@@ -1,0 +1,189 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                      String    @id @default(uuid())
+  title                   String
+  subject                 String
+  standard                String    @default("WCAG 2.2")
+  level                   String    @default("AA")
+  researchType            String    @map("research_type")
+  version                 Int       @default(1)
+  clientName              String?   @map("client_name")
+  commissionedBy          String?   @map("commissioned_by")
+  auditedByOrg            String    @default("Shift2") @map("audited_by_org")
+  researcherName          String?   @map("researcher_name")
+  dateStart               DateTime? @map("date_start")
+  dateEnd                 DateTime? @map("date_end")
+  reportDate              DateTime  @default(now()) @map("report_date")
+
+  // Rich text fields
+  summaryText             String?   @map("summary_text") @db.Text
+  researcherFeedbackText  String?   @map("researcher_feedback_text") @db.Text
+  aboutResearchText       String?   @map("about_research_text") @db.Text
+  whatWasTestedText       String?   @map("what_was_tested_text") @db.Text
+  aboutOrgText            String?   @map("about_org_text") @db.Text
+
+  // Method info
+  methodName              String?   @map("method_name")
+  techniquesNote          String?   @map("techniques_note") @db.Text
+  supportBaseline         String?   @map("support_baseline") @db.Text
+  userAgents              String[]  @default([]) @map("user_agents")
+  technologies            String[]  @default([]) @map("technologies")
+
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  scopeUrls               ProjectScopeUrl[]
+  sampleItems             SampleItem[]
+  criterionAssessments    CriterionAssessment[]
+  findings                Finding[]
+
+  @@map("projects")
+}
+
+model ProjectScopeUrl {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  url       String
+  note      String?  @db.Text
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_scope_urls")
+}
+
+enum SampleType {
+  structured
+  random
+  pdf
+}
+
+model SampleItem {
+  id          String       @id @default(uuid())
+  projectId   String       @map("project_id")
+  sampleType  SampleType   @map("sample_type")
+  title       String
+  url         String?
+  orderIndex  Int?         @map("order_index")
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  occurrences FindingOccurrence[]
+
+  @@map("sample_items")
+}
+
+enum WCAGLevel {
+  A
+  AA
+  AAA
+}
+
+enum WCAGPrinciple {
+  Perceivable
+  Operable
+  Understandable
+  Robust
+}
+
+model WCAGCriterion {
+  id                String         @id @default(uuid())
+  code              String         @unique
+  titleNl           String         @map("title_nl")
+  level             WCAGLevel
+  principle         WCAGPrinciple
+  guidelineCode     String         @map("guideline_code")
+  guidelineTitleNl  String         @map("guideline_title_nl")
+  understandingUrl  String?        @map("understanding_url")
+
+  assessments       CriterionAssessment[]
+  findings          Finding[]
+
+  @@map("wcag_criteria")
+}
+
+enum AssessmentStatus {
+  passed          // Goedgekeurd
+  failed          // Afgekeurd
+  not_present     // Niet aanwezig
+  unknown         // Onbekend
+  not_tested      // Niet getest
+}
+
+model CriterionAssessment {
+  id              String            @id @default(uuid())
+  projectId       String            @map("project_id")
+  wcagCriterionId String            @map("wcag_criterion_id")
+  status          AssessmentStatus
+  notes           String?           @db.Text
+
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wcagCriterion   WCAGCriterion     @relation(fields: [wcagCriterionId], references: [id])
+
+  @@unique([projectId, wcagCriterionId])
+  @@map("criterion_assessments")
+}
+
+enum FindingStatus {
+  open
+  published
+  resolved
+}
+
+enum FindingImpact {
+  klein
+  matig
+  kritiek
+  onbekend
+}
+
+enum FindingResponsibility {
+  redacteur
+  ontwikkelaar
+  ontwerper
+  onbekend
+}
+
+model Finding {
+  id              String                 @id @default(uuid())
+  projectId       String                 @map("project_id")
+  findingCode     String                 @map("finding_code")
+  wcagCriterionId String                 @map("wcag_criterion_id")
+  status          FindingStatus          @default(open)
+  impact          FindingImpact          @default(onbekend)
+  responsibility  FindingResponsibility  @default(onbekend)
+  description     String                 @db.Text
+  advice          String                 @db.Text
+  evidence        String?                @db.Text
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wcagCriterion   WCAGCriterion          @relation(fields: [wcagCriterionId], references: [id])
+  occurrences     FindingOccurrence[]
+
+  @@map("findings")
+}
+
+model FindingOccurrence {
+  id            String      @id @default(uuid())
+  findingId     String      @map("finding_id")
+  sampleItemId  String      @map("sample_item_id")
+  url           String?
+  context       String?     @db.Text
+
+  finding       Finding     @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  sampleItem    SampleItem  @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
+
+  @@map("finding_occurrences")
+}
