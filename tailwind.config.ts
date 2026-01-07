@@ -6,6 +6,15 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  safelist: [
+    'bg-shift2-primary',
+    'bg-shift2-secondary',
+    'bg-shift2-accent',
+    'hover:bg-shift2-primary',
+    'hover:bg-shift2-secondary',
+    'text-shift2-primary',
+    'border-shift2-primary',
+  ],
   theme: {
     extend: {
       colors: {
