@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force Shift2 colors to override any cached styles */
+.bg-shift2-primary {
+  background-color: #1f0036 !important;
+}
+
+.hover\:bg-shift2-secondary:hover {
+  background-color: #6b2d8f !important;
+}
+
+/* Override any old cardan-primary classes */
+.bg-cardan-primary {
+  background-color: #1f0036 !important;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
