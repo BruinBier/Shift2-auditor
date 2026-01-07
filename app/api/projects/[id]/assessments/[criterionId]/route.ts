@@ -3,14 +3,14 @@ import { prisma } from '@/lib/prisma';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string; criterionId: string } }
+  { params }: { params: { id: string; criterionId: string } }
 ) {
   try {
     const body = await request.json();
     const assessment = await prisma.criterionAssessment.upsert({
       where: {
         projectId_wcagCriterionId: {
-          projectId: params.projectId,
+          projectId: params.id,
           wcagCriterionId: params.criterionId,
         },
       },
@@ -19,7 +19,7 @@ export async function PUT(
         notes: body.notes,
       },
       create: {
-        projectId: params.projectId,
+        projectId: params.id,
         wcagCriterionId: params.criterionId,
         status: body.status,
         notes: body.notes,
