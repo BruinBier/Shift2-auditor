@@ -379,7 +379,7 @@ export default function Bevindingen({ project }: { project: any }) {
               id="published-only"
               checked={showOnlyPublished}
               onChange={(e) => setShowOnlyPublished(e.target.checked)}
-              className="h-4 w-4 text-cardan-primary focus:ring-cardan-primary border-gray-300 rounded"
+              className="h-4 w-4 text-shift2-primary focus:ring-cardan-primary border-gray-300 rounded"
             />
             <label htmlFor="published-only" className="ml-2 block text-sm text-gray-700">
               Alleen gepubliceerde bevindingen

@@ -21,12 +21,12 @@ export default function ReportTabs({ project }: ReportTabsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-cardan-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">CA</span>
+                <div className="w-8 h-8 bg-shift2-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">S2</span>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">CARDAN</span>
+                <span className="text-lg font-semibold text-shift2-primary">Shift2</span>
               </div>
-              <span className="text-gray-400">auditor</span>
+              <span className="text-gray-400">Auditor</span>
             </div>
             <button
               onClick={() => window.print()}
@@ -56,7 +56,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('about')}
               className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'about'
-                  ? 'border-cardan-primary text-cardan-primary'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -66,7 +66,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('results')}
               className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'results'
-                  ? 'border-cardan-primary text-cardan-primary'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -76,7 +76,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('findings')}
               className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'findings'
-                  ? 'border-cardan-primary text-cardan-primary'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -86,7 +86,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('sample')}
               className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'sample'
-                  ? 'border-cardan-primary text-cardan-primary'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -110,14 +110,14 @@ export default function ReportTabs({ project }: ReportTabsProps) {
           <div className="grid grid-cols-2 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-cardan-primary rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">CA</span>
+                <div className="w-6 h-6 bg-shift2-primary rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">S2</span>
                 </div>
-                <span className="font-semibold text-gray-900">CARDAN</span>
-                <span className="text-gray-500 text-sm">auditor</span>
+                <span className="font-semibold text-shift2-primary">Shift2</span>
+                <span className="text-gray-500 text-sm">Auditor</span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Dit onderzoek naar digitale toegankelijkheid is uitgevoerd door {project.auditedByOrg} met Cardan Auditor - dé slimme oplossing voor het onderzoeken en verbeteren van websites, apps en andere digitale kanalen.
+                Dit onderzoek naar digitale toegankelijkheid is uitgevoerd door {project.auditedByOrg} met Shift2 Auditor - dé slimme oplossing voor het onderzoeken en verbeteren van websites, apps en andere digitale kanalen.
               </p>
             </div>
             <div className="text-right">

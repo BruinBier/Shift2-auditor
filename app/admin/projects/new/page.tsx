@@ -54,7 +54,7 @@ export default function NewProjectPage() {
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -68,7 +68,7 @@ export default function NewProjectPage() {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="mijn.urk.nl"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -78,7 +78,7 @@ export default function NewProjectPage() {
                 <select
                   value={formData.standard}
                   onChange={(e) => setFormData({ ...formData, standard: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
                 >
                   <option value="WCAG 2.0">WCAG 2.0</option>
                   <option value="WCAG 2.1">WCAG 2.1</option>
@@ -91,7 +91,7 @@ export default function NewProjectPage() {
                 <select
                   value={formData.level}
                   onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
                 >
                   <option value="A">A</option>
                   <option value="AA">AA</option>
@@ -109,7 +109,7 @@ export default function NewProjectPage() {
                 required
                 value={formData.researchType}
                 onChange={(e) => setFormData({ ...formData, researchType: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -119,7 +119,7 @@ export default function NewProjectPage() {
                 type="text"
                 value={formData.clientName}
                 onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -131,7 +131,7 @@ export default function NewProjectPage() {
                 type="text"
                 value={formData.commissionedBy}
                 onChange={(e) => setFormData({ ...formData, commissionedBy: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -143,7 +143,7 @@ export default function NewProjectPage() {
                 type="text"
                 value={formData.auditedByOrg}
                 onChange={(e) => setFormData({ ...formData, auditedByOrg: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -155,7 +155,7 @@ export default function NewProjectPage() {
                 type="text"
                 value={formData.researcherName}
                 onChange={(e) => setFormData({ ...formData, researcherName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
 
@@ -165,7 +165,7 @@ export default function NewProjectPage() {
                 type="text"
                 value={formData.methodName}
                 onChange={(e) => setFormData({ ...formData, methodName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cardan-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function NewProjectPage() {
           <div className="mt-8 flex gap-4">
             <button
               type="submit"
-              className="px-6 py-2 bg-cardan-primary text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+              className="px-6 py-2 bg-shift2-primary text-white rounded-lg hover:bg-shift2-secondary transition-colors font-medium"
             >
               Project aanmaken
             </button>

@@ -9,8 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        shift2: {
+          primary: "#1f0036",      // Donker paars (logo kleur)
+          secondary: "#6b2d8f",    // Medium paars
+          accent: "#b565d8",       // Licht paars
+          danger: "#ef4444",
+          warning: "#f59e0b",
+          success: "#10b981",
+        },
+        // Backwards compatibility
         cardan: {
-          primary: "#22c55e",
+          primary: "#1f0036",
           secondary: "#6b7280",
           accent: "#8b5cf6",
           danger: "#ef4444",

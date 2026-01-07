@@ -27,7 +27,7 @@ export default async function AdminPage() {
           </div>
           <Link
             href="/admin/projects/new"
-            className="px-4 py-2 bg-cardan-primary text-white rounded-lg hover:bg-green-600 transition-colors"
+            className="px-4 py-2 bg-shift2-primary text-white rounded-lg hover:bg-shift2-secondary transition-colors"
           >
             + Nieuw onderzoek
           </Link>
@@ -39,7 +39,7 @@ export default async function AdminPage() {
             <p className="text-gray-600 mb-4">Begin met het aanmaken van je eerste onderzoek.</p>
             <Link
               href="/admin/projects/new"
-              className="inline-block px-4 py-2 bg-cardan-primary text-white rounded-lg hover:bg-green-600 transition-colors"
+              className="inline-block px-4 py-2 bg-shift2-primary text-white rounded-lg hover:bg-shift2-secondary transition-colors"
             >
               Maak eerste onderzoek aan
             </Link>

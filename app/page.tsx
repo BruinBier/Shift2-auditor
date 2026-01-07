@@ -14,7 +14,7 @@ export default function Home() {
           <div className="flex gap-4 justify-center">
             <Link
               href="/admin"
-              className="px-6 py-3 bg-cardan-primary text-white rounded-lg hover:bg-green-600 transition-colors"
+              className="px-6 py-3 bg-shift2-primary text-white rounded-lg hover:bg-shift2-secondary transition-colors"
             >
               Admin Dashboard
             </Link>
