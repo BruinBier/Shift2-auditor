@@ -2,17 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force Shift2 colors to override any cached styles */
-.bg-shift2-primary {
+/* Force Shift2 colors - Updated timestamp to bust cache */
+.bg-shift2-primary,
+button.bg-shift2-primary,
+a.bg-shift2-primary {
   background-color: #1f0036 !important;
 }
 
-.hover\:bg-shift2-secondary:hover {
+.hover\:bg-shift2-secondary:hover,
+button:hover,
+a:hover {
   background-color: #6b2d8f !important;
 }
 
-/* Override any old cardan-primary classes */
-.bg-cardan-primary {
+/* Override any old cardan and green classes */
+.bg-cardan-primary,
+.bg-green-600,
+.hover\:bg-green-600:hover {
+  background-color: #1f0036 !important;
+}
+
+/* Nuclear option - force ALL buttons and links to purple */
+button[class*="bg-"],
+a[class*="bg-"][class*="primary"] {
   background-color: #1f0036 !important;
 }
 
