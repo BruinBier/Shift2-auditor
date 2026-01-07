@@ -26,15 +26,6 @@ const config: Config = {
           warning: "#f59e0b",
           success: "#10b981",
         },
-        // Backwards compatibility
-        cardan: {
-          primary: "#1f0036",
-          secondary: "#6b7280",
-          accent: "#8b5cf6",
-          danger: "#ef4444",
-          warning: "#f59e0b",
-          success: "#10b981",
-        },
       },
     },
   },
