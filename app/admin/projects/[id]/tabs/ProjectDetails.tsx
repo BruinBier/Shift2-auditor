@@ -2,7 +2,7 @@
 
 export default function ProjectDetails({ project }: { project: any }) {
   return (
-    <div className="max-w-3xl">
+    <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Project Details</h2>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
