@@ -86,8 +86,8 @@ a[class*="bg-"][class*="primary"] {
   background-color: #1f0036 !important;
 }
 
-/* Custom hover for report tabs */
-.tab-hover:hover {
+/* Custom hover for report tabs - but not when active */
+.tab-hover:hover:not(.border-shift2-primary) {
   background-color: #79e792 !important;
   color: #290047 !important;
 }
