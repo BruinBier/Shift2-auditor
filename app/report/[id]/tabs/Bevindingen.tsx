@@ -384,7 +384,7 @@ export default function Bevindingen({ project }: { project: any }) {
               setResponsibilityFilter('all');
               setShowOnlyPublished(false);
             }}
-            className="mt-4 w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+            className="mt-4 w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-white rounded-lg text-sm font-medium transition-colors"
           >
             Reset filters
           </button>
