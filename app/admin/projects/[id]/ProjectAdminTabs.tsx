@@ -40,86 +40,87 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
         </div>
       </header>
 
-      {/* Title section */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-8 py-8">
-              <div className="mb-6">
-                <Link href="/admin" className="text-sm text-shift2-primary hover:underline mb-2 inline-block">
-                  ← Terug naar dashboard
-                </Link>
-                <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
-                <p className="text-gray-600">{project.subject} - {project.standard} {project.level}</p>
-              </div>
-
-              {/* Tabs */}
-              <nav className="flex gap-8 border-b border-gray-200">
-                <button
-                  onClick={() => setActiveTab('details')}
-                  className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'details'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Details
-                </button>
-                <button
-                  onClick={() => setActiveTab('scope')}
-                  className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'scope'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  1. Scope
-                </button>
-                <button
-                  onClick={() => setActiveTab('sample')}
-                  className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'sample'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  2. Steekproef ({project.sampleItems.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('findings')}
-                  className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'findings'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  3. Bevindingen ({project.findings.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('conclusion')}
-                  className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'conclusion'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  4. Conclusie
-                </button>
-                <button
-                  onClick={() => setActiveTab('finalize')}
-                  className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'finalize'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  5. Voltooien
-                </button>
-              </nav>
+      {/* Main content */}
+      <div className="flex-grow flex flex-col">
+        {/* Title section */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-[1400px] mx-auto px-8 py-8">
+            <div className="mb-6">
+              <Link href="/admin" className="text-sm text-shift2-primary hover:underline mb-2 inline-block">
+                ← Terug naar dashboard
+              </Link>
+              <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
+              <p className="text-gray-600">{project.subject} - {project.standard} {project.level}</p>
             </div>
-          </div>
 
-      {/* Tab content */}
-      <div className="flex-grow">
-        <div className="max-w-[1400px] mx-auto px-8 py-8">
+            {/* Tabs */}
+            <nav className="flex gap-8 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'details'
+                  ? 'border-shift2-primary text-shift2-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Details
+            </button>
+            <button
+              onClick={() => setActiveTab('scope')}
+              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'scope'
+                  ? 'border-shift2-primary text-shift2-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              1. Scope
+            </button>
+            <button
+              onClick={() => setActiveTab('sample')}
+              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'sample'
+                  ? 'border-shift2-primary text-shift2-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              2. Steekproef ({project.sampleItems.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('findings')}
+              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'findings'
+                  ? 'border-shift2-primary text-shift2-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              3. Bevindingen ({project.findings.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('conclusion')}
+              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'conclusion'
+                  ? 'border-shift2-primary text-shift2-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              4. Conclusie
+            </button>
+            <button
+              onClick={() => setActiveTab('finalize')}
+              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'finalize'
+                  ? 'border-shift2-primary text-shift2-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              5. Voltooien
+            </button>
+          </nav>
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <div className="max-w-[1400px] mx-auto py-8 flex-grow">
           {activeTab === 'details' && <ProjectDetails project={project} />}
           {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
           {activeTab === 'sample' && <SampleItems project={project} />}
@@ -152,7 +153,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
                 />
               </div>
               <p className="text-sm text-white leading-relaxed">
-                Wij maken zaken met de overheid eenvoudig, met digitale toegankelijkheid als vast onderdeel van onze dienstverlening.
+                Wij maken zaken met de overheid eenvoudig, met digitale toegankelijkheid als vast onderdeel van onse dienstverlening.
               </p>
             </div>
             <div className="text-right">
