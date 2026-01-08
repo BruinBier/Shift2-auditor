@@ -114,8 +114,6 @@ export default function ReportTabs({ project }: ReportTabsProps) {
                   alt="Shift2 Logo"
                   className="h-6 w-auto"
                 />
-                <span className="font-semibold text-white">Shift2</span>
-                <span className="text-white text-sm">Auditor</span>
               </div>
               <p className="text-sm text-white leading-relaxed">
                 Dit onderzoek naar digitale toegankelijkheid is uitgevoerd door {project.auditedByOrg} met Shift2 Auditor - dé slimme oplossing voor het onderzoeken en verbeteren van websites, apps en andere digitale kanalen.
