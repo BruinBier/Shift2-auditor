@@ -120,7 +120,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
         </div>
 
         {/* Tab content */}
-        <div className="max-w-[1400px] mx-auto px-8 py-8 flex-grow">
+        <div className="max-w-[1400px] mx-auto py-8 flex-grow">
           {activeTab === 'details' && <ProjectDetails project={project} />}
           {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
           {activeTab === 'sample' && <SampleItems project={project} />}
