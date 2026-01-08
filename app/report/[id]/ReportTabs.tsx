@@ -15,11 +15,10 @@ export default function ReportTabs({ project }: ReportTabsProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="max-w-[1400px] mx-auto w-full flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#290047' }}>
-          <div className="px-8 py-4">
-            <div className="flex items-center justify-between">
+      {/* Header */}
+      <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#290047' }}>
+        <div className="max-w-[1400px] mx-auto px-8 py-4">
+          <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img
                   src="/shift2-logo.svg"
@@ -36,10 +35,12 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               </button>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Main content - grows to fill available space */}
-        <div className="flex-grow flex flex-col">
+      {/* Main content - grows to fill available space */}
+      <div className="flex-grow flex flex-col">
+        <div className="max-w-[1400px] mx-auto w-full flex flex-col flex-grow">
           {/* Title section */}
           <div className="bg-white border-b border-gray-200">
             <div className="px-8 py-8">
@@ -113,11 +114,12 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             {activeTab === 'sample' && <Steekproef project={project} />}
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
-          <div className="px-8 py-8">
-            <div className="grid grid-cols-2 gap-8">
+      {/* Footer */}
+      <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
+        <div className="max-w-[1400px] mx-auto px-8 py-8">
+          <div className="grid grid-cols-2 gap-8">
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <img
@@ -142,8 +144,8 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               </div>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
