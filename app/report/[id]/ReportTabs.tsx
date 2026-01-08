@@ -14,7 +14,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
   const [activeTab, setActiveTab] = useState<'about' | 'results' | 'findings' | 'sample'>('about');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -37,74 +37,77 @@ export default function ReportTabs({ project }: ReportTabsProps) {
         </div>
       </header>
 
-      {/* Title section */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="mb-6">
-            <div className="text-sm text-gray-600 mb-2">
-              {project.standard} {project.level} – {project.researchType} – {project.subject}
+      {/* Main content - grows to fill available space */}
+      <div className="flex-grow flex flex-col">
+        {/* Title section */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="mb-6">
+              <div className="text-sm text-gray-600 mb-2">
+                {project.standard} {project.level} – {project.researchType} – {project.subject}
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Rapport digitale toegankelijkheid
+              </h1>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Rapport digitale toegankelijkheid
-            </h1>
-          </div>
 
-          {/* Tabs */}
-          <nav className="flex gap-8 border-b border-gray-200 no-print">
-            <button
-              onClick={() => setActiveTab('about')}
-              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                activeTab === 'about'
-                  ? 'border-shift2-primary text-shift2-primary'
-                  : 'border-transparent text-gray-500 tab-hover'
-              }`}
-            >
-              Over dit onderzoek
-            </button>
-            <button
-              onClick={() => setActiveTab('results')}
-              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                activeTab === 'results'
-                  ? 'border-shift2-primary text-shift2-primary'
-                  : 'border-transparent text-gray-500 tab-hover'
-              }`}
-            >
-              Resultaten
-            </button>
-            <button
-              onClick={() => setActiveTab('findings')}
-              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                activeTab === 'findings'
-                  ? 'border-shift2-primary text-shift2-primary'
-                  : 'border-transparent text-gray-500 tab-hover'
-              }`}
-            >
-              Bevindingen
-            </button>
-            <button
-              onClick={() => setActiveTab('sample')}
-              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                activeTab === 'sample'
-                  ? 'border-shift2-primary text-shift2-primary'
-                  : 'border-transparent text-gray-500 tab-hover'
-              }`}
-            >
-              Steekproef
-            </button>
-          </nav>
+            {/* Tabs */}
+            <nav className="flex gap-8 border-b border-gray-200 no-print">
+              <button
+                onClick={() => setActiveTab('about')}
+                className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                  activeTab === 'about'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 tab-hover'
+                }`}
+              >
+                Over dit onderzoek
+              </button>
+              <button
+                onClick={() => setActiveTab('results')}
+                className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                  activeTab === 'results'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 tab-hover'
+                }`}
+              >
+                Resultaten
+              </button>
+              <button
+                onClick={() => setActiveTab('findings')}
+                className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                  activeTab === 'findings'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 tab-hover'
+                }`}
+              >
+                Bevindingen
+              </button>
+              <button
+                onClick={() => setActiveTab('sample')}
+                className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                  activeTab === 'sample'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 tab-hover'
+                }`}
+              >
+                Steekproef
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <div className="max-w-7xl mx-auto px-4 py-8 flex-grow">
+          {activeTab === 'about' && <OverDitOnderzoek project={project} />}
+          {activeTab === 'results' && <Resultaten project={project} />}
+          {activeTab === 'findings' && <Bevindingen project={project} />}
+          {activeTab === 'sample' && <Steekproef project={project} />}
         </div>
       </div>
 
-      {/* Tab content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {activeTab === 'about' && <OverDitOnderzoek project={project} />}
-        {activeTab === 'results' && <Resultaten project={project} />}
-        {activeTab === 'findings' && <Bevindingen project={project} />}
-        {activeTab === 'sample' && <Steekproef project={project} />}
-      </div>
-
       {/* Footer */}
-      <footer className="border-t border-gray-200 mt-16" style={{ backgroundColor: '#290047' }}>
+      <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 gap-8">
             <div>
