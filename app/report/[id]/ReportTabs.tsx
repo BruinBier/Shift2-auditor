@@ -28,7 +28,8 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             </div>
             <button
               onClick={() => window.print()}
-              className="px-4 py-2 bg-shift2-primary text-white rounded-lg text-sm font-medium hover:bg-shift2-secondary transition-colors"
+              className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
+              style={{ backgroundColor: '#6b2d8f' }}
             >
               Bekijk onderzoek
             </button>
