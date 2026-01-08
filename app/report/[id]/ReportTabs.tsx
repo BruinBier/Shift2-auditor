@@ -52,7 +52,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             </div>
 
             {/* Tabs */}
-            <nav className="flex gap-8 border-b border-gray-200 no-print">
+            <nav className="flex gap-8 border-b border-gray-200 no-print items-center">
               <button
                 onClick={() => setActiveTab('about')}
                 className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
@@ -93,6 +93,13 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               >
                 Steekproef
               </button>
+              <a
+                href={`/admin/projects/${project.id}`}
+                className="ml-auto px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: '#6b2d8f' }}
+              >
+                Bekijk het onderzoek
+              </a>
             </nav>
           </div>
         </div>
