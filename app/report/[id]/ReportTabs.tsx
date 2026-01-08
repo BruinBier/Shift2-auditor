@@ -104,7 +104,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
+      <footer className="border-t border-gray-200 mt-16" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 gap-8">
             <div>
@@ -114,18 +114,18 @@ export default function ReportTabs({ project }: ReportTabsProps) {
                   alt="Shift2 Logo"
                   className="h-6 w-auto"
                 />
-                <span className="font-semibold text-shift2-primary">Shift2</span>
-                <span className="text-gray-500 text-sm">Auditor</span>
+                <span className="font-semibold text-white">Shift2</span>
+                <span className="text-white text-sm">Auditor</span>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-white leading-relaxed">
                 Dit onderzoek naar digitale toegankelijkheid is uitgevoerd door {project.auditedByOrg} met Shift2 Auditor - dé slimme oplossing voor het onderzoeken en verbeteren van websites, apps en andere digitale kanalen.
               </p>
             </div>
             <div className="text-right">
-              <div className="text-sm font-medium text-gray-900 mb-2">
+              <div className="text-sm font-medium text-white mb-2">
                 Onderzoek uitgevoerd door:
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-white">
                 <div>{project.auditedByOrg}</div>
                 {project.researcherName && <div>{project.researcherName}</div>}
                 {project.commissionedBy && <div>In opdracht van {project.commissionedBy}</div>}
