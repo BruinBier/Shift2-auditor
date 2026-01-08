@@ -55,7 +55,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('about')}
               className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'about'
-                  ? 'tab-active'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
               }`}
             >
@@ -65,7 +65,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('results')}
               className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'results'
-                  ? 'tab-active'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
               }`}
             >
@@ -75,7 +75,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('findings')}
               className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'findings'
-                  ? 'tab-active'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
               }`}
             >
@@ -85,7 +85,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               onClick={() => setActiveTab('sample')}
               className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'sample'
-                  ? 'tab-active'
+                  ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
               }`}
             >
