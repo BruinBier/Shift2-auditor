@@ -19,21 +19,20 @@ export default function ReportTabs({ project }: ReportTabsProps) {
       <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-[1400px] mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/shift2-logo.svg"
-                  alt="Shift2 Logo"
-                  className="h-8 w-auto"
-                />
-              </div>
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
-                style={{ backgroundColor: '#6b2d8f' }}
-              >
-                Download rapport
-              </button>
+            <div className="flex items-center gap-3">
+              <img
+                src="/shift2-logo.svg"
+                alt="Shift2 Logo"
+                className="h-8 w-auto"
+              />
             </div>
+            <button
+              onClick={() => window.print()}
+              className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
+              style={{ backgroundColor: '#6b2d8f' }}
+            >
+              Download rapport
+            </button>
           </div>
         </div>
       </header>
@@ -120,27 +119,26 @@ export default function ReportTabs({ project }: ReportTabsProps) {
       <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-[1400px] mx-auto px-8 py-8">
           <div className="grid grid-cols-2 gap-8">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <img
-                    src="/shift2-logo.svg"
-                    alt="Shift2 Logo"
-                    className="h-6 w-auto"
-                  />
-                </div>
-                <p className="text-sm text-white leading-relaxed">
-                  Wij maken zaken met de overheid eenvoudig, met digitale toegankelijkheid als vast onderdeel van onze dienstverlening.
-                </p>
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <img
+                  src="/shift2-logo.svg"
+                  alt="Shift2 Logo"
+                  className="h-6 w-auto"
+                />
               </div>
-              <div className="text-right">
-                <div className="text-sm font-medium text-white mb-2">
-                  Onderzoek uitgevoerd door:
-                </div>
-                <div className="text-sm text-white">
-                  <div>{project.auditedByOrg}</div>
-                  {project.researcherName && <div>{project.researcherName}</div>}
-                  {project.commissionedBy && <div>In opdracht van {project.commissionedBy}</div>}
-                </div>
+              <p className="text-sm text-white leading-relaxed">
+                Wij maken zaken met de overheid eenvoudig, met digitale toegankelijkheid als vast onderdeel van onze dienstverlening.
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-medium text-white mb-2">
+                Onderzoek uitgevoerd door:
+              </div>
+              <div className="text-sm text-white">
+                <div>{project.auditedByOrg}</div>
+                {project.researcherName && <div>{project.researcherName}</div>}
+                {project.commissionedBy && <div>In opdracht van {project.commissionedBy}</div>}
               </div>
             </div>
           </div>
