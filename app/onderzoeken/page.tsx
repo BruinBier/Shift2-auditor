@@ -23,7 +23,7 @@ export default async function OnderzoekekenPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
+            {projects.map((project: any) => (
               <Link
                 key={project.id}
                 href={`/report/${project.id}`}

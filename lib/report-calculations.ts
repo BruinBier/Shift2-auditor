@@ -1,4 +1,23 @@
-import { AssessmentStatus, WCAGLevel, WCAGPrinciple } from '@prisma/client';
+export enum AssessmentStatus {
+  passed = 'passed',
+  failed = 'failed',
+  not_present = 'not_present',
+  unknown = 'unknown',
+  not_tested = 'not_tested',
+}
+
+export enum WCAGLevel {
+  A = 'A',
+  AA = 'AA',
+  AAA = 'AAA',
+}
+
+export enum WCAGPrinciple {
+  Perceivable = 'Perceivable',
+  Operable = 'Operable',
+  Understandable = 'Understandable',
+  Robust = 'Robust',
+}
 
 export interface ProjectWithRelations {
   id: string;
@@ -18,13 +37,16 @@ export interface ProjectWithRelations {
   sampleItems: any[];
   criterionAssessments: {
     status: AssessmentStatus;
+    notes: any;
     wcagCriterion: {
+      id: string;
       code: string;
       titleNl: string;
       level: WCAGLevel;
       principle: WCAGPrinciple;
       guidelineCode: string;
       guidelineTitleNl: string;
+      understandingUrl: string | null;
     };
   }[];
   findings: any[];
@@ -174,14 +196,15 @@ export interface GroupedFindings {
     code: string;
     title: string;
     criteria: {
+      id: string;
       code: string;
       title: string;
       level: WCAGLevel;
       understandingUrl: string | null;
       assessment: {
         status: AssessmentStatus;
-        notes: string | null;
-      } | null;
+        notes: any;
+      };
       findings: any[];
     }[];
   }[];
