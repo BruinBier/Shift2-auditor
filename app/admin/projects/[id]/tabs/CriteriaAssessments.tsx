@@ -56,7 +56,7 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-white hover:bg-gray-200'
             }`}
           >
             Alle ({allCriteria.length})
@@ -64,7 +64,7 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
           <button
             onClick={() => setFilter('A')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'A' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'A' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-white hover:bg-gray-200'
             }`}
           >
             Niveau A ({allCriteria.filter(c => c.level === 'A').length})
@@ -72,7 +72,7 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
           <button
             onClick={() => setFilter('AA')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'AA' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'AA' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-white hover:bg-gray-200'
             }`}
           >
             Niveau AA ({allCriteria.filter(c => c.level === 'AA').length})
