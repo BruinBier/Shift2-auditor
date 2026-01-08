@@ -3,15 +3,34 @@
 @tailwind utilities;
 
 /* Shift2 Custom Fonts */
-/* Required font files in public/fonts/:
-   - Neulis Sans (for body text): neulis-sans-regular.woff2, neulis-sans-regular.woff
-   - Brookmans (for headings): brookmans-regular.woff2, brookmans-regular.woff
-*/
 
 @font-face {
   font-family: 'Neulis Sans';
-  src: url('/fonts/neulis-sans-regular.woff2') format('woff2'),
-       url('/fonts/neulis-sans-regular.woff') format('woff');
+  src: url('/fonts/Neulis sans/Neulis sans regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neulis Sans';
+  src: url('/fonts/Neulis sans/Neulis sans Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neulis Sans';
+  src: url('/fonts/Neulis sans/Neulis sans Semi bold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brookmans';
+  src: url('/fonts/Brockmann Roman Desktop/Brockmann-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -19,9 +38,24 @@
 
 @font-face {
   font-family: 'Brookmans';
-  src: url('/fonts/brookmans-regular.woff2') format('woff2'),
-       url('/fonts/brookmans-regular.woff') format('woff');
-  font-weight: 400;
+  src: url('/fonts/Brockmann Roman Desktop/Brockmann-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brookmans';
+  src: url('/fonts/Brockmann Roman Desktop/Brockmann-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brookmans';
+  src: url('/fonts/Brockmann Roman Desktop/Brockmann-Bold.otf') format('opentype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
