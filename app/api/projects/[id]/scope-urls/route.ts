@@ -11,6 +11,9 @@ export async function POST(
       data: {
         projectId: params.id,
         url: body.url,
+        title: body.title,
+        crawlerType: body.crawlerType,
+        inScope: body.inScope ?? true,
         note: body.note,
       },
     });

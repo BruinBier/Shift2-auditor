@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import ProjectDetails from './tabs/ProjectDetails';
 import SampleItems from './tabs/SampleItems';
+import ScopeManagement from './tabs/ScopeManagement';
 import CriteriaAssessments from './tabs/CriteriaAssessments';
 import FindingsManagement from './tabs/FindingsManagement';
 
@@ -124,7 +125,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
           {/* Tab content */}
           <div className="px-8 py-8 flex-grow">
             {activeTab === 'details' && <ProjectDetails project={project} />}
-            {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
+            {activeTab === 'scope' && <ScopeManagement project={project} />}
             {activeTab === 'sample' && <SampleItems project={project} />}
             {activeTab === 'findings' && <FindingsManagement project={project} allCriteria={allCriteria} />}
             {activeTab === 'conclusion' && (

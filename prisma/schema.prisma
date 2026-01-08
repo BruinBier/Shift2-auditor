@@ -53,12 +53,15 @@ model Project {
 }
 
 model ProjectScopeUrl {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  url       String
-  note      String?  @db.Text
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  url         String
+  title       String?
+  crawlerType String?  @map("crawler_type")
+  inScope     Boolean  @default(true) @map("in_scope")
+  note        String?  @db.Text
 
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("project_scope_urls")
 }
