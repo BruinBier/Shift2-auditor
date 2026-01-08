@@ -91,13 +91,6 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             >
               Steekproef
             </button>
-            <a
-              href={`/admin/projects/${project.id}`}
-              className="ml-auto px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: '#6b2d8f' }}
-            >
-              Bekijk het onderzoek
-            </a>
           </nav>
         </div>
       </div>
