@@ -31,7 +31,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
               className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
               style={{ backgroundColor: '#6b2d8f' }}
             >
-              Bekijk onderzoek
+              Download rapport
             </button>
           </div>
         </div>
