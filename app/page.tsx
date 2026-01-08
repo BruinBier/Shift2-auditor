@@ -14,8 +14,13 @@ export default function Home() {
           <div className="flex gap-4 justify-center">
             <Link
               href="/admin"
-              className="px-6 py-3 text-white rounded-lg transition-colors"
-              style={{ backgroundColor: '#1f0036' }}
+              className="px-6 py-3 text-white rounded-lg"
+              style={{
+                backgroundColor: '#1f0036',
+                borderRadius: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                transition: 'all 0.2s'
+              }}
             >
               Admin Dashboard
             </Link>
