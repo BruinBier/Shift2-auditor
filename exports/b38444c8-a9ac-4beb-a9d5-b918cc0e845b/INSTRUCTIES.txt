@@ -1,0 +1,26 @@
+
+EXPORT INSTRUCTIES
+==================
+
+Deze map bevat alle benodigde assets (fonts, logo) voor het rapport.
+
+OM HET RAPPORT TE EXPORTEREN:
+
+1. Open je browser naar: http://localhost:3001/report/b38444c8-a9ac-4beb-a9d5-b918cc0e845b
+
+2. Gebruik de browser's "Print" functie:
+   - Chrome/Edge: CTRL+P
+   - Kies "Save as PDF"
+   - Of gebruik browser's "Save Page As" → "Webpage, Complete"
+
+3. Plaats de geëxporteerde HTML/PDF in deze map
+
+4. Upload alles naar: rapporten.shift2.nl/b38444c8-a9ac-4beb-a9d5-b918cc0e845b/
+
+AUTOMATISCHE EXPORT (als dev server draait):
+============================================
+
+Voor automatische export met alle tabs, gebruik:
+npm run export-full b38444c8-a9ac-4beb-a9d5-b918cc0e845b
+
+(Vereist dat de dev server draait op http://localhost:3001)
