@@ -2,7 +2,7 @@
 
 export default function ProjectDetails({ project }: { project: any }) {
   return (
-    <>
+    <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Project Details</h2>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
@@ -51,6 +51,6 @@ export default function ProjectDetails({ project }: { project: any }) {
           💡 <strong>Tip:</strong> Project details bewerken komt in een volgende versie. Voor nu kun je via de andere tabs steekproef, criteria en bevindingen beheren.
         </p>
       </div>
-    </>
+    </div>
   );
 }
