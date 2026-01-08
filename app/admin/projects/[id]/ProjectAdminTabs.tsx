@@ -57,7 +57,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             <nav className="flex gap-8 border-b border-gray-200">
             <button
               onClick={() => setActiveTab('details')}
-              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'details'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -67,7 +67,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             </button>
             <button
               onClick={() => setActiveTab('scope')}
-              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'scope'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -77,7 +77,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             </button>
             <button
               onClick={() => setActiveTab('sample')}
-              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'sample'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -87,7 +87,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             </button>
             <button
               onClick={() => setActiveTab('findings')}
-              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'findings'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -97,7 +97,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             </button>
             <button
               onClick={() => setActiveTab('conclusion')}
-              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'conclusion'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -107,7 +107,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             </button>
             <button
               onClick={() => setActiveTab('finalize')}
-              className={`pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-4 pr-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'finalize'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -120,7 +120,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
         </div>
 
         {/* Tab content */}
-        <div className="max-w-[1400px] mx-auto py-8 flex-grow">
+        <div className="max-w-[1400px] mx-auto px-8 py-8 flex-grow">
           {activeTab === 'details' && <ProjectDetails project={project} />}
           {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
           {activeTab === 'sample' && <SampleItems project={project} />}
