@@ -116,7 +116,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
                 />
               </div>
               <p className="text-sm text-white leading-relaxed">
-                Dit onderzoek naar digitale toegankelijkheid is uitgevoerd door {project.auditedByOrg} met Shift2 Auditor - dé slimme oplossing voor het onderzoeken en verbeteren van websites, apps en andere digitale kanalen.
+                Wij maken het super eenvoudig om zaken met de overheid te regelen, waarbij digitale toegankelijkheid een vast onderdeel is van onze dienstverlening.
               </p>
             </div>
             <div className="text-right">
