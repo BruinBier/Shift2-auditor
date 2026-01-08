@@ -16,7 +16,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-gray-100 border-b border-gray-200 no-print">
+      <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#6b2d8f' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -26,9 +26,9 @@ export default function ReportTabs({ project }: ReportTabsProps) {
                   alt="Shift2 Logo"
                   className="h-8 w-auto"
                 />
-                <span className="text-lg font-semibold text-shift2-primary">Shift2</span>
+                <span className="text-lg font-semibold text-white">Shift2</span>
               </div>
-              <span className="text-gray-400">Auditor</span>
+              <span className="text-white">Auditor</span>
             </div>
             <button
               onClick={() => window.print()}
