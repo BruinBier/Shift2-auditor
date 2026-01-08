@@ -13,12 +13,11 @@ interface ScopePage {
 
 export default function ScopeManagement({ project }: { project: any }) {
   const router = useRouter();
-  const [showInScopeForm, setShowInScopeForm] = useState(false);
-  const [showOutScopeForm, setShowOutScopeForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<'in' | 'out'>('in');
   const [formData, setFormData] = useState({
     url: '',
-    title: '',
-    crawlerType: 'Productieomgeving',
+    description: '',
   });
   const [scopeInfo, setScopeInfo] = useState(project.scopeInfo || '');
 
@@ -27,21 +26,31 @@ export default function ScopeManagement({ project }: { project: any }) {
   const inScopePages = scopePages.filter(p => p.inScope);
   const outScopePages = scopePages.filter(p => !p.inScope);
 
-  const handleSubmit = async (inScope: boolean) => {
-    // API call om pagina toe te voegen
+  const openModal = (type: 'in' | 'out') => {
+    setModalType(type);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setFormData({ url: '', description: '' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     const response = await fetch(`/api/projects/${project.id}/scope-urls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...formData,
-        inScope,
+        url: formData.url,
+        title: formData.description,
+        inScope: modalType === 'in',
       }),
     });
 
     if (response.ok) {
-      setFormData({ url: '', title: '', crawlerType: 'Productieomgeving' });
-      setShowInScopeForm(false);
-      setShowOutScopeForm(false);
+      closeModal();
       router.refresh();
     }
   };
@@ -65,7 +74,7 @@ export default function ScopeManagement({ project }: { project: any }) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Binnen scope</h3>
             <button
-              onClick={() => setShowInScopeForm(!showInScopeForm)}
+              onClick={() => openModal('in')}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +85,7 @@ export default function ScopeManagement({ project }: { project: any }) {
           </div>
         </div>
 
-        {showInScopeForm && (
+        {false && (
           <div className="p-6 bg-gray-50 border-b border-gray-200">
             <div className="space-y-4">
               <div>
@@ -179,7 +188,7 @@ export default function ScopeManagement({ project }: { project: any }) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Buiten scope</h3>
             <button
-              onClick={() => setShowOutScopeForm(!showOutScopeForm)}
+              onClick={() => openModal('out')}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +199,7 @@ export default function ScopeManagement({ project }: { project: any }) {
           </div>
         </div>
 
-        {showOutScopeForm && (
+        {false && (
           <div className="p-6 bg-gray-50 border-b border-gray-200">
             <div className="space-y-4">
               <div>
@@ -312,6 +321,73 @@ export default function ScopeManagement({ project }: { project: any }) {
           />
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">URL toevoegen</h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    URL <span className="text-red-500">vereist</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </span>
+                    <input
+                      type="url"
+                      required
+                      value={formData.url}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Beschrijving
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
+                    rows={4}
+                    placeholder="Voeg een beschrijving toe..."
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 text-white rounded-lg font-medium transition-colors"
+                  style={{ backgroundColor: '#6b2d8f' }}
+                >
+                  Opslaan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
