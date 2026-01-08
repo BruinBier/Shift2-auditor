@@ -19,7 +19,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header - Same as Report */}
       <header className="border-b border-gray-200" style={{ backgroundColor: '#290047' }}>
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
@@ -44,7 +44,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
       <div className="flex-grow flex flex-col">
         {/* Title section */}
         <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="px-8 py-8">
             <div className="mb-6">
               <Link href="/admin" className="text-sm text-shift2-primary hover:underline mb-2 inline-block">
                 ← Terug naar dashboard
@@ -120,7 +120,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
         </div>
 
         {/* Tab content */}
-        <div className="max-w-7xl mx-auto px-4 py-8 flex-grow">
+        <div className="px-8 py-8 flex-grow">
           {activeTab === 'details' && <ProjectDetails project={project} />}
           {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
           {activeTab === 'sample' && <SampleItems project={project} />}
@@ -142,7 +142,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
 
       {/* Footer - Same as Report */}
       <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="px-8 py-8">
           <div className="grid grid-cols-2 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
