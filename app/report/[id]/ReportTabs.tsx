@@ -21,9 +21,11 @@ export default function ReportTabs({ project }: ReportTabsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-shift2-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">S2</span>
-                </div>
+                <img
+                  src="/shift2-logo.svg"
+                  alt="Shift2 Logo"
+                  className="h-8 w-auto"
+                />
                 <span className="text-lg font-semibold text-shift2-primary">Shift2</span>
               </div>
               <span className="text-gray-400">Auditor</span>
@@ -110,9 +112,11 @@ export default function ReportTabs({ project }: ReportTabsProps) {
           <div className="grid grid-cols-2 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-shift2-primary rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">S2</span>
-                </div>
+                <img
+                  src="/shift2-logo.svg"
+                  alt="Shift2 Logo"
+                  className="h-6 w-auto"
+                />
                 <span className="font-semibold text-shift2-primary">Shift2</span>
                 <span className="text-gray-500 text-sm">Auditor</span>
               </div>
