@@ -115,6 +115,11 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Brookmans', serif;
 }
 
+/* H2 should not be bold */
+h2 {
+  font-weight: 400;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
