@@ -110,7 +110,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             <Link
               href={`/report/${project.id}`}
               target="_blank"
-              className="ml-auto px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
+              className="ml-auto px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors self-start"
               style={{ backgroundColor: '#6b2d8f' }}
             >
               Bekijk het rapport
