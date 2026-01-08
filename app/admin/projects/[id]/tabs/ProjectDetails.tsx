@@ -2,10 +2,10 @@
 
 export default function ProjectDetails({ project }: { project: any }) {
   return (
-    <div className="w-full">
+    <>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Project Details</h2>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4 w-full">
+      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Titel</label>
@@ -46,11 +46,11 @@ export default function ProjectDetails({ project }: { project: any }) {
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg w-full">
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-900">
           💡 <strong>Tip:</strong> Project details bewerken komt in een volgende versie. Voor nu kun je via de andere tabs steekproef, criteria en bevindingen beheren.
         </p>
       </div>
-    </div>
+    </>
   );
 }
