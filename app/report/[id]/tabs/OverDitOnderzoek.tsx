@@ -107,7 +107,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       <div className="space-y-6">
         {/* Project details */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Onderzoeksdetails</h3>
+          <h2 className="text-lg font-normal text-gray-900 mb-4">Onderzoeksdetails</h2>
           <dl className="space-y-3">
             <div>
               <dt className="text-sm font-medium text-gray-500">Onderzoeksnorm</dt>
