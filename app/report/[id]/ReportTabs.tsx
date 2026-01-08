@@ -17,7 +17,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#290047' }}>
-        <div className="px-8 py-4">
+        <div className="max-w-[1400px] mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
@@ -41,7 +41,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
       <div className="flex-grow flex flex-col">
         {/* Title section */}
         <div className="bg-white border-b border-gray-200">
-          <div className="px-8 py-8">
+          <div className="max-w-[1400px] mx-auto px-8 py-8">
             <div className="mb-6">
               <div className="text-sm text-gray-600 mb-2">
                 {project.standard} {project.level} – {project.researchType} – {project.subject}
@@ -105,7 +105,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
         </div>
 
         {/* Tab content */}
-        <div className="px-8 py-8 flex-grow">
+        <div className="max-w-[1400px] mx-auto px-8 py-8 flex-grow">
           {activeTab === 'about' && <OverDitOnderzoek project={project} />}
           {activeTab === 'results' && <Resultaten project={project} />}
           {activeTab === 'findings' && <Bevindingen project={project} />}
@@ -115,7 +115,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
 
       {/* Footer */}
       <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
-        <div className="px-8 py-8">
+        <div className="max-w-[1400px] mx-auto px-8 py-8">
           <div className="grid grid-cols-2 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
