@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shift2 Custom Fonts */
+/* Required font files in public/fonts/:
+   - Neulis Sans (for body text): neulis-sans-regular.woff2, neulis-sans-regular.woff
+   - Brookmans (for headings): brookmans-regular.woff2, brookmans-regular.woff
+*/
+
+@font-face {
+  font-family: 'Neulis Sans';
+  src: url('/fonts/neulis-sans-regular.woff2') format('woff2'),
+       url('/fonts/neulis-sans-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brookmans';
+  src: url('/fonts/brookmans-regular.woff2') format('woff2'),
+       url('/fonts/brookmans-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Force Shift2 colors - Updated timestamp to bust cache */
 .bg-shift2-primary,
 button.bg-shift2-primary,
@@ -48,6 +72,13 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  font-family: 'Neulis Sans', sans-serif;
+  font-size: 17.92px;
+}
+
+/* Apply Brookmans font to all headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Brookmans', serif;
 }
 
 @layer utilities {

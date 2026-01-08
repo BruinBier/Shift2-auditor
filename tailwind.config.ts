@@ -27,6 +27,10 @@ const config: Config = {
           success: "#10b981",
         },
       },
+      fontFamily: {
+        sans: ['Neulis Sans', 'sans-serif'],
+        heading: ['Brookmans', 'serif'],
+      },
     },
   },
   plugins: [],
