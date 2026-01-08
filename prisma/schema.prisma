@@ -32,6 +32,7 @@ model Project {
   aboutResearchText       String?   @map("about_research_text") @db.Text
   whatWasTestedText       String?   @map("what_was_tested_text") @db.Text
   aboutOrgText            String?   @map("about_org_text") @db.Text
+  scopeInfo               String?   @map("scope_info") @db.Text
 
   // Method info
   methodName              String?   @map("method_name")

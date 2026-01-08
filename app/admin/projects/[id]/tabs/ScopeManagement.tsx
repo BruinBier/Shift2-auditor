@@ -20,6 +20,7 @@ export default function ScopeManagement({ project }: { project: any }) {
     title: '',
     crawlerType: 'Productieomgeving',
   });
+  const [scopeInfo, setScopeInfo] = useState(project.scopeInfo || '');
 
   // Haal scope URLs op uit project data
   const scopePages: ScopePage[] = project.scopeUrls || [];
@@ -45,10 +46,21 @@ export default function ScopeManagement({ project }: { project: any }) {
     }
   };
 
+  const handleScopeInfoSave = async () => {
+    await fetch(`/api/projects/${project.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scopeInfo }),
+    });
+    router.refresh();
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Binnen scope sectie */}
-      <div className="bg-white rounded-lg border border-gray-200">
+    <div className="grid grid-cols-3 gap-6">
+      {/* Left column - Scope lists */}
+      <div className="col-span-2 space-y-8">
+        {/* Binnen scope sectie */}
+        <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Binnen scope</h3>
@@ -260,6 +272,44 @@ export default function ScopeManagement({ project }: { project: any }) {
               </tbody>
             </table>
           )}
+        </div>
+      </div>
+      </div>
+
+      {/* Right sidebar - Scope info */}
+      <div className="space-y-6">
+        {/* Stap 1 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold mb-4">Stap 1. Scope</h3>
+          <p className="text-sm text-gray-600">
+            Definieer de scope van het onderzoek. Idealiter wordt dit gedaan in samenwerking met de opdrachtgever.
+          </p>
+        </div>
+
+        {/* Overige scope informatie */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Overige scope informatie</h3>
+            <div className="flex gap-2">
+              <button className="p-1 text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <button className="p-1 text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <textarea
+            value={scopeInfo}
+            onChange={(e) => setScopeInfo(e.target.value)}
+            onBlur={handleScopeInfoSave}
+            className="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent text-sm"
+            placeholder="Vul hier aanvullende scope informatie in..."
+          />
         </div>
       </div>
     </div>

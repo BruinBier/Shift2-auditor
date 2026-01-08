@@ -68,6 +68,7 @@ export async function PATCH(
         ...(body.aboutResearchText !== undefined && { aboutResearchText: body.aboutResearchText }),
         ...(body.whatWasTestedText !== undefined && { whatWasTestedText: body.whatWasTestedText }),
         ...(body.aboutOrgText !== undefined && { aboutOrgText: body.aboutOrgText }),
+        ...(body.scopeInfo !== undefined && { scopeInfo: body.scopeInfo }),
         ...(body.methodName !== undefined && { methodName: body.methodName }),
         ...(body.techniquesNote !== undefined && { techniquesNote: body.techniquesNote }),
         ...(body.supportBaseline !== undefined && { supportBaseline: body.supportBaseline }),
