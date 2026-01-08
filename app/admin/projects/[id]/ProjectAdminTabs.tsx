@@ -28,14 +28,6 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
                 className="h-8 w-auto"
               />
             </div>
-            <Link
-              href={`/report/${project.id}`}
-              target="_blank"
-              className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: '#6b2d8f' }}
-            >
-              Bekijk rapport
-            </Link>
           </div>
         </div>
       </header>
