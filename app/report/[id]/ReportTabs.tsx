@@ -116,7 +116,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
                 />
               </div>
               <p className="text-sm text-white leading-relaxed">
-                Wij maken het super eenvoudig om zaken met de overheid te regelen, waarbij digitale toegankelijkheid een vast onderdeel is van onze dienstverlening.
+                Wij maken zaken met de overheid eenvoudig, met digitale toegankelijkheid als vast onderdeel van onze dienstverlening.
               </p>
             </div>
             <div className="text-right">
