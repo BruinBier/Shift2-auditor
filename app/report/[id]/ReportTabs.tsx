@@ -16,7 +16,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#6b2d8f' }}>
+      <header className="border-b border-gray-200 no-print" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
