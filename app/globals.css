@@ -28,6 +28,12 @@ a[class*="bg-"][class*="primary"] {
   background-color: #1f0036 !important;
 }
 
+/* Custom hover for report tabs */
+.tab-hover:hover {
+  background-color: #79e792 !important;
+  color: #290047 !important;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
