@@ -20,15 +20,11 @@ export default function ReportTabs({ project }: ReportTabsProps) {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <img
-                  src="/shift2-logo.svg"
-                  alt="Shift2 Logo"
-                  className="h-8 w-auto"
-                />
-                <span className="text-lg font-semibold text-white">Shift2</span>
-              </div>
-              <span className="text-white">Auditor</span>
+              <img
+                src="/shift2-logo.svg"
+                alt="Shift2 Logo"
+                className="h-8 w-auto"
+              />
             </div>
             <button
               onClick={() => window.print()}
