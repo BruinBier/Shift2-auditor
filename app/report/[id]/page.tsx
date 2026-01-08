@@ -44,7 +44,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
     reportDate: project.reportDate.toISOString(),
-    findings: project.findings.map((f) => ({
+    findings: project.findings.map((f: any) => ({
       ...f,
       createdAt: f.createdAt.toISOString(),
       updatedAt: f.updatedAt.toISOString(),

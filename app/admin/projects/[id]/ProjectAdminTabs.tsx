@@ -40,12 +40,9 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
         </div>
       </header>
 
-      {/* Main content */}
-      <div className="flex-grow flex flex-col">
-        <div className="max-w-[1400px] mx-auto w-full flex flex-col flex-grow">
-          {/* Title section */}
-          <div className="bg-white border-b border-gray-200">
-            <div className="px-8 py-8">
+      {/* Title section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-8 py-8">
               <div className="mb-6">
                 <Link href="/admin" className="text-sm text-shift2-primary hover:underline mb-2 inline-block">
                   ← Terug naar dashboard
@@ -120,25 +117,25 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             </div>
           </div>
 
-          {/* Tab content */}
-          <div className="px-8 py-8 flex-grow">
-            {activeTab === 'details' && <ProjectDetails project={project} />}
-            {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
-            {activeTab === 'sample' && <SampleItems project={project} />}
-            {activeTab === 'findings' && <FindingsManagement project={project} allCriteria={allCriteria} />}
-            {activeTab === 'conclusion' && (
-              <div className="bg-white rounded-lg border border-gray-200 p-8">
-                <h2 className="text-xl font-bold mb-4">Conclusie</h2>
-                <p className="text-gray-600">Conclusie sectie - Nog te implementeren</p>
-              </div>
-            )}
-            {activeTab === 'finalize' && (
-              <div className="bg-white rounded-lg border border-gray-200 p-8">
-                <h2 className="text-xl font-bold mb-4">Onderzoek Voltooien</h2>
-                <p className="text-gray-600">Voltooien sectie - Nog te implementeren</p>
-              </div>
-            )}
-          </div>
+      {/* Tab content */}
+      <div className="flex-grow">
+        <div className="max-w-[1400px] mx-auto px-8 py-8">
+          {activeTab === 'details' && <ProjectDetails project={project} />}
+          {activeTab === 'scope' && <CriteriaAssessments project={project} allCriteria={allCriteria} />}
+          {activeTab === 'sample' && <SampleItems project={project} />}
+          {activeTab === 'findings' && <FindingsManagement project={project} allCriteria={allCriteria} />}
+          {activeTab === 'conclusion' && (
+            <div className="bg-white rounded-lg border border-gray-200 p-8">
+              <h2 className="text-xl font-bold mb-4">Conclusie</h2>
+              <p className="text-gray-600">Conclusie sectie - Nog te implementeren</p>
+            </div>
+          )}
+          {activeTab === 'finalize' && (
+            <div className="bg-white rounded-lg border border-gray-200 p-8">
+              <h2 className="text-xl font-bold mb-4">Onderzoek Voltooien</h2>
+              <p className="text-gray-600">Voltooien sectie - Nog te implementeren</p>
+            </div>
+          )}
         </div>
       </div>
 

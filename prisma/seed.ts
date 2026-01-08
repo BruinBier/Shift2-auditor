@@ -1,4 +1,5 @@
-import { PrismaClient, WCAGLevel, WCAGPrinciple } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { WCAGLevel, WCAGPrinciple } from '../lib/report-calculations';
 
 const prisma = new PrismaClient();
 
