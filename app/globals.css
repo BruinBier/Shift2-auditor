@@ -92,6 +92,13 @@ a[class*="bg-"][class*="primary"] {
   color: #290047 !important;
 }
 
+/* Active tab should have same style as hover */
+.tab-active {
+  background-color: #79e792 !important;
+  color: #290047 !important;
+  border-bottom-color: #79e792 !important;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
