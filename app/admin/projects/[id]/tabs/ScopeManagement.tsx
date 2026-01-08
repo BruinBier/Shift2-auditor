@@ -39,25 +39,32 @@ export default function ScopeManagement({ project }: { project: any }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const payload = {
+      url: formData.url,
+      title: formData.description,
+      crawlerType: 'Productieomgeving',
+      inScope: modalType === 'in',
+    };
+
+    console.log('Submitting scope URL:', payload);
+
     try {
       const response = await fetch(`/api/projects/${project.id}/scope-urls`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: formData.url,
-          title: formData.description,
-          crawlerType: 'Productieomgeving',
-          inScope: modalType === 'in',
-        }),
+        body: JSON.stringify(payload),
       });
 
+      const data = await response.json();
+      console.log('Response:', { status: response.status, data });
+
       if (response.ok) {
+        console.log('URL successfully added, closing modal and refreshing');
         closeModal();
         router.refresh();
       } else {
-        const error = await response.json();
-        console.error('Error adding URL:', error);
-        alert('Er ging iets mis bij het toevoegen van de URL. Check de console voor details.');
+        console.error('Error adding URL:', data);
+        alert(`Er ging iets mis: ${data.details || data.error}`);
       }
     } catch (error) {
       console.error('Error:', error);

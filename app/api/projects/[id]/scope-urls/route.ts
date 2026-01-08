@@ -7,6 +7,8 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
+    console.log('Creating scope URL:', { projectId: params.id, ...body });
+
     const scopeUrl = await prisma.projectScopeUrl.create({
       data: {
         projectId: params.id,
@@ -17,8 +19,14 @@ export async function POST(
         note: body.note,
       },
     });
+
+    console.log('Scope URL created:', scopeUrl);
     return NextResponse.json(scopeUrl, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create scope URL' }, { status: 500 });
+    console.error('Error creating scope URL:', error);
+    return NextResponse.json({
+      error: 'Failed to create scope URL',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
