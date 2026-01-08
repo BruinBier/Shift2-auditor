@@ -87,9 +87,16 @@ a[class*="bg-"][class*="primary"] {
 }
 
 /* Custom hover for report tabs - but not when active */
-.tab-hover:hover:not(.border-shift2-primary) {
+.tab-hover:hover {
   background-color: #79e792 !important;
   color: #290047 !important;
+}
+
+/* Disable hover on active tabs */
+.border-shift2-primary.tab-hover:hover,
+.border-shift2-primary:hover {
+  background-color: transparent !important;
+  color: inherit !important;
 }
 
 :root {
