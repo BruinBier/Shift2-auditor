@@ -53,7 +53,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
           <nav className="flex gap-8 border-b border-gray-200 no-print">
             <button
               onClick={() => setActiveTab('about')}
-              className={`pb-4 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'about'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
@@ -63,7 +63,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             </button>
             <button
               onClick={() => setActiveTab('results')}
-              className={`pb-4 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'results'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
@@ -73,7 +73,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             </button>
             <button
               onClick={() => setActiveTab('findings')}
-              className={`pb-4 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'findings'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
@@ -83,7 +83,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
             </button>
             <button
               onClick={() => setActiveTab('sample')}
-              className={`pb-4 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+              className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
                 activeTab === 'sample'
                   ? 'border-shift2-primary text-shift2-primary'
                   : 'border-transparent text-gray-500 tab-hover'
