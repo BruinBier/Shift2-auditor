@@ -14,6 +14,8 @@ export default function SampleItems({ project }: { project: any }) {
   const [formData, setFormData] = useState({
     title: '',
     url: '',
+    description: '',
+    sampleType: 'structured' as 'structured' | 'random' | 'pdf',
   });
   const [sampleInfo, setSampleInfo] = useState(project.sampleInfo || '');
   const [showSampleInfoModal, setShowSampleInfoModal] = useState(false);
@@ -67,10 +69,20 @@ export default function SampleItems({ project }: { project: any }) {
   const openItemModal = (item?: any) => {
     if (item) {
       setEditingId(item.id);
-      setFormData({ title: item.title, url: item.url || '' });
+      setFormData({
+        title: item.title,
+        url: item.url || '',
+        description: item.description || '',
+        sampleType: item.sampleType || activeType
+      });
     } else {
       setEditingId(null);
-      setFormData({ title: '', url: '' });
+      setFormData({
+        title: '',
+        url: '',
+        description: '',
+        sampleType: activeType
+      });
     }
     setShowModal(true);
   };
@@ -78,10 +90,10 @@ export default function SampleItems({ project }: { project: any }) {
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ title: '', url: '' });
+    setFormData({ title: '', url: '', description: '', sampleType: activeType });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, andNew: boolean = false) => {
     e.preventDefault();
 
     if (editingId) {
@@ -105,13 +117,23 @@ export default function SampleItems({ project }: { project: any }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          sampleType: activeType,
+          sampleType: formData.sampleType,
           orderIndex: items.length + 1,
         }),
       });
 
       if (response.ok) {
-        closeModal();
+        if (andNew) {
+          // Reset form but keep modal open
+          setFormData({
+            title: '',
+            url: '',
+            description: '',
+            sampleType: formData.sampleType
+          });
+        } else {
+          closeModal();
+        }
         router.refresh();
       } else {
         alert('Fout bij toevoegen van item');
@@ -451,10 +473,10 @@ export default function SampleItems({ project }: { project: any }) {
 
       {/* Item Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">{editingId ? 'Item bewerken' : 'Nieuw item toevoegen'}</h3>
+              <h3 className="text-lg font-semibold">Steekproef bewerken</h3>
               <button
                 onClick={closeModal}
                 className="sample-modal-close text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
@@ -465,45 +487,104 @@ export default function SampleItems({ project }: { project: any }) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="p-6">
+            <form onSubmit={(e) => handleSubmit(e, false)}>
+              <div className="p-6 flex-1 overflow-auto">
                 <div className="space-y-4">
+                  {/* Locatie */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Titel <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
-                      placeholder="Bijv. Homepage"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      URL {activeType !== 'pdf' && <span className="text-red-500">*</span>}
+                      Locatie
                     </label>
                     <input
                       type="url"
-                      required={activeType !== 'pdf'}
+                      required={formData.sampleType !== 'pdf'}
                       value={formData.url}
                       onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
-                      placeholder="https://example.com/pagina"
+                      placeholder="https://mijn.hhnk.nl/authenticate"
                     />
+                  </div>
+
+                  {/* Titel */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Titel
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
+                        placeholder="Pre-loginpagina"
+                      />
+                      <button
+                        type="button"
+                        className="sample-info-button px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Titel ophalen
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Beschrijving */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Beschrijving
+                    </label>
+                    <RichTextEditor
+                      content={formData.description}
+                      onChange={(content) => setFormData({ ...formData, description: content })}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Bijvoorbeeld beschrijving van proces of andere details van de pagina.</p>
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Type
+                    </label>
+                    <select
+                      value={formData.sampleType}
+                      onChange={(e) => setFormData({ ...formData, sampleType: e.target.value as 'structured' | 'random' | 'pdf' })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
+                    >
+                      <option value="structured">Gestructureerde steekproef</option>
+                      <option value="random">Willekeurige steekproef</option>
+                      <option value="pdf">PDF steekproef</option>
+                    </select>
                   </div>
                 </div>
 
-                <div className="mt-6">
+                {/* Buttons */}
+                <div className="mt-6 flex gap-3">
                   <button
                     type="submit"
-                    className="w-full px-4 py-2 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors"
                     style={{ backgroundColor: '#6b2d8f' }}
                   >
                     Opslaan
                   </button>
+                  {!editingId && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleSubmit(e as any, true)}
+                      className="sample-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                      style={{
+                        border: '1px solid #79e792',
+                        color: '#1f0036'
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Opslaan en nieuw
+                    </button>
+                  )}
                 </div>
               </div>
             </form>
