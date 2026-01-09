@@ -105,12 +105,16 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
-        // Switch to the new tab if type was changed
-        if (formData.sampleType !== activeType) {
-          setActiveType(formData.sampleType);
-        }
+        const newType = formData.sampleType;
         closeModal();
         router.refresh();
+
+        // Switch to the new tab after a short delay to allow refresh to complete
+        if (newType !== activeType) {
+          setTimeout(() => {
+            setActiveType(newType);
+          }, 100);
+        }
       } else {
         alert('Fout bij bijwerken van item');
       }
@@ -127,10 +131,7 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
-        // Switch to the new tab if type is different
-        if (formData.sampleType !== activeType) {
-          setActiveType(formData.sampleType);
-        }
+        const newType = formData.sampleType;
 
         if (andNew) {
           // Reset form but keep modal open
@@ -144,6 +145,13 @@ export default function SampleItems({ project }: { project: any }) {
           closeModal();
         }
         router.refresh();
+
+        // Switch to the new tab after a short delay to allow refresh to complete
+        if (newType !== activeType) {
+          setTimeout(() => {
+            setActiveType(newType);
+          }, 100);
+        }
       } else {
         alert('Fout bij toevoegen van item');
       }
