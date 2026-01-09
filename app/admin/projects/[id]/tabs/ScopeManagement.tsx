@@ -119,7 +119,16 @@ export default function ScopeManagement({ project }: { project: any }) {
   };
 
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        .scope-add-button {
+          background-color: white !important;
+        }
+        .scope-add-button:hover {
+          background-color: #F9FAFB !important;
+        }
+      `}} />
+      <div className="grid grid-cols-3 gap-6">
       {/* Left column - Scope lists */}
       <div className="col-span-2 space-y-8">
         {/* Binnen scope sectie */}
@@ -131,11 +140,10 @@ export default function ScopeManagement({ project }: { project: any }) {
               onClick={() => openModal('in')}
               onMouseEnter={() => setHoverInButton(true)}
               onMouseLeave={() => setHoverInButton(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
               style={{
                 border: '1px solid #79e792',
-                color: '#1f0036',
-                backgroundColor: hoverInButton ? '#F9FAFB' : 'white'
+                color: '#1f0036'
               }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
@@ -297,11 +305,10 @@ export default function ScopeManagement({ project }: { project: any }) {
               onClick={() => openModal('out')}
               onMouseEnter={() => setHoverOutButton(true)}
               onMouseLeave={() => setHoverOutButton(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
               style={{
                 border: '1px solid #79e792',
-                color: '#1f0036',
-                backgroundColor: hoverOutButton ? '#F9FAFB' : 'white'
+                color: '#1f0036'
               }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
@@ -547,5 +554,6 @@ export default function ScopeManagement({ project }: { project: any }) {
         </div>
       )}
     </div>
+    </>
   );
 }
