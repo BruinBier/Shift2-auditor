@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
 import { useEffect } from 'react';
 
 interface RichTextEditorProps {
@@ -21,6 +22,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         openOnClick: false,
       }),
       Image,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
+      }),
     ],
     content: content,
     onUpdate: ({ editor }) => {
@@ -73,12 +78,63 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
 
         <button
           type="button"
+          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'left' }) ? 'bg-gray-300' : ''}`}
+          title="Align left"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h10M4 14h16M4 18h10" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'center' }) ? 'bg-gray-300' : ''}`}
+          title="Align center"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 10h10M4 14h16M7 18h10" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'right' }) ? 'bg-gray-300' : ''}`}
+          title="Align right"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M10 10h10M4 14h16M10 18h10" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'justify' }) ? 'bg-gray-300' : ''}`}
+          title="Align justify"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+        </button>
+
+        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+        <button
+          type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`toolbar-button p-1.5 rounded ${editor.isActive('bulletList') ? 'bg-gray-300' : ''}`}
           title="Bullet list"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="4" cy="7" r="2"/>
+            <circle cx="4" cy="12" r="2"/>
+            <circle cx="4" cy="17" r="2"/>
+            <rect x="8" y="6" width="14" height="2"/>
+            <rect x="8" y="11" width="14" height="2"/>
+            <rect x="8" y="16" width="14" height="2"/>
           </svg>
         </button>
 
@@ -88,8 +144,13 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           className={`toolbar-button p-1.5 rounded ${editor.isActive('orderedList') ? 'bg-gray-300' : ''}`}
           title="Numbered list"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5h12M9 12h12M9 19h12M3 5l1 1-1 1m1 4l1 1-1 1m1 4l1 1-1 1" />
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <text x="2" y="8" fontSize="8" fontWeight="bold">1.</text>
+            <text x="2" y="14" fontSize="8" fontWeight="bold">2.</text>
+            <text x="2" y="20" fontSize="8" fontWeight="bold">3.</text>
+            <rect x="8" y="6" width="14" height="2"/>
+            <rect x="8" y="11" width="14" height="2"/>
+            <rect x="8" y="16" width="14" height="2"/>
           </svg>
         </button>
 
