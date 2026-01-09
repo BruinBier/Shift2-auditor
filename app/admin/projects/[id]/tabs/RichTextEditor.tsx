@@ -26,6 +26,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           target: '_blank',
           rel: 'noopener noreferrer',
           class: 'external-link',
+          title: 'opent in nieuw venster',
         },
       }),
       Image,

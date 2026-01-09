@@ -257,6 +257,11 @@ export default function ScopeManagement({ project }: { project: any }) {
         .prose a.external-link {
           color: #6b2d8f !important;
           text-decoration: underline !important;
+          transition: opacity 0.2s ease;
+        }
+        .prose a:hover,
+        .prose a.external-link:hover {
+          opacity: 0.7;
         }
         .prose a::after,
         .prose a.external-link::after {
