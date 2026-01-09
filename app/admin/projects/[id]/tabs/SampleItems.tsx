@@ -316,20 +316,20 @@ export default function SampleItems({ project }: { project: any }) {
               <table className="w-full">
                 <thead className="border-b border-gray-200">
                   <tr>
-                    <th className="pb-3 px-6 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th className="pb-3 px-6 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
-                    <th className="pb-3 w-24"></th>
+                    <th className="pb-3 pl-6 pr-4 text-left text-xs font-medium text-gray-500 uppercase w-32">Type</th>
+                    <th className="pb-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
+                    <th className="pb-3 pr-6 w-16"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {items.map((item: any) => (
                     <tr key={item.id}>
-                      <td className="py-4 px-6">
+                      <td className="py-4 pl-6 pr-4 align-top w-32">
                         <span className="text-sm text-gray-600">
                           {item.sampleType === 'structured' ? 'structured' : item.sampleType === 'random' ? 'random' : 'pdf'}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 align-top">
                         <div>
                           <div className="font-medium text-gray-900">{item.title}</div>
                           {item.url && (
@@ -337,7 +337,7 @@ export default function SampleItems({ project }: { project: any }) {
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 pr-6 align-top w-16">
                         <div className="flex items-center gap-2 relative justify-end">
                           <button
                             onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
