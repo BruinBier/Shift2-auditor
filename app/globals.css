@@ -103,6 +103,20 @@ a[class*="bg-"][class*="primary"] {
   color: inherit !important;
 }
 
+/* Override link color in ProseMirror editor - no purple! */
+.ProseMirror a,
+.ProseMirror a.external-link {
+  color: #1f1f1f !important;
+  text-decoration: underline !important;
+}
+
+/* No icon in editor */
+.ProseMirror a::after,
+.ProseMirror a.external-link::after {
+  content: none !important;
+  display: none !important;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
