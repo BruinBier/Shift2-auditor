@@ -137,6 +137,10 @@ export default function ScopeManagement({ project }: { project: any }) {
         button.scope-menu-button[class]:hover {
           background-color: #F3F4F6 !important;
         }
+        .scope-context-menu,
+        div.scope-context-menu[class] {
+          background-color: white !important;
+        }
       `}} />
       <div className="grid grid-cols-3 gap-6">
       {/* Left column - Scope lists */}
@@ -250,7 +254,7 @@ export default function ScopeManagement({ project }: { project: any }) {
 
                         {/* Context menu */}
                         {openMenuId === page.id && (
-                          <div className="absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1" style={{ backgroundColor: 'white' }}>
+                          <div className="scope-context-menu absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1">
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
@@ -396,7 +400,7 @@ export default function ScopeManagement({ project }: { project: any }) {
 
                         {/* Context menu */}
                         {openMenuId === page.id && (
-                          <div className="absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1" style={{ backgroundColor: 'white' }}>
+                          <div className="scope-context-menu absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1">
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
