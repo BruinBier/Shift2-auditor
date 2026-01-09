@@ -105,6 +105,10 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
+        // Switch to the new tab if type was changed
+        if (formData.sampleType !== activeType) {
+          setActiveType(formData.sampleType);
+        }
         closeModal();
         router.refresh();
       } else {
@@ -123,6 +127,11 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
+        // Switch to the new tab if type is different
+        if (formData.sampleType !== activeType) {
+          setActiveType(formData.sampleType);
+        }
+
         if (andNew) {
           // Reset form but keep modal open
           setFormData({
