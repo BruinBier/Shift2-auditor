@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ScopePage {
@@ -29,6 +29,31 @@ export default function ScopeManagement({ project }: { project: any }) {
   const scopePages: ScopePage[] = project.scopeUrls || [];
   const inScopePages = scopePages.filter(p => p.inScope);
   const outScopePages = scopePages.filter(p => !p.inScope);
+
+  // Close context menu on click outside or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openMenuId) {
+        setOpenMenuId(null);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && openMenuId) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [openMenuId]);
 
   const openModal = (type: 'in' | 'out', page?: ScopePage) => {
     setModalType(type);
