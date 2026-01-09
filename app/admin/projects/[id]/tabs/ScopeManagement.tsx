@@ -132,9 +132,13 @@ export default function ScopeManagement({ project }: { project: any }) {
               onMouseEnter={() => setHoverInButton(true)}
               onMouseLeave={() => setHoverInButton(false)}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{ border: '1px solid #79e792', color: '#1f0036', backgroundColor: hoverInButton ? '#79e792' : 'white' }}
+              style={{
+                border: '1px solid #79e792',
+                color: hoverInButton ? 'white' : '#1f0036',
+                backgroundColor: hoverInButton ? '#79e792' : 'white'
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: hoverInButton ? 'white' : '#1f0036' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.0" />
               </svg>
               URL toevoegen
@@ -294,9 +298,13 @@ export default function ScopeManagement({ project }: { project: any }) {
               onMouseEnter={() => setHoverOutButton(true)}
               onMouseLeave={() => setHoverOutButton(false)}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{ border: '1px solid #79e792', color: '#1f0036', backgroundColor: hoverOutButton ? '#79e792' : 'white' }}
+              style={{
+                border: '1px solid #79e792',
+                color: hoverOutButton ? 'white' : '#1f0036',
+                backgroundColor: hoverOutButton ? '#79e792' : 'white'
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: hoverOutButton ? 'white' : '#1f0036' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
               URL toevoegen
