@@ -238,12 +238,7 @@ export default function ScopeManagement({ project }: { project: any }) {
                       </div>
                     </td>
                     <td className="py-4">
-                      <div className="flex items-center gap-2 relative">
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </button>
+                      <div className="flex items-center gap-2 relative justify-end">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === page.id ? null : page.id)}
                           className="scope-menu-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
@@ -389,12 +384,7 @@ export default function ScopeManagement({ project }: { project: any }) {
                       </div>
                     </td>
                     <td className="py-4">
-                      <div className="flex items-center gap-2 relative">
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </button>
+                      <div className="flex items-center gap-2 relative justify-end">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === page.id ? null : page.id)}
                           className="scope-menu-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
