@@ -22,7 +22,7 @@ export default function SampleItems({ project }: { project: any }) {
   const [tempSampleInfo, setTempSampleInfo] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const items = project.sampleItems.filter((item: any) => item.sampleType === activeType);
+  const items = project.sampleItems; // Show all items, not filtered by type
 
   // Close context menu on click outside or Escape key
   useEffect(() => {
@@ -105,10 +105,6 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
-        // Switch to the new tab BEFORE closing modal and refreshing
-        if (formData.sampleType !== activeType) {
-          setActiveType(formData.sampleType);
-        }
         closeModal();
         router.refresh();
       } else {
@@ -127,11 +123,6 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
-        // Switch to the new tab BEFORE closing modal and refreshing
-        if (formData.sampleType !== activeType) {
-          setActiveType(formData.sampleType);
-        }
-
         if (andNew) {
           // Reset form but keep modal open
           setFormData({
@@ -295,48 +286,11 @@ export default function SampleItems({ project }: { project: any }) {
         <div className="col-span-2 space-y-8">
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Steekproef</h3>
-              </div>
-
-              {/* Type tabs */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveType('structured')}
-                  className={`sample-tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeType === 'structured'
-                      ? 'active text-white'
-                      : 'text-gray-700'
-                  }`}
-                  style={activeType === 'structured' ? { backgroundColor: '#6b2d8f' } : {}}
-                >
-                  Gestructureerd ({project.sampleItems.filter((i: any) => i.sampleType === 'structured').length})
-                </button>
-                <button
-                  onClick={() => setActiveType('random')}
-                  className={`sample-tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeType === 'random'
-                      ? 'active text-white'
-                      : 'text-gray-700'
-                  }`}
-                  style={activeType === 'random' ? { backgroundColor: '#6b2d8f' } : {}}
-                >
-                  Willekeurig ({project.sampleItems.filter((i: any) => i.sampleType === 'random').length})
-                </button>
-                <button
-                  onClick={() => setActiveType('pdf')}
-                  className={`sample-tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeType === 'pdf'
-                      ? 'active text-white'
-                      : 'text-gray-700'
-                  }`}
-                  style={activeType === 'pdf' ? { backgroundColor: '#6b2d8f' } : {}}
-                >
-                  PDF ({project.sampleItems.filter((i: any) => i.sampleType === 'pdf').length})
-                </button>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Steekproef ({project.sampleItems.length})</h3>
                 <button
                   onClick={() => openItemModal()}
-                  className="sample-add-button ml-auto flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                  className="sample-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
                   style={{
                     border: '1px solid #79e792',
                     color: '#1f0036'
@@ -352,12 +306,13 @@ export default function SampleItems({ project }: { project: any }) {
 
             {items.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500">Nog geen {activeType === 'structured' ? 'gestructureerde' : activeType === 'random' ? 'willekeurige' : 'PDF'} steekproefitems toegevoegd.</p>
+                <p className="text-gray-500">Nog geen steekproefitems toegevoegd.</p>
               </div>
             ) : (
               <table className="w-full">
                 <thead className="border-b border-gray-200">
                   <tr>
+                    <th className="pb-3 px-6 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th className="pb-3 px-6 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
                     <th className="pb-3 w-24"></th>
                   </tr>
@@ -365,6 +320,11 @@ export default function SampleItems({ project }: { project: any }) {
                 <tbody className="divide-y divide-gray-200">
                   {items.map((item: any) => (
                     <tr key={item.id}>
+                      <td className="py-4 px-6">
+                        <span className="text-sm text-gray-600">
+                          {item.sampleType === 'structured' ? 'structured' : item.sampleType === 'random' ? 'random' : 'pdf'}
+                        </span>
+                      </td>
                       <td className="py-4 px-6">
                         <div>
                           <div className="font-medium text-gray-900">{item.title}</div>
