@@ -15,25 +15,56 @@ export default function ScopeManagement({ project }: { project: any }) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'in' | 'out'>('in');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     url: '',
     description: '',
   });
   const [scopeInfo, setScopeInfo] = useState(project.scopeInfo || '');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Haal scope URLs op uit project data
   const scopePages: ScopePage[] = project.scopeUrls || [];
   const inScopePages = scopePages.filter(p => p.inScope);
   const outScopePages = scopePages.filter(p => !p.inScope);
 
-  const openModal = (type: 'in' | 'out') => {
+  const openModal = (type: 'in' | 'out', page?: ScopePage) => {
     setModalType(type);
+    if (page) {
+      setEditingId(page.id);
+      setFormData({ url: page.url, description: page.title || '' });
+    } else {
+      setEditingId(null);
+      setFormData({ url: '', description: '' });
+    }
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
+    setEditingId(null);
     setFormData({ url: '', description: '' });
+  };
+
+  const handleDelete = async (urlId: string) => {
+    if (!confirm('Weet je zeker dat je deze URL wilt verwijderen?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}/scope-urls/${urlId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        router.refresh();
+      } else {
+        alert('Er ging iets mis bij het verwijderen.');
+      }
+    } catch (error) {
+      console.error('Error deleting URL:', error);
+      alert('Er ging iets mis bij het verwijderen.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,11 +77,15 @@ export default function ScopeManagement({ project }: { project: any }) {
       inScope: modalType === 'in',
     };
 
-    console.log('Submitting scope URL:', payload);
+    console.log(editingId ? 'Updating' : 'Creating', 'scope URL:', payload);
 
     try {
-      const response = await fetch(`/api/projects/${project.id}/scope-urls`, {
-        method: 'POST',
+      const url = editingId
+        ? `/api/projects/${project.id}/scope-urls/${editingId}`
+        : `/api/projects/${project.id}/scope-urls`;
+
+      const response = await fetch(url, {
+        method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -59,16 +94,16 @@ export default function ScopeManagement({ project }: { project: any }) {
       console.log('Response:', { status: response.status, data });
 
       if (response.ok) {
-        console.log('URL successfully added, closing modal and refreshing');
+        console.log('URL successfully', editingId ? 'updated' : 'added');
         closeModal();
         router.refresh();
       } else {
-        console.error('Error adding URL:', data);
+        console.error('Error:', data);
         alert(`Er ging iets mis: ${data.details || data.error}`);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Er ging iets mis bij het toevoegen van de URL.');
+      alert('Er ging iets mis.');
     }
   };
 
@@ -178,17 +213,50 @@ export default function ScopeManagement({ project }: { project: any }) {
                     </td>
                     <td className="py-4 text-sm text-gray-600">{page.crawlerType}</td>
                     <td className="py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 relative">
                         <button className="p-1 text-gray-400 hover:text-gray-600">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                           </svg>
                         </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === page.id ? null : page.id)}
+                          className="p-1 text-gray-400 hover:text-gray-600"
+                        >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                           </svg>
                         </button>
+
+                        {/* Context menu */}
+                        {openMenuId === page.id && (
+                          <div className="absolute right-0 top-8 z-10 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                openModal('in', page);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Bewerken
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleDelete(page.id);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Verwijderen
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -280,17 +348,50 @@ export default function ScopeManagement({ project }: { project: any }) {
                     </td>
                     <td className="py-4 text-sm text-gray-600">{page.crawlerType}</td>
                     <td className="py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 relative">
                         <button className="p-1 text-gray-400 hover:text-gray-600">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                           </svg>
                         </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === page.id ? null : page.id)}
+                          className="p-1 text-gray-400 hover:text-gray-600"
+                        >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                           </svg>
                         </button>
+
+                        {/* Context menu */}
+                        {openMenuId === page.id && (
+                          <div className="absolute right-0 top-8 z-10 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                openModal('out', page);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Bewerken
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleDelete(page.id);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Verwijderen
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -344,7 +445,7 @@ export default function ScopeManagement({ project }: { project: any }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">URL toevoegen</h3>
+              <h3 className="text-lg font-semibold">{editingId ? 'URL bewerken' : 'URL toevoegen'}</h3>
               <button
                 onClick={closeModal}
                 className="text-gray-400 hover:text-gray-600"
