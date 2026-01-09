@@ -16,6 +16,7 @@ export default function SampleItems({ project }: { project: any }) {
     url: '',
     description: '',
     sampleType: 'structured' as 'structured' | 'random' | 'pdf',
+    makeScreenshot: false,
   });
   const [sampleInfo, setSampleInfo] = useState(project.sampleInfo || '');
   const [showSampleInfoModal, setShowSampleInfoModal] = useState(false);
@@ -73,7 +74,8 @@ export default function SampleItems({ project }: { project: any }) {
         title: item.title,
         url: item.url || '',
         description: item.description || '',
-        sampleType: item.sampleType || activeType
+        sampleType: item.sampleType || activeType,
+        makeScreenshot: false,
       });
     } else {
       setEditingId(null);
@@ -81,7 +83,8 @@ export default function SampleItems({ project }: { project: any }) {
         title: '',
         url: '',
         description: '',
-        sampleType: activeType
+        sampleType: activeType,
+        makeScreenshot: false,
       });
     }
     setShowModal(true);
@@ -90,7 +93,7 @@ export default function SampleItems({ project }: { project: any }) {
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ title: '', url: '', description: '', sampleType: activeType });
+    setFormData({ title: '', url: '', description: '', sampleType: activeType, makeScreenshot: false });
   };
 
   const handleSubmit = async (e: React.FormEvent, andNew: boolean = false) => {
@@ -129,7 +132,8 @@ export default function SampleItems({ project }: { project: any }) {
             title: '',
             url: '',
             description: '',
-            sampleType: formData.sampleType
+            sampleType: formData.sampleType,
+            makeScreenshot: false,
           });
         } else {
           closeModal();
@@ -445,7 +449,7 @@ export default function SampleItems({ project }: { project: any }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">Steekproef bewerken</h3>
+              <h3 className="text-lg font-semibold">Nieuwe pagina</h3>
               <button
                 onClick={closeModal}
                 className="sample-modal-close text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
@@ -498,6 +502,20 @@ export default function SampleItems({ project }: { project: any }) {
                         Titel ophalen
                       </button>
                     </div>
+                  </div>
+
+                  {/* Maak schermafbeelding */}
+                  <div className="flex items-center gap-3">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.makeScreenshot}
+                        onChange={(e) => setFormData({ ...formData, makeScreenshot: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">Maak schermafbeelding</span>
                   </div>
 
                   {/* Beschrijving */}
