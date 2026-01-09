@@ -236,6 +236,23 @@ export default function ScopeManagement({ project }: { project: any }) {
         button.toolbar-button[class]:hover {
           background-color: #E5E7EB !important;
         }
+        .prose ul,
+        .prose ol {
+          padding-left: 1.5rem;
+          margin: 1rem 0;
+        }
+        .prose ul {
+          list-style-type: disc;
+        }
+        .prose ol {
+          list-style-type: decimal;
+        }
+        .prose li {
+          margin: 0.25rem 0;
+        }
+        .prose li p {
+          margin: 0;
+        }
       `}} />
       <div className="grid grid-cols-3 gap-6">
       {/* Left column - Scope lists */}
@@ -546,8 +563,15 @@ export default function ScopeManagement({ project }: { project: any }) {
               </button>
             </div>
           </div>
-          <div className="w-full min-h-64 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
-            {scopeInfo || <span className="text-gray-400">Vul hier aanvullende scope informatie in...</span>}
+          <div className="w-full min-h-64 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700">
+            {scopeInfo ? (
+              <div
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: scopeInfo }}
+              />
+            ) : (
+              <span className="text-gray-400">Vul hier aanvullende scope informatie in...</span>
+            )}
           </div>
         </div>
       </div>
