@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 
 interface ScopePage {
   id: string;
@@ -637,74 +640,9 @@ export default function ScopeManagement({ project }: { project: any }) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Beschrijving
                 </label>
-                {/* Rich text editor toolbar */}
-                <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center gap-1 border-b-0">
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Bold">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
-                    </svg>
-                  </button>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Italic">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m2 2h6m-8 14h6" />
-                    </svg>
-                  </button>
-                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Bullet list">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  </button>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Numbered list">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5h12M9 12h12M9 19h12M3 5l1 1-1 1m1 4l1 1-1 1m1 4l1 1-1 1" />
-                    </svg>
-                  </button>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Quote">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </button>
-                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Code">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                  </button>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Image">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Undo">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                    </svg>
-                  </button>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Redo">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
-                    </svg>
-                  </button>
-                  <div className="flex-1"></div>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Fullscreen">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                  </button>
-                  <button type="button" className="toolbar-button p-1.5 rounded" title="Preview">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </button>
-                </div>
-                <textarea
-                  value={tempScopeInfo}
-                  onChange={(e) => setTempScopeInfo(e.target.value)}
-                  className="w-full h-96 px-3 py-2 border border-gray-300 rounded-b-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent text-sm font-mono resize-none"
-                  placeholder="Vul hier aanvullende scope informatie in..."
+                <RichTextEditor
+                  content={tempScopeInfo}
+                  onChange={setTempScopeInfo}
                 />
               </div>
 

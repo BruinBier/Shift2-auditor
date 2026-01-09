@@ -14,6 +14,12 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@tiptap/react": "^2.1.13",
+    "@tiptap/starter-kit": "^2.1.13",
+    "@tiptap/extension-text-align": "^2.1.13",
+    "@tiptap/extension-underline": "^2.1.13",
+    "@tiptap/extension-link": "^2.1.13",
+    "@tiptap/extension-image": "^2.1.13",
     "next": "14.2.18",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
