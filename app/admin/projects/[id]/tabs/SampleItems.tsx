@@ -22,16 +22,6 @@ export default function SampleItems({ project }: { project: any }) {
   const [tempSampleInfo, setTempSampleInfo] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  // Debug: log all sample items to see their sampleType values
-  useEffect(() => {
-    console.log('All sample items:', project.sampleItems.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      sampleType: item.sampleType,
-      sampleTypeType: typeof item.sampleType
-    })));
-  }, [project.sampleItems]);
-
   const items = project.sampleItems.filter((item: any) => item.sampleType === activeType);
 
   // Close context menu on click outside or Escape key
@@ -115,16 +105,12 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
-        const newType = formData.sampleType;
+        // Switch to the new tab BEFORE closing modal and refreshing
+        if (formData.sampleType !== activeType) {
+          setActiveType(formData.sampleType);
+        }
         closeModal();
         router.refresh();
-
-        // Switch to the new tab after a short delay to allow refresh to complete
-        if (newType !== activeType) {
-          setTimeout(() => {
-            setActiveType(newType);
-          }, 100);
-        }
       } else {
         alert('Fout bij bijwerken van item');
       }
@@ -141,7 +127,10 @@ export default function SampleItems({ project }: { project: any }) {
       });
 
       if (response.ok) {
-        const newType = formData.sampleType;
+        // Switch to the new tab BEFORE closing modal and refreshing
+        if (formData.sampleType !== activeType) {
+          setActiveType(formData.sampleType);
+        }
 
         if (andNew) {
           // Reset form but keep modal open
@@ -155,13 +144,6 @@ export default function SampleItems({ project }: { project: any }) {
           closeModal();
         }
         router.refresh();
-
-        // Switch to the new tab after a short delay to allow refresh to complete
-        if (newType !== activeType) {
-          setTimeout(() => {
-            setActiveType(newType);
-          }, 100);
-        }
       } else {
         alert('Fout bij toevoegen van item');
       }
