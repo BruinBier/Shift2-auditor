@@ -250,7 +250,7 @@ export default function ScopeManagement({ project }: { project: any }) {
 
                         {/* Context menu */}
                         {openMenuId === page.id && (
-                          <div className="absolute right-0 top-8 z-10 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                          <div className="absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1" style={{ backgroundColor: 'white' }}>
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
@@ -396,7 +396,7 @@ export default function ScopeManagement({ project }: { project: any }) {
 
                         {/* Context menu */}
                         {openMenuId === page.id && (
-                          <div className="absolute right-0 top-8 z-10 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                          <div className="absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1" style={{ backgroundColor: 'white' }}>
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
