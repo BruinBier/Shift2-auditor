@@ -81,6 +81,11 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           text-decoration: underline !important;
           color: #1f1f1f !important;
         }
+        .ProseMirror a::after,
+        .ProseMirror a.external-link::after {
+          content: none !important;
+          display: none !important;
+        }
       `}} />
       {/* Toolbar */}
       <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center gap-1 border-b-0">
