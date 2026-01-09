@@ -283,6 +283,10 @@ export default function SampleItems({ project }: { project: any }) {
           background-size: contain;
           vertical-align: middle;
         }
+        /* Table header alignment */
+        th.pb-3 {
+          padding-top: 12px;
+        }
       `}} />
 
       <div className="grid grid-cols-3 gap-6">
