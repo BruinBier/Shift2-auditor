@@ -35,6 +35,21 @@ export default function ScopeManagement({ project }: { project: any }) {
   const inScopePages = scopePages.filter(p => p.inScope);
   const outScopePages = scopePages.filter(p => !p.inScope);
 
+  // Add title attribute to all links in HTML
+  const addTitleToLinks = (html: string) => {
+    if (!html) return html;
+    return html.replace(
+      /<a\s+([^>]*?)>/gi,
+      (match, attrs) => {
+        // Only add title if it doesn't already exist
+        if (!/title=/i.test(attrs)) {
+          return `<a ${attrs} title="opent in nieuw venster">`;
+        }
+        return match;
+      }
+    );
+  };
+
   // Close context menu on click outside or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -589,7 +604,7 @@ export default function ScopeManagement({ project }: { project: any }) {
             {scopeInfo ? (
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: scopeInfo }}
+                dangerouslySetInnerHTML={{ __html: addTitleToLinks(scopeInfo) }}
               />
             ) : (
               <span className="text-gray-400">Vul hier aanvullende scope informatie in...</span>
