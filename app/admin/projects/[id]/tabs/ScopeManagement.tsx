@@ -121,16 +121,20 @@ export default function ScopeManagement({ project }: { project: any }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
-        .scope-add-button {
+        button.scope-add-button,
+        button.scope-add-button[class] {
           background-color: white !important;
         }
-        .scope-add-button:hover {
+        button.scope-add-button:hover,
+        button.scope-add-button[class]:hover {
           background-color: #F9FAFB !important;
         }
-        .scope-menu-button {
+        button.scope-menu-button,
+        button.scope-menu-button[class] {
           background-color: transparent !important;
         }
-        .scope-menu-button:hover {
+        button.scope-menu-button:hover,
+        button.scope-menu-button[class]:hover {
           background-color: #F3F4F6 !important;
         }
       `}} />
