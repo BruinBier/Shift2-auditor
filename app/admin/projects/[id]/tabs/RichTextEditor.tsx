@@ -76,10 +76,6 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .ProseMirror li p {
           margin: 0;
         }
-        .ProseMirror a {
-          color: #6b2d8f;
-          text-decoration: underline;
-        }
       `}} />
       {/* Toolbar */}
       <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center gap-1 border-b-0">
