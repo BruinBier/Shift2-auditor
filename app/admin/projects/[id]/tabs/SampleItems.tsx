@@ -22,6 +22,16 @@ export default function SampleItems({ project }: { project: any }) {
   const [tempSampleInfo, setTempSampleInfo] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
+  // Debug: log all sample items to see their sampleType values
+  useEffect(() => {
+    console.log('All sample items:', project.sampleItems.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      sampleType: item.sampleType,
+      sampleTypeType: typeof item.sampleType
+    })));
+  }, [project.sampleItems]);
+
   const items = project.sampleItems.filter((item: any) => item.sampleType === activeType);
 
   // Close context menu on click outside or Escape key
