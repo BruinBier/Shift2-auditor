@@ -186,6 +186,14 @@ export default function ScopeManagement({ project }: { project: any }) {
         button.scope-menu-item-delete[class]:hover {
           background-color: #F3F4F6 !important;
         }
+        button.scope-modal-close,
+        button.scope-modal-close[class] {
+          background-color: transparent !important;
+        }
+        button.scope-modal-close:hover,
+        button.scope-modal-close[class]:hover {
+          background-color: #F3F4F6 !important;
+        }
       `}} />
       <div className="grid grid-cols-3 gap-6">
       {/* Left column - Scope lists */}
@@ -516,7 +524,7 @@ export default function ScopeManagement({ project }: { project: any }) {
               <h3 className="text-lg font-semibold">{editingId ? 'URL bewerken' : 'URL toevoegen'}</h3>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="scope-modal-close text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
