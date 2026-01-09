@@ -23,7 +23,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       }),
       Image,
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: ['heading', 'paragraph', 'listItem'],
         alignments: ['left', 'center', 'right', 'justify'],
       }),
     ],
@@ -50,6 +50,25 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
 
   return (
     <div>
+      <style dangerouslySetInnerHTML={{__html: `
+        .ProseMirror ul,
+        .ProseMirror ol {
+          padding-left: 1.5rem;
+          margin: 1rem 0;
+        }
+        .ProseMirror ul {
+          list-style-type: disc;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
+        }
+        .ProseMirror li {
+          margin: 0.25rem 0;
+        }
+        .ProseMirror li p {
+          margin: 0;
+        }
+      `}} />
       {/* Toolbar */}
       <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center gap-1 border-b-0">
         <button
