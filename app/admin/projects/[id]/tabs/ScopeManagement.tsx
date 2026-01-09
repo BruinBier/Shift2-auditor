@@ -215,7 +215,6 @@ export default function ScopeManagement({ project }: { project: any }) {
               <thead className="border-b border-gray-200">
                 <tr>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
-                  <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Crawler</th>
                   <th className="pb-3 w-24"></th>
                 </tr>
               </thead>
@@ -228,7 +227,6 @@ export default function ScopeManagement({ project }: { project: any }) {
                         <div className="text-sm text-gray-500">{page.title}</div>
                       </div>
                     </td>
-                    <td className="py-4 text-sm text-gray-600">{page.crawlerType}</td>
                     <td className="py-4">
                       <div className="flex items-center gap-2 relative">
                         <button className="p-1 text-gray-400 hover:text-gray-600">
@@ -368,7 +366,6 @@ export default function ScopeManagement({ project }: { project: any }) {
               <thead className="border-b border-gray-200">
                 <tr>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
-                  <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Crawler</th>
                   <th className="pb-3 w-24"></th>
                 </tr>
               </thead>
@@ -381,7 +378,6 @@ export default function ScopeManagement({ project }: { project: any }) {
                         <div className="text-sm text-gray-500">{page.title}</div>
                       </div>
                     </td>
-                    <td className="py-4 text-sm text-gray-600">{page.crawlerType}</td>
                     <td className="py-4">
                       <div className="flex items-center gap-2 relative">
                         <button className="p-1 text-gray-400 hover:text-gray-600">
