@@ -253,10 +253,12 @@ export default function ScopeManagement({ project }: { project: any }) {
         .prose li p {
           margin: 0;
         }
+        .prose a,
         .prose a.external-link {
-          color: #6b2d8f;
-          text-decoration: underline;
+          color: #6b2d8f !important;
+          text-decoration: underline !important;
         }
+        .prose a::after,
         .prose a.external-link::after {
           content: '';
           display: inline-block;
