@@ -76,9 +76,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .ProseMirror li p {
           margin: 0;
         }
-        .ProseMirror a {
-          text-decoration: underline;
-          color: inherit !important;
+        .ProseMirror a,
+        .ProseMirror a.external-link {
+          text-decoration: underline !important;
+          color: #1f1f1f !important;
         }
       `}} />
       {/* Toolbar */}
