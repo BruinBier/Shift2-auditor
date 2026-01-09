@@ -194,6 +194,14 @@ export default function ScopeManagement({ project }: { project: any }) {
         button.scope-modal-close[class]:hover {
           background-color: #F3F4F6 !important;
         }
+        button.scope-info-button,
+        button.scope-info-button[class] {
+          background-color: transparent !important;
+        }
+        button.scope-info-button:hover,
+        button.scope-info-button[class]:hover {
+          background-color: #F3F4F6 !important;
+        }
       `}} />
       <div className="grid grid-cols-3 gap-6">
       {/* Left column - Scope lists */}
@@ -494,12 +502,12 @@ export default function ScopeManagement({ project }: { project: any }) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Overige scope informatie</h3>
             <div className="flex gap-2">
-              <button className="p-1 text-gray-400 hover:text-gray-600">
+              <button className="scope-info-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               </button>
-              <button className="p-1 text-gray-400 hover:text-gray-600">
+              <button className="scope-info-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
