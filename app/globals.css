@@ -68,8 +68,12 @@ a.bg-shift2-primary {
 }
 
 .hover\:bg-shift2-secondary:hover,
-button:hover,
-a:hover {
+button:hover {
+  background-color: #6b2d8f !important;
+}
+
+/* Only apply background to links with bg- classes, not text links */
+a[class*="bg-"]:hover {
   background-color: #6b2d8f !important;
 }
 
