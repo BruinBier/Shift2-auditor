@@ -21,6 +21,8 @@ export default function ScopeManagement({ project }: { project: any }) {
     description: '',
   });
   const [scopeInfo, setScopeInfo] = useState(project.scopeInfo || '');
+  const [showScopeInfoModal, setShowScopeInfoModal] = useState(false);
+  const [tempScopeInfo, setTempScopeInfo] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [hoverInButton, setHoverInButton] = useState(false);
   const [hoverOutButton, setHoverOutButton] = useState(false);
@@ -145,6 +147,27 @@ export default function ScopeManagement({ project }: { project: any }) {
       body: JSON.stringify({ scopeInfo }),
     });
     router.refresh();
+  };
+
+  const openScopeInfoModal = () => {
+    setTempScopeInfo(scopeInfo);
+    setShowScopeInfoModal(true);
+  };
+
+  const closeScopeInfoModal = () => {
+    setShowScopeInfoModal(false);
+    setTempScopeInfo('');
+  };
+
+  const saveScopeInfoModal = async () => {
+    setScopeInfo(tempScopeInfo);
+    await fetch(`/api/projects/${project.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scopeInfo: tempScopeInfo }),
+    });
+    router.refresh();
+    closeScopeInfoModal();
   };
 
   return (
@@ -502,25 +525,19 @@ export default function ScopeManagement({ project }: { project: any }) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Overige scope informatie</h3>
             <div className="flex gap-2">
-              <button className="scope-info-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-              <button className="scope-info-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
+              <button
+                onClick={openScopeInfoModal}
+                className="scope-info-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </button>
             </div>
           </div>
-          <textarea
-            value={scopeInfo}
-            onChange={(e) => setScopeInfo(e.target.value)}
-            onBlur={handleScopeInfoSave}
-            className="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent text-sm"
-            placeholder="Vul hier aanvullende scope informatie in..."
-          />
+          <div className="w-full min-h-64 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
+            {scopeInfo || <span className="text-gray-400">Vul hier aanvullende scope informatie in...</span>}
+          </div>
         </div>
       </div>
 
@@ -587,6 +604,113 @@ export default function ScopeManagement({ project }: { project: any }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Scope Info Modal */}
+      {showScopeInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">Overige scope informatie</h3>
+              <button
+                onClick={closeScopeInfoModal}
+                className="scope-modal-close text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-auto">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Beschrijving
+                </label>
+                {/* Rich text editor toolbar */}
+                <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center gap-1 border-b-0">
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Bold">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+                    </svg>
+                  </button>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Italic">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m2 2h6m-8 14h6" />
+                    </svg>
+                  </button>
+                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Bullet list">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Numbered list">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5h12M9 12h12M9 19h12M3 5l1 1-1 1m1 4l1 1-1 1m1 4l1 1-1 1" />
+                    </svg>
+                  </button>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Quote">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </button>
+                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Code">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </button>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Image">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Undo">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                  </button>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Redo">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
+                    </svg>
+                  </button>
+                  <div className="flex-1"></div>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Fullscreen">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </button>
+                  <button type="button" className="p-1.5 hover:bg-gray-200 rounded" title="Preview">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </div>
+                <textarea
+                  value={tempScopeInfo}
+                  onChange={(e) => setTempScopeInfo(e.target.value)}
+                  className="w-full h-96 px-3 py-2 border border-gray-300 rounded-b-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent text-sm font-mono resize-none"
+                  placeholder="Vul hier aanvullende scope informatie in..."
+                />
+              </div>
+
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={saveScopeInfoModal}
+                  className="w-full px-4 py-2 text-white rounded-lg font-medium transition-colors"
+                  style={{ backgroundColor: '#6b2d8f' }}
+                >
+                  Opslaan
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
