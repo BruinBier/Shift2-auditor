@@ -460,7 +460,7 @@ export default function SampleItems({ project }: { project: any }) {
               </button>
             </div>
 
-            <form onSubmit={(e) => handleSubmit(e, false)}>
+            <form onSubmit={(e) => handleSubmit(e, false)} className="flex-1 flex flex-col overflow-hidden">
               <div className="p-6 flex-1 overflow-auto">
                 <div className="space-y-4">
                   {/* Locatie */}
@@ -546,33 +546,33 @@ export default function SampleItems({ project }: { project: any }) {
                     </select>
                   </div>
                 </div>
+              </div>
 
-                {/* Buttons */}
-                <div className="mt-6 flex gap-3">
+              {/* Buttons - Fixed footer */}
+              <div className="p-6 border-t border-gray-200 bg-white flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors"
+                  style={{ backgroundColor: '#6b2d8f' }}
+                >
+                  Opslaan
+                </button>
+                {!editingId && (
                   <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors"
-                    style={{ backgroundColor: '#6b2d8f' }}
+                    type="button"
+                    onClick={(e) => handleSubmit(e as any, true)}
+                    className="sample-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                    style={{
+                      border: '1px solid #79e792',
+                      color: '#1f0036'
+                    }}
                   >
-                    Opslaan
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Opslaan en nieuw
                   </button>
-                  {!editingId && (
-                    <button
-                      type="button"
-                      onClick={(e) => handleSubmit(e as any, true)}
-                      className="sample-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                      style={{
-                        border: '1px solid #79e792',
-                        color: '#1f0036'
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Opslaan en nieuw
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
             </form>
           </div>
