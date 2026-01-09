@@ -79,6 +79,7 @@ model SampleItem {
   sampleType  SampleType   @map("sample_type")
   title       String
   url         String?
+  description String?      @db.Text
   orderIndex  Int?         @map("order_index")
 
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
