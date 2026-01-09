@@ -75,20 +75,9 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .ProseMirror li p {
           margin: 0;
         }
-        .ProseMirror a.external-link {
+        .ProseMirror a {
           color: #6b2d8f;
           text-decoration: underline;
-        }
-        .ProseMirror a.external-link::after {
-          content: '';
-          display: inline-block;
-          width: 12px;
-          height: 12px;
-          margin-left: 4px;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b2d8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'%3E%3C/path%3E%3Cpolyline points='15 3 21 3 21 9'%3E%3C/polyline%3E%3Cline x1='10' y1='14' x2='21' y2='3'%3E%3C/line%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-size: contain;
-          vertical-align: middle;
         }
       `}} />
       {/* Toolbar */}
