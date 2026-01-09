@@ -12,6 +12,8 @@ export async function PATCH(
       data: {
         ...(body.title && { title: body.title }),
         ...(body.url !== undefined && { url: body.url }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.sampleType && { sampleType: body.sampleType }),
         ...(body.orderIndex !== undefined && { orderIndex: body.orderIndex }),
       },
     });

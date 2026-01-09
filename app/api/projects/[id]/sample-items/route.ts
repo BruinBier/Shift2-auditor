@@ -42,6 +42,7 @@ export async function POST(
         sampleType: body.sampleType,
         title: body.title,
         url: body.url,
+        description: body.description || '',
         orderIndex: body.orderIndex,
       },
     });
