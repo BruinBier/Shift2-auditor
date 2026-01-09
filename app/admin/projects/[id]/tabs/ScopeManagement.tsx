@@ -22,6 +22,8 @@ export default function ScopeManagement({ project }: { project: any }) {
   });
   const [scopeInfo, setScopeInfo] = useState(project.scopeInfo || '');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [hoverInButton, setHoverInButton] = useState(false);
+  const [hoverOutButton, setHoverOutButton] = useState(false);
 
   // Haal scope URLs op uit project data
   const scopePages: ScopePage[] = project.scopeUrls || [];
@@ -127,8 +129,10 @@ export default function ScopeManagement({ project }: { project: any }) {
             <h3 className="text-lg font-semibold">Binnen scope</h3>
             <button
               onClick={() => openModal('in')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors hover:!bg-[#79e792]"
-              style={{ border: '1px solid #79e792', color: '#1f0036', backgroundColor: 'white' }}
+              onMouseEnter={() => setHoverInButton(true)}
+              onMouseLeave={() => setHoverInButton(false)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ border: '1px solid #79e792', color: '#1f0036', backgroundColor: hoverInButton ? '#79e792' : 'white' }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.0" />
@@ -287,8 +291,10 @@ export default function ScopeManagement({ project }: { project: any }) {
             <h3 className="text-lg font-semibold">Buiten scope</h3>
             <button
               onClick={() => openModal('out')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors hover:!bg-[#79e792]"
-              style={{ border: '1px solid #79e792', color: '#1f0036', backgroundColor: 'white' }}
+              onMouseEnter={() => setHoverOutButton(true)}
+              onMouseLeave={() => setHoverOutButton(false)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ border: '1px solid #79e792', color: '#1f0036', backgroundColor: hoverOutButton ? '#79e792' : 'white' }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
