@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ScopePage {
@@ -33,7 +33,11 @@ export default function ScopeManagement({ project }: { project: any }) {
   // Close context menu on click outside or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (openMenuId) {
+      const target = event.target as HTMLElement;
+      // Check if click is outside the context menu and the menu button
+      if (openMenuId &&
+          !target.closest('.scope-context-menu') &&
+          !target.closest('.scope-menu-button')) {
         setOpenMenuId(null);
       }
     };
