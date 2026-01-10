@@ -98,12 +98,6 @@ export default function NewProjectPage() {
       {/* Navigation section */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-8 py-6">
-          <Link
-            href="/admin"
-            className="text-sm text-shift2-primary hover:underline mb-3 inline-block"
-          >
-            ← Terug naar dashboard
-          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Rapport digitale toegankelijkheid</h1>
 
           {/* Navigation menu */}
