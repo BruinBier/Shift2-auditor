@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 interface Project {
   id: string;
@@ -27,11 +28,62 @@ interface Props {
 }
 
 export default function OnderzoekenTable({ projects }: Props) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('dateStart');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const itemsPerPage = 20;
+
+  // Close context menu on click outside or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (openMenuId &&
+          !target.closest('.project-context-menu') &&
+          !target.closest('.project-menu-button')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && openMenuId) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [openMenuId]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Weet je zeker dat je dit onderzoek wilt verwijderen?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        router.refresh();
+      } else {
+        alert('Er is een fout opgetreden bij het verwijderen van het onderzoek.');
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert('Er is een fout opgetreden bij het verwijderen van het onderzoek.');
+    }
+  };
 
   // Generate kenmerk (identifier) from index
   const getKenmerk = (index: number) => `SHP-${index + 1}`;
@@ -248,11 +300,43 @@ export default function OnderzoekenTable({ projects }: Props) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </Link>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                        </svg>
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === project.id ? null : project.id)}
+                          className="project-menu-button text-gray-400 hover:text-gray-600"
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                          </svg>
+                        </button>
+
+                        {openMenuId === project.id && (
+                          <div className="project-context-menu absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1 bg-white">
+                            <Link
+                              href={`/admin/projects/${project.id}`}
+                              onClick={() => setOpenMenuId(null)}
+                              className="project-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 hover:bg-gray-50"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Bewerken
+                            </Link>
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleDelete(project.id);
+                              }}
+                              className="project-menu-item-delete w-full px-4 py-2 text-left text-sm text-red-600 flex items-center gap-3 hover:bg-gray-50"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Verwijderen
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
