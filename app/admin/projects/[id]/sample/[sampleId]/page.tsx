@@ -76,7 +76,7 @@ export default async function SampleItemPage({
                 Dashboard
               </Link>
               <Link
-                href="/admin/onderzoeken"
+                href="/onderzoeken"
                 className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
