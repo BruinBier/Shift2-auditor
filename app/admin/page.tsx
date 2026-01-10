@@ -18,8 +18,19 @@ export default async function AdminPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        .new-project-button,
+        .new-project-button[class] {
+          background-color: white !important;
+        }
+        .new-project-button:hover,
+        .new-project-button[class]:hover {
+          background-color: #F9FAFB !important;
+        }
+      `}} />
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -27,7 +38,7 @@ export default async function AdminPage() {
           </div>
           <Link
             href="/admin/projects/new"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-white hover:bg-gray-50"
+            className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-white hover:bg-gray-50"
             style={{
               border: '1px solid #79e792',
               color: '#1f0036'
@@ -46,7 +57,7 @@ export default async function AdminPage() {
             <p className="text-gray-600 mb-4">Begin met het aanmaken van je eerste onderzoek.</p>
             <Link
               href="/admin/projects/new"
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-white hover:bg-gray-50"
+              className="new-project-button inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-white hover:bg-gray-50"
               style={{
                 border: '1px solid #79e792',
                 color: '#1f0036'
@@ -140,5 +151,6 @@ export default async function AdminPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
