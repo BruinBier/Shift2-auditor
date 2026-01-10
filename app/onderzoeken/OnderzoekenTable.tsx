@@ -590,36 +590,22 @@ export default function OnderzoekenTable({ projects }: Props) {
                   />
                 </div>
 
-                {/* Project and Versie */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Project <span className="text-gray-400">vereist</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.auditedByOrg}
-                      onChange={(e) => setFormData({ ...formData, auditedByOrg: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    >
-                      <option value="Shift2">Shift2</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Versie
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.version}
-                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    />
-                  </div>
+                {/* Project */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project <span className="text-gray-400">vereist</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.auditedByOrg}
+                    onChange={(e) => setFormData({ ...formData, auditedByOrg: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  >
+                    <option value="Shift2">Shift2</option>
+                  </select>
                 </div>
 
-                {/* Taal and Onderzoekstype */}
+                {/* Taal */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -637,21 +623,28 @@ export default function OnderzoekenTable({ projects }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Onderzoekstype <span className="text-gray-400">vereist</span>
+                      Versie
                     </label>
-                    <select
-                      required
-                      value={formData.researchType}
-                      onChange={(e) => setFormData({ ...formData, researchType: e.target.value })}
+                    <input
+                      type="number"
+                      value={formData.version}
+                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    >
-                      <option value="">Selecteer...</option>
-                      <option value="WCAG 2.2 AA – aanvullend deelonderzoek content">WCAG 2.2 AA – aanvullend deelonderzoek content</option>
-                      <option value="WCAG 2.2 AA – volledig onderzoek">WCAG 2.2 AA – volledig onderzoek</option>
-                      <option value="WCAG 2.1 AA – volledig onderzoek">WCAG 2.1 AA – volledig onderzoek</option>
-                      <option value="WCAG 2.0 AA – volledig onderzoek">WCAG 2.0 AA – volledig onderzoek</option>
-                    </select>
+                    />
                   </div>
+                </div>
+
+                {/* Onderzoekstype (readonly) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Onderzoekstype <span className="text-gray-400">vereist</span>
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={editingProject ? `${editingProject.standard} ${editingProject.level} – ${editingProject.researchType}` : ''}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                  />
                 </div>
 
                 {/* Status */}
