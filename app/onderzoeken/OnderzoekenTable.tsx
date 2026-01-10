@@ -269,7 +269,7 @@ export default function OnderzoekenTable({ projects }: Props) {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {paginatedProjects.map((project, index) => (
-                <tr key={project.id} className="hover:bg-gray-50">
+                <tr key={project.id}>
                   <td className="px-6 py-4 text-sm text-gray-900">{getKenmerk(startIndex + index)}</td>
                   <td className="px-6 py-4">
                     <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
