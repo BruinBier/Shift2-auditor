@@ -149,9 +149,9 @@ a[class*="bg-"]:hover:not([class*="menu"]) {
   background-color: #1f0036 !important;
 }
 
-/* Nuclear option - force ALL buttons and links to purple */
-button[class*="bg-"],
-a[class*="bg-"][class*="primary"] {
+/* Nuclear option - force ALL buttons and links to purple, except menu items */
+button[class*="bg-"]:not([class*="menu"]),
+a[class*="bg-"][class*="primary"]:not([class*="menu"]) {
   background-color: #1f0036 !important;
 }
 
