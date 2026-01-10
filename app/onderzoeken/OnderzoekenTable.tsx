@@ -117,6 +117,40 @@ export default function OnderzoekenTable({ projects }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <style jsx>{`
+        button.project-menu-button,
+        button.project-menu-button[class] {
+          background-color: transparent !important;
+        }
+        button.project-menu-button:hover,
+        button.project-menu-button[class]:hover {
+          background-color: #F3F4F6 !important;
+        }
+        .project-context-menu,
+        div.project-context-menu[class] {
+          background-color: white !important;
+        }
+        button.project-menu-item,
+        button.project-menu-item[class],
+        a.project-menu-item,
+        a.project-menu-item[class] {
+          background-color: transparent !important;
+        }
+        button.project-menu-item:hover,
+        button.project-menu-item[class]:hover,
+        a.project-menu-item:hover,
+        a.project-menu-item[class]:hover {
+          background-color: #F3F4F6 !important;
+        }
+        button.project-menu-item-delete,
+        button.project-menu-item-delete[class] {
+          background-color: transparent !important;
+        }
+        button.project-menu-item-delete:hover,
+        button.project-menu-item-delete[class]:hover {
+          background-color: #F3F4F6 !important;
+        }
+      `}</style>
       {/* Navigation Header */}
       <header className="border-b border-gray-200" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-[1400px] mx-auto px-8 py-4">
