@@ -80,13 +80,9 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
         <div className="max-w-[1400px] mx-auto w-full flex flex-col flex-grow">
           {/* Title section */}
           <div className="bg-white border-b border-gray-200">
-            <div className="px-8 py-8">
-              <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Rapport digitale toegankelijkheid</h1>
-              </div>
-
+            <div className="px-8 py-6">
               {/* Tabs */}
-              <nav className="flex gap-8 border-b border-gray-200 items-center">
+              <nav className="flex gap-8 border-b border-gray-200 items-center mb-4">
                 <button
                   onClick={() => setActiveTab('details')}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
@@ -145,7 +141,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
                       : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
-                  5. Voltooien
+                  5. Valideren
                 </button>
                   <Link
                       href={`/report/${project.id}`}
@@ -157,11 +153,17 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
                   </Link>
 
               </nav>
-            </div>
 
-            {/* Project info below tabs */}
-            <div className="px-8 py-3 bg-gray-50">
-              <p className="text-sm text-gray-600">{project.subject} - {project.standard} {project.level}</p>
+              {/* Project title with badges */}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded">
+                  SHP-3
+                </span>
+                <h1 className="text-xl font-semibold text-gray-900">{project.title}</h1>
+                <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
+                  {project.status}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -179,8 +181,8 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
             )}
             {activeTab === 'finalize' && (
               <div className="bg-white rounded-lg border border-gray-200 p-8">
-                <h2 className="text-xl font-bold mb-4">Onderzoek Voltooien</h2>
-                <p className="text-gray-600">Voltooien sectie - Nog te implementeren</p>
+                <h2 className="text-xl font-bold mb-4">Onderzoek Valideren</h2>
+                <p className="text-gray-600">Valideren sectie - Nog te implementeren</p>
               </div>
             )}
           </div>
