@@ -67,35 +67,13 @@ a.bg-shift2-primary {
   background-color: #1f0036 !important;
 }
 
-.hover\:bg-shift2-secondary:hover,
-button:hover {
+.hover\:bg-shift2-secondary:hover {
   background-color: #6b2d8f !important;
 }
 
-/* Exceptions: buttons that should NOT have purple hover */
-button.tooltip-button,
-button.tooltip-button:hover,
-button[type="button"]:hover,
-button.project-menu-button,
-button.project-menu-button:hover,
-.project-menu-item,
-button.project-menu-item,
-button.project-menu-item:hover,
-a.project-menu-item,
-a.project-menu-item:hover,
-.project-menu-item-delete,
-button.project-menu-item-delete,
-button.project-menu-item-delete:hover {
-  background-color: transparent !important;
-}
-
-/* Context menu items hover - gray background */
-.project-menu-item:hover,
-button.project-menu-item:hover,
-a.project-menu-item:hover,
-.project-menu-item-delete:hover,
-button.project-menu-item-delete:hover {
-  background-color: #F3F4F6 !important;
+/* Only apply purple hover to buttons with background classes */
+button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]) {
+  background-color: #6b2d8f !important;
 }
 
 button[type="submit"]:hover {
@@ -104,7 +82,7 @@ button[type="submit"]:hover {
 }
 
 /* Only apply background to links with bg- classes, not text links */
-a[class*="bg-"]:hover:not(.project-menu-item) {
+a[class*="bg-"]:hover:not([class*="menu"]) {
   background-color: #6b2d8f !important;
 }
 
