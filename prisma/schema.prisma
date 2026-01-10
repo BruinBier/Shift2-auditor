@@ -18,13 +18,21 @@ model Project {
   level                   String    @default("AA")
   researchType            String    @map("research_type")
   version                 Int       @default(1)
+  language                String    @default("Nederlands")
+  status                  String    @default("In uitvoering")
   clientName              String?   @map("client_name")
   commissionedBy          String?   @map("commissioned_by")
   auditedByOrg            String    @default("Shift2") @map("audited_by_org")
   researcherName          String?   @map("researcher_name")
+  controllerName          String?   @map("controller_name")
+  plannedTime             String?   @map("planned_time")
   dateStart               DateTime? @map("date_start")
   dateEnd                 DateTime? @map("date_end")
+  researchStartedOn       DateTime? @map("research_started_on")
   reportDate              DateTime  @default(now()) @map("report_date")
+  description             String?   @db.Text
+  isAnonymous             Boolean   @default(false) @map("is_anonymous")
+  isPrivate               Boolean   @default(false) @map("is_private")
 
   // Rich text fields
   summaryText             String?   @map("summary_text") @db.Text
