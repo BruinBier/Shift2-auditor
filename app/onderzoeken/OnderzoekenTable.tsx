@@ -250,9 +250,8 @@ export default function OnderzoekenTable({ projects }: Props) {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-          <div className="overflow-visible">
-            <table className="w-full">
+        <div className="bg-white rounded-lg border border-gray-200">
+          <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kenmerk</th>
@@ -344,7 +343,6 @@ export default function OnderzoekenTable({ projects }: Props) {
               ))}
             </tbody>
           </table>
-          </div>
         </div>
 
         {/* Pagination */}
