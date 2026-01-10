@@ -65,11 +65,26 @@ export default async function OnderzoekekenPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Onderzoeken</h1>
-          <p className="text-xl text-gray-600">
-            Bekijk alle WCAG toegankelijkheidsonderzoeken
-          </p>
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Onderzoeken</h1>
+            <p className="text-xl text-gray-600">
+              Bekijk alle WCAG toegankelijkheidsonderzoeken
+            </p>
+          </div>
+          <Link
+            href="/admin/projects/new"
+            className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-white hover:bg-gray-50"
+            style={{
+              border: '1px solid #79e792',
+              color: '#1f0036'
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nieuw onderzoek
+          </Link>
         </div>
 
         {projects.length === 0 ? (
