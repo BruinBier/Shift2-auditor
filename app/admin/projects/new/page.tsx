@@ -86,9 +86,10 @@ export default function NewProjectPage() {
         <div className="max-w-7xl mx-auto px-8 py-4">
           <Link href="/admin">
             <img
-              src="/shift2-logo-white.svg"
+              src="/shift2-logo.svg"
               alt="Shift2"
               className="h-8"
+              style={{ filter: 'brightness(0) invert(1)' }}
             />
           </Link>
         </div>
