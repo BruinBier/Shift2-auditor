@@ -122,6 +122,11 @@ export default async function SampleItemPage({
                 </div>
               </nav>
             </div>
+
+            {/* Project info below tabs */}
+            <div className="px-8 py-3 bg-gray-50">
+              <p className="text-sm text-gray-600">{project.subject} - {project.standard} {project.level}</p>
+            </div>
           </div>
 
           {/* Page Content */}

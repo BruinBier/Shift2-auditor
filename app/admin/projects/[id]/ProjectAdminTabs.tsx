@@ -43,8 +43,7 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
                 <Link href="/admin" className="text-sm text-shift2-primary hover:underline mb-2 inline-block">
                   ← Terug naar dashboard
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
-                <p className="text-gray-600">{project.subject} - {project.standard} {project.level}</p>
+                <h1 className="text-3xl font-bold text-gray-900">Rapport digitale toegankelijkheid</h1>
               </div>
 
               {/* Tabs */}
@@ -119,6 +118,11 @@ export default function ProjectAdminTabs({ project, allCriteria }: ProjectAdminT
                   </Link>
 
               </nav>
+            </div>
+
+            {/* Project info below tabs */}
+            <div className="px-8 py-3 bg-gray-50">
+              <p className="text-sm text-gray-600">{project.subject} - {project.standard} {project.level}</p>
             </div>
           </div>
 
