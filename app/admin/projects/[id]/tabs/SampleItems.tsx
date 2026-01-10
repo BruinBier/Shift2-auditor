@@ -226,11 +226,15 @@ export default function SampleItems({ project }: { project: any }) {
           background-color: #F9FAFB !important;
         }
         button.sample-menu-button,
-        button.sample-menu-button[class] {
+        button.sample-menu-button[class],
+        a.sample-link-button,
+        a.sample-link-button[class] {
           background-color: transparent !important;
         }
         button.sample-menu-button:hover,
-        button.sample-menu-button[class]:hover {
+        button.sample-menu-button[class]:hover,
+        a.sample-link-button:hover,
+        a.sample-link-button[class]:hover {
           background-color: #F3F4F6 !important;
         }
         .sample-context-menu,
@@ -376,6 +380,22 @@ export default function SampleItems({ project }: { project: any }) {
                       </td>
                       <td className="py-4 pr-6 align-top w-16">
                         <div className="flex items-center gap-2 relative justify-end">
+                          {/* Link naar URL */}
+                          {item.url && (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="sample-link-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                              title="Open pagina in nieuw venster"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                              </svg>
+                            </a>
+                          )}
+
+                          {/* 3-puntjes menu */}
                           <button
                             onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
                             className="sample-menu-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
