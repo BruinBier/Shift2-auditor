@@ -166,10 +166,11 @@ export default function NewProjectPage() {
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                 >
+                  <option value="Gepland">Gepland</option>
                   <option value="In uitvoering">In uitvoering</option>
-                  <option value="Afgerond">Afgerond</option>
-                  <option value="Gepubliceerd">Gepubliceerd</option>
-                  <option value="Gearchiveerd">Gearchiveerd</option>
+                  <option value="Controle">Controle</option>
+                  <option value="In de wacht">In de wacht</option>
+                  <option value="Gereed">Gereed</option>
                 </select>
               </div>
 
