@@ -75,13 +75,32 @@ button:hover {
 /* Exceptions: buttons that should NOT have purple hover */
 button.tooltip-button,
 button.tooltip-button:hover,
-button[type="button"]:hover {
+button[type="button"]:hover,
+button.project-menu-button,
+button.project-menu-button:hover {
   background-color: transparent !important;
 }
 
 button[type="submit"]:hover {
   opacity: 0.9 !important;
   background-color: inherit !important;
+}
+
+/* Context menu styling */
+.project-context-menu,
+div.project-context-menu {
+  background-color: white !important;
+}
+
+.project-menu-item:hover,
+button.project-menu-item:hover,
+a.project-menu-item:hover {
+  background-color: #F3F4F6 !important;
+}
+
+.project-menu-item-delete:hover,
+button.project-menu-item-delete:hover {
+  background-color: #FEE2E2 !important;
 }
 
 /* Only apply background to links with bg- classes, not text links */
