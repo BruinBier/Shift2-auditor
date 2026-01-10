@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
@@ -380,18 +381,16 @@ export default function SampleItems({ project }: { project: any }) {
                       </td>
                       <td className="py-4 pr-6 align-top w-16">
                         <div className="flex items-center gap-2 relative justify-end">
-                          {/* Link naar URL */}
-                          {item.url && (
-                            <a
-                              href={item.url}
-                              className="sample-link-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                              title="Open pagina"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                              </svg>
-                            </a>
-                          )}
+                          {/* Link naar detail pagina */}
+                          <Link
+                            href={`/admin/projects/${project.id}/sample/${item.id}`}
+                            className="sample-link-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                            title="Bekijk details"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </Link>
 
                           {/* 3-puntjes menu */}
                           <button
