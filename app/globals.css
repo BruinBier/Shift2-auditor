@@ -85,36 +85,56 @@ button[type="submit"]:hover {
   background-color: inherit !important;
 }
 
-/* Context menu items - gray background for all states */
-.project-menu-item:hover,
-.project-menu-item:active,
-.project-menu-item:focus,
+/* Context menu items - reset and apply gray background */
+button.project-menu-item,
+button.project-menu-item[class],
+a.project-menu-item,
+a.project-menu-item[class],
+button.project-menu-item-delete,
+button.project-menu-item-delete[class],
+button.sample-menu-item,
+button.sample-menu-item[class],
+button.sample-menu-item-delete,
+button.sample-menu-item-delete[class] {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
 button.project-menu-item:hover,
+button.project-menu-item[class]:hover,
 button.project-menu-item:active,
+button.project-menu-item[class]:active,
 button.project-menu-item:focus,
+button.project-menu-item[class]:focus,
 a.project-menu-item:hover,
+a.project-menu-item[class]:hover,
 a.project-menu-item:active,
+a.project-menu-item[class]:active,
 a.project-menu-item:focus,
-.project-menu-item-delete:hover,
-.project-menu-item-delete:active,
-.project-menu-item-delete:focus,
+a.project-menu-item[class]:focus,
 button.project-menu-item-delete:hover,
+button.project-menu-item-delete[class]:hover,
 button.project-menu-item-delete:active,
+button.project-menu-item-delete[class]:active,
 button.project-menu-item-delete:focus,
-.sample-menu-item:hover,
-.sample-menu-item:active,
-.sample-menu-item:focus,
+button.project-menu-item-delete[class]:focus,
 button.sample-menu-item:hover,
+button.sample-menu-item[class]:hover,
 button.sample-menu-item:active,
+button.sample-menu-item[class]:active,
 button.sample-menu-item:focus,
-.sample-menu-item-delete:hover,
-.sample-menu-item-delete:active,
-.sample-menu-item-delete:focus,
+button.sample-menu-item[class]:focus,
 button.sample-menu-item-delete:hover,
+button.sample-menu-item-delete[class]:hover,
 button.sample-menu-item-delete:active,
-button.sample-menu-item-delete:focus {
+button.sample-menu-item-delete[class]:active,
+button.sample-menu-item-delete:focus,
+button.sample-menu-item-delete[class]:focus {
   background-color: #F3F4F6 !important;
   color: inherit !important;
+  border: none !important;
+  outline: none !important;
 }
 
 /* Only apply background to links with bg- classes, not text links */
