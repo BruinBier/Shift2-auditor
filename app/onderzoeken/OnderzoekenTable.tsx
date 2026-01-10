@@ -124,28 +124,32 @@ export default function OnderzoekenTable({ projects }: Props) {
         }
         button.project-menu-button:hover,
         button.project-menu-button[class]:hover {
-          background-color: #F3F4F6 !important;
+          background-color: transparent !important;
         }
         .project-context-menu,
         div.project-context-menu[class] {
           background-color: white !important;
         }
+        .project-menu-item,
         button.project-menu-item,
         button.project-menu-item[class],
         a.project-menu-item,
         a.project-menu-item[class] {
           background-color: transparent !important;
         }
+        .project-menu-item:hover,
         button.project-menu-item:hover,
         button.project-menu-item[class]:hover,
         a.project-menu-item:hover,
         a.project-menu-item[class]:hover {
           background-color: #F3F4F6 !important;
         }
+        .project-menu-item-delete,
         button.project-menu-item-delete,
         button.project-menu-item-delete[class] {
           background-color: transparent !important;
         }
+        .project-menu-item-delete:hover,
         button.project-menu-item-delete:hover,
         button.project-menu-item-delete[class]:hover {
           background-color: #F3F4F6 !important;
