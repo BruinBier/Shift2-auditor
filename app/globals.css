@@ -81,6 +81,19 @@ button[type="submit"]:hover {
   background-color: inherit !important;
 }
 
+/* Context menu item hover - gray background */
+.project-menu-item:hover,
+button.project-menu-item:hover,
+a.project-menu-item:hover,
+.project-menu-item-delete:hover,
+button.project-menu-item-delete:hover,
+.sample-menu-item:hover,
+button.sample-menu-item:hover,
+.sample-menu-item-delete:hover,
+button.sample-menu-item-delete:hover {
+  background-color: #F3F4F6 !important;
+}
+
 /* Only apply background to links with bg- classes, not text links */
 a[class*="bg-"]:hover:not([class*="menu"]) {
   background-color: #6b2d8f !important;
