@@ -76,31 +76,45 @@ button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="
   background-color: #6b2d8f !important;
 }
 
+button[class*="bg-"]:active:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]) {
+  background-color: #6b2d8f !important;
+}
+
 button[type="submit"]:hover {
   opacity: 0.9 !important;
   background-color: inherit !important;
 }
 
-/* Context menu item hover and active - gray background */
+/* Context menu items - gray background for all states */
 .project-menu-item:hover,
 .project-menu-item:active,
+.project-menu-item:focus,
 button.project-menu-item:hover,
 button.project-menu-item:active,
+button.project-menu-item:focus,
 a.project-menu-item:hover,
 a.project-menu-item:active,
+a.project-menu-item:focus,
 .project-menu-item-delete:hover,
 .project-menu-item-delete:active,
+.project-menu-item-delete:focus,
 button.project-menu-item-delete:hover,
 button.project-menu-item-delete:active,
+button.project-menu-item-delete:focus,
 .sample-menu-item:hover,
 .sample-menu-item:active,
+.sample-menu-item:focus,
 button.sample-menu-item:hover,
 button.sample-menu-item:active,
+button.sample-menu-item:focus,
 .sample-menu-item-delete:hover,
 .sample-menu-item-delete:active,
+.sample-menu-item-delete:focus,
 button.sample-menu-item-delete:hover,
-button.sample-menu-item-delete:active {
+button.sample-menu-item-delete:active,
+button.sample-menu-item-delete:focus {
   background-color: #F3F4F6 !important;
+  color: inherit !important;
 }
 
 /* Only apply background to links with bg- classes, not text links */
