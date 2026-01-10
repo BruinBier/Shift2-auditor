@@ -1,6 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const body = await request.json();
+
+    const project = await prisma.project.update({
+      where: { id },
+      data: {
+        title: body.title,
+        subject: body.subject || '',
+        standard: body.standard || 'WCAG 2.2',
+        level: body.level || 'AA',
+        researchType: body.researchType,
+        version: body.version || 1,
+        language: body.language || 'Nederlands',
+        status: body.status || 'In uitvoering',
+        clientName: body.clientName,
+        commissionedBy: body.commissionedBy,
+        auditedByOrg: body.auditedByOrg || 'Shift2',
+        researcherName: body.researcherName,
+        controllerName: body.controllerName,
+        plannedTime: body.plannedTime,
+        dateStart: body.dateStart ? new Date(body.dateStart) : null,
+        dateEnd: body.dateEnd ? new Date(body.dateEnd) : null,
+        researchStartedOn: body.researchStartedOn ? new Date(body.researchStartedOn) : null,
+        reportDate: body.reportDate ? new Date(body.reportDate) : new Date(),
+        description: body.description,
+        isAnonymous: body.isAnonymous || false,
+        isPrivate: body.isPrivate || false,
+      },
+    });
+
+    return NextResponse.json(project, { status: 200 });
+  } catch (error) {
+    console.error('Error updating project:', error);
+    return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
