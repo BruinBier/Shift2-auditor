@@ -155,6 +155,25 @@ a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button):
   background-color: #1f0036 !important;
 }
 
+/* Editor toolbar buttons - white with gray hover */
+.editor-toolbar-button,
+.editor-toolbar-button:link,
+.editor-toolbar-button:visited {
+  background-color: transparent !important;
+  color: inherit !important;
+  border: none !important;
+}
+
+.editor-toolbar-button:hover {
+  background-color: #f3f4f6 !important;
+  color: inherit !important;
+}
+
+.editor-toolbar-button:active {
+  background-color: #f3f4f6 !important;
+  color: inherit !important;
+}
+
 /* New project button styling - white with green border and gray hover */
 .new-project-button,
 .new-project-button:link,
