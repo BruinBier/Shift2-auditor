@@ -334,11 +334,7 @@ export default function OnderzoekenTable({ projects }: Props) {
           </div>
           <Link
             href="/admin/projects/new"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-            style={{
-              backgroundColor: '#79e792',
-              color: '#1f0036'
-            }}
+            className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
           >
             Nieuw onderzoek
           </Link>

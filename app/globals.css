@@ -150,9 +150,27 @@ a[class*="bg-"]:hover:not([class*="menu"]) {
 }
 
 /* Nuclear option - force ALL buttons and links to purple, except menu items */
-button[class*="bg-"]:not([class*="menu"]),
-a[class*="bg-"][class*="primary"]:not([class*="menu"]) {
+button[class*="bg-"]:not([class*="menu"]):not(.new-project-button),
+a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button) {
   background-color: #1f0036 !important;
+}
+
+/* New project button styling */
+.new-project-button,
+.new-project-button:link,
+.new-project-button:visited {
+  background-color: #79e792 !important;
+  color: #1f0036 !important;
+}
+
+.new-project-button:hover {
+  background-color: #66d17f !important;
+  color: #1f0036 !important;
+}
+
+.new-project-button:active {
+  background-color: #5ac170 !important;
+  color: #1f0036 !important;
 }
 
 /* Custom hover for report tabs - but not when active */
