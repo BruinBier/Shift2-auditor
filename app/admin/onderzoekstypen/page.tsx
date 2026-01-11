@@ -26,6 +26,7 @@ export default function OnderzoekstypenPage() {
     level: 'AA',
     type: 'website',
     reportIntro: '',
+    selectedCriteria: [] as string[],
   });
 
   // Mock data - dit wordt later vervangen door echte data uit de database
@@ -449,9 +450,108 @@ export default function OnderzoekstypenPage() {
               )}
 
               {activeTab === 'succescriteria' && (
-                <div className="text-gray-500 text-center py-8">
-                  <p>Succescriteria configuratie komt hier</p>
-                </div>
+                <>
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Selecteer succescriteria</h3>
+                    <div className="max-h-[500px] overflow-y-auto border border-gray-300 rounded-md">
+                      <div className="divide-y divide-gray-200">
+                        {[
+                          { id: '1.1', name: 'Niet-tekstuele content', level: 'A' },
+                          { id: '1.2.1', name: 'Louter-geluid en louter-videobeeld (vooraf opgenomen)', level: 'A' },
+                          { id: '1.2.2', name: 'Ondertitels voor doven en slechthorenden (vooraf opgenomen)', level: 'A' },
+                          { id: '1.2.3', name: 'Audiodescriptie of media-alternatief (vooraf opgenomen)', level: 'A' },
+                          { id: '1.2.4', name: 'Ondertitels voor doven en slechthorenden (live)', level: 'AA' },
+                          { id: '1.2.5', name: 'Audiodescriptie (vooraf opgenomen)', level: 'AA' },
+                          { id: '1.3.1', name: 'Info en relaties', level: 'A' },
+                          { id: '1.3.2', name: 'Betekenisvolle volgorde', level: 'A' },
+                          { id: '1.3.3', name: 'Zintuiglijke eigenschappen', level: 'A' },
+                          { id: '1.3.4', name: 'Weergavestand', level: 'AA' },
+                          { id: '1.3.5', name: 'Identificeer het doel van de input', level: 'AA' },
+                          { id: '1.4.1', name: 'Gebruik van kleur', level: 'A' },
+                          { id: '1.4.2', name: 'Geluidsbediening', level: 'A' },
+                          { id: '1.4.3', name: 'Contrast (minimum)', level: 'AA' },
+                          { id: '1.4.4', name: 'Herschalen van tekst', level: 'AA' },
+                          { id: '1.4.5', name: 'Afbeeldingen van tekst', level: 'AA' },
+                          { id: '1.4.10', name: 'Reflow', level: 'AA' },
+                          { id: '1.4.11', name: 'Contrast van niet-tekstuele content', level: 'AA' },
+                          { id: '1.4.12', name: 'Tekstafstand', level: 'AA' },
+                          { id: '1.4.13', name: 'Content bij hover of focus', level: 'AA' },
+                          { id: '2.1.1', name: 'Toetsenbord', level: 'A' },
+                          { id: '2.1.2', name: 'Geen toetsenbordval', level: 'A' },
+                          { id: '2.1.4', name: 'Enkel teken sneltoetsen', level: 'A' },
+                          { id: '2.2.1', name: 'Timing aanpasbaar', level: 'A' },
+                          { id: '2.2.2', name: 'Pauzeren, stoppen, verbergen', level: 'A' },
+                          { id: '2.3.1', name: 'Drie flitsen of beneden drempelwaarde', level: 'A' },
+                          { id: '2.4.1', name: 'Blokken omzeilen', level: 'A' },
+                          { id: '2.4.2', name: 'Paginatitel', level: 'A' },
+                          { id: '2.4.3', name: 'Focus volgorde', level: 'A' },
+                          { id: '2.4.4', name: 'Linkdoel (in context)', level: 'A' },
+                          { id: '2.4.5', name: 'Meerdere manieren', level: 'AA' },
+                          { id: '2.4.6', name: 'Koppen en labels', level: 'AA' },
+                          { id: '2.4.7', name: 'Focus zichtbaar', level: 'AA' },
+                          { id: '2.5.1', name: 'Aanwijzergebaren', level: 'A' },
+                          { id: '2.5.2', name: 'Aanwijzerannulering', level: 'A' },
+                          { id: '2.5.3', name: 'Label in naam', level: 'A' },
+                          { id: '2.5.4', name: 'Bewegingsactivering', level: 'A' },
+                          { id: '3.1.1', name: 'Taal van de pagina', level: 'A' },
+                          { id: '3.1.2', name: 'Taal van onderdelen', level: 'AA' },
+                          { id: '3.2.1', name: 'Bij focus', level: 'A' },
+                          { id: '3.2.2', name: 'Bij input', level: 'A' },
+                          { id: '3.2.3', name: 'Consistente navigatie', level: 'AA' },
+                          { id: '3.2.4', name: 'Consistente identificatie', level: 'AA' },
+                          { id: '3.3.1', name: 'Fout identificatie', level: 'A' },
+                          { id: '3.3.2', name: 'Labels of instructies', level: 'A' },
+                          { id: '3.3.3', name: 'Foutsuggestie', level: 'AA' },
+                          { id: '3.3.4', name: 'Foutpreventie (wettelijk, financieel, gegevens)', level: 'AA' },
+                          { id: '4.1.1', name: 'Parsen', level: 'A' },
+                          { id: '4.1.2', name: 'Naam, rol, waarde', level: 'A' },
+                          { id: '4.1.3', name: 'Statusberichten', level: 'AA' },
+                        ].map((criterion) => {
+                          const isSelected = formData.selectedCriteria.includes(criterion.id);
+                          return (
+                            <label
+                              key={criterion.id}
+                              className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData({
+                                      ...formData,
+                                      selectedCriteria: [...formData.selectedCriteria, criterion.id],
+                                    });
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      selectedCriteria: formData.selectedCriteria.filter((id) => id !== criterion.id),
+                                    });
+                                  }
+                                }}
+                                className="w-4 h-4 text-shift2-primary border-gray-300 rounded focus:ring-shift2-primary"
+                              />
+                              <span className="ml-3 text-sm text-gray-700 flex-1">{criterion.id} - {criterion.name}</span>
+                              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                                {criterion.level}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Opslaan button */}
+                  <div className="flex justify-start pt-4">
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-shift2-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Opslaan
+                    </button>
+                  </div>
+                </>
               )}
             </form>
           </div>
