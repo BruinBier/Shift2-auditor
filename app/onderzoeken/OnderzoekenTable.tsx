@@ -104,6 +104,34 @@ export default function OnderzoekenTable({ projects }: Props) {
     };
   }, [openMenuId]);
 
+  // Close filter popup on click outside or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showFilters &&
+          !target.closest('.filter-popup') &&
+          !target.closest('.filters-button')) {
+        setShowFilters(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showFilters) {
+        setShowFilters(false);
+      }
+    };
+
+    if (showFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showFilters]);
+
   // Close tooltips when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -488,7 +516,7 @@ export default function OnderzoekenTable({ projects }: Props) {
 
             {/* Filter Popup */}
             {showFilters && (
-              <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50">
+              <div className="filter-popup absolute top-full left-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Filters</h3>
                   <button
