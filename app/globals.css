@@ -138,7 +138,7 @@ button.sample-menu-item-delete[class]:focus {
 }
 
 /* Only apply background to links with bg- classes, not text links */
-a[class*="bg-"]:hover:not([class*="menu"]) {
+a[class*="bg-"]:hover:not([class*="menu"]):not(.new-project-button) {
   background-color: #6b2d8f !important;
 }
 
