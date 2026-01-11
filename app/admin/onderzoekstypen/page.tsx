@@ -17,6 +17,16 @@ interface ResearchType {
 export default function OnderzoekstypenPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    version: 'WCAG 2.2',
+    level: 'AA',
+    type: 'website',
+    reportIntro: '',
+  });
 
   // Mock data - dit wordt later vervangen door echte data uit de database
   const researchTypes: ResearchType[] = [
@@ -159,7 +169,10 @@ export default function OnderzoekstypenPage() {
             </svg>
             <h1 className="text-2xl font-semibold">Onderzoekstypen ({sortedTypes.length})</h1>
           </div>
-          <button className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors"
+          >
             <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
               <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
@@ -269,6 +282,181 @@ export default function OnderzoekstypenPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+              <h2 className="text-xl font-semibold text-gray-900">Nieuw onderzoekstype</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 px-6">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'details'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Details
+              </button>
+              <button
+                onClick={() => setActiveTab('succescriteria')}
+                className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'succescriteria'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Succescriteria
+              </button>
+            </div>
+
+            {/* Content */}
+            <form className="p-6 space-y-6">
+              {activeTab === 'details' && (
+                <>
+                  {/* Naam */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Naam <span className="text-gray-400">vereist</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+
+                  {/* Beschrijving */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Beschrijving <span className="text-gray-400">vereist</span>
+                    </label>
+                    <textarea
+                      required
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+
+                  {/* WCAG versie, Conformiteitsniveau, Content type */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">WCAG versie</label>
+                      <select
+                        value={formData.version}
+                        onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                      >
+                        <option value="WCAG 2.2">WCAG 2.2</option>
+                        <option value="WCAG 2.1">WCAG 2.1</option>
+                        <option value="WCAG 2.0">WCAG 2.0</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Conformiteitsniveau</label>
+                      <select
+                        value={formData.level}
+                        onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                      >
+                        <option value="A">A</option>
+                        <option value="AA">AA</option>
+                        <option value="AAA">AAA</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Content type</label>
+                      <select
+                        value={formData.type}
+                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                      >
+                        <option value="website">Website</option>
+                        <option value="app">App</option>
+                        <option value="document">Document</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Rapport inleiding */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rapport inleiding</label>
+                    <div className="border border-gray-300 rounded-md">
+                      {/* Toolbar */}
+                      <div className="flex items-center gap-2 p-2 border-b border-gray-300 bg-gray-50">
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bold">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3H6v14h5a4 4 0 000-8 4 4 0 000-8zm-1 6V5h1a2 2 0 110 4h-1zm0 2h1a2 2 0 110 4h-1v-4z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Italic">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 3h8v2h-2.5l-3 10H13v2H5v-2h2.5l3-10H8V3z" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bullet list">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Numbered list">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                          </svg>
+                        </button>
+                      </div>
+                      {/* Text area */}
+                      <textarea
+                        value={formData.reportIntro}
+                        onChange={(e) => setFormData({ ...formData, reportIntro: e.target.value })}
+                        rows={6}
+                        className="w-full px-3 py-2 focus:outline-none focus:ring-0 border-0 resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Opslaan button */}
+                  <div className="flex justify-start pt-4">
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-shift2-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Opslaan
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'succescriteria' && (
+                <div className="text-gray-500 text-center py-8">
+                  <p>Succescriteria configuratie komt hier</p>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
