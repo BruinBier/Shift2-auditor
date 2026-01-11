@@ -156,20 +156,23 @@ a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button):
 }
 
 /* Editor toolbar buttons - white with gray hover */
-.editor-toolbar-button,
-.editor-toolbar-button:link,
-.editor-toolbar-button:visited {
+button.editor-toolbar-button,
+button.editor-toolbar-button[class*="bg-"],
+button.editor-toolbar-button:link,
+button.editor-toolbar-button:visited {
   background-color: transparent !important;
   color: inherit !important;
   border: none !important;
 }
 
-.editor-toolbar-button:hover {
+button.editor-toolbar-button:hover,
+button.editor-toolbar-button[class*="bg-"]:hover {
   background-color: #f3f4f6 !important;
   color: inherit !important;
 }
 
-.editor-toolbar-button:active {
+button.editor-toolbar-button:active,
+button.editor-toolbar-button[class*="bg-"]:active {
   background-color: #f3f4f6 !important;
   color: inherit !important;
 }
