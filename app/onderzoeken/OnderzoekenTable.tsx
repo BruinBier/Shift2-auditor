@@ -41,6 +41,7 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -48,6 +49,8 @@ export default function OnderzoekenTable({ projects }: Props) {
     version: '1',
     language: 'Nederlands',
     researchType: '',
+    standard: 'WCAG 2.2',
+    level: 'AA',
     status: 'In uitvoering',
     researcherName: '',
     controllerName: '',
@@ -159,6 +162,56 @@ export default function OnderzoekenTable({ projects }: Props) {
       version: '1',
       language: 'Nederlands',
       researchType: '',
+      standard: 'WCAG 2.2',
+      level: 'AA',
+      status: 'In uitvoering',
+      researcherName: '',
+      controllerName: '',
+      plannedTime: '',
+      dateStart: '',
+      dateEnd: '',
+      researchStartedOn: '',
+      reportDate: '',
+      description: '',
+      isAnonymous: false,
+      isPrivate: false,
+    });
+  };
+
+  const openCreateModal = () => {
+    setFormData({
+      title: '',
+      auditedByOrg: 'Shift2',
+      version: '1',
+      language: 'Nederlands',
+      researchType: 'Volledig onderzoek',
+      standard: 'WCAG 2.2',
+      level: 'AA',
+      status: 'In uitvoering',
+      researcherName: '',
+      controllerName: '',
+      plannedTime: '',
+      dateStart: '',
+      dateEnd: '',
+      researchStartedOn: '',
+      reportDate: '',
+      description: '',
+      isAnonymous: false,
+      isPrivate: false,
+    });
+    setShowCreateModal(true);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setFormData({
+      title: '',
+      auditedByOrg: 'Shift2',
+      version: '1',
+      language: 'Nederlands',
+      researchType: '',
+      standard: 'WCAG 2.2',
+      level: 'AA',
       status: 'In uitvoering',
       researcherName: '',
       controllerName: '',
@@ -204,6 +257,38 @@ export default function OnderzoekenTable({ projects }: Props) {
     } catch (error) {
       console.error('Error updating project:', error);
       alert('Er is een fout opgetreden bij het bijwerken van het onderzoek.');
+    }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const payload = {
+      ...formData,
+      version: parseInt(formData.version) || 1,
+      dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
+      dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
+      researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
+      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : new Date().toISOString(),
+    };
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        closeCreateModal();
+        router.refresh();
+      } else {
+        const error = await response.json();
+        alert(`Er is een fout opgetreden: ${error.error || 'Onbekende fout'}`);
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('Er is een fout opgetreden bij het aanmaken van het onderzoek.');
     }
   };
 
@@ -332,8 +417,8 @@ export default function OnderzoekenTable({ projects }: Props) {
               </svg>
             </button>
           </div>
-          <Link
-            href="/admin/projects/new"
+          <button
+            onClick={openCreateModal}
             className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors"
           >
             <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -342,7 +427,7 @@ export default function OnderzoekenTable({ projects }: Props) {
               </svg>
             </div>
             Nieuw onderzoek
-          </Link>
+          </button>
         </div>
 
         {/* Filters and Search */}
@@ -865,6 +950,360 @@ export default function OnderzoekenTable({ projects }: Props) {
                   style={{ backgroundColor: '#6b2d8f' }}
                 >
                   Opslaan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+              <h2 className="text-xl font-semibold text-gray-900">Nieuw onderzoek</h2>
+              <button
+                onClick={closeCreateModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateSubmit} className="p-6">
+              <div className="space-y-6">
+                {/* Titel */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Titel <span className="text-gray-400">vereist</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  />
+                </div>
+
+                {/* Project */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project <span className="text-gray-400">vereist</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.auditedByOrg}
+                    onChange={(e) => setFormData({ ...formData, auditedByOrg: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  >
+                    <option value="Shift2">Shift2</option>
+                  </select>
+                </div>
+
+                {/* Taal and Versie */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Taal
+                    </label>
+                    <select
+                      value={formData.language}
+                      onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    >
+                      <option value="Nederlands">Nederlands</option>
+                      <option value="Engels">Engels</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Versie
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.version}
+                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Onderzoekstype (editable for create) */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Standard <span className="text-gray-400">vereist</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.standard}
+                      onChange={(e) => setFormData({ ...formData, standard: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    >
+                      <option value="WCAG 2.2">WCAG 2.2</option>
+                      <option value="WCAG 2.1">WCAG 2.1</option>
+                      <option value="EN 301 549">EN 301 549</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Level <span className="text-gray-400">vereist</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.level}
+                      onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    >
+                      <option value="A">A</option>
+                      <option value="AA">AA</option>
+                      <option value="AAA">AAA</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Onderzoekstype <span className="text-gray-400">vereist</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.researchType}
+                      onChange={(e) => setFormData({ ...formData, researchType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    >
+                      <option value="">Selecteer...</option>
+                      <option value="Volledig onderzoek">Volledig onderzoek</option>
+                      <option value="Steekproef">Steekproef</option>
+                      <option value="Vervolg">Vervolg</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status <span className="text-gray-400">vereist</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  >
+                    <option value="Gepland">Gepland</option>
+                    <option value="In uitvoering">In uitvoering</option>
+                    <option value="Controle">Controle</option>
+                    <option value="In de wacht">In de wacht</option>
+                    <option value="Gereed">Gereed</option>
+                  </select>
+                </div>
+
+                {/* Onderzoeker and Controleur */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Onderzoeker <span className="text-gray-400">vereist</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.researcherName}
+                      onChange={(e) => setFormData({ ...formData, researcherName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    >
+                      <option value="">Selecteer...</option>
+                      <option value="frits Karskens">frits Karskens</option>
+                      <option value="Frits Karskens">Frits Karskens</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Controleur <span className="text-gray-400">vereist</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.controllerName}
+                      onChange={(e) => setFormData({ ...formData, controllerName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    >
+                      <option value="">Selecteer...</option>
+                      <option value="frits Karskens">frits Karskens</option>
+                      <option value="Frits Karskens">Frits Karskens</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Geplande tijd */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Geplande tijd
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.plannedTime}
+                    onChange={(e) => setFormData({ ...formData, plannedTime: e.target.value })}
+                    placeholder="bijv. 40 uur"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  />
+                </div>
+
+                {/* Startdatum and Deadline */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Startdatum <span className="text-gray-400">vereist</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.dateStart}
+                      onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deadline <span className="text-gray-400">vereist</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.dateEnd}
+                      onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Onderzoek gestart op and Rapportdatum */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Onderzoek gestart op
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.researchStartedOn}
+                      onChange={(e) => setFormData({ ...formData, researchStartedOn: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Rapportdatum
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.reportDate}
+                      onChange={(e) => setFormData({ ...formData, reportDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Beschrijving */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Beschrijving
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  />
+                </div>
+
+                {/* Toggles */}
+                <div className="flex gap-8">
+                  <div className="flex items-center gap-3">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isAnonymous}
+                        onChange={(e) => setFormData({ ...formData, isAnonymous: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">Anoniem</span>
+                    <div className="relative tooltip-container">
+                      <button
+                        type="button"
+                        onClick={() => setShowAnonymousTooltip(!showAnonymousTooltip)}
+                        className="tooltip-button text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </button>
+                      {showAnonymousTooltip && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+                          <div className="text-xs text-gray-700">
+                            Zet 'Anoniem' aan als het project gevoelige data bevat. URL's uit je steekproef en scope worden verborgen in het publieke rapport.
+                          </div>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="border-8 border-transparent border-t-white"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPrivate}
+                        onChange={(e) => setFormData({ ...formData, isPrivate: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">Privé</span>
+                    <div className="relative tooltip-container">
+                      <button
+                        type="button"
+                        onClick={() => setShowPrivateTooltip(!showPrivateTooltip)}
+                        className="tooltip-button text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </button>
+                      {showPrivateTooltip && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+                          <div className="text-xs text-gray-700">
+                            Zet 'Privé' aan om dit onderzoek af te schermen met een wachtwoord.
+                          </div>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="border-8 border-transparent border-t-white"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit button */}
+              <div className="mt-8">
+                <button
+                  type="submit"
+                  className="w-full px-6 py-2 text-white rounded-lg font-medium transition-colors"
+                  style={{ backgroundColor: '#6b2d8f' }}
+                >
+                  Aanmaken
                 </button>
               </div>
             </form>
