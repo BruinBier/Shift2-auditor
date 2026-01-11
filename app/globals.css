@@ -72,11 +72,11 @@ a.bg-shift2-primary {
 }
 
 /* Only apply purple hover to buttons with background classes */
-button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button):not(.filters-button) {
+button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button):not(.filters-button):not(.editor-toolbar-button) {
   background-color: #6b2d8f !important;
 }
 
-button[class*="bg-"]:active:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button):not(.filters-button) {
+button[class*="bg-"]:active:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button):not(.filters-button):not(.editor-toolbar-button) {
   background-color: #6b2d8f !important;
 }
 
@@ -150,7 +150,7 @@ a[class*="bg-"]:hover:not([class*="menu"]):not(.new-project-button):not(.beheer-
 }
 
 /* Nuclear option - force ALL buttons and links to purple, except menu items */
-button[class*="bg-"]:not([class*="menu"]):not(.new-project-button):not(.filters-button),
+button[class*="bg-"]:not([class*="menu"]):not(.new-project-button):not(.filters-button):not(.editor-toolbar-button),
 a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button):not(.filters-button):not(.beheer-menu-item) {
   background-color: #1f0036 !important;
 }

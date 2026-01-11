@@ -435,12 +435,12 @@ export default function OnderzoekstypenPage() {
                       {/* Toolbar */}
                       <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-gray-300 bg-white">
                         <div className="flex items-center gap-1">
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Bold">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Bold">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"></path>
                             </svg>
                           </button>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Italic">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Italic">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <line x1="19" x2="10" y1="4" y2="4"></line>
                               <line x1="14" x2="5" y1="20" y2="20"></line>
@@ -448,7 +448,7 @@ export default function OnderzoekstypenPage() {
                             </svg>
                           </button>
                           <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Unordered list">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Unordered list">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M3 5h.01"></path>
                               <path d="M3 12h.01"></path>
@@ -458,7 +458,7 @@ export default function OnderzoekstypenPage() {
                               <path d="M8 19h13"></path>
                             </svg>
                           </button>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Ordered list">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Ordered list">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M11 5h10"></path>
                               <path d="M11 12h10"></path>
@@ -468,20 +468,20 @@ export default function OnderzoekstypenPage() {
                               <path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"></path>
                             </svg>
                           </button>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Quote">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Quote">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
                               <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
                             </svg>
                           </button>
                           <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Inline code">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Inline code">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="m16 18 6-6-6-6"></path>
                               <path d="m8 6-6 6 6 6"></path>
                             </svg>
                           </button>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Code block">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Code block">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="m10 9-3 3 3 3"></path>
                               <path d="m14 15 3-3-3-3"></path>
@@ -489,13 +489,13 @@ export default function OnderzoekstypenPage() {
                             </svg>
                           </button>
                           <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Undo">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Undo">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
                               <path d="m9 17-5-5 5-5"></path>
                             </svg>
                           </button>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Redo">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Redo">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="m15 17 5-5-5-5"></path>
                               <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
@@ -503,7 +503,7 @@ export default function OnderzoekstypenPage() {
                           </button>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Fullscreen">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Fullscreen">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M15 3h6v6"></path>
                               <path d="m21 3-7 7"></path>
@@ -511,7 +511,7 @@ export default function OnderzoekstypenPage() {
                               <path d="M9 21H3v-6"></path>
                             </svg>
                           </button>
-                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Preview">
+                          <button type="button" className="editor-toolbar-button p-1.5 hover:bg-gray-100 rounded" title="Preview">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
                               <circle cx="12" cy="12" r="3"></circle>
