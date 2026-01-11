@@ -679,6 +679,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     >
                       <option value="">Selecteer...</option>
+                      <option value="frits Karskens">frits Karskens</option>
                       <option value="Frits Karskens">Frits Karskens</option>
                     </select>
                   </div>
@@ -694,6 +695,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     >
                       <option value="">Selecteer...</option>
+                      <option value="frits Karskens">frits Karskens</option>
                       <option value="Frits Karskens">Frits Karskens</option>
                     </select>
                   </div>
