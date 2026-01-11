@@ -65,6 +65,15 @@ export default function OnderzoekenTable({ projects }: Props) {
   });
   const [showAnonymousTooltip, setShowAnonymousTooltip] = useState(false);
   const [showPrivateTooltip, setShowPrivateTooltip] = useState(false);
+  const [filters, setFilters] = useState({
+    opdrachtgever: '',
+    project: '',
+    status: '',
+    taal: '',
+    onderzoeker: '',
+    controleur: '',
+    onderzoekstype: '',
+  });
   const itemsPerPage = 20;
 
   // Close context menu on click outside or Escape key
@@ -318,13 +327,27 @@ export default function OnderzoekenTable({ projects }: Props) {
 
   // Filter and search projects
   const filteredProjects = projects.filter((project) => {
+    // Search filter
     const searchLower = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       project.title.toLowerCase().includes(searchLower) ||
       project.subject.toLowerCase().includes(searchLower) ||
       project.researcherName?.toLowerCase().includes(searchLower) ||
       project.controllerName?.toLowerCase().includes(searchLower)
     );
+
+    // Apply filters
+    const matchesOpdrachtgever = !filters.opdrachtgever || project.auditedByOrg === filters.opdrachtgever;
+    const matchesProject = !filters.project || project.title === filters.project;
+    const matchesStatus = !filters.status || project.status === filters.status;
+    const matchesTaal = !filters.taal || project.language === filters.taal;
+    const matchesOnderzoeker = !filters.onderzoeker || project.researcherName === filters.onderzoeker;
+    const matchesControleur = !filters.controleur || project.controllerName === filters.controleur;
+    const matchesOnderzoekstype = !filters.onderzoekstype ||
+      `${project.standard} ${project.level} - ${project.researchType}` === filters.onderzoekstype;
+
+    return matchesSearch && matchesOpdrachtgever && matchesProject && matchesStatus &&
+           matchesTaal && matchesOnderzoeker && matchesControleur && matchesOnderzoekstype;
   });
 
   // Sort projects
@@ -452,15 +475,161 @@ export default function OnderzoekenTable({ projects }: Props) {
             </svg>
           </div>
 
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="filters-button flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Filters
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="filters-button flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filters
+            </button>
+
+            {/* Filter Popup */}
+            {showFilters && (
+              <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Filters</h3>
+                  <button
+                    onClick={() => setFilters({
+                      opdrachtgever: '',
+                      project: '',
+                      status: '',
+                      taal: '',
+                      onderzoeker: '',
+                      controleur: '',
+                      onderzoekstype: '',
+                    })}
+                    className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Reset filters
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Opdrachtgever */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Opdrachtgever</label>
+                    <select
+                      value={filters.opdrachtgever}
+                      onChange={(e) => setFilters({ ...filters, opdrachtgever: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                    >
+                      <option value="">Alle</option>
+                      {Array.from(new Set(projects.map(p => p.auditedByOrg))).map(org => (
+                        <option key={org} value={org}>{org}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Project */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                    <select
+                      value={filters.project}
+                      onChange={(e) => setFilters({ ...filters, project: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                    >
+                      <option value="">Alle</option>
+                      {Array.from(new Set(projects.map(p => p.title))).map(title => (
+                        <option key={title} value={title}>{title}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <select
+                        value={filters.status}
+                        onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                      >
+                        <option value="">Alle</option>
+                        {Array.from(new Set(projects.map(p => p.status))).map(status => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Taal */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Taal</label>
+                      <select
+                        value={filters.taal}
+                        onChange={(e) => setFilters({ ...filters, taal: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                      >
+                        <option value="">Alle</option>
+                        {Array.from(new Set(projects.map(p => p.language))).map(lang => (
+                          <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Onderzoeker */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Onderzoeker</label>
+                      <select
+                        value={filters.onderzoeker}
+                        onChange={(e) => setFilters({ ...filters, onderzoeker: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                      >
+                        <option value="">Alle</option>
+                        {Array.from(new Set(projects.filter(p => p.researcherName).map(p => p.researcherName!))).map(name => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Controleur */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Controleur</label>
+                      <select
+                        value={filters.controleur}
+                        onChange={(e) => setFilters({ ...filters, controleur: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                      >
+                        <option value="">Alle</option>
+                        {Array.from(new Set(projects.filter(p => p.controllerName).map(p => p.controllerName!))).map(name => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Onderzoekstype */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Onderzoekstype</label>
+                    <select
+                      value={filters.onderzoekstype}
+                      onChange={(e) => setFilters({ ...filters, onderzoekstype: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                    >
+                      <option value="">Alle</option>
+                      {Array.from(new Set(projects.map(p => `${p.standard} ${p.level} - ${p.researchType}`))).map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="w-full mt-6 px-4 py-2 bg-shift2-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Filters toepassen
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="flex-1 relative">
             <input
