@@ -10,6 +10,8 @@ interface ResearchType {
   level: string;
   type: string;
   description: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default function OnderzoekstypenPage() {
@@ -25,6 +27,8 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Volledig onderzoek op 55 succescriteria, conform WCAG 2.2.',
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-03-20'),
     },
     {
       id: '2',
@@ -33,6 +37,8 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Deelonderzoek content, conform WCAG-EM. Dit onderzoek bevat 33 succescriteria die betrekking hebben op de content van de website.',
+      createdAt: new Date('2024-02-10'),
+      updatedAt: new Date('2024-04-15'),
     },
     {
       id: '3',
@@ -41,6 +47,8 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Proef-onderzoek om de functionaliteiten van Cardan Auditor te ervaren',
+      createdAt: new Date('2024-03-05'),
+      updatedAt: new Date('2024-05-12'),
     },
     {
       id: '4',
@@ -49,6 +57,8 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Aanvullend deelonderzoek gericht op klantspecifieke content binnen de Mijn-omgeving. Dit onderzoekstype wordt gebruikt als aanvulling op een eerder volledig WCAG 2.2 AA-onderzoek van de standaard PIP-omgeving en heeft een afgebakende scope.',
+      createdAt: new Date('2024-04-01'),
+      updatedAt: new Date('2024-06-08'),
     },
   ];
 
@@ -64,10 +74,22 @@ export default function OnderzoekstypenPage() {
 
   // Sort
   const sortedTypes = [...filteredTypes].sort((a, b) => {
-    if (sortBy === 'name') {
-      return a.name.localeCompare(b.name);
+    switch (sortBy) {
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'createdAt':
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      case 'updatedAt':
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      case 'version':
+        return a.version.localeCompare(b.version);
+      case 'level':
+        return a.level.localeCompare(b.level);
+      case 'type':
+        return a.type.localeCompare(b.type);
+      default:
+        return 0;
     }
-    return 0;
   });
 
   return (
@@ -157,6 +179,11 @@ export default function OnderzoekstypenPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-shift2-primary"
               >
                 <option value="name">Naam</option>
+                <option value="createdAt">Datum aangemaakt</option>
+                <option value="updatedAt">Laatst gewijzigd</option>
+                <option value="version">WCAG versie</option>
+                <option value="level">Conformiteitsniveau</option>
+                <option value="type">Content type</option>
               </select>
             </div>
 
