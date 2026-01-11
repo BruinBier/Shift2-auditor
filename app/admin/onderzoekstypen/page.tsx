@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 
 interface ResearchType {
@@ -31,51 +31,34 @@ export default function OnderzoekstypenPage() {
     selectedCriteria: [] as string[],
   });
 
-  // Research types state - start with mock data
-  const [researchTypes, setResearchTypes] = useState<ResearchType[]>([
-    {
-      id: '1',
-      name: 'WCAG 2.2 AA onderzoek',
-      version: 'WCAG 2.2',
-      level: 'AA',
-      type: 'website',
-      description: 'Volledig onderzoek op 55 succescriteria, conform WCAG 2.2.',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-03-20'),
-    },
-    {
-      id: '2',
-      name: 'WCAG 2.2 AA deelonderzoek content',
-      version: 'WCAG 2.2',
-      level: 'AA',
-      type: 'website',
-      description: 'Deelonderzoek content, conform WCAG-EM. Dit onderzoek bevat 33 succescriteria die betrekking hebben op de content van de website.',
-      createdAt: new Date('2024-02-10'),
-      updatedAt: new Date('2024-04-15'),
-    },
-    {
-      id: '3',
-      name: 'Trial onderzoek',
-      version: 'WCAG 2.2',
-      level: 'AA',
-      type: 'website',
-      description: 'Proef-onderzoek om de functionaliteiten van Cardan Auditor te ervaren',
-      createdAt: new Date('2024-03-05'),
-      updatedAt: new Date('2024-05-12'),
-    },
-    {
-      id: '4',
-      name: 'WCAG 2.2 AA – aanvullend deelonderzoek content',
-      version: '',
-      level: 'AA',
-      type: 'website',
-      description: 'Aanvullend deelonderzoek gericht op klantspecifieke content binnen de Mijn-omgeving. Dit onderzoekstype wordt gebruikt als aanvulling op een eerder volledig WCAG 2.2 AA-onderzoek van de standaard PIP-omgeving en heeft een afgebakende scope.',
-      createdAt: new Date('2024-04-01'),
-      updatedAt: new Date('2024-06-08'),
-    },
-  ]);
+  // Research types state - loaded from database
+  const [researchTypes, setResearchTypes] = useState<ResearchType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch research types from database
+  useEffect(() => {
+    const fetchResearchTypes = async () => {
+      try {
+        const response = await fetch('/api/research-types');
+        if (response.ok) {
+          const data = await response.json();
+          setResearchTypes(data.map((item: any) => ({
+            ...item,
+            createdAt: new Date(item.createdAt),
+            updatedAt: new Date(item.updatedAt),
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching research types:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchResearchTypes();
+  }, []);
 
   // Markdown formatting functions
   const formatText = (prefix: string, suffix: string = prefix) => {
@@ -125,40 +108,62 @@ export default function OnderzoekstypenPage() {
   };
 
   // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create new research type
-    const newResearchType: ResearchType = {
-      id: String(researchTypes.length + 1),
-      name: formData.name,
-      version: formData.version,
-      level: formData.level,
-      type: formData.type,
-      description: formData.description,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    try {
+      const response = await fetch('/api/research-types', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          version: formData.version,
+          level: formData.level,
+          type: formData.type,
+          description: formData.description,
+        }),
+      });
 
-    // Add to list
-    setResearchTypes([...researchTypes, newResearchType]);
+      if (response.ok) {
+        const newResearchType = await response.json();
 
-    // Reset form
-    setFormData({
-      name: '',
-      description: '',
-      version: 'WCAG 2.2',
-      level: 'AA',
-      type: 'website',
-      reportIntro: '',
-      reportIntroPdf: '',
-      selectedCriteria: [],
-    });
+        // Add to list with proper date objects
+        setResearchTypes([
+          {
+            ...newResearchType,
+            createdAt: new Date(newResearchType.createdAt),
+            updatedAt: new Date(newResearchType.updatedAt),
+          },
+          ...researchTypes,
+        ]);
 
-    // Close modal and reset tabs
-    setShowCreateModal(false);
-    setActiveTab('details');
-    setReportTab('rapport-inleiding');
+        // Reset form
+        setFormData({
+          name: '',
+          description: '',
+          version: 'WCAG 2.2',
+          level: 'AA',
+          type: 'website',
+          reportIntro: '',
+          reportIntroPdf: '',
+          selectedCriteria: [],
+        });
+
+        // Close modal and reset tabs
+        setShowCreateModal(false);
+        setActiveTab('details');
+        setReportTab('rapport-inleiding');
+      } else {
+        const error = await response.json();
+        console.error('Error creating research type:', error);
+        alert('Er is een fout opgetreden bij het opslaan.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Er is een fout opgetreden bij het opslaan.');
+    }
   };
 
   // Filter and search
@@ -320,26 +325,46 @@ export default function OnderzoekstypenPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sortedTypes.map((type) => (
-                <tr key={type.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{type.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{type.version}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{type.level}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      {type.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{type.description}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                    </button>
+                      Laden...
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : sortedTypes.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
+                    Geen onderzoekstypen gevonden
+                  </td>
+                </tr>
+              ) : (
+                sortedTypes.map((type) => (
+                  <tr key={type.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{type.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{type.version}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{type.level}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {type.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{type.description}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
