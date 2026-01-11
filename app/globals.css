@@ -72,11 +72,11 @@ a.bg-shift2-primary {
 }
 
 /* Only apply purple hover to buttons with background classes */
-button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]) {
+button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button) {
   background-color: #6b2d8f !important;
 }
 
-button[class*="bg-"]:active:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]) {
+button[class*="bg-"]:active:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button) {
   background-color: #6b2d8f !important;
 }
 
