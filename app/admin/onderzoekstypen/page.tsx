@@ -31,6 +31,50 @@ export default function OnderzoekstypenPage() {
     selectedCriteria: [] as string[],
   });
 
+  // Research types state - start with mock data
+  const [researchTypes, setResearchTypes] = useState<ResearchType[]>([
+    {
+      id: '1',
+      name: 'WCAG 2.2 AA onderzoek',
+      version: 'WCAG 2.2',
+      level: 'AA',
+      type: 'website',
+      description: 'Volledig onderzoek op 55 succescriteria, conform WCAG 2.2.',
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-03-20'),
+    },
+    {
+      id: '2',
+      name: 'WCAG 2.2 AA deelonderzoek content',
+      version: 'WCAG 2.2',
+      level: 'AA',
+      type: 'website',
+      description: 'Deelonderzoek content, conform WCAG-EM. Dit onderzoek bevat 33 succescriteria die betrekking hebben op de content van de website.',
+      createdAt: new Date('2024-02-10'),
+      updatedAt: new Date('2024-04-15'),
+    },
+    {
+      id: '3',
+      name: 'Trial onderzoek',
+      version: 'WCAG 2.2',
+      level: 'AA',
+      type: 'website',
+      description: 'Proef-onderzoek om de functionaliteiten van Cardan Auditor te ervaren',
+      createdAt: new Date('2024-03-05'),
+      updatedAt: new Date('2024-05-12'),
+    },
+    {
+      id: '4',
+      name: 'WCAG 2.2 AA – aanvullend deelonderzoek content',
+      version: '',
+      level: 'AA',
+      type: 'website',
+      description: 'Aanvullend deelonderzoek gericht op klantspecifieke content binnen de Mijn-omgeving. Dit onderzoekstype wordt gebruikt als aanvulling op een eerder volledig WCAG 2.2 AA-onderzoek van de standaard PIP-omgeving en heeft een afgebakende scope.',
+      createdAt: new Date('2024-04-01'),
+      updatedAt: new Date('2024-06-08'),
+    },
+  ]);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Markdown formatting functions
@@ -80,49 +124,42 @@ export default function OnderzoekstypenPage() {
     }, 0);
   };
 
-  // Mock data - dit wordt later vervangen door echte data uit de database
-  const researchTypes: ResearchType[] = [
-    {
-      id: '1',
-      name: 'WCAG 2.2 AA onderzoek',
+  // Handle form submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Create new research type
+    const newResearchType: ResearchType = {
+      id: String(researchTypes.length + 1),
+      name: formData.name,
+      version: formData.version,
+      level: formData.level,
+      type: formData.type,
+      description: formData.description,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Add to list
+    setResearchTypes([...researchTypes, newResearchType]);
+
+    // Reset form
+    setFormData({
+      name: '',
+      description: '',
       version: 'WCAG 2.2',
       level: 'AA',
       type: 'website',
-      description: 'Volledig onderzoek op 55 succescriteria, conform WCAG 2.2.',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-03-20'),
-    },
-    {
-      id: '2',
-      name: 'WCAG 2.2 AA deelonderzoek content',
-      version: 'WCAG 2.2',
-      level: 'AA',
-      type: 'website',
-      description: 'Deelonderzoek content, conform WCAG-EM. Dit onderzoek bevat 33 succescriteria die betrekking hebben op de content van de website.',
-      createdAt: new Date('2024-02-10'),
-      updatedAt: new Date('2024-04-15'),
-    },
-    {
-      id: '3',
-      name: 'Trial onderzoek',
-      version: 'WCAG 2.2',
-      level: 'AA',
-      type: 'website',
-      description: 'Proef-onderzoek om de functionaliteiten van Cardan Auditor te ervaren',
-      createdAt: new Date('2024-03-05'),
-      updatedAt: new Date('2024-05-12'),
-    },
-    {
-      id: '4',
-      name: 'WCAG 2.2 AA – aanvullend deelonderzoek content',
-      version: '',
-      level: 'AA',
-      type: 'website',
-      description: 'Aanvullend deelonderzoek gericht op klantspecifieke content binnen de Mijn-omgeving. Dit onderzoekstype wordt gebruikt als aanvulling op een eerder volledig WCAG 2.2 AA-onderzoek van de standaard PIP-omgeving en heeft een afgebakende scope.',
-      createdAt: new Date('2024-04-01'),
-      updatedAt: new Date('2024-06-08'),
-    },
-  ];
+      reportIntro: '',
+      reportIntroPdf: '',
+      selectedCriteria: [],
+    });
+
+    // Close modal and reset tabs
+    setShowCreateModal(false);
+    setActiveTab('details');
+    setReportTab('rapport-inleiding');
+  };
 
   // Filter and search
   const filteredTypes = researchTypes.filter((type) => {
@@ -377,7 +414,7 @@ export default function OnderzoekstypenPage() {
             </div>
 
             {/* Content */}
-            <form className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {activeTab === 'details' && (
                 <>
                   {/* Naam */}
