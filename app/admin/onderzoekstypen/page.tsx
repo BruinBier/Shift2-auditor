@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 
 interface ResearchType {
@@ -30,6 +30,55 @@ export default function OnderzoekstypenPage() {
     reportIntroPdf: '',
     selectedCriteria: [] as string[],
   });
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Markdown formatting functions
+  const formatText = (prefix: string, suffix: string = prefix) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    const newText = beforeText + prefix + selectedText + suffix + afterText;
+    const fieldName = reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf';
+
+    setFormData({ ...formData, [fieldName]: newText });
+
+    // Set cursor position after formatting
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + prefix.length + selectedText.length + suffix.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  const formatList = (prefix: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    const lines = selectedText.split('\n');
+    const formattedLines = lines.map(line => line.trim() ? `${prefix} ${line}` : line).join('\n');
+
+    const newText = beforeText + formattedLines + afterText;
+    const fieldName = reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf';
+
+    setFormData({ ...formData, [fieldName]: newText });
+
+    setTimeout(() => {
+      textarea.focus();
+    }, 0);
+  };
 
   // Mock data - dit wordt later vervangen door echte data uit de database
   const researchTypes: ResearchType[] = [
@@ -435,12 +484,12 @@ export default function OnderzoekstypenPage() {
                       {/* Toolbar */}
                       <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-gray-300 bg-white">
                         <div className="flex items-center gap-1">
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Bold">
+                          <button type="button" onClick={() => formatText('**')} className="editor-toolbar-button p-1.5" title="Bold">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"></path>
                             </svg>
                           </button>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Italic">
+                          <button type="button" onClick={() => formatText('*')} className="editor-toolbar-button p-1.5" title="Italic">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <line x1="19" x2="10" y1="4" y2="4"></line>
                               <line x1="14" x2="5" y1="20" y2="20"></line>
@@ -448,7 +497,7 @@ export default function OnderzoekstypenPage() {
                             </svg>
                           </button>
                           <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Unordered list">
+                          <button type="button" onClick={() => formatList('-')} className="editor-toolbar-button p-1.5" title="Unordered list">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M3 5h.01"></path>
                               <path d="M3 12h.01"></path>
@@ -458,7 +507,7 @@ export default function OnderzoekstypenPage() {
                               <path d="M8 19h13"></path>
                             </svg>
                           </button>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Ordered list">
+                          <button type="button" onClick={() => formatList('1.')} className="editor-toolbar-button p-1.5" title="Ordered list">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M11 5h10"></path>
                               <path d="M11 12h10"></path>
@@ -468,20 +517,20 @@ export default function OnderzoekstypenPage() {
                               <path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"></path>
                             </svg>
                           </button>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Quote">
+                          <button type="button" onClick={() => formatList('>')} className="editor-toolbar-button p-1.5" title="Quote">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
                               <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
                             </svg>
                           </button>
                           <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Inline code">
+                          <button type="button" onClick={() => formatText('`')} className="editor-toolbar-button p-1.5" title="Inline code">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="m16 18 6-6-6-6"></path>
                               <path d="m8 6-6 6 6 6"></path>
                             </svg>
                           </button>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Code block">
+                          <button type="button" onClick={() => formatText('```\n', '\n```')} className="editor-toolbar-button p-1.5" title="Code block">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                               <path d="m10 9-3 3 3 3"></path>
                               <path d="m14 15 3-3-3-3"></path>
@@ -521,6 +570,7 @@ export default function OnderzoekstypenPage() {
                       </div>
                       {/* Text area */}
                       <textarea
+                        ref={textareaRef}
                         value={reportTab === 'rapport-inleiding' ? formData.reportIntro : formData.reportIntroPdf}
                         onChange={(e) => setFormData({
                           ...formData,
