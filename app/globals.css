@@ -155,22 +155,23 @@ a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button) 
   background-color: #1f0036 !important;
 }
 
-/* New project button styling */
+/* New project button styling - white with border and gray hover */
 .new-project-button,
 .new-project-button:link,
 .new-project-button:visited {
-  background-color: #79e792 !important;
-  color: #1f0036 !important;
+  background-color: white !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
 }
 
 .new-project-button:hover {
-  background-color: #66d17f !important;
-  color: #1f0036 !important;
+  background-color: #f9fafb !important;
+  color: #374151 !important;
 }
 
 .new-project-button:active {
-  background-color: #5ac170 !important;
-  color: #1f0036 !important;
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
 }
 
 /* Custom hover for report tabs - but not when active */

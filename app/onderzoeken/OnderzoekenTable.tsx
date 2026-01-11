@@ -334,8 +334,13 @@ export default function OnderzoekenTable({ projects }: Props) {
           </div>
           <Link
             href="/admin/projects/new"
-            className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+            className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
           >
+            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
             Nieuw onderzoek
           </Link>
         </div>
