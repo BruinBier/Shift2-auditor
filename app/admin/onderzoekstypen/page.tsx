@@ -433,62 +433,91 @@ export default function OnderzoekstypenPage() {
                   <div>
                     <div className="border border-gray-300 rounded-md">
                       {/* Toolbar */}
-                      <div className="flex items-center gap-2 p-2 border-b border-gray-300 bg-gray-50">
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bold">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M11 3H6v14h5a4 4 0 000-8 4 4 0 000-8zm-1 6V5h1a2 2 0 110 4h-1zm0 2h1a2 2 0 110 4h-1v-4z" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Italic">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M8 3h8v2h-2.5l-3 10H13v2H5v-2h2.5l3-10H8V3z" />
-                          </svg>
-                        </button>
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bullet list">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Numbered list">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                          </svg>
-                        </button>
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Quote">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Code">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                          </svg>
-                        </button>
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Undo">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Redo">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
-                          </svg>
-                        </button>
-                        <div className="flex-1"></div>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Maximize">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Preview">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </button>
+                      <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-gray-300 bg-white">
+                        <div className="flex items-center gap-1">
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Bold">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"></path>
+                            </svg>
+                          </button>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Italic">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <line x1="19" x2="10" y1="4" y2="4"></line>
+                              <line x1="14" x2="5" y1="20" y2="20"></line>
+                              <line x1="15" x2="9" y1="4" y2="20"></line>
+                            </svg>
+                          </button>
+                          <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Unordered list">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M3 5h.01"></path>
+                              <path d="M3 12h.01"></path>
+                              <path d="M3 19h.01"></path>
+                              <path d="M8 5h13"></path>
+                              <path d="M8 12h13"></path>
+                              <path d="M8 19h13"></path>
+                            </svg>
+                          </button>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Ordered list">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M11 5h10"></path>
+                              <path d="M11 12h10"></path>
+                              <path d="M11 19h10"></path>
+                              <path d="M4 4h1v5"></path>
+                              <path d="M4 9h2"></path>
+                              <path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"></path>
+                            </svg>
+                          </button>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Quote">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
+                              <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
+                            </svg>
+                          </button>
+                          <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Inline code">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="m16 18 6-6-6-6"></path>
+                              <path d="m8 6-6 6 6 6"></path>
+                            </svg>
+                          </button>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Code block">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="m10 9-3 3 3 3"></path>
+                              <path d="m14 15 3-3-3-3"></path>
+                              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            </svg>
+                          </button>
+                          <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Undo">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+                              <path d="m9 17-5-5 5-5"></path>
+                            </svg>
+                          </button>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Redo">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="m15 17 5-5-5-5"></path>
+                              <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Fullscreen">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M15 3h6v6"></path>
+                              <path d="m21 3-7 7"></path>
+                              <path d="m3 21 7-7"></path>
+                              <path d="M9 21H3v-6"></path>
+                            </svg>
+                          </button>
+                          <button type="button" className="p-1.5 hover:bg-gray-100 rounded" title="Preview">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                       {/* Text area */}
                       <textarea
@@ -498,7 +527,7 @@ export default function OnderzoekstypenPage() {
                           [reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf']: e.target.value
                         })}
                         rows={12}
-                        className="w-full px-3 py-2 focus:outline-none focus:ring-0 border-0 resize-none"
+                        className="w-full px-4 py-3 focus:outline-none focus:ring-0 border-0 resize-none"
                         placeholder={reportTab === 'rapport-inleiding'
                           ? "Voer hier de inleiding voor het rapport in..."
                           : "Voer hier de PDF-specifieke inleiding voor het rapport in..."}
