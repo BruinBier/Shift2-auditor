@@ -176,7 +176,7 @@ export default function OnderzoekstypenPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-shift2-primary"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-shift2-primary"
               >
                 <option value="name">Naam</option>
                 <option value="createdAt">Datum aangemaakt</option>
