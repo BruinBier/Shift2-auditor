@@ -26,6 +26,7 @@ export default function OnderzoekstypenPage() {
     level: 'AA',
     type: 'website',
     reportIntro: '',
+    reportIntroPdf: '',
     selectedCriteria: [] as string[],
   });
 
@@ -323,6 +324,26 @@ export default function OnderzoekstypenPage() {
               >
                 Succescriteria
               </button>
+              <button
+                onClick={() => setActiveTab('rapport-inleiding')}
+                className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'rapport-inleiding'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Rapport inleiding
+              </button>
+              <button
+                onClick={() => setActiveTab('rapport-inleiding-pdf')}
+                className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'rapport-inleiding-pdf'
+                    ? 'border-shift2-primary text-shift2-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Rapport inleiding PDF
+              </button>
             </div>
 
             {/* Content */}
@@ -396,44 +417,6 @@ export default function OnderzoekstypenPage() {
                         <option value="app">App</option>
                         <option value="document">Document</option>
                       </select>
-                    </div>
-                  </div>
-
-                  {/* Rapport inleiding */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Rapport inleiding</label>
-                    <div className="border border-gray-300 rounded-md">
-                      {/* Toolbar */}
-                      <div className="flex items-center gap-2 p-2 border-b border-gray-300 bg-gray-50">
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bold">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M11 3H6v14h5a4 4 0 000-8 4 4 0 000-8zm-1 6V5h1a2 2 0 110 4h-1zm0 2h1a2 2 0 110 4h-1v-4z" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Italic">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M8 3h8v2h-2.5l-3 10H13v2H5v-2h2.5l3-10H8V3z" />
-                          </svg>
-                        </button>
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bullet list">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                          </svg>
-                        </button>
-                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Numbered list">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                          </svg>
-                        </button>
-                      </div>
-                      {/* Text area */}
-                      <textarea
-                        value={formData.reportIntro}
-                        onChange={(e) => setFormData({ ...formData, reportIntro: e.target.value })}
-                        rows={6}
-                        className="w-full px-3 py-2 focus:outline-none focus:ring-0 border-0 resize-none"
-                      />
                     </div>
                   </div>
 
@@ -576,6 +559,176 @@ export default function OnderzoekstypenPage() {
                           );
                         })}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Opslaan button */}
+                  <div className="flex justify-start pt-4">
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-shift2-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Opslaan
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'rapport-inleiding' && (
+                <>
+                  <div>
+                    <div className="border border-gray-300 rounded-md">
+                      {/* Toolbar */}
+                      <div className="flex items-center gap-2 p-2 border-b border-gray-300 bg-gray-50">
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bold">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3H6v14h5a4 4 0 000-8 4 4 0 000-8zm-1 6V5h1a2 2 0 110 4h-1zm0 2h1a2 2 0 110 4h-1v-4z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Italic">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 3h8v2h-2.5l-3 10H13v2H5v-2h2.5l3-10H8V3z" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bullet list">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Numbered list">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Quote">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Code">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Undo">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Redo">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
+                          </svg>
+                        </button>
+                        <div className="flex-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Maximize">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Preview">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </div>
+                      {/* Text area */}
+                      <textarea
+                        value={formData.reportIntro}
+                        onChange={(e) => setFormData({ ...formData, reportIntro: e.target.value })}
+                        rows={12}
+                        className="w-full px-3 py-2 focus:outline-none focus:ring-0 border-0 resize-none"
+                        placeholder="Voer hier de inleiding voor het rapport in..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Opslaan button */}
+                  <div className="flex justify-start pt-4">
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-shift2-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Opslaan
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'rapport-inleiding-pdf' && (
+                <>
+                  <div>
+                    <div className="border border-gray-300 rounded-md">
+                      {/* Toolbar */}
+                      <div className="flex items-center gap-2 p-2 border-b border-gray-300 bg-gray-50">
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bold">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3H6v14h5a4 4 0 000-8 4 4 0 000-8zm-1 6V5h1a2 2 0 110 4h-1zm0 2h1a2 2 0 110 4h-1v-4z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Italic">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 3h8v2h-2.5l-3 10H13v2H5v-2h2.5l3-10H8V3z" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Bullet list">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Numbered list">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Quote">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Code">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Undo">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Redo">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
+                          </svg>
+                        </button>
+                        <div className="flex-1"></div>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Maximize">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                          </svg>
+                        </button>
+                        <button type="button" className="p-1 hover:bg-gray-200 rounded" title="Preview">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </div>
+                      {/* Text area */}
+                      <textarea
+                        value={formData.reportIntroPdf}
+                        onChange={(e) => setFormData({ ...formData, reportIntroPdf: e.target.value })}
+                        rows={12}
+                        className="w-full px-3 py-2 focus:outline-none focus:ring-0 border-0 resize-none"
+                        placeholder="Voer hier de PDF-specifieke inleiding voor het rapport in..."
+                      />
                     </div>
                   </div>
 
