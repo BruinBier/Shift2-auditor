@@ -1,7 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Navigation from '@/app/components/Navigation';
+import dynamic from 'next/dynamic';
+import 'md-editor-rt/lib/style.css';
+
+const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
+  ssr: false,
+  loading: () => <div className="border border-gray-300 rounded-lg p-4">Laden...</div>
+});
 
 interface ResearchType {
   id: string;
@@ -10,6 +18,9 @@ interface ResearchType {
   level: string;
   type: string;
   description: string;
+  reportIntro?: string;
+  reportIntroPdf?: string;
+  selectedCriteria?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,8 +29,12 @@ export default function OnderzoekstypenPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBeheerMenu, setShowBeheerMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [reportTab, setReportTab] = useState('rapport-inleiding');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [editingType, setEditingType] = useState<ResearchType | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -30,9 +45,10 @@ export default function OnderzoekstypenPage() {
     reportIntroPdf: '',
     selectedCriteria: [] as string[],
   });
+  const [wcagCriteria, setWcagCriteria] = useState<any[]>([]);
 
-  // Research types state - start with mock data
-  const [researchTypes, setResearchTypes] = useState<ResearchType[]>([
+  // Default research types
+  const defaultResearchTypes: ResearchType[] = [
     {
       id: '1',
       name: 'WCAG 2.2 AA onderzoek',
@@ -40,6 +56,7 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Volledig onderzoek op 55 succescriteria, conform WCAG 2.2.',
+      selectedCriteria: [],
       createdAt: new Date('2024-01-15'),
       updatedAt: new Date('2024-03-20'),
     },
@@ -50,6 +67,7 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Deelonderzoek content, conform WCAG-EM. Dit onderzoek bevat 33 succescriteria die betrekking hebben op de content van de website.',
+      selectedCriteria: [],
       createdAt: new Date('2024-02-10'),
       updatedAt: new Date('2024-04-15'),
     },
@@ -60,6 +78,7 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Proef-onderzoek om de functionaliteiten van Cardan Auditor te ervaren',
+      selectedCriteria: [],
       createdAt: new Date('2024-03-05'),
       updatedAt: new Date('2024-05-12'),
     },
@@ -70,80 +89,136 @@ export default function OnderzoekstypenPage() {
       level: 'AA',
       type: 'website',
       description: 'Aanvullend deelonderzoek gericht op klantspecifieke content binnen de Mijn-omgeving. Dit onderzoekstype wordt gebruikt als aanvulling op een eerder volledig WCAG 2.2 AA-onderzoek van de standaard PIP-omgeving en heeft een afgebakende scope.',
+      selectedCriteria: [],
       createdAt: new Date('2024-04-01'),
       updatedAt: new Date('2024-06-08'),
     },
-  ]);
+  ];
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Load research types from database
+  const [researchTypes, setResearchTypes] = useState<ResearchType[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Markdown formatting functions
-  const formatText = (prefix: string, suffix: string = prefix) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  // Set mounted state for client-side only rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    const newText = beforeText + prefix + selectedText + suffix + afterText;
-    const fieldName = reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf';
-
-    setFormData({ ...formData, [fieldName]: newText });
-
-    // Set cursor position after formatting
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + prefix.length + selectedText.length + suffix.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
-
-  const formatList = (prefix: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    const lines = selectedText.split('\n');
-    const formattedLines = lines.map(line => line.trim() ? `${prefix} ${line}` : line).join('\n');
-
-    const newText = beforeText + formattedLines + afterText;
-    const fieldName = reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf';
-
-    setFormData({ ...formData, [fieldName]: newText });
-
-    setTimeout(() => {
-      textarea.focus();
-    }, 0);
-  };
-
-  // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Create new research type
-    const newResearchType: ResearchType = {
-      id: String(researchTypes.length + 1),
-      name: formData.name,
-      version: formData.version,
-      level: formData.level,
-      type: formData.type,
-      description: formData.description,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  // Load research types from database
+  useEffect(() => {
+    const fetchResearchTypes = async () => {
+      try {
+        const response = await fetch('/api/research-types');
+        if (response.ok) {
+          const data = await response.json();
+          setResearchTypes(data.map((t: any) => ({
+            ...t,
+            createdAt: new Date(t.createdAt),
+            updatedAt: new Date(t.updatedAt),
+            selectedCriteria: t.selectedCriteria || [],
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching research types:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Add to list
-    setResearchTypes([...researchTypes, newResearchType]);
+    fetchResearchTypes();
+  }, []);
 
-    // Reset form
+  // Load WCAG criteria from API
+  useEffect(() => {
+    const fetchCriteria = async () => {
+      try {
+        const response = await fetch('/api/wcag-criteria');
+        if (response.ok) {
+          const data = await response.json();
+          setWcagCriteria(data);
+        }
+      } catch (error) {
+        console.error('Error fetching WCAG criteria:', error);
+      }
+    };
+
+    fetchCriteria();
+  }, []);
+
+  // Close Beheer menu and context menus on click outside or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (showBeheerMenu &&
+          !target.closest('.beheer-menu') &&
+          !target.closest('.beheer-button')) {
+        setShowBeheerMenu(false);
+      }
+
+      if (openMenuId && !target.closest('.context-menu') && !target.closest('.menu-button')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (showBeheerMenu) setShowBeheerMenu(false);
+        if (openMenuId) setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscapeKey);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showBeheerMenu, openMenuId]);
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Weet je zeker dat je dit onderzoekstype wilt verwijderen?')) {
+      try {
+        const response = await fetch(`/api/research-types/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          setResearchTypes(researchTypes.filter(type => type.id !== id));
+          console.log('Research type deleted:', id);
+        } else {
+          alert('Er is een fout opgetreden bij het verwijderen van het onderzoekstype.');
+        }
+      } catch (error) {
+        console.error('Error deleting research type:', error);
+        alert('Er is een fout opgetreden bij het verwijderen van het onderzoekstype.');
+      }
+      setOpenMenuId(null);
+    }
+  };
+
+  const openEditModal = (type: ResearchType) => {
+    setIsCreating(false);
+    setEditingType(type);
+    setFormData({
+      name: type.name,
+      description: type.description,
+      version: type.version,
+      level: type.level,
+      type: type.type,
+      reportIntro: type.reportIntro || '',
+      reportIntroPdf: type.reportIntroPdf || '',
+      selectedCriteria: type.selectedCriteria || []
+    });
+    setShowCreateModal(true);
+    setOpenMenuId(null);
+  };
+
+  const openCreateModal = () => {
+    setIsCreating(true);
+    setEditingType(null);
     setFormData({
       name: '',
       description: '',
@@ -152,13 +227,108 @@ export default function OnderzoekstypenPage() {
       type: 'website',
       reportIntro: '',
       reportIntroPdf: '',
-      selectedCriteria: [],
+      selectedCriteria: []
     });
+    setShowCreateModal(true);
+  };
 
-    // Close modal and reset tabs
+  const closeModal = () => {
     setShowCreateModal(false);
+    setEditingType(null);
+    setIsCreating(false);
     setActiveTab('details');
     setReportTab('rapport-inleiding');
+    setFormData({
+      name: '',
+      description: '',
+      version: 'WCAG 2.2',
+      level: 'AA',
+      type: 'website',
+      reportIntro: '',
+      reportIntroPdf: '',
+      selectedCriteria: []
+    });
+  };
+
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (isCreating) {
+        // Create new research type
+        const response = await fetch('/api/research-types', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            version: formData.version,
+            level: formData.level,
+            type: formData.type,
+            description: formData.description,
+            reportIntro: formData.reportIntro,
+            reportIntroPdf: formData.reportIntroPdf,
+            selectedCriteria: formData.selectedCriteria,
+          }),
+        });
+
+        if (response.ok) {
+          const newResearchType = await response.json();
+          setResearchTypes([...researchTypes, {
+            ...newResearchType,
+            createdAt: new Date(newResearchType.createdAt),
+            updatedAt: new Date(newResearchType.updatedAt),
+            selectedCriteria: newResearchType.selectedCriteria || [],
+          }]);
+        } else {
+          alert('Er is een fout opgetreden bij het aanmaken van het onderzoekstype.');
+          return;
+        }
+      } else if (editingType) {
+        // Update existing research type
+        console.log('Updating research type:', editingType.id, formData);
+        const response = await fetch(`/api/research-types/${editingType.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            version: formData.version,
+            level: formData.level,
+            type: formData.type,
+            description: formData.description,
+            reportIntro: formData.reportIntro,
+            reportIntroPdf: formData.reportIntroPdf,
+            selectedCriteria: formData.selectedCriteria,
+          }),
+        });
+
+        console.log('Response status:', response.status, response.ok);
+
+        if (response.ok) {
+          const updatedResearchType = await response.json();
+          console.log('Updated research type:', updatedResearchType);
+
+          // Close modal and reload page to show updated data
+          closeModal();
+          window.location.reload();
+          return;
+        } else {
+          const errorData = await response.json();
+          console.error('Error response:', errorData);
+          alert(`Er is een fout opgetreden bij het bijwerken van het onderzoekstype: ${errorData.error || 'Onbekende fout'}`);
+          return;
+        }
+      }
+
+      closeModal();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Er is een fout opgetreden bij het opslaan van het onderzoekstype.');
+    }
   };
 
   // Filter and search
@@ -233,16 +403,105 @@ export default function OnderzoekstypenPage() {
                 </svg>
                 Bevindingen
               </Link>
-              <Link
-                href="/admin/beheer"
-                className="flex items-center gap-2 text-white hover:text-gray-300"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Beheer
-              </Link>
+              <div className="relative">
+                <button
+                  onClick={() => setShowBeheerMenu(!showBeheerMenu)}
+                  className="beheer-button flex items-center gap-2 text-white hover:text-gray-300"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Beheer
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Beheer Dropdown Menu */}
+                {showBeheerMenu && (
+                  <div className="beheer-menu absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <Link
+                      href="/admin/onderzoekstypen"
+                      onClick={() => setShowBeheerMenu(false)}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Onderzoekstypen
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/projecten"
+                      onClick={() => setShowBeheerMenu(false)}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Projecten
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/opdrachtgevers"
+                      onClick={() => setShowBeheerMenu(false)}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Opdrachtgevers
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/crawler-tests"
+                      onClick={() => setShowBeheerMenu(false)}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Crawler tests
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/beoordelingen"
+                      onClick={() => setShowBeheerMenu(false)}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Beoordelingen
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/team"
+                      onClick={() => setShowBeheerMenu(false)}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Team
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </nav>
           </div>
         </div>
@@ -259,7 +518,7 @@ export default function OnderzoekstypenPage() {
             <h1 className="text-2xl font-semibold">Onderzoekstypen ({sortedTypes.length})</h1>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={openCreateModal}
             className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors"
           >
             <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -307,7 +566,7 @@ export default function OnderzoekstypenPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -331,12 +590,42 @@ export default function OnderzoekstypenPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{type.description}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-gray-400 hover:text-gray-600">
+                  <td className="px-6 py-4 text-right relative">
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === type.id ? null : type.id)}
+                      className="menu-button text-gray-400 hover:text-gray-600"
+                    >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                       </svg>
                     </button>
+
+                    {/* Context Menu */}
+                    {openMenuId === type.id && (
+                      <div
+                        className="context-menu absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                        style={{ zIndex: 9999 }}
+                      >
+                        <button
+                          onClick={() => openEditModal(type)}
+                          className="sample-menu-item flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Bewerken
+                        </button>
+                        <button
+                          onClick={() => handleDelete(type.id)}
+                          className="sample-menu-item-delete flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Verwijderen
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -378,9 +667,11 @@ export default function OnderzoekstypenPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-semibold text-gray-900">Nieuw onderzoekstype</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {isCreating ? 'Nieuw onderzoekstype' : 'Onderzoekstype bewerken'}
+              </h2>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -515,111 +806,49 @@ export default function OnderzoekstypenPage() {
                     </div>
                   </div>
 
-                  {/* WYSIWYG Editor */}
+                  {/* Markdown Editor */}
                   <div>
-                    <div className="border border-gray-300 rounded-md">
-                      {/* Toolbar */}
-                      <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-gray-300 bg-white">
-                        <div className="flex items-center gap-1">
-                          <button type="button" onClick={() => formatText('**')} className="editor-toolbar-button p-1.5" title="Bold">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"></path>
-                            </svg>
-                          </button>
-                          <button type="button" onClick={() => formatText('*')} className="editor-toolbar-button p-1.5" title="Italic">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <line x1="19" x2="10" y1="4" y2="4"></line>
-                              <line x1="14" x2="5" y1="20" y2="20"></line>
-                              <line x1="15" x2="9" y1="4" y2="20"></line>
-                            </svg>
-                          </button>
-                          <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" onClick={() => formatList('-')} className="editor-toolbar-button p-1.5" title="Unordered list">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M3 5h.01"></path>
-                              <path d="M3 12h.01"></path>
-                              <path d="M3 19h.01"></path>
-                              <path d="M8 5h13"></path>
-                              <path d="M8 12h13"></path>
-                              <path d="M8 19h13"></path>
-                            </svg>
-                          </button>
-                          <button type="button" onClick={() => formatList('1.')} className="editor-toolbar-button p-1.5" title="Ordered list">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M11 5h10"></path>
-                              <path d="M11 12h10"></path>
-                              <path d="M11 19h10"></path>
-                              <path d="M4 4h1v5"></path>
-                              <path d="M4 9h2"></path>
-                              <path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"></path>
-                            </svg>
-                          </button>
-                          <button type="button" onClick={() => formatList('>')} className="editor-toolbar-button p-1.5" title="Quote">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
-                              <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
-                            </svg>
-                          </button>
-                          <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" onClick={() => formatText('`')} className="editor-toolbar-button p-1.5" title="Inline code">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="m16 18 6-6-6-6"></path>
-                              <path d="m8 6-6 6 6 6"></path>
-                            </svg>
-                          </button>
-                          <button type="button" onClick={() => formatText('```\n', '\n```')} className="editor-toolbar-button p-1.5" title="Code block">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="m10 9-3 3 3 3"></path>
-                              <path d="m14 15 3-3-3-3"></path>
-                              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                            </svg>
-                          </button>
-                          <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Undo">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
-                              <path d="m9 17-5-5 5-5"></path>
-                            </svg>
-                          </button>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Redo">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="m15 17 5-5-5-5"></path>
-                              <path d="M4 18v-2a4 4 0 0 1 4-4h12"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Fullscreen">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M15 3h6v6"></path>
-                              <path d="m21 3-7 7"></path>
-                              <path d="m3 21 7-7"></path>
-                              <path d="M9 21H3v-6"></path>
-                            </svg>
-                          </button>
-                          <button type="button" className="editor-toolbar-button p-1.5" title="Preview">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
-                              <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Text area */}
-                      <textarea
-                        ref={textareaRef}
-                        value={reportTab === 'rapport-inleiding' ? formData.reportIntro : formData.reportIntroPdf}
-                        onChange={(e) => setFormData({
+                    {mounted && (
+                      <MdEditor
+                        key={reportTab}
+                        modelValue={reportTab === 'rapport-inleiding' ? formData.reportIntro : formData.reportIntroPdf}
+                        onChange={(content) => setFormData({
                           ...formData,
-                          [reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf']: e.target.value
+                          [reportTab === 'rapport-inleiding' ? 'reportIntro' : 'reportIntroPdf']: content
                         })}
-                        rows={12}
-                        className="w-full px-4 py-3 focus:outline-none focus:ring-0 border-0 resize-none"
-                        placeholder={reportTab === 'rapport-inleiding'
-                          ? "Voer hier de inleiding voor het rapport in..."
-                          : "Voer hier de PDF-specifieke inleiding voor het rapport in..."}
+                        language="en-US"
+                        theme="light"
+                        previewTheme="default"
+                        codeTheme="github"
+                        showCodeRowNumber={true}
+                        toolbars={[
+                          'bold',
+                          'underline',
+                          'italic',
+                          'strikeThrough',
+                          '-',
+                          'title',
+                          'sub',
+                          'sup',
+                          'quote',
+                          'unorderedList',
+                          'orderedList',
+                          '-',
+                          'codeRow',
+                          'code',
+                          'link',
+                          'image',
+                          'table',
+                          '-',
+                          'revoke',
+                          'next',
+                          '=',
+                          'previewOnly',
+                          'htmlPreview',
+                          'catalog',
+                        ]}
                       />
-                    </div>
+                    )}
                   </div>
 
                   {/* Opslaan button */}
@@ -638,130 +867,48 @@ export default function OnderzoekstypenPage() {
                 <>
                   <div className="mb-4">
                     <h3 className="text-sm font-medium text-gray-700 mb-3">Selecteer succescriteria</h3>
-                    <div className="max-h-[500px] overflow-y-auto border border-gray-300 rounded-md">
-                      <div className="divide-y divide-gray-200">
-                        {[
-                          { id: '1.1.1', name: 'Niet-tekstuele content', level: 'A' },
-                          { id: '1.2.1', name: 'Louter-geluid en louter-videobeeld (vooraf opgenomen)', level: 'A' },
-                          { id: '1.2.2', name: 'Ondertitels voor doven en slechthorenden (vooraf opgenomen)', level: 'A' },
-                          { id: '1.2.3', name: 'Audiodescriptie of media-alternatief (vooraf opgenomen)', level: 'A' },
-                          { id: '1.2.4', name: 'Ondertitels voor doven en slechthorenden (live)', level: 'AA' },
-                          { id: '1.2.5', name: 'Audiodescriptie (vooraf opgenomen)', level: 'AA' },
-                          { id: '1.2.6', name: 'Gebarentaal (vooraf opgenomen)', level: 'AAA' },
-                          { id: '1.2.7', name: 'Uitgebreide audiodescriptie (vooraf opgenomen)', level: 'AAA' },
-                          { id: '1.2.8', name: 'Media-alternatief (vooraf opgenomen)', level: 'AAA' },
-                          { id: '1.2.9', name: 'Louter-geluid (live)', level: 'AAA' },
-                          { id: '1.3.1', name: 'Info en relaties', level: 'A' },
-                          { id: '1.3.2', name: 'Betekenisvolle volgorde', level: 'A' },
-                          { id: '1.3.3', name: 'Zintuiglijke eigenschappen', level: 'A' },
-                          { id: '1.3.4', name: 'Weergavestand', level: 'AA' },
-                          { id: '1.3.5', name: 'Identificeer het doel van de input', level: 'AA' },
-                          { id: '1.3.6', name: 'Identificeer het doel', level: 'AAA' },
-                          { id: '1.4.1', name: 'Gebruik van kleur', level: 'A' },
-                          { id: '1.4.2', name: 'Geluidsbediening', level: 'A' },
-                          { id: '1.4.3', name: 'Contrast (minimum)', level: 'AA' },
-                          { id: '1.4.4', name: 'Herschalen van tekst', level: 'AA' },
-                          { id: '1.4.5', name: 'Afbeeldingen van tekst', level: 'AA' },
-                          { id: '1.4.6', name: 'Contrast (versterkt)', level: 'AAA' },
-                          { id: '1.4.7', name: 'Weinig of geen achtergrondgeluid', level: 'AAA' },
-                          { id: '1.4.8', name: 'Visuele weergave', level: 'AAA' },
-                          { id: '1.4.9', name: 'Afbeeldingen van tekst (geen uitzondering)', level: 'AAA' },
-                          { id: '1.4.10', name: 'Reflow', level: 'AA' },
-                          { id: '1.4.11', name: 'Contrast van niet-tekstuele content', level: 'AA' },
-                          { id: '1.4.12', name: 'Tekstafstand', level: 'AA' },
-                          { id: '1.4.13', name: 'Content bij hover of focus', level: 'AA' },
-                          { id: '2.1.1', name: 'Toetsenbord', level: 'A' },
-                          { id: '2.1.2', name: 'Geen toetsenbordval', level: 'A' },
-                          { id: '2.1.3', name: 'Toetsenbord (geen uitzondering)', level: 'AAA' },
-                          { id: '2.1.4', name: 'Enkel teken sneltoetsen', level: 'A' },
-                          { id: '2.2.1', name: 'Timing aanpasbaar', level: 'A' },
-                          { id: '2.2.2', name: 'Pauzeren, stoppen, verbergen', level: 'A' },
-                          { id: '2.2.3', name: 'Geen timing', level: 'AAA' },
-                          { id: '2.2.4', name: 'Onderbrekingen', level: 'AAA' },
-                          { id: '2.2.5', name: 'Herauthenticatie', level: 'AAA' },
-                          { id: '2.2.6', name: 'Time-outs', level: 'AAA' },
-                          { id: '2.3.1', name: 'Drie flitsen of beneden drempelwaarde', level: 'A' },
-                          { id: '2.3.2', name: 'Drie flitsen', level: 'AAA' },
-                          { id: '2.3.3', name: 'Animatie uit interacties', level: 'AAA' },
-                          { id: '2.4.1', name: 'Blokken omzeilen', level: 'A' },
-                          { id: '2.4.2', name: 'Paginatitel', level: 'A' },
-                          { id: '2.4.3', name: 'Focus volgorde', level: 'A' },
-                          { id: '2.4.4', name: 'Linkdoel (in context)', level: 'A' },
-                          { id: '2.4.5', name: 'Meerdere manieren', level: 'AA' },
-                          { id: '2.4.6', name: 'Koppen en labels', level: 'AA' },
-                          { id: '2.4.7', name: 'Focus zichtbaar', level: 'AA' },
-                          { id: '2.4.8', name: 'Locatie', level: 'AAA' },
-                          { id: '2.4.9', name: 'Linkdoel (alleen link)', level: 'AAA' },
-                          { id: '2.4.10', name: 'Sectiekoppen', level: 'AAA' },
-                          { id: '2.4.11', name: 'Focus niet bedekt (minimum)', level: 'AA' },
-                          { id: '2.4.12', name: 'Focus niet bedekt (versterkt)', level: 'AAA' },
-                          { id: '2.4.13', name: 'Focus weergave', level: 'AAA' },
-                          { id: '2.5.1', name: 'Aanwijzergebaren', level: 'A' },
-                          { id: '2.5.2', name: 'Aanwijzerannulering', level: 'A' },
-                          { id: '2.5.3', name: 'Label in naam', level: 'A' },
-                          { id: '2.5.4', name: 'Bewegingsactivering', level: 'A' },
-                          { id: '2.5.5', name: 'Grootte van het aanwijsgebied (versterkt)', level: 'AAA' },
-                          { id: '2.5.6', name: 'Gelijktijdige invoermechanismen', level: 'AAA' },
-                          { id: '2.5.7', name: 'Sleepbewegingen', level: 'AA' },
-                          { id: '2.5.8', name: 'Grootte van het aanwijsgebied (minimum)', level: 'AA' },
-                          { id: '3.1.1', name: 'Taal van de pagina', level: 'A' },
-                          { id: '3.1.2', name: 'Taal van onderdelen', level: 'AA' },
-                          { id: '3.1.3', name: 'Ongebruikelijke woorden', level: 'AAA' },
-                          { id: '3.1.4', name: 'Afkortingen', level: 'AAA' },
-                          { id: '3.1.5', name: 'Leesniveau', level: 'AAA' },
-                          { id: '3.1.6', name: 'Uitspraak', level: 'AAA' },
-                          { id: '3.2.1', name: 'Bij focus', level: 'A' },
-                          { id: '3.2.2', name: 'Bij input', level: 'A' },
-                          { id: '3.2.3', name: 'Consistente navigatie', level: 'AA' },
-                          { id: '3.2.4', name: 'Consistente identificatie', level: 'AA' },
-                          { id: '3.2.5', name: 'Verandering op verzoek', level: 'AAA' },
-                          { id: '3.2.6', name: 'Consistente hulp', level: 'A' },
-                          { id: '3.3.1', name: 'Fout identificatie', level: 'A' },
-                          { id: '3.3.2', name: 'Labels of instructies', level: 'A' },
-                          { id: '3.3.3', name: 'Foutsuggestie', level: 'AA' },
-                          { id: '3.3.4', name: 'Foutpreventie (wettelijk, financieel, gegevens)', level: 'AA' },
-                          { id: '3.3.5', name: 'Hulp', level: 'AAA' },
-                          { id: '3.3.6', name: 'Foutpreventie (alle)', level: 'AAA' },
-                          { id: '3.3.7', name: 'Redundante invoer', level: 'A' },
-                          { id: '3.3.8', name: 'Toegankelijke authenticatie (minimum)', level: 'AA' },
-                          { id: '3.3.9', name: 'Toegankelijke authenticatie (versterkt)', level: 'AAA' },
-                          { id: '4.1.1', name: 'Parsen', level: 'A' },
-                          { id: '4.1.2', name: 'Naam, rol, waarde', level: 'A' },
-                          { id: '4.1.3', name: 'Statusberichten', level: 'AA' },
-                        ].map((criterion) => {
-                          const isSelected = formData.selectedCriteria.includes(criterion.id);
-                          return (
-                            <label
-                              key={criterion.id}
-                              className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setFormData({
-                                      ...formData,
-                                      selectedCriteria: [...formData.selectedCriteria, criterion.id],
-                                    });
-                                  } else {
-                                    setFormData({
-                                      ...formData,
-                                      selectedCriteria: formData.selectedCriteria.filter((id) => id !== criterion.id),
-                                    });
-                                  }
-                                }}
-                                className="w-4 h-4 text-shift2-primary border-gray-300 rounded focus:ring-shift2-primary"
-                              />
-                              <span className="ml-3 text-sm text-gray-700 flex-1">{criterion.id} - {criterion.name}</span>
-                              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                                {criterion.level}
-                              </span>
-                            </label>
-                          );
-                        })}
+                    {wcagCriteria.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        Laden...
                       </div>
-                    </div>
+                    ) : (
+                      <div className="max-h-[500px] overflow-y-auto border border-gray-300 rounded-md">
+                        <div className="divide-y divide-gray-200">
+                          {wcagCriteria.map((criterion) => {
+                            const isSelected = formData.selectedCriteria.includes(criterion.id);
+                            return (
+                              <label
+                                key={criterion.id}
+                                className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setFormData({
+                                        ...formData,
+                                        selectedCriteria: [...formData.selectedCriteria, criterion.id],
+                                      });
+                                    } else {
+                                      setFormData({
+                                        ...formData,
+                                        selectedCriteria: formData.selectedCriteria.filter((id) => id !== criterion.id),
+                                      });
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-shift2-primary border-gray-300 rounded focus:ring-shift2-primary"
+                                />
+                                <span className="ml-3 text-sm text-gray-700 flex-1">{criterion.code} - {criterion.titleNl}</span>
+                                <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                                  {criterion.level}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Opslaan button */}

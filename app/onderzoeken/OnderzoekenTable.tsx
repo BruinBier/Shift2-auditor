@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 interface Project {
   id: string;
+  kenmerk?: string;
   title: string;
   subject: string;
   standard: string;
@@ -27,6 +28,9 @@ interface Project {
   description: string | null;
   isAnonymous: boolean;
   isPrivate: boolean;
+  clientProjectId: string | null;
+  commissionedBy: string | null;
+  clientProject?: any;
 }
 
 interface Props {
@@ -39,6 +43,7 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [sortBy, setSortBy] = useState('dateStart');
   const [showFilters, setShowFilters] = useState(false);
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
+  const [showBevindingenMenu, setShowBevindingenMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -46,7 +51,9 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    auditedByOrg: 'Shift2',
+    auditedByOrg: '',
+    commissionedBy: '',
+    clientProjectId: '',
     version: '1',
     language: 'Nederlands',
     researchType: '',
@@ -75,6 +82,10 @@ export default function OnderzoekenTable({ projects }: Props) {
     controleur: '',
     onderzoekstype: '',
   });
+  const [availableResearchTypes, setAvailableResearchTypes] = useState<string[]>([]);
+  const [availableOpdrachtgevers, setAvailableOpdrachtgevers] = useState<Array<{ id: string; kenmerk: string; naam: string }>>([]);
+  const [clientProjects, setClientProjects] = useState<any[]>([]);
+  const [filteredClientProjects, setFilteredClientProjects] = useState<any[]>([]);
   const itemsPerPage = 20;
 
   // Close context menu on click outside or Escape key
@@ -161,6 +172,34 @@ export default function OnderzoekenTable({ projects }: Props) {
     };
   }, [showBeheerMenu]);
 
+  // Close Bevindingen menu on click outside or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showBevindingenMenu &&
+          !target.closest('.bevindingen-menu') &&
+          !target.closest('.bevindingen-button')) {
+        setShowBevindingenMenu(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showBevindingenMenu) {
+        setShowBevindingenMenu(false);
+      }
+    };
+
+    if (showBevindingenMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showBevindingenMenu]);
+
   // Close tooltips when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -180,6 +219,70 @@ export default function OnderzoekenTable({ projects }: Props) {
     };
   }, [showAnonymousTooltip, showPrivateTooltip]);
 
+  // Load research types from database
+  useEffect(() => {
+    const fetchResearchTypes = async () => {
+      try {
+        const response = await fetch('/api/research-types');
+        if (response.ok) {
+          const data = await response.json();
+          const names = data.map((rt: any) => rt.name);
+          setAvailableResearchTypes(names);
+        }
+      } catch (error) {
+        console.error('Error loading research types:', error);
+      }
+    };
+
+    fetchResearchTypes();
+  }, []);
+
+  // Load opdrachtgevers from database
+  useEffect(() => {
+    const fetchOpdrachtgevers = async () => {
+      try {
+        const response = await fetch('/api/opdrachtgevers');
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableOpdrachtgevers(data.map((o: any) => ({ id: o.id, kenmerk: o.kenmerk, naam: o.naam })));
+        }
+      } catch (error) {
+        console.error('Error loading opdrachtgevers:', error);
+      }
+    };
+
+    fetchOpdrachtgevers();
+  }, []);
+
+  // Load client projects from database
+  useEffect(() => {
+    const fetchClientProjects = async () => {
+      try {
+        const response = await fetch('/api/client-projects');
+        if (response.ok) {
+          const data = await response.json();
+          setClientProjects(data);
+        }
+      } catch (error) {
+        console.error('Error loading client projects:', error);
+      }
+    };
+
+    fetchClientProjects();
+  }, []);
+
+  // Filter client projects based on opdrachtgever
+  useEffect(() => {
+    if (formData.auditedByOrg) {
+      const filtered = clientProjects.filter(
+        (project) => project.opdrachtgever.naam === formData.auditedByOrg
+      );
+      setFilteredClientProjects(filtered);
+    } else {
+      setFilteredClientProjects([]);
+    }
+  }, [formData.auditedByOrg, clientProjects]);
+
   const openEditModal = (project: Project) => {
     setEditingProject(project);
 
@@ -198,10 +301,14 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     setFormData({
       title: project.title,
-      auditedByOrg: project.auditedByOrg || 'Shift2',
+      auditedByOrg: project.auditedByOrg || '',
+      commissionedBy: project.commissionedBy || '',
+      clientProjectId: project.clientProjectId || '',
       version: String(project.version),
       language: project.language,
       researchType: project.researchType,
+      standard: project.standard,
+      level: project.level,
       status: project.status,
       researcherName: project.researcherName || '',
       controllerName: project.controllerName || '',
@@ -224,7 +331,9 @@ export default function OnderzoekenTable({ projects }: Props) {
     setEditingProject(null);
     setFormData({
       title: '',
-      auditedByOrg: 'Shift2',
+      auditedByOrg: '',
+      commissionedBy: '',
+      clientProjectId: '',
       version: '1',
       language: 'Nederlands',
       researchType: '',
@@ -247,7 +356,9 @@ export default function OnderzoekenTable({ projects }: Props) {
   const openCreateModal = () => {
     setFormData({
       title: '',
-      auditedByOrg: 'Shift2',
+      auditedByOrg: '',
+      commissionedBy: '',
+      clientProjectId: '',
       version: '1',
       language: 'Nederlands',
       researchType: 'Volledig onderzoek',
@@ -272,7 +383,9 @@ export default function OnderzoekenTable({ projects }: Props) {
     setShowCreateModal(false);
     setFormData({
       title: '',
-      auditedByOrg: 'Shift2',
+      auditedByOrg: '',
+      commissionedBy: '',
+      clientProjectId: '',
       version: '1',
       language: 'Nederlands',
       researchType: '',
@@ -299,7 +412,7 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     const payload = {
       ...formData,
-      version: parseInt(formData.version) || 1,
+      version: parseFloat(formData.version) || 1.0,
       dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
       dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
@@ -331,7 +444,7 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     const payload = {
       ...formData,
-      version: parseInt(formData.version) || 1,
+      version: parseFloat(formData.version) || 1.0,
       dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
       dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
@@ -379,8 +492,28 @@ export default function OnderzoekenTable({ projects }: Props) {
     }
   };
 
-  // Generate kenmerk (identifier) from index
-  const getKenmerk = (index: number) => `SHP-${index + 1}`;
+  // Get kenmerk from database (or generate fallback)
+  const getKenmerk = (project: Project) => {
+    // Use the kenmerk from the database if it exists
+    if (project.kenmerk) {
+      return project.kenmerk;
+    }
+
+    // Fallback: generate kenmerk if not in database (for old projects)
+    const opdrachtgever = availableOpdrachtgevers.find(o => o.naam === project.auditedByOrg);
+    const kenmerk = opdrachtgever?.kenmerk || 'SHP';
+
+    const projectsFromSameOrg = projects
+      .filter(p => p.auditedByOrg === project.auditedByOrg)
+      .sort((a, b) => {
+        const dateA = new Date(a.reportDate).getTime();
+        const dateB = new Date(b.reportDate).getTime();
+        return dateA - dateB;
+      });
+
+    const projectIndex = projectsFromSameOrg.findIndex(p => p.id === project.id);
+    return `${kenmerk}-${projectIndex + 1}`;
+  };
 
   // Filter and search projects
   const filteredProjects = projects.filter((project) => {
@@ -395,7 +528,7 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     // Apply filters
     const matchesOpdrachtgever = !filters.opdrachtgever || project.auditedByOrg === filters.opdrachtgever;
-    const matchesProject = !filters.project || project.title === filters.project;
+    const matchesProject = !filters.project || project.clientProject?.name === filters.project;
     const matchesStatus = !filters.status || project.status === filters.status;
     const matchesTaal = !filters.taal || project.language === filters.taal;
     const matchesOnderzoeker = !filters.onderzoeker || project.researcherName === filters.onderzoeker;
@@ -456,18 +589,59 @@ export default function OnderzoekenTable({ projects }: Props) {
                 </svg>
                 Onderzoeken
               </Link>
-              <Link
-                href="/admin/bevindingen"
-                className="flex items-center gap-2 text-white hover:text-gray-300"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Bevindingen
-              </Link>
               <div className="relative">
                 <button
-                  onClick={() => setShowBeheerMenu(!showBeheerMenu)}
+                  onClick={() => setShowBevindingenMenu(!showBevindingenMenu)}
+                  className="bevindingen-button flex items-center gap-2 text-white hover:text-gray-300"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Bevindingen
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Bevindingen Dropdown Menu */}
+                {showBevindingenMenu && (
+                  <div className="bevindingen-menu absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <Link
+                      href="/admin/bevindingen-zoeken"
+                      onClick={() => setShowBevindingenMenu(false)}
+                      className="bevindingen-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Bevindingen zoeken
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/snelle-bevindingen"
+                      onClick={() => setShowBevindingenMenu(false)}
+                      className="bevindingen-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                      style={{ transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Snelle bevindingen
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    console.log('Beheer button clicked, current state:', showBeheerMenu);
+                    setShowBeheerMenu(!showBeheerMenu);
+                    console.log('New state should be:', !showBeheerMenu);
+                  }}
                   className="beheer-button flex items-center gap-2 text-white hover:text-gray-300"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -681,8 +855,8 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary"
                     >
                       <option value="">Alle</option>
-                      {Array.from(new Set(projects.map(p => p.title))).map(title => (
-                        <option key={title} value={title}>{title}</option>
+                      {Array.from(new Set(projects.filter(p => p.clientProject?.name).map(p => p.clientProject.name))).map(name => (
+                        <option key={name} value={name}>{name}</option>
                       ))}
                     </select>
                   </div>
@@ -814,17 +988,17 @@ export default function OnderzoekenTable({ projects }: Props) {
             <tbody className="divide-y divide-gray-200">
               {paginatedProjects.map((project, index) => (
                 <tr key={project.id}>
-                  <td className="px-6 py-4 text-sm text-gray-900">{getKenmerk(startIndex + index)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{getKenmerk(project)}</td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 whitespace-nowrap">
                       {project.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">{project.title}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{project.version}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{project.language}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    {project.standard} {project.level} – {project.researchType}
+                    {project.researchType}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">{project.researcherName || '-'}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{project.controllerName || '-'}</td>
@@ -991,18 +1165,34 @@ export default function OnderzoekenTable({ projects }: Props) {
                   />
                 </div>
 
-                {/* Project */}
+                {/* Opdrachtgever */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project <span className="text-gray-400">vereist</span>
+                    Opdrachtgever <span className="text-gray-400">vereist</span>
                   </label>
                   <select
                     required
                     value={formData.auditedByOrg}
-                    onChange={(e) => setFormData({ ...formData, auditedByOrg: e.target.value })}
+                    onChange={(e) => {
+                      const newOpdrachtgever = e.target.value;
+                      // If changing opdrachtgever, clear clientProjectId if it doesn't match
+                      const currentClientProject = clientProjects.find(p => p.id === formData.clientProjectId);
+                      const shouldClearProject = currentClientProject && currentClientProject.opdrachtgever.naam !== newOpdrachtgever;
+
+                      setFormData({
+                        ...formData,
+                        auditedByOrg: newOpdrachtgever,
+                        clientProjectId: shouldClearProject ? '' : formData.clientProjectId,
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
-                    <option value="Shift2">Shift2</option>
+                    <option value="">Selecteer...</option>
+                    {availableOpdrachtgevers.map((opdrachtgever) => (
+                      <option key={opdrachtgever.id} value={opdrachtgever.naam}>
+                        {opdrachtgever.kenmerk} - {opdrachtgever.naam}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1028,6 +1218,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     </label>
                     <input
                       type="number"
+                      step="0.1"
                       value={formData.version}
                       onChange={(e) => setFormData({ ...formData, version: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -1035,17 +1226,22 @@ export default function OnderzoekenTable({ projects }: Props) {
                   </div>
                 </div>
 
-                {/* Onderzoekstype (readonly) */}
+                {/* Onderzoekstype (dropdown with research types from localStorage) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Onderzoekstype <span className="text-gray-400">vereist</span>
                   </label>
-                  <input
-                    type="text"
-                    disabled
-                    value={editingProject ? `${editingProject.standard} ${editingProject.level} – ${editingProject.researchType}` : ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                  />
+                  <select
+                    required
+                    value={formData.researchType}
+                    onChange={(e) => setFormData({ ...formData, researchType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  >
+                    <option value="">Selecteer...</option>
+                    {availableResearchTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Status */}
@@ -1065,6 +1261,38 @@ export default function OnderzoekenTable({ projects }: Props) {
                     <option value="In de wacht">In de wacht</option>
                     <option value="Gereed">Gereed</option>
                   </select>
+                </div>
+
+                {/* Project selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project
+                  </label>
+                  <select
+                    value={formData.clientProjectId}
+                    onChange={(e) => {
+                      const selectedProject = clientProjects.find(p => p.id === e.target.value);
+                      setFormData({
+                        ...formData,
+                        clientProjectId: e.target.value,
+                        commissionedBy: selectedProject?.opdrachtgever.naam || formData.auditedByOrg
+                      });
+                    }}
+                    disabled={!formData.auditedByOrg}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Geen project</option>
+                    {formData.auditedByOrg && clientProjects
+                      .filter(p => p.opdrachtgever.naam === formData.auditedByOrg)
+                      .map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                  </select>
+                  {!formData.auditedByOrg && (
+                    <p className="mt-1 text-xs text-gray-500">Selecteer eerst een opdrachtgever</p>
+                  )}
                 </div>
 
                 {/* Onderzoeker and Controleur */}
@@ -1306,18 +1534,34 @@ export default function OnderzoekenTable({ projects }: Props) {
                   />
                 </div>
 
-                {/* Project */}
+                {/* Opdrachtgever */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project <span className="text-gray-400">vereist</span>
+                    Opdrachtgever <span className="text-gray-400">vereist</span>
                   </label>
                   <select
                     required
                     value={formData.auditedByOrg}
-                    onChange={(e) => setFormData({ ...formData, auditedByOrg: e.target.value })}
+                    onChange={(e) => {
+                      const newOpdrachtgever = e.target.value;
+                      // If changing opdrachtgever, clear clientProjectId if it doesn't match
+                      const currentClientProject = clientProjects.find(p => p.id === formData.clientProjectId);
+                      const shouldClearProject = currentClientProject && currentClientProject.opdrachtgever.naam !== newOpdrachtgever;
+
+                      setFormData({
+                        ...formData,
+                        auditedByOrg: newOpdrachtgever,
+                        clientProjectId: shouldClearProject ? '' : formData.clientProjectId,
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
-                    <option value="Shift2">Shift2</option>
+                    <option value="">Selecteer...</option>
+                    {availableOpdrachtgevers.map((opdrachtgever) => (
+                      <option key={opdrachtgever.id} value={opdrachtgever.naam}>
+                        {opdrachtgever.kenmerk} - {opdrachtgever.naam}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1343,6 +1587,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     </label>
                     <input
                       type="number"
+                      step="0.1"
                       value={formData.version}
                       onChange={(e) => setFormData({ ...formData, version: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -1350,56 +1595,22 @@ export default function OnderzoekenTable({ projects }: Props) {
                   </div>
                 </div>
 
-                {/* Onderzoekstype (editable for create) */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Standard <span className="text-gray-400">vereist</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.standard}
-                      onChange={(e) => setFormData({ ...formData, standard: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    >
-                      <option value="WCAG 2.2">WCAG 2.2</option>
-                      <option value="WCAG 2.1">WCAG 2.1</option>
-                      <option value="EN 301 549">EN 301 549</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Level <span className="text-gray-400">vereist</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.level}
-                      onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    >
-                      <option value="A">A</option>
-                      <option value="AA">AA</option>
-                      <option value="AAA">AAA</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Onderzoekstype <span className="text-gray-400">vereist</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.researchType}
-                      onChange={(e) => setFormData({ ...formData, researchType: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    >
-                      <option value="">Selecteer...</option>
-                      <option value="Volledig onderzoek">Volledig onderzoek</option>
-                      <option value="Steekproef">Steekproef</option>
-                      <option value="Vervolg">Vervolg</option>
-                    </select>
-                  </div>
+                {/* Onderzoekstype (dynamically loaded from database) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Onderzoekstype <span className="text-gray-400">vereist</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.researchType}
+                    onChange={(e) => setFormData({ ...formData, researchType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  >
+                    <option value="">Selecteer...</option>
+                    {availableResearchTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Status */}
@@ -1419,6 +1630,38 @@ export default function OnderzoekenTable({ projects }: Props) {
                     <option value="In de wacht">In de wacht</option>
                     <option value="Gereed">Gereed</option>
                   </select>
+                </div>
+
+                {/* Project selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project
+                  </label>
+                  <select
+                    value={formData.clientProjectId}
+                    onChange={(e) => {
+                      const selectedProject = clientProjects.find(p => p.id === e.target.value);
+                      setFormData({
+                        ...formData,
+                        clientProjectId: e.target.value,
+                        commissionedBy: selectedProject?.opdrachtgever.naam || formData.auditedByOrg
+                      });
+                    }}
+                    disabled={!formData.auditedByOrg}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Geen project</option>
+                    {formData.auditedByOrg && clientProjects
+                      .filter(p => p.opdrachtgever.naam === formData.auditedByOrg)
+                      .map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                  </select>
+                  {!formData.auditedByOrg && (
+                    <p className="mt-1 text-xs text-gray-500">Selecteer eerst een opdrachtgever</p>
+                  )}
                 </div>
 
                 {/* Onderzoeker and Controleur */}

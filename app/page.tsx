@@ -26,7 +26,7 @@ export default function Home() {
             </Link>
             <Link
               href="/onderzoeken"
-              className="px-6 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors"
+              className="px-6 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 hover:text-white transition-colors"
             >
               Bekijk Onderzoeken
             </Link>

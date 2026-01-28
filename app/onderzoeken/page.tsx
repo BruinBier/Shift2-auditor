@@ -3,6 +3,9 @@ import OnderzoekenTable from './OnderzoekenTable';
 
 export default async function OnderzoekekenPage() {
   const projects = await prisma.project.findMany({
+    include: {
+      clientProject: true,
+    },
     orderBy: { dateStart: 'desc' },
   });
 
@@ -15,6 +18,7 @@ export default async function OnderzoekekenPage() {
     reportDate: project.reportDate.toISOString(),
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
+    clientProject: project.clientProject,
   }));
 
   return <OnderzoekenTable projects={projectsData} />;

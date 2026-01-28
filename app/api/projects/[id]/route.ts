@@ -22,6 +22,7 @@ export async function PUT(
         status: body.status || 'In uitvoering',
         clientName: body.clientName,
         commissionedBy: body.commissionedBy,
+        clientProjectId: body.clientProjectId || null,
         auditedByOrg: body.auditedByOrg || 'Shift2',
         researcherName: body.researcherName,
         controllerName: body.controllerName,
@@ -34,6 +35,27 @@ export async function PUT(
         isAnonymous: body.isAnonymous || false,
         isPrivate: body.isPrivate || false,
       },
+    });
+
+    return NextResponse.json(project, { status: 200 });
+  } catch (error) {
+    console.error('Error updating project:', error);
+    return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const body = await request.json();
+
+    // Only update the fields that are provided in the request
+    const project = await prisma.project.update({
+      where: { id },
+      data: body,
     });
 
     return NextResponse.json(project, { status: 200 });

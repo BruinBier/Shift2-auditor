@@ -55,6 +55,7 @@ export interface ProjectWithRelations {
 
 export interface ReportStats {
   passed: number;
+  effectivePassed: number; // passed + not_present (for percentage calculation)
   failed: number;
   notPresent: number;
   unknown: number;
@@ -74,6 +75,7 @@ export interface PrincipleStats {
 export function calculateReportStats(project: ProjectWithRelations): ReportStats {
   const stats: ReportStats = {
     passed: 0,
+    effectivePassed: 0,
     failed: 0,
     notPresent: 0,
     unknown: 0,
@@ -106,6 +108,9 @@ export function calculateReportStats(project: ProjectWithRelations): ReportStats
 
   // Total assessed excludes not_tested
   stats.totalAssessed = stats.passed + stats.failed + stats.notPresent + stats.unknown;
+
+  // For percentage calculation, count not_present as passed (if feature is not present, criterion is met)
+  stats.effectivePassed = stats.passed + stats.notPresent;
 
   // Count problems (findings that are published or open)
   stats.totalProblems = project.findings.filter(
@@ -163,7 +168,7 @@ export function getStatusLabel(status: AssessmentStatus): string {
     failed: 'Afgekeurd',
     not_present: 'Niet aanwezig',
     unknown: 'Onbekend',
-    not_tested: 'Niet getest',
+    not_tested: 'Niet getoetst',
   };
   return labels[status];
 }
@@ -204,13 +209,16 @@ export interface GroupedFindings {
       assessment: {
         status: AssessmentStatus;
         notes: any;
-      };
+        explanation?: string;
+      } | null;
       findings: any[];
     }[];
   }[];
 }
 
-export function groupFindingsByHierarchy(project: ProjectWithRelations): GroupedFindings[] {
+export async function groupFindingsByHierarchy(project: ProjectWithRelations): Promise<GroupedFindings[]> {
+  const { prisma } = await import('@/lib/prisma');
+
   const principles = [
     WCAGPrinciple.Perceivable,
     WCAGPrinciple.Operable,
@@ -218,31 +226,63 @@ export function groupFindingsByHierarchy(project: ProjectWithRelations): Grouped
     WCAGPrinciple.Robust,
   ];
 
+  // Determine which levels to include based on project level
+  const includeLevels: WCAGLevel[] = [WCAGLevel.A];
+  if (project.level === 'AA' || project.level === 'AAA') {
+    includeLevels.push(WCAGLevel.AA);
+  }
+  if (project.level === 'AAA') {
+    includeLevels.push(WCAGLevel.AAA);
+  }
+
+  // Get ALL WCAG criteria for the project's level
+  const allCriteria = await prisma.wCAGCriterion.findMany({
+    where: {
+      level: { in: includeLevels },
+    },
+    orderBy: { code: 'asc' },
+  });
+
   return principles.map((principle) => {
-    // Get all criteria for this principle
-    const criteriaForPrinciple = project.criterionAssessments.filter(
-      (a) => a.wcagCriterion.principle === principle
+    // Get criteria for this principle
+    const criteriaForPrinciple = allCriteria.filter(
+      (c) => c.principle === principle
     );
 
     // Group by guideline
     const guidelinesMap = new Map<string, typeof criteriaForPrinciple>();
-    criteriaForPrinciple.forEach((assessment) => {
-      const guidelineCode = assessment.wcagCriterion.guidelineCode;
+    criteriaForPrinciple.forEach((criterion) => {
+      const guidelineCode = criterion.guidelineCode;
       if (!guidelinesMap.has(guidelineCode)) {
         guidelinesMap.set(guidelineCode, []);
       }
-      guidelinesMap.get(guidelineCode)!.push(assessment);
+      guidelinesMap.get(guidelineCode)!.push(criterion);
     });
 
     // Convert to array format
-    const guidelines = Array.from(guidelinesMap.entries()).map(([code, assessments]) => {
-      const guidelineTitle = assessments[0].wcagCriterion.guidelineTitleNl;
+    const guidelines = Array.from(guidelinesMap.entries()).map(([code, criteriaList]) => {
+      const guidelineTitle = criteriaList[0].guidelineTitleNl;
 
-      const criteria = assessments.map((assessment) => {
-        const criterion = assessment.wcagCriterion;
-        const findingsForCriterion = project.findings.filter(
-          (f: any) => f.wcagCriterionId === criterion.id
+      const criteria = criteriaList.map((criterion) => {
+        // Find assessment for this criterion
+        const assessment = project.criterionAssessments.find(
+          (a) => a.wcagCriterion.id === criterion.id
         );
+
+        const findingsForCriterion = project.findings
+          .filter((f: any) => f.wcagCriterionId === criterion.id)
+          .map((finding: any) => {
+            console.log('Finding in groupFindingsByHierarchy:', finding.findingCode);
+            console.log('Occurrences:', finding.occurrences);
+            console.log('SampleItem:', finding.occurrences?.[0]?.sampleItem);
+            return {
+              ...finding,
+              // Add sampleItem from first occurrence if available (for backward compatibility)
+              sampleItem: finding.occurrences?.[0]?.sampleItem || null,
+              // Keep the full occurrences array with sampleItem data
+              occurrences: finding.occurrences || [],
+            };
+          });
 
         return {
           id: criterion.id,
@@ -250,10 +290,13 @@ export function groupFindingsByHierarchy(project: ProjectWithRelations): Grouped
           title: criterion.titleNl,
           level: criterion.level,
           understandingUrl: criterion.understandingUrl,
-          assessment: {
-            status: assessment.status,
-            notes: assessment.notes,
-          },
+          assessment: assessment
+            ? {
+                status: assessment.status,
+                notes: assessment.notes,
+                explanation: (assessment as any).explanation,
+              }
+            : null,
           findings: findingsForCriterion,
         };
       });

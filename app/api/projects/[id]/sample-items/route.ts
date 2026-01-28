@@ -36,6 +36,29 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
+
+    let screenshotPath: string | null = null;
+
+    // If makeScreenshot is true and URL is provided, create a screenshot
+    if (body.makeScreenshot && body.url) {
+      try {
+        // Call the scan-url API to generate screenshot
+        const scanResponse = await fetch(`${request.nextUrl.origin}/api/scan-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: body.url }),
+        });
+
+        if (scanResponse.ok) {
+          const scanData = await scanResponse.json();
+          screenshotPath = scanData.screenshot;
+        }
+      } catch (error) {
+        console.error('Failed to create screenshot:', error);
+        // Continue creating the sample item even if screenshot fails
+      }
+    }
+
     const sampleItem = await prisma.sampleItem.create({
       data: {
         projectId: params.id,
@@ -44,6 +67,8 @@ export async function POST(
         url: body.url,
         description: body.description || '',
         orderIndex: body.orderIndex,
+        makeScreenshot: body.makeScreenshot || false,
+        screenshotPath: screenshotPath,
       },
     });
     return NextResponse.json(sampleItem, { status: 201 });

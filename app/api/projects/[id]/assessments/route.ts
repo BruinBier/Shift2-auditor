@@ -1,19 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 
-export async function GET(
+const prisma = new PrismaClient();
+
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const assessments = await prisma.criterionAssessment.findMany({
-      where: { projectId: params.id },
-      include: {
-        wcagCriterion: true,
+    const { wcagCriterionId, status, explanation } = await request.json();
+    const projectId = params.id;
+
+    // Check if assessment already exists
+    const existingAssessment = await prisma.criterionAssessment.findFirst({
+      where: {
+        projectId,
+        wcagCriterionId,
       },
     });
-    return NextResponse.json(assessments);
+
+    let assessment;
+    if (existingAssessment) {
+      // Update existing assessment
+      assessment = await prisma.criterionAssessment.update({
+        where: {
+          id: existingAssessment.id,
+        },
+        data: {
+          status,
+          explanation: explanation !== undefined ? explanation : existingAssessment.explanation,
+        },
+      });
+    } else {
+      // Create new assessment
+      assessment = await prisma.criterionAssessment.create({
+        data: {
+          projectId,
+          wcagCriterionId,
+          status,
+          explanation: explanation || null,
+        },
+      });
+    }
+
+    return NextResponse.json(assessment);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch assessments' }, { status: 500 });
+    console.error('Error saving assessment:', error);
+    return NextResponse.json(
+      { error: 'Failed to save assessment' },
+      { status: 500 }
+    );
   }
 }

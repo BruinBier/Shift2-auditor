@@ -23,6 +23,8 @@ export default function NewProjectPage() {
     description: '',
     isAnonymous: false,
     isPrivate: false,
+    commissionedBy: '',
+    clientProjectId: '',
     // Hidden fields with defaults
     subject: '',
     standard: 'WCAG 2.2',
@@ -31,6 +33,60 @@ export default function NewProjectPage() {
 
   const [showAnonymousTooltip, setShowAnonymousTooltip] = useState(false);
   const [showPrivateTooltip, setShowPrivateTooltip] = useState(false);
+  const [researchTypes, setResearchTypes] = useState<any[]>([]);
+  const [opdrachtgevers, setOpdrachtgevers] = useState<any[]>([]);
+  const [clientProjects, setClientProjects] = useState<any[]>([]);
+  const [filteredClientProjects, setFilteredClientProjects] = useState<any[]>([]);
+
+  // Fetch research types, opdrachtgevers, and client projects on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch research types
+        const researchTypesResponse = await fetch('/api/research-types');
+        if (researchTypesResponse.ok) {
+          const data = await researchTypesResponse.json();
+          setResearchTypes(data);
+        }
+
+        // Fetch opdrachtgevers
+        const opdrachtgeversResponse = await fetch('/api/opdrachtgevers');
+        if (opdrachtgeversResponse.ok) {
+          const data = await opdrachtgeversResponse.json();
+          setOpdrachtgevers(data);
+        }
+
+        // Fetch client projects
+        const clientProjectsResponse = await fetch('/api/client-projects');
+        if (clientProjectsResponse.ok) {
+          const data = await clientProjectsResponse.json();
+          setClientProjects(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Filter client projects when opdrachtgever changes
+  useEffect(() => {
+    if (formData.commissionedBy) {
+      const filtered = clientProjects.filter(
+        (project) => project.opdrachtgever.naam === formData.commissionedBy
+      );
+      setFilteredClientProjects(filtered);
+
+      // Reset clientProjectId if current selection is not in filtered list
+      if (formData.clientProjectId && !filtered.find(p => p.id === formData.clientProjectId)) {
+        setFormData(prev => ({ ...prev, clientProjectId: '' }));
+      }
+    } else {
+      setFilteredClientProjects([]);
+      setFormData(prev => ({ ...prev, clientProjectId: '' }));
+    }
+  }, [formData.commissionedBy, clientProjects]);
 
   // Close tooltips when clicking outside
   useEffect(() => {
@@ -234,10 +290,11 @@ export default function NewProjectPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
                     <option value="">Selecteer...</option>
-                    <option value="WCAG 2.2 AA – aanvullend deelonderzoek content">WCAG 2.2 AA – aanvullend deelonderzoek content</option>
-                    <option value="WCAG 2.2 AA – volledig onderzoek">WCAG 2.2 AA – volledig onderzoek</option>
-                    <option value="WCAG 2.1 AA – volledig onderzoek">WCAG 2.1 AA – volledig onderzoek</option>
-                    <option value="WCAG 2.0 AA – volledig onderzoek">WCAG 2.0 AA – volledig onderzoek</option>
+                    {researchTypes.map((type) => (
+                      <option key={type.id} value={type.name}>
+                        {type.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -259,6 +316,46 @@ export default function NewProjectPage() {
                   <option value="In de wacht">In de wacht</option>
                   <option value="Gereed">Gereed</option>
                 </select>
+              </div>
+
+              {/* Opdrachtgever and Project */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Opdrachtgever
+                  </label>
+                  <select
+                    value={formData.commissionedBy}
+                    onChange={(e) => setFormData({ ...formData, commissionedBy: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  >
+                    <option value="">Selecteer...</option>
+                    {opdrachtgevers.map((opdr) => (
+                      <option key={opdr.id} value={opdr.naam}>
+                        {opdr.kenmerk} - {opdr.naam}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project
+                  </label>
+                  <select
+                    value={formData.clientProjectId}
+                    onChange={(e) => setFormData({ ...formData, clientProjectId: e.target.value })}
+                    disabled={!formData.commissionedBy}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Selecteer...</option>
+                    {filteredClientProjects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Onderzoeker and Controleur */}

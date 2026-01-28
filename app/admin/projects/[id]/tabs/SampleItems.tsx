@@ -77,7 +77,7 @@ export default function SampleItems({ project }: { project: any }) {
         url: item.url || '',
         description: item.description || '',
         sampleType: item.sampleType || activeType,
-        makeScreenshot: false,
+        makeScreenshot: item.makeScreenshot || false,
       });
     } else {
       setEditingId(null);
@@ -368,7 +368,7 @@ export default function SampleItems({ project }: { project: any }) {
                     <tr key={item.id}>
                       <td className="py-4 pl-6 pr-4 align-top w-32">
                         <span className="text-sm text-gray-600">
-                          {item.sampleType === 'structured' ? 'structured' : item.sampleType === 'random' ? 'random' : 'pdf'}
+                          {item.sampleType === 'structured' ? 'structured' : item.sampleType === 'random' ? 'willekeurig' : 'pdf'}
                         </span>
                       </td>
                       <td className="py-4 px-4 align-top">
@@ -468,7 +468,7 @@ export default function SampleItems({ project }: { project: any }) {
             <div className="w-full min-h-64 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700">
               {sampleInfo ? (
                 <div
-                  className="prose prose-sm max-w-none"
+                  className="prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-4 [&_h4]:text-base [&_h4]:font-bold [&_h4]:mb-2 [&_h4]:mt-3 [&_h5]:text-sm [&_h5]:font-bold [&_h5]:mb-2 [&_h5]:mt-3 [&_h6]:text-sm [&_h6]:font-bold [&_h6]:mb-2 [&_h6]:mt-3"
                   dangerouslySetInnerHTML={{ __html: addTitleToLinks(sampleInfo) }}
                 />
               ) : (

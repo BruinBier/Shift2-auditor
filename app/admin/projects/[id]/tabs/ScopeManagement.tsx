@@ -3,8 +3,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { marked } from 'marked';
+import 'md-editor-rt/lib/style.css';
 
-const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
+// Configure marked to preserve line breaks
+marked.setOptions({
+  breaks: true, // Convert \n to <br>
+  gfm: true,    // GitHub Flavored Markdown
+});
+
+const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
+  ssr: false,
+  loading: () => <div className="border border-gray-300 rounded-lg p-4">Laden...</div>
+});
 
 interface ScopePage {
   id: string;
@@ -200,11 +211,15 @@ export default function ScopeManagement({ project }: { project: any }) {
           background-color: #F9FAFB !important;
         }
         button.scope-menu-button,
-        button.scope-menu-button[class] {
+        button.scope-menu-button[class],
+        a.scope-link-button,
+        a.scope-link-button[class] {
           background-color: transparent !important;
         }
         button.scope-menu-button:hover,
-        button.scope-menu-button[class]:hover {
+        button.scope-menu-button[class]:hover,
+        a.scope-link-button:hover,
+        a.scope-link-button[class]:hover {
           background-color: #F3F4F6 !important;
         }
         .scope-context-menu,
@@ -250,6 +265,15 @@ export default function ScopeManagement({ project }: { project: any }) {
         button.toolbar-button:hover,
         button.toolbar-button[class]:hover {
           background-color: #E5E7EB !important;
+        }
+        .prose p {
+          margin: 1rem 0;
+        }
+        .prose p:first-child {
+          margin-top: 0;
+        }
+        .prose p:last-child {
+          margin-bottom: 0;
         }
         .prose ul,
         .prose ol {
@@ -334,8 +358,8 @@ export default function ScopeManagement({ project }: { project: any }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Titel</label>
                 <input
                   type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
                   placeholder="Pagina titel"
                 />
@@ -343,8 +367,8 @@ export default function ScopeManagement({ project }: { project: any }) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Crawler type</label>
                 <select
-                  value={formData.crawlerType}
-                  onChange={(e) => setFormData({ ...formData, crawlerType: e.target.value })}
+                  value={'Productieomgeving'}
+                  onChange={(e) => {}}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
                 >
                   <option>Productieomgeving</option>
@@ -354,13 +378,13 @@ export default function ScopeManagement({ project }: { project: any }) {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleSubmit(true)}
+                  onClick={() => {}}
                   className="px-4 py-2 bg-shift2-primary text-white rounded-lg hover:bg-shift2-primary/90"
                 >
                   Toevoegen
                 </button>
                 <button
-                  onClick={() => setShowInScopeForm(false)}
+                  onClick={() => {}}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                 >
                   Annuleren
@@ -392,6 +416,18 @@ export default function ScopeManagement({ project }: { project: any }) {
                     </td>
                     <td className="py-4">
                       <div className="flex items-center gap-2 relative justify-end">
+                        {/* Pijl naar rechts - link naar detail pagina */}
+                        <a
+                          href={`/admin/projects/${project.id}/scope/${page.id}`}
+                          className="scope-link-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                          title="Bekijk details"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </a>
+
+                        {/* 3-puntjes menu */}
                         <button
                           onClick={() => setOpenMenuId(openMenuId === page.id ? null : page.id)}
                           className="scope-menu-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
@@ -480,21 +516,21 @@ export default function ScopeManagement({ project }: { project: any }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Titel</label>
                 <input
                   type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
                   placeholder="Pagina titel"
                 />
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleSubmit(false)}
+                  onClick={() => {}}
                   className="px-4 py-2 bg-shift2-primary text-white rounded-lg hover:bg-shift2-primary/90"
                 >
                   Toevoegen
                 </button>
                 <button
-                  onClick={() => setShowOutScopeForm(false)}
+                  onClick={() => {}}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                 >
                   Annuleren
@@ -526,6 +562,7 @@ export default function ScopeManagement({ project }: { project: any }) {
                     </td>
                     <td className="py-4">
                       <div className="flex items-center gap-2 relative justify-end">
+                        {/* 3-puntjes menu */}
                         <button
                           onClick={() => setOpenMenuId(openMenuId === page.id ? null : page.id)}
                           className="scope-menu-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
@@ -603,8 +640,8 @@ export default function ScopeManagement({ project }: { project: any }) {
           <div className="w-full min-h-64 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700">
             {scopeInfo ? (
               <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: addTitleToLinks(scopeInfo) }}
+                className="prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-4 [&_h4]:text-base [&_h4]:font-bold [&_h4]:mb-2 [&_h4]:mt-3 [&_h5]:text-sm [&_h5]:font-bold [&_h5]:mb-2 [&_h5]:mt-3 [&_h6]:text-sm [&_h6]:font-bold [&_h6]:mb-2 [&_h6]:mt-3"
+                dangerouslySetInnerHTML={{ __html: addTitleToLinks(marked.parse(scopeInfo) as string) }}
               />
             ) : (
               <span className="text-gray-400">Vul hier aanvullende scope informatie in...</span>
@@ -684,7 +721,7 @@ export default function ScopeManagement({ project }: { project: any }) {
       {showScopeInfoModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
               <h3 className="text-lg font-semibold">Overige scope informatie</h3>
               <button
                 onClick={closeScopeInfoModal}
@@ -696,27 +733,59 @@ export default function ScopeManagement({ project }: { project: any }) {
               </button>
             </div>
 
-            <div className="p-6 flex-1 overflow-auto">
-              <div className="mb-4">
+            <div className="p-6 flex-1 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Beschrijving
                 </label>
-                <RichTextEditor
-                  content={tempScopeInfo}
+                <MdEditor
+                  modelValue={tempScopeInfo}
                   onChange={setTempScopeInfo}
+                  language="en-US"
+                  theme="light"
+                  previewTheme="default"
+                  codeTheme="github"
+                  showCodeRowNumber={true}
+                  toolbars={[
+                    'bold',
+                    'underline',
+                    'italic',
+                    '-',
+                    'strikeThrough',
+                    'sub',
+                    'sup',
+                    'quote',
+                    'unorderedList',
+                    'orderedList',
+                    '-',
+                    'codeRow',
+                    'code',
+                    'link',
+                    'image',
+                    'table',
+                    '-',
+                    'revoke',
+                    'next',
+                    '=',
+                    'pageFullscreen',
+                    'fullscreen',
+                    'preview',
+                    'catalog',
+                  ]}
+                  style={{ height: '400px' }}
                 />
               </div>
+            </div>
 
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={saveScopeInfoModal}
-                  className="w-full px-4 py-2 text-white rounded-lg font-medium transition-colors"
-                  style={{ backgroundColor: '#6b2d8f' }}
-                >
-                  Opslaan
-                </button>
-              </div>
+            <div className="p-6 border-t border-gray-200 flex-shrink-0">
+              <button
+                type="button"
+                onClick={saveScopeInfoModal}
+                className="modal-save-button w-full px-4 py-2 text-white rounded-lg font-medium transition-colors hover:opacity-90"
+                style={{ backgroundColor: '#6b2d8f' }}
+              >
+                Opslaan
+              </button>
             </div>
           </div>
         </div>

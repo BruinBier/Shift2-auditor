@@ -71,13 +71,22 @@ a.bg-shift2-primary {
   background-color: #6b2d8f !important;
 }
 
-/* Only apply purple hover to buttons with background classes */
-button[class*="bg-"]:hover:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button):not(.filters-button):not(.editor-toolbar-button) {
-  background-color: #6b2d8f !important;
+/* Only apply purple hover to buttons with shift2-primary class */
+button.bg-shift2-primary:hover,
+button[style*="6b2d8f"]:hover {
+  background-color: #5a2577 !important;
 }
 
-button[class*="bg-"]:active:not(.tooltip-button):not([class*="menu"]):not([type="button"]):not([type="submit"]):not(.new-project-button):not(.filters-button):not(.editor-toolbar-button) {
-  background-color: #6b2d8f !important;
+button.bg-shift2-primary:active,
+button[style*="6b2d8f"]:active {
+  background-color: #4a1e61 !important;
+}
+
+/* Prevent any button in modal from getting purple background - but allow active toolbar buttons and save buttons */
+.fixed button:not([type="submit"]):not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button),
+.fixed button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button) {
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 button[type="submit"]:hover {
@@ -95,7 +104,13 @@ button.project-menu-item-delete[class],
 button.sample-menu-item,
 button.sample-menu-item[class],
 button.sample-menu-item-delete,
-button.sample-menu-item-delete[class] {
+button.sample-menu-item-delete[class],
+.project-menu button,
+.project-menu button[type="button"],
+.opdrachtgever-menu button,
+.opdrachtgever-menu button[type="button"],
+.team-member-menu button,
+.team-member-menu button[type="button"] {
   background-color: transparent !important;
   border: none !important;
   outline: none !important;
@@ -130,7 +145,13 @@ button.sample-menu-item-delete[class]:hover,
 button.sample-menu-item-delete:active,
 button.sample-menu-item-delete[class]:active,
 button.sample-menu-item-delete:focus,
-button.sample-menu-item-delete[class]:focus {
+button.sample-menu-item-delete[class]:focus,
+.project-menu button:hover,
+.project-menu button[type="button"]:hover,
+.opdrachtgever-menu button:hover,
+.opdrachtgever-menu button[type="button"]:hover,
+.team-member-menu button:hover,
+.team-member-menu button[type="button"]:hover {
   background-color: #F3F4F6 !important;
   color: inherit !important;
   border: none !important;
@@ -138,21 +159,89 @@ button.sample-menu-item-delete[class]:focus {
 }
 
 /* Only apply background to links with bg- classes, not text links */
-a[class*="bg-"]:hover:not([class*="menu"]):not(.new-project-button):not(.beheer-menu-item) {
+a[class*="bg-"]:hover:not([class*="menu"]):not(.new-project-button):not(.crawler-button):not(.beheer-menu-item) {
   background-color: #6b2d8f !important;
 }
 
-/* Override any old cardan and green classes */
-.bg-cardan-primary,
-.bg-green-600,
-.hover\:bg-green-600:hover {
+/* Findings management buttons - prevent purple background */
+button.findings-button,
+button.findings-button[class*="bg-"] {
+  background-color: inherit !important;
+}
+
+button.findings-button:hover,
+button.findings-button[class*="bg-"]:hover {
+  background-color: inherit !important;
+  opacity: 0.9;
+}
+
+button.findings-button.bg-white:hover {
+  background-color: #f9fafb !important;
+}
+
+button.findings-button.bg-green-600 {
+  background-color: #10b981 !important;
+}
+
+button.findings-button.bg-green-600:hover {
+  background-color: #059669 !important;
+}
+
+/* Override any old cardan classes */
+.bg-cardan-primary {
   background-color: #1f0036 !important;
 }
 
-/* Nuclear option - force ALL buttons and links to purple, except menu items */
-button[class*="bg-"]:not([class*="menu"]):not(.new-project-button):not(.filters-button):not(.editor-toolbar-button),
-a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button):not(.filters-button):not(.beheer-menu-item) {
+/* Only force buttons with specific shift2/cardan/purple classes to purple, not ALL bg- buttons */
+button.bg-shift2-primary,
+button[style*="6b2d8f"],
+a.bg-shift2-primary {
   background-color: #1f0036 !important;
+}
+
+/* Specifically prevent modal toolbar buttons from getting ANY background - but allow active and save buttons */
+.fixed .border-b button:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button),
+.fixed .bg-gray-50 button:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button) {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: #374151 !important;
+}
+
+/* MD Editor toolbar buttons - prevent purple background, but allow active state */
+.md-editor button:not(.bg-gray-300),
+.md-editor button[type="button"]:not(.bg-gray-300),
+.md-editor-toolbar-item:not(.bg-gray-300),
+button.md-editor-toolbar-item:not(.bg-gray-300),
+.toolbar-button:not(.bg-gray-300),
+button.toolbar-button:not(.bg-gray-300) {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: currentColor !important;
+}
+
+.md-editor button:hover,
+.md-editor button[type="button"]:hover,
+.md-editor-toolbar-item:hover,
+button.md-editor-toolbar-item:hover,
+.toolbar-button:hover,
+button.toolbar-button:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: currentColor !important;
+}
+
+/* Active state for toolbar buttons - very specific to override transparent */
+button.toolbar-button.bg-gray-300,
+.toolbar-button.bg-gray-300,
+button[class*="toolbar-button"][class*="bg-gray-300"] {
+  background-color: #D1D5DB !important;
+  background: #D1D5DB !important;
+}
+
+button.toolbar-button.bg-gray-300:hover,
+.toolbar-button.bg-gray-300:hover {
+  background-color: #D1D5DB !important;
+  background: #D1D5DB !important;
 }
 
 /* Editor toolbar buttons - white with gray hover */
@@ -173,25 +262,93 @@ a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button):
   color: inherit !important;
 }
 
+/* WYSIWYG Editor toolbar buttons in modals - but allow active state and save buttons */
+.fixed button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button),
+.fixed form button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button) {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: #374151 !important;
+}
+
+.fixed button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button):hover,
+.fixed form button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button):hover {
+  background-color: #E5E7EB !important;
+  background: #E5E7EB !important;
+  color: #374151 !important;
+}
+
+/* Keep submit buttons styled correctly in modals */
+.fixed button[type="submit"] {
+  background-color: #1f0036 !important;
+  background: #1f0036 !important;
+  color: white !important;
+}
+
+.fixed button[type="submit"]:hover {
+  opacity: 0.9 !important;
+  background-color: #1f0036 !important;
+}
+
+/* Keep close button (X) styled correctly */
+.fixed button.text-gray-400,
+.fixed button[class*="text-gray"] {
+  background-color: transparent !important;
+  color: #9CA3AF !important;
+}
+
+.fixed button.text-gray-400:hover,
+.fixed button[class*="text-gray"]:hover {
+  color: #4B5563 !important;
+  background-color: transparent !important;
+}
+
 /* New project button styling - white with green border and gray hover */
 .new-project-button,
 .new-project-button:link,
-.new-project-button:visited {
+.new-project-button:visited,
+.new-user-button,
+.new-user-button:link,
+.new-user-button:visited,
+.crawler-button,
+.crawler-button:link,
+.crawler-button:visited {
   background-color: white !important;
   color: #374151 !important;
   border: 1px solid #10b981 !important;
 }
 
-.new-project-button:hover {
+.new-project-button:hover,
+.new-user-button:hover,
+.crawler-button:hover {
   background-color: #f9fafb !important;
   color: #374151 !important;
   border: 1px solid #10b981 !important;
 }
 
-.new-project-button:active {
+.new-project-button:active,
+.new-user-button:active,
+.crawler-button:active {
   background-color: #f3f4f6 !important;
   color: #374151 !important;
   border: 1px solid #10b981 !important;
+}
+
+/* Attachment save button styling - green background with white text */
+.attachment-save-button,
+.attachment-save-button:link,
+.attachment-save-button:visited {
+  background-color: #16a34a !important;
+  color: white !important;
+}
+
+.attachment-save-button:hover {
+  background-color: #15803d !important;
+  color: white !important;
+}
+
+.attachment-save-button:active {
+  background-color: #166534 !important;
+  color: white !important;
 }
 
 /* Custom hover for report tabs - but not when active */
@@ -225,6 +382,16 @@ a[class*="bg-"][class*="primary"]:not([class*="menu"]):not(.new-project-button):
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
   --background-end-rgb: 255, 255, 255;
+
+  /* Impact badge colors */
+  --color-yellow-bg: #fef3c7;
+  --color-yellow-text: #92400e;
+  --color-green-bg: #d1fae5;
+  --color-green-text: #065f46;
+  --color-orange-bg: #fed7aa;
+  --color-orange-text: #9a3412;
+  --color-red-bg: #fecaca;
+  --color-red-text: #991b1b;
 }
 
 body {
@@ -249,10 +416,221 @@ h2 {
   font-weight: 400 !important;
 }
 
+/* Exception: Report content markdown should have bold text */
+.report-markdown-content strong,
+.report-markdown-content b {
+  font-weight: 700 !important;
+}
+
+.report-markdown-content h2 {
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+  margin-bottom: 0.75rem !important;
+  margin-top: 1rem !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* FINAL OVERRIDE - Active toolbar buttons with highest specificity */
+.fixed .bg-gray-50 button.toolbar-button.bg-gray-300,
+.fixed .border-b button.toolbar-button.bg-gray-300,
+.fixed button.toolbar-button.bg-gray-300,
+button.toolbar-button.bg-gray-300.rounded,
+.toolbar-button.bg-gray-300 {
+  background-color: #D1D5DB !important;
+  background: #D1D5DB !important;
+}
+
+.fixed .bg-gray-50 button.toolbar-button.bg-gray-300:hover,
+.fixed .border-b button.toolbar-button.bg-gray-300:hover,
+.fixed button.toolbar-button.bg-gray-300:hover,
+button.toolbar-button.bg-gray-300.rounded:hover,
+.toolbar-button.bg-gray-300:hover {
+  background-color: #D1D5DB !important;
+  background: #D1D5DB !important;
+}
+
+/* Pagination buttons - prevent global button styling from interfering */
+button.pagination-button,
+button.pagination-button[type="button"] {
+  background-color: white !important;
+  color: #374151 !important;
+}
+
+button.pagination-button:hover:not(:disabled),
+button.pagination-button[type="button"]:hover:not(:disabled) {
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+}
+
+/* Action buttons in tables (gear and arrow icons) - prevent purple background */
+button.action-button,
+button.action-button[type="button"] {
+  background-color: transparent !important;
+  color: #4b5563 !important;
+}
+
+button.action-button:hover,
+button.action-button[type="button"]:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+/* Modal save button - purple color */
+button.modal-save-button,
+button.modal-save-button[type="button"] {
+  background-color: #6b2d8f !important;
+  color: white !important;
+}
+
+button.modal-save-button:hover,
+button.modal-save-button[type="button"]:hover {
+  background-color: #5a2577 !important;
+  color: white !important;
+}
+
+/* Back button and bevinding koppelen button - crawler test detail page */
+button.back-button,
+button.back-button[type="button"] {
+  background-color: transparent !important;
+  color: #4b5563 !important;
+}
+
+button.back-button:hover,
+button.back-button[type="button"]:hover {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+}
+
+button.bevinding-koppelen-button,
+button.bevinding-koppelen-button[type="button"] {
+  background-color: white !important;
+  color: #111827 !important;
+  border: 1px solid #10b981 !important;
+}
+
+button.bevinding-koppelen-button:hover,
+button.bevinding-koppelen-button[type="button"]:hover {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+  border: 1px solid #10b981 !important;
+}
+
+/* Delete modal button - light red background that becomes darker on hover */
+.fixed .delete-modal-button,
+button.delete-modal-button,
+.delete-modal-button {
+  background-color: #FEE2E2 !important;
+  color: #991B1B !important;
+  border: 1px solid #FCA5A5 !important;
+}
+
+.fixed .delete-modal-button:hover,
+button.delete-modal-button:hover,
+.delete-modal-button:hover {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #DC2626 !important;
+}
+
+/* Button component styles */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.button-size--md {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.button-variant--danger {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border-color: #FCA5A5;
+}
+
+.button-variant--danger:hover {
+  background-color: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
+}
+
+.button--icon-only {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.button-text.visuallyhidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.iconify {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Delete button specific styling */
+.delete-button {
+  flex-shrink: 0;
+}
+
+/* Impact badge chip styles */
+.chip-variant--soft {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.chip-variant--soft.chip-color--yellow {
+  border-color: var(--color-yellow-bg);
+  color: var(--color-yellow-text);
+  background-color: transparent;
+}
+
+.chip-variant--soft.chip-color--green {
+  border-color: #d1d5db;
+  color: #1f2937;
+  background-color: transparent;
+}
+
+.chip-variant--soft.chip-color--green svg {
+  color: #1f2937;
+}
+
+.chip-variant--soft.chip-color--orange {
+  border-color: var(--color-orange-bg);
+  color: var(--color-orange-text);
+  background-color: transparent;
+}
+
+.chip-variant--soft.chip-color--red {
+  border-color: var(--color-red-bg);
+  color: var(--color-red-text);
+  background-color: transparent;
+}
+
+/* Criteria list button - only underline the title text on hover */
+.criteria-list-button:hover .criterion-title {
+  text-decoration: underline;
 }
 
 /* Print styles for PDF export */
@@ -272,4 +650,103 @@ h2 {
   .page-break {
     page-break-before: always;
   }
+}
+
+/* External link styling */
+.krafters-markdown-preview a[target="_blank"],
+.finding-description a[target="_blank"],
+.whitespace-pre-wrap a[target="_blank"] {
+  text-decoration: underline;
+}
+
+/* External link icon */
+.krafters-markdown-preview a[target="_blank"]::after,
+.finding-description a[target="_blank"]::after,
+.whitespace-pre-wrap a[target="_blank"]::after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'%3E%3C/path%3E%3Cpolyline points='15 3 21 3 21 9'%3E%3C/polyline%3E%3Cline x1='10' y1='14' x2='21' y2='3'%3E%3C/line%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  vertical-align: baseline;
+}
+
+/* Markdown preview styling */
+.krafters-markdown-preview,
+.finding-description {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+.krafters-markdown-preview p,
+.finding-description p {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #374151;
+  margin: 0;
+  user-select: text;
+}
+
+.krafters-markdown-preview h1,
+.krafters-markdown-preview h2,
+.krafters-markdown-preview h3,
+.krafters-markdown-preview h4,
+.krafters-markdown-preview h5,
+.krafters-markdown-preview h6,
+.finding-description h1,
+.finding-description h2,
+.finding-description h3,
+.finding-description h4,
+.finding-description h5,
+.finding-description h6 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #111827;
+  margin: 0.5rem 0;
+}
+
+.krafters-markdown-preview ul,
+.krafters-markdown-preview ol,
+.finding-description ul,
+.finding-description ol {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #374151;
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.krafters-markdown-preview pre,
+.finding-description pre {
+  background-color: #1f2937;
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-family: monospace;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.krafters-markdown-preview code,
+.finding-description code {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+
+.krafters-markdown-preview pre code,
+.finding-description pre code {
+  background-color: transparent;
+  color: white;
+  padding: 0;
 }

@@ -10,68 +10,151 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Team {
+  id              String   @id @default(uuid())
+  name            String   @default("Shift2")
+  language        String   @default("Nederlands")
+  address         String?  @db.Text
+  email           String?
+  phone           String?
+  website         String?
+  about           String?  @db.Text
+  logoUrl         String?  @map("logo_url")
+  useCardanAI     Boolean  @default(true) @map("use_cardan_ai")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("teams")
+}
+
 model ResearchType {
-  id            String   @id @default(uuid())
-  name          String   @unique
-  version       String
-  level         String
-  type          String
-  description   String?  @db.Text
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id              String                      @id @default(uuid())
+  name            String                      @unique
+  version         String
+  level           String
+  type            String
+  description     String?                     @db.Text
+  reportIntro     String?                     @db.Text @map("report_intro")
+  reportIntroPdf  String?                     @db.Text @map("report_intro_pdf")
+  createdAt       DateTime                    @default(now()) @map("created_at")
+  updatedAt       DateTime                    @updatedAt @map("updated_at")
+
+  criteria        ResearchTypeWCAGCriterion[]
 
   @@map("research_types")
 }
 
+model ResearchTypeWCAGCriterion {
+  id              String        @id @default(uuid())
+  researchTypeId  String        @map("research_type_id")
+  wcagCriterionId String        @map("wcag_criterion_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  researchType    ResearchType  @relation(fields: [researchTypeId], references: [id], onDelete: Cascade)
+  wcagCriterion   WCAGCriterion @relation(fields: [wcagCriterionId], references: [id], onDelete: Cascade)
+
+  @@unique([researchTypeId, wcagCriterionId])
+  @@map("research_type_wcag_criteria")
+}
+
+model Opdrachtgever {
+  id            String          @id @default(uuid())
+  kenmerk       String          @unique
+  naam          String
+  contactnaam   String?
+  contactEmail  String?         @map("contact_email")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  clientProjects ClientProject[]
+
+  @@map("opdrachtgevers")
+}
+
+model ClientProject {
+  id              String        @id @default(uuid())
+  name            String
+  opdrachtgeverId String        @map("opdrachtgever_id")
+  details         String?       @db.Text
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  opdrachtgever   Opdrachtgever @relation(fields: [opdrachtgeverId], references: [id], onDelete: Cascade)
+  projects        Project[]
+
+  @@map("client_projects")
+}
+
 model Project {
-  id                      String    @id @default(uuid())
+  id                      String         @id @default(uuid())
+  kenmerk                 String?        @unique
   title                   String
   subject                 String
-  standard                String    @default("WCAG 2.2")
-  level                   String    @default("AA")
-  researchType            String    @map("research_type")
-  version                 Int       @default(1)
-  language                String    @default("Nederlands")
-  status                  String    @default("In uitvoering")
-  clientName              String?   @map("client_name")
-  commissionedBy          String?   @map("commissioned_by")
-  auditedByOrg            String    @default("Shift2") @map("audited_by_org")
-  researcherName          String?   @map("researcher_name")
-  controllerName          String?   @map("controller_name")
-  plannedTime             String?   @map("planned_time")
-  dateStart               DateTime? @map("date_start")
-  dateEnd                 DateTime? @map("date_end")
-  researchStartedOn       DateTime? @map("research_started_on")
-  reportDate              DateTime  @default(now()) @map("report_date")
-  description             String?   @db.Text
-  isAnonymous             Boolean   @default(false) @map("is_anonymous")
-  isPrivate               Boolean   @default(false) @map("is_private")
+  standard                String         @default("WCAG 2.2")
+  level                   String         @default("AA")
+  researchType            String         @map("research_type")
+  version                 Float          @default(1.0)
+  language                String         @default("Nederlands")
+  status                  String         @default("In uitvoering")
+  clientName              String?        @map("client_name")
+  commissionedBy          String?        @map("commissioned_by")
+  clientProjectId         String?        @map("client_project_id")
+  auditedByOrg            String         @default("Shift2") @map("audited_by_org")
+  researcherName          String?        @map("researcher_name")
+  controllerName          String?        @map("controller_name")
+  plannedTime             String?        @map("planned_time")
+  dateStart               DateTime?      @map("date_start")
+  dateEnd                 DateTime?      @map("date_end")
+  researchStartedOn       DateTime?      @map("research_started_on")
+  reportDate              DateTime       @default(now()) @map("report_date")
+  description             String?        @db.Text
+  notes                   String?        @db.Text
+  isAnonymous             Boolean        @default(false) @map("is_anonymous")
+  isPrivate               Boolean        @default(false) @map("is_private")
 
   // Rich text fields
-  summaryText             String?   @map("summary_text") @db.Text
-  researcherFeedbackText  String?   @map("researcher_feedback_text") @db.Text
-  aboutResearchText       String?   @map("about_research_text") @db.Text
-  whatWasTestedText       String?   @map("what_was_tested_text") @db.Text
-  aboutOrgText            String?   @map("about_org_text") @db.Text
-  scopeInfo               String?   @map("scope_info") @db.Text
+  summaryText             String?        @map("summary_text") @db.Text
+  researcherFeedbackText  String?        @map("researcher_feedback_text") @db.Text
+  aboutResearchText       String?        @map("about_research_text") @db.Text
+  whatWasTestedText       String?        @map("what_was_tested_text") @db.Text
+  aboutOrgText            String?        @map("about_org_text") @db.Text
+  scopeInfo               String?        @map("scope_info") @db.Text
+  conclusionText          String?        @map("conclusion_text") @db.Text
+  managementSummary       String?        @map("management_summary") @db.Text
+  researcherFeedback      String?        @map("researcher_feedback") @db.Text
 
   // Method info
-  methodName              String?   @map("method_name")
-  techniquesNote          String?   @map("techniques_note") @db.Text
-  supportBaseline         String?   @map("support_baseline") @db.Text
-  userAgents              String[]  @default([]) @map("user_agents")
-  technologies            String[]  @default([]) @map("technologies")
+  methodName              String?        @map("method_name")
+  techniquesNote          String?        @map("techniques_note") @db.Text
+  supportBaseline         String?        @map("support_baseline") @db.Text
+  userAgents              String?        @map("user_agents") @db.Text
+  technologies            String[]       @default([]) @map("technologies")
 
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @updatedAt @map("updated_at")
+  createdAt               DateTime       @default(now()) @map("created_at")
+  updatedAt               DateTime       @updatedAt @map("updated_at")
 
   // Relations
+  clientProject           ClientProject? @relation(fields: [clientProjectId], references: [id], onDelete: SetNull)
   scopeUrls               ProjectScopeUrl[]
   sampleItems             SampleItem[]
   criterionAssessments    CriterionAssessment[]
   findings                Finding[]
+  projectNotes            ProjectNote[]
 
   @@map("projects")
+}
+
+model ProjectNote {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  authorName  String   @map("author_name")
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_notes")
 }
 
 model ProjectScopeUrl {
@@ -95,13 +178,17 @@ enum SampleType {
 }
 
 model SampleItem {
-  id          String       @id @default(uuid())
-  projectId   String       @map("project_id")
-  sampleType  SampleType   @map("sample_type")
-  title       String
-  url         String?
-  description String?      @db.Text
-  orderIndex  Int?         @map("order_index")
+  id             String       @id @default(uuid())
+  projectId      String       @map("project_id")
+  sampleType     SampleType   @map("sample_type")
+  title          String
+  url            String?
+  description    String?      @db.Text
+  orderIndex     Int?         @map("order_index")
+  makeScreenshot Boolean      @default(false) @map("make_screenshot")
+  screenshotPath String?      @map("screenshot_path")
+  screenshotAlt  String?      @map("screenshot_alt")
+  notes          String?      @db.Text
 
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   occurrences FindingOccurrence[]
@@ -123,19 +210,36 @@ enum WCAGPrinciple {
 }
 
 model WCAGCriterion {
-  id                String         @id @default(uuid())
-  code              String         @unique
-  titleNl           String         @map("title_nl")
-  level             WCAGLevel
-  principle         WCAGPrinciple
-  guidelineCode     String         @map("guideline_code")
-  guidelineTitleNl  String         @map("guideline_title_nl")
-  understandingUrl  String?        @map("understanding_url")
+  id                  String                      @id @default(uuid())
+  code                String                      @unique
+  titleNl             String                      @map("title_nl")
+  level               WCAGLevel
+  principle           WCAGPrinciple
+  guidelineCode       String                      @map("guideline_code")
+  guidelineTitleNl    String                      @map("guideline_title_nl")
+  understandingUrl    String?                     @map("understanding_url")
 
-  assessments       CriterionAssessment[]
-  findings          Finding[]
+  assessments         CriterionAssessment[]
+  findings            Finding[]
+  researchTypes       ResearchTypeWCAGCriterion[]
+  researchTypeExplanations ResearchTypeExplanation[]
 
   @@map("wcag_criteria")
+}
+
+model ResearchTypeExplanation {
+  id                  String        @id @default(uuid())
+  researchTypeName    String        @map("research_type_name")
+  wcagCriterionId     String        @map("wcag_criterion_id")
+  explanation         String        @db.Text
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  wcagCriterion       WCAGCriterion @relation(fields: [wcagCriterionId], references: [id], onDelete: Cascade)
+
+  @@unique([researchTypeName, wcagCriterionId])
+  @@index([researchTypeName])
+  @@map("research_type_explanations")
 }
 
 enum AssessmentStatus {
@@ -152,6 +256,7 @@ model CriterionAssessment {
   wcagCriterionId String            @map("wcag_criterion_id")
   status          AssessmentStatus
   notes           String?           @db.Text
+  explanation     String?           @db.Text
 
   project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wcagCriterion   WCAGCriterion     @relation(fields: [wcagCriterionId], references: [id])
@@ -169,6 +274,7 @@ enum FindingStatus {
 enum FindingImpact {
   klein
   matig
+  serieus
   kritiek
   onbekend
 }
@@ -180,22 +286,45 @@ enum FindingResponsibility {
   onbekend
 }
 
+model QuickFinding {
+  id              String                 @id @default(uuid())
+  title           String
+  description     String                 @db.Text
+  advice          String                 @db.Text
+  criterionCode   String                 @map("criterion_code")
+  keywords        String?
+  crawler         Boolean                @default(false)
+  status          FindingStatus?
+  impact          FindingImpact?
+  responsibility  FindingResponsibility?
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  findings        Finding[]
+
+  @@map("quick_findings")
+}
+
 model Finding {
   id              String                 @id @default(uuid())
   projectId       String                 @map("project_id")
   findingCode     String                 @map("finding_code")
   wcagCriterionId String                 @map("wcag_criterion_id")
+  quickFindingId  String?                @map("quick_finding_id")
   status          FindingStatus          @default(open)
-  impact          FindingImpact          @default(onbekend)
-  responsibility  FindingResponsibility  @default(onbekend)
+  impact          FindingImpact?
+  responsibility  FindingResponsibility?
   description     String                 @db.Text
   advice          String                 @db.Text
   evidence        String?                @db.Text
+  notes           String?                @db.Text
+  sortOrder       Int                    @default(0) @map("sort_order")
   createdAt       DateTime               @default(now()) @map("created_at")
   updatedAt       DateTime               @updatedAt @map("updated_at")
 
   project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wcagCriterion   WCAGCriterion          @relation(fields: [wcagCriterionId], references: [id])
+  quickFinding    QuickFinding?          @relation(fields: [quickFindingId], references: [id], onDelete: SetNull)
   occurrences     FindingOccurrence[]
 
   @@map("findings")

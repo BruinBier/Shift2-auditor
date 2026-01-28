@@ -1,106 +1,154 @@
+'use client';
+
 import { calculateReportStats } from '@/lib/report-calculations';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
 
 export default function OverDitOnderzoek({ project }: { project: any }) {
+  const [teamName, setTeamName] = useState('Shift2');
+  const [aboutOrgText, setAboutOrgText] = useState('');
+  const [teamEmail, setTeamEmail] = useState('');
+
+  useEffect(() => {
+    // Get team info from API
+    const fetchTeamInfo = async () => {
+      try {
+        const response = await fetch('/api/team');
+        if (response.ok) {
+          const teamInfo = await response.json();
+          setTeamName(teamInfo.name || 'Shift2');
+          setAboutOrgText(teamInfo.about || '');
+          setTeamEmail(teamInfo.email || '');
+        }
+      } catch (error) {
+        console.error('Error fetching team info:', error);
+      }
+    };
+
+    fetchTeamInfo();
+  }, []);
+
   const stats = calculateReportStats(project);
-  const dateStart = project.dateStart ? new Date(project.dateStart) : null;
+  // Use researchStartedOn instead of dateStart for the report
+  const dateStart = project.researchStartedOn ? new Date(project.researchStartedOn) : (project.dateStart ? new Date(project.dateStart) : null);
   const dateEnd = project.dateEnd ? new Date(project.dateEnd) : null;
   const reportDate = new Date(project.reportDate);
 
   return (
-    <div className="grid grid-cols-3 gap-8">
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        .scope-info-content a {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+        }
+        .scope-info-content a::after {
+          content: '';
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          margin-left: 4px;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'%3E%3C/path%3E%3Cpolyline points='15 3 21 3 21 9'%3E%3C/polyline%3E%3Cline x1='10' y1='14' x2='21' y2='3'%3E%3C/line%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-size: contain;
+          vertical-align: middle;
+        }
+      `}} />
+      <div className="grid grid-cols-3 gap-8">
       {/* Main content */}
       <div className="col-span-2 space-y-8">
+        {/* Project header */}
+        <section>
+          <div className="mb-6">
+            <div className="text-sm text-gray-600 mb-2">
+              WCAG 2.2 AA – aanvullend deelonderzoek content – mijn.hhnk.nl
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Rapport digitale toegankelijkheid
+            </h1>
+            <p className="text-gray-700">
+              Dit onderzoek is door {teamName} uitgevoerd tussen{' '}
+              {dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : 'n.v.t.'} en{' '}
+              {dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : 'n.v.t.'}. Tijdens dit
+              onderzoek zijn {stats.pagesInvestigated} pagina's onderzocht. Er wordt voldaan aan{' '}
+              {stats.effectivePassed} van {stats.totalAssessed} succescriteria (
+              {stats.totalAssessed > 0
+                ? Math.round((stats.effectivePassed / stats.totalAssessed) * 100)
+                : 0}
+              %). In het onderzoek zijn {stats.totalProblems} toegankelijkheidsproblemen voor gebruikers met een functiebeperking vastgesteld. Daarnaast zijn {project.findings.length - stats.totalProblems} aanvullende opmerkingen benoemd.
+            </p>
+          </div>
+        </section>
+
         {/* Summary */}
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Samenvatting</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {project.summaryText ? (
-              <div className="text-gray-700 whitespace-pre-line">{project.summaryText}</div>
+            {project.managementSummary ? (
+              <div
+                className="text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: project.managementSummary }}
+              />
             ) : (
-              <p className="text-gray-700">
-                Dit onderzoek is door {project.auditedByOrg} uitgevoerd tussen{' '}
-                {dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : 'n.v.t.'} en{' '}
-                {dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : 'n.v.t.'}. Tijdens dit
-                onderzoek zijn {stats.pagesInvestigated} pagina's onderzocht. Er wordt voldaan aan{' '}
-                {stats.passed} van {stats.totalAssessed} succescriteria (
-                {stats.totalAssessed > 0
-                  ? Math.round((stats.passed / stats.totalAssessed) * 100)
-                  : 0}
-                %). Onze onderzoeker heeft {stats.totalProblems} problemen opgeschreven waarbij
-                gebruikers met een functiebeperking mogelijk tegen problemen aanlopen. Ook geeft de
-                onderzoeker {project.findings.filter((f: any) => f.status === 'open').length} andere
-                opmerkingen om de toegankelijkheid te verbeteren.
-              </p>
+              <p className="text-sm text-gray-500 italic">Nog geen samenvatting toegevoegd</p>
             )}
           </div>
         </section>
 
         {/* Researcher feedback */}
-        {project.researcherFeedbackText && (
+        {project.researcherFeedback && (
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Feedback van onderzoeker</h2>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="text-gray-700 whitespace-pre-line">
-                {project.researcherFeedbackText}
-              </div>
+              <div
+                className="text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
+              />
             </div>
           </section>
         )}
 
-        {/* About research */}
+        {/* What was tested */}
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Over dit onderzoek</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {project.aboutResearchText ? (
-              <div className="text-gray-700 whitespace-pre-line">{project.aboutResearchText}</div>
+            {project.researchTypeData?.reportIntro ? (
+              <div
+                className="report-markdown-content text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: project.researchTypeData.reportIntro }}
+              />
             ) : (
-              <p className="text-gray-700">
-                We hebben een {project.researchType} uitgevoerd op de klantspecifieke content binnen
-                de Mijn-omgeving. Het onderzoek is uitgevoerd als aanvulling op de standaard
-                PIP-omgeving, dat in december 2024 is uitgevoerd door Cardan.
-                <br />
-                <br />
-                Dit onderzoek is uitgevoerd conform {project.standard} zoals opgenomen in de Europese
-                norm EN 301 549.
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* What was tested */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Wat is onderzocht?</h2>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {project.whatWasTestedText ? (
-              <div className="text-gray-700 whitespace-pre-line">{project.whatWasTestedText}</div>
-            ) : (
-              <div>
-                <p className="text-gray-700 mb-4">
-                  Binnen de gegarandeerde aanvullende en afgebakende steekproef is beoordeeld in
-                  hoeverre de klantspecifieke invulling van de aanwezige hoogcontrastfunctie binnen de
-                  aanwezige hoogcontrastfunctie. Deze hoogcontrastfunctie is in dit aanvullende
-                  onderzoek beoordeeld.
-                </p>
-                <p className="text-gray-700">
-                  Het kleurcontrast is in dit aanvullende onderzoek beoordeeld binnen de aanwezige
-                  hoogcontrastfunctie.
-                </p>
-              </div>
+              <p className="text-sm text-gray-500 italic">Nog geen informatie over dit onderzoek toegevoegd</p>
             )}
           </div>
         </section>
 
         {/* About organization */}
-        {project.aboutOrgText && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Over {project.auditedByOrg}</h2>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="text-gray-700 whitespace-pre-line">{project.aboutOrgText}</div>
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Over {teamName}</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="text-gray-700 whitespace-pre-line">
+              {project.aboutOrgText || aboutOrgText || ''}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+
+        {/* Questions */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Vragen</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700">
+              Heb je naar aanleiding van dit rapport inhoudelijke vragen, neem dan contact op met{' '}
+              {teamEmail ? (
+                <a href={`mailto:${teamEmail}`} className="text-blue-600 hover:underline">
+                  {teamEmail}
+                </a>
+              ) : (
+                'ons'
+              )}
+            </p>
+          </div>
+        </section>
       </div>
 
       {/* Sidebar */}
@@ -117,11 +165,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Project</dt>
-              <dd className="text-sm text-gray-900">{project.subject}</dd>
+              <dd className="text-sm text-gray-900">
+                {project.clientProject?.name || project.subject || 'n.v.t.'}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Versie</dt>
-              <dd className="text-sm text-gray-900">{project.version}</dd>
+              <dd className="text-sm text-gray-900">{Number(project.version).toFixed(1)}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Opdrachtgever</dt>
@@ -135,7 +185,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Onderzocht door</dt>
-              <dd className="text-sm text-gray-900">{project.auditedByOrg}</dd>
+              <dd className="text-sm text-gray-900">{teamName}</dd>
             </div>
             {project.researcherName && (
               <div>
@@ -151,28 +201,36 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Scope</h3>
           <div className="space-y-3">
             <div>
-              <div className="text-sm font-medium text-gray-500 mb-1">
+              <div className="text-sm font-medium text-gray-500 mb-3">
                 Bij de URL staat de reden waarom een gedeelte van de site niet is meegenomen. Dit is
                 conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.
               </div>
             </div>
-            {project.scopeUrls.length > 0 ? (
-              <ul className="space-y-2">
-                {project.scopeUrls.map((scopeUrl: any, index: number) => (
-                  <li key={index} className="text-sm">
-                    <a
-                      href={scopeUrl.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline break-all"
-                    >
-                      {scopeUrl.url}
-                    </a>
-                    {scopeUrl.note && (
-                      <div className="text-gray-600 mt-1 text-xs">{scopeUrl.note}</div>
-                    )}
-                  </li>
-                ))}
+            {project.scopeUrls.filter((url: any) => url.inScope !== false).length > 0 ? (
+              <ul className="space-y-3">
+                {project.scopeUrls
+                  .filter((scopeUrl: any) => scopeUrl.inScope !== false)
+                  .map((scopeUrl: any, index: number) => (
+                    <li key={index} className="text-sm">
+                      <a
+                        href={scopeUrl.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline break-all inline-flex items-center gap-1"
+                      >
+                        {scopeUrl.url}
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      {scopeUrl.title && (
+                        <div className="text-gray-900 mt-0.5">{scopeUrl.title}</div>
+                      )}
+                      <div className="text-sm font-medium text-gray-500 mt-1">
+                        URI-basis
+                      </div>
+                    </li>
+                  ))}
               </ul>
             ) : (
               <p className="text-sm text-gray-600">
@@ -180,25 +238,110 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               </p>
             )}
           </div>
+
+          {/* Niet in de scope */}
+          {project.scopeUrls.filter((url: any) => !url.inScope).length > 0 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Niet in de scope</h4>
+              <div className="space-y-3">
+                <ul className="space-y-3">
+                  {project.scopeUrls
+                    .filter((scopeUrl: any) => !scopeUrl.inScope)
+                    .map((scopeUrl: any, index: number) => (
+                      <li key={index} className="text-sm">
+                        <a
+                          href={scopeUrl.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline break-all inline-flex items-center gap-1"
+                        >
+                          {scopeUrl.url}
+                          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                        <div className="text-sm font-medium text-gray-500 mt-1">
+                          andere URI-basis
+                        </div>
+                        {scopeUrl.title && (
+                          <div className="text-sm font-medium text-gray-500 mt-0.5">{scopeUrl.title}</div>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Overige scope informatie */}
+          {project.scopeInfo && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Overige scope informatie</h4>
+              <div
+                className="scope-info-content text-sm text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-4"
+                dangerouslySetInnerHTML={{ __html: project.scopeInfo }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Research method */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Onderzoeksmethode</h3>
-          <div className="space-y-3">
+          <p className="text-sm text-gray-700 mb-6">
+            Dit onderzoek is uitgevoerd conform de evaluatiemethode{' '}
+            <a
+              href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline inline-flex items-center gap-1"
+            >
+              WCAG-EM
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+            . Deze methode is aanbevolen door{' '}
+            <a
+              href="https://www.digitoegankelijk.nl/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline inline-flex items-center gap-1"
+            >
+              DigiToegankelijk (Logius)
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>.
+          </p>
+
+          <div className="space-y-4">
             <div>
-              <div className="text-sm font-medium text-gray-500">Methode</div>
-              <a
-                href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                {project.methodName || 'WCAG-EM'}
-              </a>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Technieken</h4>
+              <p className="text-sm text-gray-700">
+                Bij het uitvoeren van dit onderzoek is er vanuit gegaan dat alle technieken van het W3C ondersteund worden en dus gebruikt mogen worden.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Basisniveau van ondersteuning</h4>
+              <p className="text-sm text-gray-700">
+                Gangbare webbrowsers en hulptechnologieën.
+              </p>
             </div>
           </div>
         </div>
+
+        {/* User agents */}
+        {project.userAgents && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">User agents</h3>
+            <div
+              className="text-sm text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+              dangerouslySetInnerHTML={{ __html: project.userAgents }}
+            />
+          </div>
+        )}
 
         {/* Techniques */}
         {project.techniquesNote && (
@@ -218,20 +361,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           </div>
         )}
 
-        {/* User agents */}
-        {project.userAgents && project.userAgents.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">User agents</h3>
-            <ul className="space-y-1">
-              {project.userAgents.map((agent: string, index: number) => (
-                <li key={index} className="text-sm text-gray-700">
-                  {agent}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         {/* Technologies */}
         {project.technologies && project.technologies.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -247,5 +376,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         )}
       </div>
     </div>
+    </>
   );
 }

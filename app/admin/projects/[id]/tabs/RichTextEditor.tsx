@@ -6,7 +6,7 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -14,7 +14,9 @@ interface RichTextEditorProps {
 }
 
 export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Underline,
@@ -53,7 +55,17 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
   }, [content, editor]);
 
   if (!editor) {
-    return null;
+    return (
+      <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+        <div className="animate-pulse flex items-center gap-2 text-gray-500">
+          <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <span className="text-sm">Editor laden...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -88,174 +100,215 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         }
       `}} />
       {/* Toolbar */}
-      <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center gap-1 border-b-0">
+      <div className="border border-gray-300 rounded-t-lg bg-gray-50 px-3 py-2 flex items-center justify-between border-b-0">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('bold') ? 'bg-gray-300' : ''}`}
+            title="Bold"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('italic') ? 'bg-gray-300' : ''}`}
+            title="Italic"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m2 2h6m-8 14h6" />
+            </svg>
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'left' }) ? 'bg-gray-300' : ''}`}
+            title="Align left"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h10M4 14h16M4 18h10" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'center' }) ? 'bg-gray-300' : ''}`}
+            title="Align center"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 10h10M4 14h16M7 18h10" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'right' }) ? 'bg-gray-300' : ''}`}
+            title="Align right"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M10 10h10M4 14h16M10 18h10" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'justify' }) ? 'bg-gray-300' : ''}`}
+            title="Align justify"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('bulletList') ? 'bg-gray-300' : ''}`}
+            title="Bullet list"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="4" cy="7" r="2"/>
+              <circle cx="4" cy="12" r="2"/>
+              <circle cx="4" cy="17" r="2"/>
+              <rect x="8" y="6" width="14" height="2"/>
+              <rect x="8" y="11" width="14" height="2"/>
+              <rect x="8" y="16" width="14" height="2"/>
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('orderedList') ? 'bg-gray-300' : ''}`}
+            title="Numbered list"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <text x="2" y="8" fontSize="8" fontWeight="bold">1.</text>
+              <text x="2" y="14" fontSize="8" fontWeight="bold">2.</text>
+              <text x="2" y="20" fontSize="8" fontWeight="bold">3.</text>
+              <rect x="8" y="6" width="14" height="2"/>
+              <rect x="8" y="11" width="14" height="2"/>
+              <rect x="8" y="16" width="14" height="2"/>
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('blockquote') ? 'bg-gray-300' : ''}`}
+            title="Quote"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('code') ? 'bg-gray-300' : ''}`}
+            title="Code"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            className={`toolbar-button p-1.5 rounded ${editor.isActive('codeBlock') ? 'bg-gray-300' : ''}`}
+            title="Code Block"
+            disabled={isPreviewMode}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().undo().run()}
+            disabled={!editor.can().undo() || isPreviewMode}
+            className="toolbar-button p-1.5 rounded disabled:opacity-30"
+            title="Undo"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().redo().run()}
+            disabled={!editor.can().redo() || isPreviewMode}
+            className="toolbar-button p-1.5 rounded disabled:opacity-30"
+            title="Redo"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Preview Toggle */}
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('bold') ? 'bg-gray-300' : ''}`}
-          title="Bold"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Preview knop geklikt! Huidige state:', isPreviewMode);
+            setIsPreviewMode(!isPreviewMode);
+            console.log('Nieuwe state:', !isPreviewMode);
+          }}
+          className={`toolbar-button p-1.5 rounded ${isPreviewMode ? 'bg-blue-100 text-blue-600' : 'bg-white hover:bg-gray-100'}`}
+          title={isPreviewMode ? "Terug naar bewerken" : "Preview"}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
         </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('italic') ? 'bg-gray-300' : ''}`}
-          title="Italic"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m2 2h6m-8 14h6" />
-          </svg>
-        </button>
-
-        <div className="w-px h-6 bg-gray-300 mx-1"></div>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'left' }) ? 'bg-gray-300' : ''}`}
-          title="Align left"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h10M4 14h16M4 18h10" />
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'center' }) ? 'bg-gray-300' : ''}`}
-          title="Align center"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 10h10M4 14h16M7 18h10" />
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'right' }) ? 'bg-gray-300' : ''}`}
-          title="Align right"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M10 10h10M4 14h16M10 18h10" />
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive({ textAlign: 'justify' }) ? 'bg-gray-300' : ''}`}
-          title="Align justify"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-          </svg>
-        </button>
-
-        <div className="w-px h-6 bg-gray-300 mx-1"></div>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('bulletList') ? 'bg-gray-300' : ''}`}
-          title="Bullet list"
-        >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="4" cy="7" r="2"/>
-            <circle cx="4" cy="12" r="2"/>
-            <circle cx="4" cy="17" r="2"/>
-            <rect x="8" y="6" width="14" height="2"/>
-            <rect x="8" y="11" width="14" height="2"/>
-            <rect x="8" y="16" width="14" height="2"/>
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('orderedList') ? 'bg-gray-300' : ''}`}
-          title="Numbered list"
-        >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <text x="2" y="8" fontSize="8" fontWeight="bold">1.</text>
-            <text x="2" y="14" fontSize="8" fontWeight="bold">2.</text>
-            <text x="2" y="20" fontSize="8" fontWeight="bold">3.</text>
-            <rect x="8" y="6" width="14" height="2"/>
-            <rect x="8" y="11" width="14" height="2"/>
-            <rect x="8" y="16" width="14" height="2"/>
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('blockquote') ? 'bg-gray-300' : ''}`}
-          title="Quote"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </button>
-
-        <div className="w-px h-6 bg-gray-300 mx-1"></div>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('code') ? 'bg-gray-300' : ''}`}
-          title="Code"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={`toolbar-button p-1.5 rounded ${editor.isActive('codeBlock') ? 'bg-gray-300' : ''}`}
-          title="Code Block"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </button>
-
-        <div className="w-px h-6 bg-gray-300 mx-1"></div>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          className="toolbar-button p-1.5 rounded disabled:opacity-30"
-          title="Undo"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          className="toolbar-button p-1.5 rounded disabled:opacity-30"
-          title="Redo"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
-          </svg>
-        </button>
+        {/* Debug text */}
+        <span className="text-xs ml-2">{isPreviewMode ? 'Preview' : 'Bewerken'}</span>
       </div>
 
       {/* Editor */}
       <div className="border border-gray-300 rounded-b-lg">
-        <EditorContent editor={editor} />
+        {isPreviewMode ? (
+          <div
+            className="prose prose-sm max-w-none px-3 py-2 min-h-96 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-4 [&_h4]:text-base [&_h4]:font-bold [&_h4]:mb-2 [&_h4]:mt-3 [&_h5]:text-sm [&_h5]:font-bold [&_h5]:mb-2 [&_h5]:mt-3 [&_h6]:text-sm [&_h6]:font-bold [&_h6]:mb-2 [&_h6]:mt-3"
+            dangerouslySetInnerHTML={{ __html: editor.getHTML() }}
+          />
+        ) : (
+          <EditorContent editor={editor} />
+        )}
       </div>
     </div>
   );
