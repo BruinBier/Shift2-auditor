@@ -750,3 +750,11 @@ button.delete-modal-button:hover,
   color: white;
   padding: 0;
 }
+
+.krafters-markdown-preview strong,
+.krafters-markdown-preview b,
+.finding-description strong,
+.finding-description b {
+  font-weight: 700;
+  color: #111827;
+}

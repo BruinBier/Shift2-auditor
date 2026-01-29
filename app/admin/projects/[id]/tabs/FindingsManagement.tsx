@@ -506,7 +506,9 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
     setIsDialogOpen(true);
   };
 
-  const handleOpenQuickFinding = (criterionId: string, criterionCode: string) => {
+  const handleOpenQuickFinding = async (criterionId: string, criterionCode: string) => {
+    // Reload quick findings to ensure we have the latest data
+    await loadQuickFindings();
     setQuickFindingCriterion({ id: criterionId, code: criterionCode });
     setIsQuickFindingDialogOpen(true);
   };

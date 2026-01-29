@@ -160,9 +160,9 @@ export default function SnelleBevindingen() {
   const getStatusLabel = (status: string | null) => {
     if (!status) return 'Onbekend';
     switch (status) {
-      case 'open': return 'Open';
+      case 'open': return 'Afgekeurd';
       case 'published': return 'Gepubliceerd';
-      case 'resolved': return 'Opgelost';
+      case 'resolved': return 'Opmerking';
       default: return status;
     }
   };
@@ -170,9 +170,9 @@ export default function SnelleBevindingen() {
   const getStatusColor = (status: string | null) => {
     if (!status) return 'bg-gray-100 text-gray-800';
     switch (status) {
-      case 'open': return 'bg-orange-100 text-orange-800';
+      case 'open': return 'bg-red-100 text-red-800';
       case 'published': return 'bg-blue-100 text-blue-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'resolved': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -195,6 +195,27 @@ export default function SnelleBevindingen() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.title.trim()) {
+      alert('Titel is verplicht.');
+      return;
+    }
+
+    if (!formData.criterionCode) {
+      alert('Criterium is verplicht.');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      alert('Beschrijving is verplicht.');
+      return;
+    }
+
+    if (!formData.advice.trim()) {
+      alert('Advies is verplicht.');
+      return;
+    }
 
     try {
       const url = editingId ? `/api/quick-findings/${editingId}` : '/api/quick-findings';
@@ -411,9 +432,9 @@ export default function SnelleBevindingen() {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">Alle</option>
-                  <option value="open">Open</option>
+                  <option value="open">Afgekeurd</option>
                   <option value="published">Gepubliceerd</option>
-                  <option value="resolved">Opgelost</option>
+                  <option value="resolved">Opmerking</option>
                 </select>
               </div>
 

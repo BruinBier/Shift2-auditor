@@ -597,7 +597,7 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
             {/* Combined Bevinding, Advies, and Afbeelding Section */}
             <div className="bg-white rounded-lg border border-gray-200">
               {/* Bevinding Section */}
-              <div className="px-6 py-4">
+              <div className="px-6 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2 mb-3 relative">
                   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -657,6 +657,90 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
                     </div>
                   )}
                 </div>
+
+                {/* WCAG Criterium and Badges Row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* WCAG Criterion */}
+                  <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                    {finding.wcagCriterion?.code}
+                  </span>
+
+                  {/* Status */}
+                  {finding.status && (
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                      finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                    </span>
+                  )}
+
+                  {/* Impact */}
+                  {finding.impact && finding.impact !== 'onbekend' && (
+                    <span
+                      className="px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 border"
+                      style={{
+                        borderColor: finding.impact === 'klein' ? '#d1d5db' :
+                                    finding.impact === 'matig' ? '#d4a574' :
+                                    finding.impact === 'serieus' ? '#ffa64d' :
+                                    '#ffb3b3',
+                        color: finding.impact === 'klein' ? '#000000' :
+                               finding.impact === 'matig' ? '#8b4513' :
+                               finding.impact === 'serieus' ? '#994d00' :
+                               '#bb2525'
+                      }}
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        style={{
+                          color: finding.impact === 'klein' ? '#000000' :
+                                 finding.impact === 'matig' ? '#8b4513' :
+                                 finding.impact === 'serieus' ? '#994d00' :
+                                 '#bb2525'
+                        }}
+                      >
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                      </svg>
+                      {finding.impact}
+                    </span>
+                  )}
+
+                  {/* Responsibility */}
+                  {finding.responsibility && finding.responsibility !== 'onbekend' && (
+                    <span
+                      className="px-2 py-0.5 text-xs font-medium rounded border bg-white"
+                      style={{
+                        borderColor: '#d1d5db',
+                        color: '#000000'
+                      }}
+                    >
+                      {finding.responsibility}
+                    </span>
+                  )}
+                </div>
+
+                {/* URLs from steekproef - show prominently if available */}
+                {finding.occurrences && finding.occurrences.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    {finding.occurrences.map((occurrence: any) => (
+                      occurrence.sampleItem?.url && (
+                        <a
+                          key={occurrence.id}
+                          href={occurrence.sampleItem.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all flex items-start gap-1.5"
+                        >
+                          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          {occurrence.sampleItem.url}
+                        </a>
+                      )
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="px-6 py-4">
@@ -751,15 +835,50 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
               </div>
               <div className="px-6 py-4">
                 {finding.occurrences && finding.occurrences.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {finding.occurrences.map((occurrence: any) => (
-                      <div key={occurrence.id} className="text-sm text-gray-700">
-                        {occurrence.sampleItem?.url || occurrence.sampleItem?.title || 'Geen pagina gespecificeerd'}
+                      <div key={occurrence.id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                        {/* Sample Item Name */}
+                        {occurrence.sampleItem?.name && (
+                          <div className="font-medium text-sm text-gray-900 mb-2">
+                            {occurrence.sampleItem.name}
+                          </div>
+                        )}
+
+                        {/* URL */}
+                        {occurrence.sampleItem?.url && (
+                          <div className="mb-2">
+                            <a
+                              href={occurrence.sampleItem.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all flex items-start gap-1.5"
+                            >
+                              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              {occurrence.sampleItem.url}
+                            </a>
+                          </div>
+                        )}
+
+                        {/* Gekoppeld op datum */}
+                        {occurrence.createdAt && (
+                          <div className="text-xs text-gray-500">
+                            Gekoppeld op: {new Date(occurrence.createdAt).toLocaleDateString('nl-NL', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">Geen pagina's.</p>
+                  <p className="text-sm text-gray-500 italic">Geen pagina's gekoppeld.</p>
                 )}
               </div>
             </div>

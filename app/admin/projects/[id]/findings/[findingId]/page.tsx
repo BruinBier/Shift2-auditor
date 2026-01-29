@@ -41,6 +41,11 @@ export default async function FindingDetailPage({
     ...finding,
     createdAt: finding.createdAt.toISOString(),
     updatedAt: finding.updatedAt.toISOString(),
+    occurrences: finding.occurrences.map((occ: any) => ({
+      ...occ,
+      createdAt: occ.createdAt?.toISOString() || null,
+      updatedAt: occ.updatedAt?.toISOString() || null,
+    })),
   };
 
   const projectData = {

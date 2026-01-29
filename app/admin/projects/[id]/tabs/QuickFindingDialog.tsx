@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { marked } from 'marked';
 
 interface QuickFinding {
   id: string;
@@ -8,8 +9,10 @@ interface QuickFinding {
   description: string;
   advice: string;
   criterionCode: string;
+  status?: string;
   impact?: string;
   responsibility?: string;
+  createdAt?: string;
 }
 
 interface QuickFindingDialogProps {
@@ -34,6 +37,23 @@ export default function QuickFindingDialog({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCriterionCode, setSelectedCriterionCode] = useState(criterionCode);
 
+  // Configure marked to add target="_blank" to all links
+  useEffect(() => {
+    const renderer = new marked.Renderer();
+    const originalLink = renderer.link.bind(renderer);
+
+    renderer.link = (href: string, title: string | null | undefined, text: string) => {
+      const html = originalLink(href, title, text);
+      return html.replace('<a ', '<a target="_blank" rel="noopener noreferrer" title="opent in nieuw venster" ');
+    };
+
+    marked.setOptions({
+      renderer,
+      breaks: true,
+      gfm: true
+    });
+  }, []);
+
   if (!isOpen) return null;
 
   // Filter quick findings for the selected criterion
@@ -42,105 +62,31 @@ export default function QuickFindingDialog({
   );
 
   // Further filter by search term
-  const filteredFindings = criterionFindings.filter(finding =>
+  const searchFiltered = criterionFindings.filter(finding =>
     finding.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     finding.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Sort by createdAt (oldest first) - same as on the main page
+  const filteredFindings = [...searchFiltered].sort((a, b) => {
+    if (!a.createdAt || !b.createdAt) return 0;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 
   const handleSelect = (finding: QuickFinding) => {
     onSelect(finding);
     onClose();
   };
 
-  // Function to render advice with code blocks and lists
+  // Function to render advice with proper markdown formatting (including inline code)
   const renderAdvice = (advice: string) => {
-    const lines = advice.split('\n');
-    const elements: JSX.Element[] = [];
-    let currentCodeBlock: string[] = [];
-    let currentTextBlock: string[] = [];
-    let currentListItems: string[] = [];
-    let inCodeBlock = false;
-
-    const flushCodeBlock = () => {
-      if (currentCodeBlock.length > 0) {
-        elements.push(
-          <pre key={elements.length} className="bg-gray-900 text-white p-4 rounded-lg text-sm font-mono overflow-hidden">
-            <code className="block whitespace-pre-wrap break-words">{currentCodeBlock.join('\n')}</code>
-          </pre>
-        );
-        currentCodeBlock = [];
-      }
-    };
-
-    const flushTextBlock = () => {
-      if (currentTextBlock.length > 0) {
-        const text = currentTextBlock.join('\n').trim();
-        if (text) {
-          elements.push(
-            <p key={elements.length} className="text-sm text-gray-700">{text}</p>
-          );
-        }
-        currentTextBlock = [];
-      }
-    };
-
-    const flushListItems = () => {
-      if (currentListItems.length > 0) {
-        elements.push(
-          <ul key={elements.length} className="list-disc list-inside text-sm text-gray-700 space-y-1">
-            {currentListItems.map((item, idx) => (
-              <li key={idx}>{item}</li>
-            ))}
-          </ul>
-        );
-        currentListItems = [];
-      }
-    };
-
-    lines.forEach((line) => {
-      const trimmedLine = line.trim();
-
-      // Check for markdown code fence (```html, ```)
-      if (trimmedLine.startsWith('```')) {
-        if (inCodeBlock) {
-          // End of code block
-          flushCodeBlock();
-          inCodeBlock = false;
-        } else {
-          // Start of code block
-          flushTextBlock();
-          flushListItems();
-          inCodeBlock = true;
-        }
-        return; // Don't include the ``` markers
-      }
-
-      if (inCodeBlock) {
-        // Inside a code block
-        currentCodeBlock.push(line);
-      } else if (trimmedLine === '') {
-        // Empty line - flush current blocks
-        flushTextBlock();
-        flushListItems();
-      } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-')) {
-        // Bullet point - flush text first, then add to list
-        flushTextBlock();
-        // Remove the bullet character and trim
-        const itemText = trimmedLine.replace(/^[•\-]\s*/, '');
-        currentListItems.push(itemText);
-      } else {
-        // Regular text - flush list first, then add to text
-        flushListItems();
-        currentTextBlock.push(line);
-      }
-    });
-
-    // Flush any remaining blocks
-    flushCodeBlock();
-    flushTextBlock();
-    flushListItems();
-
-    return <div className="space-y-3">{elements}</div>;
+    try {
+      const html = marked(advice);
+      return <div className="krafters-markdown-preview finding-description space-y-3 text-sm" dangerouslySetInnerHTML={{ __html: html as string }} />;
+    } catch (error) {
+      console.error('Error rendering markdown:', error);
+      return <div className="text-sm text-gray-700">{advice}</div>;
+    }
   };
 
   return (
@@ -243,19 +189,63 @@ export default function QuickFindingDialog({
                     <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
                       {finding.criterionCode}
                     </span>
-                    {finding.impact && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                    {finding.status && (
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                        finding.status === 'open' ? 'bg-red-100 text-red-800' :
+                        finding.status === 'resolved' ? 'bg-gray-100 text-gray-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {finding.status === 'open' ? 'Afgekeurd' :
+                         finding.status === 'resolved' ? 'Opmerking' :
+                         'Gepubliceerd'}
+                      </span>
+                    )}
+                    {finding.impact && finding.impact !== 'onbekend' && (
+                      <span
+                        className="px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 border"
+                        style={{
+                          borderColor: finding.impact === 'klein' ? '#d1d5db' :
+                                      finding.impact === 'matig' ? '#d4a574' :
+                                      finding.impact === 'serieus' ? '#ffa64d' :
+                                      '#ffb3b3',
+                          color: finding.impact === 'klein' ? '#000000' :
+                                 finding.impact === 'matig' ? '#8b4513' :
+                                 finding.impact === 'serieus' ? '#994d00' :
+                                 '#bb2525'
+                        }}
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          style={{
+                            color: finding.impact === 'klein' ? '#000000' :
+                                   finding.impact === 'matig' ? '#8b4513' :
+                                   finding.impact === 'serieus' ? '#994d00' :
+                                   '#bb2525'
+                          }}
+                        >
+                          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
                         {finding.impact}
                       </span>
                     )}
-                    {finding.responsibility && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                    {finding.responsibility && finding.responsibility !== 'onbekend' && (
+                      <span
+                        className="px-2 py-0.5 text-xs font-medium rounded border bg-white"
+                        style={{
+                          borderColor: '#d1d5db',
+                          color: '#000000'
+                        }}
+                      >
                         {finding.responsibility}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-sm text-gray-700 mb-3">{finding.description}</p>
+                  <div className="mb-3">
+                    {renderAdvice(finding.description)}
+                  </div>
 
                   {finding.advice && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
