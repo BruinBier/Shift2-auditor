@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import CrawlerResults from './CrawlerResults';
 
 export default async function ScopeUrlPage({
   params
@@ -17,6 +18,11 @@ export default async function ScopeUrlPage({
 
   const scopeUrl = await prisma.projectScopeUrl.findUnique({
     where: { id: params.scopeId },
+    include: {
+      crawlerResults: {
+        orderBy: { testName: 'asc' },
+      },
+    },
   });
 
   if (!scopeUrl) {
@@ -91,30 +97,24 @@ export default async function ScopeUrlPage({
           </div>
 
           {/* Scope URL details */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
                 {scopeUrl.inScope ? 'Binnen scope' : 'Buiten scope'}
               </h2>
-              <button className="crawler-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors">
-                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                  </svg>
-                </div>
-                Crawler initialiseren
-              </button>
             </div>
 
             {/* Title/Description */}
             {scopeUrl.title && (
               <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-1">Titel:</p>
                 <p className="text-sm text-gray-900">{scopeUrl.title}</p>
               </div>
             )}
 
             {/* URL */}
             <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">URL:</p>
               <a
                 href={scopeUrl.url}
                 target="_blank"
@@ -128,6 +128,15 @@ export default async function ScopeUrlPage({
               </a>
             </div>
           </div>
+
+          {/* Crawler Results */}
+          <CrawlerResults
+            projectId={params.id}
+            scopeUrlId={params.scopeId}
+            crawlerResults={scopeUrl.crawlerResults}
+            crawledAt={scopeUrl.crawledAt}
+            url={scopeUrl.url}
+          />
         </div>
       </main>
 

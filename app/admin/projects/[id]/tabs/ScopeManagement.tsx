@@ -23,6 +23,7 @@ interface ScopePage {
   title: string;
   crawlerType?: string;
   inScope: boolean;
+  crawledAt?: Date | null;
 }
 
 export default function ScopeManagement({ project }: { project: any }) {
@@ -40,6 +41,8 @@ export default function ScopeManagement({ project }: { project: any }) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [hoverInButton, setHoverInButton] = useState(false);
   const [hoverOutButton, setHoverOutButton] = useState(false);
+  const [crawlingUrlId, setCrawlingUrlId] = useState<string | null>(null);
+  const [isDiscovering, setIsDiscovering] = useState(false);
 
   // Haal scope URLs op uit project data
   const scopePages: ScopePage[] = project.scopeUrls || [];
@@ -126,6 +129,96 @@ export default function ScopeManagement({ project }: { project: any }) {
     } catch (error) {
       console.error('Error deleting URL:', error);
       alert('Er ging iets mis bij het verwijderen.');
+    }
+  };
+
+  const handleCrawlerInit = async (urlId: string) => {
+    if (!confirm('Weet je zeker dat je de crawler voor deze URL wilt starten?')) {
+      return;
+    }
+
+    setOpenMenuId(null);
+    setCrawlingUrlId(urlId);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}/scope-urls/${urlId}/crawler`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`Crawler succesvol uitgevoerd!\n\n` +
+              `Tests uitgevoerd: ${data.testsRun}\n` +
+              `Tests gevonden: ${data.testsFound}\n\n` +
+              `Je kunt de resultaten bekijken op de detail pagina.`);
+        router.refresh();
+      } else {
+        alert(`Er ging iets mis bij het starten van de crawler: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error initiating crawler:', error);
+      alert('Er ging iets mis bij het starten van de crawler.');
+    } finally {
+      setCrawlingUrlId(null);
+    }
+  };
+
+  const handleSiteDiscovery = async () => {
+    if (inScopePages.length === 0) {
+      alert('Voeg eerst minimaal één URL toe aan de scope.');
+      return;
+    }
+
+    // Use the first in-scope URL as the starting point
+    const startUrl = inScopePages[0];
+
+    const confirmMessage = `Site Crawler starten vanaf:\n${startUrl.url}\n\n` +
+                          `Dit zal:\n` +
+                          `- Alle pagina's op de website ontdekken\n` +
+                          `- Nieuwe pagina's toevoegen aan de scope\n` +
+                          `- Optioneel alle gevonden pagina's direct crawlen\n\n` +
+                          `Wil je de gevonden pagina's direct crawlen?\n` +
+                          `(OK = Ja, crawl direct  |  Annuleren = Nee, alleen ontdekken)`;
+
+    const shouldCrawl = confirm(confirmMessage);
+    if (shouldCrawl === null) {
+      return; // User cancelled
+    }
+
+    setIsDiscovering(true);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}/scope-urls/${startUrl.id}/discover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          maxDepth: 2,
+          maxPages: 100,
+          crawlPages: shouldCrawl,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const summary = `Site discovery succesvol!\n\n` +
+                       `Totaal gevonden: ${data.discovered.total} pagina's\n` +
+                       `Interne pagina's: ${data.discovered.internal}\n` +
+                       `Nieuwe pagina's toegevoegd: ${data.discovered.new}\n` +
+                       `Bestaande pagina's: ${data.discovered.existing}\n` +
+                       (shouldCrawl ? `\nGecrawlde pagina's: ${data.crawled}` : '');
+
+        alert(summary);
+        router.refresh();
+      } else {
+        alert(`Er ging iets mis bij site discovery: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error during site discovery:', error);
+      alert('Er ging iets mis bij het ontdekken van de site.');
+    } finally {
+      setIsDiscovering(false);
     }
   };
 
@@ -323,73 +416,73 @@ export default function ScopeManagement({ project }: { project: any }) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Binnen scope</h3>
-            <button
-              onClick={() => openModal('in')}
-              onMouseEnter={() => setHoverInButton(true)}
-              onMouseLeave={() => setHoverInButton(false)}
-              className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{
-                border: '1px solid #79e792',
-                color: '#1f0036'
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.0" />
-              </svg>
-              URL toevoegen
-            </button>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/admin/projects/${project.id}/crawler-overview`}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{
+                  border: '1px solid #6b2d8f',
+                  color: '#6b2d8f',
+                  backgroundColor: 'white'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Crawler Overzicht
+              </a>
+              <button
+                onClick={() => openModal('in')}
+                onMouseEnter={() => setHoverInButton(true)}
+                onMouseLeave={() => setHoverInButton(false)}
+                className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{
+                  border: '1px solid #79e792',
+                  color: '#1f0036'
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.0" />
+                </svg>
+                URL toevoegen
+              </button>
+            </div>
           </div>
         </div>
 
-        {false && (
-          <div className="p-6 bg-gray-50 border-b border-gray-200">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                <input
-                  type="url"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
-                  placeholder="https://example.com/pagina"
-                />
+        {/* Site Crawler Section */}
+        {inScopePages.length > 0 && (
+          <div className="p-6 bg-blue-50 border-b border-blue-200">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <h4 className="text-sm font-semibold text-blue-900">Site Crawler</h4>
+                </div>
+                <p className="text-sm text-blue-800">
+                  Ontdek automatisch alle pagina's op de website vanaf de eerste URL in scope.
+                  De crawler zal alle interne links volgen en nieuwe pagina's toevoegen aan de scope.
+                </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titel</label>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
-                  placeholder="Pagina titel"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Crawler type</label>
-                <select
-                  value={'Productieomgeving'}
-                  onChange={(e) => {}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-shift2-primary focus:border-transparent"
-                >
-                  <option>Productieomgeving</option>
-                  <option>Pre-loginpagina</option>
-                  <option>Test omgeving</option>
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {}}
-                  className="px-4 py-2 bg-shift2-primary text-white rounded-lg hover:bg-shift2-primary/90"
-                >
-                  Toevoegen
-                </button>
-                <button
-                  onClick={() => {}}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Annuleren
-                </button>
-              </div>
+              <button
+                onClick={handleSiteDiscovery}
+                disabled={isDiscovering}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-4"
+                style={{ backgroundColor: '#6b2d8f' }}
+              >
+                <svg className={`w-4 h-4 ${isDiscovering ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isDiscovering ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  )}
+                </svg>
+                {isDiscovering ? 'Bezig met ontdekken...' : 'Start Site Crawler'}
+              </button>
             </div>
           </div>
         )}
@@ -410,7 +503,17 @@ export default function ScopeManagement({ project }: { project: any }) {
                   <tr key={page.id}>
                     <td className="py-4">
                       <div>
-                        <div className="font-medium text-gray-900">{page.url}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900">{page.url}</span>
+                          {page.crawledAt && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Gecrawld
+                            </span>
+                          )}
+                        </div>
                         <div className="text-sm text-gray-500">{page.title}</div>
                       </div>
                     </td>
@@ -451,6 +554,16 @@ export default function ScopeManagement({ project }: { project: any }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                               Bewerken
+                            </button>
+                            <button
+                              onClick={() => handleCrawlerInit(page.id)}
+                              disabled={crawlingUrlId === page.id}
+                              className="scope-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                              {crawlingUrlId === page.id ? 'Crawler draait...' : 'Crawler initialiseren'}
                             </button>
                             <button
                               onClick={() => {

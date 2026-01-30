@@ -165,8 +165,10 @@ model ProjectScopeUrl {
   crawlerType String?  @map("crawler_type")
   inScope     Boolean  @default(true) @map("in_scope")
   note        String?  @db.Text
+  crawledAt   DateTime? @map("crawled_at")
 
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  crawlerResults CrawlerResult[]
 
   @@map("project_scope_urls")
 }
@@ -341,4 +343,19 @@ model FindingOccurrence {
   sampleItem    SampleItem  @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
 
   @@map("finding_occurrences")
+}
+
+model CrawlerResult {
+  id            String           @id @default(uuid())
+  scopeUrlId    String           @map("scope_url_id")
+  testId        String           @map("test_id")
+  testName      String           @map("test_name")
+  found         Boolean
+  count         Int              @default(0)
+  details       String?          @db.Text // JSON string with test-specific details
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  scopeUrl      ProjectScopeUrl  @relation(fields: [scopeUrlId], references: [id], onDelete: Cascade)
+
+  @@map("crawler_results")
 }
