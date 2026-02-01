@@ -1,13 +1,43 @@
-import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import CrawlerResults from './CrawlerResults';
+import CrawlerOverviewResults from './CrawlerOverviewResults';
 
-export default async function ScopeUrlPage({
-  params
+export async function generateMetadata({
+  params,
 }: {
-  params: { id: string; scopeId: string }
+  params: { id: string; parentUrlId: string };
 }) {
+  const project = await prisma.project.findUnique({
+    where: { id: params.id },
+  });
+
+  const title = project
+    ? `${project.title} - Crawler overzicht`
+    : 'Crawler overzicht';
+
+  return {
+    title,
+    openGraph: {
+      title,
+    },
+  };
+}
+
+export default async function ParentCrawlerOverviewPage({
+  params,
+}: {
+  params: { id: string; parentUrlId: string };
+}) {
+  // Get the parent URL
+  const parentUrl = await prisma.projectScopeUrl.findUnique({
+    where: { id: params.parentUrlId },
+  });
+
+  if (!parentUrl) {
+    notFound();
+  }
+
   const project = await prisma.project.findUnique({
     where: { id: params.id },
   });
@@ -16,18 +46,40 @@ export default async function ScopeUrlPage({
     notFound();
   }
 
-  const scopeUrl = await prisma.projectScopeUrl.findUnique({
-    where: { id: params.scopeId },
+  // Get the parent URL and all discovered URLs
+  const discoveredUrls = await prisma.projectScopeUrl.findMany({
+    where: {
+      OR: [
+        { id: params.parentUrlId }, // Include the parent URL itself
+        { parentUrlId: params.parentUrlId }, // Include discovered child URLs
+      ],
+    },
     include: {
       crawlerResults: {
-        orderBy: { count: 'desc' },
+        where: { found: true },
       },
     },
+    orderBy: { url: 'asc' },
   });
 
-  if (!scopeUrl) {
-    notFound();
-  }
+  // Calculate summary statistics for each URL
+  const urlsWithStats = discoveredUrls.map(scopeUrl => {
+    const foundCount = scopeUrl.crawlerResults.length;
+    // Impact score = sum of all count values (total number of issues found)
+    const impactScore = scopeUrl.crawlerResults.reduce((sum, result) => sum + result.count, 0);
+
+    return {
+      id: scopeUrl.id,
+      url: scopeUrl.url,
+      title: scopeUrl.title,
+      crawledAt: scopeUrl.crawledAt,
+      foundCount,
+      impactScore,
+    };
+  });
+
+  // Sort by impact score (descending)
+  urlsWithStats.sort((a, b) => b.impactScore - a.impactScore);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -106,26 +158,27 @@ export default async function ScopeUrlPage({
             </div>
           </div>
 
-          {/* Scope URL details with crawler info */}
+          {/* Scope URL details */}
           <div className="grid grid-cols-3 gap-6">
-            {/* Left column - URL details */}
+            {/* Left column - Results */}
             <div className="col-span-2">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                    {scopeUrl.title || 'Geen titel'}
+                    Binnen scope
                   </h2>
+                  <p className="text-sm text-gray-600">-</p>
                 </div>
 
                 {/* URL */}
                 <div>
                   <a
-                    href={scopeUrl.url}
+                    href={parentUrl.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-600 hover:text-purple-800 underline flex items-center gap-2 w-fit"
                   >
-                    {scopeUrl.url}
+                    {parentUrl.url}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
@@ -134,16 +187,13 @@ export default async function ScopeUrlPage({
               </div>
 
               {/* Crawler Results */}
-              <CrawlerResults
+              <CrawlerOverviewResults
                 projectId={params.id}
-                scopeUrlId={params.scopeId}
-                crawlerResults={scopeUrl.crawlerResults}
-                crawledAt={scopeUrl.crawledAt}
-                url={scopeUrl.url}
+                urls={urlsWithStats}
               />
             </div>
 
-            {/* Right column - Web crawler info */}
+            {/* Right column - Info */}
             <div>
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="mb-4">
@@ -151,18 +201,18 @@ export default async function ScopeUrlPage({
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Aantal pagina's:</span>
-                      <span className="font-medium text-gray-900">1</span>
+                      <span className="font-medium text-gray-900">{discoveredUrls.length}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">ID:</span>
-                      <span className="font-medium text-gray-900">{scopeUrl.id.split('-')[0]}</span>
+                      <span className="font-medium text-gray-900">{parentUrl.id.split('-')[0]}</span>
                     </div>
-                    {scopeUrl.crawledAt && (
+                    {parentUrl.crawledAt && (
                       <>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Aangemaakt:</span>
                           <span className="font-medium text-gray-900">
-                            {new Date(scopeUrl.crawledAt).toLocaleString('nl-NL', {
+                            {new Date(parentUrl.crawledAt).toLocaleString('nl-NL', {
                               day: '2-digit',
                               month: '2-digit',
                               year: 'numeric',
@@ -174,7 +224,7 @@ export default async function ScopeUrlPage({
                         <div className="flex justify-between">
                           <span className="text-gray-600">Gewijzigd:</span>
                           <span className="font-medium text-gray-900">
-                            {new Date(scopeUrl.crawledAt).toLocaleString('nl-NL', {
+                            {new Date(parentUrl.crawledAt).toLocaleString('nl-NL', {
                               day: '2-digit',
                               month: '2-digit',
                               year: 'numeric',
@@ -186,13 +236,6 @@ export default async function ScopeUrlPage({
                       </>
                     )}
                   </div>
-                  {scopeUrl.crawledAt && (
-                    <div className="mt-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                        Afgerond
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -200,7 +243,7 @@ export default async function ScopeUrlPage({
         </div>
       </main>
 
-      {/* Footer - Same as Report */}
+      {/* Footer */}
       <footer className="border-t border-gray-200" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-[1400px] mx-auto px-8 py-8">
           <div className="grid grid-cols-2 gap-8">
@@ -210,6 +253,7 @@ export default async function ScopeUrlPage({
                   src="/shift2-logo.svg"
                   alt="Shift2 Logo"
                   className="h-6 w-auto"
+                  style={{ filter: 'brightness(0) invert(1)' }}
                 />
               </div>
               <p className="text-sm text-white leading-relaxed">

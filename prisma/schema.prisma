@@ -140,6 +140,7 @@ model Project {
   criterionAssessments    CriterionAssessment[]
   findings                Finding[]
   projectNotes            ProjectNote[]
+  crawlerRuns             CrawlerRun[]
 
   @@map("projects")
 }
@@ -166,9 +167,13 @@ model ProjectScopeUrl {
   inScope     Boolean  @default(true) @map("in_scope")
   note        String?  @db.Text
   crawledAt   DateTime? @map("crawled_at")
+  parentUrlId String?  @map("parent_url_id")
 
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentUrl   ProjectScopeUrl? @relation("DiscoveredUrls", fields: [parentUrlId], references: [id], onDelete: Cascade)
+  discoveredUrls ProjectScopeUrl[] @relation("DiscoveredUrls")
   crawlerResults CrawlerResult[]
+  findingUrls FindingUrl[]
 
   @@map("project_scope_urls")
 }
@@ -296,6 +301,7 @@ model QuickFinding {
   criterionCode   String                 @map("criterion_code")
   keywords        String?
   crawler         Boolean                @default(false)
+  crawlerTestId   String?                @unique @map("crawler_test_id") // Link to specific crawler test
   status          FindingStatus?
   impact          FindingImpact?
   responsibility  FindingResponsibility?
@@ -328,6 +334,8 @@ model Finding {
   wcagCriterion   WCAGCriterion          @relation(fields: [wcagCriterionId], references: [id])
   quickFinding    QuickFinding?          @relation(fields: [quickFindingId], references: [id], onDelete: SetNull)
   occurrences     FindingOccurrence[]
+  affectedUrls    FindingUrl[]
+  attachments     FindingAttachment[]
 
   @@map("findings")
 }
@@ -345,6 +353,33 @@ model FindingOccurrence {
   @@map("finding_occurrences")
 }
 
+model FindingUrl {
+  id              String           @id @default(uuid())
+  findingId       String           @map("finding_id")
+  scopeUrlId      String           @map("scope_url_id")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  finding         Finding          @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  scopeUrl        ProjectScopeUrl  @relation(fields: [scopeUrlId], references: [id], onDelete: Cascade)
+
+  @@unique([findingId, scopeUrlId])
+  @@map("finding_urls")
+}
+
+model FindingAttachment {
+  id              String           @id @default(uuid())
+  findingId       String           @map("finding_id")
+  fileName        String           @map("file_name")
+  fileType        String           @map("file_type") // "image/png", "image/jpeg"
+  fileSize        Int              @map("file_size") // bytes (max 20MB = 20971520)
+  filePath        String           @map("file_path") // storage path
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  finding         Finding          @relation(fields: [findingId], references: [id], onDelete: Cascade)
+
+  @@map("finding_attachments")
+}
+
 model CrawlerResult {
   id            String           @id @default(uuid())
   scopeUrlId    String           @map("scope_url_id")
@@ -358,4 +393,22 @@ model CrawlerResult {
   scopeUrl      ProjectScopeUrl  @relation(fields: [scopeUrlId], references: [id], onDelete: Cascade)
 
   @@map("crawler_results")
+}
+
+model CrawlerRun {
+  id              String    @id @default(uuid())
+  projectId       String    @map("project_id")
+  status          String    @default("running") // running, completed, failed
+  totalUrls       Int       @default(0) @map("total_urls")
+  urlsProcessed   Int       @default(0) @map("urls_processed")
+  urlsFailed      Int       @default(0) @map("urls_failed")
+  totalIssues     Int       @default(0) @map("total_issues")
+  criticalIssues  Int       @default(0) @map("critical_issues")
+  config          String?   @db.Text // JSON string with crawler config
+  startedAt       DateTime  @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("crawler_runs")
 }

@@ -10,7 +10,9 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "export": "node scripts/export-report-simple.js"
+    "export": "node scripts/export-report-simple.js",
+    "backup": "tsx scripts/export-all-data.ts",
+    "restore": "tsx scripts/import-all-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

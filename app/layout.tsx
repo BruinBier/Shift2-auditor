@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Shift2 Auditor - WCAG Toegankelijkheidsonderzoek",
+  title: "Shift2 Auditor",
   description: "Tool voor het uitvoeren en rapporteren van WCAG toegankelijkheidsonderzoeken",
 };
 

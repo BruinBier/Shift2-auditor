@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma generate)",
+      "Bash(tasklist)",
+      "Bash(npm run dev)",
+      "Bash(npx tsx scripts/fix-discovered-urls.ts)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -30,6 +30,14 @@ export async function POST(
     console.log(`[DISCOVER] Starting site discovery from ${scopeUrl.url}`);
     console.log(`[DISCOVER] Settings: maxDepth=${maxDepth}, maxPages=${maxPages}, crawl=${crawlPages}`);
 
+    // Delete existing discovered URLs for this parent to avoid accumulation
+    const deletedCount = await prisma.projectScopeUrl.deleteMany({
+      where: {
+        parentUrlId: params.urlId,
+      },
+    });
+    console.log(`[DISCOVER] Deleted ${deletedCount.count} existing discovered URLs`);
+
     // Discover all pages on the site
     const discoveredPages = await discoverSite(scopeUrl.url, maxDepth, maxPages);
 
@@ -62,6 +70,7 @@ export async function POST(
             title: page.title || `Discovered: ${page.url}`,
             crawlerType: 'Productieomgeving',
             inScope: true,
+            parentUrlId: params.urlId, // Link discovered URLs to parent
           },
         });
       })
@@ -72,7 +81,51 @@ export async function POST(
     // Optionally crawl all discovered pages
     let crawledCount = 0;
     if (crawlPages) {
-      console.log(`[DISCOVER] Starting to crawl ${createdScopeUrls.length} pages...`);
+      // Also crawl the parent URL itself
+      console.log(`[DISCOVER] Crawling parent URL: ${scopeUrl.url}...`);
+      try {
+        const parentResponse = await fetch(scopeUrl.url, {
+          headers: {
+            'User-Agent': 'Shift2-Auditor/1.0 (Accessibility Crawler)',
+          },
+        });
+
+        if (parentResponse.ok) {
+          const parentHtml = await parentResponse.text();
+          const parentTestResults = runAllMVPTests(parentHtml);
+
+          // Delete old crawler results for parent
+          await prisma.crawlerResult.deleteMany({
+            where: { scopeUrlId: params.urlId },
+          });
+
+          // Save new results for parent
+          const parentResults = parentTestResults.map(test => ({
+            scopeUrlId: params.urlId,
+            testId: test.testId,
+            testName: test.testName,
+            found: test.found,
+            count: test.count,
+            details: JSON.stringify(test.details || {}),
+          }));
+
+          await prisma.crawlerResult.createMany({
+            data: parentResults,
+          });
+
+          // Update crawledAt for parent
+          await prisma.projectScopeUrl.update({
+            where: { id: params.urlId },
+            data: { crawledAt: new Date() },
+          });
+
+          console.log(`[DISCOVER] Crawled parent URL successfully`);
+        }
+      } catch (error) {
+        console.error(`[DISCOVER] Error crawling parent URL:`, error);
+      }
+
+      console.log(`[DISCOVER] Starting to crawl ${createdScopeUrls.length} child pages...`);
 
       for (const newScopeUrl of createdScopeUrls) {
         try {
@@ -123,7 +176,7 @@ export async function POST(
         }
       }
 
-      console.log(`[DISCOVER] Crawling completed. Crawled ${crawledCount} pages`);
+      console.log(`[DISCOVER] Crawling completed. Crawled ${crawledCount} child pages + 1 parent page`);
     }
 
     return NextResponse.json({
@@ -135,7 +188,7 @@ export async function POST(
         new: createdScopeUrls.length,
         existing: internalPages.length - createdScopeUrls.length,
       },
-      crawled: crawlPages ? crawledCount : 0,
+      crawled: crawlPages ? crawledCount + 1 : 0, // +1 for parent URL
     }, { status: 200 });
 
   } catch (error) {

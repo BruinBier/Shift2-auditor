@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { marked } from 'marked';
 import 'md-editor-rt/lib/style.css';
+import CrawlerModal from '../components/CrawlerModal';
 
 // Configure marked to preserve line breaks
 marked.setOptions({
@@ -43,6 +44,8 @@ export default function ScopeManagement({ project }: { project: any }) {
   const [hoverOutButton, setHoverOutButton] = useState(false);
   const [crawlingUrlId, setCrawlingUrlId] = useState<string | null>(null);
   const [isDiscovering, setIsDiscovering] = useState(false);
+  const [showCrawlerModal, setShowCrawlerModal] = useState(false);
+  const [selectedUrlForCrawler, setSelectedUrlForCrawler] = useState<string | null>(null);
 
   // Haal scope URLs op uit project data
   const scopePages: ScopePage[] = project.scopeUrls || [];
@@ -133,24 +136,38 @@ export default function ScopeManagement({ project }: { project: any }) {
   };
 
   const handleCrawlerInit = async (urlId: string) => {
-    if (!confirm('Weet je zeker dat je de crawler voor deze URL wilt starten?')) {
-      return;
-    }
-
     setOpenMenuId(null);
-    setCrawlingUrlId(urlId);
+    setSelectedUrlForCrawler(urlId);
+    setShowCrawlerModal(true);
+  };
+
+  const handleCrawlerConfirm = async (maxPages: number) => {
+    if (!selectedUrlForCrawler) return;
+
+    setCrawlingUrlId(selectedUrlForCrawler);
 
     try {
-      const response = await fetch(`/api/projects/${project.id}/scope-urls/${urlId}/crawler`, {
+      const response = await fetch(`/api/projects/${project.id}/scope-urls/${selectedUrlForCrawler}/discover`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          maxDepth: 2,
+          maxPages: maxPages,
+          crawlPages: true,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        setShowCrawlerModal(false);
+        setSelectedUrlForCrawler(null);
+
         alert(`Crawler succesvol uitgevoerd!\n\n` +
-              `Tests uitgevoerd: ${data.testsRun}\n` +
-              `Tests gevonden: ${data.testsFound}\n\n` +
+              `Totaal gevonden: ${data.discovered.total} pagina's\n` +
+              `Interne pagina's: ${data.discovered.internal}\n` +
+              `Nieuwe pagina's toegevoegd: ${data.discovered.new}\n` +
+              `Gecrawlde pagina's: ${data.crawled}\n\n` +
               `Je kunt de resultaten bekijken op de detail pagina.`);
         router.refresh();
       } else {
@@ -417,26 +434,8 @@ export default function ScopeManagement({ project }: { project: any }) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Binnen scope</h3>
             <div className="flex items-center gap-2">
-              <a
-                href={`/admin/projects/${project.id}/crawler-overview`}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                style={{
-                  border: '1px solid #6b2d8f',
-                  color: '#6b2d8f',
-                  backgroundColor: 'white'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Crawler Overzicht
-              </a>
               <button
                 onClick={() => openModal('in')}
-                onMouseEnter={() => setHoverInButton(true)}
-                onMouseLeave={() => setHoverInButton(false)}
                 className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
                 style={{
                   border: '1px solid #79e792',
@@ -444,48 +443,13 @@ export default function ScopeManagement({ project }: { project: any }) {
                 }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.0" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
                 URL toevoegen
               </button>
             </div>
           </div>
         </div>
-
-        {/* Site Crawler Section */}
-        {inScopePages.length > 0 && (
-          <div className="p-6 bg-blue-50 border-b border-blue-200">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <h4 className="text-sm font-semibold text-blue-900">Site Crawler</h4>
-                </div>
-                <p className="text-sm text-blue-800">
-                  Ontdek automatisch alle pagina's op de website vanaf de eerste URL in scope.
-                  De crawler zal alle interne links volgen en nieuwe pagina's toevoegen aan de scope.
-                </p>
-              </div>
-              <button
-                onClick={handleSiteDiscovery}
-                disabled={isDiscovering}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-4"
-                style={{ backgroundColor: '#6b2d8f' }}
-              >
-                <svg className={`w-4 h-4 ${isDiscovering ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isDiscovering ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  )}
-                </svg>
-                {isDiscovering ? 'Bezig met ontdekken...' : 'Start Site Crawler'}
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="p-6">
           {inScopePages.length === 0 ? (
@@ -495,7 +459,7 @@ export default function ScopeManagement({ project }: { project: any }) {
               <thead className="border-b border-gray-200">
                 <tr>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
-                  <th className="pb-3 w-24"></th>
+                  <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Crawler</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -519,11 +483,11 @@ export default function ScopeManagement({ project }: { project: any }) {
                     </td>
                     <td className="py-4">
                       <div className="flex items-center gap-2 relative justify-end">
-                        {/* Pijl naar rechts - link naar detail pagina */}
+                        {/* Pijl naar rechts - link naar crawler overview pagina */}
                         <a
-                          href={`/admin/projects/${project.id}/scope/${page.id}`}
+                          href={`/admin/projects/${project.id}/crawler-overview/${page.id}`}
                           className="scope-link-button p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                          title="Bekijk details"
+                          title="Bekijk crawler overzicht"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -542,7 +506,7 @@ export default function ScopeManagement({ project }: { project: any }) {
 
                         {/* Context menu */}
                         {openMenuId === page.id && (
-                          <div className="scope-context-menu absolute right-0 top-8 z-10 w-56 rounded-lg shadow-lg border border-gray-200 py-1">
+                          <div className="scope-context-menu absolute right-0 top-8 z-10 w-64 rounded-lg shadow-lg border border-gray-200 py-1">
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
@@ -563,8 +527,9 @@ export default function ScopeManagement({ project }: { project: any }) {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                               </svg>
-                              {crawlingUrlId === page.id ? 'Crawler draait...' : 'Crawler initialiseren'}
+                              {crawlingUrlId === page.id ? 'Crawler draait...' : 'Ontdek URLs'}
                             </button>
+                            <div className="border-t border-gray-200 my-1"></div>
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
@@ -594,21 +559,21 @@ export default function ScopeManagement({ project }: { project: any }) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Buiten scope</h3>
-            <button
-              onClick={() => openModal('out')}
-              onMouseEnter={() => setHoverOutButton(true)}
-              onMouseLeave={() => setHoverOutButton(false)}
-              className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{
-                border: '1px solid #79e792',
-                color: '#1f0036'
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              URL toevoegen
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openModal('out')}
+                className="scope-add-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{
+                  border: '1px solid #79e792',
+                  color: '#1f0036'
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#1f0036' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                URL toevoegen
+              </button>
+            </div>
           </div>
         </div>
 
@@ -661,7 +626,7 @@ export default function ScopeManagement({ project }: { project: any }) {
               <thead className="border-b border-gray-200">
                 <tr>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
-                  <th className="pb-3 w-24"></th>
+                  <th className="pb-3 text-left text-xs font-medium text-gray-500 uppercase">Crawler</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -903,6 +868,17 @@ export default function ScopeManagement({ project }: { project: any }) {
           </div>
         </div>
       )}
+
+      {/* Crawler Modal */}
+      <CrawlerModal
+        isOpen={showCrawlerModal}
+        onClose={() => {
+          setShowCrawlerModal(false);
+          setSelectedUrlForCrawler(null);
+        }}
+        onConfirm={handleCrawlerConfirm}
+        isLoading={crawlingUrlId !== null}
+      />
     </div>
     </>
   );

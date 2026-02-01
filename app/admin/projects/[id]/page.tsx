@@ -11,7 +11,11 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
           opdrachtgever: true,
         },
       },
-      scopeUrls: true,
+      scopeUrls: {
+        where: {
+          parentUrlId: null, // Only fetch parent URLs (not discovered children)
+        },
+      },
       sampleItems: {
         orderBy: { orderIndex: 'asc' },
       },
