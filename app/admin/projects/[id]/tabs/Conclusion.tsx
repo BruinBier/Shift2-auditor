@@ -20,10 +20,14 @@ const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor),
 
 const AVAILABLE_TECHNOLOGIES = ['DOM', 'HTML', 'CSS', 'JavaScript', 'WAI-ARIA', 'SVG', 'PDF'];
 
+const FIXED_INTRO_TEXT = 'Tijdens het onderzoek is opgevallen dat de website al een goede basis legt voor toegankelijke content. Tegelijk zijn er enkele verbeterpunten die nog aandacht verdienen.';
+
 export default function Conclusion({ project }: { project: any }) {
   const router = useRouter();
   const [managementSummary, setManagementSummary] = useState(project.managementSummary || '');
   const [researcherFeedback, setResearcherFeedback] = useState(project.researcherFeedback || '');
+  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   // Migrate old array format to HTML string format
   const initialUserAgents = Array.isArray(project.userAgents)
@@ -153,26 +157,105 @@ export default function Conclusion({ project }: { project: any }) {
     );
   };
 
+  const generateAIFeedback = async () => {
+    setIsGeneratingFeedback(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/generate-feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const feedbackHtml = `<p>${FIXED_INTRO_TEXT}</p>\n\n${data.aiSummary}`;
+        setResearcherFeedback(feedbackHtml);
+
+        // Save to database
+        await fetch(`/api/projects/${project.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ researcherFeedback: feedbackHtml }),
+        });
+
+        router.refresh();
+      } else {
+        const errorData = await response.json();
+        console.error('Error generating feedback:', errorData);
+        alert('Er ging iets mis bij het genereren van de feedback: ' + (errorData.error || 'Onbekende fout'));
+      }
+    } catch (error) {
+      console.error('Error generating feedback:', error);
+      alert('Er ging iets mis bij het genereren van de feedback.');
+    } finally {
+      setIsGeneratingFeedback(false);
+    }
+  };
+
+  const generateAISummary = async () => {
+    setIsGeneratingSummary(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/generate-summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setManagementSummary(data.aiSummary);
+
+        // Save to database
+        await fetch(`/api/projects/${project.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ managementSummary: data.aiSummary }),
+        });
+
+        router.refresh();
+      } else {
+        const errorData = await response.json();
+        console.error('Error generating summary:', errorData);
+        alert('Er ging iets mis bij het genereren van de samenvatting: ' + (errorData.error || 'Onbekende fout'));
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      alert('Er ging iets mis bij het genereren van de samenvatting.');
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-12 gap-6">
         {/* Left column - Main content */}
         <div className="col-span-9 space-y-6">
-          {/* Managementsamenvatting */}
+          {/* Samenvatting */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Managementsamenvatting</h2>
-              <button
-                onClick={() => openEditModal('summary')}
-                className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-green-500 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+              <h2 className="text-xl font-bold text-gray-900">Samenvatting</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={generateAISummary}
+                  disabled={isGeneratingSummary}
+                  className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-blue-500 bg-white hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                </div>
-                Bewerken
-              </button>
+                  {isGeneratingSummary ? 'Genereren...' : 'Genereer met AI'}
+                </button>
+                <button
+                  onClick={() => openEditModal('summary')}
+                  className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-green-500 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  Bewerken
+                </button>
+              </div>
             </div>
             {managementSummary ? (
               <div
@@ -181,7 +264,7 @@ export default function Conclusion({ project }: { project: any }) {
               />
             ) : (
               <div className="text-gray-500 text-sm">
-                Nog geen managementsamenvatting toegevoegd. Klik op 'Bewerken' om te beginnen.
+                Nog geen samenvatting toegevoegd. Klik op 'Genereer met AI' om automatisch een samenvatting te genereren, of klik op 'Bewerken' om handmatig een samenvatting toe te voegen.
               </div>
             )}
           </div>
@@ -190,17 +273,29 @@ export default function Conclusion({ project }: { project: any }) {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">Feedback van onderzoeker</h2>
-              <button
-                onClick={() => openEditModal('feedback')}
-                className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-green-500 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+              <div className="flex gap-2">
+                <button
+                  onClick={generateAIFeedback}
+                  disabled={isGeneratingFeedback}
+                  className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-blue-500 bg-white hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                </div>
-                Bewerken
-              </button>
+                  {isGeneratingFeedback ? 'Genereren...' : 'Genereer met AI'}
+                </button>
+                <button
+                  onClick={() => openEditModal('feedback')}
+                  className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-green-500 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  Bewerken
+                </button>
+              </div>
             </div>
             {researcherFeedback ? (
               <div
@@ -208,8 +303,10 @@ export default function Conclusion({ project }: { project: any }) {
                 dangerouslySetInnerHTML={{ __html: researcherFeedback }}
               />
             ) : (
-              <div className="text-gray-500 text-sm">
-                Nog geen feedback toegevoegd. Klik op 'Bewerken' om feedback toe te voegen.
+              <div className="space-y-3">
+                <div className="text-gray-500 text-sm">
+                  Nog geen feedback toegevoegd. Klik op 'Genereer met AI' om automatisch een samenvatting te genereren op basis van de bevindingen, of klik op 'Bewerken' om handmatig feedback toe te voegen.
+                </div>
               </div>
             )}
           </div>
@@ -278,7 +375,7 @@ export default function Conclusion({ project }: { project: any }) {
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold">
-                {editMode === 'summary' && 'Managementsamenvatting bewerken'}
+                {editMode === 'summary' && 'Samenvatting bewerken'}
                 {editMode === 'feedback' && 'Feedback van onderzoeker bewerken'}
                 {editMode === 'userAgents' && 'User agents bewerken'}
                 {editMode === 'technologies' && 'Technologieën bewerken'}

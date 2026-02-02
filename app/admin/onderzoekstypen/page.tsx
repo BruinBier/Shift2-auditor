@@ -865,6 +865,24 @@ export default function OnderzoekstypenPage() {
 
               {activeTab === 'succescriteria' && (
                 <>
+                  {/* Telling van geselecteerde criteria */}
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Geselecteerde criteria</p>
+                        <p className="text-2xl font-bold text-blue-900 mt-1">
+                          {formData.selectedCriteria.length} van {wcagCriteria.length}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Percentage</p>
+                        <p className="text-2xl font-bold text-blue-900 mt-1">
+                          {wcagCriteria.length > 0 ? Math.round((formData.selectedCriteria.length / wcagCriteria.length) * 100) : 0}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="mb-4">
                     <h3 className="text-sm font-medium text-gray-700 mb-3">Selecteer succescriteria</h3>
                     {wcagCriteria.length === 0 ? (

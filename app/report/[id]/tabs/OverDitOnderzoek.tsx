@@ -35,6 +35,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const dateEnd = project.dateEnd ? new Date(project.dateEnd) : null;
   const reportDate = new Date(project.reportDate);
 
+  // Get the first manually added scope URL
+  const firstScopeUrl = project.scopeUrls.find((url: any) => url.inScope === true && !url.parentUrlId);
+  const scopeDomain = firstScopeUrl ? new URL(firstScopeUrl.url).hostname : '';
+
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
@@ -61,7 +65,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <div className="mb-6">
             <div className="text-sm text-gray-600 mb-2">
-              WCAG 2.2 AA – aanvullend deelonderzoek content – mijn.hhnk.nl
+              {project.standard} {project.level} – {project.title} – {scopeDomain || project.subject}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Rapport digitale toegankelijkheid
@@ -206,10 +210,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.
               </div>
             </div>
-            {project.scopeUrls.filter((url: any) => url.inScope !== false).length > 0 ? (
+            {project.scopeUrls.filter((url: any) => url.inScope === true && !url.parentUrlId).length > 0 ? (
               <ul className="space-y-3">
                 {project.scopeUrls
-                  .filter((scopeUrl: any) => scopeUrl.inScope !== false)
+                  .filter((scopeUrl: any) => scopeUrl.inScope === true && !scopeUrl.parentUrlId)
                   .map((scopeUrl: any, index: number) => (
                     <li key={index} className="text-sm">
                       <a

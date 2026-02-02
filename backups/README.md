@@ -14,11 +14,22 @@ This creates a new backup in `backups/backup-YYYY-MM-DD/` with all your data in 
 
 ### Restore a Backup
 
+**IMPORTANT: Always seed base data first!**
+
 ```bash
+# 1. FIRST: Seed base data (WCAG criteria + research types)
+npm run db:seed
+
+# 2. THEN: Restore your project data
 npm run restore backups/backup-2026-02-01
 ```
 
 Replace `backup-2026-02-01` with the actual backup directory name.
+
+**Why seed first?**
+- WCAG criteria are needed for findings and assessments
+- Standard research types are required by the system
+- Backups don't include WCAG criteria (to avoid duplication)
 
 ## Why CSV Backups?
 
@@ -79,12 +90,16 @@ If you lose data:
 
 1. **Find the latest backup** in this directory
 2. **Stop the application** (kill the dev server)
-3. **Restore the backup**:
+3. **Seed base data first**:
+   ```bash
+   npm run db:seed
+   ```
+4. **Then restore your project data**:
    ```bash
    npm run restore backups/backup-YYYY-MM-DD
    ```
-4. **Restart the application**
-5. **Verify** that your data is back
+5. **Restart the application**
+6. **Verify** that your data is back
 
 ## Automated Backups (Optional)
 

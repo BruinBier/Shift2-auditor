@@ -38,9 +38,20 @@ git push
 
 ### 3. Backup terugzetten (restore)
 
+**BELANGRIJK: Run ALTIJD eerst de seed script!**
+
 ```bash
+# 1. EERST: Seed basis-data (WCAG criteria + onderzoekstypen)
+npm run db:seed
+
+# 2. DAN: Restore je project data
 npm run restore backups/backup-2026-02-01
 ```
+
+**Let op:** De seed script moet ALTIJD eerst omdat:
+- WCAG criteria zijn nodig voor bevindingen en assessments
+- Standaard onderzoekstypen zijn belangrijk voor het systeem
+- Backups bevatten GEEN WCAG criteria (om duplicatie te voorkomen)
 
 ## Waarom dit systeem?
 
@@ -195,10 +206,13 @@ ls -la backups/
 # 2. Bekijk metadata
 cat backups/backup-2026-02-01/metadata.json
 
-# 3. Restore
+# 3. EERST seed basis-data
+npm run db:seed
+
+# 4. DAN restore project data
 npm run restore backups/backup-2026-02-01
 
-# 4. Verify
+# 5. Verify
 npm run dev
 # Check in browser of data er is
 ```
@@ -346,7 +360,8 @@ Als je data verloren is:
 - [ ] Commit NIETS meer
 - [ ] Find laatste backup: `ls backups/`
 - [ ] Check metadata: `cat backups/backup-*/metadata.json`
-- [ ] Restore: `npm run restore backups/backup-YYYY-MM-DD`
+- [ ] **EERST seed basis-data:** `npm run db:seed`
+- [ ] **DAN restore project data:** `npm run restore backups/backup-YYYY-MM-DD`
 - [ ] Verify: Start app en check data
 - [ ] Maak METEEN een nieuwe backup
 

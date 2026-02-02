@@ -12,6 +12,14 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
     ? allCriteria
     : allCriteria.filter(c => c.level === filter);
 
+  // Bereken hoeveel criteria zijn aangevinkt (hebben een status)
+  const checkedCount = allCriteria.filter(criterion => {
+    const assessment = project.criterionAssessments.find(
+      (a: any) => a.wcagCriterionId === criterion.id
+    );
+    return assessment?.status && assessment.status !== '';
+  }).length;
+
   const handleStatusChange = async (criterionId: string, status: string) => {
     setSaving(criterionId);
 
@@ -50,7 +58,7 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold text-gray-900">Criteria beoordelen</h2>
         <div className="flex gap-2">
           <button
@@ -77,6 +85,31 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
           >
             Niveau AA ({allCriteria.filter(c => c.level === 'AA').length})
           </button>
+        </div>
+      </div>
+
+      {/* Voortgang indicator */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-700">Beoordeelde criteria</p>
+            <p className="text-2xl font-bold text-blue-900 mt-1">
+              {checkedCount} van {allCriteria.length}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Voortgang</p>
+            <p className="text-2xl font-bold text-blue-900 mt-1">
+              {allCriteria.length > 0 ? Math.round((checkedCount / allCriteria.length) * 100) : 0}%
+            </p>
+          </div>
+        </div>
+        {/* Voortgangsbalk */}
+        <div className="mt-3 w-full bg-gray-200 rounded-full h-2.5">
+          <div
+            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+            style={{ width: `${allCriteria.length > 0 ? (checkedCount / allCriteria.length) * 100 : 0}%` }}
+          ></div>
         </div>
       </div>
 

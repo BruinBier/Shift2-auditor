@@ -216,9 +216,15 @@ This backup contains all data from the Shift2 Auditor application in CSV format.
 
 ## Import Instructions
 
+**IMPORTANT: Always seed base data first!**
+
 To restore this backup:
 
 \`\`\`bash
+# 1. FIRST: Seed base data (WCAG criteria + research types)
+npm run db:seed
+
+# 2. THEN: Restore your project data
 npm run restore backups/${backupName}
 \`\`\`
 

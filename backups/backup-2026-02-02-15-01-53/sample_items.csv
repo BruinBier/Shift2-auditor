@@ -1,0 +1,4 @@
+id,projectId,sampleType,title,url,description,orderIndex,makeScreenshot,screenshotPath,screenshotAlt,createdAt,updatedAt
+d41db11e-093a-498c-aa2a-251f302ae94e,6b40737b-a874-4e09-8b16-d4de37a18487,structured,Home | DigiD,https://mijn.urk.nl/dashboard,,1,false,,,,
+f9f2396d-88f6-4d49-b25a-67cebbf03928,6b40737b-a874-4e09-8b16-d4de37a18487,structured,Belastingen,https://mijn.urk.nl/belastingen/pink,,2,false,,,,
+80cc3a2b-8224-4263-83f1-b0f9b23a1348,6b40737b-a874-4e09-8b16-d4de37a18487,random,Mijn gegevens,https://mijn.urk.nl/gegevens,,3,false,,,,
