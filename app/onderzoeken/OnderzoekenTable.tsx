@@ -283,6 +283,30 @@ export default function OnderzoekenTable({ projects }: Props) {
     }
   }, [formData.auditedByOrg, clientProjects]);
 
+  // Auto-fill fields when research type is selected
+  useEffect(() => {
+    const fetchResearchTypeData = async () => {
+      if (formData.researchType && !editingProject) {
+        try {
+          const response = await fetch(`/api/research-types/${encodeURIComponent(formData.researchType)}`);
+          if (response.ok) {
+            const researchType = await response.json();
+            setFormData(prev => ({
+              ...prev,
+              standard: researchType.version || prev.standard,
+              level: researchType.level || prev.level,
+              description: researchType.description || prev.description,
+            }));
+          }
+        } catch (error) {
+          console.error('Error fetching research type:', error);
+        }
+      }
+    };
+
+    fetchResearchTypeData();
+  }, [formData.researchType, editingProject]);
+
   const openEditModal = (project: Project) => {
     setEditingProject(project);
 

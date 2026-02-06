@@ -475,38 +475,252 @@ export function testPageContainsLinkReadMore(html: string): CrawlerTestResult {
 
 /**
  * #6: PageContainsMultipleSameLinksTest
- * Page contains multiple links with the same link purpose
+ * Page contains multiple links to same URL with different link texts
+ * Filters semantic noise (home links, hash links, mailto/tel)
+ * Classification: Quality/Opmerking
  */
-export function testPageContainsMultipleSameLinks(html: string): CrawlerTestResult {
+export function testPageContainsMultipleSameLinks(
+  html: string,
+  options: {
+    excludeHome?: boolean;
+    excludeHashLinks?: boolean;
+    excludeSkipLinks?: boolean;
+    ignoreQuery?: boolean;
+  } = {}
+): CrawlerTestResult {
   const $ = cheerio.load(html);
-  const links = $('a');
-  const linkMap = new Map<string, number>();
-  const details: any[] = [];
 
-  links.each((i, link) => {
-    const text = $(link).text().trim();
-    if (text) {
-      linkMap.set(text, (linkMap.get(text) || 0) + 1);
+  // Default options
+  const config = {
+    excludeHome: options.excludeHome !== false,
+    excludeHashLinks: options.excludeHashLinks !== false,
+    excludeSkipLinks: options.excludeSkipLinks !== false,
+    ignoreQuery: options.ignoreQuery || false,
+  };
+
+  // Collect all internal links with context
+  const links: Array<{
+    url: string;
+    text: string;
+    context: string;
+    originalHref: string;
+  }> = [];
+
+  $('a[href]').each((i, link) => {
+    const $link = $(link);
+    const originalHref = $link.attr('href') || '';
+
+    // Filter protocol links (always excluded)
+    if (originalHref.startsWith('mailto:') ||
+        originalHref.startsWith('tel:') ||
+        originalHref.startsWith('javascript:')) {
+      return;
     }
+
+    // Filter hash links (configurable)
+    if (config.excludeHashLinks && (originalHref.startsWith('#') || originalHref.includes('#'))) {
+      return;
+    }
+
+    // Check if internal link
+    const isInternal = isInternalLink(originalHref);
+    if (!isInternal) {
+      return; // Skip external links
+    }
+
+    const text = getAccessibleName($, $link);
+
+    // Skip empty text
+    if (!text || text.trim() === '') return;
+
+    // Filter home links (configurable)
+    if (config.excludeHome && isHomeLink(originalHref, text)) {
+      return;
+    }
+
+    // Filter skip links (configurable)
+    if (config.excludeSkipLinks && isSkipLink(text, $link)) {
+      return;
+    }
+
+    const normalizedUrl = normalizeUrl(originalHref, config.ignoreQuery);
+    const context = getContext($, $link);
+
+    links.push({
+      url: normalizedUrl,
+      text: text.toLowerCase().trim(),
+      context: context,
+      originalHref: originalHref,
+    });
   });
 
-  let count = 0;
-  linkMap.forEach((occurrences, text) => {
-    if (occurrences > 1) {
-      count += occurrences;
-      if (details.length < 10) {
-        details.push({ text, occurrences });
-      }
+  // Group links by URL
+  const grouped = new Map<string, Array<{ text: string; context: string }>>();
+
+  links.forEach(link => {
+    if (!grouped.has(link.url)) {
+      grouped.set(link.url, []);
+    }
+    grouped.get(link.url)!.push({ text: link.text, context: link.context });
+  });
+
+  // Detect issues: URLs with multiple different texts
+  const issues: any[] = [];
+
+  grouped.forEach((linkInstances, url) => {
+    if (linkInstances.length < 2) return;
+
+    // Get unique texts
+    const uniqueTexts = new Set(linkInstances.map(l => l.text));
+
+    // Only report if same URL has different texts
+    if (uniqueTexts.size > 1) {
+      // Group by context
+      const byContext: Record<string, Array<{ text: string; count: number }>> = {};
+
+      linkInstances.forEach(link => {
+        if (!byContext[link.context]) {
+          byContext[link.context] = [];
+        }
+
+        const existing = byContext[link.context].find(t => t.text === link.text);
+        if (existing) {
+          existing.count++;
+        } else {
+          byContext[link.context].push({ text: link.text, count: 1 });
+        }
+      });
+
+      issues.push({
+        url: url,
+        linkCount: linkInstances.length,
+        uniqueTexts: Array.from(uniqueTexts),
+        contexts: byContext,
+      });
     }
   });
 
   return {
     testId: '6',
     testName: 'PageContainsMultipleSameLinksTest',
-    found: count > 0,
-    count: count,
-    details: { duplicateLinks: details, totalCount: count },
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues,
+      totalLinksAnalyzed: links.length,
+      classification: 'kwaliteit/opmerking',
+    },
   };
+}
+
+// Helper functions for PageContainsMultipleSameLinksTest
+
+function getAccessibleName($: cheerio.CheerioAPI, $link: cheerio.Cheerio<any>): string {
+  // Check aria-label
+  const ariaLabel = $link.attr('aria-label');
+  if (ariaLabel && ariaLabel.trim()) {
+    return ariaLabel.trim();
+  }
+
+  // Check aria-labelledby
+  const ariaLabelledby = $link.attr('aria-labelledby');
+  if (ariaLabelledby) {
+    const labelText = ariaLabelledby
+      .split(/\s+/)
+      .map(id => $(`#${id}`).text())
+      .join(' ');
+    if (labelText.trim()) return labelText.trim();
+  }
+
+  // Get text content including image alt
+  let text = $link.text() || '';
+  $link.find('img[alt]').each((i, img) => {
+    const alt = $(img).attr('alt');
+    if (alt) text += ' ' + alt;
+  });
+
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function getContext($: cheerio.CheerioAPI, $link: cheerio.Cheerio<any>): string {
+  // Check parent elements for context
+  if ($link.closest('header').length > 0) return 'header';
+  if ($link.closest('nav').length > 0) return 'navigation';
+  if ($link.closest('footer').length > 0) return 'footer';
+  if ($link.closest('main, article').length > 0) return 'main';
+  if ($link.closest('aside').length > 0) return 'sidebar';
+  return 'other';
+}
+
+function normalizeUrl(url: string, ignoreQuery: boolean): string {
+  let normalized = url;
+
+  // If absolute URL, extract only the pathname
+  if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+    try {
+      const urlObj = new URL(normalized);
+      normalized = urlObj.pathname + urlObj.search;
+    } catch {
+      // If URL parsing fails, just use the original
+    }
+  }
+
+  // Remove hash
+  normalized = normalized.split('#')[0];
+
+  // Remove query if configured
+  if (ignoreQuery) {
+    normalized = normalized.split('?')[0];
+  }
+
+  // Normalize trailing slash
+  if (normalized.endsWith('/') && normalized.length > 1) {
+    normalized = normalized.slice(0, -1);
+  }
+
+  return normalized;
+}
+
+function isHomeLink(href: string, text: string): boolean {
+  const homeUrls = ['/', '/#', '/index', '/index.html', '/home'];
+  if (homeUrls.includes(href)) return true;
+
+  const homeTexts = /^(home|start|homepage|startpagina|ga naar.*homepage|terug naar.*home)$/i;
+  if (homeTexts.test(text.toLowerCase().trim())) return true;
+
+  return false;
+}
+
+function isSkipLink(text: string, $link: cheerio.Cheerio<any>): boolean {
+  const skipPatterns = /skip to|skip navigation|ga naar inhoud|spring naar|naar hoofdinhoud|overslaan/i;
+  if (skipPatterns.test(text)) return true;
+
+  const classes = $link.attr('class') || '';
+  if (/skip[-_]link|skip[-_]to|skipnav/i.test(classes)) return true;
+
+  return false;
+}
+
+function isInternalLink(href: string): boolean {
+  // Relative URLs are always internal
+  if (href.startsWith('/') && !href.startsWith('//')) {
+    return true;
+  }
+
+  // Relative paths (no protocol)
+  if (!href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('//')) {
+    return true;
+  }
+
+  // Absolute URLs - check if same domain
+  // In server-side context, we don't have window.location, so we check common patterns
+  if (href.includes('valkenswaard.nl') ||
+      href.includes('localhost') ||
+      href.includes('127.0.0.1')) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

@@ -32,6 +32,11 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
               sampleItem: true,
             },
           },
+          affectedUrls: {
+            include: {
+              scopeUrl: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       },

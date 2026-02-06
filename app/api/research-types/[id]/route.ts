@@ -1,6 +1,57 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const identifier = decodeURIComponent(id);
+
+    // Try to find by name first (more common use case), then by ID
+    let researchType = await prisma.researchType.findUnique({
+      where: { name: identifier },
+      include: {
+        criteria: {
+          include: {
+            wcagCriterion: true,
+          },
+        },
+      },
+    });
+
+    // If not found by name, try by ID
+    if (!researchType) {
+      researchType = await prisma.researchType.findUnique({
+        where: { id: identifier },
+        include: {
+          criteria: {
+            include: {
+              wcagCriterion: true,
+            },
+          },
+        },
+      });
+    }
+
+    if (!researchType) {
+      return NextResponse.json(
+        { error: 'Research type not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(researchType);
+  } catch (error) {
+    console.error('Error fetching research type:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch research type' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

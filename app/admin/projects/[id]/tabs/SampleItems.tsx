@@ -4,8 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { marked } from 'marked';
+import 'md-editor-rt/lib/style.css';
 
-const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
+const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
+  ssr: false,
+  loading: () => <div className="border border-gray-300 rounded-lg p-4">Laden...</div>
+});
 
 export default function SampleItems({ project }: { project: any }) {
   const router = useRouter();
@@ -54,6 +59,22 @@ export default function SampleItems({ project }: { project: any }) {
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [openMenuId]);
+
+  // Convert markdown to HTML
+  const convertMarkdownToHtml = (markdown: string) => {
+    if (!markdown) return '';
+    try {
+      // Check if the content is already HTML (contains HTML tags)
+      if (/<\/?[a-z][\s\S]*>/i.test(markdown)) {
+        return markdown;
+      }
+      // Convert markdown to HTML
+      return marked.parse(markdown) as string;
+    } catch (error) {
+      console.error('Error converting markdown to HTML:', error);
+      return markdown;
+    }
+  };
 
   // Add title attribute to all links in HTML
   const addTitleToLinks = (html: string) => {
@@ -469,7 +490,7 @@ export default function SampleItems({ project }: { project: any }) {
               {sampleInfo ? (
                 <div
                   className="prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-4 [&_h4]:text-base [&_h4]:font-bold [&_h4]:mb-2 [&_h4]:mt-3 [&_h5]:text-sm [&_h5]:font-bold [&_h5]:mb-2 [&_h5]:mt-3 [&_h6]:text-sm [&_h6]:font-bold [&_h6]:mb-2 [&_h6]:mt-3"
-                  dangerouslySetInnerHTML={{ __html: addTitleToLinks(sampleInfo) }}
+                  dangerouslySetInnerHTML={{ __html: addTitleToLinks(convertMarkdownToHtml(sampleInfo)) }}
                 />
               ) : (
                 <span className="text-gray-400">Vul hier aanvullende steekproef informatie in...</span>
@@ -617,9 +638,34 @@ export default function SampleItems({ project }: { project: any }) {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Beschrijving
                     </label>
-                    <RichTextEditor
-                      content={formData.description}
+                    <MdEditor
+                      modelValue={formData.description}
                       onChange={(content) => setFormData({ ...formData, description: content })}
+                      language="en-US"
+                      theme="light"
+                      previewTheme="default"
+                      codeTheme="github"
+                      showCodeRowNumber={true}
+                      toolbars={[
+                        'bold',
+                        'italic',
+                        'strikeThrough',
+                        '-',
+                        'title',
+                        'unorderedList',
+                        'orderedList',
+                        '-',
+                        'quote',
+                        'code',
+                        'link',
+                        'image',
+                        '-',
+                        'revoke',
+                        'next',
+                        '-',
+                        'preview',
+                        'fullscreen'
+                      ]}
                     />
                     <p className="mt-1 text-xs text-gray-500">Bijvoorbeeld beschrijving van proces of andere details van de pagina.</p>
                   </div>
@@ -694,9 +740,34 @@ export default function SampleItems({ project }: { project: any }) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Beschrijving
                 </label>
-                <RichTextEditor
-                  content={tempSampleInfo}
+                <MdEditor
+                  modelValue={tempSampleInfo}
                   onChange={setTempSampleInfo}
+                  language="en-US"
+                  theme="light"
+                  previewTheme="default"
+                  codeTheme="github"
+                  showCodeRowNumber={true}
+                  toolbars={[
+                    'bold',
+                    'italic',
+                    'strikeThrough',
+                    '-',
+                    'title',
+                    'unorderedList',
+                    'orderedList',
+                    '-',
+                    'quote',
+                    'code',
+                    'link',
+                    'image',
+                    '-',
+                    'revoke',
+                    'next',
+                    '-',
+                    'preview',
+                    'fullscreen'
+                  ]}
                 />
               </div>
 

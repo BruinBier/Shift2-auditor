@@ -121,8 +121,20 @@ export async function discoverSite(
       const html = await response.text();
       const $ = cheerio.load(html);
 
-      // Get page title
-      const title = $('title').text().trim() || null;
+      // Get page title and clean it up
+      let title = $('title').text().trim() || null;
+
+      // Clean up title: remove trailing "Toegankelijkheid" or "Toegankelijk"
+      if (title) {
+        title = title.replace(/Toegankelijkheid$/gi, '');
+        title = title.replace(/Toegankelijk$/gi, '');
+        // Remove duplicate words at the end
+        title = title.replace(/(\w{3,})\1+$/gi, '$1');
+        // Remove trailing whitespace and periods
+        title = title.trim().replace(/\s*\.\s*$/g, '');
+        // If nothing left, set to null
+        if (!title) title = null;
+      }
 
       // Add current page to discovered
       discovered.set(url, {

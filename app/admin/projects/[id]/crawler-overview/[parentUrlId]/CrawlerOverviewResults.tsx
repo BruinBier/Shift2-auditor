@@ -68,12 +68,38 @@ export default function CrawlerOverviewResults({ projectId, urls }: Props) {
         }),
       });
 
-      if (createResponse.ok) {
+      if (!createResponse.ok) {
+        alert('Er ging iets mis bij het toevoegen aan steekproef.');
+        return;
+      }
+
+      // Automatically create findings for this URL's crawler results
+      const findingsResponse = await fetch(
+        `/api/projects/${projectId}/scope-urls/${urlData.id}/auto-create-findings`,
+        { method: 'POST' }
+      );
+
+      if (findingsResponse.ok) {
+        const findingsData = await findingsResponse.json();
+
         // Update local state
         setSampleItemUrls(prev => new Set(prev).add(urlData.url));
+
+        // Show success message
+        let message = '✅ Pagina toegevoegd aan steekproef';
+        if (findingsData.findingsCreated > 0 || findingsData.findingsUpdated > 0) {
+          message += `\n\n📋 ${findingsData.message}`;
+        } else if (findingsData.findingsCreated === 0) {
+          message += '\n\nℹ️ Geen bevinding templates beschikbaar voor de gevonden issues.';
+        }
+
+        alert(message);
         router.refresh();
       } else {
-        alert('Er ging iets mis bij het toevoegen aan steekproef.');
+        // Sample item was created but findings failed
+        setSampleItemUrls(prev => new Set(prev).add(urlData.url));
+        alert('✅ Pagina toegevoegd aan steekproef\n\n⚠️ Fout bij automatisch aanmaken van bevindingen.');
+        router.refresh();
       }
     } catch (error) {
       console.error('Error adding to sample:', error);

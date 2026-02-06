@@ -6,6 +6,7 @@
 import { PrismaClient } from '@prisma/client';
 import { discoverSite, discoverLinksOnPage } from './discovery';
 import { runTests } from './test-runner';
+import { fetchHtmlWithBrowser, closeBrowser } from './browser-crawler';
 
 const prisma = new PrismaClient();
 
@@ -37,18 +38,11 @@ export async function crawlUrl(
   console.log(`[CRAWLER] Processing ${url}`);
 
   try {
-    // Fetch HTML
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': config?.userAgent || 'Shift2-Auditor/1.0 (Accessibility Crawler)',
-      },
+    // Fetch HTML using Puppeteer (executes JavaScript)
+    const html = await fetchHtmlWithBrowser(url, {
+      userAgent: config?.userAgent || 'Shift2-Auditor/1.0 (Accessibility Crawler)',
+      waitTime: 3000, // Wait 3 seconds for dynamic content to load
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const html = await response.text();
 
     // Run all tests
     const testResults = await runTests(html);
@@ -152,10 +146,15 @@ export async function crawlProject(
     console.log(`[CRAWLER] URLs processed: ${result.urlsProcessed}/${result.totalUrls}`);
     console.log(`[CRAWLER] Total issues found: ${result.totalIssuesFound}`);
 
+    // Close the browser
+    await closeBrowser();
+
     return result;
 
   } catch (error) {
     console.error(`[CRAWLER] Project crawl failed:`, error);
+    // Close the browser on error as well
+    await closeBrowser();
     throw error;
   }
 }
