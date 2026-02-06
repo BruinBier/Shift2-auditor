@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "projects" ALTER COLUMN "version" SET DEFAULT 1.0,
+ALTER COLUMN "version" SET DATA TYPE DECIMAL(10,2);

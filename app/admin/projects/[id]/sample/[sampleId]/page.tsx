@@ -5,6 +5,7 @@ import ScreenshotViewer from './ScreenshotViewer';
 import AttachmentsSection from './AttachmentsSection';
 import FindingsList from './FindingsList';
 import NotesSection from './NotesSection';
+import TestResults from './TestResults';
 
 export default async function SampleItemPage({
   params,
@@ -32,6 +33,9 @@ export default async function SampleItemPage({
             },
           },
         },
+      },
+      crawlerResults: {
+        orderBy: { testName: 'asc' },
       },
     },
   });
@@ -311,6 +315,15 @@ export default async function SampleItemPage({
                     </div>
                   </div>
                 </div>
+
+                {/* Test Results section */}
+                <TestResults
+                  projectId={params.id}
+                  sampleItemId={params.sampleId}
+                  crawlerResults={sampleItem.crawlerResults}
+                  crawledAt={sampleItem.crawledAt}
+                  url={sampleItem.url}
+                />
 
                 {/* Bevindingen section */}
                 <div className="bg-white rounded-lg border border-gray-200">

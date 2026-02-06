@@ -196,9 +196,11 @@ model SampleItem {
   screenshotPath String?      @map("screenshot_path")
   screenshotAlt  String?      @map("screenshot_alt")
   notes          String?      @db.Text
+  crawledAt      DateTime?    @map("crawled_at")
 
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  occurrences FindingOccurrence[]
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  occurrences    FindingOccurrence[]
+  crawlerResults CrawlerResult[]
 
   @@map("sample_items")
 }
@@ -382,7 +384,8 @@ model FindingAttachment {
 
 model CrawlerResult {
   id            String           @id @default(uuid())
-  scopeUrlId    String           @map("scope_url_id")
+  scopeUrlId    String?          @map("scope_url_id")
+  sampleItemId  String?          @map("sample_item_id")
   testId        String           @map("test_id")
   testName      String           @map("test_name")
   found         Boolean
@@ -390,7 +393,8 @@ model CrawlerResult {
   details       String?          @db.Text // JSON string with test-specific details
   createdAt     DateTime         @default(now()) @map("created_at")
 
-  scopeUrl      ProjectScopeUrl  @relation(fields: [scopeUrlId], references: [id], onDelete: Cascade)
+  scopeUrl      ProjectScopeUrl? @relation(fields: [scopeUrlId], references: [id], onDelete: Cascade)
+  sampleItem    SampleItem?      @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
 
   @@map("crawler_results")
 }

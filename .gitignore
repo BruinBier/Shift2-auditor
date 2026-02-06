@@ -33,8 +33,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma
-prisma/migrations
 
 # visual snapshots from crawler tests
 public/__visual-snapshots__/

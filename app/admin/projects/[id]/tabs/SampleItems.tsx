@@ -29,6 +29,7 @@ export default function SampleItems({ project }: { project: any }) {
   const [tempSampleInfo, setTempSampleInfo] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
+  const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
 
   const items = project.sampleItems; // Show all items, not filtered by type
 
@@ -212,6 +213,43 @@ export default function SampleItems({ project }: { project: any }) {
       router.refresh();
     } else {
       alert('Fout bij verwijderen van item');
+    }
+  };
+
+  const handleRunTests = async (itemId: string, url: string) => {
+    if (!url) {
+      alert('Dit item heeft geen URL om te testen');
+      return;
+    }
+
+    setRunningTests(prev => new Set(prev).add(itemId));
+    setOpenMenuId(null);
+
+    try {
+      const response = await fetch(`/api/sample-items/${itemId}/crawler`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Tests succesvol uitgevoerd!\n\n` +
+              `Tests gedraaid: ${data.testsRun}\n` +
+              `Issues gevonden: ${data.testsFound}\n\n` +
+              `De resultaten zijn nu beschikbaar op de detail pagina.`);
+        router.refresh();
+      } else {
+        alert(`❌ Er ging iets mis: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error running tests:', error);
+      alert('❌ Er ging iets mis bij het draaien van de tests.');
+    } finally {
+      setRunningTests(prev => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
     }
   };
 
@@ -437,6 +475,30 @@ export default function SampleItems({ project }: { project: any }) {
                                 </svg>
                                 Bewerken
                               </button>
+                              {item.url && (
+                                <button
+                                  onClick={() => handleRunTests(item.id, item.url)}
+                                  disabled={runningTests.has(item.id)}
+                                  className="sample-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 disabled:opacity-50"
+                                >
+                                  {runningTests.has(item.id) ? (
+                                    <>
+                                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                      Tests draaien...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                      </svg>
+                                      Run Tests
+                                    </>
+                                  )}
+                                </button>
+                              )}
                               <button
                                 onClick={() => {
                                   setOpenMenuId(null);
