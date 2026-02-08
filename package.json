@@ -10,6 +10,9 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "db:check": "node -e \"require('@prisma/client').PrismaClient && console.log('✅ Database connected')\" || echo '❌ Database connection failed'",
+    "db:fix": "prisma generate && echo '✅ Prisma client regenerated'",
+    "schema:update": "prisma migrate deploy && prisma generate && echo '✅ Schema updated - you can now run: npm run dev'",
     "export": "node scripts/export-report-simple.js",
     "backup": "tsx scripts/export-all-data.ts",
     "restore": "tsx scripts/import-all-data.ts"

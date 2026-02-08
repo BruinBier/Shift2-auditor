@@ -45,6 +45,26 @@ npx prisma generate
 npm run dev
 ```
 
+### ⚠️ IMPORTANT: Schema Change Workflow (for Claude Code)
+
+When the user asks you to modify `prisma/schema.prisma`:
+
+1. **FIRST** - Ask the user: "Is the dev server running? If yes, stop it with Ctrl+C before I make changes"
+2. **THEN** - Make schema changes and create migration files
+3. **FINALLY** - Instruct user to run:
+   ```bash
+   npm run schema:update
+   npm run dev
+   ```
+
+**DO NOT:**
+- Run `npx prisma generate` yourself (will fail if dev server is running)
+- Assume dev server is stopped
+- Skip asking about dev server status
+
+**Example response:**
+> "I'll add the `status` field to the Project model. First, please stop the dev server (Ctrl+C in the terminal where npm run dev is running). Let me know when it's stopped and I'll make the changes."
+
 ## Architecture
 
 ### Core Data Models
