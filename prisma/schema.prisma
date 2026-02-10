@@ -303,14 +303,12 @@ model QuickFinding {
   criterionCode   String                 @map("criterion_code")
   keywords        String?
   crawler         Boolean                @default(false)
-  crawlerTestId   String?                @unique @map("crawler_test_id") // Link to specific crawler test
+  crawlerTestId   String?                @unique @map("crawler_test_id")
   status          FindingStatus?
   impact          FindingImpact?
   responsibility  FindingResponsibility?
   createdAt       DateTime               @default(now()) @map("created_at")
   updatedAt       DateTime               @updatedAt @map("updated_at")
-
-  findings        Finding[]
 
   @@map("quick_findings")
 }
@@ -320,7 +318,6 @@ model Finding {
   projectId       String                 @map("project_id")
   findingCode     String                 @map("finding_code")
   wcagCriterionId String                 @map("wcag_criterion_id")
-  quickFindingId  String?                @map("quick_finding_id")
   status          FindingStatus          @default(open)
   impact          FindingImpact?
   responsibility  FindingResponsibility?
@@ -334,7 +331,6 @@ model Finding {
 
   project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wcagCriterion   WCAGCriterion          @relation(fields: [wcagCriterionId], references: [id])
-  quickFinding    QuickFinding?          @relation(fields: [quickFindingId], references: [id], onDelete: SetNull)
   occurrences     FindingOccurrence[]
   affectedUrls    FindingUrl[]
   attachments     FindingAttachment[]
