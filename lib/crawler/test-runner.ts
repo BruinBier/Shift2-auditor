@@ -3,7 +3,7 @@
  * Executes all crawler tests on HTML content and aggregates results
  */
 
-import { CrawlerTestResult, runAllMVPTests } from './tests';
+import { CrawlerTestResult, runAllMVPTests, getAvailableTests, runSingleTest } from './tests';
 
 export interface TestRunResult {
   totalTests: number;
@@ -92,4 +92,64 @@ export function filterResults(
   }
 
   return filtered;
+}
+
+/**
+ * Run a single test on HTML content (for debugging)
+ */
+export async function runSingleTestByName(html: string, testName: string): Promise<TestRunResult> {
+  const result = runSingleTest(html, testName);
+
+  if (!result) {
+    return {
+      totalTests: 0,
+      testsFound: 0,
+      testsPassed: 0,
+      results: [],
+      summary: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        informational: 0,
+      },
+    };
+  }
+
+  const results = [result];
+  const testsFound = result.found ? 1 : 0;
+  const testsPassed = result.found ? 0 : 1;
+
+  const summary = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    informational: 0,
+  };
+
+  if (result.found) {
+    if (result.details?.critical) {
+      summary.critical++;
+    } else if (result.details?.informational) {
+      summary.informational++;
+    } else {
+      summary.medium++;
+    }
+  }
+
+  return {
+    totalTests: 1,
+    testsFound,
+    testsPassed,
+    results,
+    summary,
+  };
+}
+
+/**
+ * Get list of available tests
+ */
+export function getAvailableTestNames(): string[] {
+  return getAvailableTests();
 }

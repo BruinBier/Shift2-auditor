@@ -84,15 +84,38 @@ export function testTitleEmpty(html: string): CrawlerTestResult {
  */
 export function testImgMissingAlt(html: string): CrawlerTestResult {
   const $ = cheerio.load(html);
+  const allImages = $('img');
   const imagesWithoutAlt = $('img:not([alt])');
+  const imagesWithAlt = $('img[alt]');
   const count = imagesWithoutAlt.length;
 
-  const details: any[] = [];
+  const issues: any[] = [];
   imagesWithoutAlt.each((i, img) => {
     if (i < 10) { // Limit to first 10 for performance
-      details.push({
-        src: $(img).attr('src'),
-        class: $(img).attr('class'),
+      const $img = $(img);
+      const location = getElementLocation($, img);
+
+      issues.push({
+        src: $img.attr('src'),
+        class: $img.attr('class'),
+        location: location,
+        html: $.html($img),
+      });
+    }
+  });
+
+  // Also collect info about images WITH alt for context
+  const imagesWithAltInfo: any[] = [];
+  imagesWithAlt.each((i, img) => {
+    if (i < 5) { // Limit to first 5 for performance
+      const $img = $(img);
+      const location = getElementLocation($, img);
+
+      imagesWithAltInfo.push({
+        src: $img.attr('src'),
+        alt: $img.attr('alt'),
+        class: $img.attr('class'),
+        location: location,
       });
     }
   });
@@ -103,8 +126,13 @@ export function testImgMissingAlt(html: string): CrawlerTestResult {
     found: count > 0,
     count: count,
     details: {
-      images: details,
+      issues: issues,
+      images: issues, // Keep for backward compatibility
       totalCount: count,
+      totalImages: allImages.length,
+      imagesWithAlt: imagesWithAlt.length,
+      imagesWithoutAlt: count,
+      imagesWithAltExamples: imagesWithAltInfo,
       wcagLevel: 'A',
       critical: true,
     },
@@ -379,6 +407,193 @@ export function testImgAltTooLong(html: string): CrawlerTestResult {
 }
 
 /**
+ * #10: ImgAltTooShortTest
+ * Images with alt text that is too short (1-3 characters, excluding empty alt)
+ * WCAG: 1.1.1 Non-text Content - Level A
+ */
+export function testImgAltTooShort(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const images = $('img[alt]');
+  let count = 0;
+  const details: any[] = [];
+
+  images.each((i, img) => {
+    const $img = $(img);
+    const alt = $img.attr('alt') || '';
+    // Empty alt (alt="") is valid for decorative images, so we skip it
+    // But alt text with 1-3 characters is too short to be descriptive
+    if (alt.length > 0 && alt.length <= 3) {
+      count++;
+      if (details.length < 10) {
+        const location = getElementLocation($, img);
+        details.push({
+          src: $img.attr('src'),
+          class: $img.attr('class'),
+          altLength: alt.length,
+          alt: alt,
+          location: location,
+          html: $.html($img),
+        });
+      }
+    }
+  });
+
+  return {
+    testId: '10',
+    testName: 'ImgAltTooShortTest',
+    found: count > 0,
+    count: count,
+    details: {
+      images: details,
+      totalCount: count,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.1.1'],
+      classification: 'toegankelijkheid/serieus',
+    },
+  };
+}
+
+/**
+ * #11: StrongHasMoreThanFourWordsTest
+ * Strict check: <strong> elements should contain max 4 words
+ */
+export function testStrongHasMoreThanFourWords(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: any[] = [];
+
+  // Check <strong> elements
+  $('strong').each((_, element) => {
+    const $el = $(element);
+    const text = $el.text().trim();
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+
+    // Strict: more than 4 words is an issue (5 or more)
+    if (wordCount > 4) {
+      const snippet = text.length > 50 ? text.substring(0, 50) + '...' : text;
+      const location = getElementLocation($, element);
+
+      issues.push({
+        tagName: 'STRONG',
+        wordCount,
+        textSnippet: snippet,
+        reason: `Element bevat ${wordCount} woorden, maximaal 4 toegestaan voor semantische nadruk.`,
+        location,
+        html: $.html($el),
+      });
+    }
+  });
+
+  const count = issues.length;
+
+  return {
+    testId: 'StrongHasMoreThanFourWordsTest',
+    testName: 'StrongHasMoreThanFourWordsTest',
+    found: count > 0,
+    count: count,
+    details: {
+      issues,
+      totalCount: count,
+      classification: 'Kwaliteit / Premium bevinding',
+    },
+  };
+}
+
+/**
+ * #12: ElementsStyledWithStrongOrEmTest
+ * Detects misuse of <strong> or <em> for styling complete paragraphs or very long text
+ */
+export function testElementsStyledWithStrongOrEm(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: any[] = [];
+
+  // Check <strong> elements
+  $('strong').each((_, element) => {
+    const $el = $(element);
+    const text = $el.text().trim();
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    const location = getElementLocation($, element);
+
+    // Check if it's the only child of a <p> tag (complete paragraph)
+    const $parent = $el.parent();
+    const isOnlyChildOfParagraph = $parent.is('p') && $parent.children().length === 1;
+
+    // Check if it has more than 15 words
+    const hasTooManyWords = wordCount > 15;
+
+    if (isOnlyChildOfParagraph || hasTooManyWords) {
+      const snippet = text.length > 50 ? text.substring(0, 50) + '...' : text;
+      let reason = '';
+
+      if (isOnlyChildOfParagraph) {
+        reason = 'Element beslaat een complete alinea. Gebruik CSS voor styling van volledige paragrafen.';
+      } else if (hasTooManyWords) {
+        reason = `Element bevat ${wordCount} woorden (>15). Waarschijnlijk misbruikt voor styling in plaats van semantische nadruk.`;
+      }
+
+      issues.push({
+        tagName: 'STRONG',
+        wordCount,
+        textSnippet: snippet,
+        reason,
+        location,
+        isOnlyChildOfParagraph,
+        html: $.html($el),
+      });
+    }
+  });
+
+  // Check <em> elements
+  $('em').each((_, element) => {
+    const $el = $(element);
+    const text = $el.text().trim();
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    const location = getElementLocation($, element);
+
+    // Check if it's the only child of a <p> tag (complete paragraph)
+    const $parent = $el.parent();
+    const isOnlyChildOfParagraph = $parent.is('p') && $parent.children().length === 1;
+
+    // Check if it has more than 15 words
+    const hasTooManyWords = wordCount > 15;
+
+    if (isOnlyChildOfParagraph || hasTooManyWords) {
+      const snippet = text.length > 50 ? text.substring(0, 50) + '...' : text;
+      let reason = '';
+
+      if (isOnlyChildOfParagraph) {
+        reason = 'Element beslaat een complete alinea. Gebruik CSS voor styling van volledige paragrafen.';
+      } else if (hasTooManyWords) {
+        reason = `Element bevat ${wordCount} woorden (>15). Waarschijnlijk misbruikt voor styling in plaats van semantische nadruk.`;
+      }
+
+      issues.push({
+        tagName: 'EM',
+        wordCount,
+        textSnippet: snippet,
+        reason,
+        location,
+        isOnlyChildOfParagraph,
+        html: $.html($el),
+      });
+    }
+  });
+
+  const count = issues.length;
+
+  return {
+    testId: 'ElementsStyledWithStrongOrEmTest',
+    testName: 'ElementsStyledWithStrongOrEmTest',
+    found: count > 0,
+    count: count,
+    details: {
+      issues,
+      totalCount: count,
+      classification: 'Semantiek / Structuur',
+    },
+  };
+}
+
+/**
  * #3: ViewportMetaRestrictsScalingTest
  * Page has restrictions on scaling of the viewport
  */
@@ -613,6 +828,20 @@ export function testPageContainsMultipleSameLinks(
   };
 }
 
+// Helper functions
+
+function getElementLocation($: cheerio.CheerioAPI, element: any): string {
+  const $el = $(element);
+  // Try to find containing landmark
+  if ($el.closest('header').length > 0) return 'header';
+  if ($el.closest('nav').length > 0) return 'nav';
+  if ($el.closest('main').length > 0) return 'main';
+  if ($el.closest('article').length > 0) return 'article';
+  if ($el.closest('aside').length > 0) return 'aside';
+  if ($el.closest('footer').length > 0) return 'footer';
+  return 'body';
+}
+
 // Helper functions for PageContainsMultipleSameLinksTest
 
 function getAccessibleName($: cheerio.CheerioAPI, $link: cheerio.Cheerio<any>): string {
@@ -726,10 +955,11 @@ function isInternalLink(href: string): boolean {
 /**
  * #8: IframeIsYouTubeVideoWithKeysEnabledTest
  * Page has YouTube video with single character keys enabled
+ * INFORMATIONAL - this is GOOD for accessibility
  */
 export function testIframeIsYouTubeVideoWithKeysEnabled(html: string): CrawlerTestResult {
   const $ = cheerio.load(html);
-  const youtubeIframes = $('iframe[src*="youtube.com"], iframe[src*="youtu.be"]');
+  const youtubeIframes = $('iframe[src*="youtube.com"], iframe[src*="youtu.be"], iframe[src*="youtube-nocookie.com"]');
   let count = 0;
   const details: any[] = [];
 
@@ -749,7 +979,47 @@ export function testIframeIsYouTubeVideoWithKeysEnabled(html: string): CrawlerTe
     testName: 'IframeIsYouTubeVideoWithKeysEnabledTest',
     found: count > 0,
     count: count,
-    details: { iframes: details, totalCount: count },
+    details: { iframes: details, totalCount: count, informational: true },
+  };
+}
+
+/**
+ * #132: IframeIsYouTubeVideoWithKeysDisabledTest
+ * Page has YouTube video with keyboard disabled (disablekb=1)
+ * ACCESSIBILITY ISSUE - keyboard users cannot control the video
+ */
+export function testIframeIsYouTubeVideoWithKeysDisabled(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const youtubeIframes = $('iframe[src*="youtube.com"], iframe[src*="youtu.be"], iframe[src*="youtube-nocookie.com"]');
+  let count = 0;
+  const details: any[] = [];
+
+  youtubeIframes.each((i, iframe) => {
+    const src = $(iframe).attr('src') || '';
+    // Check if keyboard is explicitly disabled
+    if (src.includes('disablekb=1')) {
+      count++;
+      if (details.length < 10) {
+        details.push({
+          src,
+          index: i + 1,
+          title: $(iframe).attr('title') || '(no title)',
+        });
+      }
+    }
+  });
+
+  return {
+    testId: '132',
+    testName: 'IframeIsYouTubeVideoWithKeysDisabledTest',
+    found: count > 0,
+    count: count,
+    details: {
+      iframes: details,
+      totalCount: count,
+      wcagLevel: 'A',
+      critical: true,
+    },
   };
 }
 
@@ -1214,6 +1484,103 @@ export function testEmptyLink(html: string): CrawlerTestResult {
 }
 
 /**
+ * #25: LinkMissingHrefTest
+ * Page has links with missing, empty, or placeholder href attributes
+ */
+export function testLinkMissingHref(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: any[] = [];
+
+  // Define placeholder patterns
+  const placeholderPatterns = [
+    '#',
+    '/#',
+    'javascript:void(0)',
+    'javascript:;',
+    'javascript:',
+  ];
+
+  $('a').each((i, link) => {
+    const $link = $(link);
+    const href = $link.attr('href');
+    const linkText = $link.text().trim();
+    const ariaLabel = $link.attr('aria-label');
+    const title = $link.attr('title');
+    const name = $link.attr('name');
+    const id = $link.attr('id');
+
+    // Get accessible name
+    const accessibleName = ariaLabel || linkText || title || '';
+
+    // Get location (using standard location names for consistency)
+    let location = 'body';
+    if ($link.closest('header').length > 0) location = 'header';
+    else if ($link.closest('nav').length > 0) location = 'nav';
+    else if ($link.closest('footer').length > 0) location = 'footer';
+    else if ($link.closest('main').length > 0) location = 'main';
+    else if ($link.closest('article').length > 0) location = 'article';
+    else if ($link.closest('aside').length > 0) location = 'aside';
+
+    // Skip anchor-only links (with name or id but no href) unless they have text
+    if (!href && (name || id) && !linkText) {
+      return; // Skip this one
+    }
+
+    // Check for missing href
+    if (!href) {
+      issues.push({
+        element: accessibleName || '<geen tekst>',
+        hrefValue: '<geen href>',
+        reason: 'De link heeft geen href attribuut en functioneert daardoor niet als een werkende link.',
+        location: location,
+        html: $.html($link),
+      });
+      return;
+    }
+
+    // Check for empty href
+    const trimmedHref = href.trim();
+    if (trimmedHref === '') {
+      issues.push({
+        element: accessibleName || '<geen tekst>',
+        hrefValue: '""',
+        reason: 'De link heeft een leeg href attribuut en functioneert daardoor niet als een werkende link.',
+        location: location,
+        html: $.html($link),
+      });
+      return;
+    }
+
+    // Check for placeholder href
+    if (placeholderPatterns.includes(trimmedHref)) {
+      issues.push({
+        element: accessibleName || '<geen tekst>',
+        hrefValue: trimmedHref,
+        reason: 'De link bevat een placeholder href die niet naar een functionele bestemming leidt.',
+        location: location,
+        html: $.html($link),
+      });
+      return;
+    }
+  });
+
+  return {
+    testId: '25',
+    testName: 'LinkMissingHrefTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues,
+      totalCount: issues.length,
+      classification: 'toegankelijkheid/kritiek',
+      wcagLevel: 'A',
+      wcagCriteria: ['2.1.1', '2.4.4'],
+      critical: true,
+    },
+  };
+}
+
+/**
  * #26: TableWithoutHeadersTest
  * Page has tables without th elements (headers)
  */
@@ -1561,44 +1928,327 @@ export function testSkipLink(html: string): CrawlerTestResult {
 
 /**
  * #37: AriaLandmarksTest
- * Page uses ARIA landmarks
+ * Page uses ARIA landmarks - validates SIA-R56 (unique landmark names)
  */
 export function testAriaLandmarks(html: string): CrawlerTestResult {
   const $ = cheerio.load(html);
-  const landmarks = $('[role="banner"], [role="navigation"], [role="main"], [role="contentinfo"], [role="complementary"], [role="search"]');
-  const semanticLandmarks = $('header, nav, main, footer, aside');
-  const count = landmarks.length + semanticLandmarks.length;
 
-  const details: any[] = [];
+  // Mapping van semantische tags naar ARIA roles
+  const semanticToRoleMap: Record<string, string> = {
+    'header': 'banner',
+    'nav': 'navigation',
+    'main': 'main',
+    'footer': 'contentinfo',
+    'aside': 'complementary',
+  };
 
-  landmarks.each((i, el) => {
-    if (details.length < 10) {
-      details.push({
-        type: 'aria-role',
-        role: $(el).attr('role'),
-        tag: el.tagName,
-      });
+  // Verzamel alle landmarks (deduplicated)
+  const landmarkElements = new Set<any>();
+  const landmarksByType = new Map<string, any[]>();
+
+  // Selecteer alle mogelijke landmarks
+  const allPossibleLandmarks = $(
+    'header, nav, main, footer, aside, ' +
+    '[role="banner"], [role="navigation"], [role="main"], ' +
+    '[role="contentinfo"], [role="complementary"], [role="search"]'
+  );
+
+  allPossibleLandmarks.each((i, el) => {
+    const $el = $(el);
+    const tag = el.tagName.toLowerCase();
+    const explicitRole = $el.attr('role');
+
+    // Bepaal het effectieve landmark type
+    let landmarkType: string;
+    if (explicitRole && ['banner', 'navigation', 'main', 'contentinfo', 'complementary', 'search'].includes(explicitRole)) {
+      landmarkType = explicitRole;
+    } else if (semanticToRoleMap[tag]) {
+      landmarkType = semanticToRoleMap[tag];
+    } else {
+      return; // Skip als het geen landmark is
+    }
+
+    // Haal label informatie op
+    const ariaLabel = $el.attr('aria-label') || '';
+    const ariaLabelledby = $el.attr('aria-labelledby') || '';
+
+    // Bepaal de accessible name
+    let accessibleName = '';
+    if (ariaLabel) {
+      accessibleName = ariaLabel.trim();
+    } else if (ariaLabelledby) {
+      // Probeer de tekst van het gelabelde element op te halen
+      const labelledElement = $(`#${ariaLabelledby}`);
+      if (labelledElement.length > 0) {
+        accessibleName = labelledElement.text().trim();
+      }
+    }
+
+    const landmarkInfo = {
+      element: el,
+      type: landmarkType,
+      tag: tag,
+      explicitRole: explicitRole || null,
+      ariaLabel: ariaLabel || null,
+      ariaLabelledby: ariaLabelledby || null,
+      accessibleName: accessibleName || null,
+      html: $.html($el).substring(0, 200), // Eerste 200 chars
+      location: getElementLocation($, el),
+    };
+
+    // Voeg toe aan deduplicated set
+    landmarkElements.add(landmarkInfo);
+
+    // Groepeer per type voor SIA-R56 validatie
+    if (!landmarksByType.has(landmarkType)) {
+      landmarksByType.set(landmarkType, []);
+    }
+    landmarksByType.get(landmarkType)!.push(landmarkInfo);
+  });
+
+  // SIA-R56 Validatie: Check voor duplicate landmarks zonder unieke namen
+  const duplicateIssues: any[] = [];
+
+  landmarksByType.forEach((landmarks, type) => {
+    if (landmarks.length > 1) {
+      // Er zijn meerdere landmarks van hetzelfde type
+      // Check of ze allemaal unieke namen hebben
+      const accessibleNames = landmarks.map(lm => lm.accessibleName || '');
+      const uniqueNames = new Set(accessibleNames.filter(name => name !== ''));
+
+      // Als niet alle landmarks een unieke naam hebben, is dit een probleem
+      if (uniqueNames.size < landmarks.length) {
+        // Sommige landmarks hebben geen naam of dezelfde naam
+        const landmarksWithoutUniqueNames = landmarks.filter((lm, idx) => {
+          // Check of deze landmark geen naam heeft of een duplicate naam
+          if (!lm.accessibleName) return true;
+
+          // Check of er een andere landmark is met dezelfde naam
+          const duplicates = landmarks.filter(other =>
+            other !== lm && other.accessibleName === lm.accessibleName
+          );
+          return duplicates.length > 0;
+        });
+
+        if (landmarksWithoutUniqueNames.length > 0) {
+          duplicateIssues.push({
+            landmarkType: type,
+            count: landmarks.length,
+            issue: 'SIA-R56: Multiple landmarks of the same type must have unique accessible names',
+            wcagCriteria: ['2.4.1', '4.1.2'],
+            wcagLevel: 'A',
+            problematicLandmarks: landmarksWithoutUniqueNames.slice(0, 5).map(lm => ({
+              tag: lm.tag,
+              role: lm.explicitRole,
+              accessibleName: lm.accessibleName || '(geen naam)',
+              ariaLabel: lm.ariaLabel,
+              ariaLabelledby: lm.ariaLabelledby,
+              location: lm.location,
+              htmlPreview: lm.html,
+            })),
+          });
+        }
+      }
     }
   });
 
-  semanticLandmarks.each((i, el) => {
-    if (details.length < 10) {
-      details.push({
-        type: 'semantic',
-        tag: el.tagName,
-      });
-    }
-  });
+  // Converteer Set naar Array voor details
+  const allLandmarks = Array.from(landmarkElements);
+  const landmarkDetails = allLandmarks.slice(0, 20).map((lm: any) => ({
+    type: lm.type,
+    tag: lm.tag,
+    explicitRole: lm.explicitRole,
+    accessibleName: lm.accessibleName,
+    ariaLabel: lm.ariaLabel,
+    ariaLabelledby: lm.ariaLabelledby,
+    location: lm.location,
+  }));
+
+  // Bepaal of er issues zijn
+  const hasIssues = duplicateIssues.length > 0;
 
   return {
     testId: '37',
     testName: 'AriaLandmarksTest',
-    found: count > 0,
-    count: count,
+    found: hasIssues, // True als er SIA-R56 violations zijn
+    count: duplicateIssues.length,
     details: {
-      landmarks: details,
-      totalCount: count,
-      informational: true,
+      totalLandmarks: allLandmarks.length,
+      landmarks: landmarkDetails,
+      landmarksByType: Object.fromEntries(
+        Array.from(landmarksByType.entries()).map(([type, lms]) => [
+          type,
+          {
+            count: lms.length,
+            hasUniqueNames: lms.length <= 1 || lms.every((lm: any) => lm.accessibleName),
+          }
+        ])
+      ),
+      issues: duplicateIssues,
+      classification: hasIssues ? 'serieus' : 'informational',
+      informational: !hasIssues,
+      wcagLevel: hasIssues ? 'A' : undefined,
+      wcagCriteria: hasIssues ? ['2.4.1', '4.1.2'] : undefined,
+    },
+  };
+}
+
+/**
+ * #38: IframeIsHCaptchaTest
+ * Detects hCaptcha iframes and container divs, checks accessibility (SIA check for iframe title)
+ * WCAG: 4.1.2 (Name, Role, Value) - Level A
+ */
+export function testIframeIsHCaptcha(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+
+  // Detectie: zoek naar hCaptcha iframes EN container divs
+  const hcaptchaIframes: any[] = [];
+
+  // 1. Zoek naar hCaptcha container divs (deze genereren iframes dynamisch)
+  $('[data-hcaptcha-sitekey]').each((i, container) => {
+    const $container = $(container);
+    const sitekey = $container.attr('data-hcaptcha-sitekey') || '';
+    const location = getElementLocation($, container);
+
+    // Zoek naar iframe binnen deze container
+    const $iframe = $container.find('iframe').first();
+
+    if ($iframe.length > 0) {
+      // Er is al een iframe gegenereerd
+      const src = $iframe.attr('src') || '';
+      const title = $iframe.attr('title') || '';
+      const tabindex = $iframe.attr('tabindex') || '';
+      const ariaHidden = $iframe.attr('aria-hidden') || '';
+
+      // Bepaal of het invisible variant is
+      const isInvisible = src.includes('invisible') ||
+                         $container.attr('data-size') === 'invisible' ||
+                         $container.closest('[data-hcaptcha-invisible]').length > 0;
+
+      // Check toegankelijkheid
+      const hasTitle = title.trim().length > 0;
+      const isTitleMeaningful = hasTitle && title.length > 5;
+      const isKeyboardAccessible = tabindex !== '-1' && ariaHidden !== 'true';
+
+      // Bepaal of het toegankelijk is
+      const isAccessible = hasTitle && isTitleMeaningful && (isInvisible || isKeyboardAccessible);
+
+      hcaptchaIframes.push({
+        src: src,
+        sitekey: sitekey,
+        detectedVia: 'container-div-with-iframe',
+        hasTitle: hasTitle,
+        titleText: title || '(geen titel)',
+        isTitleMeaningful: isTitleMeaningful,
+        isInvisible: isInvisible,
+        tabindex: tabindex || 'geen',
+        ariaHidden: ariaHidden || 'geen',
+        isKeyboardAccessible: isKeyboardAccessible,
+        isAccessible: isAccessible,
+        location: location,
+        html: $.html($iframe).substring(0, 200),
+      });
+    } else {
+      // Container zonder iframe (nog niet geladen/gerenderd)
+      // We rapporteren dit als potentieel probleem
+      hcaptchaIframes.push({
+        src: '(nog niet geladen)',
+        sitekey: sitekey,
+        detectedVia: 'container-div-without-iframe',
+        hasTitle: false,
+        titleText: '(iframe nog niet gerenderd)',
+        isTitleMeaningful: false,
+        isInvisible: $container.attr('data-size') === 'invisible',
+        tabindex: 'onbekend',
+        ariaHidden: 'onbekend',
+        isKeyboardAccessible: false,
+        isAccessible: false, // Kan niet valideren zonder iframe
+        location: location,
+        html: $.html($container).substring(0, 200),
+      });
+    }
+  });
+
+  // 2. Zoek naar standalone hCaptcha iframes (zonder container div)
+  $('iframe').each((i, iframe) => {
+    const $iframe = $(iframe);
+    const src = $iframe.attr('src') || '';
+    const dataWidget = $iframe.attr('data-hcaptcha-widget-id') || '';
+
+    // Check of het een hCaptcha iframe is EN of we deze nog niet hebben via container
+    const isHCaptchaIframe = src.includes('hcaptcha.com') || dataWidget;
+    const alreadyDetected = hcaptchaIframes.some(c =>
+      c.html && c.html === $.html($iframe).substring(0, 200)
+    );
+
+    if (isHCaptchaIframe && !alreadyDetected) {
+      const title = $iframe.attr('title') || '';
+      const tabindex = $iframe.attr('tabindex') || '';
+      const ariaHidden = $iframe.attr('aria-hidden') || '';
+      const location = getElementLocation($, iframe);
+
+      // Bepaal of het invisible variant is
+      const isInvisible = src.includes('invisible') ||
+                         $iframe.closest('[data-hcaptcha-invisible]').length > 0;
+
+      // Check toegankelijkheid
+      const hasTitle = title.trim().length > 0;
+      const isTitleMeaningful = hasTitle && title.length > 5;
+      const isKeyboardAccessible = tabindex !== '-1' && ariaHidden !== 'true';
+
+      // Bepaal of het toegankelijk is
+      const isAccessible = hasTitle && isTitleMeaningful && (isInvisible || isKeyboardAccessible);
+
+      hcaptchaIframes.push({
+        src: src,
+        sitekey: 'onbekend',
+        detectedVia: 'standalone-iframe',
+        hasTitle: hasTitle,
+        titleText: title || '(geen titel)',
+        isTitleMeaningful: isTitleMeaningful,
+        isInvisible: isInvisible,
+        tabindex: tabindex || 'geen',
+        ariaHidden: ariaHidden || 'geen',
+        isKeyboardAccessible: isKeyboardAccessible,
+        isAccessible: isAccessible,
+        location: location,
+        html: $.html($iframe).substring(0, 200),
+      });
+    }
+  });
+
+  // Vind inaccessible hCaptcha's (zonder title of keyboard problemen)
+  const inaccessibleCaptchas = hcaptchaIframes.filter(captcha => !captcha.isAccessible);
+
+  return {
+    testId: '38',
+    testName: 'IframeIsHCaptchaTest',
+    found: inaccessibleCaptchas.length > 0,
+    count: inaccessibleCaptchas.length,
+    details: {
+      totalHCaptchas: hcaptchaIframes.length,
+      accessibleHCaptchas: hcaptchaIframes.filter(c => c.isAccessible).length,
+      inaccessibleHCaptchas: inaccessibleCaptchas.length,
+      issues: inaccessibleCaptchas.map(captcha => ({
+        reason: !captcha.hasTitle
+          ? 'Geen title attribuut'
+          : !captcha.isTitleMeaningful
+            ? 'Title te kort/niet zinvol'
+            : 'Niet toegankelijk voor toetsenbord',
+        hasTitle: captcha.hasTitle,
+        titleText: captcha.titleText,
+        isInvisible: captcha.isInvisible,
+        isKeyboardAccessible: captcha.isKeyboardAccessible,
+        tabindex: captcha.tabindex,
+        ariaHidden: captcha.ariaHidden,
+        location: captcha.location,
+        htmlPreview: captcha.html,
+      })),
+      allHCaptchas: hcaptchaIframes.slice(0, 10), // Eerste 10 voor overzicht
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: inaccessibleCaptchas.length > 0,
+      classification: inaccessibleCaptchas.length > 0 ? 'kritiek' : 'informational',
     },
   };
 }
@@ -1723,8 +2373,167 @@ export const testPageHasLegend = createGenericTest('129', 'Page has legend', 'le
 export const testPageHasFieldset = createGenericTest('130', 'Page has fieldset', 'fieldset', 'Fieldset elements');
 
 /**
- * Run all 130 tests on HTML content
+ * Run all 131 tests on HTML content
  */
+// Test mapping for running single tests
+const TEST_MAP: Record<string, (html: string) => CrawlerTestResult> = {
+  'LangAttributeMissingTest': testLangAttributeMissing,
+  'TitleMissingTest': testTitleMissing,
+  'TitleEmptyTest': testTitleEmpty,
+  'ImgMissingAltTest': testImgMissingAlt,
+  'FormMissingLabelsTest': testFormMissingLabels,
+  'HeadingsAtLeastOneH1Test': testHeadingsAtLeastOneH1,
+  'IframeMissingAccessibleNameTest': testIframeMissingAccessibleName,
+  'TableTest': testTable,
+  'FormTest': testForm,
+  'ImgTest': testImg,
+  'IframeIsVimeoVideoWithKeysDisabledTest': testIframeIsVimeoVideoWithKeysDisabled,
+  'ImgAltTooLongTest': testImgAltTooLong,
+  'ImgAltTooShortTest': testImgAltTooShort,
+  'ViewportMetaRestrictsScalingTest': testViewportMetaRestrictsScaling,
+  'ImageLinkMissingAccessibleNameTest': testImageLinkMissingAccessibleName,
+  'PageContainsLinkReadMoreTest': testPageContainsLinkReadMore,
+  'PageContainsMultipleSameLinksTest': testPageContainsMultipleSameLinks,
+  'IframeIsYouTubeVideoWithKeysEnabledTest': testIframeIsYouTubeVideoWithKeysEnabled,
+  'TableWithHeadingsTest': testTableWithHeadings,
+  'IframeIsGoogleMapTest': testIframeIsGoogleMap,
+  'IframeIsScribitVideoTest': testIframeIsScribitVideo,
+  'IframeIsVimeoVideoWithKeysEnabledTest': testIframeIsVimeoVideoWithKeysEnabled,
+  'IframeIsVimeoVideoTest': testIframeIsVimeoVideo,
+  'IframeTest': testIframe,
+  'AudioHasAutoplayTest': testAudioHasAutoplay,
+  'AudioControlsTest': testAudioControls,
+  'AudioTest': testAudio,
+  'VideoHasAutoplayTest': testVideoHasAutoplay,
+  'VideoMissingTitleAriaTest': testVideoMissingTitleAria,
+  'VideoControlsTest': testVideoControls,
+  'VideoTest': testVideo,
+  'LinkWithoutTextTest': testLinkWithoutText,
+  'EmptyLinkTest': testEmptyLink,
+  'TableWithoutHeadersTest': testTableWithoutHeaders,
+  'ListTest': testList,
+  'DefinitionListTest': testDefinitionList,
+  'FormMissingFieldsetTest': testFormMissingFieldset,
+  'InputMissingLabelTest': testInputMissingLabel,
+  'ButtonEmptyTest': testButtonEmpty,
+  'HeadingEmptyTest': testHeadingEmpty,
+  'HeadingSkipLevelTest': testHeadingSkipLevel,
+  'SkipLinkTest': testSkipLink,
+  'AriaLandmarksTest': testAriaLandmarks,
+  'IframeIsHCaptchaTest': testIframeIsHCaptcha,
+  'ElementHasTabindexTest': testElementHasTabindex,
+  'PageHasListTest': testPageHasList,
+  'PageHasElementsWithAriaLabelTest': testPageHasElementsWithAriaLabel,
+  'PageHasElementsWithAriaExpandedTest': testPageHasElementsWithAriaExpanded,
+  'PageHasPicturesTest': testPageHasPictures,
+  'PageHasImagesTest': testPageHasImages,
+  'PageHasDecorativeImagesOrTextAlternativeIsMissingTest': testPageHasDecorativeImagesOrTextAlternativeIsMissing,
+  'PageHasElementsWithAriaDescribedbyTest': testPageHasElementsWithAriaDescribedby,
+  'PageHasButtonWithAriaLabelTest': testPageHasButtonWithAriaLabel,
+  'FormWithRequiredInputFieldsIsValidatedByBrowserTest': testFormWithRequiredInputFieldsIsValidatedByBrowser,
+  'PageHasElementsWithAriaLabelledbyTest': testPageHasElementsWithAriaLabelledby,
+  'PageHasSvgImagesTest': testPageHasSvgImages,
+  'PageHasElementsWithRoleMenuTest': testPageHasElementsWithRoleMenu,
+  'PageHasFieldsetWithoutLegendTest': testPageHasFieldsetWithoutLegend,
+  'PageHasDialogOrModalWindowTest': testPageHasDialogOrModalWindow,
+  'PageHasInteractiveImageTest': testPageHasInteractiveImage,
+  'PageHasAriaHiddenElementTest': testPageHasAriaHiddenElement,
+  'PageHasInputFieldsWithAutocompleteTest': testPageHasInputFieldsWithAutocomplete,
+  'PageHasAriaInvalidElementTest': testPageHasAriaInvalidElement,
+  'PageHasAriaRequiredElementTest': testPageHasAriaRequiredElement,
+  'PageHasAccesskeyTest': testPageHasAccesskey,
+  'PageHasAriaLiveElementTest': testPageHasAriaLiveElement,
+  'PageHasStrongOrBoldTest': testPageHasStrongOrBold,
+  'PageHasEmOrItalicTest': testPageHasEmOrItalic,
+  'PageHasPreformattedTextTest': testPageHasPreformattedText,
+  'PageHasCodeBlockTest': testPageHasCodeBlock,
+  'PageHasBlockquoteTest': testPageHasBlockquote,
+  'PageHasAbbreviationTest': testPageHasAbbreviation,
+  'PageHasCitationTest': testPageHasCitation,
+  'PageHasMarkedTextTest': testPageHasMarkedText,
+  'PageHasSubscriptTest': testPageHasSubscript,
+  'PageHasSuperscriptTest': testPageHasSuperscript,
+  'PageHasTimeTest': testPageHasTime,
+  'PageHasDataTest': testPageHasData,
+  'PageHasDetailsTest': testPageHasDetails,
+  'PageHasSummaryTest': testPageHasSummary,
+  'PageHasArticleTest': testPageHasArticle,
+  'PageHasSectionTest': testPageHasSection,
+  'PageHasNavTest': testPageHasNav,
+  'PageHasAsideTest': testPageHasAside,
+  'PageHasHeaderTest': testPageHasHeader,
+  'PageHasFooterTest': testPageHasFooter,
+  'PageHasMainTest': testPageHasMain,
+  'PageHasFigureTest': testPageHasFigure,
+  'PageHasFigcaptionTest': testPageHasFigcaption,
+  'PageHasAddressTest': testPageHasAddress,
+  'PageHasProgressTest': testPageHasProgress,
+  'PageHasMeterTest': testPageHasMeter,
+  'PageHasOutputTest': testPageHasOutput,
+  'PageHasCanvasTest': testPageHasCanvas,
+  'PageHasObjectTest': testPageHasObject,
+  'PageHasEmbedTest': testPageHasEmbed,
+  'PageHasParamTest': testPageHasParam,
+  'PageHasSourceTest': testPageHasSource,
+  'PageHasTrackTest': testPageHasTrack,
+  'PageHasMapTest': testPageHasMap,
+  'PageHasAreaTest': testPageHasArea,
+  'PageHasSelectTest': testPageHasSelect,
+  'PageHasOptgroupTest': testPageHasOptgroup,
+  'PageHasOptionTest': testPageHasOption,
+  'PageHasTextareaTest': testPageHasTextarea,
+  'PageHasKeygenTest': testPageHasKeygen,
+  'PageHasDatalistTest': testPageHasDatalist,
+  'PageHasInputTypeCheckboxTest': testPageHasInputTypeCheckbox,
+  'PageHasInputTypeRadioTest': testPageHasInputTypeRadio,
+  'PageHasInputTypeSubmitTest': testPageHasInputTypeSubmit,
+  'PageHasInputTypeResetTest': testPageHasInputTypeReset,
+  'PageHasInputTypeButtonTest': testPageHasInputTypeButton,
+  'PageHasInputTypeFileTest': testPageHasInputTypeFile,
+  'PageHasInputTypeHiddenTest': testPageHasInputTypeHidden,
+  'PageHasInputTypeImageTest': testPageHasInputTypeImage,
+  'PageHasInputTypeDateTest': testPageHasInputTypeDate,
+  'PageHasInputTypeTimeTest': testPageHasInputTypeTime,
+  'PageHasInputTypeDatetimeLocalTest': testPageHasInputTypeDatetimeLocal,
+  'PageHasInputTypeMonthTest': testPageHasInputTypeMonth,
+  'PageHasInputTypeWeekTest': testPageHasInputTypeWeek,
+  'PageHasInputTypeColorTest': testPageHasInputTypeColor,
+  'PageHasInputTypeRangeTest': testPageHasInputTypeRange,
+  'PageHasInputTypeSearchTest': testPageHasInputTypeSearch,
+  'PageHasInputTypeTelTest': testPageHasInputTypeTel,
+  'PageHasInputTypeUrlTest': testPageHasInputTypeUrl,
+  'PageHasInputTypeEmailTest': testPageHasInputTypeEmail,
+  'PageHasInputTypeNumberTest': testPageHasInputTypeNumber,
+  'PageHasInputTypePasswordTest': testPageHasInputTypePassword,
+  'PageHasInputTypeTextTest': testPageHasInputTypeText,
+  'PageHasLabelTest': testPageHasLabel,
+  'PageHasLegendTest': testPageHasLegend,
+  'PageHasFieldsetTest': testPageHasFieldset,
+  'PageHasBrTest': testPageHasBr,
+  'IframeIsYouTubeVideoWithKeysDisabledTest': testIframeIsYouTubeVideoWithKeysDisabled,
+  'LinkMissingHrefTest': testLinkMissingHref,
+  'StrongHasMoreThanFourWordsTest': testStrongHasMoreThanFourWords,
+  'ElementsStyledWithStrongOrEmTest': testElementsStyledWithStrongOrEm,
+};
+
+/**
+ * Get list of available test names
+ */
+export function getAvailableTests(): string[] {
+  return Object.keys(TEST_MAP).sort();
+}
+
+/**
+ * Run a single test by name
+ */
+export function runSingleTest(html: string, testName: string): CrawlerTestResult | null {
+  const testFn = TEST_MAP[testName];
+  if (!testFn) {
+    return null;
+  }
+  return testFn(html);
+}
+
 export function runAllMVPTests(html: string): CrawlerTestResult[] {
   return [
     // Original 42 tests
@@ -1740,6 +2549,7 @@ export function runAllMVPTests(html: string): CrawlerTestResult[] {
     testImg(html),
     testIframeIsVimeoVideoWithKeysDisabled(html),
     testImgAltTooLong(html),
+    testImgAltTooShort(html),
     testViewportMetaRestrictsScaling(html),
     testImageLinkMissingAccessibleName(html),
     testPageContainsLinkReadMore(html),
@@ -1760,6 +2570,7 @@ export function runAllMVPTests(html: string): CrawlerTestResult[] {
     testVideo(html),
     testLinkWithoutText(html),
     testEmptyLink(html),
+    testLinkMissingHref(html),
     testTableWithoutHeaders(html),
     testList(html),
     testDefinitionList(html),
@@ -1859,5 +2670,12 @@ export function runAllMVPTests(html: string): CrawlerTestResult[] {
     testPageHasLabel(html),
     testPageHasLegend(html),
     testPageHasFieldset(html),
+    testPageHasBr(html),
+    // New test #132: YouTube with keyboard disabled
+    testIframeIsYouTubeVideoWithKeysDisabled(html),
+    // New test #133: Strong with more than 4 words
+    testStrongHasMoreThanFourWords(html),
+    // New test #134: Elements styled with strong/em
+    testElementsStyledWithStrongOrEm(html),
   ];
 }

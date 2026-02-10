@@ -15,24 +15,75 @@ async function handleCookieConsent(page: Page): Promise<void> {
   // Try to find and click cookie consent button by text content
   try {
     // Wait a moment for cookie banner to appear
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Try to find "Accepteer alle cookies" button
+    console.log(`[BROWSER] Looking for cookie consent dialog...`);
+
+    // Step 1: Try to find and click the cookie modal button first (to open the modal)
+    const openModalButtons = await page.$$('button');
+    for (const button of openModalButtons) {
+      const text = await button.evaluate(el => el.textContent?.trim() || '');
+      const className = await button.evaluate(el => el.className || '');
+
+      // Check if this is a button that opens the cookie modal
+      if (
+        className.includes('OpenCookieModalButton') ||
+        text.includes('Cookie-instellingen') ||
+        text.includes('Cookie settings')
+      ) {
+        console.log(`[BROWSER] Opening cookie modal first...`);
+        await button.evaluate((el: Element) => (el as HTMLElement).click());
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        break;
+      }
+    }
+
+    // Step 2: Look for checkboxes for "external_media" and enable them
+    try {
+      const externalMediaCheckbox = await page.$('#external_media');
+      if (externalMediaCheckbox) {
+        const isChecked = await externalMediaCheckbox.evaluate((el: Element) => (el as HTMLInputElement).checked);
+        if (!isChecked) {
+          console.log(`[BROWSER] Enabling external media checkbox...`);
+          await externalMediaCheckbox.click();
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      // Also enable maps checkbox
+      const mapsCheckbox = await page.$('#maps');
+      if (mapsCheckbox) {
+        const isChecked = await mapsCheckbox.evaluate((el: Element) => (el as HTMLInputElement).checked);
+        if (!isChecked) {
+          console.log(`[BROWSER] Enabling maps checkbox...`);
+          await mapsCheckbox.click();
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    } catch (e) {
+      console.log(`[BROWSER] Could not toggle checkboxes:`, e);
+    }
+
+    // Step 3: Try to find "Accepteer alle cookies" or "Keuze opslaan" button
     const buttons = await page.$$('button');
     for (const button of buttons) {
       const text = await button.evaluate(el => el.textContent?.trim() || '');
+      const className = await button.evaluate(el => el.className || '');
+
       if (
         text.includes('Accepteer alle cookies') ||
         text.includes('Accept all cookies') ||
         text.includes('Accepteer alle') ||
-        text.includes('Accept all')
+        text.includes('Accept all') ||
+        text.includes('Keuze opslaan') ||
+        (className.includes('CookieModal') && className.includes('button'))
       ) {
         console.log(`[BROWSER] Found cookie consent button: "${text}"`);
         // Click using JavaScript instead of Puppeteer's click to avoid visibility issues
         await button.evaluate((el: Element) => (el as HTMLElement).click());
         console.log(`[BROWSER] Clicked cookie consent button`);
         // Wait for the dialog to close and content to load
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         return;
       }
     }
@@ -42,23 +93,24 @@ async function handleCookieConsent(page: Page): Promise<void> {
       'button[class*="CookieBanner"][class*="button"]',
       'button[class*="cookie"][class*="accept"]',
       'button[class*="Cookie"][class*="Accept"]',
+      'button.CookieModal_button__EBf5n',
     ];
 
     for (const selector of cookieButtonSelectors) {
       const button = await page.$(selector);
       if (button) {
         const text = await button.evaluate(el => el.textContent?.trim() || '');
-        if (text.includes('Accepteer') || text.includes('Accept')) {
-          console.log(`[BROWSER] Found cookie consent button: ${selector}`);
+        if (text.includes('Accepteer') || text.includes('Accept') || text.includes('opslaan')) {
+          console.log(`[BROWSER] Found cookie consent button via selector: ${selector}`);
           await button.click();
           console.log(`[BROWSER] Clicked cookie consent button`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 3000));
           return;
         }
       }
     }
 
-    console.log(`[BROWSER] No cookie consent dialog found`);
+    console.log(`[BROWSER] No cookie consent dialog found or already accepted`);
   } catch (error) {
     console.log(`[BROWSER] Error handling cookie consent:`, error);
   }
@@ -70,16 +122,25 @@ async function handleCookieConsent(page: Page): Promise<void> {
 async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.connected) {
     console.log('[BROWSER] Launching headless browser...');
-    browserInstance = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-      ],
-    });
+    try {
+      browserInstance = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
+        ],
+        timeout: 60000, // 60 seconds timeout for browser launch
+      });
+      console.log('[BROWSER] ✓ Browser launched successfully');
+    } catch (error) {
+      console.error('[BROWSER] ✗ Failed to launch browser:', error);
+      throw new Error(`Failed to launch Puppeteer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
   return browserInstance;
 }
@@ -107,10 +168,15 @@ export async function fetchHtmlWithBrowser(
     userAgent?: string;
   }
 ): Promise<string> {
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  let page;
 
   try {
+    console.log(`[BROWSER] Getting browser instance...`);
+    const browser = await getBrowser();
+
+    console.log(`[BROWSER] Creating new page...`);
+    page = await browser.newPage();
+
     // Set user agent
     if (options?.userAgent) {
       await page.setUserAgent(options.userAgent);
@@ -121,11 +187,16 @@ export async function fetchHtmlWithBrowser(
 
     console.log(`[BROWSER] Navigating to ${url}`);
 
-    // Navigate to the page
+    // Navigate to the page with longer timeout and simpler wait condition
     await page.goto(url, {
-      waitUntil: 'networkidle0', // Wait until network is idle
-      timeout: 30000,
+      waitUntil: 'domcontentloaded', // Wait for DOM, not network idle (faster)
+      timeout: 60000, // 60 seconds
     });
+
+    console.log(`[BROWSER] ✓ Page loaded, waiting for dynamic content...`);
+
+    // Wait a bit for initial rendering
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Try to handle cookie consent dialogs automatically
     await handleCookieConsent(page);
@@ -141,9 +212,11 @@ export async function fetchHtmlWithBrowser(
 
     // Additional wait time for JavaScript to execute
     const waitTime = options?.waitTime || 2000;
+    console.log(`[BROWSER] Waiting ${waitTime}ms for lazy-loaded content...`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
 
     // Get the full HTML after JavaScript execution
+    console.log(`[BROWSER] Extracting HTML content...`);
     const html = await page.content();
 
     console.log(`[BROWSER] ✓ Successfully fetched ${url} (${html.length} bytes)`);
@@ -151,10 +224,15 @@ export async function fetchHtmlWithBrowser(
     return html;
 
   } catch (error) {
-    console.error(`[BROWSER] ✗ Failed to fetch ${url}:`, error);
+    console.error(`[BROWSER] ✗ Failed to fetch ${url}`);
+    console.error(`[BROWSER] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+    console.error(`[BROWSER] Error message: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   } finally {
-    await page.close();
+    if (page) {
+      console.log(`[BROWSER] Closing page...`);
+      await page.close().catch(e => console.error('[BROWSER] Error closing page:', e));
+    }
   }
 }
 
