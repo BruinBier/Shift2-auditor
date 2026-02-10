@@ -36,3 +36,15 @@ next-env.d.ts
 
 # visual snapshots from crawler tests
 public/__visual-snapshots__/
+
+# database backups
+backups/
+
+# temporary test files
+temp-*.txt
+test-*.html
+nul
+
+# temporary migration folders (only committed migrations should be tracked)
+prisma/migrations/*_restore_*
+prisma/migrations/*_temp_*
