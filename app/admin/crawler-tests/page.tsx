@@ -2,232 +2,410 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { getAvailableTests } from '@/lib/crawler/tests';
+import 'md-editor-rt/lib/style.css';
+import { formatMultipleSameLinksReport } from '@/lib/formatter/multiple-same-links-formatter';
+import { formatLinkMissingHrefReport } from '@/lib/formatter/link-missing-href-formatter';
+import { formatImgMissingAltReport } from '@/lib/formatter/img-missing-alt-formatter';
+import { formatImgAltTooShortReport } from '@/lib/formatter/img-alt-too-short-formatter';
+import { formatAriaLandmarksReport } from '@/lib/formatter/aria-landmarks-formatter';
+import { formatHCaptchaReport } from '@/lib/formatter/hcaptcha-formatter';
+import { getTestDocumentation, hasTestDocumentation } from '@/lib/crawler/test-documentation';
+import { marked } from 'marked';
 
-interface CrawlerTest {
-  id: string;
-  name: string;
-  description: string;
-  status: 'passing' | 'failing' | 'pending';
-  category?: string;
-  bevindingen?: string[];
-}
-
-const defaultTests: CrawlerTest[] = [
-  { id: '1', name: 'IframeIsVimeoVideoWithKeysDisabledTest', description: 'Page has Vimeo video with keyboard disabled', status: 'pending' },
-  { id: '2', name: 'ImgAltTooLongTest', description: 'Page has images with a very long alt-attribute value', status: 'pending', category: '1 premium bevinding' },
-  { id: '3', name: 'ViewportMetaRestrictsScalingTest', description: 'Page has restrictions on scaling of the viewport', status: 'pending', category: '1 premium bevinding' },
-  { id: '4', name: 'ImageLinkMissingAccessibleNameTest', description: 'Link with image without accessible name', status: 'pending' },
-  { id: '5', name: 'PageContainsLinkReadMoreTest', description: 'Page contains links with "Read More"', status: 'pending' },
-  { id: '6', name: 'PageContainsMultipleSameLinksTest', description: 'Page contains multiple links with the same link purpose', status: 'pending' },
-  { id: '7', name: 'IframeMissingAccessibleNameTest', description: 'Page has iframe without an accessible name', status: 'pending', category: '2 snelle bevindingen' },
-  { id: '8', name: 'IframeIsYouTubeVideoWithKeysEnabledTest', description: 'Page has YouTube video with single character keys enabled', status: 'pending', category: '1 premium bevinding' },
-  { id: '9', name: 'TableWithHeadingsTest', description: 'Page has table with th-elements', status: 'pending' },
-  { id: '10', name: 'TableTest', description: 'Page has table', status: 'pending' },
-  { id: '11', name: 'IframeIsGoogleMapTest', description: 'Page has Google Maps', status: 'pending' },
-  { id: '12', name: 'IframeIsScribitVideoTest', description: 'Page contains Scribit video', status: 'pending' },
-  { id: '13', name: 'IframeIsVimeoVideoWithKeysEnabledTest', description: 'Page has Vimeo video with single character keys enabled', status: 'pending', category: '1 premium bevinding' },
-  { id: '14', name: 'IframeIsVimeoVideoTest', description: 'Page has Vimeo video', status: 'pending' },
-  { id: '15', name: 'IframeTest', description: 'Page has iframe', status: 'pending' },
-  { id: '16', name: 'AudioHasAutoplayTest', description: 'Audio has autoplay', status: 'pending' },
-  { id: '17', name: 'AudioControlsTest', description: 'Page has audio with controls', status: 'pending' },
-  { id: '18', name: 'AudioTest', description: 'Page has audio', status: 'pending' },
-  { id: '19', name: 'VideoHasAutoplayTest', description: 'Video has autoplay', status: 'pending' },
-  { id: '20', name: 'VideoMissingTitleAriaTest', description: 'Video-element with controls does not have an accessible name', status: 'pending' },
-  { id: '21', name: 'PageContainsWordsTest', description: 'Sensory Characteristics exists', status: 'pending' },
-  { id: '22', name: 'LabelMissingForTest', description: 'Page has label-element without for-attribute', status: 'pending' },
-  { id: '23', name: 'IframeIsVimeoVideoTest', description: 'Page has Vimeo video', status: 'pending' },
-  { id: '24', name: 'VideoControlsTest', description: 'Page has video with controls', status: 'pending' },
-  { id: '25', name: 'VideoMissingTitleAriaTest', description: 'Video-element with controls does not have an accessible name', status: 'pending' },
-  { id: '26', name: 'VideoHasAutoplayTest', description: 'Video has autoplay', status: 'pending' },
-  { id: '27', name: 'AudioTest', description: 'Page has audio', status: 'pending' },
-  { id: '28', name: 'AudioControlsTest', description: 'Page has audio with controls', status: 'pending' },
-  { id: '29', name: 'AudioMissingTitleAriaTest', description: 'Audio-element with controls does not have an accessible name', status: 'pending' },
-  { id: '30', name: 'AudioHasAutoplayTest', description: 'Audio has autoplay', status: 'pending' },
-  { id: '31', name: 'IframeTest', description: 'Page has iframe', status: 'pending' },
-  { id: '32', name: 'IframeIsYouTubeVideoWithKeysEnabledTest', description: 'Page has YouTube video with single character keys enabled', status: 'pending', category: '1 premium bevinding' },
-  { id: '33', name: 'AudioHasAutoplayTest', description: 'Audio has autoplay', status: 'pending' },
-  { id: '34', name: 'IframeTest', description: 'Page has iframe', status: 'pending' },
-  { id: '35', name: 'IframeIsYouTubeVideoWithKeysEnabledTest', description: 'Page has YouTube video with single character keys enabled', status: 'pending', category: '1 premium bevinding' },
-  { id: '36', name: 'IframeIsVimeoVideoTest', description: 'Page has Vimeo video', status: 'pending' },
-  { id: '37', name: 'IframeIsVimeoVideoWithKeysEnabledTest', description: 'Page has Vimeo video with single character keys enabled', status: 'pending', category: '1 premium bevinding' },
-  { id: '38', name: 'IframeIsScribitVideoTest', description: 'Page contains Scribit video', status: 'pending' },
-  { id: '39', name: 'IframeIsGoogleMapTest', description: 'Page has Google Maps', status: 'pending' },
-  { id: '40', name: 'ListTest', description: 'Page has list', status: 'pending' },
-  { id: '41', name: 'TableTest', description: 'Page has table', status: 'pending' },
-  { id: '42', name: 'TableWithHeadingsTest', description: 'Page has table with th-elements', status: 'pending' },
-  { id: '43', name: 'TableWithEmptyHeadingsTest', description: 'Page has table with empty th-elements', status: 'pending' },
-  { id: '44', name: 'PageContainsWordsTest', description: 'Sensory Characteristics exists', status: 'pending' },
-  { id: '45', name: 'FormTest', description: 'Page has form', status: 'pending' },
-  { id: '46', name: 'VideoMissingTitleAriaTest', description: 'Video-element with controls does not have an accessible name', status: 'pending' },
-  { id: '47', name: 'VideoControlsTest', description: 'Page has video with controls', status: 'pending' },
-  { id: '48', name: 'StrongHasMoreThanFourWordsTest', description: 'Page has strong-element with more than 4 words', status: 'pending' },
-  { id: '49', name: 'InvalidListFormatTest', description: 'Page has invalid list', status: 'pending' },
-  { id: '50', name: 'ListDLItemInvalidParentTest', description: 'Description list items are not inside a description list', status: 'pending' },
-  { id: '51', name: 'ListDLInvalidGroupChildrenTest', description: 'Page has description list with invalid children within div group', status: 'pending' },
-  { id: '52', name: 'ListDLInvalidChildrenTest', description: 'Page has description list with invalid children', status: 'pending' },
-  { id: '53', name: 'ListDescriptionListTest', description: 'Page has description list', status: 'pending' },
-  { id: '54', name: 'ListLIInvalidParentTest', description: 'List item does not belong to a list', status: 'pending' },
-  { id: '55', name: 'ListInvalidChildItemTest', description: 'Page has a list with invalid children / items', status: 'pending' },
-  { id: '56', name: 'ListTest', description: 'Page has list', status: 'pending' },
-  { id: '57', name: 'EmHasMoreThanFourWordsTest', description: 'Page has em-element with more then 4 words', status: 'pending' },
-  { id: '58', name: 'LangAttributeInvalidTest', description: 'Page has invalid value for lang-attribute on the HTML element', status: 'pending', category: '1 premium bevinding' },
-  { id: '59', name: 'FormNovalidateTest', description: 'Form with required input fields is validated by browser', status: 'pending' },
-  { id: '60', name: 'AutocompleteInvalidTokenTest', description: 'Autocomplete attribute contains unknown value', status: 'pending' },
-  { id: '61', name: 'FormInputsHaveAutocompleteTest', description: 'Page has form with inputs containing autocomplete', status: 'pending' },
-  { id: '62', name: 'LabelIncorrectForTest', description: 'Label element has incorrect value for for-attribute', status: 'pending' },
-  { id: '63', name: 'LabelForMissingElementTest', description: 'Page has a label element which is not correctly connected to an input field', status: 'pending' },
-  { id: '64', name: 'LabelMissingForTest', description: 'Page has label-element without for-attribute', status: 'pending' },
-  { id: '65', name: 'FormMissingLabelsTest', description: 'Page has form without label-elements', status: 'pending' },
-  { id: '66', name: 'PageContainsExpressionsTest', description: 'The page contains one of the following expressions ...', status: 'pending' },
-  { id: '67', name: 'AutoRefreshTest', description: 'Page refreshes automatically', status: 'pending' },
-  { id: '68', name: 'LangInContentTest', description: 'Page contains content marked with lang-attribute', status: 'pending' },
-  { id: '69', name: 'AriaCurrentTest', description: 'Page has elements with aria-current', status: 'pending' },
-  { id: '70', name: 'AriaExpandedTest', description: 'Page has elements with aria-expanded', status: 'pending' },
-  { id: '71', name: 'AriaSelectedTest', description: 'Page has elements with aria-selected', status: 'pending' },
-  { id: '72', name: 'AriaControlsTest', description: 'Page has elements with aria-controls', status: 'pending' },
-  { id: '73', name: 'AriaDescribedbyTest', description: 'Page has elements with aria-describedby', status: 'pending' },
-  { id: '74', name: 'AriaPressedTest', description: 'Page has elements with aria-pressed', status: 'pending' },
-  { id: '75', name: 'AriaLabelTest', description: 'Page has elements with aria-label', status: 'pending' },
-  { id: '76', name: 'AriaLabelledbyTest', description: 'Page has elements with aria-labelledby', status: 'pending' },
-  { id: '77', name: 'AriaAnnouncementsTest', description: 'Page has element with aria-live="polite", role="status"', status: 'pending' },
-  { id: '78', name: 'FieldsetWithoutLegendTest', description: 'Page has fieldset without legend', status: 'pending' },
-  { id: '79', name: 'LegendEmptyTest', description: 'Page has an empty legend element', status: 'pending' },
-  { id: '80', name: 'PageIsRijksoverheidTest', description: 'Page is Platform Rijksoverheid (PRO)', status: 'pending' },
-  { id: '81', name: 'PageIsWordpressTest', description: 'Page is most likely WordPress', status: 'pending' },
-  { id: '82', name: 'PageIsTypo3Test', description: 'Page is TYPO3 CMS', status: 'pending' },
-  { id: '83', name: 'PageIsSimSiteTest', description: 'Page is SIM Group', status: 'pending' },
-  { id: '84', name: 'CookiebotTest', description: 'Page contains Cookiebot', status: 'pending' },
-  { id: '85', name: 'ReadSpeakerTest', description: 'Page contains ReadSpeaker', status: 'pending' },
-  { id: '86', name: 'SlickSliderTest', description: 'Page contains most likely a Slick slider (carrousel)', status: 'pending' },
-  { id: '87', name: 'DigiDTest', description: 'Page referers to DigiD, check if DigiD is part of a proces on this page', status: 'pending' },
-  { id: '88', name: 'EHerkenningTest', description: 'Page refers to eHerkenning, check if eHerkenning is part of a process on this page', status: 'pending' },
-  { id: '89', name: 'ReCaptchaTest', description: 'Page contains recaptcha', status: 'pending' },
-  { id: '90', name: 'PageIsDrupalTest', description: 'Page is Drupal', status: 'pending' },
-  { id: '91', name: 'ChatbotTest', description: 'Page has chatbot', status: 'pending' },
-  { id: '92', name: 'UsabillaTest', description: 'Page has Usabilla Feedback (GetFeedback)', status: 'pending' },
-  { id: '93', name: 'PageIsIproxNetTest', description: 'Page uses IPROX CMS', status: 'pending' },
-  { id: '94', name: 'PageIsUmbracoTest', description: 'Page uses Umbraco', status: 'pending' },
-  { id: '95', name: 'PageIsJoomlaTest', description: 'Page uses Joomla', status: 'pending' },
-  { id: '96', name: 'LinkIsHelpTest', description: 'Page contains links which most likely leads to help', status: 'pending' },
-  { id: '97', name: 'LinkIsPDFTest', description: 'Page contains PDF links', status: 'pending' },
-  { id: '98', name: 'LinkIsMP4Test', description: 'Page contains MPEG-4 video links', status: 'pending' },
-  { id: '99', name: 'LinkIsMP3Test', description: 'Page contains MP3 links', status: 'pending' },
-  { id: '100', name: 'LinkIsSRTTest', description: 'Page contains SRT links', status: 'pending' },
-  { id: '101', name: 'LinkIsPictureTest', description: 'Page contains Picture links', status: 'pending' },
-  { id: '102', name: 'IframeIsYouTubeVideoTest', description: 'Page has YouTube video', status: 'pending' },
-  { id: '103', name: 'IframeIsYouTubeVideoWithKeysDisabledTest', description: 'Page has YouTube video with keyboard disabled', status: 'pending' },
-  { id: '104', name: 'VideoTest', description: 'Page has video', status: 'pending' },
-  { id: '105', name: 'VideoHasCaptionsTest', description: 'Video has captions', status: 'pending' },
-  { id: '106', name: 'BreadcrumbsTest', description: 'Page has breadcrumbs', status: 'pending' },
-  { id: '107', name: 'SkipToContentTest', description: 'Page has skip to content link', status: 'pending' },
-  { id: '108', name: 'LinkFocusVisibleTest', description: 'Links have visible focus indicator', status: 'pending' },
-  { id: '109', name: 'ButtonFocusVisibleTest', description: 'Buttons have visible focus indicator', status: 'pending' },
-  { id: '110', name: 'InputFocusVisibleTest', description: 'Input fields have visible focus indicator', status: 'pending' },
-  { id: '111', name: 'HeadingStructureTest', description: 'Page has proper heading structure', status: 'pending' },
-  { id: '112', name: 'H1Test', description: 'Page has H1 heading', status: 'pending' },
-  { id: '113', name: 'LandmarksTest', description: 'Page uses HTML5 landmarks', status: 'pending' },
-  { id: '114', name: 'NavElementTest', description: 'Page has nav element', status: 'pending' },
-  { id: '115', name: 'MainElementTest', description: 'Page has main element', status: 'pending' },
-  { id: '116', name: 'FooterElementTest', description: 'Page has footer element', status: 'pending' },
-  { id: '117', name: 'LinkTextTest', description: 'Links have descriptive text', status: 'pending' },
-  { id: '118', name: 'ButtonTextTest', description: 'Buttons have descriptive text', status: 'pending' },
-  { id: '119', name: 'ImageAltTest', description: 'Images have alt attributes', status: 'pending' },
-  { id: '120', name: 'DecorativeImageTest', description: 'Decorative images have empty alt', status: 'pending' },
-  { id: '121', name: 'ColorContrastTest', description: 'Text has sufficient color contrast', status: 'pending' },
-  { id: '122', name: 'FontSizeTest', description: 'Font size is readable', status: 'pending' },
-  { id: '123', name: 'ResponsiveDesignTest', description: 'Page is responsive', status: 'pending' },
-  { id: '124', name: 'TouchTargetSizeTest', description: 'Touch targets are large enough', status: 'pending' },
-  { id: '125', name: 'FormValidationTest', description: 'Form has validation messages', status: 'pending' },
-  { id: '126', name: 'RequiredFieldsTest', description: 'Required fields are indicated', status: 'pending' },
-  { id: '127', name: 'ErrorMessagesTest', description: 'Error messages are clear', status: 'pending' },
-  { id: '128', name: 'SuccessMessagesTest', description: 'Success messages are provided', status: 'pending' },
-  { id: '129', name: 'LoadingIndicatorTest', description: 'Loading states are indicated', status: 'pending' },
-];
+const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
+  ssr: false,
+  loading: () => <div className="border border-blue-300 rounded-lg p-4 text-blue-700">Editor laden...</div>
+});
 
 export default function CrawlerTestsPage() {
-  const [mounted, setMounted] = useState(false);
+  const [url, setUrl] = useState('');
+  const [html, setHtml] = useState('');
+  const [selectedTest, setSelectedTest] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [allResults, setAllResults] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [runMode, setRunMode] = useState<'single' | 'all'>('single');
+  const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [showExtendedInfo, setShowExtendedInfo] = useState(false);
+  const [isEditingDocs, setIsEditingDocs] = useState(false);
+  const [editedDocumentation, setEditedDocumentation] = useState('');
+  const [isSavingDocs, setIsSavingDocs] = useState(false);
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
-  const [tests, setTests] = useState<CrawlerTest[]>(defaultTests);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedTest, setSelectedTest] = useState<CrawlerTest | null>(null);
-  const [activeTab, setActiveTab] = useState<'snelle' | 'premium'>('premium');
-  const [selectedBevindingen, setSelectedBevindingen] = useState<string[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showBevindingenMenu, setShowBevindingenMenu] = useState(false);
 
-  // Load tests from localStorage on mount
-  useEffect(() => {
-    setMounted(true);
-    const savedTests = localStorage.getItem('crawlerTests');
-    if (savedTests) {
-      try {
-        setTests(JSON.parse(savedTests));
-      } catch (error) {
-        console.error('Error loading tests from localStorage:', error);
-      }
-    }
-  }, []);
+  const availableTests = getAvailableTests();
 
-  // Save tests to localStorage whenever they change
+  // Close dropdown menus when clicking outside
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('crawlerTests', JSON.stringify(tests));
-    }
-  }, [tests, mounted]);
-
-  // Close Beheer menu on Escape key or click outside
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.beheer-button') && !target.closest('.beheer-menu')) {
         setShowBeheerMenu(false);
-        setShowDropdown(false);
+      }
+      if (!target.closest('.bevindingen-button') && !target.closest('.bevindingen-menu')) {
+        setShowBevindingenMenu(false);
       }
     };
 
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (showBeheerMenu && !target.closest('.beheer-button') && !target.closest('.beheer-menu')) {
-        setShowBeheerMenu(false);
-      }
-      if (showDropdown && !target.closest('.bevindingen-dropdown')) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    document.addEventListener('mousedown', handleClickOutside);
+    if (showBeheerMenu || showBevindingenMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showBeheerMenu, showDropdown]);
+  }, [showBeheerMenu, showBevindingenMenu]);
 
-  const filteredTests = selectedCategory === 'all'
-    ? tests
-    : tests.filter(t => t.category === selectedCategory);
+  const handleRunSingleTest = async () => {
+    if (!selectedTest) {
+      setError('Selecteer eerst een test');
+      return;
+    }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredTests.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedTests = filteredTests.slice(startIndex, endIndex);
+    if (!url && !html) {
+      setError('Voer een URL in of plak HTML');
+      return;
+    }
 
-  const goToFirstPage = () => setCurrentPage(1);
-  const goToLastPage = () => setCurrentPage(totalPages);
-  const goToPreviousPage = () => setCurrentPage(prev => Math.max(1, prev - 1));
-  const goToNextPage = () => setCurrentPage(prev => Math.min(totalPages, prev + 1));
+    setIsLoading(true);
+    setError('');
+    setResult(null);
+    setAllResults(null);
 
-  if (!mounted) {
-    return null;
-  }
+    try {
+      const response = await fetch('/api/extra/run-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: url || undefined,
+          html: html || undefined,
+          testName: selectedTest,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Er ging iets mis');
+      }
+
+      setResult(data.result);
+    } catch (err) {
+      console.error('Error running test:', err);
+      setError(err instanceof Error ? err.message : 'Er ging iets mis');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRunAllTests = async () => {
+    if (!url && !html) {
+      setError('Voer een URL in of plak HTML');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setResult(null);
+    setAllResults(null);
+
+    try {
+      const response = await fetch('/api/extra/run-all-tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: url || undefined,
+          html: html || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Er ging iets mis');
+      }
+
+      setAllResults(data);
+    } catch (err) {
+      console.error('Error running all tests:', err);
+      setError(err instanceof Error ? err.message : 'Er ging iets mis');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleResultExpanded = (testId: string) => {
+    const newExpanded = new Set(expandedResults);
+    if (newExpanded.has(testId)) {
+      newExpanded.delete(testId);
+    } else {
+      newExpanded.add(testId);
+    }
+    setExpandedResults(newExpanded);
+  };
+
+  const handleGenerateAISummary = async () => {
+    if (!allResults) return;
+
+    setIsGeneratingAI(true);
+
+    // Generate summary without AI - just with code
+    const foundIssues = allResults.results.filter((r: any) => r.found);
+
+    // Categorize by severity
+    const critical = foundIssues.filter((r: any) => r.details?.critical === true);
+    const serious = foundIssues.filter((r: any) =>
+      r.details?.classification?.includes('serieus') ||
+      (!r.details?.critical && !r.details?.informational)
+    );
+    const informational = foundIssues.filter((r: any) => r.details?.informational === true);
+
+    // Build summary text
+    let summary = `# Toegankelijkheidsaudit Samenvatting\n\n`;
+    summary += `**URL:** ${allResults.testedUrl || 'Niet opgegeven'}\n`;
+    summary += `**Datum:** ${new Date().toLocaleDateString('nl-NL')}\n\n`;
+
+    summary += `## Overzicht\n\n`;
+    summary += `- **Totaal aantal tests:** ${allResults.summary.totalTests}\n`;
+    summary += `- **Gevonden problemen:** ${foundIssues.length}\n`;
+    summary += `- **Kritieke issues:** ${critical.length}\n`;
+    summary += `- **Serieuze issues:** ${serious.length}\n`;
+    summary += `- **Informatieve issues:** ${informational.length}\n\n`;
+
+    // Helper function to extract and format location info
+    const getLocationSummary = (issue: any) => {
+      if (!issue.details?.issues || !Array.isArray(issue.details.issues)) {
+        return null;
+      }
+
+      const locationCounts = new Map<string, number>();
+      issue.details.issues.forEach((item: any) => {
+        if (item.location) {
+          locationCounts.set(item.location, (locationCounts.get(item.location) || 0) + 1);
+        }
+      });
+
+      if (locationCounts.size === 0) return null;
+
+      const locationNames: Record<string, string> = {
+        'header': 'Header',
+        'nav': 'Navigatie',
+        'main': 'Hoofdinhoud',
+        'article': 'Artikel',
+        'aside': 'Zijbalk',
+        'footer': 'Footer',
+        'body': 'Body (geen specifieke sectie)'
+      };
+
+      return Array.from(locationCounts.entries())
+        .map(([loc, count]) => `${locationNames[loc] || loc} (${count}x)`)
+        .join(', ');
+    };
+
+    // Critical issues
+    if (critical.length > 0) {
+      summary += `## 🔴 Kritieke Issues (${critical.length})\n\n`;
+      critical.forEach((issue: any, i: number) => {
+        summary += `### ${i + 1}. ${issue.testName}\n`;
+        summary += `- **Test ID:** ${issue.testId}\n`;
+        summary += `- **Aantal voorkomens:** ${issue.count}\n`;
+
+        const locations = getLocationSummary(issue);
+        if (locations) {
+          summary += `- **📍 Waar op de pagina:** ${locations}\n`;
+        }
+
+        if (issue.details?.wcagLevel) {
+          summary += `- **WCAG Level:** ${issue.details.wcagLevel}\n`;
+        }
+        if (issue.details?.wcagCriteria) {
+          summary += `- **WCAG Criteria:** ${issue.details.wcagCriteria.join(', ')}\n`;
+        }
+        summary += `\n`;
+      });
+    }
+
+    // Serious issues
+    if (serious.length > 0) {
+      summary += `## 🟠 Serieuze Issues (${serious.length})\n\n`;
+      serious.forEach((issue: any, i: number) => {
+        summary += `### ${i + 1}. ${issue.testName}\n`;
+        summary += `- **Test ID:** ${issue.testId}\n`;
+        summary += `- **Aantal voorkomens:** ${issue.count}\n`;
+
+        const locations = getLocationSummary(issue);
+        if (locations) {
+          summary += `- **📍 Waar op de pagina:** ${locations}\n`;
+        }
+
+        if (issue.details?.wcagLevel) {
+          summary += `- **WCAG Level:** ${issue.details.wcagLevel}\n`;
+        }
+        if (issue.details?.wcagCriteria) {
+          summary += `- **WCAG Criteria:** ${issue.details.wcagCriteria.join(', ')}\n`;
+        }
+        summary += `\n`;
+      });
+    }
+
+    // Informational issues
+    if (informational.length > 0) {
+      summary += `## 🔵 Informatieve Issues (${informational.length})\n\n`;
+      informational.forEach((issue: any, i: number) => {
+        summary += `### ${i + 1}. ${issue.testName}\n`;
+        summary += `- **Test ID:** ${issue.testId}\n`;
+        summary += `- **Aantal voorkomens:** ${issue.count}\n`;
+
+        const locations = getLocationSummary(issue);
+        if (locations) {
+          summary += `- **📍 Waar op de pagina:** ${locations}\n`;
+        }
+
+        summary += `\n`;
+      });
+    }
+
+    // Priority list
+    summary += `## Prioriteiten voor Oplossing\n\n`;
+    if (critical.length > 0) {
+      summary += `**1. Kritieke issues eerst oplossen:**\n`;
+      critical.slice(0, 5).forEach((issue: any) => {
+        summary += `   - ${issue.testName} (${issue.count}x)\n`;
+      });
+      summary += `\n`;
+    }
+    if (serious.length > 0) {
+      summary += `**2. Serieuze issues daarna:**\n`;
+      serious.slice(0, 5).forEach((issue: any) => {
+        summary += `   - ${issue.testName} (${issue.count}x)\n`;
+      });
+      summary += `\n`;
+    }
+    if (informational.length > 0) {
+      summary += `**3. Informatieve issues als laatste:**\n`;
+      informational.slice(0, 3).forEach((issue: any) => {
+        summary += `   - ${issue.testName} (${issue.count}x)\n`;
+      });
+    }
+
+    setAiSummary(summary);
+    setIsGeneratingAI(false);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const handleEditDocs = () => {
+    const currentDocs = getTestDocumentation(selectedTest) || '';
+    setEditedDocumentation(currentDocs);
+    setIsEditingDocs(true);
+  };
+
+  const handleSaveDocs = async () => {
+    setIsSavingDocs(true);
+    try {
+      const response = await fetch('/api/tests/documentation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testName: selectedTest,
+          documentation: editedDocumentation,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save documentation');
+      }
+
+      // Exit edit mode - documentation is saved
+      setIsEditingDocs(false);
+    } catch (err) {
+      console.error('Error saving documentation:', err);
+      alert('Er ging iets mis bij het opslaan. Probeer het opnieuw.');
+    } finally {
+      setIsSavingDocs(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingDocs(false);
+    setEditedDocumentation('');
+  };
+
+  // Helper function to get test description
+  const getTestDescription = (testName: string): string => {
+    const descriptions: Record<string, string> = {
+      'ImgMissingAltTest': 'Controleert of afbeeldingen een alt-attribuut hebben. Afbeeldingen zonder alt-attribuut zijn ontoegankelijk voor schermlezers. Let op: een leeg alt-attribuut (alt="") is wel toegestaan voor decoratieve afbeeldingen.',
+      'LangAttributeMissingTest': 'Controleert of het HTML-element een lang-attribuut heeft. Dit helpt schermlezers de juiste uitspraak en taal te gebruiken.',
+      'TitleMissingTest': 'Controleert of de pagina een <title> element heeft. De titel helpt gebruikers te begrijpen waar ze zijn en is belangrijk voor navigatie.',
+      'TitleEmptyTest': 'Controleert of de paginatitel leeg is. Een lege titel biedt geen context over de pagina-inhoud.',
+      'ImgAltTooShortTest': 'Controleert of alt-teksten van afbeeldingen te kort zijn (1-3 tekens). Te korte alt-teksten zijn vaak niet beschrijvend genoeg.',
+      'LinkMissingHrefTest': 'Controleert of links een werkende href hebben. Links zonder href of met placeholders zoals "#" zijn niet functioneel.',
+      'FormMissingLabelsTest': 'Controleert of formulieren labels hebben voor invoervelden. Labels zijn essentieel voor gebruikers met schermlezers.',
+      'HeadingsAtLeastOneH1Test': 'Controleert of de pagina tenminste één H1-heading heeft. Een H1 geeft de hoofdstructuur van de pagina aan.',
+      'IframeMissingAccessibleNameTest': 'Controleert of iframes een title-attribuut hebben. Dit helpt gebruikers te begrijpen wat het iframe bevat.',
+      'PageContainsMultipleSameLinksTest': 'Controleert of dezelfde URL meerdere keren voorkomt met verschillende linkteksten. Dit kan verwarrend zijn voor gebruikers.',
+      'ViewportMetaRestrictsScalingTest': 'Controleert of de viewport scaling beperkt is. Dit kan problemen veroorzaken voor gebruikers die willen inzoomen.',
+      'HeadingEmptyTest': 'Controleert of er lege headings zijn. Lege headings hebben geen waarde voor gebruikers.',
+      'HeadingSkipLevelTest': 'Controleert of heading-niveaus worden overgeslagen (bijv. van H1 naar H3). Dit verstoort de logische structuur.',
+      'ButtonEmptyTest': 'Controleert of knoppen leeg zijn. Knoppen zonder tekst of aria-label zijn niet bruikbaar.',
+      'InputMissingLabelTest': 'Controleert of invoervelden een label hebben. Zonder label weten gebruikers niet wat ze moeten invullen.',
+      'LinkWithoutTextTest': 'Controleert of links zichtbare tekst hebben. Links zonder tekst zijn niet begrijpelijk.',
+      'EmptyLinkTest': 'Controleert of er volledig lege links zijn. Deze zijn nutteloos en verwarrend.',
+      'TableWithoutHeadersTest': 'Controleert of tabellen <th> elementen hebben. Headers helpen bij het begrijpen van tabelstructuur.',
+      'IframeIsYouTubeVideoWithKeysDisabledTest': 'Controleert of YouTube video\'s toetsenbord navigatie hebben uitgeschakeld. Dit blokkeert toetsenbordgebruikers.',
+      'IframeIsVimeoVideoWithKeysDisabledTest': 'Controleert of Vimeo video\'s toetsenbord navigatie hebben uitgeschakeld.',
+      'AriaLandmarksTest': 'Controleert of de pagina juiste en herkenbare ARIA-landmarks bevat, zodat gebruikers van screenreaders en toetsenbord snel kunnen navigeren door de structuur van de pagina. De test controleert onder andere: of belangrijke gebieden zoals navigatie, hoofdinhoud en header als landmark zijn gemarkeerd; of meerdere landmarks van hetzelfde type (bijv. meerdere navigaties) een unieke toegankelijke naam hebben; of ARIA-rollen correct en geldig worden gebruikt. Ontbrekende, dubbele of niet-onderscheidbare landmarks maken het voor gebruikers lastig om herhalende content te omzeilen of snel naar het juiste paginadeel te springen.',
+      'IframeIsHCaptchaTest': 'Controleert of hCaptcha-iframes (vaak gebruikt voor anti-spam verificatie) toegankelijk zijn voor alle gebruikers. De test detecteert hCaptcha-elementen en valideert of ze: een betekenisvol title-attribuut hebben (zoals "hCaptcha verificatie" of "Spam bescherming"), bereikbaar zijn met het toetsenbord (geen tabindex="-1" of aria-hidden="true"), en correct geïmplementeerd zijn volgens SIA-richtlijnen. Ontoegankelijke captchas kunnen gebruikers met een beperking volledig blokkeren van het gebruik van een website.',
+    };
+    return descriptions[testName] || 'Test controleert op specifieke toegankelijkheidsproblemen. Bekijk de test resultaten voor meer details.';
+  };
+
+  // Helper function to get test metadata
+  const getTestMetadata = (testName: string): { wcagLevel?: string; critical?: boolean; serious?: boolean; informational?: boolean } | null => {
+    const metadata: Record<string, { wcagLevel?: string; critical?: boolean; serious?: boolean; informational?: boolean }> = {
+      'ImgMissingAltTest': { informational: true }, // Dynamisch: informatief als geen issues, kritiek (WCAG A) als wel issues
+      'LangAttributeMissingTest': { wcagLevel: 'A', critical: true },
+      'TitleMissingTest': { wcagLevel: 'A', critical: true },
+      'TitleEmptyTest': { wcagLevel: 'A', critical: true },
+      'ImgAltTooShortTest': { wcagLevel: 'A' },
+      'LinkMissingHrefTest': { wcagLevel: 'A', critical: true },
+      'FormMissingLabelsTest': { wcagLevel: 'A', critical: true },
+      'HeadingsAtLeastOneH1Test': { wcagLevel: 'A', critical: true },
+      'IframeMissingAccessibleNameTest': { wcagLevel: 'A', critical: true },
+      'PageContainsMultipleSameLinksTest': { informational: true },
+      'ViewportMetaRestrictsScalingTest': { wcagLevel: 'AA' },
+      'HeadingEmptyTest': { wcagLevel: 'A', critical: true },
+      'HeadingSkipLevelTest': { wcagLevel: 'AA' },
+      'ButtonEmptyTest': { wcagLevel: 'A', critical: true },
+      'InputMissingLabelTest': { wcagLevel: 'A', critical: true },
+      'LinkWithoutTextTest': { wcagLevel: 'A', critical: true },
+      'EmptyLinkTest': { wcagLevel: 'A', critical: true },
+      'TableWithoutHeadersTest': { wcagLevel: 'A', critical: true },
+      'IframeIsYouTubeVideoWithKeysDisabledTest': { wcagLevel: 'A', critical: true },
+      'IframeIsVimeoVideoWithKeysDisabledTest': { wcagLevel: 'A', critical: true },
+      'AriaLandmarksTest': { informational: true }, // Dynamisch: informatief als geen issues, serieus (WCAG A) als wel issues
+      'IframeIsHCaptchaTest': { informational: true }, // Dynamisch: informatief als geen issues, kritiek (WCAG A) als wel issues
+      'TableTest': { informational: true },
+      'FormTest': { informational: true },
+      'ImgTest': { informational: true },
+      'IframeTest': { informational: true },
+      'VideoTest': { informational: true },
+      'AudioTest': { informational: true },
+    };
+    return metadata[testName] || null;
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-shift2-primary text-white">
+    <>
+      {/* Navigation Header */}
+      <header className="border-b border-gray-200" style={{ backgroundColor: '#290047' }}>
         <div className="max-w-[1400px] mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
             <Link href="/admin">
@@ -257,15 +435,45 @@ export default function CrawlerTestsPage() {
                 </svg>
                 Onderzoeken
               </Link>
-              <Link
-                href="/admin/bevindingen"
-                className="flex items-center gap-2 text-white hover:text-gray-300"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Bevindingen
-              </Link>
+              <div className="relative">
+                <button
+                  onClick={() => setShowBevindingenMenu(!showBevindingenMenu)}
+                  className="bevindingen-button flex items-center gap-2 text-white hover:text-gray-300"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Bevindingen
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showBevindingenMenu && (
+                  <div className="bevindingen-menu absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <Link
+                      href="/admin/bevindingen-zoeken"
+                      onClick={() => setShowBevindingenMenu(false)}
+                      className="bevindingen-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Bevindingen zoeken
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </Link>
+                    <Link
+                      href="/admin/snelle-bevindingen"
+                      onClick={() => setShowBevindingenMenu(false)}
+                      className="bevindingen-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Snelle bevindingen
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              </div>
               <div className="relative">
                 <button
                   onClick={() => setShowBeheerMenu(!showBeheerMenu)}
@@ -286,10 +494,7 @@ export default function CrawlerTestsPage() {
                     <Link
                       href="/admin/onderzoekstypen"
                       onClick={() => setShowBeheerMenu(false)}
-                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
-                      style={{ transition: 'background-color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Onderzoekstypen
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,10 +504,7 @@ export default function CrawlerTestsPage() {
                     <Link
                       href="/admin/projecten"
                       onClick={() => setShowBeheerMenu(false)}
-                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
-                      style={{ transition: 'background-color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Projecten
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,10 +514,7 @@ export default function CrawlerTestsPage() {
                     <Link
                       href="/admin/opdrachtgevers"
                       onClick={() => setShowBeheerMenu(false)}
-                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
-                      style={{ transition: 'background-color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Opdrachtgevers
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,40 +524,11 @@ export default function CrawlerTestsPage() {
                     <Link
                       href="/admin/crawler-tests"
                       onClick={() => setShowBeheerMenu(false)}
-                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
-                      style={{ transition: 'background-color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 bg-gray-50"
                     >
                       Crawler tests
-                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.85 0 3.58-.51 5.07-1.39l3.63 3.63c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41l-3.63-3.63C19.51 17.58 20 15.85 20 14c0-5.52-4.48-10-10-10zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm3.5 5h-2.2c-.14-.54-.32-1.05-.54-1.52 1.16.46 2.14 1.22 2.74 2.52zm-3.5 7c-.44-.62-.81-1.3-1.09-2h2.18c-.28.7-.65 1.38-1.09 2zM6.26 13C6.1 12.36 6 11.69 6 11s.1-1.36.26-2h2.71c-.07.66-.11 1.32-.11 2s.04 1.34.11 2H6.26zm.85 2h2.2c.14.54.32 1.05.54 1.52-1.16-.46-2.14-1.22-2.74-2.52zm2.2-6H7.11c.6-1.3 1.58-2.06 2.74-2.52-.22.47-.4.98-.54 1.52zm3.78 9c.44-.62.81-1.3 1.09-2h-2.18c.28.7.65 1.38 1.09 2zm1.41-4h-4c-.07-.66-.11-1.32-.11-2s.04-1.34.11-2h4c.07.66.11 1.32.11 2s-.04 1.34-.11 2z"/>
-                      </svg>
-                    </Link>
-                    <Link
-                      href="/admin/beoordelingen"
-                      onClick={() => setShowBeheerMenu(false)}
-                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
-                      style={{ transition: 'background-color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      Beoordelingen
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </Link>
-                    <Link
-                      href="/admin/team"
-                      onClick={() => setShowBeheerMenu(false)}
-                      className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
-                      style={{ transition: 'background-color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      Team
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                       </svg>
                     </Link>
                   </div>
@@ -369,442 +539,751 @@ export default function CrawlerTestsPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.85 0 3.58-.51 5.07-1.39l3.63 3.63c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41l-3.63-3.63C19.51 17.58 20 15.85 20 14c0-5.52-4.48-10-10-10zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm3.5 5h-2.2c-.14-.54-.32-1.05-.54-1.52 1.16.46 2.14 1.22 2.74 2.52zm-3.5 7c-.44-.62-.81-1.3-1.09-2h2.18c-.28.7-.65 1.38-1.09 2zM6.26 13C6.1 12.36 6 11.69 6 11s.1-1.36.26-2h2.71c-.07.66-.11 1.32-.11 2s.04 1.34.11 2H6.26zm.85 2h2.2c.14.54.32 1.05.54 1.52-1.16-.46-2.14-1.22-2.74-2.52zm2.2-6H7.11c.6-1.3 1.58-2.06 2.74-2.52-.22.47-.4.98-.54 1.52zm3.78 9c.44-.62.81-1.3 1.09-2h-2.18c.28.7.65 1.38 1.09 2zm1.41-4h-4c-.07-.66-.11-1.32-.11-2s.04-1.34.11-2h4c.07.66.11 1.32.11 2s-.04 1.34-.11 2z"/>
-            </svg>
-            Crawler tests ({filteredTests.length})
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            🧪 Crawler Test Playground
           </h1>
+          <p className="text-gray-600">
+            Draai individuele tests of alle tests zonder database. Perfect voor debuggen en ontwikkelen.
+          </p>
         </div>
 
-        {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex items-start gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-600">Volgorde</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-shift2-primary min-w-[200px]"
-              >
-                <option value="all">Datum aangemaakt</option>
-                <option value="recent">Laatst gewijzigd</option>
-                <option value="name">Naam</option>
-                <option value="impact">Impact</option>
-              </select>
-            </div>
-            <div className="flex-1 flex flex-col gap-2">
-              <div className="relative mt-6">
-                <input
-                  type="text"
-                  placeholder="zoeken"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-shift2-primary pr-10"
-                />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black text-white rounded hover:bg-gray-800">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tests Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Naam</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Beschrijving</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gekoppelde bevindingen</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {paginatedTests.map((test) => (
-                <tr key={test.id}>
-                  <td className="px-6 py-4 text-sm text-gray-900">{test.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{test.description}</td>
-                  <td className="px-6 py-4 text-sm">
-                    {test.bevindingen && test.bevindingen.length > 0 ? (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
-                        {test.bevindingen.length} premium bevinding{test.bevindingen.length !== 1 ? 'en' : ''}
-                      </span>
-                    ) : (
-                      test.category && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                          {test.category}
-                        </span>
-                      )
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      {/* Settings/Gear button */}
-                      <button
-                        type="button"
-                        className="action-button p-2 text-gray-600 rounded"
-                        title="Instellingen"
-                        onClick={() => {
-                          setSelectedTest(test);
-                          setSelectedBevindingen(test.bevindingen || []);
-                          setShowModal(true);
-                        }}
-                        style={{ backgroundColor: 'transparent', color: '#4b5563' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f3f4f6';
-                          e.currentTarget.style.color = '#1f2937';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = '#4b5563';
-                        }}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </button>
-                      {/* Arrow/Open button */}
-                      <Link href={`/admin/crawler-tests/${test.id}`}>
-                        <button
-                          type="button"
-                          className="action-button p-2 text-gray-600 rounded"
-                          title="Openen"
-                          style={{ backgroundColor: 'transparent', color: '#4b5563' }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#1f2937';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#4b5563';
-                          }}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-white flex items-center justify-between">
-            {/* Left side - Total items */}
-            <div className="text-sm text-gray-600">
-              {startIndex + 1}-{Math.min(endIndex, filteredTests.length)} van {filteredTests.length}
-            </div>
-
-            {/* Center - Navigation controls */}
-            <div className="flex items-center gap-4">
-              {/* First page button */}
-              <button
-                type="button"
-                onClick={goToFirstPage}
-                disabled={currentPage === 1}
-                className="pagination-button px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'white' }}
-                onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                «
-              </button>
-
-              {/* Previous page button */}
-              <button
-                type="button"
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className="pagination-button px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'white' }}
-                onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                ‹
-              </button>
-
-              {/* Page indicator */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={currentPage}
-                  onChange={(e) => {
-                    const page = parseInt(e.target.value);
-                    if (page >= 1 && page <= totalPages) {
-                      setCurrentPage(page);
-                    }
-                  }}
-                  className="w-16 px-2 py-1 bg-white border border-gray-300 rounded text-sm text-gray-700 text-center focus:outline-none focus:ring-2 focus:ring-shift2-primary"
-                  min="1"
-                  max={totalPages}
-                />
-                <span className="text-sm text-gray-600">van {totalPages}</span>
-              </div>
-
-              {/* Next page button */}
-              <button
-                type="button"
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="pagination-button px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'white' }}
-                onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                ›
-              </button>
-
-              {/* Last page button */}
-              <button
-                type="button"
-                onClick={goToLastPage}
-                disabled={currentPage === totalPages}
-                className="pagination-button px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'white' }}
-                onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                »
-              </button>
-            </div>
-
-            {/* Right side - Items per page selector */}
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="px-3 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-shift2-primary"
-            >
-              <option value={20}>20 items per pagina</option>
-              <option value={50}>50 items per pagina</option>
-              <option value={100}>100 items per pagina</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal voor crawler test bevindingen */}
-      {showModal && selectedTest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Crawler test bevindingen</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6">
-              {/* Tabs */}
-              <div className="flex gap-4 border-b border-gray-200 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Input */}
+          <div className="space-y-6">
+            {/* Mode Selector */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                1. Kies test modus
+              </h2>
+              <div className="flex gap-4">
                 <button
-                  onClick={() => setActiveTab('snelle')}
-                  className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'snelle'
-                      ? 'border-gray-900 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  onClick={() => setRunMode('single')}
+                  className={`flex-1 px-4 py-3 rounded-lg border-2 transition-colors ${
+                    runMode === 'single'
+                      ? 'border-purple-500 bg-purple-50 text-purple-900'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  Snelle bevindingen
+                  <div className="font-medium">Enkele Test</div>
+                  <div className="text-xs mt-1">Test één specifieke functie</div>
                 </button>
                 <button
-                  onClick={() => setActiveTab('premium')}
-                  className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'premium'
-                      ? 'border-gray-900 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  onClick={() => setRunMode('all')}
+                  className={`flex-1 px-4 py-3 rounded-lg border-2 transition-colors ${
+                    runMode === 'all'
+                      ? 'border-purple-500 bg-purple-50 text-purple-900'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  Premium bevindingen
+                  <div className="font-medium">Alle Tests (130+)</div>
+                  <div className="text-xs mt-1">Draai volledige test suite</div>
                 </button>
               </div>
+            </div>
 
-              {/* Custom Dropdown */}
-              <div className="mb-4 relative bevindingen-dropdown">
-                {/* Input field that opens dropdown */}
-                <div
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-shift2-primary bg-white"
+            {/* Test Selector - Only for single mode */}
+            {runMode === 'single' && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  2. Selecteer een test
+                </h2>
+                <select
+                  value={selectedTest}
+                  onChange={(e) => setSelectedTest(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
-                  <span className="text-gray-500">
-                    {activeTab === 'snelle'
-                      ? 'Kies een of meerdere snelle bevindingen'
-                      : 'Kies een of meerdere premium bevindingen'}
-                  </span>
-                </div>
-
-                {/* Dropdown list */}
-                {showDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {activeTab === 'snelle' ? (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        De lijst is leeg
+                  <option value="">Kies een test...</option>
+                  {availableTests.map((test) => (
+                    <option key={test} value={test}>
+                      {test}
+                    </option>
+                  ))}
+                </select>
+                {selectedTest && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg relative">
+                    <div className="flex items-start gap-2 mb-2">
+                      <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-blue-900 mb-2">Wat test dit?</p>
+                        <p className="text-sm text-blue-800">
+                          {getTestDescription(selectedTest)}
+                        </p>
+                        {getTestMetadata(selectedTest) && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {getTestMetadata(selectedTest)?.wcagLevel && (
+                              <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800">
+                                WCAG {getTestMetadata(selectedTest)?.wcagLevel}
+                              </span>
+                            )}
+                            {getTestMetadata(selectedTest)?.critical && (
+                              <span className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">
+                                Kritiek
+                              </span>
+                            )}
+                            {getTestMetadata(selectedTest)?.serious && (
+                              <span className="px-2 py-1 text-xs font-medium rounded bg-orange-100 text-orange-800">
+                                Serieus
+                              </span>
+                            )}
+                            {getTestMetadata(selectedTest)?.informational && (
+                              <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">
+                                Informatief
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('pdf-titel-niet-getoond')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'pdf-titel-niet-getoond']);
-                              setShowDropdown(false);
-                            }
-                          }}
+                    </div>
+
+                    {/* Meer info button - bottom right */}
+                    {hasTestDocumentation(selectedTest) && (
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          onClick={() => setShowExtendedInfo(!showExtendedInfo)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 bg-white border border-blue-300 rounded-md hover:bg-blue-100 transition-colors"
                         >
-                          PDF - Titel niet getoond
-                        </div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('tekstalternatief')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'tekstalternatief']);
-                              setShowDropdown(false);
-                            }
-                          }}
-                        >
-                          Tekstalternatief met &quot;Afbeelding van...&quot;
-                        </div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('zichtbare-tekst-link')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'zichtbare-tekst-link']);
-                              setShowDropdown(false);
-                            }
-                          }}
-                        >
-                          Zichtbare tekst link niet in aria-label
-                        </div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('vimeo-keyboard')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'vimeo-keyboard']);
-                              setShowDropdown(false);
-                            }
-                          }}
-                        >
-                          Vimeo keyboard=0 ontbreekt
-                        </div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('pdf-afbeeldingen')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'pdf-afbeeldingen']);
-                              setShowDropdown(false);
-                            }
-                          }}
-                        >
-                          PDF - Afbeeldingen niet-getagde PDF
-                        </div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('paginatitel-leeg')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'paginatitel-leeg']);
-                              setShowDropdown(false);
-                            }
-                          }}
-                        >
-                          Paginatitel is leeg
-                        </div>
-                        <div
-                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            if (!selectedBevindingen.includes('alt-bestandsnaam')) {
-                              setSelectedBevindingen([...selectedBevindingen, 'alt-bestandsnaam']);
-                              setShowDropdown(false);
-                            }
-                          }}
-                        >
-                          Alt met bestandsnaam (min-tekens, underscore)
-                        </div>
+                          <svg className={`w-3.5 h-3.5 transition-transform ${showExtendedInfo ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                          Meer info
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Extended documentation - expandable */}
+                    {showExtendedInfo && hasTestDocumentation(selectedTest) && (
+                      <div className="mt-4 pt-4 border-t border-blue-200">
+                        {!isEditingDocs ? (
+                          <>
+                            <style dangerouslySetInnerHTML={{__html: `
+                              .test-documentation-content h2 {
+                                font-size: 1.1rem !important;
+                                font-weight: 600 !important;
+                                color: #1e3a8a !important;
+                                margin-top: 1.25rem !important;
+                                margin-bottom: 0.75rem !important;
+                                display: block !important;
+                              }
+                              .test-documentation-content h2:first-child {
+                                margin-top: 0 !important;
+                              }
+                              .test-documentation-content p {
+                                margin-bottom: 0.75rem !important;
+                                line-height: 1.6 !important;
+                                display: block !important;
+                              }
+                              .test-documentation-content ul, .test-documentation-content ol {
+                                margin-bottom: 0.75rem !important;
+                                padding-left: 1.5rem !important;
+                                display: block !important;
+                              }
+                              .test-documentation-content li {
+                                margin-bottom: 0.375rem !important;
+                                display: list-item !important;
+                              }
+                              .test-documentation-content strong {
+                                font-weight: 600 !important;
+                                color: #1e3a8a !important;
+                              }
+                              .test-documentation-content code {
+                                background-color: #dbeafe !important;
+                                padding: 0.125rem 0.25rem !important;
+                                border-radius: 0.25rem !important;
+                                font-size: 0.875rem !important;
+                              }
+                            `}} />
+                            <div
+                              className="text-sm text-blue-800 test-documentation-content"
+                              dangerouslySetInnerHTML={{
+                                __html: marked.parse(getTestDocumentation(selectedTest) || '')
+                              }}
+                            />
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={handleEditDocs}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 bg-white border border-blue-300 rounded-md hover:bg-blue-100 transition-colors"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Bewerken
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-blue-900 mb-2">
+                                Documentatie bewerken (Markdown)
+                              </label>
+                              <MdEditor
+                                modelValue={editedDocumentation}
+                                onChange={(content) => setEditedDocumentation(content)}
+                                language="en-US"
+                                theme="light"
+                                previewTheme="default"
+                                codeTheme="github"
+                                showCodeRowNumber={true}
+                                toolbars={[
+                                  'bold',
+                                  'italic',
+                                  'strikeThrough',
+                                  '-',
+                                  'title',
+                                  'unorderedList',
+                                  'orderedList',
+                                  '-',
+                                  'quote',
+                                  'code',
+                                  'link',
+                                  '-',
+                                  'revoke',
+                                  'next',
+                                  '-',
+                                  'preview',
+                                  'fullscreen'
+                                ]}
+                              />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={handleCancelEdit}
+                                disabled={isSavingDocs}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                              >
+                                Annuleren
+                              </button>
+                              <button
+                                onClick={handleSaveDocs}
+                                disabled={isSavingDocs}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                              >
+                                {isSavingDocs ? (
+                                  <>
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Opslaan...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Opslaan
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
               </div>
+            )}
 
-              {/* Selected bevindingen list */}
-              {selectedBevindingen.length > 0 && (
-                <div className="mb-4 space-y-2">
-                  {selectedBevindingen.map((bevinding) => {
-                    const bevindingLabels: { [key: string]: string } = {
-                      'pdf-titel-niet-getoond': 'PDF - Titel niet getoond',
-                      'tekstalternatief': 'Tekstalternatief met "Afbeelding van..."',
-                      'zichtbare-tekst-link': 'Zichtbare tekst link niet in aria-label',
-                      'vimeo-keyboard': 'Vimeo keyboard=0 ontbreekt',
-                      'pdf-afbeeldingen': 'PDF - Afbeeldingen niet-getagde PDF',
-                      'paginatitel-leeg': 'Paginatitel is leeg',
-                      'alt-bestandsnaam': 'Alt met bestandsnaam (min-tekens, underscore)'
-                    };
-
-                    return (
-                      <div key={bevinding} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-md">
-                        <span className="text-sm text-gray-700">{bevindingLabels[bevinding]}</span>
-                        <button
-                          onClick={() => {
-                            setSelectedBevindingen(selectedBevindingen.filter(b => b !== bevinding));
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Info text */}
-              <p className="text-sm text-gray-600 mb-6">
-                Je kunt meerdere snelle en premium bevindingen koppelen aan een crawler test.
-              </p>
-
-              {/* Save Button */}
-              <button
-                type="button"
-                className="modal-save-button w-full px-4 py-2 text-white text-sm rounded-md"
-                onClick={() => {
-                  if (selectedTest) {
-                    // Update the tests array with the new bevindingen
-                    const updatedTests = tests.map(t =>
-                      t.id === selectedTest.id
-                        ? { ...t, bevindingen: selectedBevindingen }
-                        : t
-                    );
-                    setTests(updatedTests);
-                  }
-                  setShowModal(false);
+            {/* URL Input */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                {runMode === 'single' ? '3a' : '2a'}. URL invoeren (optie 1)
+              </h2>
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  if (e.target.value) setHtml('');
                 }}
-              >
-                Wijzigingen opslaan
-              </button>
+                placeholder="https://example.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                De pagina wordt automatisch opgehaald met Puppeteer
+              </p>
             </div>
+
+            {/* HTML Input */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                {runMode === 'single' ? '3b' : '2b'}. HTML plakken (optie 2)
+              </h2>
+              <textarea
+                value={html}
+                onChange={(e) => {
+                  setHtml(e.target.value);
+                  if (e.target.value) setUrl('');
+                }}
+                placeholder="<html>...</html>"
+                rows={10}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Plak HTML code direct om te testen
+              </p>
+            </div>
+
+            {/* Run Button */}
+            <button
+              onClick={runMode === 'single' ? handleRunSingleTest : handleRunAllTests}
+              disabled={isLoading || (runMode === 'single' && !selectedTest) || (!url && !html)}
+              className="w-full px-6 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#6b2d8f' }}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {runMode === 'all' ? 'Alle tests draaien...' : 'Test draaien...'}
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {runMode === 'all' ? 'Run All Tests (130+)' : 'Run Test'}
+                </>
+              )}
+            </button>
+
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-red-800">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-medium">{error}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Results */}
+          <div className="space-y-6">
+            {/* All Tests Results */}
+            {allResults ? (
+              <>
+                {/* Summary Card */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    📊 Samenvatting
+                  </h2>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-900">{allResults.summary.totalTests}</p>
+                      <p className="text-sm text-gray-600">Totaal Tests</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">{allResults.summary.testsFound}</p>
+                      <p className="text-sm text-gray-600">Gevonden</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-400">{allResults.summary.testsPassed}</p>
+                      <p className="text-sm text-gray-600">Geslaagd</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Results List - Only show tests that found something */}
+                <div className="bg-white rounded-lg border border-gray-200">
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      🔍 Gevonden Issues ({allResults.summary.testsFound})
+                    </h2>
+                  </div>
+                  <div className="max-h-[600px] overflow-y-auto">
+                    {allResults.results.filter((r: any) => r.found).map((testResult: any) => (
+                      <div key={testResult.testId} className="border-b border-gray-200 last:border-b-0">
+                        <button
+                          onClick={() => toggleResultExpanded(testResult.testId)}
+                          className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-3">
+                            <svg
+                              className={`w-4 h-4 text-gray-400 transition-transform ${expandedResults.has(testResult.testId) ? 'rotate-90' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <div>
+                              <div className="font-medium text-gray-900">{testResult.testName}</div>
+                              <div className="text-sm text-gray-500">ID: {testResult.testId}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                              {testResult.count} gevonden
+                            </span>
+                          </div>
+                        </button>
+
+                        {expandedResults.has(testResult.testId) && testResult.details && (
+                          <div className="p-4 bg-gray-50 border-t border-gray-200">
+                            <pre className="text-xs bg-white p-3 rounded border border-gray-200 overflow-x-auto">
+                              {JSON.stringify(testResult.details, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary Generation */}
+                {allResults.summary.testsFound > 0 && (
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border-2 border-purple-200 p-6">
+                    <h2 className="text-lg font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Samenvatting voor Bevindingen
+                    </h2>
+                    <p className="text-sm text-purple-700 mb-4">
+                      Genereer een gestructureerde samenvatting met prioriteiten en WCAG-criteria om bevindingen te maken.
+                    </p>
+
+                    {!aiSummary ? (
+                      <button
+                        onClick={handleGenerateAISummary}
+                        disabled={isGeneratingAI}
+                        className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {isGeneratingAI ? (
+                          <>
+                            <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Samenvatting genereren...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            📋 Genereer Samenvatting
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="bg-white rounded-lg border border-purple-200 p-6 max-h-[500px] overflow-y-auto">
+                          <div className="prose prose-sm max-w-none prose-headings:text-purple-900 prose-strong:text-purple-900">
+                            <div className="whitespace-pre-wrap text-gray-800 text-sm leading-relaxed">
+                              {aiSummary}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => {
+                              copyToClipboard(aiSummary);
+                              // Show a brief success message
+                              const btn = document.activeElement as HTMLButtonElement;
+                              const originalText = btn.innerHTML;
+                              btn.innerHTML = '✓ Gekopieerd!';
+                              setTimeout(() => {
+                                btn.innerHTML = originalText;
+                              }, 2000);
+                            }}
+                            className="flex-1 px-4 py-2 bg-white border-2 border-purple-300 text-purple-700 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Kopieer naar Klembord
+                          </button>
+                          <button
+                            onClick={() => setAiSummary('')}
+                            className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                          >
+                            Verberg
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : result ? (
+              <>
+                {/* Single Test Result */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    📊 Resultaat
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Test ID</p>
+                      <p className="text-lg font-semibold text-gray-900">{result.testId}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Test Naam</p>
+                      <p className="text-lg font-semibold text-gray-900">{result.testName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Gevonden</p>
+                      <p className="text-lg font-semibold">
+                        {result.found ? (
+                          <span className="text-green-600">✓ Ja</span>
+                        ) : (
+                          <span className="text-gray-400">✗ Nee</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Aantal</p>
+                      <p className="text-lg font-semibold text-gray-900">{result.count}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Raw JSON */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    🔍 Raw Test Data
+                  </h2>
+                  <pre className="text-xs bg-gray-50 p-4 rounded border border-gray-200 overflow-x-auto max-h-96 overflow-y-auto">
+                    {JSON.stringify(result, null, 2)}
+                  </pre>
+                </div>
+
+                {/* Formatted Reports */}
+                {result.testName === 'PageContainsMultipleSameLinksTest' && result.details?.issues && (
+                  <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
+                    <h2 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      📝 Geformatteerde Rapportage
+                    </h2>
+                    <div className="space-y-4">
+                      {formatMultipleSameLinksReport(result.details).map((report, idx) => (
+                        <div key={idx} className="bg-white rounded border border-blue-100 p-4 space-y-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h3>
+                            <p className="text-sm text-gray-700">{report.bevinding}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Details:</h3>
+                            <p className="text-sm text-gray-700">{report.details}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h3>
+                            <p className="text-sm text-gray-700">{report.advies}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.testName === 'LinkMissingHrefTest' && result.details?.issues && (
+                  <div className="bg-red-50 rounded-lg border border-red-200 p-6">
+                    <h2 className="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      📝 Geformatteerde Rapportage (Kritiek)
+                    </h2>
+                    <div className="space-y-4">
+                      {formatLinkMissingHrefReport(result.details).map((report, idx) => (
+                        <div key={idx} className="bg-white rounded border border-red-100 p-4 space-y-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h3>
+                            <p className="text-sm text-gray-700">{report.bevinding}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Details:</h3>
+                            <p className="text-sm text-gray-700">{report.details}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h3>
+                            <p className="text-sm text-gray-700">{report.advies}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.testName === 'ImgMissingAltTest' && result.details?.images && result.details.images.length > 0 && (
+                  <div className="bg-red-50 rounded-lg border border-red-200 p-6">
+                    <h2 className="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      📝 Geformatteerde Rapportage (Kritiek - WCAG 1.1.1)
+                    </h2>
+                    <div className="space-y-4">
+                      {formatImgMissingAltReport(result.details).map((report, idx) => (
+                        <div key={idx} className="bg-white rounded border border-red-100 p-4 space-y-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <h3 className="text-sm font-semibold text-gray-900">Bevinding:</h3>
+                              <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800 border border-red-200">
+                                KRITIEK
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{report.bevinding}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Details:</h3>
+                            <p className="text-sm text-gray-700">{report.details}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h3>
+                            <p className="text-sm text-gray-700">{report.advies}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.testName === 'ImgAltTooShortTest' && result.details?.images && (
+                  <div className="bg-orange-50 rounded-lg border border-orange-200 p-6">
+                    <h2 className="text-lg font-semibold text-orange-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      📝 Geformatteerde Rapportage (Serieus - WCAG 1.1.1)
+                    </h2>
+                    <div className="space-y-4">
+                      {formatImgAltTooShortReport(result.details).map((report, idx) => (
+                        <div key={idx} className="bg-white rounded border border-orange-100 p-4 space-y-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h3>
+                            <p className="text-sm text-gray-700">{report.bevinding}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Details:</h3>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{report.details}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h3>
+                            <p className="text-sm text-gray-700">{report.advies}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.testName === 'AriaLandmarksTest' && result.details?.issues && result.details.issues.length > 0 && (
+                  <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
+                    <h2 className="text-lg font-semibold text-yellow-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                      📝 Geformatteerde Rapportage (SIA-R56 - WCAG 2.4.1, 4.1.2)
+                    </h2>
+                    <div className="space-y-4">
+                      {formatAriaLandmarksReport(result.details).map((report, idx) => (
+                        <div key={idx} className="bg-white rounded border border-yellow-100 p-4 space-y-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <h3 className="text-sm font-semibold text-gray-900">Bevinding:</h3>
+                              <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">
+                                SERIEUS
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{report.bevinding}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Details:</h3>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{report.details}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h3>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{report.advies}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.testName === 'IframeIsHCaptchaTest' && result.details?.issues && result.details.issues.length > 0 && (
+                  <div className="bg-red-50 rounded-lg border border-red-200 p-6">
+                    <h2 className="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      📝 Geformatteerde Rapportage (Kritiek - WCAG 4.1.2)
+                    </h2>
+                    <div className="space-y-4">
+                      {formatHCaptchaReport(result.details).map((report, idx) => (
+                        <div key={idx} className="bg-white rounded border border-red-100 p-4 space-y-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <h3 className="text-sm font-semibold text-gray-900">Bevinding:</h3>
+                              <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800 border border-red-200">
+                                KRITIEK
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{report.bevinding}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Details:</h3>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{report.details}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h3>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{report.advies}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <p className="text-gray-500">
+                  Nog geen resultaten. Kies een modus en klik op "Run Test" of "Run All Tests".
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      )}
+
+        {/* Info Box */}
+        <div className="mt-8 bg-purple-50 border border-purple-200 rounded-lg p-6">
+          <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            Hoe werkt dit?
+          </h3>
+          <ul className="text-sm text-purple-800 space-y-1 ml-7">
+            <li>• Deze pagina praat NIET met de database</li>
+            <li>• Resultaten worden NIET opgeslagen</li>
+            <li>• Perfect voor debuggen en testen van nieuwe tests</li>
+            <li>• Je kunt een URL opgeven (wordt opgehaald met Puppeteer) OF HTML plakken</li>
+            <li>• <strong>Enkele Test:</strong> Test één specifieke functie met geformatteerde rapportage</li>
+            <li>• <strong>Alle Tests:</strong> Draai alle 130+ tests tegelijk en zie een overzicht</li>
+          </ul>
+        </div>
+      </div>
     </div>
+    </>
   );
 }

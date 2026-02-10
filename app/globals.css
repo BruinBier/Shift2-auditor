@@ -715,11 +715,80 @@ button.delete-modal-button:hover,
 .krafters-markdown-preview ol,
 .finding-description ul,
 .finding-description ol {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #374151;
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  color: #374151 !important;
+  margin: 0.5rem 0 !important;
+  padding-left: 1.5rem !important;
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  display: block !important;
+}
+
+.krafters-markdown-preview ol {
+  list-style-type: decimal !important;
+}
+
+.krafters-markdown-preview ul > li,
+.krafters-markdown-preview ol > li,
+.finding-description ul > li,
+.finding-description ol > li {
+  display: list-item !important;
+  list-style-type: inherit !important;
+  list-style-position: outside !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Extra specific rules to override Tailwind reset */
+div.krafters-markdown-preview ul,
+.krafters-markdown-preview ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  padding-left: 2rem !important;
+}
+
+div.krafters-markdown-preview ul > li,
+.krafters-markdown-preview ul > li {
+  display: list-item !important;
+  list-style: disc !important;
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+}
+
+div.krafters-markdown-preview ul > li::marker,
+.krafters-markdown-preview ul > li::marker {
+  content: "• " !important;
+  color: #374151 !important;
+}
+
+/* MdEditor preview styling - force bullets */
+.md-editor-preview ul,
+.md-editor-preview-wrapper ul,
+#md-editor-v3 ul,
+#md-editor-v3-preview ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  padding-left: 2rem !important;
+  display: block !important;
+}
+
+.md-editor-preview ul > li,
+.md-editor-preview-wrapper ul > li,
+#md-editor-v3 ul > li,
+#md-editor-v3-preview ul > li {
+  display: list-item !important;
+  list-style: disc !important;
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+}
+
+.md-editor-preview ul > li::marker,
+.md-editor-preview-wrapper ul > li::marker,
+#md-editor-v3 ul > li::marker,
+#md-editor-v3-preview ul > li::marker {
+  content: "• " !important;
+  color: #374151 !important;
 }
 
 .krafters-markdown-preview pre,

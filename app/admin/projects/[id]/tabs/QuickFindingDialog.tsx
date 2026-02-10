@@ -37,20 +37,32 @@ export default function QuickFindingDialog({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCriterionCode, setSelectedCriterionCode] = useState(criterionCode);
 
-  // Configure marked to add target="_blank" to all links
+  // Configure marked to add target="_blank" to all links and properly escape HTML
   useEffect(() => {
     const renderer = new marked.Renderer();
     const originalLink = renderer.link.bind(renderer);
+    const originalHtml = renderer.html.bind(renderer);
 
     renderer.link = (href: string, title: string | null | undefined, text: string) => {
       const html = originalLink(href, title, text);
       return html.replace('<a ', '<a target="_blank" rel="noopener noreferrer" title="opent in nieuw venster" ');
     };
 
+    // Override HTML renderer to escape HTML that's not in code blocks
+    renderer.html = (html: string) => {
+      // Escape HTML entities so they display as text
+      return html
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     marked.setOptions({
       renderer,
       breaks: true,
-      gfm: true
+      gfm: true,
     });
   }, []);
 
@@ -82,7 +94,87 @@ export default function QuickFindingDialog({
   const renderAdvice = (advice: string) => {
     try {
       const html = marked(advice);
-      return <div className="krafters-markdown-preview finding-description space-y-3 text-sm" dangerouslySetInnerHTML={{ __html: html as string }} />;
+      return (
+        <>
+          <style dangerouslySetInnerHTML={{__html: `
+            .krafters-markdown-preview h2 {
+              font-size: 1rem !important;
+              font-weight: 600 !important;
+              color: #1f2937 !important;
+              margin-top: 1rem !important;
+              margin-bottom: 0.5rem !important;
+              display: block !important;
+            }
+            .krafters-markdown-preview h2:first-child {
+              margin-top: 0 !important;
+            }
+            .krafters-markdown-preview p {
+              margin-bottom: 0.75rem !important;
+              line-height: 1.6 !important;
+              display: block !important;
+            }
+            .krafters-markdown-preview ul {
+              margin-bottom: 0.75rem !important;
+              padding-left: 2rem !important;
+              margin-left: 0 !important;
+              display: block !important;
+              list-style: disc outside !important;
+              list-style-type: disc !important;
+            }
+            .krafters-markdown-preview ol {
+              margin-bottom: 0.75rem !important;
+              padding-left: 2rem !important;
+              margin-left: 0 !important;
+              display: block !important;
+              list-style: decimal outside !important;
+              list-style-type: decimal !important;
+            }
+            .krafters-markdown-preview ul > li,
+            .krafters-markdown-preview ol > li {
+              margin-bottom: 0.375rem !important;
+              display: list-item !important;
+              margin-left: 0 !important;
+            }
+            .krafters-markdown-preview ul > li {
+              list-style: disc outside !important;
+              list-style-type: disc !important;
+            }
+            .krafters-markdown-preview ol > li {
+              list-style: decimal outside !important;
+              list-style-type: decimal !important;
+            }
+            .krafters-markdown-preview li::marker {
+              color: #1f2937 !important;
+            }
+            .krafters-markdown-preview strong {
+              font-weight: 600 !important;
+            }
+            .krafters-markdown-preview code {
+              background-color: #f3f4f6 !important;
+              padding: 0.125rem 0.375rem !important;
+              border-radius: 0.25rem !important;
+              font-size: 0.875em !important;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+              color: #1f2937 !important;
+            }
+            .krafters-markdown-preview pre {
+              background-color: #f3f4f6 !important;
+              padding: 0.75rem !important;
+              border-radius: 0.375rem !important;
+              overflow-x: auto !important;
+              margin-bottom: 0.75rem !important;
+              border: 1px solid #e5e7eb !important;
+            }
+            .krafters-markdown-preview pre code {
+              background-color: transparent !important;
+              padding: 0 !important;
+              border-radius: 0 !important;
+              font-size: 0.875rem !important;
+            }
+          `}} />
+          <div className="krafters-markdown-preview finding-description text-sm" style={{ listStyleType: 'disc' }} dangerouslySetInnerHTML={{ __html: html as string }} />
+        </>
+      );
     } catch (error) {
       console.error('Error rendering markdown:', error);
       return <div className="text-sm text-gray-700">{advice}</div>;

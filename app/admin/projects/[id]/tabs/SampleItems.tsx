@@ -30,8 +30,36 @@ export default function SampleItems({ project }: { project: any }) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
   const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
+  const [completedTests, setCompletedTests] = useState<Set<string>>(new Set());
+  const [debugMode, setDebugMode] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<string>('');
+  const [availableTests, setAvailableTests] = useState<string[]>([]);
 
   const items = project.sampleItems; // Show all items, not filtered by type
+
+  // Check if an item has been tested (has crawler results in database)
+  const hasBeenTested = (item: any) => {
+    return item.crawlerResults && item.crawlerResults.length > 0;
+  };
+
+  // Fetch available tests when debug mode is enabled
+  useEffect(() => {
+    const fetchTests = async () => {
+      try {
+        const response = await fetch('/api/tests/available');
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableTests(data.tests || []);
+        }
+      } catch (error) {
+        console.error('Error fetching available tests:', error);
+      }
+    };
+
+    if (debugMode && availableTests.length === 0) {
+      fetchTests();
+    }
+  }, [debugMode, availableTests.length]);
 
   // Close context menu on click outside or Escape key
   useEffect(() => {
@@ -222,18 +250,32 @@ export default function SampleItems({ project }: { project: any }) {
       return;
     }
 
+    // Validate debug mode requirements
+    if (debugMode && !selectedTest) {
+      alert('⚠️ Selecteer eerst een test in debug mode');
+      return;
+    }
+
     setRunningTests(prev => new Set(prev).add(itemId));
     setOpenMenuId(null);
 
     try {
+      const body = debugMode && selectedTest ? { testName: selectedTest } : {};
+
       const response = await fetch(`/api/sample-items/${itemId}/crawler`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert(`✅ Tests succesvol uitgevoerd!\n\n` +
+        // Mark as completed
+        setCompletedTests(prev => new Set(prev).add(itemId));
+
+        const modeText = data.debugMode ? `\n🐛 Debug mode: ${data.testName}` : '';
+        alert(`✅ Tests succesvol uitgevoerd!${modeText}\n\n` +
               `Tests gedraaid: ${data.testsRun}\n` +
               `Issues gevonden: ${data.testsFound}\n\n` +
               `De resultaten zijn nu beschikbaar op de detail pagina.`);
@@ -432,7 +474,20 @@ export default function SampleItems({ project }: { project: any }) {
                       </td>
                       <td className="py-4 px-4 align-top">
                         <div>
-                          <div className="font-medium text-gray-900">{item.title}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium text-gray-900">{item.title}</div>
+                            {runningTests.has(item.id) && (
+                              <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            )}
+                            {!runningTests.has(item.id) && (hasBeenTested(item) || completedTests.has(item.id)) && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                Voltooid
+                              </span>
+                            )}
+                          </div>
                           {item.url && (
                             <div className="text-sm text-gray-500">{item.url}</div>
                           )}
@@ -476,29 +531,80 @@ export default function SampleItems({ project }: { project: any }) {
                                 Bewerken
                               </button>
                               {item.url && (
-                                <button
-                                  onClick={() => handleRunTests(item.id, item.url)}
-                                  disabled={runningTests.has(item.id)}
-                                  className="sample-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 disabled:opacity-50"
-                                >
-                                  {runningTests.has(item.id) ? (
-                                    <>
-                                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                      </svg>
-                                      Tests draaien...
-                                    </>
-                                  ) : (
-                                    <>
+                                <>
+                                  <button
+                                    onClick={() => handleRunTests(item.id, item.url)}
+                                    disabled={runningTests.has(item.id)}
+                                    className="sample-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 disabled:opacity-50"
+                                  >
+                                    {runningTests.has(item.id) ? (
+                                      <>
+                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Tests draaien...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        Run Tests
+                                      </>
+                                    )}
+                                  </button>
+
+                                  <div className="my-1 border-t border-gray-200"></div>
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDebugMode(!debugMode);
+                                    }}
+                                    className="sample-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center justify-between gap-3"
+                                  >
+                                    <div className="flex items-center gap-3">
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                                       </svg>
-                                      Run Tests
-                                    </>
+                                      Debug Mode
+                                    </div>
+                                    <div className={`w-9 h-5 rounded-full transition-colors ${debugMode ? 'bg-green-600' : 'bg-gray-300'}`}>
+                                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mt-0.5 ${debugMode ? 'translate-x-4 ml-0.5' : 'ml-0.5'}`}></div>
+                                    </div>
+                                  </button>
+
+                                  {debugMode && (
+                                    <div className="px-4 py-2">
+                                      <select
+                                        value={selectedTest}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedTest(e.target.value);
+                                        }}
+                                        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <option value="">Selecteer een test...</option>
+                                        {availableTests.map(testName => (
+                                          <option key={testName} value={testName}>
+                                            {testName}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      {selectedTest && (
+                                        <div className="mt-1 text-xs text-gray-500">
+                                          Test: {selectedTest}
+                                        </div>
+                                      )}
+                                    </div>
                                   )}
-                                </button>
+                                </>
                               )}
+
+                              <div className="my-1 border-t border-gray-200"></div>
+
                               <button
                                 onClick={() => {
                                   setOpenMenuId(null);

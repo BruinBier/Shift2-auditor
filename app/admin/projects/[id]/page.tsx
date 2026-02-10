@@ -18,6 +18,9 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
       },
       sampleItems: {
         orderBy: { orderIndex: 'asc' },
+        include: {
+          crawlerResults: true,
+        },
       },
       criterionAssessments: {
         include: {

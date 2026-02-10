@@ -23,8 +23,8 @@ const QUICK_FINDINGS = [
   {
     id: '2',
     title: 'PDF - Afbeeldingen niet-getagde PDF',
-    description: 'Het volgende PDF-document is niet getagd. Hierdoor zijn informatieve afbeeldingen niet gemarkeerd als <Figure> en hebben zij geen tekstalternatief. Mensen die blind zijn en een schermlezer gebruiken krijgen deze informatie daardoor niet aangeboden. Omdat het document niet is getagd, is niet vast te stellen of afbeeldingen correct zijn verwerkt. Hierdoor wordt dit nu niet afgekeurd. Zodra het document wel wordt getagd, kan blijken dat informatieve afbeeldingen ontbreken of onjuist zijn getagd.',
-    advice: 'Zorg dat de PDF wordt voorzien van een volledige tags-structuur en maak daarbij onderscheid tussen informatieve en decoratieve afbeeldingen.\n\nTag informatieve afbeeldingen als <Figure> en geef deze van een kort en beschrijvend tekstalternatief dat de functie of inhoud van de afbeelding samenvat.\nMarkeer decoratieve afbeeldingen als artefact zodat deze worden genegeerd door schermlezers.',
+    description: 'Het volgende PDF-document is niet getagd. Hierdoor zijn informatieve afbeeldingen niet gemarkeerd als `<Figure>` en hebben zij geen tekstalternatief. Mensen die blind zijn en een schermlezer gebruiken krijgen deze informatie daardoor niet aangeboden. Omdat het document niet is getagd, is niet vast te stellen of afbeeldingen correct zijn verwerkt. Hierdoor wordt dit nu niet afgekeurd. Zodra het document wel wordt getagd, kan blijken dat informatieve afbeeldingen ontbreken of onjuist zijn getagd.',
+    advice: 'Zorg dat de PDF wordt voorzien van een volledige tags-structuur en maak daarbij onderscheid tussen informatieve en decoratieve afbeeldingen.\n\n- Tag informatieve afbeeldingen als `<Figure>` en geef deze van een kort en beschrijvend tekstalternatief dat de functie of inhoud van de afbeelding samenvat.\n- Markeer decoratieve afbeeldingen als artefact zodat deze worden genegeerd door schermlezers.',
     criterionCode: '1.1.1',
     impact: 'Serieus',
     responsibility: 'Redacteur'

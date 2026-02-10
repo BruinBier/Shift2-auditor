@@ -2,6 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, Fragment } from 'react';
+import { formatMultipleSameLinksReport } from '@/lib/formatter/multiple-same-links-formatter';
+import { formatLinkMissingHrefReport } from '@/lib/formatter/link-missing-href-formatter';
+import { formatImgMissingAltReport } from '@/lib/formatter/img-missing-alt-formatter';
+import { formatImgAltTooShortReport } from '@/lib/formatter/img-alt-too-short-formatter';
+import { formatElementsStyledWithStrongOrEm } from '@/lib/formatter/elements-styled-strong-em-formatter';
+import { formatStrongFourWords } from '@/lib/formatter/strong-four-words-formatter';
 
 interface CrawlerResult {
   id: string;
@@ -311,19 +317,279 @@ export default function TestResults({ projectId, sampleItemId, crawlerResults, c
                     <tr>
                       <td colSpan={6} className="px-6 py-4 bg-gray-50">
                         <div className="text-sm space-y-3">
-                          <div className="flex items-center gap-2 text-gray-600 mb-3">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="font-medium">Test Details</span>
+                          <div className="flex items-center justify-between gap-2 text-gray-600 mb-3">
+                            <div className="flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="font-medium">Test Details</span>
+                            </div>
+                            <button
+                              onClick={() => setExpandedTestId(null)}
+                              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              Sluit
+                            </button>
                           </div>
 
-                          {/* Render details as JSON for now */}
-                          <div className="bg-white rounded border border-gray-200 p-4">
-                            <pre className="text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap">
+                          {/* Render raw test details JSON */}
+                          <div className="bg-white rounded border border-gray-200 p-4 relative mb-4">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-2">Raw Test Data:</h4>
+                            <pre className="text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap select-text">
                               {JSON.stringify(details, null, 2)}
                             </pre>
                           </div>
+
+                          {/* Render formatted report for specific tests */}
+                          {result.testName === 'PageContainsMultipleSameLinksTest' && details?.issues && (
+                            <div className="bg-blue-50 rounded border border-blue-200 p-4 relative">
+                              <h4 className="text-sm font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Geformatteerde Rapportage:
+                              </h4>
+                              <div className="space-y-6">
+                                {formatMultipleSameLinksReport(details).map((report, idx) => (
+                                  <div key={idx} className="space-y-3 bg-white rounded border border-blue-100 p-4">
+                                    {idx > 0 && <div className="border-t border-gray-200 pt-4 -mt-4 mb-4"></div>}
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.bevinding}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Details:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.details}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.advies}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Render formatted report for LinkMissingHrefTest */}
+                          {result.testName === 'LinkMissingHrefTest' && details?.issues && (
+                            <div className="bg-red-50 rounded border border-red-200 p-4 relative">
+                              <h4 className="text-sm font-semibold text-red-900 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Geformatteerde Rapportage (Kritiek):
+                              </h4>
+                              <div className="space-y-6">
+                                {formatLinkMissingHrefReport(details).map((report, idx) => (
+                                  <div key={idx} className="space-y-3 bg-white rounded border border-red-100 p-4">
+                                    {idx > 0 && <div className="border-t border-gray-200 pt-4 -mt-4 mb-4"></div>}
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.bevinding}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Details:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.details}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.advies}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Render formatted report for ImgMissingAltTest */}
+                          {result.testName === 'ImgMissingAltTest' && details?.images && (
+                            <div className="bg-red-50 rounded border border-red-200 p-4 relative">
+                              <h4 className="text-sm font-semibold text-red-900 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Geformatteerde Rapportage (Kritiek - WCAG 1.1.1):
+                              </h4>
+                              <div className="space-y-6">
+                                {formatImgMissingAltReport(details).map((report, idx) => (
+                                  <div key={idx} className="space-y-3 bg-white rounded border border-red-100 p-4">
+                                    {idx > 0 && <div className="border-t border-gray-200 pt-4 -mt-4 mb-4"></div>}
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.bevinding}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Details:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.details}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.advies}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Render formatted report for ImgAltTooShortTest */}
+                          {result.testName === 'ImgAltTooShortTest' && details?.images && (
+                            <div className="bg-orange-50 rounded border border-orange-200 p-4 relative">
+                              <h4 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Geformatteerde Rapportage (Serieus - WCAG 1.1.1):
+                              </h4>
+                              <div className="space-y-6">
+                                {formatImgAltTooShortReport(details).map((report, idx) => (
+                                  <div key={idx} className="space-y-3 bg-white rounded border border-orange-100 p-4">
+                                    {idx > 0 && <div className="border-t border-gray-200 pt-4 -mt-4 mb-4"></div>}
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Bevinding:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.bevinding}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Details:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.details}</p>
+                                    </div>
+
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h5>
+                                      <p className="text-sm text-gray-700 select-text">{report.advies}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Render formatted report for StrongHasMoreThanFourWordsTest */}
+                          {result.testName === 'StrongHasMoreThanFourWordsTest' && details?.issues && (
+                            <div className="bg-amber-50 rounded border border-amber-200 p-4 relative">
+                              <h4 className="text-sm font-semibold text-amber-900 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Geformatteerde Rapportage (Kwaliteit / Premium):
+                              </h4>
+                              <div className="bg-white rounded border border-amber-100 p-4">
+                                <div className="space-y-4">
+                                  {(() => {
+                                    const formatted = formatStrongFourWords(details);
+                                    return (
+                                      <>
+                                        <div>
+                                          <h5 className="text-sm font-semibold text-gray-900 mb-2">Samenvatting:</h5>
+                                          <pre className="text-sm text-gray-700 whitespace-pre-wrap select-text">{formatted.summary}</pre>
+                                        </div>
+
+                                        <div className="border-t border-gray-200 pt-4">
+                                          <h5 className="text-sm font-semibold text-gray-900 mb-3">Details per locatie:</h5>
+                                          <div className="space-y-3">
+                                            {Array.from(formatted.issuesByLocation.entries()).map(([location, issues]) => (
+                                              <div key={location} className="bg-gray-50 rounded p-3">
+                                                <div className="font-medium text-sm text-gray-900 mb-2">📍 {location}</div>
+                                                <div className="space-y-2">
+                                                  {issues.map((issue, idx) => (
+                                                    <div key={idx} className="text-sm text-gray-700 pl-4 border-l-2 border-amber-300">
+                                                      <div><strong>&lt;strong&gt;</strong> - {issue.wordCount} woorden (max 4)</div>
+                                                      <div className="text-xs text-gray-600 mt-1">{issue.textSnippet}</div>
+                                                      <div className="text-xs text-amber-700 mt-1 italic">{issue.reason}</div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+
+                                        <div className="border-t border-gray-200 pt-4">
+                                          <h5 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h5>
+                                          <p className="text-sm text-gray-700 select-text">
+                                            Het <code>&lt;strong&gt;</code> element is bedoeld voor <strong>korte semantische nadruk</strong> van maximaal 4 woorden.
+                                            Voor langere tekstfragmenten dient u CSS classes te gebruiken voor visuele opmaak, of de tekst op te splitsen in meerdere kortere
+                                            benadrukkingen met normale tekst ertussen.
+                                          </p>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Render formatted report for ElementsStyledWithStrongOrEmTest */}
+                          {result.testName === 'ElementsStyledWithStrongOrEmTest' && details?.issues && (
+                            <div className="bg-purple-50 rounded border border-purple-200 p-4 relative">
+                              <h4 className="text-sm font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                </svg>
+                                Geformatteerde Rapportage (Semantiek / Structuur):
+                              </h4>
+                              <div className="bg-white rounded border border-purple-100 p-4">
+                                <div className="space-y-4">
+                                  {(() => {
+                                    const formatted = formatElementsStyledWithStrongOrEm(details);
+                                    return (
+                                      <>
+                                        <div>
+                                          <h5 className="text-sm font-semibold text-gray-900 mb-2">Samenvatting:</h5>
+                                          <pre className="text-sm text-gray-700 whitespace-pre-wrap select-text">{formatted.summary}</pre>
+                                        </div>
+
+                                        <div className="border-t border-gray-200 pt-4">
+                                          <h5 className="text-sm font-semibold text-gray-900 mb-3">Details per locatie:</h5>
+                                          <div className="space-y-3">
+                                            {Array.from(formatted.issuesByLocation.entries()).map(([location, issues]) => (
+                                              <div key={location} className="bg-gray-50 rounded p-3">
+                                                <div className="font-medium text-sm text-gray-900 mb-2">📍 {location}</div>
+                                                <div className="space-y-2">
+                                                  {issues.map((issue, idx) => (
+                                                    <div key={idx} className="text-sm text-gray-700 pl-4 border-l-2 border-purple-300">
+                                                      <div><strong>&lt;{issue.tagName.toLowerCase()}&gt;</strong> - {issue.wordCount} woorden</div>
+                                                      <div className="text-xs text-gray-600 mt-1">{issue.textSnippet}</div>
+                                                      <div className="text-xs text-purple-700 mt-1 italic">{issue.reason}</div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+
+                                        <div className="border-t border-gray-200 pt-4">
+                                          <h5 className="text-sm font-semibold text-gray-900 mb-2">Advies:</h5>
+                                          <p className="text-sm text-gray-700 select-text">
+                                            De <code>&lt;strong&gt;</code> en <code>&lt;em&gt;</code> elementen moeten gebruikt worden voor
+                                            <strong> semantische nadruk</strong> van enkele woorden of korte zinsdelen, niet voor het stylen
+                                            van grote tekstblokken. Gebruik CSS classes voor visuele styling van langere tekstsecties.
+                                          </p>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
