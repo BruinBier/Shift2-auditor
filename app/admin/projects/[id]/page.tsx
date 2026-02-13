@@ -130,6 +130,10 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
     })),
   };
 
+  // Debug: Check if sampleInfo is present
+  console.log('🔍 DEBUG: project.sampleInfo =', project.sampleInfo);
+  console.log('🔍 DEBUG: projectData.sampleInfo =', projectData.sampleInfo);
+
   const relatedProjectsData = relatedProjects.map((p) => ({
     ...p,
     dateStart: p.dateStart?.toISOString() || null,

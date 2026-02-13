@@ -65,7 +65,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <div className="mb-6">
             <div className="text-sm text-gray-600 mb-2">
-              {project.standard} {project.level} – {project.title} – {scopeDomain || project.subject}
+              {project.title}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Rapport digitale toegankelijkheid
@@ -160,42 +160,30 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Project details */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-normal text-gray-900 mb-4">Onderzoeksdetails</h2>
-          <dl className="space-y-3">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Onderzoeksnorm</dt>
-              <dd className="text-sm text-gray-900">
-                {project.standard} niveau {project.level}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Project</dt>
-              <dd className="text-sm text-gray-900">
-                {project.clientProject?.name || project.subject || 'n.v.t.'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Versie</dt>
-              <dd className="text-sm text-gray-900">{Number(project.version).toFixed(1)}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Opdrachtgever</dt>
-              <dd className="text-sm text-gray-900">{project.commissionedBy || 'n.v.t.'}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Rapportdatum</dt>
-              <dd className="text-sm text-gray-900">
-                {format(reportDate, 'd MMMM yyyy', { locale: nl })}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Onderzocht door</dt>
-              <dd className="text-sm text-gray-900">{teamName}</dd>
-            </div>
+          <dl className="[&>dt]:text-sm [&>dt]:font-medium [&>dt]:text-gray-500 [&>dt]:mt-3 [&>dt]:first:mt-0 [&>dd]:text-sm [&>dd]:text-gray-900 [&>dd]:mt-1">
+            <dt>Onderzoekstype</dt>
+            <dd>
+              {project.researchTypeData?.name || `${project.standard} niveau ${project.level}`}
+            </dd>
+            <dt>Project</dt>
+            <dd>
+              {project.clientProject?.name || project.subject || 'n.v.t.'}
+            </dd>
+            <dt>Versie</dt>
+            <dd>{Number(project.version).toFixed(1)}</dd>
+            <dt>Opdrachtgever</dt>
+            <dd>{project.commissionedBy || 'n.v.t.'}</dd>
+            <dt>Rapportdatum</dt>
+            <dd>
+              {format(reportDate, 'd MMMM yyyy', { locale: nl })}
+            </dd>
+            <dt>Onderzocht door</dt>
+            <dd>{teamName}</dd>
             {project.researcherName && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Onderzoeker</dt>
-                <dd className="text-sm text-gray-900">{project.researcherName}</dd>
-              </div>
+              <>
+                <dt>Onderzoeker</dt>
+                <dd>{project.researcherName}</dd>
+              </>
             )}
           </dl>
         </div>
@@ -227,9 +215,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </a>
-                      {scopeUrl.title && (
-                        <div className="text-gray-900 mt-0.5">{scopeUrl.title}</div>
-                      )}
                       <div className="text-sm font-medium text-gray-500 mt-1">
                         URI-basis
                       </div>
@@ -267,9 +252,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                         <div className="text-sm font-medium text-gray-500 mt-1">
                           andere URI-basis
                         </div>
-                        {scopeUrl.title && (
-                          <div className="text-sm font-medium text-gray-500 mt-0.5">{scopeUrl.title}</div>
-                        )}
                       </li>
                     ))}
                 </ul>

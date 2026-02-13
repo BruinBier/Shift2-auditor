@@ -43,6 +43,7 @@ export default function SnelleBevindingen() {
   const [showFilters, setShowFilters] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterImpact, setFilterImpact] = useState<string>('all');
+  const [filterCriterion, setFilterCriterion] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -66,11 +67,40 @@ export default function SnelleBevindingen() {
     setMounted(true);
     fetchQuickFindings();
     fetchWcagCriteria();
+
+    // Add target="_blank" to all links in MdEditor preview
+    const addTargetBlankToLinks = () => {
+      if (typeof window !== 'undefined') {
+        const observer = new MutationObserver(() => {
+          const previews = document.querySelectorAll('.md-editor-preview, .md-editor-preview-wrapper, #md-editor-v3-preview');
+          previews.forEach(preview => {
+            const links = preview.querySelectorAll('a');
+            links.forEach(link => {
+              if (!link.hasAttribute('target')) {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
+                link.setAttribute('title', 'opent in nieuw venster');
+              }
+            });
+          });
+        });
+
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+
+        return () => observer.disconnect();
+      }
+    };
+
+    const cleanup = addTargetBlankToLinks();
+    return cleanup;
   }, []);
 
   useEffect(() => {
     applyFiltersAndSort();
-  }, [quickFindings, searchQuery, sortBy, sortOrder, filterStatus, filterImpact]);
+  }, [quickFindings, searchQuery, sortBy, sortOrder, filterStatus, filterImpact, filterCriterion]);
 
   const fetchWcagCriteria = async () => {
     try {
@@ -111,7 +141,8 @@ export default function SnelleBevindingen() {
       filtered = filtered.filter(f =>
         f.title.toLowerCase().includes(query) ||
         f.description.toLowerCase().includes(query) ||
-        f.criterionCode.toLowerCase().includes(query)
+        f.criterionCode.toLowerCase().includes(query) ||
+        (f.keywords && f.keywords.toLowerCase().includes(query))
       );
     }
 
@@ -123,6 +154,11 @@ export default function SnelleBevindingen() {
     // Apply impact filter
     if (filterImpact !== 'all') {
       filtered = filtered.filter(f => f.impact === filterImpact);
+    }
+
+    // Apply criterion filter
+    if (filterCriterion !== 'all') {
+      filtered = filtered.filter(f => f.criterionCode === filterCriterion);
     }
 
     // Apply sorting
@@ -401,7 +437,7 @@ export default function SnelleBevindingen() {
               showFilters ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
-            Filters {(filterStatus !== 'all' || filterImpact !== 'all') && '(actief)'}
+            Filters {(filterStatus !== 'all' || filterImpact !== 'all' || filterCriterion !== 'all') && '(actief)'}
           </button>
 
           <div className="flex-1 relative">
@@ -423,7 +459,7 @@ export default function SnelleBevindingen() {
         {/* Filters Panel */}
         {showFilters && (
           <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select
@@ -453,11 +489,28 @@ export default function SnelleBevindingen() {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Succescriterium</label>
+                <select
+                  value={filterCriterion}
+                  onChange={(e) => setFilterCriterion(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">Alle</option>
+                  {wcagCriteria.map((criterion) => (
+                    <option key={criterion.id} value={criterion.code}>
+                      {criterion.code}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-end">
                 <button
                   onClick={() => {
                     setFilterStatus('all');
                     setFilterImpact('all');
+                    setFilterCriterion('all');
                     setSearchQuery('');
                   }}
                   className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"

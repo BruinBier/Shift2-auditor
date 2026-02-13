@@ -1,33 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET /api/quick-findings/[id] - Get a single quick finding
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const quickFinding = await prisma.quickFinding.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!quickFinding) {
-      return NextResponse.json(
-        { error: 'Quick finding not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(quickFinding);
-  } catch (error) {
-    console.error('Error fetching quick finding:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch quick finding' },
-      { status: 500 }
-    );
-  }
-}
-
 // PUT /api/quick-findings/[id] - Update a quick finding
 export async function PUT(
   request: NextRequest,
@@ -35,9 +8,10 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
+    const { id } = params;
 
     const quickFinding = await prisma.quickFinding.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: body.title,
         description: body.description,
@@ -67,8 +41,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+
     await prisma.quickFinding.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

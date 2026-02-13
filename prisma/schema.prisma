@@ -119,6 +119,7 @@ model Project {
   whatWasTestedText       String?        @map("what_was_tested_text") @db.Text
   aboutOrgText            String?        @map("about_org_text") @db.Text
   scopeInfo               String?        @map("scope_info") @db.Text
+  sampleInfo              String?        @map("sample_info") @db.Text
   conclusionText          String?        @map("conclusion_text") @db.Text
   managementSummary       String?        @map("management_summary") @db.Text
   researcherFeedback      String?        @map("researcher_feedback") @db.Text

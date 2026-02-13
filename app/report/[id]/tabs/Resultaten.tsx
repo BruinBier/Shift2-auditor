@@ -40,7 +40,7 @@ export default function Resultaten({ project }: { project: any }) {
             Rapport digitale toegankelijkheid
           </h1>
           <p className="text-gray-700">
-            Dit rapport toont de uitslagen van het onderzoek digitale toegankelijkheid. De resultaten staan in twee overzichten: een per principe en een per succescriterium. Zo krijg je zowel een globaal overzicht als details over waar wel goed gaat en wat beter kan.
+            Dit rapport toont de uitkomsten van het onderzoek digitale toegankelijkheid. De resultaten staan in twee overzichten: een per principe en een per succescriterium. Zo krijg je zowel een globaal overzicht als details over waar wel goed gaat en wat beter kan.
           </p>
         </div>
 
@@ -138,58 +138,67 @@ export default function Resultaten({ project }: { project: any }) {
           </table>
         </div>
       </section>
-
-      {/* Results per principle */}
-      <section>
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          Resultaten per principe
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </h2>
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  WCAG Principe
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Niveau A
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Niveau AA
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Totaal
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {principleStats.map((stat) => (
-                <tr key={stat.principle}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {getPrincipleLabel(stat.principle)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {stat.levelA.passed} / {stat.levelA.total}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {stat.levelAA.passed} / {stat.levelAA.total}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
-                    {stat.total.passed} / {stat.total.total}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
       </div>
 
       {/* Sidebar - Right column */}
       <div className="space-y-6">
+        {/* Results per principle */}
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Resultaten per principe</h2>
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    WCAG Principe
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Niveau A
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Niveau AA
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Totaal
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {principleStats.map((stat) => (
+                  <tr key={stat.principle}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {getPrincipleLabel(stat.principle)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                      {stat.levelA.passed} / {stat.levelA.total}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                      {stat.levelAA.passed} / {stat.levelAA.total}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                      {stat.total.passed} / {stat.total.total}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-gray-50 font-bold">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    Totaal
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                    {principleStats.reduce((sum, stat) => sum + stat.levelA.passed, 0)} / {principleStats.reduce((sum, stat) => sum + stat.levelA.total, 0)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                    {principleStats.reduce((sum, stat) => sum + stat.levelAA.passed, 0)} / {principleStats.reduce((sum, stat) => sum + stat.levelAA.total, 0)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                    {principleStats.reduce((sum, stat) => sum + stat.total.passed, 0)} / {principleStats.reduce((sum, stat) => sum + stat.total.total, 0)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <h2 className="text-xl font-bold text-gray-900">Statistieken</h2>
 
         {/* Findings by status */}

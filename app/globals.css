@@ -655,14 +655,31 @@ button.delete-modal-button:hover,
 /* External link styling */
 .krafters-markdown-preview a[target="_blank"],
 .finding-description a[target="_blank"],
-.whitespace-pre-wrap a[target="_blank"] {
+.whitespace-pre-wrap a[target="_blank"],
+.md-editor-preview a[target="_blank"],
+.md-editor-preview-wrapper a[target="_blank"],
+#md-editor-v3-preview a[target="_blank"] {
   text-decoration: underline;
+}
+
+/* External link hover - alleen onderlijnen, geen kleurverandering */
+.krafters-markdown-preview a:hover,
+.finding-description a:hover,
+.whitespace-pre-wrap a:hover,
+.md-editor-preview a:hover,
+.md-editor-preview-wrapper a:hover,
+#md-editor-v3-preview a:hover {
+  text-decoration: underline !important;
+  color: inherit !important;
 }
 
 /* External link icon */
 .krafters-markdown-preview a[target="_blank"]::after,
 .finding-description a[target="_blank"]::after,
-.whitespace-pre-wrap a[target="_blank"]::after {
+.whitespace-pre-wrap a[target="_blank"]::after,
+.md-editor-preview a[target="_blank"]::after,
+.md-editor-preview-wrapper a[target="_blank"]::after,
+#md-editor-v3-preview a[target="_blank"]::after {
   content: "";
   display: inline-block;
   width: 12px;
