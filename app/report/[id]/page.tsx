@@ -3,6 +3,27 @@ import { prisma } from '@/lib/prisma';
 import ReportTabs from './ReportTabs';
 import { marked } from 'marked';
 import { groupFindingsByHierarchy } from '@/lib/report-calculations';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const project = await prisma.project.findUnique({
+    where: { id: params.id },
+    select: {
+      title: true,
+      subject: true,
+    },
+  });
+
+  if (!project) {
+    return {
+      title: 'Rapport niet gevonden',
+    };
+  }
+
+  return {
+    title: `Rapport digitale toegankelijkheid - ${project.subject || project.title || 'Shift2 Auditor'}`,
+  };
+}
 
 export default async function ReportPage({ params }: { params: { id: string } }) {
   const project = await prisma.project.findUnique({
@@ -61,15 +82,8 @@ export default async function ReportPage({ params }: { params: { id: string } })
   // Convert scopeInfo markdown to HTML
   const scopeInfoHtml = project.scopeInfo ? await marked.parse(project.scopeInfo) : null;
 
-  // Debug: Check if occurrences are loaded
-  console.log('=== DEBUG: Findings in page.tsx ===');
-  project.findings.slice(0, 3).forEach((f: any) => {
-    console.log(`Finding: ${f.findingCode}`);
-    console.log(`Occurrences count: ${f.occurrences?.length || 0}`);
-    if (f.occurrences && f.occurrences.length > 0) {
-      console.log(`First occurrence sampleItem:`, f.occurrences[0].sampleItem);
-    }
-  });
+  // Convert sampleInfo markdown to HTML
+  const sampleInfoHtml = project.sampleInfo ? await marked.parse(project.sampleInfo) : null;
 
   // Group findings by WCAG hierarchy
   const groupedFindings = await groupFindingsByHierarchy(project as any);
@@ -84,6 +98,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
     userAgents: project.userAgents || null,
     researchTypeData: researchTypeData,
     scopeInfo: scopeInfoHtml,
+    sampleInfo: sampleInfoHtml,
     groupedFindings, // Pass the grouped findings to the client
     findings: project.findings.map((f: any) => ({
       ...f,

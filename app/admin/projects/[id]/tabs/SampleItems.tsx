@@ -306,14 +306,27 @@ export default function SampleItems({ project }: { project: any }) {
   };
 
   const saveSampleInfoModal = async () => {
-    setSampleInfo(tempSampleInfo);
-    await fetch(`/api/projects/${project.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sampleInfo: tempSampleInfo }),
-    });
-    router.refresh();
-    closeSampleInfoModal();
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sampleInfo: tempSampleInfo }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Error saving sampleInfo:', error);
+        alert('Fout bij opslaan van steekproef informatie');
+        return;
+      }
+
+      setSampleInfo(tempSampleInfo);
+      router.refresh();
+      closeSampleInfoModal();
+    } catch (error) {
+      console.error('Exception while saving sampleInfo:', error);
+      alert('Fout bij opslaan van steekproef informatie');
+    }
   };
 
   return (
