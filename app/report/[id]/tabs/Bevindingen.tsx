@@ -79,10 +79,16 @@ export default function Bevindingen({ project }: { project: any }) {
           return {
             ...guideline,
             number: `${principleNumber}.${guidelineNumber}`,
-            criteria: guideline.criteria.map((criterion: any, criterionIndex: number) => ({
-              ...criterion,
-              number: criterionIndex + 1,
-            })),
+            criteria: guideline.criteria.map((criterion: any) => {
+              // Extract number from criterion code (e.g., "1.4.11" -> 11)
+              const codeParts = criterion.code.split('.');
+              const criterionNumber = codeParts.length >= 3 ? parseInt(codeParts[2]) : 0;
+
+              return {
+                ...criterion,
+                number: criterionNumber,
+              };
+            }),
           };
         }),
       };
@@ -234,7 +240,7 @@ export default function Bevindingen({ project }: { project: any }) {
       '1.3.4': 'Content kan in zowel staand als liggend formaat worden bekeken.',
       '1.3.5': 'Het doel van invoervelden is programmatisch bepaalbaar.',
       '1.4.1': 'Kleur wordt niet als enige visuele middel gebruikt om informatie over te brengen.',
-      '1.4.2': 'Gebruiker heeft controle over audio die automatisch start.',
+      '1.4.2': 'Geluidsbediening.',
       '1.4.3': 'Het contrast tussen tekst en achtergrond is minimaal 4,5:1.',
       '1.4.4': 'Tekst kan tot 200% worden vergroot zonder verlies van content of functionaliteit.',
       '1.4.5': 'Afbeeldingen van tekst worden niet gebruikt, tenzij noodzakelijk.',
@@ -466,9 +472,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                 </span>
                               </h4>
 
-                              {/* Criterion description */}
+                              {/* Criterion description - use title from database */}
                               <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                                {getCriterionDescription(criterion.code)}
+                                {criterion.title}
                               </p>
 
                               {/* Understanding link */}

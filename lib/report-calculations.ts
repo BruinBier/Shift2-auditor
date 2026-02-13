@@ -235,11 +235,37 @@ export async function groupFindingsByHierarchy(project: ProjectWithRelations): P
     includeLevels.push(WCAGLevel.AAA);
   }
 
-  // Get ALL WCAG criteria for the project's level
+  // Get criteria IDs that are selected for this research type
+  let allowedCriteriaIds: string[] | null = null;
+  if (project.researchType) {
+    const researchType = await prisma.researchType.findUnique({
+      where: { name: project.researchType },
+      include: {
+        criteria: {
+          select: {
+            wcagCriterionId: true,
+          },
+        },
+      },
+    });
+
+    if (researchType) {
+      allowedCriteriaIds = researchType.criteria.map(c => c.wcagCriterionId);
+    }
+  }
+
+  // Get WCAG criteria for the project's level, filtered by research type if applicable
+  const whereClause: any = {
+    level: { in: includeLevels },
+  };
+
+  // Only include criteria that are selected in the research type
+  if (allowedCriteriaIds !== null && allowedCriteriaIds.length > 0) {
+    whereClause.id = { in: allowedCriteriaIds };
+  }
+
   const allCriteria = await prisma.wCAGCriterion.findMany({
-    where: {
-      level: { in: includeLevels },
-    },
+    where: whereClause,
     orderBy: { code: 'asc' },
   });
 

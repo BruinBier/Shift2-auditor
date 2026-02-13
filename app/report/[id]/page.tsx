@@ -62,6 +62,34 @@ export default async function ReportPage({ params }: { params: { id: string } })
     notFound();
   }
 
+  // Filter criterionAssessments based on research type
+  let filteredAssessments = project.criterionAssessments;
+  if (project.researchType) {
+    const researchType = await prisma.researchType.findUnique({
+      where: { name: project.researchType },
+      include: {
+        criteria: {
+          select: {
+            wcagCriterionId: true,
+          },
+        },
+      },
+    });
+
+    if (researchType && researchType.criteria.length > 0) {
+      const allowedCriteriaIds = new Set(researchType.criteria.map(c => c.wcagCriterionId));
+      filteredAssessments = project.criterionAssessments.filter(
+        assessment => allowedCriteriaIds.has(assessment.wcagCriterion.id)
+      );
+    }
+  }
+
+  // Update project with filtered assessments
+  const projectWithFilteredAssessments = {
+    ...project,
+    criterionAssessments: filteredAssessments,
+  };
+
   // Fetch research type data
   let researchTypeData = null;
   if (project.researchType) {
@@ -85,12 +113,12 @@ export default async function ReportPage({ params }: { params: { id: string } })
   // Convert sampleInfo markdown to HTML
   const sampleInfoHtml = project.sampleInfo ? await marked.parse(project.sampleInfo) : null;
 
-  // Group findings by WCAG hierarchy
-  const groupedFindings = await groupFindingsByHierarchy(project as any);
+  // Group findings by WCAG hierarchy (use filtered assessments)
+  const groupedFindings = await groupFindingsByHierarchy(projectWithFilteredAssessments as any);
 
   // Convert dates to strings for client component
   const projectData = {
-    ...project,
+    ...projectWithFilteredAssessments,
     version: parseFloat(String(project.version)),
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
