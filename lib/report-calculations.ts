@@ -288,6 +288,7 @@ export async function groupFindingsByHierarchy(project: ProjectWithRelations): P
     // Convert to array format
     const guidelines = Array.from(guidelinesMap.entries()).map(([code, criteriaList]) => {
       const guidelineTitle = criteriaList[0].guidelineTitleNl;
+      const guidelineDescription = criteriaList[0].guidelineDescriptionNl;
 
       const criteria = criteriaList.map((criterion) => {
         // Find assessment for this criterion
@@ -314,6 +315,7 @@ export async function groupFindingsByHierarchy(project: ProjectWithRelations): P
           id: criterion.id,
           code: criterion.code,
           title: criterion.titleNl,
+          description: criterion.descriptionNl,
           level: criterion.level,
           understandingUrl: criterion.understandingUrl,
           assessment: assessment
@@ -333,6 +335,7 @@ export async function groupFindingsByHierarchy(project: ProjectWithRelations): P
       return {
         code,
         title: guidelineTitle,
+        description: guidelineDescription,
         criteria,
       };
     });

@@ -733,7 +733,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                 {/* Description - always visible */}
                 <div>
                   <p className="text-sm text-gray-700 mb-2">
-                    {group.criterion.descriptionNl || 'Geef informatieve afbeeldingen en andere niet-tekstuele content een goed tekstalternatief.'}
+                    {group.criterion.descriptionNl || group.criterion.titleNl}
                   </p>
                   <p className="text-sm text-gray-600">
                     <a

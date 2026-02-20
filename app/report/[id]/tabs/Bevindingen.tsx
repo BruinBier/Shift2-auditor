@@ -226,62 +226,6 @@ export default function Bevindingen({ project }: { project: any }) {
     return explanations[code] || '';
   };
 
-  const getCriterionDescription = (code: string) => {
-    const descriptions: Record<string, string> = {
-      '1.1.1': 'Geef informatieve afbeeldingen en andere niet-tekstuele content een goed tekstalternatief.',
-      '1.2.1': 'Vooraf opgenomen content bevat een tekstalternatief voor video en audio.',
-      '1.2.2': 'Ondertitels voor doven en slechthorenden voor vooraf opgenomen video.',
-      '1.2.3': 'Gebarentaal of audiodescriptie voor vooraf opgenomen video.',
-      '1.2.4': 'Ondertitels voor doven en slechthorenden voor live video.',
-      '1.2.5': 'Audiodescriptie voor vooraf opgenomen video.',
-      '1.3.1': 'Structuur en relaties zijn programmatisch bepaalbaar.',
-      '1.3.2': 'De juiste volgorde van content is programmatisch bepaalbaar.',
-      '1.3.3': 'Instructies zijn niet uitsluitend afhankelijk van zintuiglijke kenmerken.',
-      '1.3.4': 'Content kan in zowel staand als liggend formaat worden bekeken.',
-      '1.3.5': 'Het doel van invoervelden is programmatisch bepaalbaar.',
-      '1.4.1': 'Kleur wordt niet als enige visuele middel gebruikt om informatie over te brengen.',
-      '1.4.2': 'Geluidsbediening.',
-      '1.4.3': 'Het contrast tussen tekst en achtergrond is minimaal 4,5:1.',
-      '1.4.4': 'Tekst kan tot 200% worden vergroot zonder verlies van content of functionaliteit.',
-      '1.4.5': 'Afbeeldingen van tekst worden niet gebruikt, tenzij noodzakelijk.',
-      '1.4.10': 'Content kan zonder horizontaal scrollen worden bekeken op 320 CSS pixels breedte.',
-      '1.4.11': 'Het contrast van interactieve componenten en grafische objecten is minimaal 3:1.',
-      '1.4.12': 'Tekstafstand kan door gebruiker worden aangepast zonder verlies van content.',
-      '1.4.13': 'Content die verschijnt bij hover of focus is afsluitbaar, blijvend en hoverbaar.',
-      '2.1.1': 'Alle functionaliteit is beschikbaar via een toetsenbord.',
-      '2.1.2': 'Toetsenbord focus kan niet vast komen te zitten in een component.',
-      '2.1.4': 'Sneltoetsen kunnen worden uitgeschakeld of aangepast.',
-      '2.2.1': 'Tijdslimieten kunnen worden uitgezet, aangepast of verlengd.',
-      '2.2.2': 'Bewegende, knipperende of scrollende content kan worden gepauzeerd.',
-      '2.3.1': 'Content knippert niet meer dan 3 keer per seconde.',
-      '2.4.1': 'Een mechanisme is beschikbaar om herhalende content over te slaan.',
-      '2.4.2': 'Webpagina\'s hebben beschrijvende en onderscheidende titels.',
-      '2.4.3': 'Focusvolgorde behoudt betekenis en bedienbaarheid.',
-      '2.4.4': 'Het doel van een link kan uit de linktekst of context worden bepaald.',
-      '2.4.5': 'Er is meer dan één manier om een webpagina binnen een set te vinden.',
-      '2.4.6': 'Koppen en labels beschrijven onderwerp of doel.',
-      '2.4.7': 'De toetsenbordfocus indicator is zichtbaar.',
-      '2.5.1': 'Alle functionaliteit die met complexe gebaren werkt, werkt ook met een enkele aanraking.',
-      '2.5.2': 'Voor functionaliteit die via aanraking werkt, geldt dat de actie pas wordt uitgevoerd bij loslaten.',
-      '2.5.3': 'Labels in code komen overeen met zichtbare labels.',
-      '2.5.4': 'Functionaliteit die wordt geactiveerd door beweging kan ook met interface componenten worden geactiveerd.',
-      '3.1.1': 'De primaire taal van de webpagina is programmatisch bepaalbaar.',
-      '3.1.2': 'De taal van passages of zinnen is programmatisch bepaalbaar.',
-      '3.2.1': 'Focus ontvangen veroorzaakt geen onverwachte contextwijziging.',
-      '3.2.2': 'Invoer wijzigen veroorzaakt geen onverwachte contextwijziging.',
-      '3.2.3': 'Navigatiemechanismen die op meerdere pagina\'s voorkomen, staan in dezelfde volgorde.',
-      '3.2.4': 'Componenten met dezelfde functionaliteit zijn consistent gelabeld.',
-      '3.3.1': 'Invoerfouten worden automatisch gedetecteerd en aan de gebruiker beschreven.',
-      '3.3.2': 'Labels of instructies zijn aanwezig bij invoervelden.',
-      '3.3.3': 'Suggesties voor het herstellen van invoerfouten worden gegeven.',
-      '3.3.4': 'Acties die juridische verplichtingen, financiële transacties of wijzigingen in gebruikersdata veroorzaken, zijn omkeerbaar.',
-      '4.1.1': 'Content heeft geen fouten in de opmaakcode.',
-      '4.1.2': 'Naam, rol en waarde van componenten zijn programmatisch bepaalbaar.',
-      '4.1.3': 'Statusberichten zijn programmatisch bepaalbaar zonder focus te ontvangen.',
-    };
-    return descriptions[code] || 'Beschrijving niet beschikbaar.';
-  };
-
   const getPrincipleIcon = (principleName: string) => {
     switch (principleName) {
       case 'Waarneembaar':
@@ -407,21 +351,21 @@ export default function Bevindingen({ project }: { project: any }) {
               return (
                 <div key={principle.principle} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
                   {/* Principle header */}
-                  <div className="mb-4">
+                  <div className="mb-8">
                     <div className="flex items-center gap-2 mb-2">
                       {getPrincipleIcon(getDisplayPrincipleName(principle.principleName))}
-                      <h2 className="text-lg font-semibold text-gray-900">
+                      <h2 className="text-2xl font-semibold text-gray-900">
                         {getDisplayPrincipleName(principle.principleName)}
                       </h2>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <p className="text-sm text-gray-700 leading-relaxed mb-6">
                       {getPrincipleDescription(principle.principleName)}
                     </p>
                   </div>
 
                   {/* Guidelines as details/summary */}
-                  {guidelinesWithStatus.map((guideline: any) => (
-                    <details key={guideline.code} className="group" id={guideline.number} open={expandAllGuidelines}>
+                  {guidelinesWithStatus.map((guideline: any, index: number) => (
+                    <details key={guideline.code} className={`group ${index > 0 ? 'mt-10' : ''}`} id={guideline.number} open={expandAllGuidelines}>
                       <summary className="cursor-pointer list-none">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-700 text-sm group-open:rotate-90 transition-transform inline-block">
@@ -443,7 +387,7 @@ export default function Bevindingen({ project }: { project: any }) {
                       <div className="mt-3 space-y-4">
                         {/* Guideline description */}
                         <p className="text-sm text-gray-700 leading-relaxed ml-6">
-                          {getGuidelineDescription(guideline.title)}
+                          {guideline.description || guideline.title}
                         </p>
 
                         {/* Criteria */}
@@ -472,9 +416,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                 </span>
                               </h4>
 
-                              {/* Criterion description - use title from database */}
+                              {/* Criterion description - use description from database */}
                               <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                                {criterion.title}
+                                {criterion.description || criterion.title}
                               </p>
 
                               {/* Understanding link */}
@@ -569,7 +513,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                   <>
                                     {/* Rejected findings section */}
                                     {rejectedFindings.length > 0 && (
-                                      <div className="mt-4 pt-4 border-t border-gray-200">
+                                      <div className="mt-4 pt-6 border-t border-gray-200">
                                         <h5 className="text-sm font-semibold text-gray-900 mb-3">
                                           Gevonden problemen ({rejectedFindings.length})
                                         </h5>
@@ -577,7 +521,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                         <div className="space-y-3">
                                           {rejectedFindings.map((finding: any, index: number) => (
                                       <div key={finding.id}>
-                                        {index > 0 && <hr className="border-gray-200 my-4" />}
+                                        {index > 0 && <hr className="border-gray-200 my-6" />}
                                         <article className="space-y-3">
                                           {/* Finding title */}
                                           <h6 className="text-sm font-bold text-gray-900">
@@ -787,7 +731,7 @@ export default function Bevindingen({ project }: { project: any }) {
 
                                     {/* Remarks section */}
                                     {remarks.length > 0 && (
-                                      <div className="mt-4 pt-4 border-t border-gray-200">
+                                      <div className="mt-4 pt-6 border-t border-gray-200">
                                         <h5 className="text-sm font-semibold text-gray-900 mb-2">
                                           Overige opmerkingen ({remarks.length})
                                         </h5>
@@ -798,7 +742,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                         <div className="space-y-3">
                                           {remarks.map((finding: any, index: number) => (
                                             <div key={finding.id}>
-                                              {index > 0 && <hr className="border-gray-200 my-4" />}
+                                              {index > 0 && <hr className="border-gray-200 my-6" />}
                                               <article className="space-y-3">
                                                 {/* Finding title */}
                                                 <h6 className="text-sm font-bold text-gray-900">

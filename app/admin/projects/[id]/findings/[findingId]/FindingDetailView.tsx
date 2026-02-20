@@ -902,7 +902,7 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
                 </h3>
               </div>
               <div className="px-4 pt-1 pb-3 text-sm text-gray-700 leading-relaxed border-b border-gray-200">
-                {finding.wcagCriterion?.descriptionNl || 'Geef informatieve afbeeldingen en andere niet-tekstuele content een goed tekstalternatief.'}
+                {finding.wcagCriterion?.titleNl}
               </div>
 
               {/* Bevinding Details Section */}

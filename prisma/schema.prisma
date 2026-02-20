@@ -220,14 +220,16 @@ enum WCAGPrinciple {
 }
 
 model WCAGCriterion {
-  id                  String                      @id @default(uuid())
-  code                String                      @unique
-  titleNl             String                      @map("title_nl")
-  level               WCAGLevel
-  principle           WCAGPrinciple
-  guidelineCode       String                      @map("guideline_code")
-  guidelineTitleNl    String                      @map("guideline_title_nl")
-  understandingUrl    String?                     @map("understanding_url")
+  id                     String                      @id @default(uuid())
+  code                   String                      @unique
+  titleNl                String                      @map("title_nl")
+  descriptionNl          String?                     @map("description_nl")
+  level                  WCAGLevel
+  principle              WCAGPrinciple
+  guidelineCode          String                      @map("guideline_code")
+  guidelineTitleNl       String                      @map("guideline_title_nl")
+  guidelineDescriptionNl String?                     @map("guideline_description_nl")
+  understandingUrl       String?                     @map("understanding_url")
 
   assessments         CriterionAssessment[]
   findings            Finding[]
