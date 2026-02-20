@@ -229,46 +229,6 @@ export default function Conclusion({ project }: { project: any }) {
       <div className="grid grid-cols-12 gap-6">
         {/* Left column - Main content */}
         <div className="col-span-9 space-y-6">
-          {/* Samenvatting */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Samenvatting</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={generateAISummary}
-                  disabled={isGeneratingSummary}
-                  className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-blue-500 bg-white hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {isGeneratingSummary ? 'Genereren...' : 'Genereer met AI'}
-                </button>
-                <button
-                  onClick={() => openEditModal('summary')}
-                  className="new-project-button findings-button flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-green-500 bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </div>
-                  Bewerken
-                </button>
-              </div>
-            </div>
-            {managementSummary ? (
-              <div
-                className="prose prose-sm max-w-none text-gray-700 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-4 [&_h4]:text-base [&_h4]:font-bold [&_h4]:mb-2 [&_h4]:mt-3 [&_h5]:text-sm [&_h5]:font-bold [&_h5]:mb-2 [&_h5]:mt-3 [&_h6]:text-sm [&_h6]:font-bold [&_h6]:mb-2 [&_h6]:mt-3"
-                dangerouslySetInnerHTML={{ __html: managementSummary }}
-              />
-            ) : (
-              <div className="text-gray-500 text-sm">
-                Nog geen samenvatting toegevoegd. Klik op 'Genereer met AI' om automatisch een samenvatting te genereren, of klik op 'Bewerken' om handmatig een samenvatting toe te voegen.
-              </div>
-            )}
-          </div>
-
           {/* Feedback van onderzoeker */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">

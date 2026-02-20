@@ -516,6 +516,32 @@ export default function OnderzoekenTable({ projects }: Props) {
     }
   };
 
+  const handleCopy = async (id: string) => {
+    if (!confirm('Weet je zeker dat je dit onderzoek wilt kopiëren? Dit kan even duren.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${id}/copy`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const newProject = await response.json();
+        alert('Het onderzoek is succesvol gekopieerd!');
+        router.refresh();
+        // Optionally navigate to the new project
+        // router.push(`/admin/projects/${newProject.id}`);
+      } else {
+        const error = await response.json();
+        alert(`Er is een fout opgetreden bij het kopiëren van het onderzoek: ${error.error || 'Onbekende fout'}`);
+      }
+    } catch (error) {
+      console.error('Error copying project:', error);
+      alert('Er is een fout opgetreden bij het kopiëren van het onderzoek.');
+    }
+  };
+
   // Get kenmerk from database (or generate fallback)
   const getKenmerk = (project: Project) => {
     // Use the kenmerk from the database if it exists
@@ -536,7 +562,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       });
 
     const projectIndex = projectsFromSameOrg.findIndex(p => p.id === project.id);
-    return `${kenmerk}-${projectIndex + 1}`;
+    return `${kenmerk}-${String(projectIndex + 1).padStart(2, '0')}`;
   };
 
   // Filter and search projects
@@ -1062,6 +1088,18 @@ export default function OnderzoekenTable({ projects }: Props) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                               Bewerken
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleCopy(project.id);
+                              }}
+                              className="project-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 hover:bg-gray-50"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              Kopieer onderzoek
                             </button>
                             <button
                               onClick={() => {

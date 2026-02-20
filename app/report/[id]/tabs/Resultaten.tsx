@@ -34,7 +34,7 @@ export default function Resultaten({ project }: { project: any }) {
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-600 mb-2">
-            WCAG 2.2 AA – aanvullend deelonderzoek content – mijn.hhnk.nl
+            {project.title}
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Rapport digitale toegankelijkheid

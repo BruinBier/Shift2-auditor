@@ -38,6 +38,56 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   // Get the first manually added scope URL
   const firstScopeUrl = project.scopeUrls.find((url: any) => url.inScope === true && !url.parentUrlId);
   const scopeDomain = firstScopeUrl ? new URL(firstScopeUrl.url).hostname : '';
+  const scopeUrl = firstScopeUrl?.url ? firstScopeUrl.url.replace(/\/$/, '') : '';
+
+  // Generate automatic summary
+  const generateAutoSummary = () => {
+    const totalPages = project.sampleItems.length;
+    const passedCriteria = stats.effectivePassed;
+    const totalCriteria = stats.totalAssessed;
+    const percentage = totalCriteria > 0 ? Math.round((passedCriteria / totalCriteria) * 100) : 0;
+    const failedCriteria = stats.failed;
+    const unknownCriteria = stats.unknown;
+    const additionalRemarks = project.findings.length - stats.totalProblems;
+
+    const dateStartFormatted = dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : '[datum]';
+    const dateEndFormatted = dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : '[datum]';
+
+    return (
+      <>
+        <p className="mb-4">
+          Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de redactionele content op de website{' '}
+          <a
+            href={scopeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline inline-flex items-center gap-1"
+          >
+            {scopeUrl}
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+          . Het onderzoek is uitgevoerd conform WCAG 2.2 niveau A en AA (EN 301 549), volgens de evaluatiemethode WCAG-EM.
+        </p>
+
+        <p className="mb-4">
+          Het onderzoek vond plaats in de periode van {dateStartFormatted} tot en met {dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
+        </p>
+
+        <p className="mb-4">
+          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA.
+          {' '}Er wordt voldaan aan {passedCriteria} van de {totalCriteria} succescriteria ({percentage}%).
+          {failedCriteria > 0 && ` Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`}
+          {additionalRemarks > 0 && ` Daarnaast zijn ${additionalRemarks} aanvullende ${additionalRemarks === 1 ? 'opmerking opgenomen' : 'opmerkingen opgenomen'} om de toegankelijkheid verder te optimaliseren.`}
+        </p>
+
+        <p>
+          Wij adviseren om redactionele content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het redactionele proces.
+        </p>
+      </>
+    );
+  };
 
   return (
     <>
@@ -57,6 +107,24 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           background-size: contain;
           vertical-align: middle;
         }
+        .report-markdown-content h2 {
+          font-size: 1.5rem !important;
+          font-weight: 400 !important;
+          color: #111827 !important;
+          margin-bottom: 1rem !important;
+        }
+        .scope-info-content h3,
+        .report-markdown-content h3 {
+          font-size: 1.125rem !important;
+          font-weight: 700 !important;
+          color: #111827 !important;
+          margin-top: 1rem !important;
+          margin-bottom: 0.5rem !important;
+        }
+        .scope-info-content h3:first-child,
+        .report-markdown-content h3:first-child {
+          margin-top: 0 !important;
+        }
       `}} />
       <div className="grid grid-cols-3 gap-8">
       {/* Main content */}
@@ -70,17 +138,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Rapport digitale toegankelijkheid
             </h1>
-            <p className="text-gray-700">
-              Dit onderzoek is door {teamName} uitgevoerd tussen{' '}
-              {dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : 'n.v.t.'} en{' '}
-              {dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : 'n.v.t.'}. Tijdens dit
-              onderzoek zijn {stats.pagesInvestigated} pagina's onderzocht. Er wordt voldaan aan{' '}
-              {stats.effectivePassed} van {stats.totalAssessed} succescriteria (
-              {stats.totalAssessed > 0
-                ? Math.round((stats.effectivePassed / stats.totalAssessed) * 100)
-                : 0}
-              %). In het onderzoek zijn {stats.totalProblems} toegankelijkheidsproblemen voor gebruikers met een functiebeperking vastgesteld. Daarnaast zijn {project.findings.length - stats.totalProblems} aanvullende opmerkingen benoemd.
-            </p>
           </div>
         </section>
 
@@ -88,14 +145,16 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Samenvatting</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {project.managementSummary ? (
-              <div
-                className="text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
-                dangerouslySetInnerHTML={{ __html: project.managementSummary }}
-              />
-            ) : (
-              <p className="text-sm text-gray-500 italic">Nog geen samenvatting toegevoegd</p>
-            )}
+            <div className="text-gray-700 whitespace-pre-line">
+              {project.managementSummary ? (
+                <div
+                  className="prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                  dangerouslySetInnerHTML={{ __html: project.managementSummary }}
+                />
+              ) : (
+                generateAutoSummary()
+              )}
+            </div>
           </div>
         </section>
 
@@ -114,7 +173,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
         {/* What was tested */}
         <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Over dit onderzoek</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             {project.researchTypeData?.reportIntro ? (
               <div
@@ -351,7 +409,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {project.technologies && project.technologies.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Technologieën</h3>
-            <ul className="space-y-1">
+            <ul className="list-disc list-inside space-y-1">
               {project.technologies.map((tech: string, index: number) => (
                 <li key={index} className="text-sm text-gray-700">
                   {tech}

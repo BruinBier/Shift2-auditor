@@ -389,7 +389,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                     <tr key={relatedProject.id} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded">
-                          SHP-{relatedProject.version}
+                          {relatedProject.kenmerk || `SHP-${relatedProject.version}`}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -398,7 +398,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{relatedProject.title}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{relatedProject.version}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{Number(relatedProject.version).toFixed(1)}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {relatedProject.reportDate ? format(new Date(relatedProject.reportDate), 'd MMMM yyyy', { locale: nl }) : '-'}
                       </td>
