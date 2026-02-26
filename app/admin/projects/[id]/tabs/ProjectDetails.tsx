@@ -249,7 +249,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Versie</label>
-              <div className="text-sm text-gray-900">{project.version}</div>
+              <div className="text-sm text-gray-900">{Number(project.version).toFixed(1)}</div>
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Taal</label>

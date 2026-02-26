@@ -4,11 +4,14 @@ import { calculateReportStats } from '@/lib/report-calculations';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
+import { parseMarkdownTabs } from '@/lib/parse-tabs';
+import { formatProjectName } from '@/lib/format-project-name';
 
 export default function OverDitOnderzoek({ project }: { project: any }) {
   const [teamName, setTeamName] = useState('Shift2');
   const [aboutOrgText, setAboutOrgText] = useState('');
   const [teamEmail, setTeamEmail] = useState('');
+  const [openAccordions, setOpenAccordions] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     // Get team info from API
@@ -29,6 +32,16 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     fetchTeamInfo();
   }, []);
 
+  // Add target="_blank" and external icon to all links in markdown content
+  useEffect(() => {
+    const links = document.querySelectorAll('.report-markdown-content a');
+    links.forEach((link) => {
+      const anchor = link as HTMLAnchorElement;
+      anchor.setAttribute('target', '_blank');
+      anchor.setAttribute('rel', 'noopener noreferrer');
+    });
+  }, [project]);
+
   const stats = calculateReportStats(project);
   // Use researchStartedOn instead of dateStart for the report
   const dateStart = project.researchStartedOn ? new Date(project.researchStartedOn) : (project.dateStart ? new Date(project.dateStart) : null);
@@ -39,6 +52,22 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const firstScopeUrl = project.scopeUrls.find((url: any) => url.inScope === true && !url.parentUrlId);
   const scopeDomain = firstScopeUrl ? new URL(firstScopeUrl.url).hostname : '';
   const scopeUrl = firstScopeUrl?.url ? firstScopeUrl.url.replace(/\/$/, '') : '';
+
+  // Extract domain from subject for intro text
+  const getIntroUrl = () => {
+    const subjectOrTitle = project.subject || project.title || '';
+    if (subjectOrTitle.includes(' - ')) {
+      const parts = subjectOrTitle.split(' - ');
+      const lastPart = parts[parts.length - 1].trim();
+      // Add protocol if not present
+      if (lastPart && !lastPart.startsWith('http')) {
+        return `https://${lastPart}`;
+      }
+      return lastPart;
+    }
+    return scopeUrl;
+  };
+  const introUrl = getIntroUrl();
 
   // Generate automatic summary
   const generateAutoSummary = () => {
@@ -56,7 +85,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     return (
       <>
         <p className="mb-4">
-          Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de redactionele content op de website{' '}
+          Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de website{' '}
           <a
             href={scopeUrl}
             target="_blank"
@@ -77,7 +106,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
         <p className="mb-4">
           De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA.
-          {' '}Er wordt voldaan aan {passedCriteria} van de {totalCriteria} succescriteria ({percentage}%).
+          {' '}In dit deelonderzoek zijn {totalCriteria} succescriteria beoordeeld.
+          {' '}Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%).
           {failedCriteria > 0 && ` Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`}
           {additionalRemarks > 0 && ` Daarnaast zijn ${additionalRemarks} aanvullende ${additionalRemarks === 1 ? 'opmerking opgenomen' : 'opmerkingen opgenomen'} om de toegankelijkheid verder te optimaliseren.`}
         </p>
@@ -92,11 +122,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
-        .scope-info-content a {
+        .scope-info-content a,
+        .report-markdown-content a {
           color: #2563eb !important;
           text-decoration: underline !important;
         }
-        .scope-info-content a::after {
+        .scope-info-content a::after,
+        .report-markdown-content a::after {
           content: '';
           display: inline-block;
           width: 12px;
@@ -109,9 +141,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         }
         .report-markdown-content h2 {
           font-size: 1.5rem !important;
-          font-weight: 400 !important;
+          font-weight: 700 !important;
           color: #111827 !important;
           margin-bottom: 1rem !important;
+          margin-top: 0 !important;
         }
         .scope-info-content h3,
         .report-markdown-content h3 {
@@ -125,6 +158,24 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         .report-markdown-content h3:first-child {
           margin-top: 0 !important;
         }
+        .report-markdown-content table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin: 1rem 0 !important;
+        }
+        .report-markdown-content table th,
+        .report-markdown-content table td {
+          border: 1px solid #d1d5db !important;
+          padding: 0.5rem !important;
+          text-align: left !important;
+        }
+        .report-markdown-content table th {
+          background-color: #f9fafb !important;
+          font-weight: 600 !important;
+        }
+        .report-markdown-content table tr:nth-child(even) {
+          background-color: #f9fafb !important;
+        }
       `}} />
       <div className="grid grid-cols-3 gap-8">
       {/* Main content */}
@@ -136,8 +187,64 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               {project.title}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Rapport digitale toegankelijkheid
+              Toegankelijkheidsonderzoek {formatProjectName(project.subject || project.title, project.researchTypeData?.type)}
             </h1>
+          </div>
+        </section>
+
+        {/* Report intro */}
+        <section>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700 leading-relaxed mb-3">
+              {(() => {
+                // Use reportIntroHeader if available
+                const template = project.researchTypeData?.reportIntroHeader;
+
+                if (template) {
+                  // Split the template by {url} placeholder
+                  const parts = template.split('{url}');
+
+                  return (
+                    <>
+                      {parts[0]}
+                      <a
+                        href={introUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        {introUrl}
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      {parts[1] || ''}
+                    </>
+                  );
+                } else {
+                  // Fallback to default text
+                  return (
+                    <>
+                      Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de {project.researchTypeData?.type || 'website'}{' '}
+                      <a
+                        href={introUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        {introUrl}
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </>
+                  );
+                }
+              })()}
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              Het onderzoek is uitgevoerd conform {project.researchTypeData?.version || 'WCAG 2.2'} niveau {project.researchTypeData?.level || 'A en AA'} (EN 301 549), volgens de evaluatiemethode WCAG-EM.
+            </p>
           </div>
         </section>
 
@@ -173,16 +280,82 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
         {/* What was tested */}
         <section>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {project.researchTypeData?.reportIntro ? (
-              <div
-                className="report-markdown-content text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
-                dangerouslySetInnerHTML={{ __html: project.researchTypeData.reportIntro }}
-              />
-            ) : (
-              <p className="text-sm text-gray-500 italic">Nog geen informatie over dit onderzoek toegevoegd</p>
-            )}
-          </div>
+          {(() => {
+            const parsedContent = parseMarkdownTabs(project.researchTypeData?.reportIntro);
+
+            if (parsedContent && parsedContent.tabs.length > 0) {
+              // Toggle accordion function
+              const toggleAccordion = (index: number) => {
+                const newOpenAccordions = new Set(openAccordions);
+                if (newOpenAccordions.has(index)) {
+                  newOpenAccordions.delete(index);
+                } else {
+                  newOpenAccordions.add(index);
+                }
+                setOpenAccordions(newOpenAccordions);
+              };
+
+              // Render accordion interface with optional intro
+              return (
+                <div className="space-y-4">
+                  {/* Intro section (if present) */}
+                  {parsedContent.intro && (
+                    <div className="report-markdown-content text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2 mb-4">
+                      <div dangerouslySetInnerHTML={{ __html: parsedContent.intro }} />
+                    </div>
+                  )}
+
+                  {/* Accordion section */}
+                  <div className="space-y-0 border border-gray-300 rounded-lg overflow-hidden">
+                    {parsedContent.tabs.map((tab, index) => {
+                      const isOpen = openAccordions.has(index);
+                      return (
+                        <div key={index} className={index > 0 ? 'border-t border-gray-300' : ''}>
+                          {/* Accordion header */}
+                          <button
+                            onClick={() => toggleAccordion(index)}
+                            className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                            aria-expanded={isOpen}
+                          >
+                            <span className="text-base font-medium text-gray-900">
+                              {tab.title}
+                            </span>
+                            <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                              {isOpen ? '−' : '+'}
+                            </span>
+                          </button>
+
+                          {/* Accordion content */}
+                          {isOpen && (
+                            <div className="px-6 py-4 bg-white">
+                              <div
+                                className="report-markdown-content text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                                dangerouslySetInnerHTML={{ __html: tab.content }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            } else {
+              // No tabs found, render regular content
+              return (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  {project.researchTypeData?.reportIntro ? (
+                    <div
+                      className="report-markdown-content text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                      dangerouslySetInnerHTML={{ __html: project.researchTypeData.reportIntro }}
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">Nog geen informatie over dit onderzoek toegevoegd</p>
+                  )}
+                </div>
+              );
+            }
+          })()}
         </section>
 
         {/* About organization */}

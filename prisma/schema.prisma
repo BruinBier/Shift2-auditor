@@ -28,18 +28,19 @@ model Team {
 }
 
 model ResearchType {
-  id              String                      @id @default(uuid())
-  name            String                      @unique
-  version         String
-  level           String
-  type            String
-  description     String?                     @db.Text
-  reportIntro     String?                     @db.Text @map("report_intro")
-  reportIntroPdf  String?                     @db.Text @map("report_intro_pdf")
-  createdAt       DateTime                    @default(now()) @map("created_at")
-  updatedAt       DateTime                    @updatedAt @map("updated_at")
+  id                String                      @id @default(uuid())
+  name              String                      @unique
+  version           String
+  level             String
+  type              String
+  description       String?                     @db.Text
+  reportIntroHeader String?                     @db.Text @map("report_intro_header")
+  reportIntro       String?                     @db.Text @map("report_intro")
+  reportIntroPdf    String?                     @db.Text @map("report_intro_pdf")
+  createdAt         DateTime                    @default(now()) @map("created_at")
+  updatedAt         DateTime                    @updatedAt @map("updated_at")
 
-  criteria        ResearchTypeWCAGCriterion[]
+  criteria          ResearchTypeWCAGCriterion[]
 
   @@map("research_types")
 }

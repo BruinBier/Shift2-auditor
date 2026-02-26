@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { marked } from 'marked';
+import { formatProjectName } from '@/lib/format-project-name';
 
 export default function Steekproef({ project }: { project: any }) {
   const [activeSubTab, setActiveSubTab] = useState<'structured' | 'random' | 'pdf'>('structured');
@@ -151,7 +152,7 @@ export default function Steekproef({ project }: { project: any }) {
             {project.title}
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Rapport digitale toegankelijkheid
+            Toegankelijkheidsonderzoek {formatProjectName(project.subject || project.title, project.researchTypeData?.type)}
           </h1>
         </div>
 

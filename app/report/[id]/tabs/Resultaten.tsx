@@ -5,6 +5,7 @@ import {
   getStatusColor,
   getPrincipleLabel,
 } from '@/lib/report-calculations';
+import { formatProjectName } from '@/lib/format-project-name';
 
 export default function Resultaten({ project }: { project: any }) {
   const stats = calculateReportStats(project);
@@ -37,7 +38,7 @@ export default function Resultaten({ project }: { project: any }) {
             {project.title}
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Rapport digitale toegankelijkheid
+            Toegankelijkheidsonderzoek {formatProjectName(project.subject || project.title, project.researchTypeData?.type)}
           </h1>
           <p className="text-gray-700">
             Dit rapport toont de uitkomsten van het onderzoek digitale toegankelijkheid. De resultaten staan in twee overzichten: een per principe en een per succescriterium. Zo krijg je zowel een globaal overzicht als details over waar wel goed gaat en wat beter kan.
@@ -69,7 +70,7 @@ export default function Resultaten({ project }: { project: any }) {
           </div>
           <div className="bg-orange-50 rounded-lg border border-orange-200 p-4 text-center">
             <div className="text-3xl font-bold text-orange-700 mb-1">{stats.unknown}</div>
-            <div className="text-sm text-orange-700 font-medium">Onbekend</div>
+            <div className="text-sm text-orange-700 font-medium">Niet beoordeeld</div>
           </div>
           <div className="bg-blue-50 rounded-lg border border-blue-200 p-4 text-center">
             <div className="text-3xl font-bold text-blue-700 mb-1">{stats.notTested}</div>

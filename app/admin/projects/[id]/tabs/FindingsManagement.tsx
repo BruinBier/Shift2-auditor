@@ -424,7 +424,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
       case 'passed': return 'Goedgekeurd';
       case 'failed': return 'Afgekeurd';
       case 'not_present': return 'Niet aanwezig';
-      case 'unknown': return 'Onbekend';
+      case 'unknown': return 'Niet beoordeeld';
       case 'not_tested': return 'Niet getoetst';
       default: return '';
     }
@@ -725,7 +725,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                       <option value="passed">Goedgekeurd</option>
                       <option value="failed">Afgekeurd</option>
                       <option value="not_present">Niet aanwezig</option>
-                      <option value="unknown">Onbekend</option>
+                      <option value="unknown">Niet beoordeeld</option>
                     </select>
                   </div>
                 </div>

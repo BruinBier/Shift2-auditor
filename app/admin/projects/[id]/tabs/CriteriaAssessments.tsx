@@ -150,7 +150,7 @@ export default function CriteriaAssessments({ project, allCriteria }: { project:
                       <option value="passed">Goedgekeurd</option>
                       <option value="failed">Afgekeurd</option>
                       <option value="not_present">Niet aanwezig</option>
-                      <option value="unknown">Onbekend</option>
+                      <option value="unknown">Niet beoordeeld</option>
                       <option value="not_tested">Niet getest</option>
                     </select>
                   </td>

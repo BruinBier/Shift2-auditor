@@ -167,7 +167,7 @@ export function getStatusLabel(status: AssessmentStatus): string {
     passed: 'Goedgekeurd',
     failed: 'Afgekeurd',
     not_present: 'Niet aanwezig',
-    unknown: 'Onbekend',
+    unknown: 'Niet beoordeeld',
     not_tested: 'Niet getoetst',
   };
   return labels[status];

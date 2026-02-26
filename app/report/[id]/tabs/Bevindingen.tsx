@@ -7,6 +7,7 @@ import {
   getStatusLabel,
   getStatusColor,
 } from '@/lib/report-calculations';
+import { formatProjectName } from '@/lib/format-project-name';
 
 export default function Bevindingen({ project }: { project: any }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -179,7 +180,7 @@ export default function Bevindingen({ project }: { project: any }) {
       serieus: 'Serieus',
       matig: 'Matig',
       klein: 'Klein',
-      onbekend: 'Onbekend',
+      onbekend: 'Niet beoordeeld',
     };
     return labels[impact] || impact;
   };
@@ -300,7 +301,7 @@ export default function Bevindingen({ project }: { project: any }) {
             {project.title}
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Rapport digitale toegankelijkheid
+            Toegankelijkheidsonderzoek {formatProjectName(project.subject || project.title, project.researchTypeData?.type)}
           </h1>
         </div>
 

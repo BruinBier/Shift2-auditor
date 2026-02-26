@@ -198,7 +198,7 @@ export default function Finalize({ project, allCriteria }: FinalizeProps) {
                   <div className="text-2xl font-bold text-orange-800">
                     {criteriaWithAssessments.filter((c: any) => c.status === 'unknown').length}
                   </div>
-                  <div className="text-xs text-orange-700 mt-1">Onbekend</div>
+                  <div className="text-xs text-orange-700 mt-1">Niet beoordeeld</div>
                 </div>
                 <div className="bg-blue-100 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-blue-800">
@@ -250,11 +250,11 @@ export default function Finalize({ project, allCriteria }: FinalizeProps) {
                           case 'not_present':
                             return 'Niet aanwezig';
                           case 'unknown':
-                            return 'Onbekend';
+                            return 'Niet beoordeeld';
                           case 'untested':
                             return 'Niet getoetst';
                           default:
-                            return 'Onbekend';
+                            return 'Niet beoordeeld';
                         }
                       };
 

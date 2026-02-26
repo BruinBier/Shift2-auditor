@@ -18,6 +18,7 @@ interface ResearchType {
   level: string;
   type: string;
   description: string;
+  reportIntroHeader?: string;
   reportIntro?: string;
   reportIntroPdf?: string;
   selectedCriteria?: string[];
@@ -103,6 +104,24 @@ export default function OnderzoekstypenPage() {
   // Set mounted state for client-side only rendering
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Add CSS for markdown editor modal z-index
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .md-editor-modal-container,
+      .md-editor-modal-mask {
+        z-index: 99999 !important;
+      }
+      .md-editor-modal {
+        z-index: 100000 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   // Load research types from database
@@ -806,6 +825,67 @@ export default function OnderzoekstypenPage() {
                     </div>
                   </div>
 
+                  {/* Help text for accordions */}
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">💡 Uitklapbare secties gebruiken in het rapport</h4>
+                    <p className="text-sm text-gray-700 mb-2">
+                      Je kunt de inhoud in het rapport opsplitsen in uitklapbare secties (accordeons) door gebruik te maken van horizontale lijnen (<code className="bg-white px-1 py-0.5 rounded">---</code>).
+                    </p>
+
+                    <div className="space-y-3 mt-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 mb-1">Voorbeeld zonder intro:</p>
+                        <pre className="text-xs bg-white p-3 rounded border border-gray-300 overflow-x-auto">
+{`## Doel van het onderzoek
+
+Content voor de eerste uitklapbare sectie...
+
+---
+
+## Methodiek
+
+Content voor de tweede uitklapbare sectie...
+
+---
+
+## Resultaten
+
+Content voor de derde uitklapbare sectie...`}
+                        </pre>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 mb-1">Voorbeeld met intro:</p>
+                        <pre className="text-xs bg-white p-3 rounded border border-gray-300 overflow-x-auto">
+{`Dit is de intro tekst die altijd zichtbaar is boven de uitklapbare secties.
+Deze tekst heeft geen heading en komt voor de eerste ---.
+
+---
+
+## Doel van het onderzoek
+
+Content voor de eerste uitklapbare sectie...
+
+---
+
+## Methodiek
+
+Content voor de tweede uitklapbare sectie...`}
+                        </pre>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mt-3">
+                      <strong>Tips:</strong>
+                    </p>
+                    <ul className="text-sm text-gray-600 list-disc list-inside space-y-1 mt-1">
+                      <li>Tekst vóór de eerste <code className="bg-white px-1 py-0.5 rounded">---</code> zonder heading = intro (altijd zichtbaar)</li>
+                      <li>Elke sectie na <code className="bg-white px-1 py-0.5 rounded">---</code> wordt een uitklapbare sectie met + icoon</li>
+                      <li>De eerste heading (H2, H3 of H4) wordt de titel van de uitklapbare sectie</li>
+                      <li>Gebruikers kunnen meerdere secties tegelijk openen</li>
+                    </ul>
+                  </div>
+
                   {/* Markdown Editor */}
                   <div>
                     {mounted && (
@@ -839,6 +919,7 @@ export default function OnderzoekstypenPage() {
                           'link',
                           'image',
                           'table',
+                          0, // Horizontal rule button
                           '-',
                           'revoke',
                           'next',
