@@ -1,17 +1,118 @@
 'use client';
 
-import { calculateReportStats } from '@/lib/report-calculations';
+import { calculateReportStats, calculatePrincipleStats, getStatusLabel, getPrincipleLabel } from '@/lib/report-calculations';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 import { parseMarkdownTabs } from '@/lib/parse-tabs';
 import { formatProjectName } from '@/lib/format-project-name';
+import { useSearchParams } from 'next/navigation';
 
 export default function OverDitOnderzoek({ project }: { project: any }) {
+  const searchParams = useSearchParams();
+  const isPdfMode = searchParams.get('pdf') === 'true';
+
   const [teamName, setTeamName] = useState('Shift2');
   const [aboutOrgText, setAboutOrgText] = useState('');
   const [teamEmail, setTeamEmail] = useState('');
   const [openAccordions, setOpenAccordions] = useState<Set<number>>(new Set());
+  const [openResultsAccordions, setOpenResultsAccordions] = useState<Set<string>>(new Set());
+  const [openFindingsAccordions, setOpenFindingsAccordions] = useState<Set<string>>(new Set());
+  const [openDetailsAccordions, setOpenDetailsAccordions] = useState<Set<string>>(new Set());
+
+  const handleDownloadPdf = async () => {
+    try {
+      const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'PDF wordt gegenereerd...';
+      }
+
+      // Call the server-side PDF generation API
+      const response = await fetch(`/api/reports/${project.id}/pdf`);
+
+      if (!response.ok) {
+        throw new Error('PDF generatie mislukt');
+      }
+
+      // Get the PDF blob
+      const pdfBlob = await response.blob();
+
+      // Download the PDF
+      const url = window.URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      const fileName = `rapport-${project.subject || project.title}-v${project.version}.pdf`.replace(/[^a-zA-Z0-9.-]/g, '_');
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Download PDF';
+      }
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Er is een fout opgetreden bij het genereren van de PDF. Probeer het opnieuw.');
+
+      const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Download PDF';
+      }
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    try {
+      const button = document.querySelector('[data-docx-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Word wordt gegenereerd...';
+      }
+
+      // Call the server-side Word document generation API
+      const response = await fetch(`/api/reports/${project.id}/docx`);
+
+      if (!response.ok) {
+        throw new Error('Word generatie mislukt');
+      }
+
+      // Get the Word document blob
+      const docxBlob = await response.blob();
+
+      // Download the Word document
+      const url = window.URL.createObjectURL(docxBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      const fileName = `rapport-${project.subject || project.title}-v${project.version}.docx`.replace(/[^a-zA-Z0-9.-]/g, '_');
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Download Word';
+      }
+    } catch (error) {
+      console.error('Word generation error:', error);
+      alert('Er is een fout opgetreden bij het genereren van het Word document. Probeer het opnieuw.');
+
+      const button = document.querySelector('[data-docx-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Download Word';
+      }
+    }
+  };
 
   useEffect(() => {
     // Get team info from API
@@ -43,10 +144,61 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   }, [project]);
 
   const stats = calculateReportStats(project);
+  const principleStats = calculatePrincipleStats(project);
+
   // Use researchStartedOn instead of dateStart for the report
   const dateStart = project.researchStartedOn ? new Date(project.researchStartedOn) : (project.dateStart ? new Date(project.dateStart) : null);
   const dateEnd = project.dateEnd ? new Date(project.dateEnd) : null;
   const reportDate = new Date(project.reportDate);
+
+  // Prepare criteria data sorted by code
+  const sortedCriteria = [...project.criterionAssessments].sort((a: any, b: any) =>
+    a.wcagCriterion.code.localeCompare(b.wcagCriterion.code)
+  );
+
+  // Auto-open all accordions in PDF mode
+  useEffect(() => {
+    if (isPdfMode) {
+      // Open all report intro accordions
+      const parsedContent = parseMarkdownTabs(project.researchTypeData?.reportIntro);
+      if (parsedContent && parsedContent.tabs.length > 0) {
+        const allIndices = new Set(parsedContent.tabs.map((_, index) => index));
+        setOpenAccordions(allIndices);
+      }
+
+      // Open all results accordions
+      setOpenResultsAccordions(new Set(['criteria', 'principles']));
+
+      // Open all findings accordions
+      const findingKeys = new Set<string>();
+      sortedCriteria
+        .filter((assessment: any) => assessment.status === 'failed')
+        .forEach((assessment: any) => {
+          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status === 'open') || [];
+          findings.forEach((finding: any) => {
+            findingKeys.add(`${assessment.wcagCriterion.id}-${finding.id}`);
+          });
+        });
+
+      // Open all remarks accordions
+      sortedCriteria
+        .filter((assessment: any) => {
+          const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open');
+          return hasRemark;
+        })
+        .forEach((assessment: any) => {
+          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open') || [];
+          findings.forEach((finding: any) => {
+            findingKeys.add(`opmerking-${assessment.wcagCriterion.id}-${finding.id}`);
+          });
+        });
+
+      setOpenFindingsAccordions(findingKeys);
+
+      // Open all details accordions
+      setOpenDetailsAccordions(new Set(['scope', 'sample', 'method', 'environment', 'technologies']));
+    }
+  }, [isPdfMode, project.researchTypeData?.reportIntro, project.findings, sortedCriteria]);
 
   // Get the first manually added scope URL
   const firstScopeUrl = project.scopeUrls.find((url: any) => url.inScope === true && !url.parentUrlId);
@@ -76,44 +228,43 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     const totalCriteria = stats.totalAssessed;
     const percentage = totalCriteria > 0 ? Math.round((passedCriteria / totalCriteria) * 100) : 0;
     const failedCriteria = stats.failed;
-    const unknownCriteria = stats.unknown;
-    const additionalRemarks = project.findings.length - stats.totalProblems;
 
     const dateStartFormatted = dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : '[datum]';
     const dateEndFormatted = dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : '[datum]';
 
+    // Check if research type has a custom summary template
+    if (project.researchTypeData?.summaryTemplate) {
+      const template = project.researchTypeData.summaryTemplate;
+
+      // Replace placeholders with actual values
+      const summaryHtml = template
+        .replace(/\{dateStart\}/g, dateStartFormatted)
+        .replace(/\{dateEnd\}/g, dateEndFormatted)
+        .replace(/\{totalPages\}/g, String(totalPages))
+        .replace(/\{totalCriteria\}/g, String(totalCriteria))
+        .replace(/\{passedCriteria\}/g, String(passedCriteria))
+        .replace(/\{percentage\}/g, String(percentage))
+        .replace(/\{failedCriteria\}/g, String(failedCriteria))
+        .replace(/\{compliesFully\}/g, percentage === 100 ? 'volledig' : 'niet volledig');
+
+      return (
+        <div dangerouslySetInnerHTML={{ __html: summaryHtml }} />
+      );
+    }
+
+    // Fallback to default template
     return (
       <>
-        <p className="mb-4">
-          Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de website{' '}
-          <a
-            href={scopeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline inline-flex items-center gap-1"
-          >
-            {scopeUrl}
-            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
-          . Het onderzoek is uitgevoerd conform WCAG 2.2 niveau A en AA (EN 301 549), volgens de evaluatiemethode WCAG-EM.
-        </p>
-
         <p className="mb-4">
           Het onderzoek vond plaats in de periode van {dateStartFormatted} tot en met {dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
         </p>
 
         <p className="mb-4">
-          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA.
-          {' '}In dit deelonderzoek zijn {totalCriteria} succescriteria beoordeeld.
-          {' '}Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%).
-          {failedCriteria > 0 && ` Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`}
-          {additionalRemarks > 0 && ` Daarnaast zijn ${additionalRemarks} aanvullende ${additionalRemarks === 1 ? 'opmerking opgenomen' : 'opmerkingen opgenomen'} om de toegankelijkheid verder te optimaliseren.`}
+          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). Bij {failedCriteria} {failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.
         </p>
 
         <p>
-          Wij adviseren om redactionele content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het redactionele proces.
+          Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.
         </p>
       </>
     );
@@ -176,6 +327,141 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         .report-markdown-content table tr:nth-child(even) {
           background-color: #f9fafb !important;
         }
+
+        /* Screen reader only - hide visually but keep for assistive tech */
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border-width: 0;
+        }
+
+        /* Print styles */
+        @media print {
+          /* Hide sidebar when printing */
+          .grid-cols-3 > div:last-child {
+            display: none !important;
+          }
+
+          /* Make main content full width */
+          .grid-cols-3 > div:first-child {
+            grid-column: span 3 !important;
+          }
+
+          /* Ensure accordions are visible in print */
+          button[aria-expanded] + div {
+            display: block !important;
+          }
+
+          /* Hide accordion toggle buttons - decorative in PDF */
+          button[aria-expanded] {
+            pointer-events: none;
+          }
+
+          /* Hide accordion expand/collapse icons - decorative */
+          button[aria-expanded] > span:last-child {
+            display: none !important;
+          }
+
+          /* Remove ALL borders and shadows - no exceptions */
+          * {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+          }
+
+          /* Specifically target common border classes */
+          .border, .border-t, .border-b, .border-l, .border-r,
+          .border-gray-200, .border-gray-300, .border-gray-400,
+          .shadow, .shadow-sm, .shadow-md, .shadow-lg,
+          table, th, td, tr, thead, tbody,
+          div, section, button {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+          }
+
+          /* Add spacing between table cells instead of borders */
+          table {
+            border-spacing: 0 0.25rem !important;
+            border-collapse: separate !important;
+          }
+
+          /* Add subtle background to table rows for readability */
+          tbody tr {
+            background-color: #f9fafb !important;
+          }
+          tbody tr:nth-child(even) {
+            background-color: #f3f4f6 !important;
+          }
+          thead tr {
+            background-color: #e5e7eb !important;
+          }
+
+          /* Add padding to table cells for better spacing without borders */
+          table th, table td {
+            padding: 0.5rem 1rem !important;
+          }
+
+          /* Better page breaks */
+          section {
+            page-break-inside: avoid;
+          }
+
+          h1, h2, h3 {
+            page-break-after: avoid;
+          }
+
+          /* Ensure tables don't break awkwardly */
+          table {
+            page-break-inside: avoid;
+          }
+
+          /* Remove decorative rounded corners */
+          .rounded, .rounded-lg, .rounded-md {
+            border-radius: 0 !important;
+          }
+
+          /* Hide ALL SVG icons - they create padobjects */
+          svg {
+            display: none !important;
+          }
+
+          /* Remove ALL pseudo-elements (::before, ::after) */
+          *::before, *::after {
+            display: none !important;
+            content: none !important;
+            background-image: none !important;
+            background: none !important;
+          }
+
+          /* Remove ALL decorative list styling */
+          ul, ol {
+            list-style: none !important;
+            list-style-type: none !important;
+            list-style-image: none !important;
+          }
+
+          /* Remove ALL text decorations */
+          a, u {
+            text-decoration: none !important;
+          }
+
+          /* Remove ALL background images */
+          * {
+            background-image: none !important;
+          }
+
+          /* Remove underlines from links */
+          .text-blue-600, .underline {
+            text-decoration: none !important;
+          }
+        }
       `}} />
       <div className="grid grid-cols-3 gap-8">
       {/* Main content */}
@@ -183,7 +469,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Project header */}
         <section>
           <div className="mb-6">
-            <div className="text-sm text-gray-600 mb-2">
+            <div className="text-sm text-gray-600 mb-2 print-hide">
               {project.title}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -317,9 +603,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                             className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                             aria-expanded={isOpen}
                           >
-                            <span className="text-base font-medium text-gray-900">
+                            <h3 className="text-base font-medium text-gray-900">
                               {tab.title}
-                            </span>
+                            </h3>
                             <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                               {isOpen ? '−' : '+'}
                             </span>
@@ -356,6 +642,747 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               );
             }
           })()}
+        </section>
+
+        {/* Results Overview */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Overzicht resultaten</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700 mb-4">
+              De resultaten zijn weergegeven in twee overzichten: per succescriterium en per WCAG-principe.
+            </p>
+
+            {/* Results Accordions */}
+            <div className="space-y-0 border border-gray-300 rounded-lg overflow-hidden">
+              {/* Accordion 1: Results per Criterion */}
+              <div>
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openResultsAccordions);
+                    if (newOpen.has('criteria')) {
+                      newOpen.delete('criteria');
+                    } else {
+                      newOpen.add('criteria');
+                    }
+                    setOpenResultsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openResultsAccordions.has('criteria')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Resultaten per succescriterium</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openResultsAccordions.has('criteria') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openResultsAccordions.has('criteria') && (
+                  <div className="px-6 py-4 bg-white">
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse" aria-label="Resultaten per WCAG succescriterium">
+                        <caption className="sr-only">Overzicht van alle geteste WCAG succescriteria met hun niveau en resultaat</caption>
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">
+                              Succescriterium
+                            </th>
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">
+                              Niveau
+                            </th>
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">
+                              Resultaat
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedCriteria.map((assessment: any) => {
+                            const isFailed = assessment.status === 'failed';
+                            return (
+                              <tr key={assessment.wcagCriterion.id} className={isFailed ? 'font-bold' : ''}>
+                                <th scope="row" className="border border-gray-300 px-4 py-2 text-sm text-left font-normal">
+                                  {assessment.wcagCriterion.code} {assessment.wcagCriterion.titleNl}
+                                </th>
+                                <td className="border border-gray-300 px-4 py-2 text-sm">
+                                  {assessment.wcagCriterion.level}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 text-sm">
+                                  {getStatusLabel(assessment.status)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 2: Results by Principle */}
+              <div className="border-t border-gray-300">
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openResultsAccordions);
+                    if (newOpen.has('principles')) {
+                      newOpen.delete('principles');
+                    } else {
+                      newOpen.add('principles');
+                    }
+                    setOpenResultsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openResultsAccordions.has('principles')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Onderzoeksscores</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openResultsAccordions.has('principles') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openResultsAccordions.has('principles') && (
+                  <div className="px-6 py-4 bg-white">
+                    <p className="text-gray-700 mb-4 text-sm">
+                      De tabel hieronder laat per WCAG-principe en per WCAG-niveau zien hoeveel succescriteria zijn getoetst en hoeveel daarvan goedgekeurd zijn.
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse" aria-label="Onderzoeksscores per WCAG principe en niveau">
+                        <caption className="sr-only">Aantal goedgekeurde succescriteria per WCAG principe, uitgesplitst naar niveau A en AA</caption>
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">
+                              WCAG Principe
+                            </th>
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-900">
+                              Niveau A
+                            </th>
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-900">
+                              Niveau AA
+                            </th>
+                            <th scope="col" className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-900">
+                              Totaal
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {principleStats.map((stat) => (
+                            <tr key={stat.principle}>
+                              <th scope="row" className="border border-gray-300 px-4 py-2 text-sm font-medium text-left">
+                                {getPrincipleLabel(stat.principle)}
+                              </th>
+                              <td className="border border-gray-300 px-4 py-2 text-sm text-center">
+                                {stat.levelA.passed} / {stat.levelA.total}
+                              </td>
+                              <td className="border border-gray-300 px-4 py-2 text-sm text-center">
+                                {stat.levelAA.passed} / {stat.levelAA.total}
+                              </td>
+                              <td className="border border-gray-300 px-4 py-2 text-sm font-medium text-center">
+                                {stat.total.passed} / {stat.total.total}
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="bg-gray-50 font-bold">
+                            <th scope="row" className="border border-gray-300 px-4 py-2 text-sm text-left">
+                              Totaal
+                            </th>
+                            <td className="border border-gray-300 px-4 py-2 text-sm text-center">
+                              {principleStats.reduce((sum, stat) => sum + stat.levelA.passed, 0)} / {principleStats.reduce((sum, stat) => sum + stat.levelA.total, 0)}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-2 text-sm text-center">
+                              {principleStats.reduce((sum, stat) => sum + stat.levelAA.passed, 0)} / {principleStats.reduce((sum, stat) => sum + stat.levelAA.total, 0)}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-2 text-sm text-center">
+                              {principleStats.reduce((sum, stat) => sum + stat.total.passed, 0)} / {principleStats.reduce((sum, stat) => sum + stat.total.total, 0)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Bevindingen */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Bevindingen</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700 mb-6">
+              Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen, gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.
+            </p>
+
+            {/* Failed criteria */}
+            <div className="space-y-6">
+              {sortedCriteria
+                .filter((assessment: any) => assessment.status === 'failed')
+                .map((assessment: any, index: number) => {
+                  const criterion = assessment.wcagCriterion;
+                  // Get findings with status 'open' (Afgekeurd) for this criterion
+                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.status === 'open') || [];
+
+                  return (
+                    <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">
+                      {/* Criterion title */}
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {criterion.code} {criterion.titleNl} {criterion.level}
+                      </h3>
+
+                      {/* Description and link */}
+                      <p className="text-sm text-gray-700 mb-3">
+                        {criterion.descriptionNl || criterion.titleNl}
+                        <br />
+                        {criterion.understandingUrl && (
+                          <a
+                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (match, slug) =>
+                              `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                          >
+                            {criterion.code} {criterion.titleNl}
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        )}
+                      </p>
+
+                      {/* Result */}
+                      <p className="text-sm text-gray-700 mb-4">
+                        <strong>Resultaat:</strong> Voldoet niet
+                      </p>
+
+                      {/* Findings */}
+                      {findings.length > 0 && (
+                        <div className="space-y-0 border border-gray-300 rounded-lg overflow-hidden">
+                          {findings.map((finding: any, findingIndex: number) => {
+                            const findingKey = `${criterion.id}-${finding.id}`;
+                            const isOpen = openFindingsAccordions.has(findingKey);
+
+                            return (
+                              <div key={finding.id} className={findingIndex > 0 ? 'border-t border-gray-300' : ''}>
+                                <button
+                                  onClick={() => {
+                                    const newOpen = new Set(openFindingsAccordions);
+                                    if (newOpen.has(findingKey)) {
+                                      newOpen.delete(findingKey);
+                                    } else {
+                                      newOpen.add(findingKey);
+                                    }
+                                    setOpenFindingsAccordions(newOpen);
+                                  }}
+                                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                                  aria-expanded={isOpen}
+                                >
+                                  <h4 className="font-medium text-sm text-gray-900">Bevinding {findingIndex + 1}</h4>
+                                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                                    {isOpen ? '−' : '+'}
+                                  </span>
+                                </button>
+
+                                {isOpen && (
+                                  <div className="px-4 py-3 bg-white text-sm text-gray-700">
+                                    {/* Sample Items - URLs first on separate line */}
+                                    {finding.occurrences && finding.occurrences.length > 0 && (
+                                      <>
+                                        {finding.occurrences.map((occurrence: any) =>
+                                          occurrence.sampleItem?.url && (
+                                            <a
+                                              key={occurrence.id}
+                                              href={occurrence.sampleItem.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
+                                            >
+                                              {occurrence.sampleItem.url}
+                                              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                              </svg>
+                                            </a>
+                                          )
+                                        )}
+                                      </>
+                                    )}
+
+                                    {/* Description */}
+                                    <div dangerouslySetInnerHTML={{ __html: finding.description }} />
+
+                                    {/* Advice */}
+                                    <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
+                                    <div dangerouslySetInnerHTML={{ __html: finding.advice }} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </section>
+
+        {/* Opmerkingen */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Opmerkingen</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700 mb-6">
+              De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.
+            </p>
+
+            {/* Criteria with remarks (findings with status !== 'open') */}
+            <div className="space-y-6">
+              {sortedCriteria
+                .filter((assessment: any) => {
+                  // Only show criteria that have findings with status !== 'open' (Opmerkingen)
+                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open');
+                  return hasRemark;
+                })
+                .map((assessment: any, index: number) => {
+                  const criterion = assessment.wcagCriterion;
+                  // Get findings with status !== 'open' (Opmerkingen) for this criterion
+                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.status !== 'open') || [];
+
+                  return (
+                    <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">
+                      {/* Criterion title */}
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {criterion.code} {criterion.titleNl} {criterion.level}
+                      </h3>
+
+                      {/* Description and link */}
+                      <p className="text-sm text-gray-700 mb-3">
+                        {criterion.descriptionNl || criterion.titleNl}
+                        <br />
+                        {criterion.understandingUrl && (
+                          <a
+                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (match, slug) =>
+                              `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                          >
+                            {criterion.code} {criterion.titleNl}
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        )}
+                      </p>
+
+                      {/* Result */}
+                      <p className="text-sm text-gray-700 mb-4">
+                        <strong>Resultaat:</strong> {getStatusLabel(assessment.status)}
+                      </p>
+
+                      {/* Findings (Opmerkingen) */}
+                      {findings.length > 0 && (
+                        <div className="space-y-0 border border-gray-300 rounded-lg overflow-hidden">
+                          {findings.map((finding: any, findingIndex: number) => {
+                            const findingKey = `opmerking-${criterion.id}-${finding.id}`;
+                            const isOpen = openFindingsAccordions.has(findingKey);
+
+                            return (
+                              <div key={finding.id} className={findingIndex > 0 ? 'border-t border-gray-300' : ''}>
+                                <button
+                                  onClick={() => {
+                                    const newOpen = new Set(openFindingsAccordions);
+                                    if (newOpen.has(findingKey)) {
+                                      newOpen.delete(findingKey);
+                                    } else {
+                                      newOpen.add(findingKey);
+                                    }
+                                    setOpenFindingsAccordions(newOpen);
+                                  }}
+                                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                                  aria-expanded={isOpen}
+                                >
+                                  <h4 className="font-medium text-sm text-gray-900">Opmerking {findingIndex + 1}</h4>
+                                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                                    {isOpen ? '−' : '+'}
+                                  </span>
+                                </button>
+
+                                {isOpen && (
+                                  <div className="px-4 py-3 bg-white text-sm text-gray-700">
+                                    {/* Sample Items - URLs first on separate line */}
+                                    {finding.occurrences && finding.occurrences.length > 0 && (
+                                      <>
+                                        {finding.occurrences.map((occurrence: any) =>
+                                          occurrence.sampleItem?.url && (
+                                            <a
+                                              key={occurrence.id}
+                                              href={occurrence.sampleItem.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
+                                            >
+                                              {occurrence.sampleItem.url}
+                                              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                              </svg>
+                                            </a>
+                                          )
+                                        )}
+                                      </>
+                                    )}
+
+                                    {/* Description */}
+                                    <div dangerouslySetInnerHTML={{ __html: finding.description }} />
+
+                                    {/* Advice */}
+                                    <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
+                                    <div dangerouslySetInnerHTML={{ __html: finding.advice }} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Show message if no remarks */}
+            {sortedCriteria.filter((assessment: any) => {
+              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open');
+              return hasRemark;
+            }).length === 0 && (
+              <p className="text-sm text-gray-500 italic">Er zijn geen opmerkingen voor dit onderzoek.</p>
+            )}
+          </div>
+        </section>
+
+        {/* Borging en vervolg */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Borging en vervolg</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700 mb-4">
+              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen op pagina's die niet zijn onderzocht. Het is daarom raadzaam om de volledige website te controleren op vergelijkbare patronen en deze structureel te monitoren.
+            </p>
+            <p className="text-gray-700">
+              Daarnaast kunnen wijzigingen in content of het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.
+            </p>
+          </div>
+        </section>
+
+        {/* Onderzoeksdetails */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Onderzoeksdetails</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-gray-700 mb-4">
+              Dit hoofdstuk bevat de onderzoeksverantwoording: de scope en steekproef van het onderzoek, de gehanteerde methode en de hulpmiddelen waarmee is getest.
+            </p>
+
+            {/* Details Accordions */}
+            <div className="space-y-0 border border-gray-300 rounded-lg overflow-hidden">
+              {/* Accordion 1: Scope */}
+              <div>
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openDetailsAccordions);
+                    if (newOpen.has('scope')) {
+                      newOpen.delete('scope');
+                    } else {
+                      newOpen.add('scope');
+                    }
+                    setOpenDetailsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openDetailsAccordions.has('scope')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Scope</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openDetailsAccordions.has('scope') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openDetailsAccordions.has('scope') && (
+                  <div className="px-6 py-4 bg-white">
+                    <p className="text-sm text-gray-700 mb-4">
+                      Bij de URL staat de reden waarom een gedeelte wel of niet is meegenomen. Dit is conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.
+                    </p>
+
+                    {/* Binnen scope URLs */}
+                    {project.scopeUrls.filter((url: any) => url.inScope === true && !url.parentUrlId).length > 0 && (
+                      <div className="mb-4">
+                        {project.scopeUrls
+                          .filter((scopeUrl: any) => scopeUrl.inScope === true && !scopeUrl.parentUrlId)
+                          .map((scopeUrl: any, index: number) => (
+                            <div key={index} className="mb-2">
+                              <a
+                                href={scopeUrl.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline inline-flex items-center gap-1"
+                              >
+                                {scopeUrl.url}
+                                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                              {' (URI-basis)'}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Buiten scope */}
+                    {project.scopeUrls.filter((url: any) => url.inScope === false).length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-base font-semibold text-gray-900 mb-3">Buiten scope</h4>
+                        {project.scopeUrls
+                          .filter((scopeUrl: any) => scopeUrl.inScope === false)
+                          .map((scopeUrl: any, index: number) => (
+                            <div key={index} className="mb-2">
+                              <a
+                                href={scopeUrl.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline inline-flex items-center gap-1"
+                              >
+                                {scopeUrl.url}
+                                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                              {' (Andere URI-basis en/of stijlkenmerken)'}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Wettelijke uitzonderingen */}
+                    <div>
+                      <h4 className="text-base font-semibold text-gray-900 mb-3">Wettelijke uitzonderingen</h4>
+                      <p className="text-sm text-gray-700 mb-2">
+                        De volgende content valt op grond van de Toegankelijkheidswet buiten de scope van dit onderzoek:
+                      </p>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>Online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie;</li>
+                        <li>kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces;</li>
+                        <li>audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst;</li>
+                        <li>van derden afkomstige inhoud;</li>
+                        <li>inhoud van archieven.</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 2: Steekproef */}
+              <div className="border-t border-gray-300">
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openDetailsAccordions);
+                    if (newOpen.has('sample')) {
+                      newOpen.delete('sample');
+                    } else {
+                      newOpen.add('sample');
+                    }
+                    setOpenDetailsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openDetailsAccordions.has('sample')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Steekproef</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openDetailsAccordions.has('sample') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openDetailsAccordions.has('sample') && (
+                  <div className="px-6 py-4 bg-white">
+                    <p className="text-sm text-gray-700 mb-4">
+                      Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie:{' '}
+                      <a
+                        href="https://www.digitoegankelijk.nl/aanpak/toegankelijkheidsonderzoek"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        https://www.digitoegankelijk.nl/aanpak/toegankelijkheidsonderzoek
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </p>
+
+                    {/* Overige steekproef informatie */}
+                    {project.sampleInfo && (
+                      <div className="mb-4 text-sm text-gray-700">
+                        <div dangerouslySetInnerHTML={{ __html: project.sampleInfo }} />
+                      </div>
+                    )}
+
+                    {/* Volledige steekproef */}
+                    <h4 className="text-base font-semibold text-gray-900 mb-3">Volledige steekproef</h4>
+                    {project.sampleItems && project.sampleItems.length > 0 ? (
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
+                        {project.sampleItems.map((item: any, index: number) => (
+                          <li key={item.id}>
+                            {item.url ? (
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline inline-flex items-center gap-1"
+                              >
+                                {item.url}
+                                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            ) : (
+                              <span>{item.title}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Geen steekproef items toegevoegd</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 3: Onderzoeksmethode en technieken */}
+              <div className="border-t border-gray-300">
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openDetailsAccordions);
+                    if (newOpen.has('method')) {
+                      newOpen.delete('method');
+                    } else {
+                      newOpen.add('method');
+                    }
+                    setOpenDetailsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openDetailsAccordions.has('method')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Onderzoeksmethode en technieken</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openDetailsAccordions.has('method') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openDetailsAccordions.has('method') && (
+                  <div className="px-6 py-4 bg-white">
+                    <p className="text-sm text-gray-700">
+                      Dit onderzoek is uitgevoerd conform de evaluatiemethode{' '}
+                      <a
+                        href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        WCAG-EM
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      . Deze methode is aanbevolen door{' '}
+                      <a
+                        href="https://www.digitoegankelijk.nl/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        DigiToegankelijk (Logius)
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      . Bij het uitvoeren van dit onderzoek is ervan uitgegaan dat alle technieken van het W3C ondersteund worden en dus gebruikt mogen worden.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 4: Testomgeving */}
+              <div className="border-t border-gray-300">
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openDetailsAccordions);
+                    if (newOpen.has('environment')) {
+                      newOpen.delete('environment');
+                    } else {
+                      newOpen.add('environment');
+                    }
+                    setOpenDetailsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openDetailsAccordions.has('environment')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Testomgeving</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openDetailsAccordions.has('environment') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openDetailsAccordions.has('environment') && (
+                  <div className="px-6 py-4 bg-white">
+                    <p className="text-sm text-gray-700 mb-4">
+                      Het basisniveau van ondersteuning bestaat uit gangbare webbrowsers en hulptechnologieën. Het onderzoek is uitgevoerd met:
+                    </p>
+
+                    {/* User agents */}
+                    {project.userAgents ? (
+                      <div
+                        className="text-sm text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+                        dangerouslySetInnerHTML={{ __html: project.userAgents }}
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Geen testomgeving informatie beschikbaar</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 5: Technologieën */}
+              <div className="border-t border-gray-300">
+                <button
+                  onClick={() => {
+                    const newOpen = new Set(openDetailsAccordions);
+                    if (newOpen.has('technologies')) {
+                      newOpen.delete('technologies');
+                    } else {
+                      newOpen.add('technologies');
+                    }
+                    setOpenDetailsAccordions(newOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  aria-expanded={openDetailsAccordions.has('technologies')}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">Technologieën</h3>
+                  <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
+                    {openDetailsAccordions.has('technologies') ? '−' : '+'}
+                  </span>
+                </button>
+
+                {openDetailsAccordions.has('technologies') && (
+                  <div className="px-6 py-4 bg-white">
+                    {project.technologies && project.technologies.length > 0 ? (
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {project.technologies.map((tech: string, index: number) => (
+                          <li key={index}>{tech}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Geen technologieën toegevoegd</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* About organization */}
@@ -417,6 +1444,30 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               </>
             )}
           </dl>
+        </div>
+
+        {/* PDF & Word Download */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-normal text-gray-900 mb-4">Onderzoeksresultaten</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Download het rapport als PDF of Word document. Het document wordt automatisch gegenereerd.
+          </p>
+          <div className="space-y-2">
+            <button
+              onClick={handleDownloadPdf}
+              data-pdf-button
+              className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Download PDF
+            </button>
+            <button
+              onClick={handleDownloadDocx}
+              data-docx-button
+              className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Download Word
+            </button>
+          </div>
         </div>
 
         {/* Scope */}
