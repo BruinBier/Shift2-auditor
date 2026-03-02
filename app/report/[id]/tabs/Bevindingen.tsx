@@ -227,6 +227,21 @@ export default function Bevindingen({ project }: { project: any }) {
     return explanations[code] || '';
   };
 
+  // Convert Understanding URL to Dutch WCAG URL
+  const getDutchWCAGUrl = (understandingUrl: string | null | undefined) => {
+    if (!understandingUrl) return null;
+
+    // Extract the slug from the Understanding URL
+    // e.g., https://www.w3.org/WAI/WCAG22/Understanding/non-text-content → non-text-content
+    const match = understandingUrl.match(/\/Understanding\/(.+?)(?:\.html)?$/);
+    if (match && match[1]) {
+      const slug = match[1];
+      return `https://www.w3.org/Translations/WCAG22-nl/#${slug}`;
+    }
+
+    return understandingUrl; // Fallback to original URL
+  };
+
   const getPrincipleIcon = (principleName: string) => {
     switch (principleName) {
       case 'Waarneembaar':
@@ -417,25 +432,27 @@ export default function Bevindingen({ project }: { project: any }) {
                                 </span>
                               </h4>
 
-                              {/* Criterion description - use description from database */}
-                              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                              {/* Criterion description and link */}
+                              <p className="text-sm text-gray-700 leading-relaxed mb-4">
                                 {criterion.description || criterion.title}
+                                <br />
+                                {criterion.understandingUrl && (() => {
+                                  const dutchUrl = getDutchWCAGUrl(criterion.understandingUrl);
+                                  return dutchUrl ? (
+                                    <a
+                                      href={dutchUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                                    >
+                                      {criterion.code} {criterion.title}
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                      </svg>
+                                    </a>
+                                  ) : null;
+                                })()}
                               </p>
-
-                              {/* Understanding link */}
-                              {criterion.understandingUrl && (
-                                <a
-                                  href={criterion.understandingUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1 mb-4"
-                                >
-                                  Understanding SC: {criterion.code}
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                  </svg>
-                                </a>
-                              )}
 
                               {/* Resultaat */}
                               {criterion.assessment && (

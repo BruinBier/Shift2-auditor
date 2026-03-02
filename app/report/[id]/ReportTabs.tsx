@@ -41,9 +41,31 @@ export default function ReportTabs({ project }: ReportTabsProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <Navigation />
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          /* Hide all navigation in PDF */
+          header, nav, footer {
+            display: none !important;
+          }
+          /* Hide specific navigation elements */
+          .print-hide {
+            display: none !important;
+          }
+          /* Ensure main content takes full width */
+          .min-h-screen {
+            min-height: auto !important;
+          }
+          /* Remove padding/margins for print */
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+        }
+      `}} />
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Header */}
+        <Navigation />
 
       {/* Main content */}
       <div className="flex-grow flex flex-col">
@@ -143,6 +165,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }

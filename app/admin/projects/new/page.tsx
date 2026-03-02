@@ -12,7 +12,7 @@ export default function NewProjectPage() {
     version: '1',
     language: 'Nederlands',
     researchType: '',
-    status: 'In uitvoering',
+    status: 'Gepland',
     researcherName: '',
     controllerName: '',
     plannedTime: '',
@@ -25,6 +25,8 @@ export default function NewProjectPage() {
     isPrivate: false,
     commissionedBy: '',
     clientProjectId: '',
+    hasReinspection: false,
+    reinspectionWeeks: 14,
     // Hidden fields with defaults
     subject: '',
     standard: 'WCAG 2.2',
@@ -432,6 +434,43 @@ export default function NewProjectPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   />
                 </div>
+              </div>
+
+              {/* Herinspectie */}
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center gap-3 mb-3">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.hasReinspection}
+                      onChange={(e) => setFormData({ ...formData, hasReinspection: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
+                  </label>
+                  <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
+                </div>
+                {formData.hasReinspection && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Aantal weken na deadline
+                    </label>
+                    <select
+                      value={formData.reinspectionWeeks}
+                      onChange={(e) => setFormData({ ...formData, reinspectionWeeks: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary bg-white"
+                    >
+                      <option value="12">12 weken</option>
+                      <option value="13">13 weken</option>
+                      <option value="14">14 weken</option>
+                      <option value="15">15 weken</option>
+                      <option value="16">16 weken</option>
+                    </select>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Er wordt automatisch een tweede project (v1.1) aangemaakt voor de herinspectie. Bevindingen worden gekopieerd wanneer v1.0 op "Gereed" wordt gezet.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Onderzoek gestart op and Rapportdatum */}

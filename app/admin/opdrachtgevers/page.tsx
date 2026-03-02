@@ -9,6 +9,7 @@ interface Opdrachtgever {
   naam: string;
   contactnaam: string;
   contactEmail: string;
+  accountmanager: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +27,7 @@ export default function OpdrachtgeversPage() {
     naam: '',
     contactnaam: '',
     contactEmail: '',
+    accountmanager: '',
   });
 
   // Load opdrachtgevers from database
@@ -117,6 +119,7 @@ export default function OpdrachtgeversPage() {
       naam: opdrachtgever.naam,
       contactnaam: opdrachtgever.contactnaam,
       contactEmail: opdrachtgever.contactEmail,
+      accountmanager: opdrachtgever.accountmanager,
     });
     setShowCreateModal(true);
     setOpenMenuId(null);
@@ -130,6 +133,7 @@ export default function OpdrachtgeversPage() {
       naam: '',
       contactnaam: '',
       contactEmail: '',
+      accountmanager: '',
     });
     setShowCreateModal(true);
   };
@@ -143,6 +147,7 @@ export default function OpdrachtgeversPage() {
       naam: '',
       contactnaam: '',
       contactEmail: '',
+      accountmanager: '',
     });
   };
 
@@ -435,6 +440,7 @@ export default function OpdrachtgeversPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opdrachtgever</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contactnaam</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact e-mail</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accountmanager</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
@@ -452,6 +458,7 @@ export default function OpdrachtgeversPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.contactnaam}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.contactEmail}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.accountmanager}</td>
                   <td className="px-6 py-4 text-right relative">
                     <div className="flex items-center justify-end gap-2">
                       <Link
@@ -610,6 +617,20 @@ export default function OpdrachtgeversPage() {
                   onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   placeholder="bijv. contact@gemeente.nl"
+                />
+              </div>
+
+              {/* Accountmanager */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Accountmanager
+                </label>
+                <input
+                  type="text"
+                  value={formData.accountmanager}
+                  onChange={(e) => setFormData({ ...formData, accountmanager: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  placeholder="bijv. Marie van den Berg"
                 />
               </div>
 

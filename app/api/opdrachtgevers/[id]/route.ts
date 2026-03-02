@@ -44,6 +44,7 @@ export async function PUT(
         naam: data.naam,
         contactnaam: data.contactnaam || null,
         contactEmail: data.contactEmail || null,
+        accountmanager: data.accountmanager || null,
       },
     });
 

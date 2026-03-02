@@ -37,6 +37,7 @@ model ResearchType {
   reportIntroHeader String?                     @db.Text @map("report_intro_header")
   reportIntro       String?                     @db.Text @map("report_intro")
   reportIntroPdf    String?                     @db.Text @map("report_intro_pdf")
+  summaryTemplate   String?                     @db.Text @map("summary_template")
   createdAt         DateTime                    @default(now()) @map("created_at")
   updatedAt         DateTime                    @updatedAt @map("updated_at")
 
@@ -59,13 +60,14 @@ model ResearchTypeWCAGCriterion {
 }
 
 model Opdrachtgever {
-  id            String          @id @default(uuid())
-  kenmerk       String          @unique
-  naam          String
-  contactnaam   String?
-  contactEmail  String?         @map("contact_email")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
+  id             String          @id @default(uuid())
+  kenmerk        String          @unique
+  naam           String
+  contactnaam    String?
+  contactEmail   String?         @map("contact_email")
+  accountmanager String?
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   clientProjects ClientProject[]
 
@@ -88,7 +90,7 @@ model ClientProject {
 
 model Project {
   id                      String         @id @default(uuid())
-  kenmerk                 String?        @unique
+  kenmerk                 String?
   title                   String
   subject                 String
   standard                String         @default("WCAG 2.2")
@@ -132,11 +134,18 @@ model Project {
   userAgents              String?        @map("user_agents") @db.Text
   technologies            String[]       @default([]) @map("technologies")
 
+  // Herinspectie fields
+  parentProjectId         String?        @map("parent_project_id")
+  hasReinspection         Boolean        @default(false) @map("has_reinspection")
+  reinspectionWeeks       Int?           @map("reinspection_weeks")
+
   createdAt               DateTime       @default(now()) @map("created_at")
   updatedAt               DateTime       @updatedAt @map("updated_at")
 
   // Relations
   clientProject           ClientProject? @relation(fields: [clientProjectId], references: [id], onDelete: SetNull)
+  parentProject           Project?       @relation("ProjectHerinspectie", fields: [parentProjectId], references: [id], onDelete: SetNull)
+  childProjects           Project[]      @relation("ProjectHerinspectie")
   scopeUrls               ProjectScopeUrl[]
   sampleItems             SampleItem[]
   criterionAssessments    CriterionAssessment[]

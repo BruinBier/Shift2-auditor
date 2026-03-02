@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         naam: data.naam,
         contactnaam: data.contactnaam || null,
         contactEmail: data.contactEmail || null,
+        accountmanager: data.accountmanager || null,
       },
     });
 

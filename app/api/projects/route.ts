@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Get criteria from research type if specified
     let criteriaToCreate: string[] = [];
+    let criteriaCodesMap: Map<string, string> = new Map(); // Map criterionId to code
     if (body.researchType) {
       const researchType = await prisma.researchType.findFirst({
         where: { name: body.researchType },
@@ -114,6 +115,11 @@ export async function POST(request: NextRequest) {
           criteria: {
             select: {
               wcagCriterionId: true,
+              wcagCriterion: {
+                select: {
+                  code: true,
+                },
+              },
             },
           },
         },
@@ -121,9 +127,38 @@ export async function POST(request: NextRequest) {
 
       if (researchType && researchType.criteria.length > 0) {
         criteriaToCreate = researchType.criteria.map(c => c.wcagCriterionId);
+        // Build a map of criterionId to code
+        researchType.criteria.forEach(c => {
+          criteriaCodesMap.set(c.wcagCriterionId, c.wcagCriterion.code);
+        });
         console.log(`Found ${criteriaToCreate.length} criteria for research type: ${body.researchType}`);
       }
     }
+
+    // Determine the default status for each criterion based on research type
+    const getStatusForCriterion = (criterionId: string): string => {
+      // Only apply special rules for "WCAG 2.2 AA deelonderzoek content"
+      if (body.researchType !== 'WCAG 2.2 AA deelonderzoek content') {
+        return 'not_tested';
+      }
+
+      const code = criteriaCodesMap.get(criterionId);
+      if (!code) {
+        return 'not_tested';
+      }
+
+      // Set specific criteria to "not_present"
+      if (['1.2.4', '1.4.2', '2.2.2'].includes(code)) {
+        return 'not_present';
+      }
+
+      // Set specific criteria to "passed"
+      if (['2.1.4', '2.3.1'].includes(code)) {
+        return 'passed';
+      }
+
+      return 'not_tested';
+    };
 
     const project = await prisma.project.create({
       data: {
@@ -150,6 +185,8 @@ export async function POST(request: NextRequest) {
         description: body.description,
         isAnonymous: body.isAnonymous || false,
         isPrivate: body.isPrivate || false,
+        hasReinspection: body.hasReinspection || false,
+        reinspectionWeeks: body.reinspectionWeeks || null,
         summaryText: body.summaryText,
         researcherFeedbackText: body.researcherFeedbackText,
         aboutResearchText: body.aboutResearchText,
@@ -163,14 +200,82 @@ export async function POST(request: NextRequest) {
         criterionAssessments: {
           create: criteriaToCreate.map(criterionId => ({
             wcagCriterionId: criterionId,
-            status: 'not_tested',
+            status: getStatusForCriterion(criterionId),
           })),
         },
       },
     });
 
     console.log(`Created project ${project.id} with ${criteriaToCreate.length} criterion assessments`);
-    return NextResponse.json(project, { status: 201 });
+
+    // If reinspection is enabled, create v1.1 project
+    let reinspectionProject = null;
+    if (body.hasReinspection && body.reinspectionWeeks && body.dateEnd) {
+      const deadlineDate = new Date(body.dateEnd);
+      const reinspectionStart = new Date(deadlineDate);
+      reinspectionStart.setDate(reinspectionStart.getDate() + (body.reinspectionWeeks * 7));
+
+      // Calculate reinspection deadline (1 week for reinspection)
+      const reinspectionDuration = 7; // 1 week for reinspection
+
+      const reinspectionEnd = new Date(reinspectionStart);
+      reinspectionEnd.setDate(reinspectionEnd.getDate() + reinspectionDuration);
+
+      reinspectionProject = await prisma.project.create({
+        data: {
+          kenmerk: kenmerk, // Same kenmerk as v1.0, version differentiates them
+          title: `${body.title} (herinspectie)`,
+          subject: body.subject || '',
+          standard: body.standard || 'WCAG 2.2',
+          level: body.level || 'AA',
+          researchType: body.researchType,
+          version: 1.1,
+          language: body.language || 'Nederlands',
+          status: 'Gepland',
+          clientName: body.clientName,
+          commissionedBy: body.commissionedBy,
+          clientProjectId: body.clientProjectId || null,
+          auditedByOrg: body.auditedByOrg || 'Shift2',
+          researcherName: body.researcherName,
+          controllerName: body.controllerName,
+          plannedTime: body.plannedTime,
+          dateStart: reinspectionStart,
+          dateEnd: reinspectionEnd,
+          researchStartedOn: null,
+          reportDate: reinspectionEnd,
+          description: body.description,
+          isAnonymous: body.isAnonymous || false,
+          isPrivate: body.isPrivate || false,
+          hasReinspection: false,
+          reinspectionWeeks: null,
+          parentProjectId: project.id,
+          summaryText: body.summaryText,
+          researcherFeedbackText: body.researcherFeedbackText,
+          aboutResearchText: body.aboutResearchText,
+          whatWasTestedText: body.whatWasTestedText,
+          aboutOrgText: body.aboutOrgText,
+          methodName: body.methodName,
+          techniquesNote: body.techniquesNote,
+          supportBaseline: body.supportBaseline,
+          userAgents: body.userAgents ? JSON.stringify(body.userAgents) : null,
+          technologies: body.technologies || [],
+          criterionAssessments: {
+            create: criteriaToCreate.map(criterionId => ({
+              wcagCriterionId: criterionId,
+              status: getStatusForCriterion(criterionId),
+            })),
+          },
+        },
+      });
+
+      console.log(`Created reinspection project ${reinspectionProject.id} (v1.1) linked to ${project.id} (v1.0)`);
+    }
+
+    return NextResponse.json({
+      project,
+      reinspectionProject,
+      message: reinspectionProject ? 'Project en herinspectie aangemaakt' : 'Project aangemaakt'
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating project:', error);
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });

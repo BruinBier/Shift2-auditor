@@ -31,6 +31,8 @@ interface Project {
   clientProjectId: string | null;
   commissionedBy: string | null;
   clientProject?: any;
+  hasReinspection?: boolean;
+  parentProjectId?: string | null;
 }
 
 interface Props {
@@ -48,7 +50,9 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [generatedEmail, setGeneratedEmail] = useState({ subject: '', body: '' });
   const [formData, setFormData] = useState({
     title: '',
     auditedByOrg: '',
@@ -59,7 +63,7 @@ export default function OnderzoekenTable({ projects }: Props) {
     researchType: '',
     standard: 'WCAG 2.2',
     level: 'AA',
-    status: 'In uitvoering',
+    status: 'Gepland',
     researcherName: '',
     controllerName: '',
     plannedTime: '',
@@ -70,6 +74,8 @@ export default function OnderzoekenTable({ projects }: Props) {
     description: '',
     isAnonymous: false,
     isPrivate: false,
+    hasReinspection: false,
+    reinspectionWeeks: 14,
   });
   const [showAnonymousTooltip, setShowAnonymousTooltip] = useState(false);
   const [showPrivateTooltip, setShowPrivateTooltip] = useState(false);
@@ -344,6 +350,8 @@ export default function OnderzoekenTable({ projects }: Props) {
       description: project.description || '',
       isAnonymous: project.isAnonymous,
       isPrivate: project.isPrivate,
+      hasReinspection: false,
+      reinspectionWeeks: 14,
     });
 
     setShowEditModal(true);
@@ -363,7 +371,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       researchType: '',
       standard: 'WCAG 2.2',
       level: 'AA',
-      status: 'In uitvoering',
+      status: 'Gepland',
       researcherName: '',
       controllerName: '',
       plannedTime: '',
@@ -374,6 +382,8 @@ export default function OnderzoekenTable({ projects }: Props) {
       description: '',
       isAnonymous: false,
       isPrivate: false,
+      hasReinspection: false,
+      reinspectionWeeks: 14,
     });
   };
 
@@ -388,7 +398,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       researchType: 'Volledig onderzoek',
       standard: 'WCAG 2.2',
       level: 'AA',
-      status: 'In uitvoering',
+      status: 'Gepland',
       researcherName: '',
       controllerName: '',
       plannedTime: '',
@@ -399,6 +409,8 @@ export default function OnderzoekenTable({ projects }: Props) {
       description: '',
       isAnonymous: false,
       isPrivate: false,
+      hasReinspection: false,
+      reinspectionWeeks: 14,
     });
     setShowCreateModal(true);
   };
@@ -415,7 +427,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       researchType: '',
       standard: 'WCAG 2.2',
       level: 'AA',
-      status: 'In uitvoering',
+      status: 'Gepland',
       researcherName: '',
       controllerName: '',
       plannedTime: '',
@@ -426,6 +438,8 @@ export default function OnderzoekenTable({ projects }: Props) {
       description: '',
       isAnonymous: false,
       isPrivate: false,
+      hasReinspection: false,
+      reinspectionWeeks: 14,
     });
   };
 
@@ -542,6 +556,96 @@ export default function OnderzoekenTable({ projects }: Props) {
     }
   };
 
+  const handleGenerateEmail = (project: Project) => {
+    // Check if this is a reinspection project
+    const isReinspection = !!project.parentProjectId;
+
+    // Find related project
+    const nulmetingProject = isReinspection
+      ? projects.find(p => p.id === project.parentProjectId)
+      : project;
+
+    const reinspectionProject = isReinspection
+      ? project
+      : (project.hasReinspection ? projects.find(p => p.parentProjectId === project.id) : null);
+
+    // Format dates
+    const formatWeekNumber = (dateString: string | null) => {
+      if (!dateString) return 'XX';
+      const date = new Date(dateString);
+      // Get ISO week number (simple approximation)
+      const oneJan = new Date(date.getFullYear(), 0, 1);
+      const numberOfDays = Math.floor((date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000));
+      return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
+    };
+
+    const formatDate = (dateString: string | null) => {
+      if (!dateString) return '[datum]';
+      return format(new Date(dateString), 'd MMMM yyyy', { locale: nl });
+    };
+
+    // Generate subject based on what we're showing
+    const isContentResearch = project.researchType?.toLowerCase().includes('content');
+    let subject: string;
+
+    // For content research, always use simple subject
+    if (isContentResearch) {
+      subject = 'Planning contentonderzoek toegankelijkheid';
+    } else if (isReinspection) {
+      // For reinspection, only mention reinspection
+      subject = `Planning ${project.researchType || 'onderzoek'} toegankelijkheid (herinspectie)`;
+    } else if (project.hasReinspection || reinspectionProject) {
+      // For nulmeting with reinspection, mention both
+      subject = `Planning ${project.researchType || 'onderzoek'} toegankelijkheid (nulmeting en herinspectie)`;
+    } else {
+      // For standalone projects
+      subject = `Planning ${project.researchType || 'onderzoek'} toegankelijkheid`;
+    }
+
+    // Generate body
+    // Extract clean website name from subject or title
+    // Pattern: "WCAG 2.2 AA - Deelonderzoek content - ijsselstein.nl (herinspectie)"
+    // We want: "ijsselstein.nl"
+    const rawName = project.subject || project.title;
+    let websiteName = rawName;
+
+    // Extract text after the last " - " (which is typically the website name)
+    const lastDashIndex = rawName.lastIndexOf(' - ');
+    if (lastDashIndex !== -1) {
+      websiteName = rawName.substring(lastDashIndex + 3);
+    }
+
+    // Remove any suffix in parentheses like "(herinspectie)" or "(nulmeting)"
+    websiteName = websiteName.replace(/\s*\([^)]*\)\s*$/, '').trim();
+
+    let body = `Hallo,\n\nIn de bijlage stuur ik je de planning voor het toegankelijkheidsonderzoek van de website ${websiteName}.\n\n`;
+
+    // Show information based on project type
+    if (isReinspection) {
+      // Show nulmeting info first (planning is sent before nulmeting starts)
+      if (nulmetingProject) {
+        body += `De nulmeting (v${nulmetingProject.version.toFixed(1)}) vindt plaats in week ${formatWeekNumber(nulmetingProject.dateStart)} (week van ${formatDate(nulmetingProject.dateStart)}). Het rapport ontvang je uiterlijk ${formatDate(nulmetingProject.dateEnd)}.`;
+        body += `\n\n`;
+      }
+
+      // Then show reinspection info
+      body += `De herinspectie (v${project.version.toFixed(1)}) staat gepland in week ${formatWeekNumber(project.dateStart)} (week van ${formatDate(project.dateStart)}). Het rapport hiervan ontvang je uiterlijk ${formatDate(project.dateEnd)}.`;
+    } else {
+      // For nulmeting, show only nulmeting info
+      body += `De nulmeting (v${project.version.toFixed(1)}) vindt plaats in week ${formatWeekNumber(project.dateStart)} (week van ${formatDate(project.dateStart)}). Het rapport ontvang je uiterlijk ${formatDate(project.dateEnd)}.`;
+    }
+
+    // Add closing text based on project type
+    if (isReinspection) {
+      body += `\n\nNa afronding van de nulmeting ontvang je van mij een uitnodiging voor een overleg. In dat gesprek nemen we de resultaten gezamenlijk door en bespreken we de vervolgstappen.\n\nZou je kunnen bevestigen of deze planning akkoord is? Bij akkoord plannen wij de werkzaamheden definitief in.\n\nHeb je in de tussentijd nog vragen? Laat het gerust weten.`;
+    } else {
+      body += `\n\nNa afronding krijg je van mij een email met een link naar de onderzoeksresultaten\n\nZou je kunnen bevestigen of deze planning akkoord is? Bij akkoord plannen wij de werkzaamheden definitief in.\n\nHeb je in de tussentijd nog vragen? Laat het gerust weten.`;
+    }
+
+    setGeneratedEmail({ subject, body });
+    setShowEmailModal(true);
+  };
+
   // Get kenmerk from database (or generate fallback)
   const getKenmerk = (project: Project) => {
     // Use the kenmerk from the database if it exists
@@ -563,6 +667,41 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     const projectIndex = projectsFromSameOrg.findIndex(p => p.id === project.id);
     return `${kenmerk}-${String(projectIndex + 1).padStart(2, '0')}`;
+  };
+
+  // Get status badge colors
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Gepland':
+        return 'bg-gray-100 text-gray-800';
+      case 'In uitvoering':
+        return 'bg-orange-100 text-orange-800';
+      case 'Controle':
+        return 'bg-blue-100 text-blue-800';
+      case 'In de wacht':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Gereed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get deadline status (returns 'overdue', 'soon', or 'normal')
+  const getDeadlineStatus = (dateEnd: string | null) => {
+    if (!dateEnd) return 'normal';
+
+    const deadline = new Date(dateEnd);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadline.setHours(0, 0, 0, 0);
+
+    const diffTime = deadline.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return 'overdue';
+    if (diffDays <= 7) return 'soon';
+    return 'normal';
   };
 
   // Filter and search projects
@@ -1040,9 +1179,21 @@ export default function OnderzoekenTable({ projects }: Props) {
                 <tr key={project.id}>
                   <td className="px-6 py-4 text-sm text-gray-900">{getKenmerk(project)}</td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 whitespace-nowrap">
-                      {project.status}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
+                        {project.status}
+                      </span>
+                      {project.hasReinspection && (
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
+                          Nulmeting
+                        </span>
+                      )}
+                      {project.parentProjectId && (
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-purple-100 text-purple-700">
+                          Herinspectie
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">{project.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
@@ -1055,8 +1206,27 @@ export default function OnderzoekenTable({ projects }: Props) {
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {project.dateStart ? format(new Date(project.dateStart), 'd MMM yyyy', { locale: nl }) : '-'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {project.dateEnd ? format(new Date(project.dateEnd), 'd MMM yyyy', { locale: nl }) : '-'}
+                  <td className="px-6 py-4 text-sm">
+                    {project.dateEnd ? (
+                      <div className="flex items-center gap-2">
+                        {project.status !== 'Gereed' && getDeadlineStatus(project.dateEnd) === 'overdue' && (
+                          <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        <span className={
+                          project.status !== 'Gereed' && getDeadlineStatus(project.dateEnd) === 'overdue'
+                            ? 'text-red-600 font-semibold'
+                            : project.status !== 'Gereed' && getDeadlineStatus(project.dateEnd) === 'soon'
+                            ? 'text-orange-600 font-medium'
+                            : 'text-gray-900'
+                        }>
+                          {format(new Date(project.dateEnd), 'd MMM yyyy', { locale: nl })}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-900">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center gap-2">
@@ -1100,6 +1270,18 @@ export default function OnderzoekenTable({ projects }: Props) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
                               Kopieer onderzoek
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleGenerateEmail(project);
+                              }}
+                              className="project-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 hover:bg-gray-50"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Genereer planningsmail
                             </button>
                             <button
                               onClick={() => {
@@ -1435,6 +1617,43 @@ export default function OnderzoekenTable({ projects }: Props) {
                   </div>
                 </div>
 
+                {/* Herinspectie */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.hasReinspection}
+                        onChange={(e) => setFormData({ ...formData, hasReinspection: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
+                  </div>
+                  {formData.hasReinspection && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Aantal weken na deadline
+                      </label>
+                      <select
+                        value={formData.reinspectionWeeks}
+                        onChange={(e) => setFormData({ ...formData, reinspectionWeeks: parseInt(e.target.value) })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary bg-white"
+                      >
+                        <option value="12">12 weken</option>
+                        <option value="13">13 weken</option>
+                        <option value="14">14 weken</option>
+                        <option value="15">15 weken</option>
+                        <option value="16">16 weken</option>
+                      </select>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Er wordt automatisch een tweede project (v1.1) aangemaakt voor de herinspectie. Bevindingen worden gekopieerd wanneer v1.0 op "Gereed" wordt gezet.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Onderzoek gestart op and Rapportdatum */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -1558,6 +1777,106 @@ export default function OnderzoekenTable({ projects }: Props) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEmailModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Planningsmail</h2>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Onderwerp</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    readOnly
+                    value={generatedEmail.subject}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedEmail.subject);
+                      alert('Onderwerp gekopieerd!');
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    title="Kopieer onderwerp"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bericht</label>
+                <div className="relative">
+                  <textarea
+                    readOnly
+                    value={generatedEmail.body}
+                    rows={12}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 focus:outline-none font-mono text-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedEmail.body);
+                      alert('Bericht gekopieerd!');
+                    }}
+                    className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                    title="Kopieer bericht"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Sluiten
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`Onderwerp: ${generatedEmail.subject}\n\n${generatedEmail.body}`);
+                  alert('Email volledig gekopieerd!');
+                }}
+                className="px-4 py-2 text-sm font-medium text-white rounded-lg"
+                style={{ backgroundColor: '#6b2d8f' }}
+              >
+                Kopieer alles
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1802,6 +2121,43 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     />
                   </div>
+                </div>
+
+                {/* Herinspectie */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.hasReinspection}
+                        onChange={(e) => setFormData({ ...formData, hasReinspection: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
+                  </div>
+                  {formData.hasReinspection && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Aantal weken na deadline
+                      </label>
+                      <select
+                        value={formData.reinspectionWeeks}
+                        onChange={(e) => setFormData({ ...formData, reinspectionWeeks: parseInt(e.target.value) })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary bg-white"
+                      >
+                        <option value="12">12 weken</option>
+                        <option value="13">13 weken</option>
+                        <option value="14">14 weken</option>
+                        <option value="15">15 weken</option>
+                        <option value="16">16 weken</option>
+                      </select>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Er wordt automatisch een tweede project (v1.1) aangemaakt voor de herinspectie. Bevindingen worden gekopieerd wanneer v1.0 op "Gereed" wordt gezet.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Onderzoek gestart op and Rapportdatum */}

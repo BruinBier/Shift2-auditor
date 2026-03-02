@@ -103,6 +103,8 @@ export default async function ReportPage({ params }: { params: { id: string } })
         ...researchType,
         reportIntro: researchType.reportIntro ? await marked.parse(researchType.reportIntro) : null,
         reportIntroPdf: researchType.reportIntroPdf ? await marked.parse(researchType.reportIntroPdf) : null,
+        // summaryTemplate is passed through as-is (HTML with placeholders, not markdown)
+        summaryTemplate: researchType.summaryTemplate || null,
       };
     }
   }
