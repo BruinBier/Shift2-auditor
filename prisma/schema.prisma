@@ -63,6 +63,7 @@ model Opdrachtgever {
   id             String          @id @default(uuid())
   kenmerk        String          @unique
   naam           String
+  projectnummer  String?
   contactnaam    String?
   contactEmail   String?         @map("contact_email")
   accountmanager String?

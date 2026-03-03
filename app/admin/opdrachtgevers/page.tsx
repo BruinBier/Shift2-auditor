@@ -7,6 +7,7 @@ interface Opdrachtgever {
   id: string;
   kenmerk: string;
   naam: string;
+  projectnummer: string;
   contactnaam: string;
   contactEmail: string;
   accountmanager: string;
@@ -25,6 +26,7 @@ export default function OpdrachtgeversPage() {
   const [formData, setFormData] = useState({
     kenmerk: '',
     naam: '',
+    projectnummer: '',
     contactnaam: '',
     contactEmail: '',
     accountmanager: '',
@@ -117,6 +119,7 @@ export default function OpdrachtgeversPage() {
     setFormData({
       kenmerk: opdrachtgever.kenmerk,
       naam: opdrachtgever.naam,
+      projectnummer: opdrachtgever.projectnummer,
       contactnaam: opdrachtgever.contactnaam,
       contactEmail: opdrachtgever.contactEmail,
       accountmanager: opdrachtgever.accountmanager,
@@ -131,6 +134,7 @@ export default function OpdrachtgeversPage() {
     setFormData({
       kenmerk: '',
       naam: '',
+      projectnummer: '',
       contactnaam: '',
       contactEmail: '',
       accountmanager: '',
@@ -145,6 +149,7 @@ export default function OpdrachtgeversPage() {
     setFormData({
       kenmerk: '',
       naam: '',
+      projectnummer: '',
       contactnaam: '',
       contactEmail: '',
       accountmanager: '',
@@ -438,8 +443,8 @@ export default function OpdrachtgeversPage() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kenmerk</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opdrachtgever</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectnummer</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contactnaam</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact e-mail</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accountmanager</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
@@ -456,8 +461,8 @@ export default function OpdrachtgeversPage() {
                       {opdrachtgever.naam}
                     </Link>
                   </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.projectnummer || '-'}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.contactnaam}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.contactEmail}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{opdrachtgever.accountmanager}</td>
                   <td className="px-6 py-4 text-right relative">
                     <div className="flex items-center justify-end gap-2">
@@ -589,6 +594,20 @@ export default function OpdrachtgeversPage() {
                   onChange={(e) => setFormData({ ...formData, naam: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   placeholder="bijv. Gemeente Amsterdam"
+                />
+              </div>
+
+              {/* Projectnummer */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Projectnummer
+                </label>
+                <input
+                  type="text"
+                  value={formData.projectnummer}
+                  onChange={(e) => setFormData({ ...formData, projectnummer: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  placeholder="bijv. PRJ-2024-001"
                 />
               </div>
 

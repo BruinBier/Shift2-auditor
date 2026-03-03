@@ -586,11 +586,17 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     // Generate subject based on what we're showing
     const isContentResearch = project.researchType?.toLowerCase().includes('content');
+    const isApplicationResearch = project.researchType?.toLowerCase().includes('applicatie') ||
+                                   project.researchType?.toLowerCase().includes('formulieren');
+    const isFormulierenResearch = project.researchType?.toLowerCase().includes('formulieren');
     let subject: string;
 
-    // For content research, always use simple subject
-    if (isContentResearch) {
-      subject = 'Planning contentonderzoek toegankelijkheid';
+    // For formulieren research, use specialized subject
+    if (isFormulierenResearch) {
+      subject = 'Planning contentonderzoek toegankelijkheid Shift2 formulieren';
+    } else if (isContentResearch) {
+      // For other content research, use simple subject
+      subject = 'Planning contentonderzoek toegankelijkheid website';
     } else if (isReinspection) {
       // For reinspection, only mention reinspection
       subject = `Planning ${project.researchType || 'onderzoek'} toegankelijkheid (herinspectie)`;
@@ -618,7 +624,12 @@ export default function OnderzoekenTable({ projects }: Props) {
     // Remove any suffix in parentheses like "(herinspectie)" or "(nulmeting)"
     websiteName = websiteName.replace(/\s*\([^)]*\)\s*$/, '').trim();
 
-    let body = `Hallo,\n\nIn de bijlage stuur ik je de planning voor het toegankelijkheidsonderzoek van de website ${websiteName}.\n\n`;
+    // Determine subject description based on research type
+    const subjectDescription = isApplicationResearch
+      ? `de Shift2-formulieren op ${websiteName}`
+      : `de website ${websiteName}`;
+
+    let body = `Hallo,\n\nBijgaand stuur ik je de planning voor het toegankelijkheidsonderzoek van ${subjectDescription}.\n\n`;
 
     // Show information based on project type
     if (isReinspection) {

@@ -167,16 +167,57 @@ export default function SampleItems({ project }: { project: any }) {
         if (data.title) {
           setFormData({ ...formData, title: data.title });
         } else {
-          alert('Geen titel gevonden');
+          // Generate fallback title from URL
+          const suggestedTitle = generateTitleFromUrl(formData.url);
+          if (confirm(`Geen titel gevonden. Wil je deze suggestie gebruiken?\n\n"${suggestedTitle}"\n\nKlik OK om te gebruiken, of Annuleren om handmatig in te vullen.`)) {
+            setFormData({ ...formData, title: suggestedTitle });
+          }
         }
       } else {
-        alert('Fout bij ophalen van titel');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.error || 'Fout bij ophalen van titel';
+
+        // Generate fallback title from URL
+        const suggestedTitle = generateTitleFromUrl(formData.url);
+        if (confirm(`${errorMsg}\n\nWil je deze suggestie gebruiken?\n\n"${suggestedTitle}"\n\nKlik OK om te gebruiken, of Annuleren om handmatig in te vullen.`)) {
+          setFormData({ ...formData, title: suggestedTitle });
+        }
       }
     } catch (error) {
       console.error('Error fetching title:', error);
-      alert('Fout bij ophalen van titel');
+
+      // Generate fallback title from URL
+      const suggestedTitle = generateTitleFromUrl(formData.url);
+      if (confirm(`Kon titel niet ophalen.\n\nWil je deze suggestie gebruiken?\n\n"${suggestedTitle}"\n\nKlik OK om te gebruiken, of Annuleren om handmatig in te vullen.`)) {
+        setFormData({ ...formData, title: suggestedTitle });
+      }
     } finally {
       setIsFetchingTitle(false);
+    }
+  };
+
+  // Helper function to generate a title from URL
+  const generateTitleFromUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+
+      // Get the last meaningful part of the path
+      const parts = pathname.split('/').filter(p => p && p !== 'form');
+      const lastPart = parts[parts.length - 1] || parts[parts.length - 2] || '';
+
+      // Clean up: remove numbers at the end, replace hyphens/underscores with spaces, capitalize
+      const cleaned = lastPart
+        .replace(/-\d+$/, '') // Remove trailing numbers like "-0"
+        .replace(/[-_]/g, ' ') // Replace hyphens and underscores with spaces
+        .split(' ')
+        .filter(word => word.length > 0)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+      return cleaned || 'Formulier';
+    } catch {
+      return 'Formulier';
     }
   };
 
@@ -487,22 +528,46 @@ export default function SampleItems({ project }: { project: any }) {
                       </td>
                       <td className="py-4 px-4 align-top">
                         <div>
-                          <div className="flex items-center gap-2">
-                            <div className="font-medium text-gray-900">{item.title}</div>
-                            {runningTests.has(item.id) && (
-                              <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            )}
-                            {!runningTests.has(item.id) && (hasBeenTested(item) || completedTests.has(item.id)) && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                Voltooid
-                              </span>
-                            )}
-                          </div>
-                          {item.url && (
-                            <div className="text-sm text-gray-500">{item.url}</div>
+                          {project.researchTypeData?.type === 'formulieren' ? (
+                            <>
+                              <div className="font-medium text-gray-900 mb-1">{item.title}</div>
+                              <div className="flex items-center gap-2 mb-1">
+                                {runningTests.has(item.id) && (
+                                  <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                )}
+                                {!runningTests.has(item.id) && (hasBeenTested(item) || completedTests.has(item.id)) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    Voltooid
+                                  </span>
+                                )}
+                              </div>
+                              {item.url && (
+                                <div className="text-sm text-gray-500">{item.url}</div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <div className="font-medium text-gray-900">{item.title}</div>
+                                {runningTests.has(item.id) && (
+                                  <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                )}
+                                {!runningTests.has(item.id) && (hasBeenTested(item) || completedTests.has(item.id)) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    Voltooid
+                                  </span>
+                                )}
+                              </div>
+                              {item.url && (
+                                <div className="text-sm text-gray-500">{item.url}</div>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

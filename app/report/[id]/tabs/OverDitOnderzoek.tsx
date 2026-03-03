@@ -236,25 +236,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     const dateStartFormatted = dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : '[datum]';
     const dateEndFormatted = dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : '[datum]';
 
-    // Special template for "WCAG 2.2 AA deelonderzoek content"
-    if (project.researchTypeData?.name === 'WCAG 2.2 AA deelonderzoek content') {
-      return (
-        <>
-          <p className="mb-4">
-            Dit onderzoek is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
-          </p>
-
-          <p className="mb-4">
-            De onderzochte content voldoet {percentage === 100 ? '' : 'niet '}volledig aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn 30 succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze 30 succescriteria ({percentage}%). Bij {failedCriteria} {failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.
-          </p>
-
-          <p>
-            Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.
-          </p>
-        </>
-      );
-    }
-
     // Check if research type has a custom summary template
     if (project.researchTypeData?.summaryTemplate) {
       const template = project.researchTypeData.summaryTemplate;
@@ -330,6 +311,18 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         }
         .scope-info-content h3:first-child,
         .report-markdown-content h3:first-child {
+          margin-top: 0 !important;
+        }
+        .scope-info-content h4,
+        .report-markdown-content h4 {
+          font-size: 1rem !important;
+          font-weight: 700 !important;
+          color: #111827 !important;
+          margin-top: 1rem !important;
+          margin-bottom: 0.5rem !important;
+        }
+        .scope-info-content h4:first-child,
+        .report-markdown-content h4:first-child {
           margin-top: 0 !important;
         }
         .report-markdown-content table {
@@ -501,79 +494,56 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Report intro */}
         <section>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {project.researchTypeData?.name === 'WCAG 2.2 AA deelonderzoek content' ? (
-              <>
-                <p className="text-gray-700 leading-relaxed mb-3">
-                  WCAG 2.2 AA - deelonderzoek content
-                </p>
-                <p className="text-gray-700 leading-relaxed">
-                  <a
-                    href={introUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline inline-flex items-center gap-1"
-                  >
-                    {introUrl}
-                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-gray-700 leading-relaxed mb-3">
-                  {(() => {
-                    // Use reportIntroHeader if available
-                    const template = project.researchTypeData?.reportIntroHeader;
+            <p className="text-gray-700 leading-relaxed mb-3">
+              {(() => {
+                // Use reportIntroHeader if available
+                const template = project.researchTypeData?.reportIntroHeader;
 
-                    if (template) {
-                      // Split the template by {url} placeholder
-                      const parts = template.split('{url}');
+                if (template) {
+                  // Split the template by {url} placeholder
+                  const parts = template.split('{url}');
 
-                      return (
-                        <>
-                          {parts[0]}
-                          <a
-                            href={introUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline inline-flex items-center gap-1"
-                          >
-                            {introUrl}
-                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                          {parts[1] || ''}
-                        </>
-                      );
-                    } else {
-                      // Fallback to default text
-                      return (
-                        <>
-                          Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de {project.researchTypeData?.type || 'website'}{' '}
-                          <a
-                            href={introUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline inline-flex items-center gap-1"
-                          >
-                            {introUrl}
-                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                        </>
-                      );
-                    }
-                  })()}
-                </p>
-                <p className="text-gray-700 leading-relaxed">
-                  Het onderzoek is uitgevoerd conform {project.researchTypeData?.version || 'WCAG 2.2'} niveau {project.researchTypeData?.level || 'A en AA'} (EN 301 549), volgens de evaluatiemethode WCAG-EM.
-                </p>
-              </>
-            )}
+                  return (
+                    <>
+                      {parts[0]}
+                      <a
+                        href={introUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        {introUrl}
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      {parts[1] || ''}
+                    </>
+                  );
+                } else {
+                  // Fallback to default text
+                  return (
+                    <>
+                      Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de {project.researchTypeData?.type || 'website'}{' '}
+                      <a
+                        href={introUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline inline-flex items-center gap-1"
+                      >
+                        {introUrl}
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </>
+                  );
+                }
+              })()}
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              Het onderzoek is uitgevoerd conform {project.researchTypeData?.version || 'WCAG 2.2'} niveau {project.researchTypeData?.level || 'A en AA'} (EN 301 549), volgens de evaluatiemethode WCAG-EM.
+            </p>
           </div>
         </section>
 
@@ -609,210 +579,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
         {/* What was tested */}
         <section>
-          {project.researchTypeData?.name === 'WCAG 2.2 AA deelonderzoek content' ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Over dit onderzoek</h2>
-
-              <p className="text-gray-700 mb-6">
-                Voor deze website is een deelonderzoek uitgevoerd naar de toegankelijkheid van de content, om vast te stellen in hoeverre deze voldoet aan WCAG 2.2 niveau A en AA (EN 301 549). De geldigheid van dit onderzoeksrapport bedraagt maximaal drie jaar. Bij substantiële wijzigingen in de content of het publicatieproces adviseren wij een aanvullend of nieuw onderzoek uit te laten voeren.
-              </p>
-
-              {/* 4 separate accordions */}
-              <div className="space-y-0 border border-gray-300 rounded-lg overflow-hidden">
-                {/* Accordion 1: Afbakening van het deelonderzoek */}
-                <div>
-                  <button
-                    onClick={() => {
-                      const newOpen = new Set(openAfbakeningAccordions);
-                      if (newOpen.has('afbakening-main')) {
-                        newOpen.delete('afbakening-main');
-                      } else {
-                        newOpen.add('afbakening-main');
-                      }
-                      setOpenAfbakeningAccordions(newOpen);
-                    }}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                    aria-expanded={openAfbakeningAccordions.has('afbakening-main')}
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900">Afbakening van het deelonderzoek</h3>
-                    <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
-                      {openAfbakeningAccordions.has('afbakening-main') ? '−' : '+'}
-                    </span>
-                  </button>
-
-                  {openAfbakeningAccordions.has('afbakening-main') && (
-                    <div className="px-6 py-4 bg-white">
-                      <p className="text-gray-700 mb-4">
-                        Dit deelonderzoek heeft uitsluitend betrekking op de content van de website: teksten, koppen, afbeeldingen, alternatieve teksten, linkteksten, video's, PDF-documenten, tabellen en overige door de organisatie beheerde inhoud.
-                      </p>
-
-                      <p className="text-gray-700 mb-4">
-                        Bij dit onderzoek zijn 30 van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld, voor zover deze betrekking hebben op de content van de website.
-                      </p>
-
-                      <p className="text-gray-700 mb-4">
-                        De overige 25 succescriteria hebben betrekking op de technische basis van de website en worden beoordeeld in het afzonderlijk deelonderzoek techniek.
-                      </p>
-
-                      <p className="text-gray-700 mb-6">
-                        Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.
-                      </p>
-
-                      <h4 className="text-base font-bold text-gray-900 mb-3">Succescriteria beoordeeld in het technisch deelonderzoek</h4>
-
-                      <p className="text-gray-700 mb-4">
-                        Onderstaande succescriteria zijn in dit contentonderzoek niet beoordeeld en vallen onder het afzonderlijke deelonderzoek techniek:
-                      </p>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-gray-50">
-                              <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">SC</th>
-                              <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">Naam</th>
-                              <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">Niveau</th>
-                              <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">Reden van uitsluiting</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">3.3.1</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">Foutidentificatie</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">A</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">Formuliervalidatie wordt volledig door het systeem afgehandeld</td>
-                            </tr>
-                            <tr>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">3.3.3</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">Foutsuggestie</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">AA</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">Foutsuggesties worden door het systeem gegenereerd</td>
-                            </tr>
-                            <tr>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">3.3.7</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">Overbodige invoer</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">A</td>
-                              <td className="border border-gray-300 px-4 py-2 text-sm">Het hergebruik van eerder ingevoerde gegevens binnen processen is binnen het platform technisch ingericht en wordt centraal beheerd.</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Accordion 2: Embedded content en content van derden */}
-                <div className="border-t border-gray-300">
-                  <button
-                    onClick={() => {
-                      const newOpen = new Set(openAfbakeningAccordions);
-                      if (newOpen.has('embedded')) {
-                        newOpen.delete('embedded');
-                      } else {
-                        newOpen.add('embedded');
-                      }
-                      setOpenAfbakeningAccordions(newOpen);
-                    }}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                    aria-expanded={openAfbakeningAccordions.has('embedded')}
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900">Embedded content en content van derden</h3>
-                    <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
-                      {openAfbakeningAccordions.has('embedded') ? '−' : '+'}
-                    </span>
-                  </button>
-
-                  {openAfbakeningAccordions.has('embedded') && (
-                    <div className="px-6 py-4 bg-white">
-                      <p className="text-sm text-gray-700 mb-3">
-                        Wanneer op de website content is opgenomen via embedded elementen (zoals iframes met formulieren, kaarten of andere applicaties), wordt in dit onderzoek uitsluitend beoordeeld hoe de embed op de pagina is geplaatst. Dit omvat de aanwezigheid van een beschrijvende title en of de embed een toetsenbordval veroorzaakt.
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        De inhoud van de embedded applicatie zelf valt niet onder dit onderzoek. De organisatie wordt geadviseerd om de betreffende applicatie apart te laten toetsen op WCAG 2.2 AA.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Accordion 3: Reikwijdte en werkwijze */}
-                <div className="border-t border-gray-300">
-                  <button
-                    onClick={() => {
-                      const newOpen = new Set(openAfbakeningAccordions);
-                      if (newOpen.has('reikwijdte')) {
-                        newOpen.delete('reikwijdte');
-                      } else {
-                        newOpen.add('reikwijdte');
-                      }
-                      setOpenAfbakeningAccordions(newOpen);
-                    }}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                    aria-expanded={openAfbakeningAccordions.has('reikwijdte')}
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900">Reikwijdte en werkwijze</h3>
-                    <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
-                      {openAfbakeningAccordions.has('reikwijdte') ? '−' : '+'}
-                    </span>
-                  </button>
-
-                  {openAfbakeningAccordions.has('reikwijdte') && (
-                    <div className="px-6 py-4 bg-white">
-                      <p className="text-sm text-gray-700 mb-3">
-                        Het onderzoek is uitgevoerd op basis van een representatieve steekproef van webpagina's. Binnen deze steekproef zijn de aangetroffen toegankelijkheidsproblemen zo concreet mogelijk beschreven, inclusief verwijzing naar de betreffende pagina. Waar mogelijk is een aanbeveling opgenomen om de afwijking te verhelpen.
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        Dit onderzoek biedt geen uitputtend overzicht van alle mogelijke toegankelijkheidsproblemen. De bevindingen vormen een momentopname van de situatie ten tijde van het onderzoek.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Accordion 4: Wat is WCAG? */}
-                <div className="border-t border-gray-300">
-                  <button
-                    onClick={() => {
-                      const newOpen = new Set(openAfbakeningAccordions);
-                      if (newOpen.has('wcag')) {
-                        newOpen.delete('wcag');
-                      } else {
-                        newOpen.add('wcag');
-                      }
-                      setOpenAfbakeningAccordions(newOpen);
-                    }}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                    aria-expanded={openAfbakeningAccordions.has('wcag')}
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900">Wat is WCAG?</h3>
-                    <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
-                      {openAfbakeningAccordions.has('wcag') ? '−' : '+'}
-                    </span>
-                  </button>
-
-                  {openAfbakeningAccordions.has('wcag') && (
-                    <div className="px-6 py-4 bg-white">
-                      <p className="text-sm text-gray-700 mb-3">
-                        WCAG (Web Content Accessibility Guidelines) zijn internationaal erkende richtlijnen voor digitale toegankelijkheid, opgebouwd rond vier principes: Waarneembaar, Bedienbaar, Begrijpelijk en Robuust. Binnen deze principes zijn meetbare succescriteria vastgesteld.
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        Meer informatie:{' '}
-                        <a
-                          href="https://www.w3.org/Translations/WCAG22-nl/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 underline inline-flex items-center gap-1"
-                        >
-                          WCAG 2.2 (Nederlandse vertaling)
-                          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            (() => {
+          {(() => {
               const parsedContent = parseMarkdownTabs(project.researchTypeData?.reportIntro);
 
               if (parsedContent && parsedContent.tabs.length > 0) {
@@ -849,7 +616,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                               className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                               aria-expanded={isOpen}
                             >
-                              <h3 className="text-base font-medium text-gray-900">
+                              <h3 className="text-lg font-bold text-gray-900">
                                 {tab.title}
                               </h3>
                               <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
@@ -887,8 +654,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   </div>
                 );
               }
-            })()
-          )}
+            })()}
         </section>
 
         {/* Results Overview */}
@@ -916,7 +682,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openResultsAccordions.has('criteria')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Resultaten per succescriterium</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Resultaten per succescriterium</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openResultsAccordions.has('criteria') ? '−' : '+'}
                   </span>
@@ -979,7 +745,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openResultsAccordions.has('principles')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Onderzoeksscores</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Onderzoeksscores</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openResultsAccordions.has('principles') ? '−' : '+'}
                   </span>
@@ -1311,10 +1077,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Borging en vervolg</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-gray-700 mb-4">
-              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen op pagina's die niet zijn onderzocht. Het is daarom raadzaam om de volledige website te controleren op vergelijkbare patronen en deze structureel te monitoren.
+              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in formulieren die niet zijn onderzocht. Het is daarom raadzaam om alle online formulieren te controleren op vergelijkbare patronen en deze structureel te monitoren.
             </p>
             <p className="text-gray-700">
-              Daarnaast kunnen wijzigingen in content of het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.
+              Daarnaast kunnen wijzigingen in de inhoud van formulieren of in het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling van de formulieren blijven daarom noodzakelijk.
             </p>
           </div>
         </section>
@@ -1344,7 +1110,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openDetailsAccordions.has('scope')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Scope</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Scope</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openDetailsAccordions.has('scope') ? '−' : '+'}
                   </span>
@@ -1357,7 +1123,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                     </p>
 
                     {/* Binnen scope URLs */}
-                    {project.scopeUrls.filter((url: any) => url.inScope === true && !url.parentUrlId).length > 0 && (
+                    {project.scopeUrls.filter((url: any) => url.inScope === true && !url.parentUrlId).length > 0 ? (
                       <div className="mb-4">
                         {project.scopeUrls
                           .filter((scopeUrl: any) => scopeUrl.inScope === true && !scopeUrl.parentUrlId)
@@ -1378,13 +1144,17 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                             </div>
                           ))}
                       </div>
+                    ) : (
+                      <p className="text-sm text-gray-700">
+                        Voor dit onderzoek is de scope nog niet bepaald.
+                      </p>
                     )}
 
                     {/* Buiten scope */}
-                    {project.scopeUrls.filter((url: any) => url.inScope === false).length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-base font-semibold text-gray-900 mb-3">Buiten scope</h4>
-                        {project.scopeUrls
+                    <div className="mb-4 pt-5">
+                      <h4 className="text-base font-semibold text-gray-900 mb-3">Buiten scope</h4>
+                      {project.scopeUrls.filter((url: any) => url.inScope === false).length > 0 ? (
+                        project.scopeUrls
                           .filter((scopeUrl: any) => scopeUrl.inScope === false)
                           .map((scopeUrl: any, index: number) => (
                             <div key={index} className="mb-2">
@@ -1401,23 +1171,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                               </a>
                               {' (Andere URI-basis en/of stijlkenmerken)'}
                             </div>
-                          ))}
-                      </div>
-                    )}
-
-                    {/* Wettelijke uitzonderingen */}
-                    <div>
-                      <h4 className="text-base font-semibold text-gray-900 mb-3">Wettelijke uitzonderingen</h4>
-                      <p className="text-sm text-gray-700 mb-2">
-                        De volgende content valt op grond van de Toegankelijkheidswet buiten de scope van dit onderzoek:
-                      </p>
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        <li>Online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie;</li>
-                        <li>kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces;</li>
-                        <li>audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst;</li>
-                        <li>van derden afkomstige inhoud;</li>
-                        <li>inhoud van archieven.</li>
-                      </ul>
+                          ))
+                      ) : (
+                        <p className="text-sm text-gray-700">
+                          Nog niet bepaald.
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1438,7 +1197,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openDetailsAccordions.has('sample')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Steekproef</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Steekproef</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openDetailsAccordions.has('sample') ? '−' : '+'}
                   </span>
@@ -1471,23 +1230,44 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                     {/* Volledige steekproef */}
                     <h4 className="text-base font-semibold text-gray-900 mb-3">Volledige steekproef</h4>
                     {project.sampleItems && project.sampleItems.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
+                      <ul className="list-disc list-outside ml-5 text-sm text-gray-700 space-y-2">
                         {project.sampleItems.map((item: any, index: number) => (
                           <li key={item.id}>
-                            {item.url ? (
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 underline inline-flex items-center gap-1"
-                              >
-                                {item.url}
-                                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                              </a>
+                            {project.researchTypeData?.type === 'formulieren' ? (
+                              <>
+                                <div className="font-medium text-gray-900">{item.title}</div>
+                                {item.url && (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 underline inline-flex items-center gap-1"
+                                  >
+                                    {item.url}
+                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                )}
+                              </>
                             ) : (
-                              <span>{item.title}</span>
+                              <>
+                                {item.url ? (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 underline inline-flex items-center gap-1"
+                                  >
+                                    {item.url}
+                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                ) : (
+                                  <span>{item.title}</span>
+                                )}
+                              </>
                             )}
                           </li>
                         ))}
@@ -1514,7 +1294,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openDetailsAccordions.has('method')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Onderzoeksmethode en technieken</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Onderzoeksmethode en technieken</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openDetailsAccordions.has('method') ? '−' : '+'}
                   </span>
@@ -1568,7 +1348,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openDetailsAccordions.has('environment')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Testomgeving</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Testomgeving</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openDetailsAccordions.has('environment') ? '−' : '+'}
                   </span>
@@ -1608,7 +1388,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                   aria-expanded={openDetailsAccordions.has('technologies')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-900">Technologieën</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Technologieën</h3>
                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                     {openDetailsAccordions.has('technologies') ? '−' : '+'}
                   </span>
@@ -1719,7 +1499,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
         {/* Scope */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Scope</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Scope</h3>
           <div className="space-y-3">
             <div>
               <div className="text-sm font-medium text-gray-500 mb-3">
@@ -1802,7 +1582,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
         {/* Research method */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Onderzoeksmethode</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Onderzoeksmethode</h3>
           <p className="text-sm text-gray-700 mb-6">
             Dit onderzoek is uitgevoerd conform de evaluatiemethode{' '}
             <a
@@ -1850,7 +1630,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* User agents */}
         {project.userAgents && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">User agents</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">User agents</h3>
             <div
               className="text-sm text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
               dangerouslySetInnerHTML={{ __html: project.userAgents }}
@@ -1861,7 +1641,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Techniques */}
         {project.techniquesNote && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Technieken</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Technieken</h3>
             <div className="text-sm text-gray-700 whitespace-pre-line">
               {project.techniquesNote}
             </div>
@@ -1871,7 +1651,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Support baseline */}
         {project.supportBaseline && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basisniveau van ondersteuning</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Basisniveau van ondersteuning</h3>
             <div className="text-sm text-gray-700">{project.supportBaseline}</div>
           </div>
         )}
@@ -1879,7 +1659,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Technologies */}
         {project.technologies && project.technologies.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Technologieën</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Technologieën</h3>
             <ul className="list-disc list-inside space-y-1">
               {project.technologies.map((tech: string, index: number) => (
                 <li key={index} className="text-sm text-gray-700">

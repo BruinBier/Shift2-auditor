@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       data: {
         kenmerk: data.kenmerk,
         naam: data.naam,
+        projectnummer: data.projectnummer || null,
         contactnaam: data.contactnaam || null,
         contactEmail: data.contactEmail || null,
         accountmanager: data.accountmanager || null,
