@@ -60,6 +60,14 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
   // Populate form with editing finding data
   useEffect(() => {
     if (editingFinding) {
+      console.log('[FindingDialog] Loading editing finding:', {
+        id: editingFinding.id,
+        description: editingFinding.description,
+        advice: editingFinding.advice,
+        descriptionLength: editingFinding.description?.length || 0,
+        adviceLength: editingFinding.advice?.length || 0
+      });
+
       setFormData({
         criterionId: editingFinding.wcagCriterionId || criterionId,
         description: editingFinding.description || '',
@@ -94,6 +102,7 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
       }
     } else {
       // Reset form when not editing
+      console.log('[FindingDialog] Resetting form (no editingFinding)');
       setFormData({
         criterionId: criterionId,
         description: '',
@@ -105,7 +114,7 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
       setAttachments([]);
       setSelectedSampleItemIds(new Set());
     }
-  }, [editingFinding?.id, criterionId]);
+  }, [editingFinding?.id, editingFinding?.description, editingFinding?.advice, criterionId]);
 
   // Close dialog on Escape key (but first close tooltips if any are open)
   useEffect(() => {

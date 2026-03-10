@@ -236,6 +236,29 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     const dateStartFormatted = dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : '[datum]';
     const dateEndFormatted = dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : '[datum]';
 
+    const isFormulieren = project.researchTypeData?.type === 'formulieren';
+
+    // Count unique forms for formulieren type (by extracting form name from parentheses or title)
+    const uniqueForms = isFormulieren ? (() => {
+      const formNames = new Set<string>();
+      project.sampleItems.forEach((item: any) => {
+        // Extract form name from title (text in parentheses at the end or after last dash)
+        const match = item.title.match(/\(([^)]+)\)\s*$/);
+        if (match) {
+          formNames.add(match[1].trim());
+        } else {
+          // Fallback: use the part after the last "-"
+          const parts = item.title.split('-');
+          if (parts.length > 1) {
+            formNames.add(parts[parts.length - 1].trim());
+          } else {
+            formNames.add(item.title.trim());
+          }
+        }
+      });
+      return formNames.size;
+    })() : totalPages;
+
     // Check if research type has a custom summary template
     if (project.researchTypeData?.summaryTemplate) {
       const template = project.researchTypeData.summaryTemplate;
@@ -245,6 +268,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         .replace(/\{dateStart\}/g, dateStartFormatted)
         .replace(/\{dateEnd\}/g, dateEndFormatted)
         .replace(/\{totalPages\}/g, String(totalPages))
+        .replace(/\{uniqueForms\}/g, String(uniqueForms))
         .replace(/\{totalCriteria\}/g, String(totalCriteria))
         .replace(/\{passedCriteria\}/g, String(passedCriteria))
         .replace(/\{percentage\}/g, String(percentage))
@@ -252,7 +276,25 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         .replace(/\{compliesFully\}/g, percentage === 100 ? 'volledig' : 'niet volledig');
 
       return (
-        <div dangerouslySetInnerHTML={{ __html: summaryHtml }} />
+        <>
+          <div dangerouslySetInnerHTML={{ __html: summaryHtml }} />
+
+          {/* Researcher feedback if available */}
+          {project.researcherFeedback && (
+            <div
+              className="mt-4 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+              dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
+            />
+          )}
+
+          {/* Closing advice - formulieren specific or default */}
+          <p className="mt-4">
+            {isFormulieren
+              ? 'Wij adviseren om formuliercontent periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
+              : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.'
+            }
+          </p>
+        </>
       );
     }
 
@@ -267,8 +309,20 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). Bij {failedCriteria} {failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.
         </p>
 
+        {/* Researcher feedback if available */}
+        {project.researcherFeedback && (
+          <div
+            className="mb-4 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+            dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
+          />
+        )}
+
+        {/* Closing advice - formulieren specific or default */}
         <p>
-          Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.
+          {isFormulieren
+            ? 'Wij adviseren om formuliercontent periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
+            : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.'
+          }
         </p>
       </>
     );
@@ -563,19 +617,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             </div>
           </div>
         </section>
-
-        {/* Researcher feedback */}
-        {project.researcherFeedback && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Feedback van onderzoeker</h2>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div
-                className="text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
-                dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
-              />
-            </div>
-          </section>
-        )}
 
         {/* What was tested */}
         <section>
