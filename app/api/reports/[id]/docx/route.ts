@@ -5,6 +5,7 @@ import PizZip from 'pizzip';
 import fs from 'fs';
 import path from 'path';
 import { calculateReportStats } from '@/lib/report-calculations';
+import { generateFindingsSectionXml } from '@/lib/generate-findings-xml';
 
 export async function GET(
   request: NextRequest,
@@ -39,7 +40,7 @@ export async function GET(
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { sortOrder: 'asc' },
         },
         criterionAssessments: {
           include: {
@@ -120,6 +121,178 @@ export async function GET(
     const percentage = totalCriteria > 0 ? Math.round((passedCriteria / totalCriteria) * 100) : 0;
     const failedCriteria = stats.failed;
     const compliesFully = percentage === 100 ? 'volledig' : 'niet volledig';
+
+    // Calculate principle statistics for the scores table
+    const principleLabels: Record<string, string> = {
+      'Perceivable': 'Waarneembaar',
+      'Operable': 'Bedienbaar',
+      'Understandable': 'Begrijpelijk',
+      'Robust': 'Robuust',
+    };
+
+    const principleScores = ['Perceivable', 'Operable', 'Understandable', 'Robust'].map(principle => {
+      const criteriaForPrinciple = project.criterionAssessments.filter(
+        (a: any) => a.wcagCriterion.principle === principle
+      );
+
+      const levelA = criteriaForPrinciple.filter((a: any) => a.wcagCriterion.level === 'A');
+      const levelAA = criteriaForPrinciple.filter((a: any) => a.wcagCriterion.level === 'AA');
+
+      // "Goedgekeurd" = only passed (not including not_present)
+      const countApproved = (arr: any[]) => arr.filter((a: any) => a.status === 'passed').length;
+      // "Getoetst" = total assessed (excludes not_tested)
+      const countTested = (arr: any[]) => arr.filter((a: any) => a.status !== 'not_tested').length;
+
+      return {
+        principle: principleLabels[principle] || principle,
+        levelA: {
+          approved: countApproved(levelA),
+          tested: countTested(levelA),
+        },
+        levelAA: {
+          approved: countApproved(levelAA),
+          tested: countTested(levelAA),
+        },
+        total: {
+          approved: countApproved(criteriaForPrinciple),
+          tested: countTested(criteriaForPrinciple),
+        },
+      };
+    });
+
+    // Calculate totals across all principles
+    const totalScores = {
+      levelA: {
+        approved: principleScores.reduce((sum, p) => sum + p.levelA.approved, 0),
+        tested: principleScores.reduce((sum, p) => sum + p.levelA.tested, 0),
+      },
+      levelAA: {
+        approved: principleScores.reduce((sum, p) => sum + p.levelAA.approved, 0),
+        tested: principleScores.reduce((sum, p) => sum + p.levelAA.tested, 0),
+      },
+      total: {
+        approved: principleScores.reduce((sum, p) => sum + p.total.approved, 0),
+        tested: principleScores.reduce((sum, p) => sum + p.total.tested, 0),
+      },
+    };
+
+    // Prepare criteria assessments for table
+    const criteriaForTable = project.criterionAssessments
+      .filter(a => a.status === 'passed' || a.status === 'failed' || a.status === 'not_present' || a.status === 'unknown')
+      .sort((a, b) => {
+        // Sort by code (e.g., "1.1.1" < "1.3.1" < "2.4.6")
+        const [aMajor, aMinor, aPatch] = a.wcagCriterion.code.split('.').map(Number);
+        const [bMajor, bMinor, bPatch] = b.wcagCriterion.code.split('.').map(Number);
+
+        if (aMajor !== bMajor) return aMajor - bMajor;
+        if (aMinor !== bMinor) return aMinor - bMinor;
+        return aPatch - bPatch;
+      })
+      .map(assessment => {
+        // Map status to Dutch labels
+        let statusLabel = 'Voldoet';
+        if (assessment.status === 'failed') {
+          statusLabel = 'Voldoet niet';
+        } else if (assessment.status === 'not_present') {
+          statusLabel = 'Niet aanwezig';
+        } else if (assessment.status === 'unknown') {
+          statusLabel = 'Niet beoordeeld';
+        }
+
+        return {
+          code: assessment.wcagCriterion.code,
+          name: assessment.wcagCriterion.titleNl,
+          status: statusLabel,
+          isFailed: assessment.status === 'failed',
+        };
+      });
+
+    // Prepare findings data for bevindingen section
+    const failedAssessments = project.criterionAssessments
+      .filter(a => a.status === 'failed')
+      .sort((a, b) => {
+        const [aMajor, aMinor, aPatch] = a.wcagCriterion.code.split('.').map(Number);
+        const [bMajor, bMinor, bPatch] = b.wcagCriterion.code.split('.').map(Number);
+        if (aMajor !== bMajor) return aMajor - bMajor;
+        if (aMinor !== bMinor) return aMinor - bMinor;
+        return aPatch - bPatch;
+      });
+
+    const findingsData = failedAssessments.map(assessment => {
+      const criterion = assessment.wcagCriterion;
+      const findingsForCriterion = project.findings.filter(
+        f => f.wcagCriterionId === criterion.id
+      );
+
+      return {
+        code: criterion.code,
+        title: criterion.titleNl,
+        level: criterion.level,
+        description: criterion.descriptionNl || '',
+        understandingUrl: criterion.understandingUrl || '',
+        findings: findingsForCriterion.map((finding, index) => ({
+          number: index + 1,
+          findingCode: finding.findingCode,
+          description: finding.description || '',
+          advice: finding.advice || '',
+          impact: finding.impact,
+          responsibility: finding.responsibility || '',
+          locations: finding.occurrences.map(occ => ({
+            title: occ.sampleItem?.title || 'Onbekende locatie',
+            url: occ.sampleItem?.url || '',
+          })),
+        })),
+      };
+    }).filter(item => item.findings.length > 0); // Only include criteria that have findings
+
+    console.log(`[DOCX] Prepared ${findingsData.length} failed criteria with findings`);
+
+    // Prepare opmerkingen data (findings with status !== 'open')
+    const opmerkingenFindings = project.findings.filter(f => f.status !== 'open');
+
+    // Group opmerkingen by criterion
+    const opmerkingenData = opmerkingenFindings.reduce((acc, finding) => {
+      const criterion = finding.wcagCriterion;
+      if (!criterion) return acc;
+
+      let criterionGroup = acc.find(item => item.code === criterion.code);
+
+      if (!criterionGroup) {
+        criterionGroup = {
+          code: criterion.code,
+          title: criterion.titleNl,
+          level: criterion.level,
+          description: criterion.descriptionNl || '',
+          understandingUrl: criterion.understandingUrl || '',
+          findings: [],
+        };
+        acc.push(criterionGroup);
+      }
+
+      criterionGroup.findings.push({
+        number: criterionGroup.findings.length + 1,
+        findingCode: finding.findingCode,
+        description: finding.description || '',
+        advice: finding.advice || '',
+        impact: finding.impact,
+        responsibility: finding.responsibility || '',
+        locations: finding.occurrences.map(occ => ({
+          title: occ.sampleItem?.title || 'Onbekende locatie',
+          url: occ.sampleItem?.url || '',
+        })),
+      });
+
+      return acc;
+    }, [] as any[]).sort((a, b) => {
+      // Sort by criterion code
+      const [aMajor, aMinor, aPatch] = a.code.split('.').map(Number);
+      const [bMajor, bMinor, bPatch] = b.code.split('.').map(Number);
+      if (aMajor !== bMajor) return aMajor - bMajor;
+      if (aMinor !== bMinor) return aMinor - bMinor;
+      return aPatch - bPatch;
+    });
+
+    console.log(`[DOCX] Prepared ${opmerkingenData.length} criteria with opmerkingen (${opmerkingenFindings.length} total opmerkingen)`);
 
     // Prepare data for template
     const templateData = {
@@ -285,6 +458,9 @@ export async function GET(
       browserFirefox: 'Mozilla Firefox 147',
       browserEdge: 'Microsoft Edge 145',
       screenReader: 'NVDA (Windows)',
+
+      // Dynamic criteria assessments for table
+      criteriaAssessments: criteriaForTable,
     };
 
     console.log('[DOCX] Rendering template with data...');
@@ -305,10 +481,342 @@ export async function GET(
     // Render the template with data
     doc.render(templateData);
 
+    console.log('[DOCX] Updating criteria table with project data...');
+
+    // Get the rendered ZIP and modify the criteria table
+    const renderedZip = doc.getZip();
+    const documentXml = renderedZip.file('word/document.xml');
+    if (documentXml) {
+      let xmlContent = documentXml.asText();
+
+      // Find the criteria table (contains pattern that identifies it)
+      // We'll look for the table that has "1.1.1" in it (after TOC)
+      const firstOccurrence = xmlContent.indexOf('1.1.1');
+      const secondOccurrence = xmlContent.indexOf('1.1.1', firstOccurrence + 1);
+
+      if (secondOccurrence !== -1) {
+        // Find the table containing this occurrence
+        const tableStart = xmlContent.lastIndexOf('<w:tbl', secondOccurrence);
+        const tableEnd = xmlContent.indexOf('</w:tbl>', tableStart) + '</w:tbl>'.length;
+
+        if (tableStart !== -1 && tableEnd > tableStart) {
+          // Extract table
+          const oldTable = xmlContent.substring(tableStart, tableEnd);
+
+          // Find header row
+          const headerRowStart = oldTable.indexOf('<w:tr');
+          const headerRowEnd = oldTable.indexOf('</w:tr>', headerRowStart) + '</w:tr>'.length;
+          const headerRow = oldTable.substring(headerRowStart, headerRowEnd);
+
+          // Find a template row (second row)
+          const templateRowStart = oldTable.indexOf('<w:tr', headerRowEnd);
+          const templateRowEnd = oldTable.indexOf('</w:tr>', templateRowStart) + '</w:tr>'.length;
+          const templateRowXml = oldTable.substring(templateRowStart, templateRowEnd);
+
+          // Build new table with dynamic rows
+          let newTable = oldTable.substring(0, headerRowStart) + headerRow;
+
+          // Generate rows for each criterion
+          for (const criterion of criteriaForTable) {
+            let row = templateRowXml;
+
+            // Replace placeholders (using actual values from first row as template)
+            // This is a simple approach - replace the first criterion's data with current criterion
+            row = row.replace(/1\.1\.1/g, criterion.code);
+            row = row.replace(/Niet-tekstuele content/g, criterion.name);
+            // Replace any existing status text with the current criterion's status
+            row = row.replace(/<w:t>Voldoet niet<\/w:t>/g, `<w:t>${criterion.status}</w:t>`);
+            row = row.replace(/<w:t>Voldoet<\/w:t>/g, `<w:t>${criterion.status}</w:t>`);
+            row = row.replace(/<w:t>Niet aanwezig<\/w:t>/g, `<w:t>${criterion.status}</w:t>`);
+            row = row.replace(/<w:t>Niet beoordeeld<\/w:t>/g, `<w:t>${criterion.status}</w:t>`);
+
+            // Handle bold formatting for failed criteria
+            if (criterion.isFailed) {
+              // Add bold tags if not present
+              row = row.replace(/<w:rPr>/g, '<w:rPr><w:b/><w:bCs/>');
+              row = row.replace(/<w:rPr\/>/g, '<w:rPr><w:b/><w:bCs/></w:rPr>');
+            } else {
+              // Remove bold tags if present
+              row = row.replace(/<w:b\/>/g, '').replace(/<w:bCs\/>/g, '');
+            }
+
+            newTable += row;
+          }
+
+          newTable += '</w:tbl>';
+
+          // Replace the old table with the new one
+          xmlContent = xmlContent.substring(0, tableStart) + newTable + xmlContent.substring(tableEnd);
+
+          // Update the ZIP
+          renderedZip.file('word/document.xml', xmlContent);
+
+          console.log(`[DOCX] Updated criteria table with ${criteriaForTable.length} criteria`);
+        }
+      }
+
+      // Now update the scores table (Onderzoek scores)
+      console.log('[DOCX] Updating scores table with project data...');
+
+      // Find the scores table by looking for "WCAG Principe" header text
+      const scoresTableMarker = 'De tabel hieronder laat per WCAG-principe';
+      const scoresTableIntroIndex = xmlContent.indexOf(scoresTableMarker);
+
+      if (scoresTableIntroIndex !== -1) {
+        // Find the table after this marker
+        const scoresTableStart = xmlContent.indexOf('<w:tbl', scoresTableIntroIndex);
+
+        if (scoresTableStart !== -1) {
+          const scoresTableEnd = xmlContent.indexOf('</w:tbl>', scoresTableStart) + '</w:tbl>'.length;
+
+          if (scoresTableEnd > scoresTableStart) {
+            const oldScoresTable = xmlContent.substring(scoresTableStart, scoresTableEnd);
+
+            // Extract all rows from the table
+            const rowMatches = oldScoresTable.match(/<w:tr[^>]*>[\s\S]*?<\/w:tr>/g);
+
+            if (rowMatches && rowMatches.length >= 6) {
+              // Row 0: Header
+              // Row 1-4: Principle rows (Waarneembaar, Bedienbaar, Begrijpelijk, Robuust)
+              // Row 5: Total row
+
+              const headerRow = rowMatches[0];
+              let updatedRows = [headerRow];
+
+              // Update principle rows (rows 1-4)
+              for (let i = 0; i < 4; i++) {
+                const principleScore = principleScores[i];
+                let row = rowMatches[i + 1]; // +1 because row 0 is header
+
+                // Helper function to replace text in <w:t> tags
+                const replaceInTextTags = (xmlRow: string, oldText: string, newText: string) => {
+                  return xmlRow.replace(
+                    new RegExp(`(<w:t[^>]*>)${oldText.replace(/[/\s]/g, '\\s*')}(<\\/w:t>)`, 'g'),
+                    `$1${newText}$2`
+                  );
+                };
+
+                // Replace each cell value individually
+                // The format in XML is separate <w:t> tags for each part: "5 /" and "8"
+
+                // First, let's extract current values and replace them
+                const textMatches = row.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
+
+                if (textMatches && textMatches.length >= 7) {
+                  // Index 0: Principle name (already correct)
+                  // Index 1-2: Level A (e.g., "5 /" and "8")
+                  // Index 3-4: Level AA (e.g., "6 /" and "7")
+                  // Index 5-6: Total (e.g., "11 /" and "15")
+
+                  // Replace Level A
+                  row = row.replace(textMatches[1], `<w:t>${principleScore.levelA.approved} /</w:t>`);
+                  row = row.replace(textMatches[2], `<w:t> ${principleScore.levelA.tested}</w:t>`);
+
+                  // Replace Level AA
+                  row = row.replace(textMatches[3], `<w:t>${principleScore.levelAA.approved} /</w:t>`);
+                  row = row.replace(textMatches[4], `<w:t> ${principleScore.levelAA.tested}</w:t>`);
+
+                  // Replace Total
+                  row = row.replace(textMatches[5], `<w:t>${principleScore.total.approved} /</w:t>`);
+                  row = row.replace(textMatches[6], `<w:t> ${principleScore.total.tested}</w:t>`);
+                }
+
+                updatedRows.push(row);
+              }
+
+              // Update total row (row 5)
+              let totalRow = rowMatches[5];
+              const totalTextMatches = totalRow.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
+
+              if (totalTextMatches && totalTextMatches.length >= 5) {
+                // Total row structure (6 text elements):
+                // [0]: "Totaal"
+                // [1]: "11 /" (Level A approved)
+                // [2]: " 16" (Level A tested)
+                // [3]: "9 /" (Level AA approved)
+                // [4]: " 11" (Level AA tested)
+                // [5]: "20/ 27" (Total - BOTH numbers in ONE tag!)
+
+                // Replace Level A total
+                totalRow = totalRow.replace(totalTextMatches[1], `<w:t>${totalScores.levelA.approved} /</w:t>`);
+                totalRow = totalRow.replace(totalTextMatches[2], `<w:t> ${totalScores.levelA.tested}</w:t>`);
+
+                // Replace Level AA total
+                totalRow = totalRow.replace(totalTextMatches[3], `<w:t>${totalScores.levelAA.approved} /</w:t>`);
+                totalRow = totalRow.replace(totalTextMatches[4], `<w:t> ${totalScores.levelAA.tested}</w:t>`);
+
+                // Replace overall total (note: both numbers are in one <w:t> tag)
+                totalRow = totalRow.replace(totalTextMatches[5], `<w:t>${totalScores.total.approved}/ ${totalScores.total.tested}</w:t>`);
+              }
+
+              updatedRows.push(totalRow);
+
+              // Rebuild the table
+              const tablePrefix = oldScoresTable.substring(0, oldScoresTable.indexOf('<w:tr'));
+              const newScoresTable = tablePrefix + updatedRows.join('') + '</w:tbl>';
+
+              // Replace the old scores table with the new one
+              xmlContent = xmlContent.substring(0, scoresTableStart) + newScoresTable + xmlContent.substring(scoresTableEnd);
+
+              // Update the ZIP
+              renderedZip.file('word/document.xml', xmlContent);
+
+              console.log(`[DOCX] Updated scores table with ${principleScores.length} principles`);
+            } else {
+              console.log(`[DOCX] Unexpected number of rows in scores table: ${rowMatches?.length || 0}`);
+            }
+          }
+        }
+      } else {
+        console.log('[DOCX] Scores table marker not found, skipping scores table update');
+      }
+
+      // Now update the bevindingen (findings) section
+      console.log('[DOCX] Updating bevindingen section with project data...');
+
+      if (findingsData.length > 0) {
+        // Find the bevindingen section by searching for "Bevindingen" heading (not the intro text)
+        // We need to find the Heading2 "Bevindingen", not just any paragraph with that text
+        let bevHeadingStart = -1;
+        let searchPos = 0;
+
+        // Search for "Bevindingen" that is in a Heading2 style
+        while ((searchPos = xmlContent.indexOf('Bevindingen', searchPos)) !== -1) {
+          // Check if this occurrence is in a heading by looking backwards for pStyle="Heading2" or "Kop2"
+          const before = xmlContent.substring(Math.max(0, searchPos - 200), searchPos);
+          if (before.includes('pStyle w:val="Heading2"') || before.includes('pStyle w:val="Kop2"')) {
+            // This is the heading! Now find the start of this paragraph
+            const paragraphStart = xmlContent.lastIndexOf('<w:p ', searchPos);
+            const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', searchPos);
+            bevHeadingStart = Math.max(paragraphStart, paragraphStart2);
+            break;
+          }
+          searchPos++;
+        }
+
+        if (bevHeadingStart !== -1) {
+          // Find the end of the bevindingen section (before "Opmerkingen" heading or next section)
+          const bevSectionEndMarker = 'Opmerkingen';
+          let bevSectionEnd = xmlContent.indexOf(bevSectionEndMarker, bevHeadingStart);
+
+          // If no "Opmerkingen" section, try "Borging en vervolg"
+          if (bevSectionEnd === -1) {
+            bevSectionEnd = xmlContent.indexOf('Borging en vervolg', bevHeadingStart);
+          }
+
+          if (bevSectionEnd !== -1) {
+            // Find the start of the paragraph containing the end marker
+            // This ensures we stop right before the next heading
+            const beforeEndMarker = xmlContent.substring(bevSectionEnd - 1000, bevSectionEnd);
+            const lastPStart = Math.max(
+              beforeEndMarker.lastIndexOf('<w:p '),
+              beforeEndMarker.lastIndexOf('<w:p>')
+            );
+
+            const actualSectionEnd = bevSectionEnd - 1000 + lastPStart;
+
+            console.log(`[DOCX] Found bevindingen section from ${bevHeadingStart} to ${actualSectionEnd}`);
+
+            // Generate new findings XML
+            const newFindingsXml = generateFindingsSectionXml(findingsData);
+
+            // Replace the entire section (from Bevindingen heading to before next section heading)
+            // This removes both the heading, intro text, and all old findings
+            xmlContent = xmlContent.substring(0, bevHeadingStart) + newFindingsXml + xmlContent.substring(actualSectionEnd);
+
+            // Update the ZIP
+            renderedZip.file('word/document.xml', xmlContent);
+
+            console.log(`[DOCX] Updated bevindingen section with ${findingsData.length} failed criteria`);
+          } else {
+            console.log('[DOCX] Could not find end of bevindingen section');
+          }
+        } else {
+          console.log('[DOCX] Bevindingen heading not found in template');
+        }
+      } else {
+        console.log('[DOCX] No findings to include in bevindingen section');
+      }
+
+      // Now update the opmerkingen section
+      console.log('[DOCX] Updating opmerkingen section with project data...');
+
+      if (opmerkingenData.length > 0) {
+        // Find the opmerkingen section by searching for "Opmerkingen" heading
+        let opmHeadingStart = -1;
+        let searchPos = 0;
+
+        // Search for "Opmerkingen" that is in a Heading2 style
+        while ((searchPos = xmlContent.indexOf('Opmerkingen', searchPos)) !== -1) {
+          // Check if this occurrence is in a heading by looking backwards for pStyle="Heading2" or "Kop2"
+          const before = xmlContent.substring(Math.max(0, searchPos - 200), searchPos);
+          if (before.includes('pStyle w:val="Heading2"') || before.includes('pStyle w:val="Kop2"')) {
+            // This is the heading! Now find the start of this paragraph
+            const paragraphStart = xmlContent.lastIndexOf('<w:p ', searchPos);
+            const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', searchPos);
+            opmHeadingStart = Math.max(paragraphStart, paragraphStart2);
+            break;
+          }
+          searchPos++;
+        }
+
+        if (opmHeadingStart !== -1) {
+          // Find the end of the opmerkingen section (before next section heading)
+          // Try "Borging en vervolg" or any other next section
+          const possibleEndMarkers = ['Borging en vervolg', 'Bijlage'];
+          let opmSectionEnd = -1;
+
+          for (const marker of possibleEndMarkers) {
+            const pos = xmlContent.indexOf(marker, opmHeadingStart);
+            if (pos !== -1) {
+              opmSectionEnd = pos;
+              break;
+            }
+          }
+
+          if (opmSectionEnd !== -1) {
+            // Find the start of the paragraph containing the end marker
+            const beforeEndMarker = xmlContent.substring(opmSectionEnd - 1000, opmSectionEnd);
+            const lastPStart = Math.max(
+              beforeEndMarker.lastIndexOf('<w:p '),
+              beforeEndMarker.lastIndexOf('<w:p>')
+            );
+
+            const actualSectionEnd = opmSectionEnd - 1000 + lastPStart;
+
+            console.log(`[DOCX] Found opmerkingen section from ${opmHeadingStart} to ${actualSectionEnd}`);
+
+            // Generate new opmerkingen XML (use custom intro and result text)
+            const newOpmerkingenXml = generateFindingsSectionXml(
+              opmerkingenData,
+              'Opmerkingen',
+              undefined, // Use default intro text for Opmerkingen
+              'Voldoet maar met opmerking', // Result text
+              'Opmerking' // Finding label
+            );
+
+            // Replace the entire section
+            xmlContent = xmlContent.substring(0, opmHeadingStart) + newOpmerkingenXml + xmlContent.substring(actualSectionEnd);
+
+            // Update the ZIP
+            renderedZip.file('word/document.xml', xmlContent);
+
+            console.log(`[DOCX] Updated opmerkingen section with ${opmerkingenData.length} criteria (${opmerkingenFindings.length} total opmerkingen)`);
+          } else {
+            console.log('[DOCX] Could not find end of opmerkingen section');
+          }
+        } else {
+          console.log('[DOCX] Opmerkingen heading not found in template');
+        }
+      } else {
+        console.log('[DOCX] No opmerkingen to include in opmerkingen section');
+      }
+    }
+
     console.log('[DOCX] Generating Word document buffer...');
 
-    // Generate the Word document
-    const docxBuffer = doc.getZip().generate({
+    // Generate the Word document (use renderedZip if available)
+    const docxBuffer = renderedZip.generate({
       type: 'nodebuffer',
       compression: 'DEFLATE',
     });
