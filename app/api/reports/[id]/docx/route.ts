@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { calculateReportStats } from '@/lib/report-calculations';
 import { generateFindingsSectionXml } from '@/lib/generate-findings-xml';
+import { generateTocXml, defaultFormulierenTocEntries } from '@/lib/generate-toc-xml';
 
 export async function GET(
   request: NextRequest,
@@ -25,7 +26,6 @@ export async function GET(
           },
         },
         scopeUrls: {
-          where: { inScope: true },
           orderBy: { url: 'asc' },
         },
         sampleItems: {
@@ -304,7 +304,8 @@ export async function GET(
         return naam.replace(/^gemeente\s+/i, '');
       })(),
       websiteUrl: (() => {
-        const firstUrl = project.scopeUrls[0]?.url;
+        const inScopeUrls = project.scopeUrls.filter(u => u.inScope);
+        const firstUrl = inScopeUrls[0]?.url;
         if (!firstUrl) return '';
         // Extract base domain (e.g., https://www.wierden.nl/)
         try {
@@ -453,11 +454,23 @@ export async function GET(
       totalSampleItems: project.sampleItems.length,
       totalScopeUrls: project.scopeUrls.length,
 
-      // Browser and tool versions for test environment section
-      browserChrome: 'Google Chrome 145',
-      browserFirefox: 'Mozilla Firefox 147',
-      browserEdge: 'Microsoft Edge 145',
-      screenReader: 'NVDA (Windows)',
+      // Scope URLs for onderzoeksdetails (split by inScope)
+      scopeUrlsInScope: project.scopeUrls
+        .filter(u => u.inScope)
+        .map(scopeUrl => ({
+          url: scopeUrl.url,
+          scopeDescription: scopeUrl.scopeDescription || '(Andere URI-basis en stijlkenmerken)',
+        })),
+      scopeUrlsOutOfScope: project.scopeUrls
+        .filter(u => !u.inScope)
+        .map(scopeUrl => ({
+          url: scopeUrl.url,
+          scopeDescription: scopeUrl.scopeDescription || '(Andere URI-basis en stijlkenmerken)',
+        })),
+
+      // Browser and tool versions for test environment section (from database)
+      userAgents: project.userAgents || 'Google Chrome 145 (primair);\nMozilla Firefox 147;\nMicrosoft Edge 145;\nNVDA (Windows) in combinatie met Google Chrome;',
+      technologies: project.technologies.length > 0 ? project.technologies.join('\n') : 'DOM\nHTML\nCSS',
 
       // Dynamic criteria assessments for table
       criteriaAssessments: criteriaForTable,
@@ -489,6 +502,57 @@ export async function GET(
     if (documentXml) {
       let xmlContent = documentXml.asText();
 
+      // Split managementSummary into multiple paragraphs
+      console.log('[DOCX] Converting managementSummary newlines to multiple paragraphs...');
+
+      // Find the paragraph containing managementSummary content
+      // Look for the first occurrence of a unique part of the summary text
+      const summaryLines = templateData.managementSummary.split('\n').filter(line => line.trim().length > 0);
+
+      if (summaryLines.length > 1) {
+        // Find the paragraph containing the first line of the summary
+        const firstLine = summaryLines[0].substring(0, 50); // Use first 50 chars to find it
+        const searchPattern = firstLine.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex chars
+
+        // Find where this text appears in the document
+        const firstLineIndex = xmlContent.indexOf(firstLine);
+
+        if (firstLineIndex !== -1) {
+          // Find the paragraph that contains this text
+          const paragraphStart = xmlContent.lastIndexOf('<w:p ', firstLineIndex);
+          const paragraphEnd = xmlContent.indexOf('</w:p>', firstLineIndex) + '</w:p>'.length;
+
+          if (paragraphStart !== -1 && paragraphEnd > paragraphStart) {
+            const oldParagraph = xmlContent.substring(paragraphStart, paragraphEnd);
+
+            // Extract the paragraph properties (pPr) from the first paragraph
+            const pPrMatch = oldParagraph.match(/<w:pPr>[\s\S]*?<\/w:pPr>/);
+            const pPr = pPrMatch ? pPrMatch[0] : '<w:pPr><w:pStyle w:val="Normal"/></w:pPr>';
+
+            // Extract run properties (rPr) if any
+            const rPrMatch = oldParagraph.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
+            const rPr = rPrMatch ? rPrMatch[0] : '';
+
+            // Build new paragraphs for each line
+            const newParagraphs = summaryLines.map(line => {
+              const escapedLine = line
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+              return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
+            }).join('\n');
+
+            // Replace the old paragraph with new paragraphs
+            xmlContent = xmlContent.substring(0, paragraphStart) + newParagraphs + xmlContent.substring(paragraphEnd);
+
+            console.log(`[DOCX] Split managementSummary into ${summaryLines.length} paragraphs`);
+          }
+        }
+      }
+
       // Find the criteria table (contains pattern that identifies it)
       // We'll look for the table that has "1.1.1" in it (after TOC)
       const firstOccurrence = xmlContent.indexOf('1.1.1');
@@ -517,7 +581,8 @@ export async function GET(
           let newTable = oldTable.substring(0, headerRowStart) + headerRow;
 
           // Generate rows for each criterion
-          for (const criterion of criteriaForTable) {
+          for (let i = 0; i < criteriaForTable.length; i++) {
+            const criterion = criteriaForTable[i];
             let row = templateRowXml;
 
             // Replace placeholders (using actual values from first row as template)
@@ -538,6 +603,27 @@ export async function GET(
             } else {
               // Remove bold tags if present
               row = row.replace(/<w:b\/>/g, '').replace(/<w:bCs\/>/g, '');
+            }
+
+            // Mark the first data row (second row overall) as a header row
+            // This makes it repeat on each page if the table spans multiple pages
+            if (i === 0) {
+              // This is the second row (first data row after the header)
+              // Add table header property to make it repeat on each page
+              const trTagIndex = row.indexOf('<w:tr');
+              const trTagEnd = row.indexOf('>', trTagIndex) + 1;
+
+              // Check if there's already a <w:trPr> section
+              if (row.includes('<w:trPr>')) {
+                // Add tblHeader to existing trPr
+                row = row.replace('<w:trPr>', '<w:trPr><w:tblHeader/>');
+              } else if (row.includes('<w:trPr/>')) {
+                // Replace empty trPr
+                row = row.replace('<w:trPr/>', '<w:trPr><w:tblHeader/></w:trPr>');
+              } else {
+                // Add new trPr section right after the <w:tr> tag
+                row = row.substring(0, trTagEnd) + '<w:trPr><w:tblHeader/></w:trPr>' + row.substring(trTagEnd);
+              }
             }
 
             newTable += row;
@@ -810,6 +896,579 @@ export async function GET(
         }
       } else {
         console.log('[DOCX] No opmerkingen to include in opmerkingen section');
+      }
+
+      // Update scope URLs in Onderzoeksdetails section
+      console.log('[DOCX] Updating scope URLs in Onderzoeksdetails section...');
+      console.log(`[DOCX] In-scope URLs: ${templateData.scopeUrlsInScope.length}, Out-of-scope URLs: ${templateData.scopeUrlsOutOfScope.length}`);
+
+      // Find "Scope" heading (Kop3) - the existing one in the template
+      let scopeHeadingStart = -1;
+      let searchPos = 0;
+
+      while ((searchPos = xmlContent.indexOf('>Scope<', searchPos)) !== -1) {
+        // Check if this is THE scope heading (Kop3 style) by looking backwards
+        const before = xmlContent.substring(Math.max(0, searchPos - 300), searchPos);
+        if (before.includes('pStyle w:val="Kop3"')) {
+          // This is the Scope heading in Onderzoeksdetails!
+          const paragraphStart = xmlContent.lastIndexOf('<w:p ', searchPos);
+          const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', searchPos);
+          scopeHeadingStart = Math.max(paragraphStart, paragraphStart2);
+          console.log('[DOCX] Found "Scope" heading at index', scopeHeadingStart);
+          break;
+        }
+        searchPos++;
+      }
+
+      if (scopeHeadingStart !== -1) {
+        // Find the end of the Scope heading paragraph
+        const scopeHeadingEnd = xmlContent.indexOf('</w:p>', scopeHeadingStart) + '</w:p>'.length;
+
+        // Find the intro text paragraph (the one that starts with "Bij de URL staat...")
+        // This is the paragraph right after the Scope heading
+        const afterScopeHeading = xmlContent.substring(scopeHeadingEnd);
+        const introTextEnd = afterScopeHeading.indexOf('</w:p>') + '</w:p>'.length;
+        const scopeIntroEnd = scopeHeadingEnd + introTextEnd;
+
+        console.log('[DOCX] Found Scope intro text, ends at index', scopeIntroEnd);
+
+        // Now find where the Scope section ends (before "Buiten scope" or next Kop3/Kop4 heading)
+        const afterIntro = xmlContent.substring(scopeIntroEnd);
+
+        // Look for "Buiten scope" heading OR next Kop3/Kop4 heading
+        let scopeSectionEnd = -1;
+        const buitenScopeMatch = afterIntro.search(/>Buiten scope</);
+
+        if (buitenScopeMatch !== -1) {
+          // Found "Buiten scope" - scope section ends where "Buiten scope" starts
+          const beforeBuitenScope = afterIntro.substring(0, buitenScopeMatch);
+          const lastPStart = Math.max(
+            beforeBuitenScope.lastIndexOf('<w:p '),
+            beforeBuitenScope.lastIndexOf('<w:p>')
+          );
+          scopeSectionEnd = scopeIntroEnd + lastPStart;
+        } else {
+          // No "Buiten scope" - look for next heading
+          const nextHeadingMatch = afterIntro.search(/<w:pStyle w:val="Kop[3-4]"/);
+          if (nextHeadingMatch !== -1) {
+            const beforeNextHeading = afterIntro.substring(0, nextHeadingMatch);
+            const lastPStart = Math.max(
+              beforeNextHeading.lastIndexOf('<w:p '),
+              beforeNextHeading.lastIndexOf('<w:p>')
+            );
+            scopeSectionEnd = scopeIntroEnd + lastPStart;
+          }
+        }
+
+        if (scopeSectionEnd !== -1) {
+          console.log('[DOCX] Scope section ends at index', scopeSectionEnd);
+
+          // Extract one URL paragraph as template
+          const scopeContent = xmlContent.substring(scopeIntroEnd, scopeSectionEnd);
+          const firstHyperlinkMatch = scopeContent.match(/<w:p[^>]*>.*?<w:hyperlink.*?<\/w:hyperlink>.*?<\/w:p>/s);
+
+          let urlParagraphTemplate = '';
+          if (firstHyperlinkMatch) {
+            urlParagraphTemplate = firstHyperlinkMatch[0];
+            console.log('[DOCX] Extracted URL paragraph template from Scope section');
+          } else {
+            // Fallback
+            console.log('[DOCX] Could not find URL paragraph template, using fallback');
+            urlParagraphTemplate = '<w:p><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>{{URL}}</w:t></w:r></w:p>';
+          }
+
+          // Generate new URL paragraphs for in-scope URLs
+          let inScopeUrlsXml = '';
+          templateData.scopeUrlsInScope.forEach(scopeUrl => {
+            const urlParagraph = urlParagraphTemplate.replace(/https?:\/\/[^<]+/g, scopeUrl.url);
+            inScopeUrlsXml += urlParagraph;
+          });
+
+          // Replace the URL content (keep heading and intro, replace URLs)
+          xmlContent = xmlContent.substring(0, scopeIntroEnd) +
+                      inScopeUrlsXml +
+                      xmlContent.substring(scopeSectionEnd);
+
+          console.log(`[DOCX] Updated Scope section with ${templateData.scopeUrlsInScope.length} in-scope URLs`);
+
+          // Update the ZIP
+          renderedZip.file('word/document.xml', xmlContent);
+
+          // Now handle "Buiten scope" section (if it exists)
+          const buitenScopeIndex = xmlContent.indexOf('>Buiten scope<');
+          if (buitenScopeIndex !== -1) {
+            // Find the actual heading
+            let buitenScopeHeadingStart = -1;
+            const beforeBuiten = xmlContent.substring(Math.max(0, buitenScopeIndex - 300), buitenScopeIndex);
+            if (beforeBuiten.includes('pStyle w:val="Kop')) {
+              const paragraphStart = xmlContent.lastIndexOf('<w:p ', buitenScopeIndex);
+              const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', buitenScopeIndex);
+              buitenScopeHeadingStart = Math.max(paragraphStart, paragraphStart2);
+            }
+
+            if (buitenScopeHeadingStart !== -1) {
+              if (templateData.scopeUrlsOutOfScope.length === 0) {
+                // Remove entire "Buiten scope" section
+                console.log('[DOCX] No out-of-scope URLs, removing "Buiten scope" section...');
+
+                // Find the end of "Buiten scope" heading paragraph first
+                const buitenHeadingEnd = xmlContent.indexOf('</w:p>', buitenScopeHeadingStart) + '</w:p>'.length;
+
+                // Now search for the NEXT heading AFTER the "Buiten scope" heading
+                const afterBuitenHeading = xmlContent.substring(buitenHeadingEnd);
+                const nextHeadingMatch = afterBuitenHeading.search(/<w:pStyle w:val="Kop[2-4]"/);
+
+                if (nextHeadingMatch !== -1) {
+                  const contentBetween = afterBuitenHeading.substring(0, nextHeadingMatch);
+                  const lastPStart = Math.max(
+                    contentBetween.lastIndexOf('<w:p '),
+                    contentBetween.lastIndexOf('<w:p>')
+                  );
+
+                  if (lastPStart !== -1) {
+                    const buitenSectionEnd = buitenHeadingEnd + lastPStart;
+                    xmlContent = xmlContent.substring(0, buitenScopeHeadingStart) + xmlContent.substring(buitenSectionEnd);
+                    console.log('[DOCX] Removed "Buiten scope" section');
+
+                    // Update the ZIP again
+                    renderedZip.file('word/document.xml', xmlContent);
+                  } else {
+                    console.log('[DOCX] Could not find paragraph start before next heading');
+                  }
+                } else {
+                  console.log('[DOCX] Could not find next heading after "Buiten scope"');
+                }
+              } else {
+                // Replace "Buiten scope" URLs
+                console.log(`[DOCX] Replacing "Buiten scope" URLs with ${templateData.scopeUrlsOutOfScope.length} out-of-scope URLs...`);
+
+                const buitenHeadingEnd = xmlContent.indexOf('</w:p>', buitenScopeHeadingStart) + '</w:p>'.length;
+                const afterBuitenHeading = xmlContent.substring(buitenHeadingEnd);
+                const nextHeadingMatch = afterBuitenHeading.search(/<w:pStyle w:val="Kop[2-4]"/);
+
+                if (nextHeadingMatch !== -1) {
+                  const contentBetween = afterBuitenHeading.substring(0, nextHeadingMatch);
+                  const lastPStart = Math.max(
+                    contentBetween.lastIndexOf('<w:p '),
+                    contentBetween.lastIndexOf('<w:p>')
+                  );
+
+                  if (lastPStart !== -1) {
+                    const buitenContentEnd = buitenHeadingEnd + lastPStart;
+
+                    let outOfScopeUrlsXml = '';
+                    templateData.scopeUrlsOutOfScope.forEach(scopeUrl => {
+                      const urlParagraph = urlParagraphTemplate.replace(/https?:\/\/[^<]+/g, scopeUrl.url);
+                      outOfScopeUrlsXml += urlParagraph;
+                    });
+
+                    xmlContent = xmlContent.substring(0, buitenHeadingEnd) +
+                                outOfScopeUrlsXml +
+                                xmlContent.substring(buitenContentEnd);
+
+                    console.log('[DOCX] Replaced "Buiten scope" URLs');
+
+                    // Update the ZIP again
+                    renderedZip.file('word/document.xml', xmlContent);
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          console.log('[DOCX] Could not determine end of Scope section');
+        }
+      } else {
+        console.log('[DOCX] "Scope" heading not found in template');
+      }
+
+      // Update "Volledige steekproef" section with sample items
+      console.log('[DOCX] Updating "Volledige steekproef" section...');
+      console.log(`[DOCX] Sample items: ${project.sampleItems.length}`);
+
+      // Find "Volledige steekproef" heading (Kop4)
+      let steekproefHeadingStart = -1;
+      searchPos = 0;
+
+      while ((searchPos = xmlContent.indexOf('Volledige steekproef', searchPos)) !== -1) {
+        // Check if this is a heading by looking backwards
+        const before = xmlContent.substring(Math.max(0, searchPos - 300), searchPos);
+        if (before.includes('pStyle w:val="Kop')) {
+          const paragraphStart = xmlContent.lastIndexOf('<w:p ', searchPos);
+          const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', searchPos);
+          steekproefHeadingStart = Math.max(paragraphStart, paragraphStart2);
+          console.log('[DOCX] Found "Volledige steekproef" heading at index', steekproefHeadingStart);
+          break;
+        }
+        searchPos++;
+      }
+
+      if (steekproefHeadingStart !== -1) {
+        // Add spacing after the "Volledige steekproef" heading
+        // Find the heading paragraph
+        const steekproefHeadingPEnd = xmlContent.indexOf('</w:p>', steekproefHeadingStart);
+        const steekproefHeadingParagraph = xmlContent.substring(steekproefHeadingStart, steekproefHeadingPEnd + '</w:p>'.length);
+
+        // Add spacing before and after the heading (before="480" after="240" = 24pt spacing above, 12pt below)
+        let updatedHeading = steekproefHeadingParagraph;
+
+        // Check if there's already a <w:pPr> section
+        if (updatedHeading.includes('<w:pPr>')) {
+          // Find where to insert spacing - after <w:pStyle> if present, otherwise at start of pPr
+          const pStyleEndIndex = updatedHeading.indexOf('</w:pPr>');
+          updatedHeading = updatedHeading.substring(0, pStyleEndIndex) +
+                          '<w:spacing w:before="480" w:after="240"/>' +
+                          updatedHeading.substring(pStyleEndIndex);
+        }
+
+        // Replace the heading with the updated version
+        xmlContent = xmlContent.substring(0, steekproefHeadingStart) +
+                    updatedHeading +
+                    xmlContent.substring(steekproefHeadingPEnd + '</w:p>'.length);
+
+        // Find the end of the heading paragraph
+        const steekproefHeadingEnd = xmlContent.indexOf('</w:p>', steekproefHeadingStart) + '</w:p>'.length;
+
+        // Find where the section ends (before next Kop3/Kop4 heading)
+        const afterSteekproefHeading = xmlContent.substring(steekproefHeadingEnd);
+        const nextHeadingMatch = afterSteekproefHeading.search(/<w:pStyle w:val="Kop[3-4]"/);
+
+        if (nextHeadingMatch !== -1) {
+          const beforeNextHeading = afterSteekproefHeading.substring(0, nextHeadingMatch);
+          const lastPStart = Math.max(
+            beforeNextHeading.lastIndexOf('<w:p '),
+            beforeNextHeading.lastIndexOf('<w:p>')
+          );
+          const steekproefSectionEnd = steekproefHeadingEnd + lastPStart;
+
+          console.log('[DOCX] Steekproef section ends at index', steekproefSectionEnd);
+
+          // Extract sample item paragraph templates from the content
+          const steekproefContent = xmlContent.substring(steekproefHeadingEnd, steekproefSectionEnd);
+
+          // Find a text paragraph (for title) - look for numbered list paragraph
+          const titleParagraphMatch = steekproefContent.match(/<w:p[^>]*>.*?<w:numPr>.*?<\/w:p>/s);
+
+          // Find a hyperlink paragraph (for URL) - look for paragraph with hyperlink
+          const urlParagraphMatch = steekproefContent.match(/<w:p[^>]*>(?!.*<w:numPr>).*?<w:hyperlink.*?<\/w:hyperlink>.*?<\/w:p>/s);
+
+          let titleParagraphTemplate = '';
+          let urlParagraphTemplate = '';
+
+          if (titleParagraphMatch) {
+            titleParagraphTemplate = titleParagraphMatch[0];
+            console.log('[DOCX] Extracted title paragraph template');
+          } else {
+            console.log('[DOCX] Could not find title paragraph template, using fallback');
+            titleParagraphTemplate = '<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="3"/></w:numPr></w:pPr><w:r><w:t>{{TITLE}}</w:t></w:r></w:p>';
+          }
+
+          if (urlParagraphMatch) {
+            urlParagraphTemplate = urlParagraphMatch[0];
+            console.log('[DOCX] Extracted URL paragraph template');
+          } else {
+            console.log('[DOCX] Could not find URL paragraph template, using fallback');
+            urlParagraphTemplate = '<w:p><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>{{URL}}</w:t></w:r></w:p>';
+          }
+
+          // Generate new paragraphs for all sample items
+          let sampleItemsXml = '';
+          project.sampleItems.forEach(item => {
+            // Create a single paragraph with title (bold) and URL on new line
+            // Extract paragraph properties from template
+            const titlePStart = titleParagraphTemplate.indexOf('<w:pPr>');
+            const titlePEnd = titleParagraphTemplate.indexOf('</w:pPr>') + '</w:pPr>'.length;
+            const pPrSection = titleParagraphTemplate.substring(titlePStart, titlePEnd);
+
+            // Build paragraph with title (not bold) and URL on new line
+            let itemParagraph = titleParagraphTemplate.substring(0, titlePEnd);
+
+            // Add title run (without bold)
+            itemParagraph += `<w:r><w:t>${item.title}</w:t></w:r>`;
+
+            // Add line break
+            itemParagraph += '<w:r><w:br/></w:r>';
+
+            // Add URL run (if URL exists)
+            if (item.url) {
+              itemParagraph += `<w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${item.url}</w:t></w:r>`;
+            }
+
+            // Close paragraph
+            itemParagraph += '</w:p>';
+
+            sampleItemsXml += itemParagraph;
+          });
+
+          // Replace the section content (keep heading, replace items)
+          xmlContent = xmlContent.substring(0, steekproefHeadingEnd) +
+                      sampleItemsXml +
+                      xmlContent.substring(steekproefSectionEnd);
+
+          console.log(`[DOCX] Updated "Volledige steekproef" section with ${project.sampleItems.length} sample items`);
+
+          // Update the ZIP
+          renderedZip.file('word/document.xml', xmlContent);
+        } else {
+          console.log('[DOCX] Could not find end of Volledige steekproef section');
+        }
+      } else {
+        console.log('[DOCX] "Volledige steekproef" heading not found in template');
+      }
+
+      // Update numbering.xml to remove visual numbering (no bullets, no numbers) but keep list structure
+      console.log('[DOCX] Updating numbering.xml to remove visual numbering for sample items...');
+      const numberingXml = renderedZip.file('word/numbering.xml');
+      if (numberingXml) {
+        let numberingContent = numberingXml.asText();
+
+        // Find abstractNum with abstractNumId="0" (used by numId="3")
+        // Change the format to "none" so no bullets or numbers are shown
+        // This keeps the list structure for indentation but hides the visual marker
+
+        // Find the first <w:lvl w:ilvl="0"> within abstractNumId="0"
+        const abstractNum0Start = numberingContent.indexOf('<w:abstractNum w:abstractNumId="0"');
+        if (abstractNum0Start !== -1) {
+          const abstractNum0End = numberingContent.indexOf('</w:abstractNum>', abstractNum0Start);
+          const abstractNum0Content = numberingContent.substring(abstractNum0Start, abstractNum0End);
+
+          // Find the first lvl (ilvl="0") within this abstractNum
+          const lvl0Start = abstractNum0Content.indexOf('<w:lvl w:ilvl="0">');
+          if (lvl0Start !== -1) {
+            const lvl0End = abstractNum0Content.indexOf('</w:lvl>', lvl0Start) + '</w:lvl>'.length;
+            let lvl0Content = abstractNum0Content.substring(lvl0Start, lvl0End);
+
+            // Replace bullet format with "none" to hide visual numbering
+            lvl0Content = lvl0Content.replace('<w:numFmt w:val="bullet"/>', '<w:numFmt w:val="none"/>');
+
+            // Replace lvlText with empty string (no visual marker)
+            lvl0Content = lvl0Content.replace(/<w:lvlText w:val="[^"]*"\/>/, '<w:lvlText w:val=""/>');
+
+            // Replace the rFonts (remove Symbol font, use default)
+            lvl0Content = lvl0Content.replace(/<w:rFonts w:ascii="Symbol" w:hAnsi="Symbol"[^>]*\/>/, '');
+
+            // Remove indentation - set left and hanging to 0
+            lvl0Content = lvl0Content.replace(/<w:ind w:left="[^"]*" w:hanging="[^"]*"\/>/, '<w:ind w:left="0" w:hanging="0"/>');
+            // Also handle variations
+            lvl0Content = lvl0Content.replace(/<w:ind w:left="[^"]*"\/>/, '<w:ind w:left="0"/>');
+            lvl0Content = lvl0Content.replace(/<w:ind w:hanging="[^"]*"\/>/, '<w:ind w:hanging="0"/>');
+
+            // Update the abstractNum content
+            const updatedAbstractNum0 = abstractNum0Content.substring(0, lvl0Start) + lvl0Content + abstractNum0Content.substring(lvl0End);
+
+            // Update the full numbering content
+            numberingContent = numberingContent.substring(0, abstractNum0Start) + updatedAbstractNum0 + numberingContent.substring(abstractNum0End);
+
+            // Update the ZIP
+            renderedZip.file('word/numbering.xml', numberingContent);
+
+            console.log('[DOCX] Updated numbering.xml to hide visual numbering');
+          }
+        }
+      } else {
+        console.log('[DOCX] numbering.xml not found');
+      }
+
+      // Update browser versions (userAgents) section
+      console.log('[DOCX] Replacing hardcoded browser versions with database values...');
+
+      // Find the intro text "Het onderzoek is uitgevoerd met:"
+      const browserIntroText = 'Het onderzoek is uitgevoerd met:';
+      const browserIntroIndex = xmlContent.indexOf(browserIntroText);
+
+      if (browserIntroIndex !== -1) {
+        // Find the paragraph containing this text
+        const introParagraphStart = xmlContent.lastIndexOf('<w:p ', browserIntroIndex);
+        const introParagraphEnd = xmlContent.indexOf('</w:p>', browserIntroIndex) + '</w:p>'.length;
+
+        // After this paragraph, find the next set of list items (browsers)
+        // Look for the first browser "Google Chrome 145"
+        const firstBrowserIndex = xmlContent.indexOf('Google Chrome 145', introParagraphEnd);
+
+        if (firstBrowserIndex !== -1) {
+          // Find where this browser list starts
+          const browserListStart = xmlContent.lastIndexOf('<w:p ', firstBrowserIndex);
+
+          // Find where the browser list ends - look for the next heading or section
+          // The browsers are in a numbered list (numId="4"), so find where that list ends
+          // We'll look for the next paragraph that doesn't have numId="4"
+          let browserListEnd = firstBrowserIndex;
+          let searchPos = browserListEnd;
+
+          // Find all consecutive paragraphs with numId="4"
+          while (true) {
+            const nextPEnd = xmlContent.indexOf('</w:p>', searchPos) + '</w:p>'.length;
+            const nextPStart = xmlContent.indexOf('<w:p ', nextPEnd);
+
+            if (nextPStart === -1) break;
+
+            // Check if this paragraph has numId="4"
+            const nextPContent = xmlContent.substring(nextPStart, nextPStart + 500);
+            if (nextPContent.includes('<w:numId w:val="4"/>')) {
+              // This is still part of the browser list
+              browserListEnd = xmlContent.indexOf('</w:p>', nextPStart) + '</w:p>'.length;
+              searchPos = browserListEnd;
+            } else {
+              // This is not part of the browser list, we've reached the end
+              break;
+            }
+          }
+
+          // Extract a template paragraph from the existing browser list
+          const templateParagraphEnd = xmlContent.indexOf('</w:p>', firstBrowserIndex) + '</w:p>'.length;
+          const templateParagraph = xmlContent.substring(browserListStart, templateParagraphEnd);
+
+          // Extract paragraph properties and formatting
+          const pPrMatch = templateParagraph.match(/<w:pPr>[\s\S]*?<\/w:pPr>/);
+          const pPr = pPrMatch ? pPrMatch[0] : '<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr>';
+
+          // Extract run properties if any
+          const rPrMatch = templateParagraph.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
+          const rPr = rPrMatch ? rPrMatch[0] : '';
+
+          // Build new paragraphs from database userAgents
+          const userAgentLines = templateData.userAgents.split('\n').filter(line => line.trim().length > 0);
+          const newBrowserParagraphs = userAgentLines.map(line => {
+            const escapedLine = line
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&apos;');
+
+            return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
+          }).join('\n');
+
+          // Replace the old browser list with new paragraphs
+          xmlContent = xmlContent.substring(0, browserListStart) + newBrowserParagraphs + xmlContent.substring(browserListEnd);
+
+          // Update the ZIP
+          renderedZip.file('word/document.xml', xmlContent);
+
+          console.log(`[DOCX] Replaced browser versions with ${userAgentLines.length} entries from database`);
+        } else {
+          console.log('[DOCX] Could not find hardcoded browser versions to replace');
+        }
+      } else {
+        console.log('[DOCX] Browser intro text not found');
+      }
+
+      // Update technologies (DOM, HTML, CSS) section
+      console.log('[DOCX] Replacing hardcoded technologies with database values...');
+
+      // Find "Onderzoeksmethode en technieken" section
+      const techSectionHeading = 'Onderzoeksmethode en technieken';
+      const techHeadingIndex = xmlContent.indexOf(techSectionHeading);
+
+      if (techHeadingIndex !== -1) {
+        // After this heading, look for DOM/HTML/CSS list
+        // Technologies are likely in a numbered list after this heading
+        const domIndex = xmlContent.indexOf('DOM', techHeadingIndex);
+
+        if (domIndex !== -1) {
+          // Find the list containing DOM
+          const domParagraphStart = xmlContent.lastIndexOf('<w:p ', domIndex);
+
+          // Find where this tech list ends
+          // Similar approach to browser list - find consecutive paragraphs with same numId
+          let techListEnd = domIndex;
+          let searchPos = techListEnd;
+
+          // Get the numId from the first paragraph
+          const firstTechPContent = xmlContent.substring(domParagraphStart, domParagraphStart + 500);
+          const numIdMatch = firstTechPContent.match(/<w:numId w:val="(\d+)"\/>/);
+          const techNumId = numIdMatch ? numIdMatch[1] : null;
+
+          if (techNumId) {
+            // Find all consecutive paragraphs with this numId
+            while (true) {
+              const nextPEnd = xmlContent.indexOf('</w:p>', searchPos) + '</w:p>'.length;
+              const nextPStart = xmlContent.indexOf('<w:p ', nextPEnd);
+
+              if (nextPStart === -1) break;
+
+              // Check if this paragraph has the same numId
+              const nextPContent = xmlContent.substring(nextPStart, nextPStart + 500);
+              if (nextPContent.includes(`<w:numId w:val="${techNumId}"/>`)) {
+                // This is still part of the tech list
+                techListEnd = xmlContent.indexOf('</w:p>', nextPStart) + '</w:p>'.length;
+                searchPos = techListEnd;
+              } else {
+                // This is not part of the tech list, we've reached the end
+                break;
+              }
+            }
+
+            // Extract template paragraph
+            const templateParagraphEnd = xmlContent.indexOf('</w:p>', domIndex) + '</w:p>'.length;
+            const templateParagraph = xmlContent.substring(domParagraphStart, templateParagraphEnd);
+
+            // Extract paragraph properties and formatting
+            const pPrMatch = templateParagraph.match(/<w:pPr>[\s\S]*?<\/w:pPr>/);
+            const pPr = pPrMatch ? pPrMatch[0] : '';
+
+            // Extract run properties if any
+            const rPrMatch = templateParagraph.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
+            const rPr = rPrMatch ? rPrMatch[0] : '';
+
+            // Build new paragraphs from database technologies
+            const techLines = templateData.technologies.split('\n').filter(line => line.trim().length > 0);
+            const newTechParagraphs = techLines.map(line => {
+              const escapedLine = line
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+              return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
+            }).join('\n');
+
+            // Replace the old tech list with new paragraphs
+            xmlContent = xmlContent.substring(0, domParagraphStart) + newTechParagraphs + xmlContent.substring(techListEnd);
+
+            // Update the ZIP
+            renderedZip.file('word/document.xml', xmlContent);
+
+            console.log(`[DOCX] Replaced technologies with ${techLines.length} entries from database`);
+          } else {
+            console.log('[DOCX] Could not find numId for technologies list');
+          }
+        } else {
+          console.log('[DOCX] Could not find hardcoded technologies (DOM) to replace');
+        }
+      } else {
+        console.log('[DOCX] Technologies section heading not found');
+      }
+
+      // Now update the TOC (Table of Contents) with fixed entries
+      console.log('[DOCX] Updating table of contents with fixed entries...');
+
+      // Find the TOC section (after "Inhoud" heading)
+      const inhoudHeadingIndex = xmlContent.indexOf('Inhoud</w:t>');
+      if (inhoudHeadingIndex !== -1) {
+        // Find the SDT content area after "Inhoud"
+        const sdtContentStart = xmlContent.indexOf('<w:sdtContent>', inhoudHeadingIndex);
+        const sdtContentEnd = xmlContent.indexOf('</w:sdtContent>', sdtContentStart);
+
+        if (sdtContentStart !== -1 && sdtContentEnd !== -1) {
+          // Generate TOC entries (fixed list)
+          const tocXml = generateTocXml(defaultFormulierenTocEntries);
+
+          // Replace the SDT content
+          xmlContent = xmlContent.substring(0, sdtContentStart + '<w:sdtContent>'.length) +
+            tocXml +
+            xmlContent.substring(sdtContentEnd);
+
+          // Update the ZIP
+          renderedZip.file('word/document.xml', xmlContent);
+
+          console.log(`[DOCX] Updated TOC with ${defaultFormulierenTocEntries.length} fixed entries`);
+        } else {
+          console.log('[DOCX] Could not find TOC SDT content area');
+        }
+      } else {
+        console.log('[DOCX] Inhoud heading not found');
       }
     }
 
