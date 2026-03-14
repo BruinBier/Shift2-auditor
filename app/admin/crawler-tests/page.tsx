@@ -14,6 +14,9 @@ import { formatHCaptchaReport } from '@/lib/formatter/hcaptcha-formatter';
 import { getTestDocumentation, hasTestDocumentation } from '@/lib/crawler/test-documentation';
 import { marked } from 'marked';
 
+// Configure marked to use synchronous mode
+marked.use({ async: false });
+
 const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
   ssr: false,
   loading: () => <div className="border border-blue-300 rounded-lg p-4 text-blue-700">Editor laden...</div>
@@ -701,7 +704,7 @@ export default function CrawlerTestsPage() {
                             <div
                               className="text-sm text-blue-800 test-documentation-content"
                               dangerouslySetInnerHTML={{
-                                __html: marked.parse(getTestDocumentation(selectedTest) || '')
+                                __html: marked.parse(getTestDocumentation(selectedTest) || '') as string
                               }}
                             />
                             <div className="mt-4 flex justify-end">

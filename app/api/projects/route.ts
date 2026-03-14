@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine the default status for each criterion based on research type
-    const getStatusForCriterion = (criterionId: string): string => {
+    const getStatusForCriterion = (criterionId: string): 'not_tested' | 'not_present' | 'passed' | 'failed' => {
       // Only apply special rules for "WCAG 2.2 AA deelonderzoek content"
       if (body.researchType !== 'WCAG 2.2 AA deelonderzoek content') {
         return 'not_tested';
@@ -199,7 +199,11 @@ export async function POST(request: NextRequest) {
         technologies: body.technologies || [],
         criterionAssessments: {
           create: criteriaToCreate.map(criterionId => ({
-            wcagCriterionId: criterionId,
+            wcagCriterion: {
+              connect: {
+                id: criterionId,
+              },
+            },
             status: getStatusForCriterion(criterionId),
           })),
         },
@@ -261,7 +265,11 @@ export async function POST(request: NextRequest) {
           technologies: body.technologies || [],
           criterionAssessments: {
             create: criteriaToCreate.map(criterionId => ({
-              wcagCriterionId: criterionId,
+              wcagCriterion: {
+                connect: {
+                  id: criterionId,
+                },
+              },
               status: getStatusForCriterion(criterionId),
             })),
           },

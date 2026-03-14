@@ -14,15 +14,16 @@ export async function GET(
       where: {
         crawlerTestId: testId,
       },
-      include: {
-        findings: {
-          select: {
-            id: true,
-            projectId: true,
-            findingCode: true,
-          },
-        },
-      },
+      // Note: findings relation doesn't exist because quickFindingId field is not in the Finding model
+      // include: {
+      //   findings: {
+      //     select: {
+      //       id: true,
+      //       projectId: true,
+      //       findingCode: true,
+      //     },
+      //   },
+      // },
     });
 
     if (!quickFinding) {

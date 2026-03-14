@@ -24,6 +24,96 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
   const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize'>('details');
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
   const [showBevindingenMenu, setShowBevindingenMenu] = useState(false);
+  const [isFinalizingProject, setIsFinalizingProject] = useState(false);
+  const [showFinalizedModal, setShowFinalizedModal] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
+
+  // Get status color based on status value
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Gepland':
+        return 'bg-gray-100 text-gray-800';
+      case 'In uitvoering':
+        return 'bg-orange-100 text-orange-800';
+      case 'Controle':
+        return 'bg-blue-100 text-blue-800';
+      case 'In de wacht':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Gereed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Function to handle button click
+  const handleFinalizeButtonClick = () => {
+    if (project.status === 'Gereed') {
+      // Show modal when project is already finalized
+      setShowFinalizedModal(true);
+    } else {
+      // Finalize the project
+      handleFinalizeProject();
+    }
+  };
+
+  // Function to finalize the project
+  const handleFinalizeProject = async () => {
+    if (isFinalizingProject) return;
+
+    const confirmed = confirm('Weet je zeker dat je het onderzoek wilt afronden? De status wordt gewijzigd naar "Gereed".');
+    if (!confirmed) return;
+
+    setIsFinalizingProject(true);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}/finalize`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to finalize project');
+      }
+
+      const data = await response.json();
+
+      alert('Onderzoek succesvol afgerond!');
+      router.refresh();
+    } catch (error) {
+      console.error('Error finalizing project:', error);
+      alert('Er is een fout opgetreden bij het afronden van het onderzoek. Probeer het opnieuw.');
+    } finally {
+      setIsFinalizingProject(false);
+    }
+  };
+
+  // Function to reactivate project (set back to "In uitvoering")
+  const handleReactivateProject = async () => {
+    if (isReactivating) return;
+
+    setIsReactivating(true);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'In uitvoering' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reactivate project');
+      }
+
+      setShowFinalizedModal(false);
+      alert('Project status is teruggezet naar "In uitvoering".');
+      router.refresh();
+    } catch (error) {
+      console.error('Error reactivating project:', error);
+      alert('Er is een fout opgetreden bij het terugzetten van de status. Probeer het opnieuw.');
+    } finally {
+      setIsReactivating(false);
+    }
+  };
 
   const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize') => {
     const tabParam = tab === 'details' ? '' :
@@ -276,51 +366,66 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
               {/* Tabs */}
               <nav className="flex gap-8 border-b border-gray-200 items-center mb-4">
                 <button
-                  onClick={() => handleTabChange('details')}
+                  onClick={() => project.status !== 'Gereed' && handleTabChange('details')}
+                  disabled={project.status === 'Gereed'}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    activeTab === 'details'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 tab-hover'
+                    project.status === 'Gereed'
+                      ? 'border-transparent text-gray-400 cursor-not-allowed'
+                      : activeTab === 'details'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
                   Details
                 </button>
                 <button
-                  onClick={() => handleTabChange('scope')}
+                  onClick={() => project.status !== 'Gereed' && handleTabChange('scope')}
+                  disabled={project.status === 'Gereed'}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    activeTab === 'scope'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 tab-hover'
+                    project.status === 'Gereed'
+                      ? 'border-transparent text-gray-400 cursor-not-allowed'
+                      : activeTab === 'scope'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
                   1. Scope
                 </button>
                 <button
-                  onClick={() => handleTabChange('sample')}
+                  onClick={() => project.status !== 'Gereed' && handleTabChange('sample')}
+                  disabled={project.status === 'Gereed'}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    activeTab === 'sample'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 tab-hover'
+                    project.status === 'Gereed'
+                      ? 'border-transparent text-gray-400 cursor-not-allowed'
+                      : activeTab === 'sample'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
                   2. Steekproef
                 </button>
                 <button
-                  onClick={() => handleTabChange('findings')}
+                  onClick={() => project.status !== 'Gereed' && handleTabChange('findings')}
+                  disabled={project.status === 'Gereed'}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    activeTab === 'findings'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 tab-hover'
+                    project.status === 'Gereed'
+                      ? 'border-transparent text-gray-400 cursor-not-allowed'
+                      : activeTab === 'findings'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
                   3. Bevindingen
                 </button>
                 <button
-                  onClick={() => handleTabChange('conclusion')}
+                  onClick={() => project.status !== 'Gereed' && handleTabChange('conclusion')}
+                  disabled={project.status === 'Gereed'}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    activeTab === 'conclusion'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 tab-hover'
+                    project.status === 'Gereed'
+                      ? 'border-transparent text-gray-400 cursor-not-allowed'
+                      : activeTab === 'conclusion'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
                   4. Conclusie
@@ -336,17 +441,29 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                   5. Voltooien
                 </button>
                   <div className="ml-auto flex gap-2" style={{ marginBottom: '8px' }}>
-                    <a
-                      href={`/api/reports/${project.id}/docx`}
-                      download
-                      className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors hover:opacity-90"
-                      style={{ backgroundColor: '#6b2d8f' }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Download formulier
-                    </a>
+                    {activeTab === 'finalize' && (
+                      <button
+                        onClick={handleFinalizeButtonClick}
+                        disabled={isFinalizingProject}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                          project.status === 'Gereed'
+                            ? 'bg-green-700 text-white'
+                            : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
+                        }`}
+                      >
+                        {project.status === 'Gereed' && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        {isFinalizingProject
+                          ? 'Bezig met afronden...'
+                          : project.status === 'Gereed'
+                            ? 'Onderzoek afgerond'
+                            : 'Onderzoek afronden'
+                        }
+                      </button>
+                    )}
                     <Link
                       href={`/report/${project.id}`}
                       className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors hover:opacity-90"
@@ -366,7 +483,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                   </span>
                 )}
                 <h1 className="text-xl font-semibold text-gray-900">{project.title}</h1>
-                <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
+                <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
                   {project.status}
                 </span>
               </div>
@@ -414,6 +531,52 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
           </div>
         </div>
       </footer>
+
+      {/* Finalized Project Modal */}
+      {showFinalizedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+            {/* Close button (X) */}
+            <button
+              onClick={() => setShowFinalizedModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Onderzoek afgerond</h3>
+
+            <p className="text-sm text-gray-700 mb-6">
+              Dit onderzoek is afgerond. Je kunt geen wijzigingen meer maken. Als je iets wilt aanpassen, moet je eerst de status terug in uitvoering zetten.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleReactivateProject}
+                disabled={isReactivating}
+                className="flex items-center gap-2 px-4 py-1.5 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                {isReactivating ? 'Bezig...' : 'Zet terug in uitvoering'}
+              </button>
+              <Link
+                href={`/report/${project.id}`}
+                className="flex items-center gap-2 px-4 py-1.5 text-white rounded transition-colors hover:opacity-90 text-sm"
+                style={{ backgroundColor: '#6b2d8f' }}
+              >
+                Bekijk rapport
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

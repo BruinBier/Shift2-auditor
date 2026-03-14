@@ -468,8 +468,8 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
     const renderer = new marked.Renderer();
     const originalLink = renderer.link.bind(renderer);
 
-    renderer.link = (href: string, title: string | null | undefined, text: string) => {
-      const html = originalLink(href, title, text);
+    renderer.link = (token: any) => {
+      const html = originalLink(token);
       return html.replace('<a ', '<a target="_blank" rel="noopener noreferrer" title="opent in nieuw venster" ');
     };
 
@@ -853,7 +853,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                   <p className="text-sm text-gray-500 italic">Geen bevindingen.</p>
                 ) : (
                   <div className="space-y-3">
-                    {group.findings.map((finding: any) => {
+                    {group.findings.map((finding: any, findingIndex: number) => {
                       const isCollapsed = collapsedFindings.has(finding.id);
                       const isDragging = draggedFinding === finding.id;
                       const isDragOver = dragOverFinding === finding.id;
@@ -904,7 +904,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                                 </svg>
                               </button>
                               <span className="font-medium text-sm text-gray-900">
-                                Bevinding {finding.findingCode}
+                                Bevinding {findingIndex + 1} (SC {group.criterion.code})
                               </span>
                             </div>
                             <button

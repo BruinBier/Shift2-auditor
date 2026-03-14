@@ -543,7 +543,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                         <article className="space-y-3">
                                           {/* Finding title */}
                                           <h6 className="text-sm font-bold text-gray-900">
-                                            Bevinding {finding.findingCode}
+                                            Bevinding {index + 1} (SC {criterion.code})
                                           </h6>
 
                                           {/* Badges row */}
@@ -764,7 +764,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                               <article className="space-y-3">
                                                 {/* Finding title */}
                                                 <h6 className="text-sm font-bold text-gray-900">
-                                                  Bevinding {finding.findingCode}
+                                                  Opmerking {index + 1} (SC {criterion.code})
                                                 </h6>
 
                                                 {/* Badges row */}

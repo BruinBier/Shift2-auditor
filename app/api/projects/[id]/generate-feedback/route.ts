@@ -40,7 +40,7 @@ export async function POST(
     // Prepare findings summary for AI
     const findingsSummary = findings.map((finding, index) => {
       const criterionInfo = finding.wcagCriterion
-        ? `${finding.wcagCriterion.code} - ${finding.wcagCriterion.title}`
+        ? `${finding.wcagCriterion.code} - ${finding.wcagCriterion.titleNl}`
         : 'Onbekend criterium';
 
       return `

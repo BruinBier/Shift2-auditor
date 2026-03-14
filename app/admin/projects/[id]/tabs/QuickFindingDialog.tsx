@@ -43,13 +43,14 @@ export default function QuickFindingDialog({
     const originalLink = renderer.link.bind(renderer);
     const originalHtml = renderer.html.bind(renderer);
 
-    renderer.link = (href: string, title: string | null | undefined, text: string) => {
-      const html = originalLink(href, title, text);
+    renderer.link = (token: any) => {
+      const html = originalLink(token);
       return html.replace('<a ', '<a target="_blank" rel="noopener noreferrer" title="opent in nieuw venster" ');
     };
 
     // Override HTML renderer to escape HTML that's not in code blocks
-    renderer.html = (html: string) => {
+    renderer.html = (token: any) => {
+      const html = token.text || '';
       // Escape HTML entities so they display as text
       return html
         .replace(/&/g, '&amp;')

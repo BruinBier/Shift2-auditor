@@ -238,26 +238,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
     const isFormulieren = project.researchTypeData?.type === 'formulieren';
 
-    // Count unique forms for formulieren type (by extracting form name from parentheses or title)
-    const uniqueForms = isFormulieren ? (() => {
-      const formNames = new Set<string>();
-      project.sampleItems.forEach((item: any) => {
-        // Extract form name from title (text in parentheses at the end or after last dash)
-        const match = item.title.match(/\(([^)]+)\)\s*$/);
-        if (match) {
-          formNames.add(match[1].trim());
-        } else {
-          // Fallback: use the part after the last "-"
-          const parts = item.title.split('-');
-          if (parts.length > 1) {
-            formNames.add(parts[parts.length - 1].trim());
-          } else {
-            formNames.add(item.title.trim());
-          }
-        }
-      });
-      return formNames.size;
-    })() : totalPages;
+    // For formulieren projects: count in-scope URLs (each URL = one form)
+    // For other projects: use total sample items
+    const uniqueForms = isFormulieren && project.scopeUrls
+      ? project.scopeUrls.filter((url: any) => url.inScope).length
+      : totalPages;
 
     // Check if research type has a custom summary template
     if (project.researchTypeData?.summaryTemplate) {
@@ -929,7 +914,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                   className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                                   aria-expanded={isOpen}
                                 >
-                                  <h4 className="font-medium text-sm text-gray-900">Bevinding {findingIndex + 1}</h4>
+                                  <h4 className="font-medium text-sm text-gray-900">Bevinding {findingIndex + 1} (SC {criterion.code})</h4>
                                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                                     {isOpen ? '−' : '+'}
                                   </span>
@@ -1055,7 +1040,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                   className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                                   aria-expanded={isOpen}
                                 >
-                                  <h4 className="font-medium text-sm text-gray-900">Opmerking {findingIndex + 1}</h4>
+                                  <h4 className="font-medium text-sm text-gray-900">Opmerking {findingIndex + 1} (SC {criterion.code})</h4>
                                   <span className="text-2xl text-gray-600 flex-shrink-0 ml-4">
                                     {isOpen ? '−' : '+'}
                                   </span>
@@ -1514,28 +1499,19 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           </dl>
         </div>
 
-        {/* PDF & Word Download */}
+        {/* Word Download */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-normal text-gray-900 mb-4">Onderzoeksresultaten</h2>
           <p className="text-sm text-gray-600 mb-4">
-            Download het rapport als PDF of Word document. Het document wordt automatisch gegenereerd.
+            Download het rapport als Word document. Het document wordt automatisch gegenereerd.
           </p>
-          <div className="space-y-2">
-            <button
-              onClick={handleDownloadPdf}
-              data-pdf-button
-              className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Download PDF
-            </button>
-            <button
-              onClick={handleDownloadDocx}
-              data-docx-button
-              className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Download Word
-            </button>
-          </div>
+          <button
+            onClick={handleDownloadDocx}
+            data-docx-button
+            className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Download Word
+          </button>
         </div>
 
         {/* Scope */}

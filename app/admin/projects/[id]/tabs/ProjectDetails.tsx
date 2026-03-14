@@ -29,6 +29,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [editingNoteContent, setEditingNoteContent] = useState('');
   const [showEditNoteModal, setShowEditNoteModal] = useState(false);
   const [editorModalKey, setEditorModalKey] = useState(0);
+  const [projectStatus, setProjectStatus] = useState(project.status);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Fetch opdrachtgevers, client projects, and notes
   useEffect(() => {
@@ -227,6 +229,42 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     ontwerper: project.findings?.filter((f: any) => f.responsibility === 'ontwerper').length || 0,
   };
 
+  // Handle status update
+  const handleStatusChange = async (newStatus: string) => {
+    if (isUpdatingStatus) return;
+
+    const confirmed = confirm(`Weet je zeker dat je de status wilt wijzigen naar "${newStatus}"?`);
+    if (!confirmed) {
+      // Reset dropdown to current value
+      setProjectStatus(project.status);
+      return;
+    }
+
+    setIsUpdatingStatus(true);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        setProjectStatus(newStatus);
+        alert('Status succesvol bijgewerkt!');
+        window.location.reload();
+      } else {
+        throw new Error('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Er is een fout opgetreden bij het bijwerken van de status. Probeer het opnieuw.');
+      setProjectStatus(project.status); // Reset to original status
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Two column layout - 2/3 and 1/3 */}
@@ -243,6 +281,21 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             </div>
           </div>
           <div className="p-4 space-y-4">
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">Status</label>
+              <select
+                value={projectStatus}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={isUpdatingStatus}
+                className="w-full text-sm text-gray-900 border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="Gepland">Gepland</option>
+                <option value="In uitvoering">In uitvoering</option>
+                <option value="Controle">Controle</option>
+                <option value="In de wacht">In de wacht</option>
+                <option value="Gereed">Gereed</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Onderzoekstype</label>
               <div className="text-sm text-gray-900">{project.researchType}</div>

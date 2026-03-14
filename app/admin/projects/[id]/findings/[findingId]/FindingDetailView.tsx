@@ -11,9 +11,11 @@ interface FindingDetailViewProps {
   project: any;
   finding: any;
   allCriteria: any[];
+  findingIndex: number;
+  sampleItems: any[];
 }
 
-export default function FindingDetailView({ project, finding, allCriteria }: FindingDetailViewProps) {
+export default function FindingDetailView({ project, finding, allCriteria, findingIndex, sampleItems }: FindingDetailViewProps) {
   const router = useRouter();
   const [notes, setNotes] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
@@ -69,15 +71,16 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
     const renderer = new marked.Renderer();
     const originalLink = renderer.link.bind(renderer);
 
-    renderer.link = (href: string, title: string | null | undefined, text: string) => {
-      const html = originalLink(href, title, text);
+    renderer.link = (token: any) => {
+      const html = originalLink(token);
       return html.replace('<a ', '<a target="_blank" rel="noopener noreferrer" title="opent in nieuw venster" ');
     };
 
     marked.setOptions({
       renderer,
       breaks: true,
-      gfm: true
+      gfm: true,
+      async: false
     });
   }, []);
 
@@ -606,7 +609,7 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
                     className="text-lg text-gray-900"
                     style={{ fontWeight: 900, textShadow: '0 0 0.5px currentColor' }}
                   >
-                    Bevinding {finding.findingCode}
+                    Bevinding {findingIndex} (SC {finding.wcagCriterion.code})
                   </h2>
                   <button
                     onClick={() => setShowFindingMenu(!showFindingMenu)}
@@ -1289,6 +1292,7 @@ export default function FindingDetailView({ project, finding, allCriteria }: Fin
         criterionId={finding.wcagCriterionId}
         criterionCode={finding.wcagCriterion?.code || ''}
         allCriteria={allCriteria}
+        sampleItems={sampleItems}
         editingFinding={finding}
       />
 

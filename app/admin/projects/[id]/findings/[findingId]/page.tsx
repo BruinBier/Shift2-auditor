@@ -36,6 +36,24 @@ export default async function FindingDetailPage({
     orderBy: { code: 'asc' },
   });
 
+  // Get all findings for this criterion to calculate index
+  const criterionFindings = await prisma.finding.findMany({
+    where: {
+      projectId: params.id,
+      wcagCriterionId: finding.wcagCriterionId,
+    },
+    orderBy: { sortOrder: 'asc' },
+  });
+
+  // Calculate the index of this finding (1-based)
+  const findingIndex = criterionFindings.findIndex(f => f.id === finding.id) + 1;
+
+  // Fetch sample items for the edit dialog
+  const sampleItems = await prisma.sampleItem.findMany({
+    where: { projectId: params.id },
+    orderBy: { orderIndex: 'asc' },
+  });
+
   // Convert dates to strings
   const findingData = {
     ...finding,
@@ -56,5 +74,5 @@ export default async function FindingDetailPage({
     reportDate: project.reportDate.toISOString(),
   };
 
-  return <FindingDetailView project={projectData} finding={findingData} allCriteria={allCriteria} />;
+  return <FindingDetailView project={projectData} finding={findingData} allCriteria={allCriteria} findingIndex={findingIndex} sampleItems={sampleItems} />;
 }

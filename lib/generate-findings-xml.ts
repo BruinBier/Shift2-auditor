@@ -80,11 +80,15 @@ function escapeXml(text: string): string {
 /**
  * Generate XML for one finding
  */
-function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding'): string {
+function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding', criterionCode?: string, criterionTitle?: string): string {
   let xml = '';
 
-  // Finding header as Kop4 (e.g., "Bevinding 1" or "Opmerking 1") - override bold to false for this specific heading
-  xml += `<w:p><w:pPr><w:pStyle w:val="Kop4"/></w:pPr><w:r><w:rPr><w:b w:val="0"/><w:bCs w:val="0"/></w:rPr><w:t>${escapeXml(findingLabel)} ${finding.number}</w:t></w:r></w:p>`;
+  // Finding header as Kop4 (e.g., "Bevinding 1 (SC 1.3.3)" or "Opmerking 1 (SC 1.3.3)") - override bold to false for this specific heading
+  // Add spacing before: before=720 (36pt) for MORE whitespace above the finding heading (space after gray box)
+  const titleText = criterionCode
+    ? `${escapeXml(findingLabel)} ${finding.number} (SC ${escapeXml(criterionCode)})`
+    : `${escapeXml(findingLabel)} ${finding.number}`;
+  xml += `<w:p><w:pPr><w:pStyle w:val="Kop4"/><w:spacing w:before="720"/></w:pPr><w:r><w:rPr><w:b w:val="0"/><w:bCs w:val="0"/></w:rPr><w:t>${titleText}</w:t></w:r></w:p>`;
 
   // Locations (title and URL in same paragraph with line break)
   if (finding.locations.length > 0) {
@@ -123,26 +127,27 @@ function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, resu
   xml += `<w:p><w:pPr><w:pStyle w:val="Kop3"/></w:pPr><w:r><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)} ${escapeXml(criterion.level)}</w:t></w:r></w:p>`;
 
   // Criterion description with link on same paragraph but new line
+  // Add spacing after this paragraph: after=240 (12pt) for more space before the gray "Resultaat" box
   if (criterion.description && criterion.understandingUrl) {
     // Combined paragraph with description, line break, and link
-    xml += `<w:p><w:pPr></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r><w:r><w:br/></w:r><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:p>`;
+    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r><w:r><w:br/></w:r><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:p>`;
   } else if (criterion.description) {
-    // Just description if no URL
-    xml += generateParagraph(criterion.description);
+    // Just description if no URL - also add spacing
+    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r></w:p>`;
   } else if (criterion.understandingUrl) {
-    // Just link if no description
-    xml += generateHyperlinkParagraph(criterion.understandingUrl, `${criterion.code} ${criterion.title}`);
+    // Just link if no description - also add spacing
+    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:p>`;
   }
 
   // Result with "Resultaat:" in bold and 15px font size (30 half-points) with light gray background and padding
-  // Increased spacing: before=240 (12pt), after=480 (24pt) for more whitespace around gray box
+  // Spacing: before=240 (12pt), after=240 (12pt) to keep gray box compact
   // Padding via spaces: add spaces at start and end for horizontal padding within gray box
-  // Vertical padding via line height: line=480 (24pt) for more vertical space inside gray box
-  xml += `<w:p><w:pPr><w:shd w:val="clear" w:color="auto" w:fill="EEEEEE"/><w:spacing w:before="240" w:after="480" w:line="480" w:lineRule="atLeast"/></w:pPr><w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="30"/><w:szCs w:val="30"/></w:rPr><w:t xml:space="preserve">  Resultaat:</w:t></w:r><w:r><w:rPr><w:sz w:val="30"/><w:szCs w:val="30"/></w:rPr><w:t xml:space="preserve"> ${escapeXml(resultText)}  </w:t></w:r></w:p>`;
+  // Vertical positioning: add more line breaks above text to push it down slightly
+  xml += `<w:p><w:pPr><w:shd w:val="clear" w:color="auto" w:fill="EEEEEE"/><w:spacing w:before="240" w:after="240"/></w:pPr><w:r><w:br/></w:r><w:r><w:br/></w:r><w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="30"/><w:szCs w:val="30"/></w:rPr><w:t xml:space="preserve">  Resultaat:</w:t></w:r><w:r><w:rPr><w:sz w:val="30"/><w:szCs w:val="30"/></w:rPr><w:t xml:space="preserve"> ${escapeXml(resultText)}  </w:t></w:r><w:r><w:br/></w:r></w:p>`;
 
   // Each finding
   criterion.findings.forEach(finding => {
-    xml += generateFindingXml(finding, findingLabel);
+    xml += generateFindingXml(finding, findingLabel, criterion.code, criterion.title);
   });
 
   return xml;

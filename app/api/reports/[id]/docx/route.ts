@@ -90,29 +90,13 @@ export async function GET(
       });
     };
 
-    // Count unique forms for formulieren research type
-    const countUniqueForms = () => {
-      const formNames = new Set<string>();
-      project.sampleItems.forEach((item) => {
-        // Extract form name from title (text in parentheses at the end)
-        const match = item.title.match(/\(([^)]+)\)\s*$/);
-        if (match) {
-          formNames.add(match[1].trim());
-        } else {
-          // Fallback: use the part after the last "-"
-          const parts = item.title.split('-');
-          if (parts.length > 1) {
-            formNames.add(parts[parts.length - 1].trim());
-          } else {
-            formNames.add(item.title.trim());
-          }
-        }
-      });
-      return formNames.size;
-    };
-
-    const uniqueForms = countUniqueForms();
+    // For formulieren projects: count in-scope URLs (each URL = one form)
+    // For other projects: use total sample items
+    const isFormulieren = researchTypeData?.type === 'formulieren';
     const totalPages = project.sampleItems.length;
+    const uniqueForms = isFormulieren && project.scopeUrls
+      ? project.scopeUrls.filter((url: any) => url.inScope).length
+      : totalPages;
 
     // Calculate report statistics
     const stats = calculateReportStats(project as any);
@@ -298,11 +282,7 @@ export async function GET(
     const templateData = {
       // Basic project info
       projectSubject: project.subject || project.title,
-      opdrachtgeverNaam: (() => {
-        let naam = project.clientProject?.opdrachtgever?.naam || project.commissionedBy || '';
-        // Remove "gemeente" prefix if present
-        return naam.replace(/^gemeente\s+/i, '');
-      })(),
+      opdrachtgeverNaam: project.clientProject?.opdrachtgever?.naam || project.commissionedBy || '',
       websiteUrl: (() => {
         const inScopeUrls = project.scopeUrls.filter(u => u.inScope);
         const firstUrl = inScopeUrls[0]?.url;
@@ -459,18 +439,18 @@ export async function GET(
         .filter(u => u.inScope)
         .map(scopeUrl => ({
           url: scopeUrl.url,
-          scopeDescription: scopeUrl.scopeDescription || '(Andere URI-basis en stijlkenmerken)',
+          scopeDescription: '(Andere URI-basis en stijlkenmerken)', // TODO: Add scopeDescription field to ProjectScopeUrl model
         })),
       scopeUrlsOutOfScope: project.scopeUrls
         .filter(u => !u.inScope)
         .map(scopeUrl => ({
           url: scopeUrl.url,
-          scopeDescription: scopeUrl.scopeDescription || '(Andere URI-basis en stijlkenmerken)',
+          scopeDescription: '(Andere URI-basis en stijlkenmerken)', // TODO: Add scopeDescription field to ProjectScopeUrl model
         })),
 
       // Browser and tool versions for test environment section (from database)
       userAgents: project.userAgents || 'Google Chrome 145 (primair);\nMozilla Firefox 147;\nMicrosoft Edge 145;\nNVDA (Windows) in combinatie met Google Chrome;',
-      technologies: project.technologies.length > 0 ? project.technologies.join('\n') : 'DOM\nHTML\nCSS',
+      technologies: project.technologies.length > 0 ? Array.from(new Set(project.technologies)).join('\n') : 'DOM\nHTML\nCSS',
 
       // Dynamic criteria assessments for table
       criteriaAssessments: criteriaForTable,
@@ -1222,7 +1202,7 @@ export async function GET(
       if (numberingXml) {
         let numberingContent = numberingXml.asText();
 
-        // Find abstractNum with abstractNumId="0" (used by numId="3")
+        // Find abstractNum with abstractNumId="0" (used by numId="3" - sample items)
         // Change the format to "none" so no bullets or numbers are shown
         // This keeps the list structure for indentation but hides the visual marker
 
@@ -1259,12 +1239,66 @@ export async function GET(
             // Update the full numbering content
             numberingContent = numberingContent.substring(0, abstractNum0Start) + updatedAbstractNum0 + numberingContent.substring(abstractNum0End);
 
-            // Update the ZIP
-            renderedZip.file('word/numbering.xml', numberingContent);
-
-            console.log('[DOCX] Updated numbering.xml to hide visual numbering');
+            console.log('[DOCX] Updated abstractNum 0 (sample items) to hide visual numbering');
           }
         }
+
+        // Also update abstractNum with abstractNumId="2" (used by numId="4" - technology lists)
+        // Update font size to 11pt (22 half-points)
+        const abstractNum2Start = numberingContent.indexOf('<w:abstractNum w:abstractNumId="2"');
+        if (abstractNum2Start !== -1) {
+          const abstractNum2End = numberingContent.indexOf('</w:abstractNum>', abstractNum2Start);
+          const abstractNum2Content = numberingContent.substring(abstractNum2Start, abstractNum2End);
+
+          // Find the first lvl (ilvl="0") within this abstractNum
+          const lvl0Start = abstractNum2Content.indexOf('<w:lvl w:ilvl="0">');
+          if (lvl0Start !== -1) {
+            const lvl0End = abstractNum2Content.indexOf('</w:lvl>', lvl0Start) + '</w:lvl>'.length;
+            let lvl0Content = abstractNum2Content.substring(lvl0Start, lvl0End);
+
+            // Update font size from 20 (10pt) to 22 (11pt) to match browsers
+            lvl0Content = lvl0Content.replace(/<w:sz w:val="20"\/>/g, '<w:sz w:val="22"/>');
+
+            // Update the abstractNum content
+            const updatedAbstractNum2 = abstractNum2Content.substring(0, lvl0Start) + lvl0Content + abstractNum2Content.substring(lvl0End);
+
+            // Update the full numbering content
+            numberingContent = numberingContent.substring(0, abstractNum2Start) + updatedAbstractNum2 + numberingContent.substring(abstractNum2End);
+
+            console.log('[DOCX] Updated abstractNum 2 (technologies) font size to 11pt to match browsers');
+          }
+        }
+
+        // Also update abstractNum with abstractNumId="1" (used by numId="5" - browser lists)
+        // Update font size to 11pt (22 half-points)
+        const abstractNum1Start = numberingContent.indexOf('<w:abstractNum w:abstractNumId="1"');
+        if (abstractNum1Start !== -1) {
+          const abstractNum1End = numberingContent.indexOf('</w:abstractNum>', abstractNum1Start);
+          const abstractNum1Content = numberingContent.substring(abstractNum1Start, abstractNum1End);
+
+          // Find the first lvl (ilvl="0") within this abstractNum
+          const lvl0Start = abstractNum1Content.indexOf('<w:lvl w:ilvl="0">');
+          if (lvl0Start !== -1) {
+            const lvl0End = abstractNum1Content.indexOf('</w:lvl>', lvl0Start) + '</w:lvl>'.length;
+            let lvl0Content = abstractNum1Content.substring(lvl0Start, lvl0End);
+
+            // Update font size from 20 (10pt) to 22 (11pt) to match browsers and technologies
+            lvl0Content = lvl0Content.replace(/<w:sz w:val="20"\/>/g, '<w:sz w:val="22"/>');
+
+            // Update the abstractNum content
+            const updatedAbstractNum1 = abstractNum1Content.substring(0, lvl0Start) + lvl0Content + abstractNum1Content.substring(lvl0End);
+
+            // Update the full numbering content
+            numberingContent = numberingContent.substring(0, abstractNum1Start) + updatedAbstractNum1 + numberingContent.substring(abstractNum1End);
+
+            console.log('[DOCX] Updated abstractNum 1 (browsers) font size to 11pt to match browsers and technologies');
+          }
+        }
+
+        // Update the ZIP
+        renderedZip.file('word/numbering.xml', numberingContent);
+
+        console.log('[DOCX] Updated numbering.xml');
       } else {
         console.log('[DOCX] numbering.xml not found');
       }
@@ -1327,16 +1361,26 @@ export async function GET(
           const rPr = rPrMatch ? rPrMatch[0] : '';
 
           // Build new paragraphs from database userAgents
-          const userAgentLines = templateData.userAgents.split('\n').filter(line => line.trim().length > 0);
+          // First, strip HTML tags from userAgents
+          const cleanedUserAgents = templateData.userAgents
+            .replace(/<ul>/gi, '')
+            .replace(/<\/ul>/gi, '')
+            .replace(/<li>/gi, '')
+            .replace(/<\/li>/gi, '\n')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .trim();
+
+          const userAgentLines = cleanedUserAgents.split('\n').filter(line => line.trim().length > 0);
           const newBrowserParagraphs = userAgentLines.map(line => {
-            const escapedLine = line
+            const escapedLine = line.trim()
               .replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')
               .replace(/>/g, '&gt;')
               .replace(/"/g, '&quot;')
               .replace(/'/g, '&apos;');
 
-            return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
+            // Add 12pt (24 half-points) font size to run properties
+            return `<w:p>${pPr}<w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
           }).join('\n');
 
           // Replace the old browser list with new paragraphs
@@ -1356,63 +1400,66 @@ export async function GET(
       // Update technologies (DOM, HTML, CSS) section
       console.log('[DOCX] Replacing hardcoded technologies with database values...');
 
-      // Find "Onderzoeksmethode en technieken" section
-      const techSectionHeading = 'Onderzoeksmethode en technieken';
-      const techHeadingIndex = xmlContent.indexOf(techSectionHeading);
+      // Find "Technologieën" Kop3 heading (NOT "Onderzoeksmethode en technieken")
+      let techHeadingStart = -1;
+      let techSearchPos = 0;
 
-      if (techHeadingIndex !== -1) {
-        // After this heading, look for DOM/HTML/CSS list
-        // Technologies are likely in a numbered list after this heading
-        const domIndex = xmlContent.indexOf('DOM', techHeadingIndex);
+      while ((techSearchPos = xmlContent.indexOf('>Technologieën<', techSearchPos)) !== -1) {
+        // Check if this is a Kop3 heading
+        const before = xmlContent.substring(Math.max(0, techSearchPos - 300), techSearchPos);
+        if (before.includes('pStyle w:val="Kop3"')) {
+          const paragraphStart = xmlContent.lastIndexOf('<w:p ', techSearchPos);
+          const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', techSearchPos);
+          techHeadingStart = Math.max(paragraphStart, paragraphStart2);
+          console.log('[DOCX] Found "Technologieën" heading at index', techHeadingStart);
+          break;
+        }
+        techSearchPos++;
+      }
 
-        if (domIndex !== -1) {
-          // Find the list containing DOM
-          const domParagraphStart = xmlContent.lastIndexOf('<w:p ', domIndex);
+      if (techHeadingStart !== -1) {
+        // Find the end of the heading paragraph
+        const techHeadingEnd = xmlContent.indexOf('</w:p>', techHeadingStart) + '</w:p>'.length;
 
-          // Find where this tech list ends
-          // Similar approach to browser list - find consecutive paragraphs with same numId
-          let techListEnd = domIndex;
-          let searchPos = techListEnd;
+        // Find where the Technologieën section ends (before next Kop2/Kop3/section heading)
+        const afterTechHeading = xmlContent.substring(techHeadingEnd);
+        const nextHeadingMatch = afterTechHeading.search(/<w:pStyle w:val="Kop[2-3]"/);
 
-          // Get the numId from the first paragraph
-          const firstTechPContent = xmlContent.substring(domParagraphStart, domParagraphStart + 500);
-          const numIdMatch = firstTechPContent.match(/<w:numId w:val="(\d+)"\/>/);
-          const techNumId = numIdMatch ? numIdMatch[1] : null;
+        if (nextHeadingMatch !== -1) {
+          const beforeNextHeading = afterTechHeading.substring(0, nextHeadingMatch);
+          const lastPStart = Math.max(
+            beforeNextHeading.lastIndexOf('<w:p '),
+            beforeNextHeading.lastIndexOf('<w:p>')
+          );
+          const techSectionEnd = techHeadingEnd + lastPStart;
 
-          if (techNumId) {
-            // Find all consecutive paragraphs with this numId
-            while (true) {
-              const nextPEnd = xmlContent.indexOf('</w:p>', searchPos) + '</w:p>'.length;
-              const nextPStart = xmlContent.indexOf('<w:p ', nextPEnd);
+          console.log('[DOCX] Technologieën section ends at index', techSectionEnd);
 
-              if (nextPStart === -1) break;
+          // Extract the section content
+          const techContent = xmlContent.substring(techHeadingEnd, techSectionEnd);
 
-              // Check if this paragraph has the same numId
-              const nextPContent = xmlContent.substring(nextPStart, nextPStart + 500);
-              if (nextPContent.includes(`<w:numId w:val="${techNumId}"/>`)) {
-                // This is still part of the tech list
-                techListEnd = xmlContent.indexOf('</w:p>', nextPStart) + '</w:p>'.length;
-                searchPos = techListEnd;
-              } else {
-                // This is not part of the tech list, we've reached the end
-                break;
-              }
-            }
+          // Find the FIRST paragraph with numId="5" (or numId="4") in this section
+          const firstNumIdMatch = techContent.match(/<w:p[^>]*>.*?<w:numPr>.*?<w:numId w:val="(\d+)".*?<\/w:p>/s);
 
-            // Extract template paragraph
-            const templateParagraphEnd = xmlContent.indexOf('</w:p>', domIndex) + '</w:p>'.length;
-            const templateParagraph = xmlContent.substring(domParagraphStart, templateParagraphEnd);
+          if (firstNumIdMatch) {
+            const firstParagraphStart = techHeadingEnd + techContent.indexOf(firstNumIdMatch[0]);
+            const firstParagraphEnd = firstParagraphStart + firstNumIdMatch[0].length;
+            const templateParagraph = xmlContent.substring(firstParagraphStart, firstParagraphEnd);
 
             // Extract paragraph properties and formatting
             const pPrMatch = templateParagraph.match(/<w:pPr>[\s\S]*?<\/w:pPr>/);
             const pPr = pPrMatch ? pPrMatch[0] : '';
 
-            // Extract run properties if any
-            const rPrMatch = templateParagraph.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
-            const rPr = rPrMatch ? rPrMatch[0] : '';
-
             // Build new paragraphs from database technologies
-            const techLines = templateData.technologies.split('\n').filter(line => line.trim().length > 0);
+            // Remove duplicates and filter empty lines
+            console.log('[DOCX DEBUG] Raw technologies:', templateData.technologies);
+            const techLines = Array.from(new Set(
+              templateData.technologies.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+            ));
+            console.log('[DOCX DEBUG] Unique tech lines after dedup:', techLines);
+
             const newTechParagraphs = techLines.map(line => {
               const escapedLine = line
                 .replace(/&/g, '&amp;')
@@ -1421,24 +1468,31 @@ export async function GET(
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&apos;');
 
-              return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
+              // Create paragraph properties with bullet list formatting (numId="4")
+              const cleanPPr = '<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr>';
+
+n              // Add run properties with font size: 24 half-points (12pt) to match browsers
+              // NOTE: Do NOT specify font family - let it inherit from default
+              const rPr = '<w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>';
+
+              return `<w:p>${cleanPPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
             }).join('\n');
 
-            // Replace the old tech list with new paragraphs
-            xmlContent = xmlContent.substring(0, domParagraphStart) + newTechParagraphs + xmlContent.substring(techListEnd);
+            // Replace ENTIRE section content (from after heading to before next heading) with new paragraphs
+            xmlContent = xmlContent.substring(0, techHeadingEnd) + newTechParagraphs + xmlContent.substring(techSectionEnd);
 
             // Update the ZIP
             renderedZip.file('word/document.xml', xmlContent);
 
             console.log(`[DOCX] Replaced technologies with ${techLines.length} entries from database`);
           } else {
-            console.log('[DOCX] Could not find numId for technologies list');
+            console.log('[DOCX] Could not find technology list paragraphs');
           }
         } else {
-          console.log('[DOCX] Could not find hardcoded technologies (DOM) to replace');
+          console.log('[DOCX] Could not find end of Technologieën section');
         }
       } else {
-        console.log('[DOCX] Technologies section heading not found');
+        console.log('[DOCX] "Technologieën" heading not found');
       }
 
       // Now update the TOC (Table of Contents) with fixed entries

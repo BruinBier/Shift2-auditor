@@ -12,8 +12,6 @@ interface FinalizeProps {
 export default function Finalize({ project, allCriteria }: FinalizeProps) {
   const router = useRouter();
   const [applicableCriteria, setApplicableCriteria] = useState(allCriteria);
-  const [isControlDialogOpen, setIsControlDialogOpen] = useState(false);
-  const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
 
   // Load research type from localStorage and filter criteria
   useEffect(() => {
@@ -112,56 +110,10 @@ export default function Finalize({ project, allCriteria }: FinalizeProps) {
     console.log('All assessed:', allAssessed.map((c: any) => ({ code: c.criterion.code, principle: c.criterion.principle, status: c.status })));
   }, [criteriaWithAssessments]);
 
-  // For demo purposes, generate a simple criterion ID mapping
-  const getCriterionId = (code: string) => {
-    // This should ideally match the actual criterion IDs from the database
-    // For now, we'll use a simple pattern
-    return `criterion-${code.replace(/\./g, '-')}`;
-  };
-
   return (
     <div className="grid grid-cols-12 gap-6">
       {/* Left column - Main content */}
       <div className="col-span-9">
-        {/* Vraag om controle blok */}
-        <div className="bg-green-50 rounded-lg border border-green-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Vraag om controle</h3>
-          <p className="text-sm text-gray-700 mb-4">
-            Frits Karskens controleert de resultaten van jouw toetsing. De controleur kan wijzigingen maken en het onderzoek voortzetten. De datum van vandaag wordt opgeslagen als onderzoeksdatum.
-          </p>
-          <button
-            onClick={() => setIsControlDialogOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6b2d8f] text-white rounded-lg hover:bg-[#5a2578] transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Controle aanvragen
-          </button>
-        </div>
-
-        {/* Markeer als afgerond blok */}
-        <div className="bg-green-50 rounded-lg border border-green-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Markeer als afgerond</h3>
-          <p className="text-sm text-gray-700 mb-4">
-            Het onderzoek wordt afgerond en online gepubliceerd. Een officieel rapport wordt gegenereerd in PDF, JSON en CSV.
-          </p>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#6b2d8f] text-white rounded-lg hover:bg-[#5a2578] transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Beoordeling
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Onderzoek afronden
-            </button>
-          </div>
-        </div>
-
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-6">
             <h2 className="text-xl font-bold">Resultaten per succescriterium</h2>
@@ -509,35 +461,6 @@ export default function Finalize({ project, allCriteria }: FinalizeProps) {
           </div>
         </div>
       </div>
-
-      {/* Controle Dialog Modal */}
-      {isControlDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
-            {/* Close button */}
-            <button
-              onClick={() => setIsControlDialogOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            {/* Content */}
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Vraag om controle</h3>
-            <p className="text-sm text-gray-700 mb-6">
-              Frits Karskens controleert de resultaten van jouw toetsing. De controleur kan wijzigingen maken en het onderzoek voortzetten. De datum van vandaag wordt opgeslagen als onderzoeksdatum.
-            </p>
-            <button className="modal-save-button flex items-center gap-2 px-4 py-2 bg-[#6b2d8f] text-white rounded-lg hover:bg-[#5a2578] transition-colors w-full justify-center">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Controle aanvragen
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

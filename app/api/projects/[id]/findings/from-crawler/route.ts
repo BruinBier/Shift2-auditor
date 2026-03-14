@@ -79,7 +79,6 @@ export async function POST(
         projectId,
         findingCode,
         wcagCriterionId: wcagCriterion.id,
-        quickFindingId,
         status: quickFinding.status || 'open',
         impact: quickFinding.impact,
         responsibility: quickFinding.responsibility,
@@ -99,7 +98,6 @@ export async function POST(
           },
         },
         wcagCriterion: true,
-        quickFinding: true,
       },
     });
 

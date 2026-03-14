@@ -126,7 +126,9 @@ export default function ProjectenPage() {
 
             if (response.ok) {
               opdrachtgever = await response.json();
-              setAvailableOpdrachtgevers(prev => [...prev, opdrachtgever]);
+              if (opdrachtgever) {
+                setAvailableOpdrachtgevers(prev => [...prev, opdrachtgever!]);
+              }
             }
           }
 

@@ -93,12 +93,12 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
 
       // Load existing sample item selections from occurrences
       if (editingFinding.occurrences && Array.isArray(editingFinding.occurrences)) {
-        const sampleItemIds = new Set(
+        const sampleItemIds = new Set<string>(
           editingFinding.occurrences.map((occ: any) => occ.sampleItemId)
         );
         setSelectedSampleItemIds(sampleItemIds);
       } else {
-        setSelectedSampleItemIds(new Set());
+        setSelectedSampleItemIds(new Set<string>());
       }
     } else {
       // Reset form when not editing
@@ -320,7 +320,11 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            {editingFinding?.id ? `Bevinding ${editingFinding.findingCode}` : 'Nieuwe bevinding'}
+            {editingFinding?.id ? (
+              `Bevinding (SC ${editingFinding.wcagCriterion?.code || criterionCode})`
+            ) : (
+              'Nieuwe bevinding'
+            )}
           </h2>
           <button
             onClick={onClose}

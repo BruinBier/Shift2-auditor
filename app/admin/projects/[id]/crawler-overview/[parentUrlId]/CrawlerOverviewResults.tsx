@@ -36,7 +36,7 @@ export default function CrawlerOverviewResults({ projectId, urls }: Props) {
       const response = await fetch(`/api/projects/${projectId}/sample-items`);
       if (response.ok) {
         const items = await response.json();
-        const urls = new Set(items.map((item: any) => item.url).filter(Boolean));
+        const urls = new Set<string>(items.map((item: any) => item.url).filter(Boolean));
         setSampleItemUrls(urls);
       }
     } catch (error) {

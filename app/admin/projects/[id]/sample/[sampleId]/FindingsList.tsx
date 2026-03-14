@@ -43,6 +43,16 @@ export default function FindingsList({ findings, projectId, sampleId }: Findings
     );
   }
 
+  // Calculate finding indices per criterion for display
+  const findingIndicesMap = new Map<string, Map<string, number>>();
+  findings.forEach((f: any) => {
+    if (!findingIndicesMap.has(f.wcagCriterionId)) {
+      findingIndicesMap.set(f.wcagCriterionId, new Map());
+    }
+    const criterionMap = findingIndicesMap.get(f.wcagCriterionId)!;
+    criterionMap.set(f.id, criterionMap.size + 1);
+  });
+
   return (
     <>
       <div className="divide-y divide-gray-200">
@@ -50,13 +60,16 @@ export default function FindingsList({ findings, projectId, sampleId }: Findings
           // Check if this finding has an occurrence on this sample item
           const hasOccurrenceOnThisPage = finding.occurrences.some((occ: any) => occ.sampleItemId === sampleId);
 
+          // Get finding index for this criterion
+          const findingIndex = findingIndicesMap.get(finding.wcagCriterionId)?.get(finding.id) || 1;
+
           return (
             <div key={finding.id} className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-gray-900">
-                      Bevinding {finding.findingCode}
+                      Bevinding {findingIndex} (SC {finding.wcagCriterion.code})
                     </h3>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       finding.status === 'open'

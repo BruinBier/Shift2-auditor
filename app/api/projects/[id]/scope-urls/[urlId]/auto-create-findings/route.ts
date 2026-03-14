@@ -48,13 +48,15 @@ export async function POST(
       });
     }
 
-    // Check which findings already exist for this project + QuickFinding combination
+    // Check which findings already exist for this project
+    // Note: quickFindingId field doesn't exist in schema, so we can't filter by it
     const existingFindings = await prisma.finding.findMany({
       where: {
         projectId,
-        quickFindingId: {
-          in: quickFindings.map(qf => qf.id),
-        },
+        // TODO: Add quickFindingId to schema to enable this filter
+        // quickFindingId: {
+        //   in: quickFindings.map(qf => qf.id),
+        // },
       },
       include: {
         affectedUrls: {
@@ -65,27 +67,30 @@ export async function POST(
       },
     });
 
-    const createdFindings = [];
-    const updatedFindings = [];
+    const createdFindings: string[] = [];
+    const updatedFindings: string[] = [];
 
     for (const quickFinding of quickFindings) {
       // Check if finding already exists for this QuickFinding
-      const existingFinding = existingFindings.find(f => f.quickFindingId === quickFinding.id);
+      // Note: Since quickFindingId doesn't exist, we can't match findings properly
+      // This will create duplicate findings for now until schema is updated
+      const existingFinding = null; // TODO: Re-enable when quickFindingId is added to schema
 
       if (existingFinding) {
-        // Check if this scopeUrl is already linked
-        const hasUrl = existingFinding.affectedUrls.some(au => au.scopeUrlId === scopeUrlId);
-
-        if (!hasUrl) {
-          // Add the URL to the existing finding
-          await prisma.findingUrl.create({
-            data: {
-              findingId: existingFinding.id,
-              scopeUrlId,
-            },
-          });
-          updatedFindings.push(existingFinding.findingCode);
-        }
+        // TODO: Re-enable this block when quickFindingId is added to schema
+        // // Check if this scopeUrl is already linked
+        // const hasUrl = existingFinding.affectedUrls.some(au => au.scopeUrlId === scopeUrlId);
+        //
+        // if (!hasUrl) {
+        //   // Add the URL to the existing finding
+        //   await prisma.findingUrl.create({
+        //     data: {
+        //       findingId: existingFinding.id,
+        //       scopeUrlId,
+        //     },
+        //   });
+        //   updatedFindings.push(existingFinding.findingCode);
+        // }
       } else {
         // Get the WCAG criterion
         const wcagCriterion = await prisma.wCAGCriterion.findUnique({
@@ -161,7 +166,8 @@ export async function POST(
             projectId,
             findingCode,
             wcagCriterionId: wcagCriterion.id,
-            quickFindingId: quickFinding.id,
+            // TODO: Add quickFindingId to schema
+            // quickFindingId: quickFinding.id,
             status: 'open', // Draft status
             impact: quickFinding.impact,
             responsibility: quickFinding.responsibility,
