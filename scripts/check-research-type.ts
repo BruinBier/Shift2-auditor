@@ -1,36 +1,28 @@
 import { prisma } from '../lib/prisma';
 
 async function checkResearchType() {
-  const projectId = 'd0d6504f-e0f0-48c3-95a4-4e25df146fc1';
-
   const project = await prisma.project.findUnique({
-    where: { id: projectId },
+    where: { id: '52589c23-e76c-4a5f-bbaa-e0dcd4bbf1ee' },
     select: {
-      id: true,
-      title: true,
-      subject: true,
-      researchType: true,
-    },
+      researchType: true
+    }
   });
 
-  console.log('Project details:');
-  console.log('ID:', project?.id);
-  console.log('Title:', project?.title);
-  console.log('Subject:', project?.subject);
-  console.log('Research Type (raw):', JSON.stringify(project?.researchType));
-  console.log('Research Type (string):', project?.researchType);
+  console.log('Research type:', project?.researchType);
 
-  // Also check what research types exist in the database
-  const researchTypes = await prisma.researchType.findMany({
-    select: { name: true },
+  const researchTypeData = await prisma.researchType.findUnique({
+    where: { name: project?.researchType || '' },
+    select: {
+      reportIntroHeader: true,
+      type: true
+    }
   });
 
-  console.log('\nAll available research types:');
-  researchTypes.forEach(rt => {
-    console.log(`- "${rt.name}"`);
-  });
+  console.log('\nResearch type data:');
+  console.log('Type:', researchTypeData?.type);
+  console.log('Report intro header:', researchTypeData?.reportIntroHeader);
 
   await prisma.$disconnect();
 }
 
-checkResearchType().catch(console.error);
+checkResearchType();

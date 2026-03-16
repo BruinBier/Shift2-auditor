@@ -78,6 +78,25 @@ function escapeXml(text: string): string {
 }
 
 /**
+ * Strip HTML tags from text and decode HTML entities
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<p[^>]*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .trim();
+}
+
+/**
  * Generate XML for one finding
  */
 function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding', criterionCode?: string, criterionTitle?: string): string {
@@ -103,15 +122,15 @@ function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding'
     });
   }
 
-  // Description
+  // Description (strip HTML tags first)
   if (finding.description) {
-    xml += generateParagraph(finding.description);
+    xml += generateParagraph(stripHtml(finding.description));
   }
 
-  // Advice as Kop5 heading with text on next paragraph
+  // Advice as Kop5 heading with text on next paragraph (strip HTML tags first)
   if (finding.advice) {
     xml += `<w:p><w:pPr><w:pStyle w:val="Kop5"/></w:pPr><w:r><w:t>Advies</w:t></w:r></w:p>`;
-    xml += generateParagraph(finding.advice);
+    xml += generateParagraph(stripHtml(finding.advice));
   }
 
   return xml;

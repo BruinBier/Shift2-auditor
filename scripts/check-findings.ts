@@ -1,46 +1,86 @@
 import { prisma } from '../lib/prisma';
 
 async function checkFindings() {
-  const projectId = 'd0d6504f-e0f0-48c3-95a4-4e25df146fc1';
+  const projectId = '52589c23-e76c-4a5f-bbaa-e0dcd4bbf1ee';
 
   console.log('Checking findings for project...\n');
 
-  const findings = await prisma.finding.findMany({
-    where: { projectId },
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
     include: {
-      wcagCriterion: true,
-      quickFinding: true,
-      affectedUrls: {
+      findings: {
         include: {
-          scopeUrl: true,
+          wcagCriterion: true,
+        },
+      },
+      criterionAssessments: {
+        include: {
+          wcagCriterion: true,
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
   });
 
-  console.log(`Total findings: ${findings.length}\n`);
+  if (!project) {
+    console.log('❌ Project not found!');
+    await prisma.$disconnect();
+    return;
+  }
 
-  if (findings.length === 0) {
-    console.log('❌ No findings found!');
-    console.log('\nPossible reasons:');
-    console.log('  1. The auto-create API was not called successfully');
-    console.log('  2. There was an error during finding creation');
-    console.log('  3. The "Add to Sample" button was not clicked yet');
+  console.log(`Project: ${project.subject}`);
+  console.log(`Total findings: ${project.findings.length}\n`);
+
+  // Show ALL findings
+  console.log('=== ALL FINDINGS ===');
+  project.findings.forEach((f, i) => {
+    console.log(`  ${i + 1}. ${f.wcagCriterion.code} - ${f.wcagCriterion.titleNl}`);
+    console.log(`     Status: ${f.status}`);
+    console.log(`     Code: ${f.findingCode}`);
+    console.log(`     ID: ${f.id}`);
+    console.log('');
+  });
+
+  // Find the 1.4.3 criterion
+  const criterion143 = project.criterionAssessments.find(
+    a => a.wcagCriterion.code === '1.4.3'
+  );
+
+  if (criterion143) {
+    console.log(`\n=== Criterion 1.4.3 (${criterion143.wcagCriterion.titleNl}) ===`);
+    console.log(`Assessment status: ${criterion143.status}\n`);
+
+    // Find findings for this criterion
+    const findingsFor143 = project.findings.filter(
+      f => f.wcagCriterionId === criterion143.wcagCriterion.id
+    );
+
+    console.log(`Number of findings for 1.4.3: ${findingsFor143.length}\n`);
+
+    if (findingsFor143.length > 0) {
+      console.log('Findings:');
+      findingsFor143.forEach((f, i) => {
+        console.log(`  ${i + 1}. ID: ${f.id}`);
+        console.log(`     Status: ${f.status}`);
+        console.log(`     Code: ${f.findingCode}`);
+        console.log(`     Description: ${f.description?.substring(0, 100)}...`);
+        console.log('');
+      });
+    }
   } else {
-    console.log('✅ Findings found:\n');
-    findings.forEach((f, i) => {
-      console.log(`${i + 1}. ${f.findingCode}: ${f.description.substring(0, 60)}...`);
-      console.log(`   WCAG: ${f.wcagCriterion.code} - ${f.wcagCriterion.titleNl}`);
-      console.log(`   Status: ${f.status}`);
-      console.log(`   Impact: ${f.impact}`);
-      console.log(`   Affected URLs: ${f.affectedUrls.length}`);
-      if (f.affectedUrls.length > 0) {
-        f.affectedUrls.forEach(au => {
-          console.log(`     - ${au.scopeUrl.title || au.scopeUrl.url}`);
-        });
-      }
-      console.log(`   Created: ${f.createdAt}`);
+    console.log('\n❌ Criterion 1.4.3 not found in assessments');
+  }
+
+  // Also show all non-open findings (these go to "Opmerkingen" in Word doc)
+  const nonOpenFindings = project.findings.filter(f => f.status !== 'open');
+  console.log(`\n=== All non-open findings (will appear in "Opmerkingen" section) ===`);
+  console.log(`Total: ${nonOpenFindings.length}\n`);
+
+  if (nonOpenFindings.length > 0) {
+    nonOpenFindings.forEach((f, i) => {
+      console.log(`  ${i + 1}. ${f.wcagCriterion.code} - ${f.wcagCriterion.titleNl}`);
+      console.log(`     Status: ${f.status}`);
+      console.log(`     Finding code: ${f.findingCode}`);
+      console.log(`     ID: ${f.id}`);
       console.log('');
     });
   }

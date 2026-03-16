@@ -343,7 +343,10 @@ export async function GET(
             .replace(/\{passedCriteria\}/g, String(passedCriteria))
             .replace(/\{percentage\}/g, String(percentage))
             .replace(/\{failedCriteria\}/g, String(failedCriteria))
-            .replace(/\{compliesFully\}/g, compliesFully);
+            .replace(/\{compliesFully\}/g, compliesFully)
+            .replace(/\{formsSingularPlural\}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
+            .replace(/\{pagesSingularPlural\}/g, totalPages === 1 ? 'processtap' : 'processtappen')
+            .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria');
         }
         // Fallback
         else {
@@ -385,9 +388,7 @@ export async function GET(
 
         // Add closing advice for formulieren (only if not already present)
         const isFormulieren = researchTypeData?.type === 'formulieren';
-        const closingAdviceText = 'Wij adviseren om ' +
-          (isFormulieren ? 'formuliercontent' : 'content') +
-          ' periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het ' +
+        const closingAdviceText = 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het ' +
           (isFormulieren ? 'beheer- en publicatieproces van formulieren' : 'publicatieproces') +
           '.';
 
@@ -419,9 +420,9 @@ export async function GET(
 
       snapshotWarningText: 'Dit onderzoek biedt geen uitputtend overzicht van alle mogelijke toegankelijkheidsproblemen. De bevindingen vormen een momentopname van de situatie ten tijde van het onderzoek.',
 
-      continuityAdvice1: 'Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in pagina\'s die niet zijn onderzocht. Het is daarom raadzaam om alle pagina\'s te controleren op vergelijkbare patronen en deze structureel te monitoren.',
+      continuityAdvice1: `Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in ${isFormulieren ? 'formulieren' : 'pagina\'s'} die niet zijn onderzocht. Het is daarom raadzaam om alle ${isFormulieren ? 'formulieren' : 'pagina\'s'} te controleren op vergelijkbare patronen en deze structureel te monitoren.`,
 
-      continuityAdvice2: 'Daarnaast kunnen wijzigingen in de inhoud of in het publicatieproces nieuwe toegankelijkheidsrisico\'s met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.',
+      continuityAdvice2: 'Daarnaast kunnen wijzigingen in de content van formulieren of in het publicatieproces nieuwe toegankelijkheidsrisico\'s met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.',
 
       scopeExplanation: 'Bij de URL staat de reden waarom een gedeelte wel of niet is meegenomen. Dit is conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.',
 

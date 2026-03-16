@@ -113,8 +113,8 @@ export default function Resultaten({ project }: { project: any }) {
                         {assessment.wcagCriterion.level}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 text-sm text-gray-900 ${isFailed ? 'font-bold' : ''}`}>
-                      <div className="hover:underline cursor-pointer">{assessment.wcagCriterion.titleNl}</div>
+                    <td className={`px-6 py-4 text-sm text-gray-900`}>
+                      <div className={`hover:underline cursor-pointer ${isFailed ? 'font-bold' : ''}`}>{assessment.wcagCriterion.titleNl}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span

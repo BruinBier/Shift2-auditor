@@ -152,10 +152,15 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const dateEnd = project.dateEnd ? new Date(project.dateEnd) : null;
   const reportDate = new Date(project.reportDate);
 
-  // Prepare criteria data sorted by code
-  const sortedCriteria = [...project.criterionAssessments].sort((a: any, b: any) =>
-    a.wcagCriterion.code.localeCompare(b.wcagCriterion.code)
-  );
+  // Prepare criteria data sorted by code (numerically)
+  const sortedCriteria = [...project.criterionAssessments].sort((a: any, b: any) => {
+    const [aMajor, aMinor, aPatch] = a.wcagCriterion.code.split('.').map(Number);
+    const [bMajor, bMinor, bPatch] = b.wcagCriterion.code.split('.').map(Number);
+
+    if (aMajor !== bMajor) return aMajor - bMajor;
+    if (aMinor !== bMinor) return aMinor - bMinor;
+    return aPatch - bPatch;
+  });
 
   // Auto-open all accordions in PDF mode
   useEffect(() => {
@@ -258,7 +263,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         .replace(/\{passedCriteria\}/g, String(passedCriteria))
         .replace(/\{percentage\}/g, String(percentage))
         .replace(/\{failedCriteria\}/g, String(failedCriteria))
-        .replace(/\{compliesFully\}/g, percentage === 100 ? 'volledig' : 'niet volledig');
+        .replace(/\{compliesFully\}/g, percentage === 100 ? 'volledig' : 'niet volledig')
+        .replace(/\{formsSingularPlural\}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
+        .replace(/\{pagesSingularPlural\}/g, totalPages === 1 ? 'processtap' : 'processtappen')
+        .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria');
 
       return (
         <>
@@ -275,7 +283,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           {/* Closing advice - formulieren specific or default */}
           <p className="mt-4">
             {isFormulieren
-              ? 'Wij adviseren om formuliercontent periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
+              ? 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
               : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.'
             }
           </p>
@@ -305,7 +313,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         {/* Closing advice - formulieren specific or default */}
         <p>
           {isFormulieren
-            ? 'Wij adviseren om formuliercontent periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
+            ? 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
             : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.'
           }
         </p>
@@ -736,14 +744,14 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                           {sortedCriteria.map((assessment: any) => {
                             const isFailed = assessment.status === 'failed';
                             return (
-                              <tr key={assessment.wcagCriterion.id} className={isFailed ? 'font-bold' : ''}>
-                                <th scope="row" className="border border-gray-300 px-4 py-2 text-sm text-left font-normal">
+                              <tr key={assessment.wcagCriterion.id}>
+                                <th scope="row" className={`border border-gray-300 px-4 py-2 text-sm text-left ${isFailed ? 'font-bold' : 'font-normal'}`}>
                                   {assessment.wcagCriterion.code} {assessment.wcagCriterion.titleNl}
                                 </th>
-                                <td className="border border-gray-300 px-4 py-2 text-sm">
+                                <td className={`border border-gray-300 px-4 py-2 text-sm ${isFailed ? 'font-bold' : ''}`}>
                                   {assessment.wcagCriterion.level}
                                 </td>
-                                <td className="border border-gray-300 px-4 py-2 text-sm">
+                                <td className={`border border-gray-300 px-4 py-2 text-sm ${isFailed ? 'font-bold' : ''}`}>
                                   {getStatusLabel(assessment.status)}
                                 </td>
                               </tr>
@@ -862,7 +870,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   return (
                     <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">
                       {/* Criterion title */}
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">
                         {criterion.code} {criterion.titleNl} {criterion.level}
                       </h3>
 
@@ -976,8 +984,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             <div className="space-y-6">
               {sortedCriteria
                 .filter((assessment: any) => {
-                  // Only show criteria that have findings with status !== 'open' (Opmerkingen)
-                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open');
+                  const criterion = assessment.wcagCriterion;
+                  // Show criteria that have findings with status !== 'open' (Opmerkingen)
+                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.status !== 'open');
                   return hasRemark;
                 })
                 .map((assessment: any, index: number) => {
@@ -1090,7 +1099,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
             {/* Show message if no remarks */}
             {sortedCriteria.filter((assessment: any) => {
-              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open');
+              const criterion = assessment.wcagCriterion;
+              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.status !== 'open');
               return hasRemark;
             }).length === 0 && (
               <p className="text-sm text-gray-500 italic">Er zijn geen opmerkingen voor dit onderzoek.</p>
@@ -1103,10 +1113,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Borging en vervolg</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-gray-700 mb-4">
-              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in formulieren die niet zijn onderzocht. Het is daarom raadzaam om alle online formulieren te controleren op vergelijkbare patronen en deze structureel te monitoren.
+              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in formulieren die niet zijn onderzocht. Het is daarom raadzaam om alle formulieren te controleren op vergelijkbare patronen en deze structureel te monitoren.
             </p>
             <p className="text-gray-700">
-              Daarnaast kunnen wijzigingen in de inhoud van formulieren of in het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling van de formulieren blijven daarom noodzakelijk.
+              Daarnaast kunnen wijzigingen in de content van formulieren of in het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling van de formulieren blijven daarom noodzakelijk.
             </p>
           </div>
         </section>
