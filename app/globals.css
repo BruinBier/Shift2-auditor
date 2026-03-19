@@ -83,8 +83,8 @@ button[style*="6b2d8f"]:active {
 }
 
 /* Prevent any button in modal from getting purple background - but allow active toolbar buttons and save buttons */
-.fixed button:not([type="submit"]):not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button),
-.fixed button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button) {
+.fixed button:not([type="submit"]):not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button):not(.default-save-button),
+.fixed button[type="button"]:not(.bg-gray-300):not(.modal-save-button):not(.delete-modal-button):not(.attachment-save-button):not(.default-save-button) {
   background-color: transparent !important;
   background: transparent !important;
 }

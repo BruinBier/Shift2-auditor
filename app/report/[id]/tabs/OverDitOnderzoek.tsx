@@ -880,7 +880,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                         <br />
                         {criterion.understandingUrl && (
                           <a
-                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (match, slug) =>
+                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
                               `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
                             )}
                             target="_blank"
@@ -1007,7 +1007,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                         <br />
                         {criterion.understandingUrl && (
                           <a
-                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (match, slug) =>
+                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
                               `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
                             )}
                             target="_blank"

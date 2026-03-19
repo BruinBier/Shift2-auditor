@@ -283,18 +283,29 @@ export async function GET(
       // Basic project info
       projectSubject: project.subject || project.title,
       opdrachtgeverNaam: project.clientProject?.opdrachtgever?.naam || project.commissionedBy || '',
+
+      // Website URL - extract base domain from first in-scope URL (without protocol and www)
       websiteUrl: (() => {
         const inScopeUrls = project.scopeUrls.filter(u => u.inScope);
         const firstUrl = inScopeUrls[0]?.url;
         if (!firstUrl) return '';
-        // Extract base domain (e.g., https://www.wierden.nl/)
+        // Extract base domain (e.g., heerlen.nl)
         try {
           const url = new URL(firstUrl);
-          return `${url.protocol}//${url.host}/`;
+          let host = url.host;
+          // Remove www. prefix if present
+          if (host.startsWith('www.')) {
+            host = host.substring(4);
+          }
+          return host;
         } catch {
           return firstUrl;
         }
       })(),
+
+      // Website name - use project subject (e.g., "Heerlen")
+      websiteName: project.subject || project.title,
+
       reportDate: formatDate(project.reportDate),
       version: project.version.toString(),
 
@@ -400,6 +411,32 @@ export async function GET(
         return summary;
       })(),
       researcherFeedback: '', // Empty since we're combining it with managementSummary
+
+      // Report intro header - different for formulieren vs regular projects
+      reportIntroHeader: (() => {
+        const websiteUrl = (() => {
+          const inScopeUrls = project.scopeUrls.filter(u => u.inScope);
+          const firstUrl = inScopeUrls[0]?.url;
+          if (!firstUrl) return '';
+          // Extract base domain (without protocol and www)
+          try {
+            const url = new URL(firstUrl);
+            let host = url.host;
+            // Remove www. prefix if present
+            if (host.startsWith('www.')) {
+              host = host.substring(4);
+            }
+            return host;
+          } catch {
+            return firstUrl;
+          }
+        })();
+
+        return isFormulieren
+          ? `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content van de formulieren op ${websiteUrl}`
+          : `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de website ${websiteUrl}`;
+      })(),
+
       aboutResearchText: project.aboutResearchText || `Voor dit project is een onderzoek uitgevoerd naar de toegankelijkheid van de content, om vast te stellen in hoeverre deze voldoet aan ${project.standard} niveau ${project.level} (EN 301 549).`,
       scopeInfo: project.scopeInfo || `Dit onderzoek heeft betrekking op de content die door de organisatie via het beheersysteem kan worden ingevoerd of aangepast.`,
       sampleInfo: project.sampleInfo || `Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie: https://www.digitoegankelijk.nl/aanpak/toegankelijkheidsonderzoek.`,
@@ -946,7 +983,7 @@ export async function GET(
 
           // Extract one URL paragraph as template
           const scopeContent = xmlContent.substring(scopeIntroEnd, scopeSectionEnd);
-          const firstHyperlinkMatch = scopeContent.match(/<w:p[^>]*>.*?<w:hyperlink.*?<\/w:hyperlink>.*?<\/w:p>/s);
+          const firstHyperlinkMatch = scopeContent.match(/<w:p[^>]*>[\s\S]*?<w:hyperlink[\s\S]*?<\/w:hyperlink>[\s\S]*?<\/w:p>/);
 
           let urlParagraphTemplate = '';
           if (firstHyperlinkMatch) {
@@ -961,7 +998,16 @@ export async function GET(
           // Generate new URL paragraphs for in-scope URLs
           let inScopeUrlsXml = '';
           templateData.scopeUrlsInScope.forEach(scopeUrl => {
-            const urlParagraph = urlParagraphTemplate.replace(/https?:\/\/[^<]+/g, scopeUrl.url);
+            // Replace URLs in hyperlinks (with protocol)
+            let urlParagraph = urlParagraphTemplate.replace(/https?:\/\/[^<]+/g, scopeUrl.url);
+            // Also replace any text within <w:t> tags that looks like a URL or domain
+            urlParagraph = urlParagraph.replace(/(<w:t[^>]*>)([^<]+)(<\/w:t>)/g, (match, openTag, text, closeTag) => {
+              // If the text looks like a domain or URL, replace it with the full URL
+              if (text.includes('.nl') || text.includes('.com') || text.includes('http')) {
+                return openTag + scopeUrl.url + closeTag;
+              }
+              return match;
+            });
             inScopeUrlsXml += urlParagraph;
           });
 
@@ -1128,10 +1174,10 @@ export async function GET(
           const steekproefContent = xmlContent.substring(steekproefHeadingEnd, steekproefSectionEnd);
 
           // Find a text paragraph (for title) - look for numbered list paragraph
-          const titleParagraphMatch = steekproefContent.match(/<w:p[^>]*>.*?<w:numPr>.*?<\/w:p>/s);
+          const titleParagraphMatch = steekproefContent.match(/<w:p[^>]*>[\s\S]*?<w:numPr>[\s\S]*?<\/w:p>/);
 
           // Find a hyperlink paragraph (for URL) - look for paragraph with hyperlink
-          const urlParagraphMatch = steekproefContent.match(/<w:p[^>]*>(?!.*<w:numPr>).*?<w:hyperlink.*?<\/w:hyperlink>.*?<\/w:p>/s);
+          const urlParagraphMatch = steekproefContent.match(/<w:p[^>]*>(?![\s\S]*<w:numPr>)[\s\S]*?<w:hyperlink[\s\S]*?<\/w:hyperlink>[\s\S]*?<\/w:p>/);
 
           let titleParagraphTemplate = '';
           let urlParagraphTemplate = '';
@@ -1440,7 +1486,7 @@ export async function GET(
           const techContent = xmlContent.substring(techHeadingEnd, techSectionEnd);
 
           // Find the FIRST paragraph with numId="5" (or numId="4") in this section
-          const firstNumIdMatch = techContent.match(/<w:p[^>]*>.*?<w:numPr>.*?<w:numId w:val="(\d+)".*?<\/w:p>/s);
+          const firstNumIdMatch = techContent.match(/<w:p[^>]*>[\s\S]*?<w:numPr>[\s\S]*?<w:numId w:val="(\d+)"[\s\S]*?<\/w:p>/);
 
           if (firstNumIdMatch) {
             const firstParagraphStart = techHeadingEnd + techContent.indexOf(firstNumIdMatch[0]);
@@ -1472,8 +1518,8 @@ export async function GET(
               // Create paragraph properties with bullet list formatting (numId="4")
               const cleanPPr = '<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr>';
 
-n              // Add run properties with font size: 24 half-points (12pt) to match browsers
-              // NOTE: Do NOT specify font family - let it inherit from default
+              // Add run properties with font size: 24 half-points (12pt) to match browsers
+              // NOTE: DO NOT specify font family - let it inherit from default
               const rPr = '<w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>';
 
               return `<w:p>${cleanPPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
@@ -1542,7 +1588,8 @@ n              // Add run properties with font size: 24 half-points (12pt) to ma
     console.log('[DOCX] Sending Word document:', fileName);
 
     // Return Word document as download
-    return new NextResponse(docxBuffer, {
+    // Convert Buffer to Uint8Array for NextResponse
+    return new NextResponse(new Uint8Array(docxBuffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${fileName}"`,

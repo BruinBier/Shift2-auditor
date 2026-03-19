@@ -94,8 +94,8 @@ export async function POST(
 
           // Use QuickFinding metadata if available
           if (quickFinding) {
-            impact = quickFinding.impact;
-            responsibility = quickFinding.responsibility;
+            impact = quickFinding.impact || 'onbekend';
+            responsibility = quickFinding.responsibility || 'onbekend';
             wcagCriterionId = (await prisma.wCAGCriterion.findUnique({
               where: { code: quickFinding.criterionCode },
             }))?.id;
@@ -134,8 +134,8 @@ export async function POST(
 
           description = quickFinding.description;
           advice = quickFinding.advice;
-          impact = quickFinding.impact;
-          responsibility = quickFinding.responsibility;
+          impact = quickFinding.impact || 'onbekend';
+          responsibility = quickFinding.responsibility || 'onbekend';
           quickFindingId = quickFinding.id;
 
           // Get WCAG criterion
@@ -201,10 +201,9 @@ export async function POST(
             projectId,
             findingCode,
             wcagCriterionId,
-            quickFindingId,
             status: 'open',
-            impact,
-            responsibility,
+            impact: impact as any,
+            responsibility: responsibility as any,
             description,
             advice,
             sortOrder,
@@ -216,7 +215,6 @@ export async function POST(
           },
           include: {
             wcagCriterion: true,
-            quickFinding: true,
             occurrences: {
               include: {
                 sampleItem: true,

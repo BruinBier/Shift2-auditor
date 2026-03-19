@@ -118,7 +118,8 @@ export async function GET(
     console.log('[PDF] Sending PDF:', fileName);
 
     // Return PDF as download
-    return new NextResponse(pdfBuffer, {
+    // Convert Buffer to Uint8Array for NextResponse
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${fileName}"`,

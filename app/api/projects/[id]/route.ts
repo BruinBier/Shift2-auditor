@@ -34,6 +34,11 @@ export async function PUT(
         description: body.description,
         isAnonymous: body.isAnonymous || false,
         isPrivate: body.isPrivate || false,
+        isExternalProject: body.isExternalProject || false,
+        externalBureau: body.externalBureau || null,
+        hasReinspection: body.hasReinspection || false,
+        reinspectionWeeks: body.reinspectionWeeks || null,
+        reinspectionDate: body.reinspectionDate ? new Date(body.reinspectionDate) : null,
       },
     });
 

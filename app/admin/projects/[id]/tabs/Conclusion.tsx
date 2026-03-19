@@ -45,6 +45,7 @@ export default function Conclusion({ project }: { project: any }) {
 
   const [userAgents, setUserAgents] = useState(initialUserAgents);
   const [technologies, setTechnologies] = useState(project.technologies || ['DOM', 'HTML', 'CSS']);
+  const [defaultUserAgents, setDefaultUserAgents] = useState('');
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editMode, setEditMode] = useState<'summary' | 'feedback' | 'userAgents' | 'technologies' | null>(null);
@@ -70,6 +71,7 @@ export default function Conclusion({ project }: { project: any }) {
   }, [showEditModal, isSaving]);
 
   const openEditModal = (mode: 'summary' | 'feedback' | 'userAgents' | 'technologies') => {
+    console.log('openEditModal called with mode:', mode);
     setEditMode(mode);
     const turndownService = new TurndownService({
       br: '\n', // Convert <br> tags to newlines
@@ -158,12 +160,115 @@ export default function Conclusion({ project }: { project: any }) {
     }
   };
 
+  const saveAsDefaultAndApply = async () => {
+    setIsSaving(true);
+    try {
+      // Convert Markdown to HTML
+      const html = await marked.parse(tempContent);
+
+      // Determine the settings key based on research type
+      // Check if research type contains "formulieren" (case insensitive)
+      const isFormulieren = project.researchType?.toLowerCase().includes('formulieren') ?? false;
+      const settingsKey = isFormulieren
+        ? 'default_user_agents_formulieren'
+        : 'default_user_agents';
+
+      // Save as default setting
+      const settingsResponse = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: settingsKey,
+          value: html,
+        }),
+      });
+
+      if (!settingsResponse.ok) {
+        throw new Error('Failed to save default setting');
+      }
+
+      // Update current project
+      const projectResponse = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userAgents: html }),
+      });
+
+      if (projectResponse.ok) {
+        setUserAgents(html);
+        setDefaultUserAgents(html);
+        router.refresh();
+        closeEditModal();
+        const researchTypeMsg = isFormulieren ? ' formulieren projecten' : ' projecten';
+        alert(`Opgeslagen als standaard en toegepast op dit project. Nieuwe${researchTypeMsg} met onderzoekstype "${project.researchType}" zullen deze waarde gebruiken.`);
+      } else {
+        const errorData = await projectResponse.json();
+        console.error('Server error:', errorData);
+        alert('Er ging iets mis bij het opslaan van het project.');
+      }
+    } catch (error) {
+      console.error('Error saving as default:', error);
+      alert('Er ging iets mis bij het opslaan als standaard.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const toggleTechnology = (tech: string) => {
     setTempTechnologies(prev =>
       prev.includes(tech)
         ? prev.filter(t => t !== tech)
         : [...prev, tech]
     );
+  };
+
+  const saveAsDefaultTechnologiesAndApply = async () => {
+    setIsSaving(true);
+    try {
+      // Determine the settings key based on research type
+      const isFormulieren = project.researchType?.toLowerCase().includes('formulieren') ?? false;
+      const settingsKey = isFormulieren
+        ? 'default_technologies_formulieren'
+        : 'default_technologies';
+
+      // Save as default setting
+      const settingsResponse = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: settingsKey,
+          value: JSON.stringify(tempTechnologies),
+        }),
+      });
+
+      if (!settingsResponse.ok) {
+        throw new Error('Failed to save default setting');
+      }
+
+      // Update current project
+      const projectResponse = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ technologies: tempTechnologies }),
+      });
+
+      if (projectResponse.ok) {
+        setTechnologies(tempTechnologies);
+        router.refresh();
+        closeEditModal();
+        const researchTypeMsg = isFormulieren ? ' formulieren projecten' : ' projecten';
+        alert(`Opgeslagen als standaard en toegepast op dit project. Nieuwe${researchTypeMsg} met onderzoekstype "${project.researchType}" zullen deze waarde gebruiken.`);
+      } else {
+        const errorData = await projectResponse.json();
+        console.error('Server error:', errorData);
+        alert('Er ging iets mis bij het opslaan van het project.');
+      }
+    } catch (error) {
+      console.error('Error saving as default:', error);
+      alert('Er ging iets mis bij het opslaan als standaard.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const generateAIFeedback = async () => {
@@ -233,6 +338,22 @@ export default function Conclusion({ project }: { project: any }) {
     }
   };
 
+  // Fetch default user agents on mount
+  useEffect(() => {
+    const fetchDefaultUserAgents = async () => {
+      try {
+        const response = await fetch('/api/settings?key=default_user_agents');
+        if (response.ok) {
+          const data = await response.json();
+          setDefaultUserAgents(data.value);
+        }
+      } catch (error) {
+        console.error('Error fetching default user agents:', error);
+      }
+    };
+    fetchDefaultUserAgents();
+  }, []);
+
   // Generate automatic summary on component mount if no managementSummary exists
   useEffect(() => {
     if (!managementSummary && !autoGeneratedSummary) {
@@ -257,7 +378,7 @@ export default function Conclusion({ project }: { project: any }) {
       let summaryHtml = '';
 
       if (isFormulieren) {
-        summaryHtml = `<p>Dit onderzoek is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld uit ${uniqueForms} ${uniqueForms === 1 ? 'formulier' : 'formulieren'} met in het totaal ${totalPages} ${totalPages === 1 ? 'processtap' : 'processtappen'} binnen de Shift2-omgeving met verschillende kenmerken en complexiteitsniveaus.</p>\n\n<p>De onderzochte formuliercontent voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} ${totalCriteria === 1 ? 'succescriterium' : 'succescriteria'} beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} ${totalCriteria === 1 ? 'succescriterium' : 'succescriteria'} (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.</p>`;
+        summaryHtml = `<p>Dit onderzoek is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld uit ${uniqueForms} ${uniqueForms === 1 ? 'formulier' : 'formulieren'} met in het totaal ${totalPages} ${totalPages === 1 ? 'processtap' : 'processtappen'}.</p>\n\n<p>De onderzochte formuliercontent voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} ${totalCriteria === 1 ? 'succescriterium' : 'succescriteria'} beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} ${totalCriteria === 1 ? 'succescriterium' : 'succescriteria'} (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.</p>`;
       } else {
         summaryHtml = `<p>Het onderzoek vond plaats in de periode van ${dateStartFormatted} tot en met ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p>\n\n<p>De onderzochte content voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.</p>`;
       }
@@ -492,21 +613,51 @@ export default function Conclusion({ project }: { project: any }) {
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={saveContent}
-                className="modal-save-button px-4 py-2 text-white rounded-lg transition-colors"
-                disabled={isSaving}
-              >
-                {isSaving ? 'Opslaan...' : 'Opslaan'}
-              </button>
-              <button
-                onClick={closeEditModal}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                disabled={isSaving}
-              >
-                Annuleren
-              </button>
+            <div className="p-6 border-t border-gray-200">
+              <div className="flex justify-between items-center gap-3">
+                {editMode === 'userAgents' && (
+                  <button
+                    onClick={saveAsDefaultAndApply}
+                    className="default-save-button px-4 py-2 rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: '#2563eb',
+                      color: 'white'
+                    }}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Opslaan...' : 'Opslaan als standaard'}
+                  </button>
+                )}
+                {editMode === 'technologies' && (
+                  <button
+                    onClick={saveAsDefaultTechnologiesAndApply}
+                    className="default-save-button px-4 py-2 rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: '#2563eb',
+                      color: 'white'
+                    }}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Opslaan...' : 'Opslaan als standaard'}
+                  </button>
+                )}
+                <div className="flex gap-3 ml-auto">
+                  <button
+                    onClick={saveContent}
+                    className="modal-save-button px-4 py-2 text-white rounded-lg transition-colors"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Opslaan...' : 'Opslaan'}
+                  </button>
+                  <button
+                    onClick={closeEditModal}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    disabled={isSaving}
+                  >
+                    Annuleren
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

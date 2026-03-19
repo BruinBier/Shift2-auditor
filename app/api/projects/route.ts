@@ -65,18 +65,8 @@ export async function POST(request: NextRequest) {
 
       const clientProjectIds = opdrachtgeverClientProjects.map(cp => cp.id);
 
-      // Count ALL projects (with or without kenmerk) for this opdrachtgever
-      const totalProjectCount = await prisma.project.count({
-        where: {
-          OR: [
-            { clientProjectId: { in: clientProjectIds } },
-            { commissionedBy: opdrachtgeverNaam },
-          ],
-        },
-      });
-
-      // Also find highest existing kenmerk number
-      const existingProjectsWithKenmerk = await prisma.project.findMany({
+      // Find all existing kenmerk numbers for this opdrachtgever
+      const existingProjects = await prisma.project.findMany({
         where: {
           kenmerk: {
             startsWith: `${opdrachtgeverKenmerk}-`,
@@ -85,24 +75,26 @@ export async function POST(request: NextRequest) {
         select: { kenmerk: true },
       });
 
-      let highestNumber = 0;
-      existingProjectsWithKenmerk.forEach((project) => {
+      // Extract all existing numbers
+      const existingNumbers = new Set<number>();
+      existingProjects.forEach((project) => {
         if (project.kenmerk) {
           const match = project.kenmerk.match(/-(\d+)$/);
           if (match) {
-            const num = parseInt(match[1], 10);
-            if (num > highestNumber) {
-              highestNumber = num;
-            }
+            existingNumbers.add(parseInt(match[1], 10));
           }
         }
       });
 
-      // Use the MAXIMUM of total count or highest kenmerk number, then add 1
-      const nextNumber = Math.max(totalProjectCount, highestNumber) + 1;
+      // Find the first available number (starting from 1)
+      let nextNumber = 1;
+      while (existingNumbers.has(nextNumber)) {
+        nextNumber++;
+      }
+
       kenmerk = `${opdrachtgeverKenmerk}-${String(nextNumber).padStart(2, '0')}`;
 
-      console.log(`Generated kenmerk: ${kenmerk} (total count: ${totalProjectCount}, highest: ${highestNumber})`);
+      console.log(`Generated kenmerk: ${kenmerk} (first available number, existing: ${Array.from(existingNumbers).sort((a, b) => a - b).join(', ')})`);
     }
 
     // Get criteria from research type if specified
@@ -160,6 +152,44 @@ export async function POST(request: NextRequest) {
       return 'not_tested';
     };
 
+    // Get default user agents if not provided
+    let userAgents = body.userAgents;
+    if (!userAgents && body.researchType) {
+      // Check if research type contains "formulieren" (case insensitive)
+      const isFormulieren = body.researchType.toLowerCase().includes('formulieren');
+      const settingsKey = isFormulieren
+        ? 'default_user_agents_formulieren'
+        : 'default_user_agents';
+
+      const defaultUserAgentsSetting = await prisma.settings.findUnique({
+        where: { key: settingsKey },
+      });
+      if (defaultUserAgentsSetting) {
+        userAgents = defaultUserAgentsSetting.value;
+      }
+    }
+
+    // Get default technologies if not provided
+    let technologies = body.technologies;
+    if (!technologies && body.researchType) {
+      // Check if research type contains "formulieren" (case insensitive)
+      const isFormulieren = body.researchType.toLowerCase().includes('formulieren');
+      const settingsKey = isFormulieren
+        ? 'default_technologies_formulieren'
+        : 'default_technologies';
+
+      const defaultTechnologiesSetting = await prisma.settings.findUnique({
+        where: { key: settingsKey },
+      });
+      if (defaultTechnologiesSetting) {
+        try {
+          technologies = JSON.parse(defaultTechnologiesSetting.value);
+        } catch (e) {
+          console.error('Failed to parse default technologies:', e);
+        }
+      }
+    }
+
     const project = await prisma.project.create({
       data: {
         kenmerk,
@@ -187,6 +217,9 @@ export async function POST(request: NextRequest) {
         isPrivate: body.isPrivate || false,
         hasReinspection: body.hasReinspection || false,
         reinspectionWeeks: body.reinspectionWeeks || null,
+        reinspectionDate: body.reinspectionDate ? new Date(body.reinspectionDate) : null,
+        isExternalProject: body.isExternalProject || false,
+        externalBureau: body.externalBureau || null,
         summaryText: body.summaryText,
         researcherFeedbackText: body.researcherFeedbackText,
         aboutResearchText: body.aboutResearchText,
@@ -195,8 +228,8 @@ export async function POST(request: NextRequest) {
         methodName: body.methodName,
         techniquesNote: body.techniquesNote,
         supportBaseline: body.supportBaseline,
-        userAgents: body.userAgents ? JSON.stringify(body.userAgents) : null,
-        technologies: body.technologies || [],
+        userAgents: userAgents || null,
+        technologies: technologies || [],
         criterionAssessments: {
           create: criteriaToCreate.map(criterionId => ({
             wcagCriterion: {
@@ -214,21 +247,36 @@ export async function POST(request: NextRequest) {
 
     // If reinspection is enabled, create v1.1 project
     let reinspectionProject = null;
-    if (body.hasReinspection && body.reinspectionWeeks && body.dateEnd) {
-      const deadlineDate = new Date(body.dateEnd);
-      const reinspectionStart = new Date(deadlineDate);
-      reinspectionStart.setDate(reinspectionStart.getDate() + (body.reinspectionWeeks * 7));
+    if (body.hasReinspection && (body.reinspectionWeeks || body.reinspectionDate)) {
+      let reinspectionStart: Date;
+      let reinspectionEnd: Date;
 
-      // Calculate reinspection deadline (1 week for reinspection)
-      const reinspectionDuration = 7; // 1 week for reinspection
+      if (body.reinspectionDate) {
+        // External projects: use specified date
+        reinspectionStart = new Date(body.reinspectionDate);
+        // Calculate reinspection deadline (1 week for reinspection)
+        reinspectionEnd = new Date(reinspectionStart);
+        reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
+      } else if (body.reinspectionWeeks && body.dateEnd) {
+        // Regular projects: calculate from deadline + weeks
+        const deadlineDate = new Date(body.dateEnd);
+        reinspectionStart = new Date(deadlineDate);
+        reinspectionStart.setDate(reinspectionStart.getDate() + (body.reinspectionWeeks * 7));
+        // Calculate reinspection deadline (1 week for reinspection)
+        reinspectionEnd = new Date(reinspectionStart);
+        reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
+      } else {
+        // Skip reinspection creation if neither date nor weeks provided
+        reinspectionStart = null as any;
+        reinspectionEnd = null as any;
+      }
 
-      const reinspectionEnd = new Date(reinspectionStart);
-      reinspectionEnd.setDate(reinspectionEnd.getDate() + reinspectionDuration);
+      if (reinspectionStart && reinspectionEnd) {
 
       reinspectionProject = await prisma.project.create({
         data: {
           kenmerk: kenmerk, // Same kenmerk as v1.0, version differentiates them
-          title: `${body.title} (herinspectie)`,
+          title: body.title, // Use same title as v1.0, version differentiates them
           subject: body.subject || '',
           standard: body.standard || 'WCAG 2.2',
           level: body.level || 'AA',
@@ -261,8 +309,8 @@ export async function POST(request: NextRequest) {
           methodName: body.methodName,
           techniquesNote: body.techniquesNote,
           supportBaseline: body.supportBaseline,
-          userAgents: body.userAgents ? JSON.stringify(body.userAgents) : null,
-          technologies: body.technologies || [],
+          userAgents: userAgents || null,
+          technologies: technologies || [],
           criterionAssessments: {
             create: criteriaToCreate.map(criterionId => ({
               wcagCriterion: {
@@ -277,6 +325,7 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`Created reinspection project ${reinspectionProject.id} (v1.1) linked to ${project.id} (v1.0)`);
+      }
     }
 
     return NextResponse.json({

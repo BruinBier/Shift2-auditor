@@ -12,7 +12,7 @@ interface Finding {
   findingCode: string;
   description: string;
   advice: string;
-  impact: string;
+  impact: string | null;
   responsibility: string;
   locations: Location[];
 }

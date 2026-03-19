@@ -27,6 +27,17 @@ model Team {
   @@map("teams")
 }
 
+model Settings {
+  id                    String   @id @default(uuid())
+  key                   String   @unique
+  value                 String   @db.Text
+  description           String?  @db.Text
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
 model ResearchType {
   id                String                      @id @default(uuid())
   name              String                      @unique
@@ -139,6 +150,15 @@ model Project {
   parentProjectId         String?        @map("parent_project_id")
   hasReinspection         Boolean        @default(false) @map("has_reinspection")
   reinspectionWeeks       Int?           @map("reinspection_weeks")
+  reinspectionDate        DateTime?      @map("reinspection_date")
+
+  // Planning fields
+  planningSent            DateTime?      @map("planning_sent")
+  planningApproved        DateTime?      @map("planning_approved")
+
+  // External project fields
+  isExternalProject       Boolean        @default(false) @map("is_external_project")
+  externalBureau          String?        @map("external_bureau")
 
   createdAt               DateTime       @default(now()) @map("created_at")
   updatedAt               DateTime       @updatedAt @map("updated_at")

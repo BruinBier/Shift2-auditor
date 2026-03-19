@@ -12,14 +12,18 @@ export default async function OnderzoekekenPage() {
   // Convert dates to strings for client component
   const projectsData = projects.map((project) => ({
     ...project,
-    dateStart: project.dateStart?.toISOString() || null,
-    dateEnd: project.dateEnd?.toISOString() || null,
-    researchStartedOn: project.researchStartedOn?.toISOString() || null,
+    dateStart: project.dateStart?.toISOString(),
+    dateEnd: project.dateEnd?.toISOString(),
+    researchStartedOn: project.researchStartedOn?.toISOString(),
     reportDate: project.reportDate.toISOString(),
+    planningSent: project.planningSent?.toISOString(),
+    planningApproved: project.planningApproved?.toISOString(),
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     clientProject: project.clientProject,
-  }));
+    parentProjectId: project.parentProjectId,
+    hasReinspection: project.hasReinspection,
+  } as any));
 
   return <OnderzoekenTable projects={projectsData} />;
 }

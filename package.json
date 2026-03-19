@@ -25,6 +25,7 @@
     "@tiptap/extension-underline": "^2.1.13",
     "@tiptap/react": "^2.1.13",
     "@tiptap/starter-kit": "^2.1.13",
+    "adm-zip": "^0.5.16",
     "axe-core": "^4.11.1",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
