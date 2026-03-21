@@ -8,6 +8,98 @@ import { calculateReportStats } from '@/lib/report-calculations';
 import { generateFindingsSectionXml } from '@/lib/generate-findings-xml';
 import { generateTocXml, defaultFormulierenTocEntries } from '@/lib/generate-toc-xml';
 
+/**
+ * Escape XML special characters
+ */
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
+ * Track hyperlink relationships for Word document
+ */
+class HyperlinkManager {
+  private relationships: Map<string, string> = new Map();
+  private nextId: number = 100; // Start at high number to avoid conflicts
+
+  /**
+   * Get or create a relationship ID for a URL
+   */
+  getRelId(url: string): string {
+    if (this.relationships.has(url)) {
+      return this.relationships.get(url)!;
+    }
+
+    const relId = `rId${this.nextId++}`;
+    this.relationships.set(url, relId);
+    return relId;
+  }
+
+  /**
+   * Generate relationship XML entries for all tracked URLs
+   */
+  generateRelationshipXml(): string {
+    let xml = '';
+    for (const [url, relId] of this.relationships.entries()) {
+      xml += `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${escapeXml(url)}" TargetMode="External"/>`;
+    }
+    return xml;
+  }
+
+  /**
+   * Get all relationships as array for insertion into rels file
+   */
+  getRelationships(): Array<{url: string, relId: string}> {
+    return Array.from(this.relationships.entries()).map(([url, relId]) => ({url, relId}));
+  }
+}
+
+/**
+ * Generate a hyperlink paragraph with proper relationship
+ */
+function generateHyperlink(url: string, displayText: string, hyperlinkManager: HyperlinkManager, style?: 'bullet' | 'normal'): string {
+  const relId = hyperlinkManager.getRelId(url);
+
+  if (style === 'bullet') {
+    // Bullet list item with hyperlink
+    return `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(displayText)}</w:t></w:r></w:hyperlink></w:p>`;
+  } else {
+    // Normal paragraph with hyperlink
+    return `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(displayText)}</w:t></w:r></w:hyperlink></w:p>`;
+  }
+}
+
+/**
+ * Generate a bullet list item with bold title and hyperlink URL on new line
+ */
+function generateBulletWithTitleAndUrl(title: string, url: string, hyperlinkManager: HyperlinkManager): string {
+  // Start with title and line break
+  let xml = `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(title)}</w:t></w:r>`;
+
+  // Only add URL if it exists
+  if (url && url.trim() !== '') {
+    const relId = hyperlinkManager.getRelId(url);
+    xml += `<w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink>`;
+  }
+
+  xml += `</w:p>`;
+  return xml;
+}
+
+/**
+ * Generate a paragraph with bold title and hyperlink URL on new line
+ */
+function generateParagraphWithTitleAndUrl(title: string, url: string, hyperlinkManager: HyperlinkManager): string {
+  const relId = hyperlinkManager.getRelId(url);
+
+  return `<w:p><w:pPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(title)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink></w:p>`;
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -79,6 +171,9 @@ export async function GET(
     });
 
     console.log('[DOCX] Template loaded, preparing data...');
+
+    // Initialize hyperlink manager for tracking all hyperlinks in the document
+    const hyperlinkManager = new HyperlinkManager();
 
     // Format dates
     const formatDate = (date: Date | null | undefined): string => {
@@ -520,56 +615,9 @@ export async function GET(
     if (documentXml) {
       let xmlContent = documentXml.asText();
 
-      // Split managementSummary into multiple paragraphs
-      console.log('[DOCX] Converting managementSummary newlines to multiple paragraphs...');
-
-      // Find the paragraph containing managementSummary content
-      // Look for the first occurrence of a unique part of the summary text
-      const summaryLines = templateData.managementSummary.split('\n').filter(line => line.trim().length > 0);
-
-      if (summaryLines.length > 1) {
-        // Find the paragraph containing the first line of the summary
-        const firstLine = summaryLines[0].substring(0, 50); // Use first 50 chars to find it
-        const searchPattern = firstLine.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex chars
-
-        // Find where this text appears in the document
-        const firstLineIndex = xmlContent.indexOf(firstLine);
-
-        if (firstLineIndex !== -1) {
-          // Find the paragraph that contains this text
-          const paragraphStart = xmlContent.lastIndexOf('<w:p ', firstLineIndex);
-          const paragraphEnd = xmlContent.indexOf('</w:p>', firstLineIndex) + '</w:p>'.length;
-
-          if (paragraphStart !== -1 && paragraphEnd > paragraphStart) {
-            const oldParagraph = xmlContent.substring(paragraphStart, paragraphEnd);
-
-            // Extract the paragraph properties (pPr) from the first paragraph
-            const pPrMatch = oldParagraph.match(/<w:pPr>[\s\S]*?<\/w:pPr>/);
-            const pPr = pPrMatch ? pPrMatch[0] : '<w:pPr><w:pStyle w:val="Normal"/></w:pPr>';
-
-            // Extract run properties (rPr) if any
-            const rPrMatch = oldParagraph.match(/<w:rPr>[\s\S]*?<\/w:rPr>/);
-            const rPr = rPrMatch ? rPrMatch[0] : '';
-
-            // Build new paragraphs for each line
-            const newParagraphs = summaryLines.map(line => {
-              const escapedLine = line
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
-
-              return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
-            }).join('\n');
-
-            // Replace the old paragraph with new paragraphs
-            xmlContent = xmlContent.substring(0, paragraphStart) + newParagraphs + xmlContent.substring(paragraphEnd);
-
-            console.log(`[DOCX] Split managementSummary into ${summaryLines.length} paragraphs`);
-          }
-        }
-      }
+      // NOTE: We no longer manually split managementSummary here
+      // Docxtemplater with linebreaks:true handles newlines automatically
+      console.log('[DOCX] Docxtemplater has already rendered managementSummary with linebreaks');
 
       // Find the criteria table (contains pattern that identifies it)
       // We'll look for the table that has "1.1.1" in it (after TOC)
@@ -821,8 +869,8 @@ export async function GET(
 
             console.log(`[DOCX] Found bevindingen section from ${bevHeadingStart} to ${actualSectionEnd}`);
 
-            // Generate new findings XML
-            const newFindingsXml = generateFindingsSectionXml(findingsData);
+            // Generate new findings XML with clickable hyperlinks
+            const newFindingsXml = generateFindingsSectionXml(findingsData, hyperlinkManager);
 
             // Replace the entire section (from Bevindingen heading to before next section heading)
             // This removes both the heading, intro text, and all old findings
@@ -890,9 +938,10 @@ export async function GET(
 
             console.log(`[DOCX] Found opmerkingen section from ${opmHeadingStart} to ${actualSectionEnd}`);
 
-            // Generate new opmerkingen XML (use custom intro and result text)
+            // Generate new opmerkingen XML with clickable hyperlinks (use custom intro and result text)
             const newOpmerkingenXml = generateFindingsSectionXml(
               opmerkingenData,
+              hyperlinkManager,
               'Opmerkingen',
               undefined, // Use default intro text for Opmerkingen
               'Voldoet maar met opmerking', // Result text
@@ -997,19 +1046,20 @@ export async function GET(
 
           // Generate new URL paragraphs for in-scope URLs
           let inScopeUrlsXml = '';
-          templateData.scopeUrlsInScope.forEach(scopeUrl => {
-            // Replace URLs in hyperlinks (with protocol)
-            let urlParagraph = urlParagraphTemplate.replace(/https?:\/\/[^<]+/g, scopeUrl.url);
-            // Also replace any text within <w:t> tags that looks like a URL or domain
-            urlParagraph = urlParagraph.replace(/(<w:t[^>]*>)([^<]+)(<\/w:t>)/g, (match, openTag, text, closeTag) => {
-              // If the text looks like a domain or URL, replace it with the full URL
-              if (text.includes('.nl') || text.includes('.com') || text.includes('http')) {
-                return openTag + scopeUrl.url + closeTag;
-              }
-              return match;
+
+          if (templateData.scopeUrlsInScope.length >= 2) {
+            // Render as bullet list when there are 2 or more URLs with clickable hyperlinks
+            templateData.scopeUrlsInScope.forEach(scopeUrl => {
+              const relId = hyperlinkManager.getRelId(scopeUrl.url);
+              // Bullet list item with clickable hyperlink, followed by " (URI-basis)"
+              inScopeUrlsXml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> (URI-basis)</w:t></w:r></w:p>`;
             });
-            inScopeUrlsXml += urlParagraph;
-          });
+          } else if (templateData.scopeUrlsInScope.length === 1) {
+            // Single URL - render as regular paragraph with clickable hyperlink
+            const scopeUrl = templateData.scopeUrlsInScope[0];
+            const relId = hyperlinkManager.getRelId(scopeUrl.url);
+            inScopeUrlsXml += `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> (URI-basis)</w:t></w:r></w:p>`;
+          }
 
           // Replace the URL content (keep heading and intro, replace URLs)
           xmlContent = xmlContent.substring(0, scopeIntroEnd) +
@@ -1201,30 +1251,9 @@ export async function GET(
           // Generate new paragraphs for all sample items
           let sampleItemsXml = '';
           project.sampleItems.forEach(item => {
-            // Create a single paragraph with title (bold) and URL on new line
-            // Extract paragraph properties from template
-            const titlePStart = titleParagraphTemplate.indexOf('<w:pPr>');
-            const titlePEnd = titleParagraphTemplate.indexOf('</w:pPr>') + '</w:pPr>'.length;
-            const pPrSection = titleParagraphTemplate.substring(titlePStart, titlePEnd);
-
-            // Build paragraph with title (not bold) and URL on new line
-            let itemParagraph = titleParagraphTemplate.substring(0, titlePEnd);
-
-            // Add title run (without bold)
-            itemParagraph += `<w:r><w:t>${item.title}</w:t></w:r>`;
-
-            // Add line break
-            itemParagraph += '<w:r><w:br/></w:r>';
-
-            // Add URL run (if URL exists)
-            if (item.url) {
-              itemParagraph += `<w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${item.url}</w:t></w:r>`;
-            }
-
-            // Close paragraph
-            itemParagraph += '</w:p>';
-
-            sampleItemsXml += itemParagraph;
+            // Create bullet list item with title (bold) and clickable hyperlink URL on new line
+            // Use numId="4" for visible bullets (same as scope URLs and findings)
+            sampleItemsXml += generateBulletWithTitleAndUrl(item.title, item.url || '', hyperlinkManager);
           });
 
           // Replace the section content (keep heading, replace items)
@@ -1571,6 +1600,95 @@ export async function GET(
       } else {
         console.log('[DOCX] Inhoud heading not found');
       }
+    }
+
+    // Update hyperlink relationships with actual URLs
+    console.log('[DOCX] Updating hyperlink relationships with actual project URLs...');
+    const relsFile = renderedZip.file('word/_rels/document.xml.rels');
+    if (relsFile) {
+      let relsContent = relsFile.asText();
+
+      // Replace {website_url} with actual website URL (add https://www. for hyperlinks)
+      let websiteUrlWithProtocol = templateData.websiteUrl;
+      if (websiteUrlWithProtocol && !websiteUrlWithProtocol.startsWith('http://') && !websiteUrlWithProtocol.startsWith('https://')) {
+        websiteUrlWithProtocol = 'https://www.' + websiteUrlWithProtocol;
+      }
+      relsContent = relsContent.replace(/{website_url}/g, websiteUrlWithProtocol);
+
+      // Replace {scope_url_1}, {scope_url_2}, {scope_url_3} with actual scope URLs
+      templateData.scopeUrlsInScope.forEach((scopeUrl, index) => {
+        const placeholder = `{scope_url_${index + 1}}`;
+        relsContent = relsContent.replace(new RegExp(placeholder, 'g'), scopeUrl.url);
+      });
+
+      // Insert all hyperlink relationships tracked by HyperlinkManager
+      console.log('[DOCX] Inserting hyperlink relationships from HyperlinkManager...');
+      const newRelationships = hyperlinkManager.generateRelationshipXml();
+      const relationshipsCount = hyperlinkManager.getRelationships().length;
+
+      if (relationshipsCount > 0) {
+        // Insert before closing </Relationships> tag
+        const closingTag = '</Relationships>';
+        const insertPosition = relsContent.lastIndexOf(closingTag);
+
+        if (insertPosition !== -1) {
+          relsContent = relsContent.substring(0, insertPosition) +
+                        newRelationships +
+                        relsContent.substring(insertPosition);
+
+          console.log(`[DOCX] Inserted ${relationshipsCount} hyperlink relationships`);
+        } else {
+          console.error('[DOCX] Could not find closing </Relationships> tag');
+        }
+      }
+
+      // Update the relationships file
+      renderedZip.file('word/_rels/document.xml.rels', relsContent);
+
+      console.log(`[DOCX] Updated ${templateData.scopeUrlsInScope.length + 1} placeholder relationships + ${relationshipsCount} new hyperlinks`);
+    } else {
+      console.log('[DOCX] Could not find relationships file');
+    }
+
+    // Update document metadata (title, subject, etc.)
+    console.log('[DOCX] Updating document metadata...');
+    const corePropsFile = renderedZip.file('docProps/core.xml');
+    if (corePropsFile) {
+      let corePropsContent = corePropsFile.asText();
+
+      // Create dynamic title based on project info
+      const documentTitle = `Toegankelijkheidsonderzoek ${project.researchType} - ${project.subject || project.title}`;
+
+      // Replace title
+      corePropsContent = corePropsContent.replace(
+        /<dc:title>.*?<\/dc:title>/,
+        `<dc:title>${escapeXml(documentTitle)}</dc:title>`
+      );
+
+      // Replace subject
+      corePropsContent = corePropsContent.replace(
+        /<dc:subject>.*?<\/dc:subject>/,
+        `<dc:subject>${escapeXml(project.subject || project.title)}</dc:subject>`
+      );
+
+      // Update creator/author
+      corePropsContent = corePropsContent.replace(
+        /<dc:creator>.*?<\/dc:creator>/,
+        `<dc:creator>${escapeXml(project.researcherName || 'Shift2')}</dc:creator>`
+      );
+
+      // Update last modified by
+      corePropsContent = corePropsContent.replace(
+        /<cp:lastModifiedBy>.*?<\/cp:lastModifiedBy>/,
+        `<cp:lastModifiedBy>${escapeXml(project.researcherName || 'Shift2')}</cp:lastModifiedBy>`
+      );
+
+      // Update the core properties
+      renderedZip.file('docProps/core.xml', corePropsContent);
+
+      console.log(`[DOCX] Updated document metadata with title: "${documentTitle}"`);
+    } else {
+      console.log('[DOCX] Could not find core.xml for metadata update');
     }
 
     console.log('[DOCX] Generating Word document buffer...');

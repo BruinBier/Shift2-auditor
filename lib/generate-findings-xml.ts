@@ -2,6 +2,45 @@
  * Helper functions to generate Word XML for findings section
  */
 
+/**
+ * Track hyperlink relationships for Word document
+ */
+export class HyperlinkManager {
+  private relationships: Map<string, string> = new Map();
+  private nextId: number = 100; // Start at high number to avoid conflicts
+
+  /**
+   * Get or create a relationship ID for a URL
+   */
+  getRelId(url: string): string {
+    if (this.relationships.has(url)) {
+      return this.relationships.get(url)!;
+    }
+
+    const relId = `rId${this.nextId++}`;
+    this.relationships.set(url, relId);
+    return relId;
+  }
+
+  /**
+   * Generate relationship XML entries for all tracked URLs
+   */
+  generateRelationshipXml(): string {
+    let xml = '';
+    for (const [url, relId] of this.relationships.entries()) {
+      xml += `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${escapeXml(url)}" TargetMode="External"/>`;
+    }
+    return xml;
+  }
+
+  /**
+   * Get all relationships as array for insertion into rels file
+   */
+  getRelationships(): Array<{url: string, relId: string}> {
+    return Array.from(this.relationships.entries()).map(([url, relId]) => ({url, relId}));
+  }
+}
+
 interface Location {
   title: string;
   url: string;
@@ -99,7 +138,7 @@ function stripHtml(html: string): string {
 /**
  * Generate XML for one finding
  */
-function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding', criterionCode?: string, criterionTitle?: string): string {
+function generateFindingXml(finding: Finding, hyperlinkManager: HyperlinkManager, findingLabel: string = 'Bevinding', criterionCode?: string, criterionTitle?: string): string {
   let xml = '';
 
   // Finding header as Kop4 (e.g., "Bevinding 1 (SC 1.3.3)" or "Opmerking 1 (SC 1.3.3)") - override bold to false for this specific heading
@@ -110,16 +149,34 @@ function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding'
   xml += `<w:p><w:pPr><w:pStyle w:val="Kop4"/><w:spacing w:before="720"/></w:pPr><w:r><w:rPr><w:b w:val="0"/><w:bCs w:val="0"/></w:rPr><w:t>${titleText}</w:t></w:r></w:p>`;
 
   // Locations (title and URL in same paragraph with line break)
+  // If 2+ locations, render as bullet list
   if (finding.locations.length > 0) {
-    finding.locations.forEach(location => {
-      if (location.url) {
-        // Title and URL in same paragraph with line break
-        xml += `<w:p><w:pPr></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(location.title)}</w:t></w:r><w:r><w:br/></w:r><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(location.url)}</w:t></w:r></w:p>`;
-      } else {
-        // Just title if no URL
-        xml += generateParagraph(location.title);
-      }
-    });
+    if (finding.locations.length >= 2) {
+      // Render as bullet list when there are 2 or more locations
+      finding.locations.forEach(location => {
+        if (location.url) {
+          // Bullet list item with title (bold) on first line and clickable hyperlink URL on new line
+          // Use numId="4" for bullet list (same as technologies list)
+          const relId = hyperlinkManager.getRelId(location.url);
+          xml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(location.title)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(location.url)}</w:t></w:r></w:hyperlink></w:p>`;
+        } else {
+          // Bullet list item with just title if no URL (bold)
+          xml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t>${escapeXml(location.title)}</w:t></w:r></w:p>`;
+        }
+      });
+    } else {
+      // Render as regular paragraphs when there's only 1 location
+      finding.locations.forEach(location => {
+        if (location.url) {
+          // Title (bold) on first line and clickable hyperlink URL on new line
+          const relId = hyperlinkManager.getRelId(location.url);
+          xml += `<w:p><w:pPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(location.title)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(location.url)}</w:t></w:r></w:hyperlink></w:p>`;
+        } else {
+          // Just title if no URL (bold)
+          xml += generateBoldParagraph(location.title);
+        }
+      });
+    }
   }
 
   // Description (strip HTML tags first)
@@ -139,23 +196,25 @@ function generateFindingXml(finding: Finding, findingLabel: string = 'Bevinding'
 /**
  * Generate XML for one criterion with its findings
  */
-function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, resultText: string = 'Voldoet niet', findingLabel: string = 'Bevinding'): string {
+function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, hyperlinkManager: HyperlinkManager, resultText: string = 'Voldoet niet', findingLabel: string = 'Bevinding'): string {
   let xml = '';
 
   // Criterion heading (e.g., "1.3.3 Zintuiglijke eigenschappen A") - use Kop3 for Dutch templates
   xml += `<w:p><w:pPr><w:pStyle w:val="Kop3"/></w:pPr><w:r><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)} ${escapeXml(criterion.level)}</w:t></w:r></w:p>`;
 
-  // Criterion description with link on same paragraph but new line
+  // Criterion description with clickable hyperlink on same paragraph but new line
   // Add spacing after this paragraph: after=240 (12pt) for more space before the gray "Resultaat" box
   if (criterion.description && criterion.understandingUrl) {
-    // Combined paragraph with description, line break, and link
-    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r><w:r><w:br/></w:r><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:p>`;
+    // Combined paragraph with description, line break, and clickable hyperlink
+    const relId = hyperlinkManager.getRelId(criterion.understandingUrl);
+    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:hyperlink></w:p>`;
   } else if (criterion.description) {
     // Just description if no URL - also add spacing
     xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r></w:p>`;
   } else if (criterion.understandingUrl) {
-    // Just link if no description - also add spacing
-    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:p>`;
+    // Just clickable hyperlink if no description - also add spacing
+    const relId = hyperlinkManager.getRelId(criterion.understandingUrl);
+    xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:hyperlink></w:p>`;
   }
 
   // Result with "Resultaat:" in bold and 15px font size (30 half-points) with light gray background and padding
@@ -166,7 +225,7 @@ function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, resu
 
   // Each finding
   criterion.findings.forEach(finding => {
-    xml += generateFindingXml(finding, findingLabel, criterion.code, criterion.title);
+    xml += generateFindingXml(finding, hyperlinkManager, findingLabel, criterion.code, criterion.title);
   });
 
   return xml;
@@ -177,6 +236,7 @@ function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, resu
  */
 export function generateFindingsSectionXml(
   criteria: CriterionWithFindings[],
+  hyperlinkManager: HyperlinkManager,
   sectionTitle: string = 'Bevindingen',
   introText?: string,
   resultText: string = 'Voldoet niet',
@@ -196,7 +256,7 @@ export function generateFindingsSectionXml(
 
   // Each criterion with findings
   criteria.forEach(criterion => {
-    xml += generateCriterionWithFindingsXml(criterion, resultText, findingLabel);
+    xml += generateCriterionWithFindingsXml(criterion, hyperlinkManager, resultText, findingLabel);
   });
 
   return xml;
