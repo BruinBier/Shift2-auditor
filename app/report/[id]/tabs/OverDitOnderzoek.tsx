@@ -930,24 +930,63 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
                                 {isOpen && (
                                   <div className="px-4 py-3 bg-white text-sm text-gray-700">
-                                    {/* Sample Items - URLs first on separate line */}
+                                    {/* Sample Items - URLs with bullets if 2+ occurrences */}
                                     {finding.occurrences && finding.occurrences.length > 0 && (
                                       <>
-                                        {finding.occurrences.map((occurrence: any) =>
-                                          occurrence.sampleItem?.url && (
-                                            <a
-                                              key={occurrence.id}
-                                              href={occurrence.sampleItem.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
-                                            >
-                                              {occurrence.sampleItem.url}
-                                              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                              </svg>
-                                            </a>
-                                          )
+                                        {finding.occurrences.length >= 2 ? (
+                                          <ul
+                                            className="occurrence-list-with-bullets space-y-1 mb-3"
+                                            style={{
+                                              listStyleType: 'disc',
+                                              listStylePosition: 'outside',
+                                              paddingLeft: '2rem',
+                                              display: 'block'
+                                            }}
+                                          >
+                                            {finding.occurrences.map((occurrence: any) => (
+                                              <li
+                                                key={occurrence.id}
+                                                style={{
+                                                  display: 'list-item',
+                                                  listStyleType: 'disc',
+                                                  listStylePosition: 'outside'
+                                                }}
+                                              >
+                                                {occurrence.sampleItem?.title && (
+                                                  <div className="font-medium">{occurrence.sampleItem.title}</div>
+                                                )}
+                                                {occurrence.sampleItem?.url && (
+                                                  <a
+                                                    href={occurrence.sampleItem.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-800 underline break-all"
+                                                  >
+                                                    {occurrence.sampleItem.url}
+                                                  </a>
+                                                )}
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        ) : (
+                                          <>
+                                            {finding.occurrences.map((occurrence: any) =>
+                                              occurrence.sampleItem?.url && (
+                                                <a
+                                                  key={occurrence.id}
+                                                  href={occurrence.sampleItem.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
+                                                >
+                                                  {occurrence.sampleItem.url}
+                                                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                  </svg>
+                                                </a>
+                                              )
+                                            )}
+                                          </>
                                         )}
                                       </>
                                     )}
@@ -1057,24 +1096,63 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
                                 {isOpen && (
                                   <div className="px-4 py-3 bg-white text-sm text-gray-700">
-                                    {/* Sample Items - URLs first on separate line */}
+                                    {/* Sample Items - URLs with bullets if 2+ occurrences */}
                                     {finding.occurrences && finding.occurrences.length > 0 && (
                                       <>
-                                        {finding.occurrences.map((occurrence: any) =>
-                                          occurrence.sampleItem?.url && (
-                                            <a
-                                              key={occurrence.id}
-                                              href={occurrence.sampleItem.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
-                                            >
-                                              {occurrence.sampleItem.url}
-                                              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                              </svg>
-                                            </a>
-                                          )
+                                        {finding.occurrences.length >= 2 ? (
+                                          <ul
+                                            className="occurrence-list-with-bullets space-y-1 mb-3"
+                                            style={{
+                                              listStyleType: 'disc',
+                                              listStylePosition: 'outside',
+                                              paddingLeft: '2rem',
+                                              display: 'block'
+                                            }}
+                                          >
+                                            {finding.occurrences.map((occurrence: any) => (
+                                              <li
+                                                key={occurrence.id}
+                                                style={{
+                                                  display: 'list-item',
+                                                  listStyleType: 'disc',
+                                                  listStylePosition: 'outside'
+                                                }}
+                                              >
+                                                {occurrence.sampleItem?.title && (
+                                                  <div className="font-medium">{occurrence.sampleItem.title}</div>
+                                                )}
+                                                {occurrence.sampleItem?.url && (
+                                                  <a
+                                                    href={occurrence.sampleItem.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-800 underline break-all"
+                                                  >
+                                                    {occurrence.sampleItem.url}
+                                                  </a>
+                                                )}
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        ) : (
+                                          <>
+                                            {finding.occurrences.map((occurrence: any) =>
+                                              occurrence.sampleItem?.url && (
+                                                <a
+                                                  key={occurrence.id}
+                                                  href={occurrence.sampleItem.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
+                                                >
+                                                  {occurrence.sampleItem.url}
+                                                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                  </svg>
+                                                </a>
+                                              )
+                                            )}
+                                          </>
                                         )}
                                       </>
                                     )}
@@ -1159,11 +1237,60 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                     </p>
 
                     {/* Binnen scope URLs */}
-                    {project.scopeUrls.filter((url: any) => url.inScope === true && !url.parentUrlId).length > 0 ? (
-                      <div className="mb-4">
-                        {project.scopeUrls
-                          .filter((scopeUrl: any) => scopeUrl.inScope === true && !scopeUrl.parentUrlId)
-                          .map((scopeUrl: any, index: number) => (
+                    {(() => {
+                      const inScopeUrls = project.scopeUrls.filter((url: any) => url.inScope === true && !url.parentUrlId);
+
+                      if (inScopeUrls.length === 0) {
+                        return (
+                          <p className="text-sm text-gray-700">
+                            Voor dit onderzoek is de scope nog niet bepaald.
+                          </p>
+                        );
+                      }
+
+                      if (inScopeUrls.length >= 2) {
+                        // Render as bullet list when 2 or more URLs
+                        return (
+                          <ul
+                            className="list-disc list-outside text-sm text-gray-700 space-y-2 mb-4"
+                            style={{
+                              listStyleType: 'disc',
+                              listStylePosition: 'outside',
+                              paddingLeft: '2rem',
+                              display: 'block'
+                            }}
+                          >
+                            {inScopeUrls.map((scopeUrl: any, index: number) => (
+                              <li
+                                key={index}
+                                style={{
+                                  display: 'list-item',
+                                  listStyleType: 'disc',
+                                  listStylePosition: 'outside'
+                                }}
+                              >
+                                <a
+                                  href={scopeUrl.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 underline inline-flex items-center gap-1"
+                                >
+                                  {scopeUrl.url}
+                                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </a>
+                                {' (URI-basis)'}
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      }
+
+                      // Single URL - render as regular paragraph
+                      return (
+                        <div className="mb-4">
+                          {inScopeUrls.map((scopeUrl: any, index: number) => (
                             <div key={index} className="mb-2">
                               <a
                                 href={scopeUrl.url}
@@ -1179,12 +1306,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                               {' (URI-basis)'}
                             </div>
                           ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-700">
-                        Voor dit onderzoek is de scope nog niet bepaald.
-                      </p>
-                    )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Buiten scope */}
                     <div className="mb-4 pt-5">
@@ -1518,10 +1642,17 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <button
             onClick={handleDownloadDocx}
             data-docx-button
-            className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed mb-3"
           >
             Download Word
           </button>
+          <a
+            href={`/api/reports/${project.id}/xlsx`}
+            download
+            className="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            Download Excel
+          </a>
         </div>
 
         {/* Scope */}

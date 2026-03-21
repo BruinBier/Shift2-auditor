@@ -92,6 +92,7 @@ export default function OnderzoekenTable({ projects }: Props) {
     planning: '',
     onderzoeker: '',
     controleur: '',
+    onderzoekstype: '',
   });
   const [availableResearchTypes, setAvailableResearchTypes] = useState<string[]>([]);
   const [availableOpdrachtgevers, setAvailableOpdrachtgevers] = useState<Array<{ id: string; kenmerk: string; naam: string }>>([]);
@@ -1000,9 +1001,10 @@ export default function OnderzoekenTable({ projects }: Props) {
       (filters.planning === 'not_sent' && !project.planningSent);
     const matchesOnderzoeker = !filters.onderzoeker || project.researcherName === filters.onderzoeker;
     const matchesControleur = !filters.controleur || project.controllerName === filters.controleur;
+    const matchesOnderzoekstype = !filters.onderzoekstype || project.researchType === filters.onderzoekstype;
 
     return matchesSearch && matchesOpdrachtgever && matchesProject && matchesStatus &&
-           matchesPlanning && matchesOnderzoeker && matchesControleur;
+           matchesPlanning && matchesOnderzoeker && matchesControleur && matchesOnderzoekstype;
   });
 
   // Sort projects - by date ascending (oldest first)
@@ -1070,14 +1072,14 @@ export default function OnderzoekenTable({ projects }: Props) {
     }
   });
 
-  // Keep original groupedProjects for backward compatibility with pagination
-  const groupedProjects = groupedActiveProjects;
+  // Count only nulmetingen and standalone projects (exclude herinspecties from count)
+  const activeProjectCount = activeProjects.filter(p => !p.parentProjectId).length;
 
-  // Pagination
-  const totalPages = Math.ceil(groupedProjects.length / itemsPerPage);
+  // Pagination for active projects table
+  const totalPages = Math.ceil(groupedActiveProjects.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedProjects = groupedProjects.slice(startIndex, endIndex);
+  const paginatedProjects = groupedActiveProjects.slice(startIndex, endIndex);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1275,7 +1277,7 @@ export default function OnderzoekenTable({ projects }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h1 className="text-2xl font-bold text-gray-900">
-              Onderzoeken ({projects.length})
+              Actieve onderzoeken ({activeProjectCount})
             </h1>
             <button className="ml-2 text-gray-400 hover:text-gray-600">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1355,6 +1357,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       planning: '',
                       onderzoeker: '',
                       controleur: '',
+                      onderzoekstype: '',
                     })}
                     className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
                   >

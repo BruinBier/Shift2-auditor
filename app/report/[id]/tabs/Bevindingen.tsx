@@ -10,6 +10,13 @@ import {
 import { formatProjectName } from '@/lib/format-project-name';
 
 export default function Bevindingen({ project }: { project: any }) {
+  console.log('🔵 Bevindingen component loaded!');
+  console.log('🔵 Project data:', {
+    id: project.id,
+    hasGroupedFindings: !!project.groupedFindings,
+    groupedFindingsLength: project.groupedFindings?.length
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sampleItemFilter, setSampleItemFilter] = useState<string>('all');
   const [criteriumFilter, setCriteriumFilter] = useState<string>('all');
@@ -44,6 +51,37 @@ export default function Bevindingen({ project }: { project: any }) {
 
   // Use pre-grouped data from server
   const groupedData = project.groupedFindings || [];
+
+  // Debug: Check if 1.3.5 exists in the data
+  useEffect(() => {
+    console.log('=== DEBUGGING 1.3.5 IN RAW GROUPED DATA ===');
+    groupedData.forEach((principle: any) => {
+      principle.guidelines.forEach((guideline: any) => {
+        guideline.criteria.forEach((criterion: any) => {
+          if (criterion.code === '1.3.5') {
+            console.log('Found 1.3.5 in groupedData!');
+            console.log('Assessment:', criterion.assessment);
+            console.log('Findings:', criterion.findings?.length);
+            criterion.findings?.forEach((f: any, i: number) => {
+              console.log(`  Finding ${i + 1}:`, f.findingCode, 'Status:', f.status, 'Occurrences:', f.occurrences?.length);
+            });
+          }
+        });
+      });
+    });
+  }, [groupedData]);
+
+  // Debug: Check filter states
+  useEffect(() => {
+    const hasActiveFilters = searchTerm !== '' || statusFilter !== 'all' || impactFilter !== 'all' || sampleItemFilter !== 'all';
+    console.log('=== FILTER STATES ===', {
+      searchTerm,
+      statusFilter,
+      impactFilter,
+      sampleItemFilter,
+      hasActiveFilters
+    });
+  }, [searchTerm, statusFilter, impactFilter, sampleItemFilter]);
 
   // Extract unique sample items from all findings
   const sampleItems = useMemo(() => {
@@ -158,6 +196,31 @@ export default function Bevindingen({ project }: { project: any }) {
       }))
       .filter((p: any) => !hasActiveFilters || p.guidelines.length > 0);
   }, [numberedData, searchTerm, statusFilter, impactFilter, sampleItemFilter]);
+
+  // Debug: Check if 1.3.5 exists in FILTERED data
+  useEffect(() => {
+    console.log('=== CHECKING FOR 1.3.5 IN FILTERED DATA ===');
+    let found = false;
+    filteredData.forEach(principle => {
+      principle.guidelines.forEach(guideline => {
+        guideline.criteria.forEach(criterion => {
+          if (criterion.code === '1.3.5') {
+            found = true;
+            console.log('FOUND 1.3.5 in filteredData:', {
+              code: criterion.code,
+              name: criterion.title,
+              assessment: criterion.assessment,
+              filteredFindings: criterion.filteredFindings,
+              filteredFindingsCount: criterion.filteredFindings?.length
+            });
+          }
+        });
+      });
+    });
+    if (!found) {
+      console.log('1.3.5 NOT FOUND in filteredData - it was filtered out!');
+    }
+  }, [filteredData]);
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
@@ -527,6 +590,14 @@ export default function Bevindingen({ project }: { project: any }) {
                                 const rejectedFindings = criterion.filteredFindings.filter((f: any) => f.status === 'open');
                                 const remarks = criterion.filteredFindings.filter((f: any) => f.status !== 'open');
 
+                                if (criterion.code === '1.3.5') {
+                                  console.log('Criterion 1.3.5 - Total findings:', criterion.filteredFindings.length);
+                                  console.log('Criterion 1.3.5 - Rejected findings:', rejectedFindings.length);
+                                  criterion.filteredFindings.forEach((f: any, i: number) => {
+                                    console.log(`  Finding ${i + 1}:`, f.findingCode, 'Status:', f.status, 'Occurrences:', f.occurrences?.length);
+                                  });
+                                }
+
                                 return (
                                   <>
                                     {/* Rejected findings section */}
@@ -603,27 +674,71 @@ export default function Bevindingen({ project }: { project: any }) {
 
                                           {/* Sample Items (Steekproef) */}
                                           {finding.occurrences && finding.occurrences.length > 0 && (
-                                            <div className="text-sm text-gray-700 space-y-1">
-                                              {finding.occurrences.map((occurrence: any) => (
-                                                <div key={occurrence.id}>
-                                                  {occurrence.sampleItem?.title && (
-                                                    <div className="font-medium">{occurrence.sampleItem.title}</div>
-                                                  )}
-                                                  {occurrence.sampleItem?.url && (
-                                                    <a
-                                                      href={occurrence.sampleItem.url}
-                                                      target="_blank"
-                                                      rel="noopener noreferrer"
-                                                      className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800"
+                                            <div className="text-sm text-gray-700">
+                                              {console.log('Finding:', finding.findingCode, 'Occurrences:', finding.occurrences.length)}
+                                              {finding.occurrences.length >= 2 ? (
+                                                <ul
+                                                  className="occurrence-list-with-bullets space-y-1"
+                                                  style={{
+                                                    listStyleType: 'disc',
+                                                    listStylePosition: 'outside',
+                                                    paddingLeft: '2rem',
+                                                    display: 'block'
+                                                  }}
+                                                >
+                                                  {finding.occurrences.map((occurrence: any) => (
+                                                    <li
+                                                      key={occurrence.id}
+                                                      style={{
+                                                        display: 'list-item',
+                                                        listStyleType: 'disc',
+                                                        listStylePosition: 'outside'
+                                                      }}
                                                     >
-                                                      <span className="underline break-all">{occurrence.sampleItem.url}</span>
-                                                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                      </svg>
-                                                    </a>
-                                                  )}
+
+                                                      {occurrence.sampleItem?.title && (
+                                                        <span className="font-medium">{occurrence.sampleItem.title}</span>
+                                                      )}
+                                                      {occurrence.sampleItem?.url && (
+                                                        <>
+                                                          {occurrence.sampleItem?.title && ' - '}
+                                                          <a
+                                                            href={occurrence.sampleItem.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-600 hover:text-blue-800 underline break-all"
+                                                          >
+                                                            {occurrence.sampleItem.url}
+                                                          </a>
+                                                        </>
+                                                      )}
+                                                    </li>
+                                                  ))}
+                                                </ul>
+                                              ) : (
+                                                <div className="space-y-1">
+                                                  {finding.occurrences.map((occurrence: any) => (
+                                                    <div key={occurrence.id}>
+                                                      {occurrence.sampleItem?.title && (
+                                                        <div className="font-medium">{occurrence.sampleItem.title}</div>
+                                                      )}
+                                                      {occurrence.sampleItem?.url && (
+                                                        <a
+                                                          href={occurrence.sampleItem.url}
+                                                          target="_blank"
+                                                          rel="noopener noreferrer"
+                                                          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800"
+                                                        >
+                                                          <span className="underline break-all">{occurrence.sampleItem.url}</span>
+                                                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                          </svg>
+                                                        </a>
+                                                      )}
+                                                    </div>
+                                                  ))}
                                                 </div>
-                                              ))}
+                                              )}
                                             </div>
                                           )}
 
@@ -824,27 +939,54 @@ export default function Bevindingen({ project }: { project: any }) {
 
                                                 {/* Sample Items (Steekproef) */}
                                                 {finding.occurrences && finding.occurrences.length > 0 && (
-                                                  <div className="text-sm text-gray-700 space-y-1">
-                                                    {finding.occurrences.map((occurrence: any) => (
-                                                      <div key={occurrence.id}>
-                                                        {occurrence.sampleItem?.title && (
-                                                          <div className="font-medium">{occurrence.sampleItem.title}</div>
-                                                        )}
-                                                        {occurrence.sampleItem?.url && (
-                                                          <a
-                                                            href={occurrence.sampleItem.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800"
-                                                          >
-                                                            <span className="underline break-all">{occurrence.sampleItem.url}</span>
-                                                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                            </svg>
-                                                          </a>
-                                                        )}
+                                                  <div className="text-sm text-gray-700">
+                                                    {finding.occurrences.length >= 2 ? (
+                                                      <ul className="list-disc list-inside space-y-1">
+                                                        {finding.occurrences.map((occurrence: any) => (
+                                                          <li key={occurrence.id}>
+                                                            {occurrence.sampleItem?.title && (
+                                                              <span className="font-medium">{occurrence.sampleItem.title}</span>
+                                                            )}
+                                                            {occurrence.sampleItem?.url && (
+                                                              <>
+                                                                {occurrence.sampleItem?.title && ' - '}
+                                                                <a
+                                                                  href={occurrence.sampleItem.url}
+                                                                  target="_blank"
+                                                                  rel="noopener noreferrer"
+                                                                  className="text-blue-600 hover:text-blue-800 underline break-all"
+                                                                >
+                                                                  {occurrence.sampleItem.url}
+                                                                </a>
+                                                              </>
+                                                            )}
+                                                          </li>
+                                                        ))}
+                                                      </ul>
+                                                    ) : (
+                                                      <div className="space-y-1">
+                                                        {finding.occurrences.map((occurrence: any) => (
+                                                          <div key={occurrence.id}>
+                                                            {occurrence.sampleItem?.title && (
+                                                              <div className="font-medium">{occurrence.sampleItem.title}</div>
+                                                            )}
+                                                            {occurrence.sampleItem?.url && (
+                                                              <a
+                                                                href={occurrence.sampleItem.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800"
+                                                              >
+                                                                <span className="underline break-all">{occurrence.sampleItem.url}</span>
+                                                                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                </svg>
+                                                              </a>
+                                                            )}
+                                                          </div>
+                                                        ))}
                                                       </div>
-                                                    ))}
+                                                    )}
                                                   </div>
                                                 )}
 

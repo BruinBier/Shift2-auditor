@@ -941,14 +941,14 @@ function isInternalLink(href: string): boolean {
     return true;
   }
 
-  // Absolute URLs - check if same domain
-  // In server-side context, we don't have window.location, so we check common patterns
-  if (href.includes('valkenswaard.nl') ||
-      href.includes('localhost') ||
+  // Absolute URLs - check if localhost/development
+  if (href.includes('localhost') ||
       href.includes('127.0.0.1')) {
     return true;
   }
 
+  // For absolute URLs, we cannot reliably determine if they are internal without
+  // comparing to the page's domain. This is handled by the caller.
   return false;
 }
 

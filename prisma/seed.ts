@@ -101,7 +101,7 @@ const wcagCriteria = [
   {
     code: '1.3.3',
     titleNl: 'Zintuiglijke eigenschappen',
-    descriptionNl: 'Verwijs niet naar vorm, locatie, kleur, omvang, orientatie of geluid.',
+    descriptionNl: 'Verwijs niet naar vorm, locatie, kleur, omvang, oriëntatie of geluid.',
     level: WCAGLevel.A,
     principle: WCAGPrinciple.Perceivable,
     guidelineCode: '1.3',

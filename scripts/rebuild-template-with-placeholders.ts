@@ -42,7 +42,7 @@ async function rebuildTemplateWithPlaceholders() {
   // Step 3: Replace dates and version
   console.log('\nStep 3: Replacing dates and version...');
   xmlContent = xmlContent.replace(/28 februari 2026/g, '{reportDate}');
-  xmlContent = xmlContent.replace(/Raportversie:\s*1\.0/gi, 'Raportversie: {version}');
+  xmlContent = xmlContent.replace(/Rapportversie:\s*1\.0/gi, 'Rapportversie: {version}');
   console.log('  ✓ Replaced dates with {reportDate} and version with {version}');
 
   // Step 4: Replace "website" with "formulieren" in title

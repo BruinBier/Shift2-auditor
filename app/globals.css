@@ -759,14 +759,18 @@ button.delete-modal-button:hover,
 
 /* Extra specific rules to override Tailwind reset */
 div.krafters-markdown-preview ul,
-.krafters-markdown-preview ul {
+.krafters-markdown-preview ul,
+div.finding-description ul,
+.finding-description ul {
   list-style-type: disc !important;
   list-style-position: outside !important;
   padding-left: 2rem !important;
 }
 
 div.krafters-markdown-preview ul > li,
-.krafters-markdown-preview ul > li {
+.krafters-markdown-preview ul > li,
+div.finding-description ul > li,
+.finding-description ul > li {
   display: list-item !important;
   list-style: disc !important;
   list-style-type: disc !important;
@@ -774,9 +778,59 @@ div.krafters-markdown-preview ul > li,
 }
 
 div.krafters-markdown-preview ul > li::marker,
-.krafters-markdown-preview ul > li::marker {
+.krafters-markdown-preview ul > li::marker,
+div.finding-description ul > li::marker,
+.finding-description ul > li::marker {
   content: "• " !important;
   color: #374151 !important;
+}
+
+/* Force bullets for occurrence lists in reports - highest specificity */
+.text-sm.text-gray-700 ul,
+div.text-sm.text-gray-700 > ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  padding-left: 2rem !important;
+  display: block !important;
+}
+
+.text-sm.text-gray-700 ul > li,
+div.text-sm.text-gray-700 > ul > li {
+  display: list-item !important;
+  list-style: disc !important;
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  margin-left: 0 !important;
+}
+
+.text-sm.text-gray-700 ul > li::marker,
+div.text-sm.text-gray-700 > ul > li::marker {
+  content: "• " !important;
+  color: #374151 !important;
+  display: inline-block !important;
+}
+
+/* Force bullets for occurrence lists - ABSOLUTE OVERRIDE */
+ul.occurrence-list-with-bullets {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  padding-left: 2rem !important;
+  margin-left: 0 !important;
+  display: block !important;
+}
+
+ul.occurrence-list-with-bullets > li {
+  display: list-item !important;
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+ul.occurrence-list-with-bullets > li::marker {
+  content: "• " !important;
+  color: #374151 !important;
+  font-size: 1em !important;
 }
 
 /* MdEditor preview styling - force bullets */
