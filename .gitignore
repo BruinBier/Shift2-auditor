@@ -105,3 +105,4 @@ templates/**/*backup*.docx
 # Test DOCX output files
 test-*.docx
 *-output.docx
+templates/formulieren/temp_docx/

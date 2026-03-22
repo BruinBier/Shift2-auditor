@@ -281,6 +281,7 @@ export async function GET(
         return {
           code: assessment.wcagCriterion.code,
           name: assessment.wcagCriterion.titleNl,
+          level: assessment.wcagCriterion.level,
           status: statusLabel,
           isFailed: assessment.status === 'failed',
         };
@@ -620,18 +621,26 @@ export async function GET(
       console.log('[DOCX] Docxtemplater has already rendered managementSummary with linebreaks');
 
       // Find the criteria table (contains pattern that identifies it)
-      // We'll look for the table that has "1.1.1" in it (after TOC)
-      const firstOccurrence = xmlContent.indexOf('1.1.1');
-      const secondOccurrence = xmlContent.indexOf('1.1.1', firstOccurrence + 1);
+      // We'll look for the table that has both a criterion code pattern AND "Voldoet" (results column)
+      // This ensures we find the criteria assessment table, not the "niet getoetste criteria" table
 
-      if (secondOccurrence !== -1) {
-        // Find the table containing this occurrence
-        const tableStart = xmlContent.lastIndexOf('<w:tbl', secondOccurrence);
+      // Search for "Voldoet" text
+      const voldoetOccurrence = xmlContent.indexOf('Voldoet');
+
+      if (voldoetOccurrence !== -1) {
+        // Find the table containing "Voldoet"
+        const tableStart = xmlContent.lastIndexOf('<w:tbl', voldoetOccurrence);
         const tableEnd = xmlContent.indexOf('</w:tbl>', tableStart) + '</w:tbl>'.length;
 
         if (tableStart !== -1 && tableEnd > tableStart) {
           // Extract table
           const oldTable = xmlContent.substring(tableStart, tableEnd);
+
+          // Verify this table also contains a criterion code pattern (like "1.1.1")
+          // This confirms it's the criteria assessment table
+          if (!oldTable.match(/\d\.\d\.\d/)) {
+            console.log('[DOCX] Table with Voldoet does not contain criterion codes, skipping');
+          } else {
 
           // Find header row
           const headerRowStart = oldTable.indexOf('<w:tr');
@@ -643,6 +652,16 @@ export async function GET(
           const templateRowEnd = oldTable.indexOf('</w:tr>', templateRowStart) + '</w:tr>'.length;
           const templateRowXml = oldTable.substring(templateRowStart, templateRowEnd);
 
+          // Extract the criterion code from the template row to know what to replace
+          const codeMatch = templateRowXml.match(/<w:t>(\d\.\d\.\d)/);
+          const templateCode = codeMatch ? codeMatch[1] : '1.1.1';
+
+          // Extract the criterion name from the template row
+          const nameMatch = templateRowXml.match(/<w:t>\d\.\d\.\d ([^<]+)<\/w:t>/);
+          const templateName = nameMatch ? nameMatch[1] : 'Niet-tekstuele content';
+
+          console.log(`[DOCX] Using template row with code "${templateCode}" and name "${templateName}"`);
+
           // Build new table with dynamic rows
           let newTable = oldTable.substring(0, headerRowStart) + headerRow;
 
@@ -651,10 +670,17 @@ export async function GET(
             const criterion = criteriaForTable[i];
             let row = templateRowXml;
 
-            // Replace placeholders (using actual values from first row as template)
-            // This is a simple approach - replace the first criterion's data with current criterion
-            row = row.replace(/1\.1\.1/g, criterion.code);
-            row = row.replace(/Niet-tekstuele content/g, criterion.name);
+            // Replace placeholders (using detected template values)
+            // Replace the criterion code found in template with actual criterion code
+            row = row.replace(new RegExp(templateCode.replace(/\./g, '\\.'), 'g'), criterion.code);
+            // Replace the criterion name found in template with actual criterion name
+            row = row.replace(new RegExp(templateName.replace(/[()]/g, '\\$&'), 'g'), criterion.name);
+
+            // Replace the level text directly using the exact XML structure
+            // The template has "<w:t>A</w:t>" in the level column
+            // We replace it with the actual level (A or AA)
+            row = row.replace(/<w:t>A<\/w:t>/g, `<w:t>${criterion.level}</w:t>`);
+
             // Replace any existing status text with the current criterion's status
             row = row.replace(/<w:t>Voldoet niet<\/w:t>/g, `<w:t>${criterion.status}</w:t>`);
             row = row.replace(/<w:t>Voldoet<\/w:t>/g, `<w:t>${criterion.status}</w:t>`);
@@ -704,6 +730,7 @@ export async function GET(
           renderedZip.file('word/document.xml', xmlContent);
 
           console.log(`[DOCX] Updated criteria table with ${criteriaForTable.length} criteria`);
+        }
         }
       }
 
