@@ -30,6 +30,11 @@ export default function OnderzoekstypenPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicatingType, setDuplicatingType] = useState<ResearchType | null>(null);
+  const [duplicateName, setDuplicateName] = useState('');
+  const [findText, setFindText] = useState('');
+  const [replaceText, setReplaceText] = useState('');
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [reportTab, setReportTab] = useState('rapport-inleiding');
@@ -267,6 +272,71 @@ export default function OnderzoekstypenPage() {
       reportIntroPdf: '',
       selectedCriteria: []
     });
+  };
+
+  const openDuplicateModal = (type: ResearchType) => {
+    setDuplicatingType(type);
+    setDuplicateName(`${type.name} (kopie)`);
+    setShowDuplicateModal(true);
+    setOpenMenuId(null);
+  };
+
+  const closeDuplicateModal = () => {
+    setShowDuplicateModal(false);
+    setDuplicatingType(null);
+    setDuplicateName('');
+    setFindText('');
+    setReplaceText('');
+  };
+
+  const handleDuplicate = async () => {
+    if (!duplicatingType || !duplicateName.trim()) {
+      alert('Vul een naam in voor het gedupliceerde onderzoekstype.');
+      return;
+    }
+
+    // Validate find/replace: both must be filled or both must be empty
+    if ((findText.trim() && !replaceText.trim()) || (!findText.trim() && replaceText.trim())) {
+      alert('Als je tekst wilt vervangen, vul dan zowel "Zoek naar" als "Vervang door" in.');
+      return;
+    }
+
+    try {
+      const requestBody: any = {
+        newName: duplicateName.trim(),
+      };
+
+      // Only add find/replace if both are provided
+      if (findText.trim() && replaceText.trim()) {
+        requestBody.findText = findText.trim();
+        requestBody.replaceText = replaceText.trim();
+      }
+
+      const response = await fetch(`/api/research-types/${duplicatingType.id}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.ok) {
+        const duplicatedType = await response.json();
+        setResearchTypes([...researchTypes, {
+          ...duplicatedType,
+          createdAt: new Date(duplicatedType.createdAt),
+          updatedAt: new Date(duplicatedType.updatedAt),
+          selectedCriteria: duplicatedType.selectedCriteria || [],
+        }]);
+        closeDuplicateModal();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Er is een fout opgetreden bij het dupliceren van het onderzoekstype.');
+      }
+    } catch (error) {
+      console.error('Error duplicating research type:', error);
+      alert('Er is een fout opgetreden bij het dupliceren van het onderzoekstype.');
+    }
   };
 
   // Handle form submit
@@ -633,6 +703,15 @@ export default function OnderzoekstypenPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                           Bewerken
+                        </button>
+                        <button
+                          onClick={() => openDuplicateModal(type)}
+                          className="sample-menu-item flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Dupliceren
                         </button>
                         <button
                           onClick={() => handleDelete(type.id)}
@@ -1022,6 +1101,109 @@ Content voor de tweede uitklapbare sectie...`}
                 </>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Modal */}
+      {showDuplicateModal && duplicatingType && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Onderzoekstype dupliceren</h2>
+              <button
+                onClick={closeDuplicateModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Je staat op het punt om het onderzoekstype <strong>{duplicatingType.name}</strong> te dupliceren.
+              </p>
+              <p className="text-sm text-gray-600">
+                Het nieuwe onderzoekstype krijgt dezelfde instellingen, criteria en teksten als het origineel.
+              </p>
+
+              {/* Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Naam voor het nieuwe onderzoekstype
+                </label>
+                <input
+                  type="text"
+                  value={duplicateName}
+                  onChange={(e) => setDuplicateName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !findText && !replaceText) {
+                      e.preventDefault();
+                      handleDuplicate();
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-shift2-primary"
+                  placeholder="Naam voor het nieuwe onderzoekstype"
+                  autoFocus
+                />
+              </div>
+
+              {/* Optional Find and Replace */}
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Optioneel: Tekst vervangen</p>
+                <p className="text-xs text-gray-500 mb-3">
+                  Vervang tekst in de beschrijving en rapport intro teksten. Bijvoorbeeld: vervang "formulieren" door "content".
+                </p>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Zoek naar
+                    </label>
+                    <input
+                      type="text"
+                      value={findText}
+                      onChange={(e) => setFindText(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-shift2-primary"
+                      placeholder="bijv. formulieren"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Vervang door
+                    </label>
+                    <input
+                      type="text"
+                      value={replaceText}
+                      onChange={(e) => setReplaceText(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-shift2-primary focus:border-shift2-primary"
+                      placeholder="bijv. content"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={closeDuplicateModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleDuplicate}
+                className="px-4 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Dupliceren
+              </button>
+            </div>
           </div>
         </div>
       )}

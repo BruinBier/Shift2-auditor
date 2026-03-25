@@ -89,6 +89,7 @@ model Opdrachtgever {
 model ClientProject {
   id              String        @id @default(uuid())
   name            String
+  projectnummer   String?
   opdrachtgeverId String        @map("opdrachtgever_id")
   details         String?       @db.Text
   createdAt       DateTime      @default(now()) @map("created_at")

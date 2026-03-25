@@ -18,6 +18,9 @@
     "restore": "tsx scripts/import-all-data.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^5.22.0",
     "@tiptap/extension-image": "^2.1.13",
     "@tiptap/extension-link": "^2.1.13",
