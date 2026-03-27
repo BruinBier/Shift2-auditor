@@ -37,23 +37,43 @@ export async function PATCH(
 ) {
   try {
     const data = await request.json();
+    console.log('PATCH request data:', data);
+    console.log('Updating client project:', params.id);
+
+    const updateData: any = {};
+
+    // Only include fields that are provided in the request
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+    if (data.details !== undefined) {
+      updateData.details = data.details;
+    }
+    if (data.projectnummer !== undefined) {
+      updateData.projectnummer = data.projectnummer || null;
+    }
+    if (data.opdrachtgeverId !== undefined) {
+      updateData.opdrachtgeverId = data.opdrachtgeverId;
+    }
+
+    console.log('Update data:', updateData);
 
     const clientProject = await prisma.clientProject.update({
       where: { id: params.id },
-      data: {
-        name: data.name,
-        details: data.details,
-      },
+      data: updateData,
       include: {
         opdrachtgever: true,
       },
     });
 
+    console.log('Successfully updated client project');
     return NextResponse.json(clientProject);
   } catch (error) {
     console.error('Error updating client project:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Failed to update client project' },
+      { error: 'Failed to update client project', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

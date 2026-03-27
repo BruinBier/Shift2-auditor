@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     const clientProject = await prisma.clientProject.create({
       data: {
         name: data.name,
+        projectnummer: data.projectnummer || null,
         opdrachtgeverId: data.opdrachtgeverId,
         details: data.details || null,
       },

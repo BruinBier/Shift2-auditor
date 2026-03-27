@@ -27,3 +27,5 @@ export default async function OnderzoekekenPage() {
 
   return <OnderzoekenTable projects={projectsData} />;
 }
+
+

@@ -21,6 +21,7 @@ interface ClientProject {
     id: string;
     kenmerk: string;
     naam: string;
+    accountmanager: string | null;
   };
   projects?: any[];
 }
@@ -324,6 +325,7 @@ export default function ProjectenPage() {
         }
       } else if (editingProject) {
         // Update existing project
+        console.log('Updating project with data:', formData);
         const response = await fetch(`/api/client-projects/${editingProject.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -337,7 +339,9 @@ export default function ProjectenPage() {
           ));
           closeEditModal();
         } else {
-          alert('Fout bij het updaten van het project');
+          const errorData = await response.json();
+          console.error('Update error:', errorData);
+          alert(`Fout bij het updaten van het project: ${errorData.details || errorData.error}`);
         }
       }
     } catch (error) {
@@ -643,6 +647,7 @@ export default function ProjectenPage() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectnummer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accountmanager</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectdetails</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opdrachtgever</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
@@ -651,13 +656,13 @@ export default function ProjectenPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
                     Laden...
                   </td>
                 </tr>
               ) : sortedProjects.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
                     Geen projecten gevonden
                   </td>
                 </tr>
@@ -666,6 +671,7 @@ export default function ProjectenPage() {
                   <tr key={project.id}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{project.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{project.projectnummer || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{project.opdrachtgever.accountmanager || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div
                         className="prose prose-sm max-w-none"
@@ -813,6 +819,20 @@ export default function ProjectenPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Projectnummer */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Projectnummer
+                </label>
+                <input
+                  type="text"
+                  value={formData.projectnummer}
+                  onChange={(e) => setFormData({ ...formData, projectnummer: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  placeholder="Bijv. 2024-001"
+                />
               </div>
 
               {/* Projectdetails with Tiptap Editor */}
