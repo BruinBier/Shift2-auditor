@@ -61,30 +61,35 @@ class HyperlinkManager {
 
 /**
  * Generate a hyperlink paragraph with proper relationship
+ * Includes an external link icon (↗) after the link
  */
 function generateHyperlink(url: string, displayText: string, hyperlinkManager: HyperlinkManager, style?: 'bullet' | 'normal'): string {
   const relId = hyperlinkManager.getRelId(url);
+  const externalLinkIcon = ' ↗';
 
   if (style === 'bullet') {
-    // Bullet list item with hyperlink
-    return `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(displayText)}</w:t></w:r></w:hyperlink></w:p>`;
+    // Bullet list item with hyperlink + icon
+    return `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(displayText)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r></w:p>`;
   } else {
-    // Normal paragraph with hyperlink
-    return `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(displayText)}</w:t></w:r></w:hyperlink></w:p>`;
+    // Normal paragraph with hyperlink + icon
+    return `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(displayText)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r></w:p>`;
   }
 }
 
 /**
  * Generate a bullet list item with bold title and hyperlink URL on new line
+ * Includes an external link icon (↗) after the link if URL is provided
  */
 function generateBulletWithTitleAndUrl(title: string, url: string, hyperlinkManager: HyperlinkManager): string {
+  const externalLinkIcon = ' ↗';
+
   // Start with title and line break
   let xml = `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(title)}</w:t></w:r>`;
 
   // Only add URL if it exists
   if (url && url.trim() !== '') {
     const relId = hyperlinkManager.getRelId(url);
-    xml += `<w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink>`;
+    xml += `<w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r>`;
   }
 
   xml += `</w:p>`;
@@ -93,11 +98,13 @@ function generateBulletWithTitleAndUrl(title: string, url: string, hyperlinkMana
 
 /**
  * Generate a paragraph with bold title and hyperlink URL on new line
+ * Includes an external link icon (↗) after the link
  */
 function generateParagraphWithTitleAndUrl(title: string, url: string, hyperlinkManager: HyperlinkManager): string {
   const relId = hyperlinkManager.getRelId(url);
+  const externalLinkIcon = ' ↗';
 
-  return `<w:p><w:pPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(title)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink></w:p>`;
+  return `<w:p><w:pPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(title)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r></w:p>`;
 }
 
 export async function GET(
@@ -106,6 +113,7 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
+    console.error('🔴🔴🔴 DOCX ROUTE CALLED - PROJECT ID:', id, '🔴🔴🔴');
     console.log('[DOCX] Starting Word document generation for project:', id);
 
     // Fetch complete project data
@@ -153,14 +161,27 @@ export async function GET(
     });
 
     console.log('[DOCX] Project found, loading template...');
+    console.log('[DOCX DEBUG] project.researchType:', project.researchType);
+    console.log('[DOCX DEBUG] researchTypeData:', researchTypeData);
+
+    // Determine which template to use based on research type
+    const isFormulierenType = researchTypeData?.type === 'formulieren';
+    console.log('[DOCX DEBUG] isFormulierenType:', isFormulierenType);
+
+    const templateFolder = isFormulierenType ? 'formulieren' : 'website';
+    const templateName = isFormulierenType
+      ? 'Toegankelijkheidsonderzoek formulieren Template - with placeholders.docx'
+      : 'Toegankelijkheidsonderzoek website Template - with placeholders.docx';
 
     // Load the template
     const templatePath = path.join(
       process.cwd(),
       'templates',
-      'formulieren',
-      'Toegankelijkheidsonderzoek formulieren Template - with placeholders.docx'
+      templateFolder,
+      templateName
     );
+
+    console.log(`[DOCX] Using template: ${templateFolder}/${templateName}`);
 
     const templateContent = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(templateContent);
@@ -184,6 +205,9 @@ export async function GET(
         year: 'numeric'
       });
     };
+
+    // Use researchStartedOn instead of dateStart for the report (same as web page)
+    const dateStart = project.researchStartedOn ? new Date(project.researchStartedOn) : (project.dateStart ? new Date(project.dateStart) : null);
 
     // For formulieren projects: count in-scope URLs (each URL = one form)
     // For other projects: use total sample items
@@ -298,11 +322,14 @@ export async function GET(
         return aPatch - bPatch;
       });
 
+    // Number findings per criterion (not globally) - each criterion starts at 1
+    // IMPORTANT: Only include findings with status "open" in Bevindingen section
+    // Findings with other statuses (like "opmerking") go to the Opmerkingen section
     const findingsData = failedAssessments.map(assessment => {
       const criterion = assessment.wcagCriterion;
-      const findingsForCriterion = project.findings.filter(
-        f => f.wcagCriterionId === criterion.id
-      );
+      const findingsForCriterion = project.findings
+        .filter(f => f.wcagCriterionId === criterion.id && f.status === 'open')
+        .sort((a, b) => a.sortOrder - b.sortOrder); // Sort by sortOrder within each criterion
 
       return {
         code: criterion.code,
@@ -311,7 +338,7 @@ export async function GET(
         description: criterion.descriptionNl || '',
         understandingUrl: criterion.understandingUrl || '',
         findings: findingsForCriterion.map((finding, index) => ({
-          number: index + 1,
+          number: index + 1, // Number per criterion, starting at 1 for each criterion
           findingCode: finding.findingCode,
           description: finding.description || '',
           advice: finding.advice || '',
@@ -429,83 +456,7 @@ export async function GET(
 
       // Rich text fields - main sections
       // Combine management summary with researcher feedback (if available)
-      managementSummary: (() => {
-        let summary = '';
-
-        // If managementSummary exists, use it
-        if (project.managementSummary) {
-          summary = project.managementSummary;
-        }
-        // Otherwise, generate from research type template
-        else if (researchTypeData?.summaryTemplate) {
-          const template = researchTypeData.summaryTemplate;
-
-          // Replace placeholders with actual values
-          summary = template
-            .replace(/\{dateStart\}/g, formatDate(project.dateStart))
-            .replace(/\{dateEnd\}/g, formatDate(project.dateEnd))
-            .replace(/\{totalPages\}/g, String(totalPages))
-            .replace(/\{uniqueForms\}/g, String(uniqueForms))
-            .replace(/\{totalCriteria\}/g, String(totalCriteria))
-            .replace(/\{passedCriteria\}/g, String(passedCriteria))
-            .replace(/\{percentage\}/g, String(percentage))
-            .replace(/\{failedCriteria\}/g, String(failedCriteria))
-            .replace(/\{compliesFully\}/g, compliesFully)
-            .replace(/\{formsSingularPlural\}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
-            .replace(/\{pagesSingularPlural\}/g, totalPages === 1 ? 'processtap' : 'processtappen')
-            .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria');
-        }
-        // Fallback
-        else {
-          summary = `De onderzochte content voldoet niet volledig aan ${project.standard} niveau ${project.level}. In dit onderzoek zijn criteria beoordeeld.`;
-        }
-
-        // Strip HTML tags from summary for Word
-        summary = summary
-          .replace(/<p[^>]*>/gi, '\n')
-          .replace(/<\/p>/gi, '\n')
-          .replace(/<br\s*\/?>/gi, '\n')
-          .replace(/<[^>]+>/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .trim();
-
-        // Add researcher feedback after the summary
-        if (project.researcherFeedback) {
-          // Strip HTML tags from researcher feedback for Word
-          const feedbackText = project.researcherFeedback
-            .replace(/<p[^>]*>/gi, '\n')
-            .replace(/<\/p>/gi, '\n')
-            .replace(/<br\s*\/?>/gi, '\n')
-            .replace(/<[^>]+>/g, '')
-            .replace(/&nbsp;/g, ' ')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&apos;/g, "'")
-            .trim();
-
-          summary += '\n\n' + feedbackText;
-        }
-
-        // Add closing advice for formulieren (only if not already present)
-        const isFormulieren = researchTypeData?.type === 'formulieren';
-        const closingAdviceText = 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het ' +
-          (isFormulieren ? 'beheer- en publicatieproces van formulieren' : 'publicatieproces') +
-          '.';
-
-        // Only add if not already present
-        if (!summary.includes('Wij adviseren om')) {
-          summary += '\n\n' + closingAdviceText;
-        }
-
-        return summary;
-      })(),
+      managementSummary: '',  // Empty - do NOT show any text under Samenvatting heading in Word document
       researcherFeedback: '', // Empty since we're combining it with managementSummary
 
       // Report intro header - different for formulieren vs regular projects
@@ -553,9 +504,9 @@ export async function GET(
 
       snapshotWarningText: 'Dit onderzoek biedt geen uitputtend overzicht van alle mogelijke toegankelijkheidsproblemen. De bevindingen vormen een momentopname van de situatie ten tijde van het onderzoek.',
 
-      continuityAdvice1: `Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in ${isFormulieren ? 'formulieren' : 'pagina\'s'} die niet zijn onderzocht. Het is daarom raadzaam om alle ${isFormulieren ? 'formulieren' : 'pagina\'s'} te controleren op vergelijkbare patronen en deze structureel te monitoren.`,
+      continuityAdvice1: `Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in ${isFormulieren ? 'formulieren' : 'pagina\'s'} die niet zijn onderzocht. Het is daarom raadzaam om ${isFormulieren ? 'alle formulieren' : 'de volledige website'} te controleren op vergelijkbare patronen en deze structureel te monitoren.`,
 
-      continuityAdvice2: 'Daarnaast kunnen wijzigingen in de content van formulieren of in het publicatieproces nieuwe toegankelijkheidsrisico\'s met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.',
+      continuityAdvice2: `Daarnaast kunnen wijzigingen in de content ${isFormulieren ? 'van formulieren ' : ''}of ${isFormulieren ? 'in ' : ''}het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling ${isFormulieren ? 'van de formulieren ' : ''}blijven daarom noodzakelijk.`,
 
       scopeExplanation: 'Bij de URL staat de reden waarom een gedeelte wel of niet is meegenomen. Dit is conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.',
 
@@ -584,13 +535,22 @@ export async function GET(
 
       // Browser and tool versions for test environment section (from database)
       userAgents: project.userAgents || 'Google Chrome 145 (primair);\nMozilla Firefox 147;\nMicrosoft Edge 145;\nNVDA (Windows) in combinatie met Google Chrome;',
-      technologies: project.technologies.length > 0 ? Array.from(new Set(project.technologies)).join('\n') : 'DOM\nHTML\nCSS',
+      technologies: (() => {
+        console.log('[DOCX DEBUG] project.technologies array:', project.technologies);
+        console.log('[DOCX DEBUG] project.technologies.length:', project.technologies.length);
+        const uniqueTechs = Array.from(new Set(project.technologies));
+        console.log('[DOCX DEBUG] uniqueTechs after Set:', uniqueTechs);
+        const joined = uniqueTechs.join('\n');
+        console.log('[DOCX DEBUG] joined with newlines:', joined);
+        return project.technologies.length > 0 ? joined : 'DOM\nHTML\nCSS';
+      })(),
 
       // Dynamic criteria assessments for table
       criteriaAssessments: criteriaForTable,
     };
 
     console.log('[DOCX] Rendering template with data...');
+    console.log('[DOCX DEBUG] templateData.technologies string:', templateData.technologies);
     console.log('[DOCX DEBUG] managementSummary length:', templateData.managementSummary.length);
     console.log('[DOCX DEBUG] managementSummary preview:', templateData.managementSummary.substring(0, 500));
 
@@ -605,6 +565,11 @@ export async function GET(
       console.log('[DOCX DEBUG] Failed to write debug file:', err);
     }
 
+    // IMPORTANT: Remove managementSummary from templateData before rendering
+    // We'll insert it manually after rendering to avoid Docxtemplater corruption with linebreaks
+    const managementSummaryContent = templateData.managementSummary;
+    templateData.managementSummary = ''; // Set to empty string so placeholder remains in template
+
     // Render the template with data
     doc.render(templateData);
 
@@ -613,12 +578,164 @@ export async function GET(
     // Get the rendered ZIP and modify the criteria table
     const renderedZip = doc.getZip();
     const documentXml = renderedZip.file('word/document.xml');
+    let xmlContent = ''; // Declare xmlContent outside the if block so it's accessible later
     if (documentXml) {
-      let xmlContent = documentXml.asText();
+      xmlContent = documentXml.asText();
 
-      // NOTE: We no longer manually split managementSummary here
-      // Docxtemplater with linebreaks:true handles newlines automatically
-      console.log('[DOCX] Docxtemplater has already rendered managementSummary with linebreaks');
+      // Replace any remaining hardcoded dates from old Wierden template
+      console.log('[DOCX] Replacing hardcoded dates in template...');
+      xmlContent = xmlContent.replace(/23 maart 2026/g, formatDate(project.reportDate));
+      xmlContent = xmlContent.replace(/9 maart 2026/g, formatDate(project.dateStart));
+      xmlContent = xmlContent.replace(/2 maart 2026/g, formatDate(project.reportDate));
+
+      // Insert summary text dynamically after Samenvatting heading
+      console.log('[DOCX] Inserting summary text after Samenvatting heading...');
+
+      // Find the ACTUAL Samenvatting heading (not the one in TOC)
+      // The actual heading has a bookmark with name="_Toc_Samenvatting"
+      const bookmarkIndex = xmlContent.indexOf('name="_Toc_Samenvatting"');
+      let samenvattingHeadingIndex = -1;
+
+      if (bookmarkIndex !== -1) {
+        // Find "Samenvatting</w:t>" that comes AFTER this bookmark
+        samenvattingHeadingIndex = xmlContent.indexOf('Samenvatting</w:t>', bookmarkIndex);
+        console.log('[DOCX DEBUG] Found Samenvatting bookmark at index:', bookmarkIndex);
+        console.log('[DOCX DEBUG] Found Samenvatting heading at index:', samenvattingHeadingIndex);
+      } else {
+        // Fallback: find the heading by looking for the one with Kop2 style
+        // This should be the second occurrence (first is in TOC)
+        const firstIndex = xmlContent.indexOf('Samenvatting</w:t>');
+        if (firstIndex !== -1) {
+          samenvattingHeadingIndex = xmlContent.indexOf('Samenvatting</w:t>', firstIndex + 1);
+          console.log('[DOCX DEBUG] Bookmark not found, using second occurrence at:', samenvattingHeadingIndex);
+        }
+      }
+      if (samenvattingHeadingIndex !== -1) {
+        // Find the paragraph containing "Samenvatting"
+        const samenvattingParaStart = xmlContent.lastIndexOf('<w:p', samenvattingHeadingIndex);
+        const samenvattingParaEnd = xmlContent.indexOf('</w:p>', samenvattingHeadingIndex) + '</w:p>'.length;
+
+        // Generate summary text with actual values (same logic as website)
+        const dateStartFormatted = dateStart ? formatDate(dateStart) : '[datum]';
+        const dateEndFormatted = project.dateEnd ? formatDate(project.dateEnd) : '[datum]';
+
+        let summaryText = '';
+
+        // Use template from research type (SAME as website does)
+        if (researchTypeData?.summaryTemplate) {
+          summaryText = researchTypeData.summaryTemplate
+            .replace(/\{dateStart\}/g, dateStartFormatted)
+            .replace(/\{dateEnd\}/g, dateEndFormatted)
+            .replace(/\{totalPages\}/g, String(totalPages))
+            .replace(/\{uniqueForms\}/g, String(uniqueForms))
+            .replace(/\{totalCriteria\}/g, String(totalCriteria))
+            .replace(/\{passedCriteria\}/g, String(passedCriteria))
+            .replace(/\{percentage\}/g, String(percentage))
+            .replace(/\{failedCriteria\}/g, String(failedCriteria))
+            .replace(/\{compliesFully\}/g, compliesFully)
+            .replace(/\{formsSingularPlural\}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
+            .replace(/\{pagesSingularPlural\}/g, totalPages === 1 ? 'processtap' : 'processtappen')
+            .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria')
+            .replace(/\{standard\}/g, researchTypeData?.version || 'WCAG 2.2')
+            .replace(/\{level\}/g, researchTypeData?.level || 'A en AA');
+        } else {
+          // Fallback template
+          summaryText = `Het onderzoek vond plaats in de periode van ${dateStartFormatted} tot en met ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.\n\nDe onderzochte content voldoet ${compliesFully} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`;
+        }
+
+        // Strip HTML tags from summary (template may contain HTML)
+        summaryText = summaryText
+          .replace(/<p[^>]*>/gi, '\n\n')
+          .replace(/<\/p>/gi, '')
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim();
+
+        // Split into paragraphs
+        let summaryParagraphs = summaryText.split(/\n\n+/).filter(p => p.trim().length > 0);
+
+        // Add researcher feedback if available (SAME as website does)
+        if (project.researcherFeedback) {
+          // Strip HTML tags from researcher feedback
+          const feedbackText = project.researcherFeedback
+            .replace(/<p[^>]*>/gi, '\n\n')
+            .replace(/<\/p>/gi, '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&apos;/g, "'")
+            .trim();
+
+          // Add feedback text as new paragraphs (split by double newlines)
+          const feedbackParagraphs = feedbackText.split(/\n\n+/).filter(p => p.trim().length > 0);
+          summaryParagraphs.push(''); // Empty line before feedback
+          summaryParagraphs.push(...feedbackParagraphs);
+        }
+
+        // Add closing advice (SAME as website does)
+        summaryParagraphs.push(''); // Empty line before advice
+        const isFormulieren = researchTypeData?.type === 'formulieren';
+        const adviceText = isFormulieren
+          ? 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
+          : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.';
+        summaryParagraphs.push(adviceText);
+
+        // Generate XML for each paragraph
+        const summaryXml = summaryParagraphs.map(para => {
+          if (para === '') {
+            // Empty paragraph for spacing
+            return '<w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr></w:p>';
+          }
+
+          // Escape XML special characters
+          const escapedPara = para
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+
+          return `<w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr><w:r><w:t xml:space="preserve">${escapedPara}</w:t></w:r></w:p>`;
+        }).join('');
+
+        // DEBUG: Log summary XML length
+        console.log(`[DOCX DEBUG] summaryXml length: ${summaryXml.length} characters`);
+        console.log(`[DOCX DEBUG] First 500 chars of summaryXml: ${summaryXml.substring(0, 500)}`);
+
+        // Insert summary after Samenvatting heading
+        xmlContent = xmlContent.substring(0, samenvattingParaEnd) + summaryXml + xmlContent.substring(samenvattingParaEnd);
+
+        // DEBUG: Check if summary is in xmlContent
+        const hasSummaryAfterInsert = xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen');
+        console.log(`[DOCX DEBUG] After summary insert - summary in xmlContent: ${hasSummaryAfterInsert}`);
+
+        // DEBUG: Save xmlContent to file for inspection
+        try {
+          fs.writeFileSync(
+            path.join(process.cwd(), 'debug-xmlcontent-after-summary.txt'),
+            xmlContent
+          );
+          console.log('[DOCX DEBUG] Saved xmlContent to debug-xmlcontent-after-summary.txt');
+        } catch (err) {
+          console.log('[DOCX DEBUG] Failed to save xmlContent:', err);
+        }
+
+        // Update the ZIP
+        renderedZip.file('word/document.xml', xmlContent);
+
+        console.log(`[DOCX] Inserted summary with ${summaryParagraphs.length} paragraphs`);
+      } else {
+        console.log('[DOCX] Samenvatting heading not found, cannot insert summary');
+      }
 
       // Find the criteria table (contains pattern that identifies it)
       // We'll look for the table that has both a criterion code pattern AND "Voldoet" (results column)
@@ -629,8 +746,45 @@ export async function GET(
 
       if (voldoetOccurrence !== -1) {
         // Find the table containing "Voldoet"
-        const tableStart = xmlContent.lastIndexOf('<w:tbl', voldoetOccurrence);
-        const tableEnd = xmlContent.indexOf('</w:tbl>', tableStart) + '</w:tbl>'.length;
+        // Search backwards from "Voldoet" for <w:tbl> or <w:tbl (...) but NOT <w:tblHeader
+        const tableStart = xmlContent.lastIndexOf('<w:tbl>', voldoetOccurrence) !== -1
+          ? xmlContent.lastIndexOf('<w:tbl>', voldoetOccurrence)
+          : xmlContent.lastIndexOf('<w:tbl ', voldoetOccurrence);
+
+        // Find the MATCHING closing tag by counting nested tables
+        let depth = 1;
+        let pos = tableStart + '<w:tbl'.length;
+        let tableEnd = -1;
+
+        while (depth > 0 && pos < xmlContent.length) {
+          const nextOpen = xmlContent.indexOf('<w:tbl', pos);
+          const nextClose = xmlContent.indexOf('</w:tbl>', pos);
+
+          if (nextClose === -1) {
+            console.log('[DOCX ERROR] Could not find closing </w:tbl> tag!');
+            break;
+          }
+
+          if (nextOpen !== -1 && nextOpen < nextClose) {
+            // Found nested table opening
+            depth++;
+            pos = nextOpen + '<w:tbl'.length;
+          } else {
+            // Found closing tag
+            depth--;
+            if (depth === 0) {
+              tableEnd = nextClose + '</w:tbl>'.length;
+            }
+            pos = nextClose + '</w:tbl>'.length;
+          }
+        }
+
+        if (tableEnd === -1) {
+          console.log('[DOCX ERROR] Could not find matching </w:tbl> tag, using fallback');
+          tableEnd = xmlContent.indexOf('</w:tbl>', tableStart) + '</w:tbl>'.length;
+        }
+
+        console.log(`[DOCX DEBUG] tableStart: ${tableStart}, tableEnd: ${tableEnd}, table length: ${tableEnd - tableStart}`);
 
         if (tableStart !== -1 && tableEnd > tableStart) {
           // Extract table
@@ -642,12 +796,29 @@ export async function GET(
             console.log('[DOCX] Table with Voldoet does not contain criterion codes, skipping');
           } else {
 
-          // Find header row
-          const headerRowStart = oldTable.indexOf('<w:tr');
-          const headerRowEnd = oldTable.indexOf('</w:tr>', headerRowStart) + '</w:tr>'.length;
-          const headerRow = oldTable.substring(headerRowStart, headerRowEnd);
+          // Find the FIRST COMPLETE <w:tr> tag (template may have incomplete first row due to XML corruption)
+          // Look for the FIRST <w:tr that starts from the beginning (not in the middle)
+          // We identify a complete row by checking if there's content BEFORE the first <w:tr
+          const firstTrIndex = oldTable.indexOf('<w:tr');
 
-          // Find a template row (second row)
+          // Check if there's significant content before the first <w:tr (means incomplete row)
+          const beforeFirstTr = oldTable.substring(0, firstTrIndex);
+          const hasIncompleteFirstRow = beforeFirstTr.includes('<w:tc>') || beforeFirstTr.includes('<w:trPr>');
+
+          let headerRowStart = firstTrIndex;
+          let headerRowEnd = oldTable.indexOf('</w:tr>', headerRowStart) + '</w:tr>'.length;
+          let headerRow = oldTable.substring(headerRowStart, headerRowEnd);
+
+          // If there's an incomplete first row, use the SECOND <w:tr as header
+          if (hasIncompleteFirstRow) {
+            console.log('[DOCX DEBUG] Detected incomplete first row in template (corrupted XML), using second row as header');
+            const secondTrIndex = oldTable.indexOf('<w:tr', headerRowEnd);
+            headerRowStart = secondTrIndex;
+            headerRowEnd = oldTable.indexOf('</w:tr>', headerRowStart) + '</w:tr>'.length;
+            headerRow = oldTable.substring(headerRowStart, headerRowEnd);
+          }
+
+          // Find a template row (row after header)
           const templateRowStart = oldTable.indexOf('<w:tr', headerRowEnd);
           const templateRowEnd = oldTable.indexOf('</w:tr>', templateRowStart) + '</w:tr>'.length;
           const templateRowXml = oldTable.substring(templateRowStart, templateRowEnd);
@@ -662,8 +833,79 @@ export async function GET(
 
           console.log(`[DOCX] Using template row with code "${templateCode}" and name "${templateName}"`);
 
+          // DEBUG: Log table structure
+          const oldTableRowCount = (oldTable.match(/<w:tr/g) || []).length;
+          console.log(`[DOCX DEBUG] Old table has ${oldTableRowCount} rows (including header)`);
+          console.log(`[DOCX DEBUG] criteriaForTable.length: ${criteriaForTable.length}`);
+          console.log(`[DOCX DEBUG] tableStart index: ${tableStart}, tableEnd index: ${tableEnd}`);
+          console.log(`[DOCX DEBUG] oldTable length: ${oldTable.length} characters`);
+
+          // DEBUG: Save old table to file
+          const fs = require('fs');
+          fs.writeFileSync('debug-old-table.xml', oldTable);
+          console.log('[DOCX DEBUG] Saved old table to debug-old-table.xml');
+
+          // DEBUG: Show what's AFTER the old table in xmlContent
+          const afterTable = xmlContent.substring(tableEnd, tableEnd + 500);
+          console.log('[DOCX DEBUG] First 500 chars AFTER old table:');
+          console.log(afterTable);
+
           // Build new table with dynamic rows
-          let newTable = oldTable.substring(0, headerRowStart) + headerRow;
+          // Extract ONLY the table opening tags (everything before the header row)
+          // If there's an incomplete first row, we need to EXCLUDE it from tablePrefix
+          let tablePrefix;
+          if (hasIncompleteFirstRow) {
+            // The incomplete row has NO <w:tr> opening tag, but DOES have content and a </w:tr> closing tag
+            // We need to find that closing tag and skip past it
+            // IMPORTANT: Find the actual <w:tbl tag (not <w:tblHeader/> or other tags starting with <w:tbl)
+            // We need to search for tags that have <w:tbl followed by space or >
+            // But <w:tblHeader/> ends with />, so we need to check the character BEFORE the >
+            let tblStart = -1;
+            let searchPos = 0;
+            while (searchPos < oldTable.length) {
+              const candidate = oldTable.indexOf('<w:tbl', searchPos);
+              if (candidate === -1) break;
+
+              // Check what comes after '<w:tbl'
+              const charAfter = oldTable[candidate + 6]; // 6 = length of '<w:tbl'
+              if (charAfter === ' ' || charAfter === '>') {
+                // This is the actual <w:tbl tag
+                tblStart = candidate;
+                break;
+              }
+
+              // Otherwise, it's something like <w:tblHeader, keep searching
+              searchPos = candidate + 1;
+            }
+
+            const tblTagEnd = tblStart !== -1 ? oldTable.indexOf('>', tblStart) + 1 : -1;
+
+            // Find the FIRST </w:tr> (which belongs to the incomplete row)
+            const firstTrCloseIndex = oldTable.indexOf('</w:tr>');
+
+            if (firstTrCloseIndex !== -1 && firstTrCloseIndex < headerRowStart) {
+              // The incomplete row's closing tag comes BEFORE the header row
+              // We need to skip from <w:tbl> tag to AFTER the incomplete row's </w:tr>
+              const afterIncompleteTr = firstTrCloseIndex + '</w:tr>'.length;
+
+              // tablePrefix = <w:tbl> tag ONLY (no content)
+              // We'll start newTable with: <w:tbl> + headerRow (which starts from the SECOND <w:tr>)
+              tablePrefix = oldTable.substring(tblStart, tblTagEnd);
+              console.log('[DOCX DEBUG] Using ONLY <w:tbl> tag as tablePrefix, skipping incomplete row that ends at', firstTrCloseIndex);
+              console.log('[DOCX DEBUG] tablePrefix:', JSON.stringify(tablePrefix));
+              console.log('[DOCX DEBUG] tblStart:', tblStart, 'tblTagEnd:', tblTagEnd);
+            } else {
+              // Fallback: use everything before header
+              tablePrefix = oldTable.substring(tblStart, headerRowStart);
+              console.log('[DOCX DEBUG] Incomplete row detected but no closing tag found before header, using content before header');
+            }
+          } else {
+            // No incomplete row, use everything before header
+            tablePrefix = oldTable.substring(0, headerRowStart);
+          }
+
+          // Start building new table
+          let newTable = tablePrefix + headerRow;
 
           // Generate rows for each criterion
           for (let i = 0; i < criteriaForTable.length; i++) {
@@ -723,11 +965,25 @@ export async function GET(
 
           newTable += '</w:tbl>';
 
+          // DEBUG: Log new table structure
+          const newTableRowCount = (newTable.match(/<w:tr/g) || []).length;
+          console.log(`[DOCX DEBUG] New table has ${newTableRowCount} rows (including header)`);
+          console.log(`[DOCX DEBUG] newTable length: ${newTable.length} characters`);
+          fs.writeFileSync('debug-new-table.xml', newTable);
+          console.log('[DOCX DEBUG] Saved new table to debug-new-table.xml');
+
           // Replace the old table with the new one
           xmlContent = xmlContent.substring(0, tableStart) + newTable + xmlContent.substring(tableEnd);
 
+          // DEBUG: Check if summary is still in xmlContent before saving
+          const hasSummaryBeforeTableSave = xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen');
+          console.log(`[DOCX DEBUG] Before criteria table ZIP save - summary in xmlContent: ${hasSummaryBeforeTableSave}`);
+
           // Update the ZIP
           renderedZip.file('word/document.xml', xmlContent);
+
+          // DEBUG: Check if summary is still there
+          console.log(`[DOCX DEBUG] After criteria table - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
 
           console.log(`[DOCX] Updated criteria table with ${criteriaForTable.length} criteria`);
         }
@@ -850,6 +1106,9 @@ export async function GET(
         console.log('[DOCX] Scores table marker not found, skipping scores table update');
       }
 
+      // DEBUG: Check if summary is still in xmlContent after scores table
+      console.log(`[DOCX DEBUG] After scores table - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
+
       // Now update the bevindingen (findings) section
       console.log('[DOCX] Updating bevindingen section with project data...');
 
@@ -905,6 +1164,9 @@ export async function GET(
 
             // Update the ZIP
             renderedZip.file('word/document.xml', xmlContent);
+
+            // DEBUG: Check if summary is still in xmlContent after bevindingen update
+            console.log(`[DOCX DEBUG] After bevindingen - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
 
             console.log(`[DOCX] Updated bevindingen section with ${findingsData.length} failed criteria`);
           } else {
@@ -1026,36 +1288,28 @@ export async function GET(
 
         console.log('[DOCX] Found Scope intro text, ends at index', scopeIntroEnd);
 
-        // Now find where the Scope section ends (before "Buiten scope" or next Kop3/Kop4 heading)
+        // Now find where the Scope section ends (before next Kop3 heading ONLY, not Kop4)
+        // This is because we'll add "Buiten de scope" (Kop4) ourselves if needed
         const afterIntro = xmlContent.substring(scopeIntroEnd);
 
-        // Look for "Buiten scope" heading OR next Kop3/Kop4 heading
+        // Look for next Kop3 heading (like "Steekproef")
         let scopeSectionEnd = -1;
-        const buitenScopeMatch = afterIntro.search(/>Buiten scope</);
-
-        if (buitenScopeMatch !== -1) {
-          // Found "Buiten scope" - scope section ends where "Buiten scope" starts
-          const beforeBuitenScope = afterIntro.substring(0, buitenScopeMatch);
+        const nextKop3Match = afterIntro.search(/<w:pStyle w:val="Kop3"/);
+        if (nextKop3Match !== -1) {
+          const beforeNextHeading = afterIntro.substring(0, nextKop3Match);
           const lastPStart = Math.max(
-            beforeBuitenScope.lastIndexOf('<w:p '),
-            beforeBuitenScope.lastIndexOf('<w:p>')
+            beforeNextHeading.lastIndexOf('<w:p '),
+            beforeNextHeading.lastIndexOf('<w:p>')
           );
           scopeSectionEnd = scopeIntroEnd + lastPStart;
-        } else {
-          // No "Buiten scope" - look for next heading
-          const nextHeadingMatch = afterIntro.search(/<w:pStyle w:val="Kop[3-4]"/);
-          if (nextHeadingMatch !== -1) {
-            const beforeNextHeading = afterIntro.substring(0, nextHeadingMatch);
-            const lastPStart = Math.max(
-              beforeNextHeading.lastIndexOf('<w:p '),
-              beforeNextHeading.lastIndexOf('<w:p>')
-            );
-            scopeSectionEnd = scopeIntroEnd + lastPStart;
-          }
         }
 
         if (scopeSectionEnd !== -1) {
           console.log('[DOCX] Scope section ends at index', scopeSectionEnd);
+
+          // DEBUG: Show what comes after scopeSectionEnd
+          const afterScopeEnd = xmlContent.substring(scopeSectionEnd, scopeSectionEnd + 500);
+          console.log('[DOCX DEBUG] First 500 chars after scopeSectionEnd:', afterScopeEnd.substring(0, 200));
 
           // Extract one URL paragraph as template
           const scopeContent = xmlContent.substring(scopeIntroEnd, scopeSectionEnd);
@@ -1075,116 +1329,70 @@ export async function GET(
           let inScopeUrlsXml = '';
 
           if (templateData.scopeUrlsInScope.length >= 2) {
-            // Render as bullet list when there are 2 or more URLs with clickable hyperlinks
+            // Render as bullet list when there are 2 or more URLs with clickable hyperlinks + icon
             templateData.scopeUrlsInScope.forEach(scopeUrl => {
               const relId = hyperlinkManager.getRelId(scopeUrl.url);
-              // Bullet list item with clickable hyperlink, followed by " (URI-basis)"
-              inScopeUrlsXml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> (URI-basis)</w:t></w:r></w:p>`;
+              const externalLinkIcon = ' ↗';
+              // Bullet list item with clickable hyperlink + icon, followed by " (URI-basis)"
+              inScopeUrlsXml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r><w:r><w:t xml:space="preserve"> (URI-basis)</w:t></w:r></w:p>`;
             });
           } else if (templateData.scopeUrlsInScope.length === 1) {
-            // Single URL - render as regular paragraph with clickable hyperlink
+            // Single URL - render as regular paragraph with clickable hyperlink + icon
             const scopeUrl = templateData.scopeUrlsInScope[0];
             const relId = hyperlinkManager.getRelId(scopeUrl.url);
-            inScopeUrlsXml += `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> (URI-basis)</w:t></w:r></w:p>`;
+            const externalLinkIcon = ' ↗';
+            inScopeUrlsXml += `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r><w:r><w:t xml:space="preserve"> (URI-basis)</w:t></w:r></w:p>`;
           }
 
           // Replace the URL content (keep heading and intro, replace URLs)
-          xmlContent = xmlContent.substring(0, scopeIntroEnd) +
-                      inScopeUrlsXml +
-                      xmlContent.substring(scopeSectionEnd);
+          let updatedScopeXml = xmlContent.substring(0, scopeIntroEnd) +
+                      inScopeUrlsXml;
+
+          // Add "Buiten de scope" section if there are out-of-scope URLs
+          if (templateData.scopeUrlsOutOfScope.length > 0) {
+            console.log(`[DOCX] Adding "Buiten de scope" section with ${templateData.scopeUrlsOutOfScope.length} URLs...`);
+
+            // Add spacing before heading
+            updatedScopeXml += '<w:p><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr></w:p>';
+
+            // Add "Buiten de scope" heading (Kop4)
+            updatedScopeXml += '<w:p w14:paraId="' + Math.random().toString(36).substring(2, 10).toUpperCase() + '" w14:textId="77777777" w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:pStyle w:val="Kop4"/></w:pPr><w:r><w:t>Buiten de scope</w:t></w:r></w:p>';
+
+            // Add out-of-scope URLs with hyperlinks + icon
+            templateData.scopeUrlsOutOfScope.forEach(scopeUrl => {
+              const relId = hyperlinkManager.getRelId(scopeUrl.url);
+              const externalLinkIcon = ' ↗';
+              updatedScopeXml += `<w:p><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(scopeUrl.url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r><w:r><w:t xml:space="preserve"> (Andere URI-basis en/of stijlkenmerken)</w:t></w:r></w:p>`;
+            });
+
+            console.log('[DOCX] Added "Buiten de scope" section');
+          } else {
+            console.log('[DOCX] No out-of-scope URLs, skipping "Buiten de scope" section');
+          }
+
+          // Complete the updated XML
+          const beforeUpdate = xmlContent;
+          xmlContent = updatedScopeXml + beforeUpdate.substring(scopeSectionEnd);
+
+          // DEBUG: Check if Technologieën exists in the kept portion
+          const keptPortion = beforeUpdate.substring(scopeSectionEnd);
+          console.log('[DOCX DEBUG] Kept portion contains Technologieën:', keptPortion.includes('>Technologieën<'));
+          console.log('[DOCX DEBUG] Kept portion length:', keptPortion.length);
+          console.log('[DOCX DEBUG] scopeSectionEnd:', scopeSectionEnd);
 
           console.log(`[DOCX] Updated Scope section with ${templateData.scopeUrlsInScope.length} in-scope URLs`);
 
           // Update the ZIP
           renderedZip.file('word/document.xml', xmlContent);
-
-          // Now handle "Buiten scope" section (if it exists)
-          const buitenScopeIndex = xmlContent.indexOf('>Buiten scope<');
-          if (buitenScopeIndex !== -1) {
-            // Find the actual heading
-            let buitenScopeHeadingStart = -1;
-            const beforeBuiten = xmlContent.substring(Math.max(0, buitenScopeIndex - 300), buitenScopeIndex);
-            if (beforeBuiten.includes('pStyle w:val="Kop')) {
-              const paragraphStart = xmlContent.lastIndexOf('<w:p ', buitenScopeIndex);
-              const paragraphStart2 = xmlContent.lastIndexOf('<w:p>', buitenScopeIndex);
-              buitenScopeHeadingStart = Math.max(paragraphStart, paragraphStart2);
-            }
-
-            if (buitenScopeHeadingStart !== -1) {
-              if (templateData.scopeUrlsOutOfScope.length === 0) {
-                // Remove entire "Buiten scope" section
-                console.log('[DOCX] No out-of-scope URLs, removing "Buiten scope" section...');
-
-                // Find the end of "Buiten scope" heading paragraph first
-                const buitenHeadingEnd = xmlContent.indexOf('</w:p>', buitenScopeHeadingStart) + '</w:p>'.length;
-
-                // Now search for the NEXT heading AFTER the "Buiten scope" heading
-                const afterBuitenHeading = xmlContent.substring(buitenHeadingEnd);
-                const nextHeadingMatch = afterBuitenHeading.search(/<w:pStyle w:val="Kop[2-4]"/);
-
-                if (nextHeadingMatch !== -1) {
-                  const contentBetween = afterBuitenHeading.substring(0, nextHeadingMatch);
-                  const lastPStart = Math.max(
-                    contentBetween.lastIndexOf('<w:p '),
-                    contentBetween.lastIndexOf('<w:p>')
-                  );
-
-                  if (lastPStart !== -1) {
-                    const buitenSectionEnd = buitenHeadingEnd + lastPStart;
-                    xmlContent = xmlContent.substring(0, buitenScopeHeadingStart) + xmlContent.substring(buitenSectionEnd);
-                    console.log('[DOCX] Removed "Buiten scope" section');
-
-                    // Update the ZIP again
-                    renderedZip.file('word/document.xml', xmlContent);
-                  } else {
-                    console.log('[DOCX] Could not find paragraph start before next heading');
-                  }
-                } else {
-                  console.log('[DOCX] Could not find next heading after "Buiten scope"');
-                }
-              } else {
-                // Replace "Buiten scope" URLs
-                console.log(`[DOCX] Replacing "Buiten scope" URLs with ${templateData.scopeUrlsOutOfScope.length} out-of-scope URLs...`);
-
-                const buitenHeadingEnd = xmlContent.indexOf('</w:p>', buitenScopeHeadingStart) + '</w:p>'.length;
-                const afterBuitenHeading = xmlContent.substring(buitenHeadingEnd);
-                const nextHeadingMatch = afterBuitenHeading.search(/<w:pStyle w:val="Kop[2-4]"/);
-
-                if (nextHeadingMatch !== -1) {
-                  const contentBetween = afterBuitenHeading.substring(0, nextHeadingMatch);
-                  const lastPStart = Math.max(
-                    contentBetween.lastIndexOf('<w:p '),
-                    contentBetween.lastIndexOf('<w:p>')
-                  );
-
-                  if (lastPStart !== -1) {
-                    const buitenContentEnd = buitenHeadingEnd + lastPStart;
-
-                    let outOfScopeUrlsXml = '';
-                    templateData.scopeUrlsOutOfScope.forEach(scopeUrl => {
-                      const urlParagraph = urlParagraphTemplate.replace(/https?:\/\/[^<]+/g, scopeUrl.url);
-                      outOfScopeUrlsXml += urlParagraph;
-                    });
-
-                    xmlContent = xmlContent.substring(0, buitenHeadingEnd) +
-                                outOfScopeUrlsXml +
-                                xmlContent.substring(buitenContentEnd);
-
-                    console.log('[DOCX] Replaced "Buiten scope" URLs');
-
-                    // Update the ZIP again
-                    renderedZip.file('word/document.xml', xmlContent);
-                  }
-                }
-              }
-            }
-          }
         } else {
           console.log('[DOCX] Could not determine end of Scope section');
         }
       } else {
         console.log('[DOCX] "Scope" heading not found in template');
       }
+
+      // DEBUG: Check if summary is still there after Scope URLs update
+      console.log(`[DOCX DEBUG] After Scope URLs - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
 
       // Update "Volledige steekproef" section with sample items
       console.log('[DOCX] Updating "Volledige steekproef" section...');
@@ -1292,6 +1500,11 @@ export async function GET(
 
           // Update the ZIP
           renderedZip.file('word/document.xml', xmlContent);
+
+          // DEBUG: Check if summary is still there after steekproef update
+          console.log(`[DOCX DEBUG] After steekproef - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
+          // DEBUG: Check if Technologieën is still there after steekproef update
+          console.log(`[DOCX DEBUG] After steekproef - Technologieën present: ${xmlContent.includes('>Technologieën<')}`);
         } else {
           console.log('[DOCX] Could not find end of Volledige steekproef section');
         }
@@ -1419,34 +1632,72 @@ export async function GET(
         const introParagraphEnd = xmlContent.indexOf('</w:p>', browserIntroIndex) + '</w:p>'.length;
 
         // After this paragraph, find the next set of list items (browsers)
-        // Look for the first browser "Google Chrome 145"
-        const firstBrowserIndex = xmlContent.indexOf('Google Chrome 145', introParagraphEnd);
+        // Look for the first browser (search for "Google Chrome" or "Chrome")
+        let firstBrowserIndex = xmlContent.indexOf('Google Chrome', introParagraphEnd);
+        if (firstBrowserIndex === -1) {
+          firstBrowserIndex = xmlContent.indexOf('Chrome', introParagraphEnd);
+        }
 
         if (firstBrowserIndex !== -1) {
           // Find where this browser list starts
           const browserListStart = xmlContent.lastIndexOf('<w:p ', firstBrowserIndex);
 
-          // Find where the browser list ends - look for the next heading or section
-          // The browsers are in a numbered list (numId="4"), so find where that list ends
-          // We'll look for the next paragraph that doesn't have numId="4"
+          // Find where the browser list ends
+          // Strategy: Find the next Kop3 heading (like "Technologieën") FIRST, then use that as the hard limit
+          // This prevents accidentally removing sections that come after the browsers
+
+          // Find "Technologieën" heading position (safety net)
+          let techHeadingPosition = -1;
+          let techSearchStart = introParagraphEnd;
+          while ((techSearchStart = xmlContent.indexOf('>Technologieën<', techSearchStart)) !== -1) {
+            const before = xmlContent.substring(Math.max(0, techSearchStart - 300), techSearchStart);
+            if (before.includes('pStyle w:val="Kop3"')) {
+              techHeadingPosition = xmlContent.lastIndexOf('<w:p ', techSearchStart);
+              console.log('[DOCX DEBUG] Found Technologieën at position', techHeadingPosition);
+              break;
+            }
+            techSearchStart++;
+          }
+
+          // Find where the browser list ends - look for next paragraph WITHOUT numId="4"/"5"
+          // BUT STOP before "Technologieën" heading
           let browserListEnd = firstBrowserIndex;
           let searchPos = browserListEnd;
 
-          // Find all consecutive paragraphs with numId="4"
+          // Find all consecutive paragraphs with numId="4" or "5"
           while (true) {
             const nextPEnd = xmlContent.indexOf('</w:p>', searchPos) + '</w:p>'.length;
-            const nextPStart = xmlContent.indexOf('<w:p ', nextPEnd);
+
+            // Safety check: if we've reached "Technologieën", stop immediately
+            if (techHeadingPosition !== -1 && nextPEnd >= techHeadingPosition) {
+              console.log('[DOCX DEBUG] Stopped before Technologieën heading');
+              break;
+            }
+
+            // Look for next paragraph (with or without space after <w:p)
+            const nextPStart1 = xmlContent.indexOf('<w:p ', nextPEnd);
+            const nextPStart2 = xmlContent.indexOf('<w:p>', nextPEnd);
+            const nextPStart = nextPStart1 !== -1 && (nextPStart2 === -1 || nextPStart1 < nextPStart2)
+              ? nextPStart1
+              : nextPStart2;
 
             if (nextPStart === -1) break;
 
-            // Check if this paragraph has numId="4"
+            // Safety check: if we've reached "Technologieën", stop immediately
+            if (techHeadingPosition !== -1 && nextPStart >= techHeadingPosition) {
+              console.log('[DOCX DEBUG] Stopped before Technologieën heading');
+              break;
+            }
+
+            // Check if this paragraph has numId="4" OR numId="5" (browsers use numId="5" in some templates)
             const nextPContent = xmlContent.substring(nextPStart, nextPStart + 500);
-            if (nextPContent.includes('<w:numId w:val="4"/>')) {
+            if (nextPContent.includes('<w:numId w:val="4"/>') || nextPContent.includes('<w:numId w:val="5"/>')) {
               // This is still part of the browser list
               browserListEnd = xmlContent.indexOf('</w:p>', nextPStart) + '</w:p>'.length;
               searchPos = browserListEnd;
             } else {
               // This is not part of the browser list, we've reached the end
+              console.log('[DOCX DEBUG] Found end of browser list - next paragraph has different numId');
               break;
             }
           }
@@ -1486,6 +1737,12 @@ export async function GET(
             return `<w:p>${pPr}<w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
           }).join('\n');
 
+          // DEBUG: Check what we're about to remove
+          const removedContent = xmlContent.substring(browserListStart, browserListEnd);
+          console.log(`[DOCX DEBUG] Browser list range: ${browserListStart} to ${browserListEnd}`);
+          console.log(`[DOCX DEBUG] Removed content contains Technologieën: ${removedContent.includes('>Technologieën<')}`);
+          console.log(`[DOCX DEBUG] Removed content length: ${removedContent.length} characters`);
+
           // Replace the old browser list with new paragraphs
           xmlContent = xmlContent.substring(0, browserListStart) + newBrowserParagraphs + xmlContent.substring(browserListEnd);
 
@@ -1524,9 +1781,23 @@ export async function GET(
         // Find the end of the heading paragraph
         const techHeadingEnd = xmlContent.indexOf('</w:p>', techHeadingStart) + '</w:p>'.length;
 
-        // Find where the Technologieën section ends (before next Kop2/Kop3/section heading)
+        // Find where the Technologieën section ends (before next Kop2/Kop3/section heading OR before </w:body>)
         const afterTechHeading = xmlContent.substring(techHeadingEnd);
-        const nextHeadingMatch = afterTechHeading.search(/<w:pStyle w:val="Kop[2-3]"/);
+        let nextHeadingMatch = afterTechHeading.search(/<w:pStyle w:val="Kop[2-3]"/);
+
+        // If no next heading, look for </w:body> (end of document) or <w:sectPr (section properties before body end)
+        if (nextHeadingMatch === -1) {
+          const sectPrMatch = afterTechHeading.indexOf('<w:sectPr');
+          const bodyEndMatch = afterTechHeading.indexOf('</w:body>');
+
+          if (sectPrMatch !== -1) {
+            nextHeadingMatch = sectPrMatch;
+            console.log('[DOCX] Technologieën is the last section, ending at <w:sectPr>');
+          } else if (bodyEndMatch !== -1) {
+            nextHeadingMatch = bodyEndMatch;
+            console.log('[DOCX] Technologieën is the last section, ending at </w:body>');
+          }
+        }
 
         if (nextHeadingMatch !== -1) {
           const beforeNextHeading = afterTechHeading.substring(0, nextHeadingMatch);
@@ -1584,8 +1855,16 @@ export async function GET(
             // Replace ENTIRE section content (from after heading to before next heading) with new paragraphs
             xmlContent = xmlContent.substring(0, techHeadingEnd) + newTechParagraphs + xmlContent.substring(techSectionEnd);
 
+            // DEBUG: Check if Technologieën heading is still in xmlContent
+            console.log('[DOCX DEBUG] After technologies replacement - heading present:', xmlContent.includes('>Technologieën<'));
+            console.log('[DOCX DEBUG] techHeadingEnd:', techHeadingEnd);
+            console.log('[DOCX DEBUG] techSectionEnd:', techSectionEnd);
+
             // Update the ZIP
             renderedZip.file('word/document.xml', xmlContent);
+
+            // DEBUG: Check if summary is still there after technologies update
+            console.log(`[DOCX DEBUG] After technologies - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
 
             console.log(`[DOCX] Replaced technologies with ${techLines.length} entries from database`);
           } else {
@@ -1677,6 +1956,10 @@ export async function GET(
       console.log('[DOCX] Could not find relationships file');
     }
 
+    // DISABLED: "Over {teamName}" and "Vragen" sections are now in the template
+    // This code previously added these sections dynamically, but they should be part of the template instead
+    console.log('[DOCX] Skipping "Over {teamName}" and "Vragen" sections (now in template)');
+
     // Update document metadata (title, subject, etc.)
     console.log('[DOCX] Updating document metadata...');
     const corePropsFile = renderedZip.file('docProps/core.xml');
@@ -1719,6 +2002,10 @@ export async function GET(
     }
 
     console.log('[DOCX] Generating Word document buffer...');
+
+    // FINAL STEP: Save xmlContent to ZIP one last time to ensure all changes are included
+    renderedZip.file('word/document.xml', xmlContent);
+    console.log(`[DOCX DEBUG] Final save - summary present: ${xmlContent.includes('Dit onderzoek is door Shift2 uitgevoerd tussen')}`);
 
     // Generate the Word document (use renderedZip if available)
     const docxBuffer = renderedZip.generate({
