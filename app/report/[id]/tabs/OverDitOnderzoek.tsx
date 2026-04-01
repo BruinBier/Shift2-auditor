@@ -266,7 +266,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         .replace(/\{compliesFully\}/g, percentage === 100 ? 'volledig' : 'niet volledig')
         .replace(/\{formsSingularPlural\}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
         .replace(/\{pagesSingularPlural\}/g, totalPages === 1 ? 'processtap' : 'processtappen')
-        .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria');
+        .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria')
+        .replace(/\{standard\}/g, project.researchTypeData?.version || 'WCAG 2.2')
+        .replace(/\{level\}/g, project.researchTypeData?.level || 'A en AA');
 
       return (
         <>
@@ -1191,10 +1193,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Borging en vervolg</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-gray-700 mb-4">
-              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in formulieren die niet zijn onderzocht. Het is daarom raadzaam om alle formulieren te controleren op vergelijkbare patronen en deze structureel te monitoren.
+              Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen op pagina's die niet zijn onderzocht. Het is daarom raadzaam om de volledige website te controleren op vergelijkbare patronen en deze structureel te monitoren.
             </p>
             <p className="text-gray-700">
-              Daarnaast kunnen wijzigingen in de content van formulieren of in het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling van de formulieren blijven daarom noodzakelijk.
+              Daarnaast kunnen wijzigingen in content of het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.
             </p>
           </div>
         </section>
