@@ -4,6 +4,7 @@ import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import fs from 'fs';
 import path from 'path';
+import { marked } from 'marked';
 import { calculateReportStats } from '@/lib/report-calculations';
 import { generateFindingsSectionXml } from '@/lib/generate-findings-xml';
 import { generateTocXml, defaultFormulierenTocEntries } from '@/lib/generate-toc-xml';
@@ -105,6 +106,117 @@ function generateParagraphWithTitleAndUrl(title: string, url: string, hyperlinkM
   const externalLinkIcon = ' ↗';
 
   return `<w:p><w:pPr></w:pPr><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t xml:space="preserve">${escapeXml(title)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(url)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve">${externalLinkIcon}</w:t></w:r></w:p>`;
+}
+
+/**
+ * Decode HTML entities to regular characters
+ */
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
+/**
+ * Convert simple HTML (from markdown) to Word XML paragraphs
+ * Handles: <p>, <ul>, <ol>, <li>, <a>, <strong>, <em>, <h3>, <h4>
+ */
+function convertHtmlToWordXml(html: string, hyperlinkManager: HyperlinkManager): string {
+  if (!html || html.trim() === '') return '';
+
+  let xml = '';
+
+  // Strip outer wrapper if present
+  let content = html.trim();
+
+  // Split by paragraph tags
+  const paragraphs = content.split(/<\/?p[^>]*>/i).filter(p => p.trim());
+
+  for (let para of paragraphs) {
+    para = para.trim();
+    if (!para) continue;
+
+    // Check if this is a heading
+    const h3Match = para.match(/<h3[^>]*>(.*?)<\/h3>/i);
+    const h4Match = para.match(/<h4[^>]*>(.*?)<\/h4>/i);
+
+    if (h3Match) {
+      const text = decodeHtmlEntities(h3Match[1].replace(/<[^>]+>/g, '')).trim();
+      xml += `<w:p><w:pPr><w:pStyle w:val="Kop3"/></w:pPr><w:r><w:t>${escapeXml(text)}</w:t></w:r></w:p>`;
+      continue;
+    }
+
+    if (h4Match) {
+      const text = decodeHtmlEntities(h4Match[1].replace(/<[^>]+>/g, '')).trim();
+      xml += `<w:p><w:pPr><w:pStyle w:val="Kop4"/></w:pPr><w:r><w:t>${escapeXml(text)}</w:t></w:r></w:p>`;
+      continue;
+    }
+
+    // Check if this is a list
+    const ulMatch = para.match(/<ul[^>]*>(.*?)<\/ul>/is);
+    const olMatch = para.match(/<ol[^>]*>(.*?)<\/ol>/is);
+
+    if (ulMatch || olMatch) {
+      const listContent = ulMatch ? ulMatch[1] : (olMatch ? olMatch[1] : '');
+      const listItems = listContent.match(/<li[^>]*>(.*?)<\/li>/gis);
+
+      if (listItems) {
+        for (const li of listItems) {
+          const itemContent = li.replace(/<\/?li[^>]*>/gi, '').trim();
+
+          // Check for links in list item
+          const linkMatch = itemContent.match(/<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/i);
+          if (linkMatch) {
+            const url = linkMatch[1];
+            const linkText = decodeHtmlEntities(linkMatch[2].replace(/<[^>]+>/g, '')).trim();
+            const relId = hyperlinkManager.getRelId(url);
+            const beforeLink = decodeHtmlEntities(itemContent.substring(0, itemContent.indexOf('<a')).replace(/<[^>]+>/g, '')).trim();
+            const afterLink = decodeHtmlEntities(itemContent.substring(itemContent.indexOf('</a>') + 4).replace(/<[^>]+>/g, '')).trim();
+
+            xml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr>`;
+            if (beforeLink) xml += `<w:r><w:t xml:space="preserve">${escapeXml(beforeLink)} </w:t></w:r>`;
+            xml += `<w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(linkText)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> ↗</w:t></w:r>`;
+            if (afterLink) xml += `<w:r><w:t xml:space="preserve"> ${escapeXml(afterLink)}</w:t></w:r>`;
+            xml += `</w:p>`;
+          } else {
+            // Plain list item
+            const text = decodeHtmlEntities(itemContent.replace(/<[^>]+>/g, '')).trim();
+            xml += `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:r><w:t>${escapeXml(text)}</w:t></w:r></w:p>`;
+          }
+        }
+      }
+      continue;
+    }
+
+    // Regular paragraph - check for inline links
+    const linkMatch = para.match(/<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/i);
+    if (linkMatch) {
+      const url = linkMatch[1];
+      const linkText = decodeHtmlEntities(linkMatch[2].replace(/<[^>]+>/g, '')).trim();
+      const relId = hyperlinkManager.getRelId(url);
+      const beforeLink = decodeHtmlEntities(para.substring(0, para.indexOf('<a')).replace(/<[^>]+>/g, '')).trim();
+      const afterLink = decodeHtmlEntities(para.substring(para.indexOf('</a>') + 4).replace(/<[^>]+>/g, '')).trim();
+
+      xml += `<w:p><w:pPr></w:pPr>`;
+      if (beforeLink) xml += `<w:r><w:t xml:space="preserve">${escapeXml(beforeLink)} </w:t></w:r>`;
+      xml += `<w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(linkText)}</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> ↗</w:t></w:r>`;
+      if (afterLink) xml += `<w:r><w:t xml:space="preserve"> ${escapeXml(afterLink)}</w:t></w:r>`;
+      xml += `</w:p>`;
+    } else {
+      // Plain paragraph
+      const text = decodeHtmlEntities(para.replace(/<[^>]+>/g, '')).trim();
+      if (text) {
+        xml += `<w:p><w:pPr></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p>`;
+      }
+    }
+  }
+
+  return xml;
 }
 
 export async function GET(
@@ -486,13 +598,13 @@ export async function GET(
 
       aboutResearchText: project.aboutResearchText || `Voor dit project is een onderzoek uitgevoerd naar de toegankelijkheid van de content, om vast te stellen in hoeverre deze voldoet aan ${project.standard} niveau ${project.level} (EN 301 549).`,
       scopeInfo: project.scopeInfo || `Dit onderzoek heeft betrekking op de content die door de organisatie via het beheersysteem kan worden ingevoerd of aangepast.`,
-      sampleInfo: project.sampleInfo || `Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie: https://www.digitoegankelijk.nl/aanpak/toegankelijkheidsonderzoek.`,
+      sampleInfo: project.sampleInfo || `Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie: https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek`,
       conclusionText: project.conclusionText || '',
 
       // Additional text sections with defaults
       managementSummaryAdvice: 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces.',
 
-      validityText: 'De geldigheid van dit onderzoeksrapport bedraagt maximaal drie jaar. Bij substantiële wijzigingen in de content of het publicatieproces adviseren wij een aanvullend of nieuw onderzoek uit te laten voeren.',
+      validityText: 'De geldigheid van dit onderzoeksrapport bedraagt drie jaar. Bij substantiële wijzigingen in de content of het publicatieproces adviseren wij een aanvullend of nieuw onderzoek uit te laten voeren.',
 
       criteriaCountText: `Bij dit onderzoek zijn succescriteria van ${project.standard} niveau ${project.level} beoordeeld.`,
 
@@ -542,7 +654,7 @@ export async function GET(
         console.log('[DOCX DEBUG] uniqueTechs after Set:', uniqueTechs);
         const joined = uniqueTechs.join('\n');
         console.log('[DOCX DEBUG] joined with newlines:', joined);
-        return project.technologies.length > 0 ? joined : 'DOM\nHTML\nCSS';
+        return uniqueTechs.length > 0 ? joined : 'DOM\nHTML\nCSS';
       })(),
 
       // Dynamic criteria assessments for table
@@ -1370,6 +1482,33 @@ export async function GET(
             console.log('[DOCX] No out-of-scope URLs, skipping "Buiten de scope" section');
           }
 
+          // Add "Overige scope informatie" section if scopeInfo is available
+          if (project.scopeInfo && project.scopeInfo.trim() !== '') {
+            console.log('[DOCX] Adding "Overige scope informatie" section...');
+
+            // Add spacing before heading (only if "Buiten de scope" section was NOT added)
+            if (templateData.scopeUrlsOutOfScope.length === 0) {
+              updatedScopeXml += '<w:p><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr></w:p>';
+            }
+
+            // Add "Overige scope informatie" heading (Kop4) - but only if there's no "Buiten de scope" already
+            // If "Buiten de scope" was added, add spacing before this heading
+            if (templateData.scopeUrlsOutOfScope.length > 0) {
+              updatedScopeXml += '<w:p><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr></w:p>';
+            }
+
+            updatedScopeXml += '<w:p w14:paraId="' + Math.random().toString(36).substring(2, 10).toUpperCase() + '" w14:textId="77777777" w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:pStyle w:val="Kop4"/></w:pPr><w:r><w:t>Overige scope informatie</w:t></w:r></w:p>';
+
+            // Convert scopeInfo (markdown/plain text) to HTML first, then to Word XML
+            const scopeInfoHtml = marked.parse(project.scopeInfo);
+            const scopeInfoXml = convertHtmlToWordXml(scopeInfoHtml as string, hyperlinkManager);
+            updatedScopeXml += scopeInfoXml;
+
+            console.log('[DOCX] Added "Overige scope informatie" section');
+          } else {
+            console.log('[DOCX] No scopeInfo available, skipping "Overige scope informatie" section');
+          }
+
           // Complete the updated XML
           const beforeUpdate = xmlContent;
           xmlContent = updatedScopeXml + beforeUpdate.substring(scopeSectionEnd);
@@ -1805,7 +1944,9 @@ export async function GET(
             beforeNextHeading.lastIndexOf('<w:p '),
             beforeNextHeading.lastIndexOf('<w:p>')
           );
-          const techSectionEnd = techHeadingEnd + lastPStart;
+          // Find the END of the last paragraph, not the start
+          const lastPEnd = beforeNextHeading.indexOf('</w:p>', lastPStart);
+          const techSectionEnd = techHeadingEnd + (lastPEnd !== -1 ? lastPEnd + '</w:p>'.length : lastPStart);
 
           console.log('[DOCX] Technologieën section ends at index', techSectionEnd);
 

@@ -194,6 +194,15 @@ function generateFindingXml(finding: Finding, hyperlinkManager: HyperlinkManager
 }
 
 /**
+ * Convert WCAG Understanding URL to Dutch translation URL
+ */
+function convertToNlUrl(url: string): string {
+  return url.replace(/^https:\/\/www\.w3\.org\/WAI\/WCAG22\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
+    `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
+  );
+}
+
+/**
  * Generate XML for one criterion with its findings
  */
 function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, hyperlinkManager: HyperlinkManager, resultText: string = 'Voldoet niet', findingLabel: string = 'Bevinding'): string {
@@ -206,14 +215,18 @@ function generateCriterionWithFindingsXml(criterion: CriterionWithFindings, hype
   // Add spacing after this paragraph: after=240 (12pt) for more space before the gray "Resultaat" box
   if (criterion.description && criterion.understandingUrl) {
     // Combined paragraph with description, line break, and clickable hyperlink
-    const relId = hyperlinkManager.getRelId(criterion.understandingUrl);
+    // Convert URL to Dutch translation
+    const nlUrl = convertToNlUrl(criterion.understandingUrl);
+    const relId = hyperlinkManager.getRelId(nlUrl);
     xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r><w:r><w:br/></w:r><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:hyperlink></w:p>`;
   } else if (criterion.description) {
     // Just description if no URL - also add spacing
     xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(criterion.description)}</w:t></w:r></w:p>`;
   } else if (criterion.understandingUrl) {
     // Just clickable hyperlink if no description - also add spacing
-    const relId = hyperlinkManager.getRelId(criterion.understandingUrl);
+    // Convert URL to Dutch translation
+    const nlUrl = convertToNlUrl(criterion.understandingUrl);
+    const relId = hyperlinkManager.getRelId(nlUrl);
     xml += `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr><w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>${escapeXml(criterion.code)} ${escapeXml(criterion.title)}</w:t></w:r></w:hyperlink></w:p>`;
   }
 
@@ -250,7 +263,7 @@ export function generateFindingsSectionXml(
   // Intro paragraph (use default intro for Bevindingen if not provided)
   const defaultIntro = sectionTitle === 'Bevindingen'
     ? 'Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen, gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.'
-    : 'Hieronder worden de opmerkingen beschreven. Per opmerking is de locatie en een beschrijving van het probleem opgenomen, gevolgd door een advies.';
+    : 'De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.';
 
   xml += generateParagraph(introText || defaultIntro);
 

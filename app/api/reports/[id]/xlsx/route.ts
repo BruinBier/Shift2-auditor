@@ -41,6 +41,14 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    // Fetch research type data separately
+    let researchTypeData = null;
+    if (project.researchType) {
+      researchTypeData = await prisma.researchType.findUnique({
+        where: { name: project.researchType },
+      });
+    }
+
     // Group findings by hierarchy (same as report page)
     const groupedFindings = await groupFindingsByHierarchy(project as any);
 
@@ -127,24 +135,33 @@ export async function GET(
       fgColor: { argb: 'FF290047' }, // Shift2 purple
     };
 
+    // Determine if this is a "website" template (no "Stap X" prefix) or "formulieren" template (with "Stap X" prefix)
+    const isWebsiteTemplate = researchTypeData?.type === 'website';
+
     // Add open findings data with per-criterion numbering from report page
     for (const item of openFindings) {
       const finding = item.finding;
       const criterionCode = item.criterionCode;
       const findingNumber = item.indexInCriterion;
 
-      // Format URLs as "Stap X - Title\nURL" (or just "Title\nURL" if title already starts with "Stap")
+      // Format URLs based on template type
       const formattedUrls = finding.occurrences
         .map((occ: any, idx: number) => {
           const title = occ.sampleItem?.title || 'Onbekend';
           const url = occ.sampleItem?.url || '';
-          // Check if title already starts with "Stap"
-          const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
-          return url ? `${formattedTitle}\n${url}` : formattedTitle;
+
+          if (isWebsiteTemplate) {
+            // Website template: just show title and URL (no "Stap X" prefix)
+            return url ? `${title}\n${url}` : title;
+          } else {
+            // Formulieren template: add "Stap X" prefix if not already present
+            const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
+            return url ? `${formattedTitle}\n${url}` : formattedTitle;
+          }
         })
         .join('\n\n');
 
-      findingsSheet.addRow({
+      const row = findingsSheet.addRow({
         code: `Bevinding ${findingNumber} (SC ${criterionCode})`,
         criterion: `${criterionCode} ${finding.wcagCriterion.titleNl}`,
         description: stripHtml(finding.description),
@@ -155,6 +172,47 @@ export async function GET(
         remarks: '', // Empty for manual input
         actions: '', // Empty for manual input
       });
+
+      // Make URLs clickable hyperlinks with blue underlined style for both templates
+      const urlCell = row.getCell('urls');
+      const richText: any[] = [];
+
+      finding.occurrences.forEach((occ: any, idx: number) => {
+        const title = occ.sampleItem?.title || 'Onbekend';
+        const url = occ.sampleItem?.url || '';
+
+        if (url) {
+          // Add title as plain text (with "Stap X" prefix for formulieren template)
+          if (idx > 0) richText.push({ text: '\n\n' });
+
+          if (isWebsiteTemplate) {
+            richText.push({ text: title + '\n' });
+          } else {
+            // Formulieren template: add "Stap X" prefix if not already present
+            const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
+            richText.push({ text: formattedTitle + '\n' });
+          }
+
+          // Add URL as hyperlink with blue underlined style
+          richText.push({
+            text: url,
+            hyperlink: url,
+            font: { color: { argb: 'FF0563C1' }, underline: true }
+          });
+        } else {
+          if (idx > 0) richText.push({ text: '\n\n' });
+          if (isWebsiteTemplate) {
+            richText.push({ text: title });
+          } else {
+            const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
+            richText.push({ text: formattedTitle });
+          }
+        }
+      });
+
+      if (richText.length > 0) {
+        urlCell.value = { richText };
+      }
     }
 
     // Enable text wrapping for all cells
@@ -193,18 +251,24 @@ export async function GET(
       const criterionCode = item.criterionCode;
       const remarkNumber = item.indexInCriterion;
 
-      // Format URLs as "Stap X - Title\nURL" (or just "Title\nURL" if title already starts with "Stap")
+      // Format URLs based on template type (same as findings above)
       const formattedUrls = remark.occurrences
         .map((occ: any, idx: number) => {
           const title = occ.sampleItem?.title || 'Onbekend';
           const url = occ.sampleItem?.url || '';
-          // Check if title already starts with "Stap"
-          const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
-          return url ? `${formattedTitle}\n${url}` : formattedTitle;
+
+          if (isWebsiteTemplate) {
+            // Website template: just show title and URL (no "Stap X" prefix)
+            return url ? `${title}\n${url}` : title;
+          } else {
+            // Formulieren template: add "Stap X" prefix if not already present
+            const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
+            return url ? `${formattedTitle}\n${url}` : formattedTitle;
+          }
         })
         .join('\n\n');
 
-      remarksSheet.addRow({
+      const row = remarksSheet.addRow({
         code: `Opmerking ${remarkNumber} (SC ${criterionCode})`,
         criterion: `${criterionCode} ${remark.wcagCriterion.titleNl}`,
         description: stripHtml(remark.description),
@@ -212,6 +276,47 @@ export async function GET(
         urls: formattedUrls,
         advice: stripHtml(remark.advice),
       });
+
+      // Make URLs clickable hyperlinks with blue underlined style for both templates
+      const urlCell = row.getCell('urls');
+      const richText: any[] = [];
+
+      remark.occurrences.forEach((occ: any, idx: number) => {
+        const title = occ.sampleItem?.title || 'Onbekend';
+        const url = occ.sampleItem?.url || '';
+
+        if (url) {
+          // Add title as plain text (with "Stap X" prefix for formulieren template)
+          if (idx > 0) richText.push({ text: '\n\n' });
+
+          if (isWebsiteTemplate) {
+            richText.push({ text: title + '\n' });
+          } else {
+            // Formulieren template: add "Stap X" prefix if not already present
+            const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
+            richText.push({ text: formattedTitle + '\n' });
+          }
+
+          // Add URL as hyperlink with blue underlined style
+          richText.push({
+            text: url,
+            hyperlink: url,
+            font: { color: { argb: 'FF0563C1' }, underline: true }
+          });
+        } else {
+          if (idx > 0) richText.push({ text: '\n\n' });
+          if (isWebsiteTemplate) {
+            richText.push({ text: title });
+          } else {
+            const formattedTitle = title.toLowerCase().startsWith('stap') ? title : `Stap ${idx + 1} - ${title}`;
+            richText.push({ text: formattedTitle });
+          }
+        }
+      });
+
+      if (richText.length > 0) {
+        urlCell.value = { richText };
+      }
     }
 
     // Enable text wrapping for remarks

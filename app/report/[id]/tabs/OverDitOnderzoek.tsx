@@ -882,7 +882,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                         <br />
                         {criterion.understandingUrl && (
                           <a
-                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
+                            href={criterion.understandingUrl.replace(/^https:\/\/www\.w3\.org\/WAI\/WCAG22\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
                               `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
                             )}
                             target="_blank"
@@ -1048,7 +1048,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                         <br />
                         {criterion.understandingUrl && (
                           <a
-                            href={criterion.understandingUrl.replace(/\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
+                            href={criterion.understandingUrl.replace(/^https:\/\/www\.w3\.org\/WAI\/WCAG22\/Understanding\/(.+?)(?:\.html)?$/, (_match: string, slug: string) =>
                               `https://www.w3.org/Translations/WCAG22-nl/#${slug}`
                             )}
                             target="_blank"
@@ -1370,12 +1370,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                     <p className="text-sm text-gray-700 mb-4">
                       Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie:{' '}
                       <a
-                        href="https://www.digitoegankelijk.nl/aanpak/toegankelijkheidsonderzoek"
+                        href="https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline inline-flex items-center gap-1"
                       >
-                        https://www.digitoegankelijk.nl/aanpak/toegankelijkheidsonderzoek
+                        https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek
                         <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
