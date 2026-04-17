@@ -25,6 +25,47 @@ npm run backup             # Export all data to JSON
 npm run restore            # Import data from JSON backup
 ```
 
+## WCAG-checklists (referentiemateriaal)
+
+Bij het uitvoeren van WCAG-audits: gebruik de checklists in `wcag-checklists/`. Start met `wcag-checklists/Project_Instructie_WCAG_Audit.md` voor de werkwijze en het bevindingformat. Per SC is een `Checklist_SC_X_X_X.md` beschikbaar, voor sommige SC's ook `Richtlijnen_Grensgevallen_SC_X_X_X.md`. Gebruik `Voorbeelden_Bevindingen.md` voor schrijfstijl. Zie `wcag-checklists/README.md` voor het volledige overzicht.
+
+## Audit CLI (for Claude Code use)
+
+When the user asks you to audit a website and log findings, use `npm run cli` instead of the UI. The CLI (`scripts/audit-cli.ts`) calls the Next.js API, so the dev server must be running. All commands output JSON to stdout so you can parse results and chain calls.
+
+```bash
+# Read
+npm run cli -- list-projects
+npm run cli -- get-project <projectId>            # scope URLs, sample items, findings, assessments
+npm run cli -- list-criteria                       # all WCAG criterion IDs + codes
+npm run cli -- search-quick-findings <keyword>     # reuse finding templates
+
+# Write
+npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured
+npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --sample-items=<sampleItemId1>,<sampleItemId2>
+npm run cli -- create-finding-from-quick <projectId> <quickFindingId> --sample-items=<sampleItemId>
+npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=failed
+```
+
+**Typical flow for "check site X, log issues":**
+1. `list-projects` → find the target project
+2. `get-project <id>` → read existing context (don't duplicate findings)
+3. `create-sample-item` for each page you review → get `sampleItemId`s
+4. `create-finding` with the `sampleItemId`s → auto-sets criterion assessment to `failed`
+
+**Valid enum values:**
+- `--impact`: `klein` | `matig` | `serieus` | `kritiek` | `onbekend`
+- `--responsibility`: `redacteur` | `ontwikkelaar` | `ontwerper` | `onbekend`
+- `--status` (finding): `open` | `published` | `resolved` (default `open`)
+- `--status` (assessment): `passed` | `failed` | `not_present` | `unknown` | `not_tested`
+- `--type` (sample): `structured` | `random` | `pdf`
+
+**Notes:**
+- Finding codes are auto-generated as `B001`, `B002`, ... per project — don't pass one.
+- Linking uses `SampleItem + FindingOccurrence` (the manual/UI path), not `ScopeUrl + FindingUrl` (crawler path).
+- Creating a finding with `status=open` auto-upserts the criterion's assessment to `failed` — this is existing API behavior.
+- Override base URL if needed: `AUDIT_CLI_BASE_URL=http://localhost:3001 npm run cli -- ...`
+
 ## Database & Prisma Workflow
 
 ### Critical User Preferences
