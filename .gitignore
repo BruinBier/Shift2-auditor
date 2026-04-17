@@ -37,9 +37,6 @@ next-env.d.ts
 # visual snapshots from crawler tests
 public/__visual-snapshots__/
 
-# database backups
-backups/
-
 # temporary test files
 temp-*.txt
 test-*.html
@@ -49,60 +46,4 @@ nul
 prisma/migrations/*_restore_*
 prisma/migrations/*_temp_*
 
-# Debug and test files from Word template development
-debug-*.txt
-debug-*.json
-*-debug.txt
-*-debug.json
-criteria-context-debug.json
-135-row-debug.txt
 
-# Temporary XML files from template processing
-bevindingen-*.xml
-onderzoek-scores-*.xml
-table-structure.xml
-template-content.txt
-template-document-xml.txt
-template-styles.xml
-heading-template.xml
-paragraph-template.xml
-scores-template-row.xml
-
-# Test/debug scripts (not production code)
-scripts/debug-*.ts
-scripts/check-*.ts
-scripts/inspect-*.ts
-scripts/find-*.ts
-scripts/test-*.ts
-scripts/verify-*.ts
-scripts/show-*.ts
-scripts/extract-*.ts
-scripts/remove-*.ts
-scripts/fix-*.ts
-scripts/update-*.ts
-scripts/add-*.ts
-scripts/create-*.ts
-scripts/careful-*.ts
-scripts/force-*.ts
-scripts/improve-*.ts
-scripts/increase-*.ts
-scripts/list-*.ts
-scripts/make-*.ts
-scripts/prepare-*.ts
-scripts/restore-*.ts
-scripts/analyze-*.ts
-scripts/count-*.ts
-scripts/get-*.ts
-scripts/change-*.ts
-scripts/clean-*.ts
-scripts/final-*.ts
-scripts/generate-test-*.ts
-
-# Template backup files (too many during development)
-templates/**/*BACKUP*.docx
-templates/**/*backup*.docx
-
-# Test DOCX output files
-test-*.docx
-*-output.docx
-templates/formulieren/temp_docx/

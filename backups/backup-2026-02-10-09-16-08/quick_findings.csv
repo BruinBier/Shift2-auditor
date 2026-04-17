@@ -1,0 +1,143 @@
+id,title,description,advice,criterionCode,keywords,crawler,crawlerTestId,status,impact,responsibility,createdAt,updatedAt
+60f79d7a-49a6-45ed-92ee-96ff9697f0b4,"Tekstalternatief met ""Afbeelding van...""","Op pagina (URL) staan afbeeldingen met een tekstalternatief dat begint met woorden als ""Afbeelding van"" of ""Foto van"". Voor mensen die een schermlezer of brailleleesregel gebruiken is dit niet nodig. Hulpsoftware geeft namelijk al aan dat het om een afbeelding gaat. Door deze extra woorden wordt de informatie langer en minder prettig om te beluisteren of te lezen.","Laat in het tekstalternatief woorden als ""afbeelding"", ""foto"" of ""plaatje"" weg en beschrijf direct de inhoud of functie van de afbeelding.
+
+Voorbeeld:
+
+```html
+<img src=""team.jpg"" alt=""Projectteam in overleg aan een tafel"">
+```
+
+In specifieke situaties is het wel zinvol om het type afbeelding te noemen. Doe dit alleen als het verschil belangrijk is voor het begrip.
+
+Voorbeelden:
+
+• Een schets van een straatbeeld in plaats van een foto van die straat.
+• Een karikatuur van een persoon in plaats van een foto van die persoon.
+
+Voorbeeld:
+
+```html
+<img src=""straat-schets.png"" alt=""Schets van een druk stadsplein met mensen"">
+```",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+2b852e26-0837-4d18-b562-01fdd10cfa52,PDF - Afbeeldingen niet-getagde PDF,"Het volgende PDF-document is niet getagd. Hierdoor zijn informatieve afbeeldingen niet gemarkeerd als `<Figure>` en hebben zij geen tekstalternatief. Mensen die blind zijn en een schermlezer gebruiken krijgen deze informatie daardoor niet aangeboden. Omdat het document niet is getagd, is niet vast te stellen of afbeeldingen correct zijn verwerkt. Hierdoor wordt dit nu niet afgekeurd. Zodra het document wel wordt getagd, kan blijken dat informatieve afbeeldingen ontbreken of onjuist zijn getagd.","Zorg dat de PDF wordt voorzien van een volledige tags-structuur en maak daarbij onderscheid tussen informatieve en decoratieve afbeeldingen.
+
+- Tag informatieve afbeeldingen als `<Figure>` en geef deze van een kort en beschrijvend tekstalternatief dat de functie of inhoud van de afbeelding samenvat.
+- Markeer decoratieve afbeeldingen als artefact zodat deze worden genegeerd door schermlezers.",1.1.1,,false,,,serieus,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+5ac91caf-1623-46ad-be31-ee4bc538f1e0,"Alt met bestandsnaam (min-tekens, underscore)","Op pagina URL staat een afbeelding waarvan het tekstalternatief bestaat uit een bestandsnaam of technische waarde, zoals img_398.jpg of landschap-met-bomen. Dit tekstalternatief bevat underscores of mintekens in plaats van gewone spaties. Voor mensen die een schermlezer gebruiken wordt dit letterlijk voorgelezen, waardoor de tekst moeilijk te begrijpen is en de inhoud van de afbeelding niet duidelijk wordt.","Vervang het technische tekstalternatief door een korte en duidelijke beschrijving van de afbeelding. Gebruik gewone woorden zonder underscores of mintekens, zodat schermlezers het goed kunnen uitspreken.
+
+```html
+<img src=""landschap-met-bomen.jpg"" alt=""Landschap met bomen"">
+```
+
+Zorg altijd dat het tekstalternatief de inhoud kort samenvat en goed leesbaar is voor iedereen.",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+e1c7c682-7f39-4969-a5cb-d406cf1d939f,Te lang alt-attribuut,"Op pagina URL staat een afbeelding met een erg lang tekstalternatief. Het tekstalternatief bestaat uit één lange waarde in het alt-attribuut. Dit is lastig voor mensen die een schermlezer gebruiken, omdat de informatie zonder structuur wordt voorgelezen. Hierdoor is het moeilijk om de inhoud te begrijpen, vooral als de afbeelding veel details bevat.","Gebruik voor (complexe) afbeeldingen geen lang tekstalternatief in het alt-attribuut. Beperk het alt-attribuut tot een korte beschrijving van de afbeelding. Het advies is een tekstalternatief van maximaal 75 tekens. Plaats de uitgebreide uitleg ergens anders op de pagina, bijvoorbeeld in een aparte alinea of via een toegankelijke link naar een langere beschrijving.
+
+Voorbeeld:
+
+```html
+<img src=""diagram.png"" alt=""Overzicht van de organisatiestructuur. Zie beschrijving onder afbeelding."">
+<p id=""diagram-beschrijving"">
+  Beschrijving van het diagram: de organisatie bestaat uit drie afdelingen: Communicatie, Ontwikkeling en Onderzoek. 
+  Onder elke afdeling vallen twee teams, die samen rapporteren aan het managementteam.
+</p>
+```
+
+Of, als de uitgebreide beschrijving elders staat:
+
+```html
+<img src=""diagram.png"" alt=""Overzicht van de organisatiestructuur. Zie pagina met toelichting."">
+```
+
+Zorg ervoor dat de beknopte tekst in het alt-attribuut het doel van de afbeelding samenvat. Zo blijft de afbeelding begrijpelijk voor gebruikers van schermlezers en voldoet de pagina aan WCAG 1.1.1.
+
+Dit probleem komt ook voor op pagina URL.",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+5185fe03-f368-47f8-90b9-67fb1f456cc0,Decoratieve afbeelding zonder lege alt-tekst,"Op pagina URL is één of meerdere decoratieve afbeeldingen voorzien van een tekstalternatief via het alt-attribuut. Hierdoor worden deze afbeeldingen ook gepresenteerd aan bezoekers die gebruik maken van een schermlezer, terwijl de afbeeldingen in dit geval geen inhoudelijke informatie toevoegen aan de pagina. Dit kan leiden tot onnodige onderbrekingen tijdens het navigeren en bemoeilijkt het snel scannen van de relevante inhoud.","Zorg dat decoratieve afbeeldingen worden genegeerd door hulpsoftware. Dit kan door een leeg tekstalternatief te gebruiken (alt="""") of de afbeelding op te maken als achtergrondafbeelding via CSS. Zo blijft de pagina overzichtelijk voor gebruikers van een schermlezer, terwijl het visuele ontwerp behouden blijft.",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+5e3f22d1-5125-4ce4-91f5-bda331dcbc3e,PDF - Decoratieve afbeelding is geen artefact,In het PDF-document DOCUMENT bevinden zich decoratieve afbeeldingen die getagd zijn als <Figure>. Hierdoor wordt de afbeelding gepresenteerd door hulpsoftware terwijl dit niet de bedoeling is.,"Afbeeldingen in PDF's kunnen als artefact worden gemarkeerd, hierdoor worden ze niet meer gepresenteerd door hulpsoftware. Dit kan in nieuwere versies van Microsoft Word worden gedaan door de afbeelding te markeren als decoratief. In Adobe InDesign kan een afbeelding ook als decoratief worden gemarkeerd. Als dit niet is gebeurd, kan de auteur via Adobe Acrobat Pro de afbeelding als achtergrond of <Artefact> markeren. Dan verdwijnt de afbeelding uit de tags.",1.1.1,,false,,,matig,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+df3dc350-8109-4175-82d1-a5407c7d025a,Decoratieve SVG,"Op pagina URL staan decoratieve svg's. Deze zijn niet verborgen voor hulpsoftware. Dit keuren we niet af, maar het is wel beter om de elementen te verbergen. Zo voorkom je dat er overbodige of onduidelijke informatie wordt gepresenteerd aan gebruikers van hulpsoftware.","Verberg decoratieve SVG's voor hulpsoftware zodat ze niet onnodig worden voorgelezen. Dit kan door aria-hidden=""true"" toe te voegen aan het <svg>-element.
+
+```html
+<svg aria-hidden=""true"" ...>
+  <!-- decoratieve inhoud -->
+</svg>
+```
+
+Zorg er ook voor dat de SVG geen onnodige title- of desc-elementen bevat. Zo blijft de ervaring helder voor gebruikers van schermlezers.",1.1.1,,false,,,klein,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+9968fed6-52ee-4eb4-9380-62dd0e95df0a,Op tijd gebaseerde media mist tekstalternatief,Op pagina URL bevindt zicht een video waarvoor een onvoldoende tekstalternatief beschikbaar is. Voor de ziende persoon is het snel duidelijk dat er een video staat en waar deze video over gaat. Deze informatie moet ook beschikbaar zijn voor bezoekers die afhankelijk zijn van hulpsoftware zoals een schermlezer of braille.,"Zorg dat het tekstalternatief van de video duidelijk maakt dat het om een video gaat en wat de inhoud ervan is. Beschrijf kort het onderwerp of doel van de video, zodat ook gebruikers van schermlezers of braille een goed beeld krijgen van de context.
+
+Plaats bij voorkeur een korte inleidende tekst direct boven de video, bijvoorbeeld:
+
+Video: uitleg over het maken van toegankelijke documenten.
+
+Vul dit eventueel aan met een aria-label of title-attribuut bij de videospeler of het iframe waarin de video staat.
+
+Voorbeeld:
+
+```html
+<p>In onderstaande video leer je meer over het maken van toegankelijke documenten.</p>
+<iframe src=""video.mp4"" title=""Video: Toegankelijke documenten maken""></iframe>
+```
+
+Of met een eigen videospeler:
+
+```html
+<video controls aria-label=""Video: Toegankelijke documenten maken"">
+  <source src=""video.mp4"" type=""video/mp4"">
+</video>
+```
+
+Combineer waar mogelijk beide vormen: een tekstuele omschrijving boven de video en een toegankelijke naam van de videospeler. Zo wordt de informatie begrijpelijk voor alle gebruikers.",1.1.1,,false,,,matig,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+a4b0b27c-638e-4412-a5e2-30670a7b1e42,Afbeelding als link met dubbel tekstalternatief door title en alt,Op pagina URL staat een klikbare afbeelding. De afbeelding staat in een link. Zowel de link als de afbeelding hebben informatie die ervoor zorgen dat ze waarneembaar zijn voor gebruikers van hulpsoftware. Op de link staat een title-attribuut. Op de afbeelding een alt-attribuut. Beiden geven nu dezelfde (of vergelijkbare) informatie. Hierdoor wordt deze informatie dubbel gepresenteerd door hulpsoftware.,"Het advies is om het alt-attribuut te gebruiken voor het tekstalternatief van de afbeelding en alleen het title-attribuut te gebruiken om meer informatie te geven over het linkdoel. Bijvoorbeeld ""Opent in een nieuw venster"".",1.1.1,,false,,,klein,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+d2a07730-7160-49f5-8044-81acda421a70,Tekstalternatief height/width 0,"Op de pagina URL bevinden zich afbeeldingen waarvan het tekstalternatief verborgen wordt door het gebruik van height:0;, width:0; of font-size:0;. De presentatie van hulpsoftware verschilt bij het gebruik hiervan, waardoor het tekstalternatief bij sommigen wel en bij anderen niet wordt gepresenteerd.","Verwijder height:0;, width:0; of font-size:0; van de tekstalternatieven om deze gelijkwaardig beschikbaar te maken voor hulpsoftware. Tekst die visueel verborgen is, maar voor hulpsoftware wel beschikbaar moet zijn, moet op een andere manier verborgen worden. Dit kan bijvoorbeeld met een .sr-only class in CSS of met de clip-methode.",1.1.1,,false,,,klein,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+b687d902-70c0-4de3-ac2d-5bb28cbf10f1,Functioneel icoon zonder toegankelijke naam,Een icoon dat een functie heeft (zoals VOORBEELD) bevat geen toegankelijke naam of label. Zonder toegankelijke naam blijft de actie onduidelijk voor screenreadergebruikers.,"Voeg een toegankelijke naam toe met aria-label, aria-labelledby of een bijschrift dat de functie beschrijft (bijv. ""VOORBEELD"").",1.1.1,,false,,,klein,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+36d698af-6a3b-4db1-b5f0-69d35121b151,Rijksoverheid lint,"Op alle pagina's staat het beeldmerk (lint) van de Rijksoverheid, te herkennen aan een donkerblauw balkje met daarin een ""wapen"". Het gebruik van dit lint toont aan dat deze website en de organisatie onderdeel is van de Rijksoverheid. Het lint is daarom informatief. Er is nu geen tekstalternatief voor deze informatie beschikbaar.","Voeg het woord ""Rijksoverheid"" toe aan het tekstalternatief.",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+cd389c62-cc5d-49ba-a3e3-d5c1c6821343,Icoon extern venster zonder tekstalternatief,Op de pagina URL bevindt zich een icoon wat communiceert dat een link wordt geopend in een nieuw venster. Dit icoon mist een tekstalternatief. Hierdoor wordt niet gepresenteerd door hulpsoftware dat de link in een nieuw venster zal openen.,"Over het algemeen wordt afgeraden links in een nieuw venster te openen. Mocht dit toch nodig/wenselijk zijn in de context, voeg dan een tekstalternatief toe aan het icoon, bijvoorbeeld ""Opent in nieuw venster"".",1.1.1,,false,,,matig,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+e8e88bf5-6f40-4347-94f2-67219c978bd2,Afbeelding en tekst als aparte links,Op de pagina URL bevindt zich een afbeelding met link en zichtbare tekst met dezelfde link. Hierdoor moet iemand die een toetsenbord gebruikt om door de pagina te navigeren langs beide links.,"Dit kan worden opgelost door de afbeelding en de tekst in één linkelement te plaatsen. Zo wordt de afbeelding decoratief binnen de link en hoeft de gebruiker maar één keer te navigeren.
+
+Voorbeeld:
+
+```html
+<a href="""">
+  <img src="""" alt=""""> Bekijk de details
+</a>
+```
+
+Gebruik een lege alt-tekst bij decoratieve afbeeldingen binnen links om dubbele informatie voor schermlezers te voorkomen.",1.1.1,,false,,,klein,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+b05b1b38-9afd-4f13-ad2c-039c305984b1,Tekstalternatieven complexe afbeelding,Op pagina URL bevindt zicht een complexe afbeelding. Dit soort complexe afbeeldingen moeten voorzien worden van zowel een kort- als lang tekstalternatief. Deze is/zijn in dit geval onvoldoende aanwezig.,Zorg voor een kort tekstalternatief die een beknopte beschrijving geeft van de afbeelding. Dit kan bijvoorbeeld met het alt-atribuut. Zorg ook voor een lang tekstalternatief. Deze geeft een uitgebreide beschrijving van dezelfde informatie die in de afbeelding wordt overgebracht. Dit kan bijvoorbeeld door middel van een tabel of een uitgeschreven tekst. Deze tekst kan dan bijvoorbeeld onder de afbeelding staan of in een uitklapbaar onderdeel bij de afbeelding. De beschrijving kan ook op een andere pagina staan waar dan met een link naar toe wordt verwezen.,1.1.1,,false,,,matig,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+15870e83-8aaa-49ba-9113-d892a2e33671,Tekstalternatief verborgen,"Op pagina URL bevinden zich afbeeldingen waarbij het tekstalternatief verborgen is met display:none, visibility:hidden of aria-hidden=""true"". Hierdoor is het tekstalternatief niet beschikbaar voor hulpsoftware.","Verwijder display:none, visibility:hidden of aria-hidden=""true"" van het tekstalternatief zodat deze weer beschikbaar wordt voor hulpsoftware. Tekst die visueel verborgen is, maar voor hulpsoftware wel beschikbaar moet zijn, moet op een andere manier verborgen worden. Dit kan bijvoorbeeld met een .sr-only class in CSS of met de clip-methode.",1.1.1,,false,,,matig,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+9ece1674-1d0d-4f24-b18a-f9c0dd4a6b47,Kaart,Op pagina X staat een kaart. De informatie in deze kaart is niet toegankelijk voor een blinde gebruiker.,"De kaart kan toegankelijk gemaakt worden door een tekstalternatief te bieden die voorgelezen kan worden door hulpsoftware. Een van de mogelijke oplossingen is het aanbieden van een toegankelijke datatabel waarin dezelfde informatie wordt gepresenteerd.
+
+Voor elk item in een legenda moet informatie worden gegeven. Een item dat niet voorkomt, moet ook beschreven worden. Het feit dat een item niet op de kaart staat, is ook informatie die moet worden overgedragen, want anders zou deze niet in de legenda staan.",1.1.1,,false,,,matig,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+a2d58579-bc51-4279-a658-b55e06e15614,CAPTCHA geen uitzondering,"Op pagina URL wordt een CAPTCHA gebruikt. Deze is niet volledig inhoudelijk getest, omdat de inhoud elke keer anders is. Er is geen gebruik gemaakt van de uitzondering voor CAPTCHA's. De afbeeldingen moeten een tekst(alternatief) krijgen dat het doel van deze afbeeldingen aangeeft en dat is op dit moment niet het geval. Hiernaast moet de CAPTCHA ook op een toegankelijke manier gebruikt kunnen worden. De CAPTCHA moet dus voldoen aan alle overige succescriteria.","Het advies is om geen gebruik te maken van CAPTCHA's, omdat deze altijd een drempel voor toegankelijkheid zijn. Zie de Engelstalige pagina https://www.w3.org/TR/turingtest/ voor meer informatie en eventuele alternatieven. Het aanbieden van een toegankelijk alternatief voor de hele CAPTCHA is hier eventueel ook een geldige oplossing.",1.1.1,,false,,,,,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+6a236c84-1575-401b-aedb-f2f18425ef96,CAPTCHA uitzondering,"Op pagina X wordt een CAPTCHA gebruikt. Deze is niet volledig inhoudelijk getest, omdat de inhoud elke keer anders is. Er is gebruik gemaakt van de uitzondering voor CAPTCHA's, die uitzondering zorgt ervoor dat er voldaan wordt aan dit succescriterium. Hiernaast moet de CAPTCHA ook op een toegankelijke manier gebruikt kunnen worden. De CAPTCHA moet dus voldoen aan alle overige succescriteria.","Het advies is om geen gebruik te maken van CAPTCHA's, omdat deze altijd een drempel voor toegankelijkheid zijn. Zie de Engelstalige pagina https://www.w3.org/TR/turingtest/ voor meer informatie en eventuele alternatieven. Het aanbieden van een toegankelijk alternatief voor de hele CAPTCHA is ook een optie.",1.1.1,,false,,,,,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+24b8a0bf-7d7e-4cf6-ba22-9e37f8e35084,CSS Pseudo-element: Decoratief,"Op pagina URL wordt met CSS een icoontje geplaatst bij X. Dit icoontje is decoratief, maar hulpsoftware leest deze nu wel voor. Het icoontje is geplaatst met behulp van een CSS pseudo-element (:before) of :after). De schermlezer leest nu voor: X. Zorg ervoor dat hulpsoftware het icoontje kan negeren.","Ook met CSS kan worden aangegeven worden of dit icoontje genegeerd moet worden door bijvoorbeeld een schermlezer. Hieronder volgt een voorbeeld:
+
+```css
+.decorative-icon:before {
+  content: ""🐱"" / """";
+}
+```
+
+De schermlezer zal het icoontje niet meer voorlezen door in de CSS content gebruik te maken van een extra forward-slash / met daarachter een leeg tekstalternatief.
+
+Uitgebreide voorbeelden van hoe tekstalternatieven werken in CSS via pseudo-elementen zijn te vinden in het code-voorbeeld op CodePen.io.",1.1.1,,false,,,klein,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+9a0043b7-57dc-4df8-926e-138e1aa8d210,CSS Pseudo-element: Tekstalternatief ontbreekt,"Op pagina URL wordt met CSS een icoontje geplaatst bij X. Dit icoontje is informatief, maar er is geen tekstalternatief beschikbaar. Hierdoor is de informatie van dit icoontje niet waarneembaar voor iedereen die afhankelijk is van een schermlezer of braille. Een tekstalternatief is altijd verplicht voor informatieve icoontjes, ook als icoontjes worden geplaatst met pseudo-elementen via CSS.","Via CSS kan het tekstalternatief worden geplaatst. Pas hiervoor de CSS aan van het pseudo-element (:before of :after).
+
+Een voorbeeld:
+
+```css
+.informative-icon:before {
+  content: ""\25BA / ""Tekst alternatief"";
+}
+```
+
+Uitgebreide voorbeelden van hoe tekstalternatieven werken in CSS via pseudo-elementen zijn te vinden in het code-voorbeeld op CodePen.io.",1.1.1,,false,,,matig,ontwikkelaar,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+45098f9b-8a52-4a77-bdc2-56b1b5249807,Video of animatie zonder tekstalternatief,"Op pagina URL staat een video. Bij deze video ontbreekt een tekstalternatief. Een ziende gebruiker kan zien dat er een video staat en waar de video over gaat. Als je afhankelijk bent van een schermlezer moet het tekstalternatief vertellen wat er staat (een video) en waar deze over gaat, bijvoorbeeld ""Video: X"".","Voor een video of animatie geldt dat er direct vóór (bij voorkeur) of direct na de video een korte omschrijving staat van wat in de video of animatie te zien is. Dit kan bijvoorbeeld met een titel (bijvoorbeeld in een kop) die direct boven de video staat, of in een zin of alinea direct boven de video.
+
+De uitleg mag ook verder weg staan van de video, maar alleen als er een directe verwijzing staat naar de video.
+
+Let op: In YouTube-video's staat ook vaak een titel in de video zelf. Dit volstaat niet als titel of omschrijving van de video.",1.1.1,,false,,,,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+d105179f-374f-4f69-aaad-cdaf501795b3,PDF - Complexe afbeelding,In het volgende PDF-document staat een complexe afbeeldig op pagina X. Een blinde gebruiker is nu uitgesloten van de informatie die in deze complexe afbeelding staat.,De inhoud van deze afbeelding moet in tekst uitgeschreven worden. Deze tekst kan meteen onder de afbeelding staat of als een link of bestand worden toegevoegd. Het tekstalternatief van de afbeelding kan dan verwijzen naar de plek waar deze uitgeschreven tekst staat.,1.1.1,,false,,,matig,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+fb0e2d7b-e6aa-40fa-a525-fc1ea2e5a2bd,Kaart voor navigatie,Op pagina URL staat een kaart die bedoeld is voor navigatie. De essentiële informatie uit deze kaart moet daarom op een toegankelijke manier worden aangeboden. De kaart zelf is verder niet onderzocht.,Zorg dat de adressen ook op de website worden aangeboden als standaard tekst.,1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+5de53867-b747-486d-97fa-6f29aeda6b75,PDF - Niet-getagd logo,In het volgende PDF-document staat bovenin het logo van ORGANISATIE. Dit logo is niet als afbeelding getagd en wordt daarom genegeerd.,"Op pagina 1 moet dit logo wel een afbeelding worden en een goed tekstalternatief krijgen. Op de vervolgpagina's is dat niet nodig en zelfs niet gewenst, omdat dit daar de leesvolgorde kan onderbreken.",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+745da907-6989-4c9d-9225-44181fef5c92,Complexe afbeelding,"Op pagina URL staat een complexe afbeelding. Niet alle gebruikers kunnen de informatie in deze afbeelding goed waarnemen, bijvoorbeeld omdat ze afhankelijk zijn van voorleessoftware of braille.",De inhoud van deze afbeelding moet in tekst uitgeschreven worden. Deze tekst kan meteen onder de afbeelding staan of als een link of bestand worden toegevoegd. Het tekstalternatief van de afbeelding kan dan verwijzen naar de plek waar deze uitgeschreven tekst staat. Zie ook https://www.w3.org/WAI/tutorials/images/complex/ voor meer tips over hoe een tekstalternatief toe te voegen aan een complexe afbeelding.,1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
+b0175e83-45b5-4fa0-be7a-66ca751d1cb9,alt-attribuut ontbreekt,Op pagina URL staat een afbeelding zonder tekstalternatief. Ook het verplichte alt-attribuut ontbreekt. Op een img-element moet altijd een alt-attribuut aanwezig zijn.,"Als de afbeelding informatief is, dan moet het alt-attribuut een correcte omschrijving van de afbeelding geven. Als de afbeelding decoratief is dan moet het alt-attribuut leeg worden gelaten: alt="""". Andere oplossingen zijn ook mogelijk.",1.1.1,,false,,,klein,redacteur,Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd),Tue Feb 10 2026 10:08:39 GMT+0100 (Midden-Europese standaardtijd)
