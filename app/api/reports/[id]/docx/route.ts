@@ -26,7 +26,9 @@ function escapeXml(text: string): string {
  */
 class HyperlinkManager {
   private relationships: Map<string, string> = new Map();
-  private nextId: number = 100; // Start at high number to avoid conflicts
+  // Start at 200 to avoid conflicts with template's existing hyperlinks (rId100, rId101)
+  // Template already has: rId100 (WCAG-EM) and rId101 (DigiToegankelijk)
+  private nextId: number = 200;
 
   /**
    * Get or create a relationship ID for a URL
@@ -752,7 +754,7 @@ export async function GET(
             .replace(/\{level\}/g, researchTypeData?.level || 'A en AA');
         } else {
           // Fallback template
-          summaryText = `Het onderzoek vond plaats in de periode van ${dateStartFormatted} tot en met ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.\n\nDe onderzochte content voldoet ${compliesFully} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`;
+          summaryText = `Dit onderzoek is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.\n\nDe onderzochte content voldoet ${compliesFully} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`;
         }
 
         // Strip HTML tags from summary (template may contain HTML)
@@ -1882,8 +1884,12 @@ export async function GET(
           console.log(`[DOCX DEBUG] Removed content contains Technologieën: ${removedContent.includes('>Technologieën<')}`);
           console.log(`[DOCX DEBUG] Removed content length: ${removedContent.length} characters`);
 
-          // Replace the old browser list with new paragraphs
-          xmlContent = xmlContent.substring(0, browserListStart) + newBrowserParagraphs + xmlContent.substring(browserListEnd);
+          // IMPORTANT: Keep the intro paragraph before the browser list
+          // Extract the intro paragraph (from introParagraphStart to introParagraphEnd)
+          const introParagraph = xmlContent.substring(introParagraphStart, introParagraphEnd);
+
+          // Replace: keep everything before intro, add intro, add new browsers, keep everything after old browsers
+          xmlContent = xmlContent.substring(0, introParagraphStart) + introParagraph + newBrowserParagraphs + xmlContent.substring(browserListEnd);
 
           // Update the ZIP
           renderedZip.file('word/document.xml', xmlContent);
@@ -2096,6 +2102,32 @@ export async function GET(
     } else {
       console.log('[DOCX] Could not find relationships file');
     }
+
+    // Add hyperlinks to "WCAG-EM" and "Digitoegankelijk (Logius)" in methodology text
+    console.log('[DOCX] Adding hyperlinks to WCAG-EM and Digitoegankelijk...');
+
+    // DEBUG: Search for the text patterns in the XML
+    const wcagEmIndex = xmlContent.indexOf('WCAG-EM');
+    const digitoegankelijkIndex = xmlContent.indexOf('Digitoegankelijk');
+
+    console.log(`[DEBUG] WCAG-EM found at index: ${wcagEmIndex}`);
+    console.log(`[DEBUG] Digitoegankelijk found at index: ${digitoegankelijkIndex}`);
+
+    if (wcagEmIndex !== -1) {
+      const snippet = xmlContent.substring(wcagEmIndex - 200, wcagEmIndex + 200);
+      console.log(`[DEBUG] WCAG-EM context:\n${snippet}`);
+    }
+
+    if (digitoegankelijkIndex !== -1) {
+      const snippet = xmlContent.substring(digitoegankelijkIndex - 200, digitoegankelijkIndex + 200);
+      console.log(`[DEBUG] Digitoegankelijk context:\n${snippet}`);
+    }
+
+    // IMPORTANT: The template already has hyperlinks for WCAG-EM (rId100) and DigiToegankelijk (rId101)
+    // These relationships MUST be preserved in the document.xml.rels file
+    // We do NOT need to create new relationship IDs - the template already has them!
+    console.log('[DOCX] Template already contains hyperlinks for WCAG-EM (rId100) and DigiToegankelijk (rId101)');
+    console.log('[DOCX] These relationships will be preserved in the generated document');
 
     // DISABLED: "Over {teamName}" and "Vragen" sections are now in the template
     // This code previously added these sections dynamically, but they should be part of the template instead

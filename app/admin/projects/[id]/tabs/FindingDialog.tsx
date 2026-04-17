@@ -45,6 +45,8 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
   const [showConceptTooltip, setShowConceptTooltip] = useState(false);
   const [showOpgelostTooltip, setShowOpgelostTooltip] = useState(false);
   const [showGecontroleerdTooltip, setShowGecontroleerdTooltip] = useState(false);
+  const [editorKey, setEditorKey] = useState(Date.now());
+  const [editorsReady, setEditorsReady] = useState(false);
   const [formData, setFormData] = useState<FindingFormData>({
     criterionId: criterionId,
     description: '',
@@ -115,6 +117,22 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
       setSelectedSampleItemIds(new Set());
     }
   }, [editingFinding?.id, editingFinding?.description, editingFinding?.advice, criterionId]);
+
+  // Reset editor key when dialog opens to force remount with delay
+  useEffect(() => {
+    if (isOpen) {
+      setEditorsReady(false);
+      setEditorKey(Date.now());
+      // Delay to ensure DOM is ready before mounting editors
+      // Use longer delay to prevent offsetTop errors
+      const timer = setTimeout(() => {
+        setEditorsReady(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setEditorsReady(false);
+    }
+  }, [isOpen]);
 
   // Close dialog on Escape key (but first close tooltips if any are open)
   useEffect(() => {
@@ -546,43 +564,51 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Beschrijving <span className="text-red-600">vereist</span>
                 </label>
-                <MdEditor
-                  modelValue={formData.description}
-                  onChange={(content) => setFormData({ ...formData, description: content })}
-                  language="en-US"
-                  theme="light"
-                  previewTheme="default"
-                  codeTheme="github"
-                  showCodeRowNumber={true}
-                  toolbars={[
-                    'bold',
-                    'underline',
-                    'italic',
-                    '-',
-                    'title',
-                    'strikeThrough',
-                    'sub',
-                    'sup',
-                    'quote',
-                    'unorderedList',
-                    'orderedList',
-                    '-',
-                    'codeRow',
-                    'code',
-                    'link',
-                    'image',
-                    'table',
-                    '-',
-                    'revoke',
-                    'next',
-                    '=',
-                    'pageFullscreen',
-                    'fullscreen',
-                    'preview',
-                    'catalog',
-                  ]}
-                  style={{ height: '300px' }}
-                />
+                {isOpen && editorsReady ? (
+                  <MdEditor
+                    key={`description-${editorKey}`}
+                    modelValue={formData.description}
+                    onChange={(content) => setFormData({ ...formData, description: content })}
+                    language="en-US"
+                    theme="light"
+                    previewTheme="default"
+                    codeTheme="github"
+                    showCodeRowNumber={true}
+                    sanitize={(html) => html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                    toolbars={[
+                      'bold',
+                      'underline',
+                      'italic',
+                      '-',
+                      'title',
+                      'strikeThrough',
+                      'sub',
+                      'sup',
+                      'quote',
+                      'unorderedList',
+                      'orderedList',
+                      '-',
+                      'codeRow',
+                      'code',
+                      'link',
+                      'image',
+                      'table',
+                      '-',
+                      'revoke',
+                      'next',
+                      '=',
+                      'pageFullscreen',
+                      'fullscreen',
+                      'preview',
+                      'catalog',
+                    ]}
+                    style={{ height: '300px' }}
+                  />
+                ) : (
+                  <div className="border border-gray-300 rounded-lg p-4 h-[300px] flex items-center justify-center">
+                    <span className="text-gray-500">Laden...</span>
+                  </div>
+                )}
               </div>
 
               {/* Advice */}
@@ -596,43 +622,51 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                     Advies genereren
                   </button>
                 </div>
-                <MdEditor
-                  modelValue={formData.advice}
-                  onChange={(content) => setFormData({ ...formData, advice: content })}
-                  language="en-US"
-                  theme="light"
-                  previewTheme="default"
-                  codeTheme="github"
-                  showCodeRowNumber={true}
-                  toolbars={[
-                    'bold',
-                    'underline',
-                    'italic',
-                    '-',
-                    'title',
-                    'strikeThrough',
-                    'sub',
-                    'sup',
-                    'quote',
-                    'unorderedList',
-                    'orderedList',
-                    '-',
-                    'codeRow',
-                    'code',
-                    'link',
-                    'image',
-                    'table',
-                    '-',
-                    'revoke',
-                    'next',
-                    '=',
-                    'pageFullscreen',
-                    'fullscreen',
-                    'preview',
-                    'catalog',
-                  ]}
-                  style={{ height: '300px' }}
-                />
+                {isOpen && editorsReady ? (
+                  <MdEditor
+                    key={`advice-${editorKey}`}
+                    modelValue={formData.advice}
+                    onChange={(content) => setFormData({ ...formData, advice: content })}
+                    language="en-US"
+                    theme="light"
+                    previewTheme="default"
+                    codeTheme="github"
+                    showCodeRowNumber={true}
+                    sanitize={(html) => html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                    toolbars={[
+                      'bold',
+                      'underline',
+                      'italic',
+                      '-',
+                      'title',
+                      'strikeThrough',
+                      'sub',
+                      'sup',
+                      'quote',
+                      'unorderedList',
+                      'orderedList',
+                      '-',
+                      'codeRow',
+                      'code',
+                      'link',
+                      'image',
+                      'table',
+                      '-',
+                      'revoke',
+                      'next',
+                      '=',
+                      'pageFullscreen',
+                      'fullscreen',
+                      'preview',
+                      'catalog',
+                    ]}
+                    style={{ height: '300px' }}
+                  />
+                ) : (
+                  <div className="border border-gray-300 rounded-lg p-4 h-[300px] flex items-center justify-center">
+                    <span className="text-gray-500">Laden...</span>
+                  </div>
+                )}
               </div>
 
               {/* Status, Verantwoordelijkheid, Impact */}

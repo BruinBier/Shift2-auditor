@@ -297,7 +297,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     return (
       <>
         <p className="mb-4">
-          Het onderzoek vond plaats in de periode van {dateStartFormatted} tot en met {dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
+          Dit onderzoek is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
         </p>
 
         <p className="mb-4">

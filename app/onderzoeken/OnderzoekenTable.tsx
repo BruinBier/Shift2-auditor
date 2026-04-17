@@ -1030,8 +1030,13 @@ export default function OnderzoekenTable({ projects }: Props) {
     // Skip if already processed (as a reinspection)
     if (processedActiveIds.has(project.id)) return;
 
-    // Skip if this is a reinspection (it will be added after its parent)
-    if (project.parentProjectId) return;
+    // Skip if this is a reinspection whose parent is also in active projects
+    // (it will be added after its parent). But if parent is completed, show this herinspectie standalone.
+    if (project.parentProjectId) {
+      const parentInActive = activeProjects.some(p => p.id === project.parentProjectId);
+      if (parentInActive) return; // Skip, will be added after parent
+      // Parent is not in active (probably completed), so show this herinspectie standalone
+    }
 
     // Add the current project (nulmeting or standalone)
     groupedActiveProjects.push(project);
@@ -1062,14 +1067,8 @@ export default function OnderzoekenTable({ projects }: Props) {
     groupedCompletedProjects.push(project);
     processedCompletedIds.add(project.id);
 
-    // If this is a nulmeting with a reinspection, find and add the reinspection immediately after
-    if (project.hasReinspection) {
-      const reinspection = completedProjects.find(p => p.parentProjectId === project.id);
-      if (reinspection && !processedCompletedIds.has(reinspection.id)) {
-        groupedCompletedProjects.push(reinspection);
-        processedCompletedIds.add(reinspection.id);
-      }
-    }
+    // Note: We don't add herinspectie projects to the completed section
+    // They remain in the active projects section based on their own status
   });
 
   // Count only nulmetingen and standalone projects (exclude herinspecties from count)
@@ -1531,8 +1530,13 @@ export default function OnderzoekenTable({ projects }: Props) {
                   ? activeProjects.find(p => p.parentProjectId === project.id)
                   : null;
 
-                // Skip herinspectie rows - they'll be rendered when parent is expanded
-                if (isReinspection) return null;
+                // Skip herinspectie rows if parent is also in active projects (they'll be rendered when parent is expanded)
+                // But show standalone if parent is NOT in active projects (parent is completed)
+                if (isReinspection) {
+                  const parentInActive = activeProjects.some(p => p.id === project.parentProjectId);
+                  if (parentInActive) return null; // Skip, will be shown under parent
+                  // Parent not in active, so show this herinspectie as standalone row
+                }
 
                 return (
                   <React.Fragment key={project.id}>
@@ -1567,6 +1571,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                           {project.hasReinspection && (
                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                               Nulmeting
+                            </span>
+                          )}
+                          {isReinspection && (
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
+                              Herinspectie
                             </span>
                           )}
                         </div>
@@ -2011,9 +2020,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                     const isExpanded = expandedProjects.has(project.id);
 
                     // Find child reinspection if this is a nulmeting
-                    const childReinspection = isNulmetingWithReinspection
-                      ? completedProjects.find(p => p.parentProjectId === project.id)
-                      : null;
+                    // Only show herinspectie in completed section if it's also completed
+                    let childReinspection = null;
+                    if (isNulmetingWithReinspection) {
+                      childReinspection = completedProjects.find(p => p.parentProjectId === project.id);
+                    }
 
                     // Skip herinspectie rows - they'll be rendered when parent is expanded
                     if (isReinspection) return null;

@@ -463,7 +463,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
     return { total, assessed, passed, failed, notPresent, unknown, notTested, notAssessed };
   }, [allCriteria, project.criterionAssessments]);
 
-  // Configure marked to add target="_blank" to all links
+  // Configure marked to add target="_blank" to all links and escape HTML
   const configureMarked = useCallback(() => {
     const renderer = new marked.Renderer();
     const originalLink = renderer.link.bind(renderer);
@@ -476,7 +476,10 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
     marked.setOptions({
       renderer,
       breaks: true,
-      gfm: true
+      gfm: true,
+      sanitize: false, // We handle HTML manually
+      mangle: false,
+      headerIds: false
     });
   }, []);
 
@@ -488,8 +491,17 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
   // Function to render advice with proper markdown formatting
   const renderAdvice = useCallback((advice: string) => {
     try {
-      const html = marked(advice);
-      return <div className="krafters-markdown-preview finding-description space-y-3" dangerouslySetInnerHTML={{ __html: html as string }} />;
+      // Escape HTML tags but preserve markdown syntax
+      // This allows markdown like **bold** or `code` to work
+      // while preventing HTML tags like <strong> from being rendered
+      const escapedAdvice = advice
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Parse markdown to HTML
+      const html = marked.parse(escapedAdvice);
+      return <div className="krafters-markdown-preview finding-description space-y-3" dangerouslySetInnerHTML={{ __html: html }} />;
     } catch (error) {
       console.error('Error rendering markdown:', error);
       return <div className="text-sm text-gray-700">{advice}</div>;

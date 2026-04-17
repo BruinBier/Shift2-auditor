@@ -33,6 +33,8 @@ export default function SampleItems({ project }: { project: any }) {
   const [activeType, setActiveType] = useState<'structured' | 'random' | 'pdf'>('structured');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editorKey, setEditorKey] = useState(Date.now());
+  const [editorsReady, setEditorsReady] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     url: '',
@@ -92,6 +94,21 @@ export default function SampleItems({ project }: { project: any }) {
       fetchTests();
     }
   }, [debugMode, availableTests.length]);
+
+  // Reset editor key when modals open to force remount with delay
+  useEffect(() => {
+    if (showModal || showSampleInfoModal) {
+      setEditorsReady(false);
+      setEditorKey(Date.now());
+      // Delay to ensure DOM is ready before mounting editors
+      const timer = setTimeout(() => {
+        setEditorsReady(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setEditorsReady(false);
+    }
+  }, [showModal, showSampleInfoModal]);
 
   // Close context menu on click outside or Escape key
   useEffect(() => {
@@ -797,35 +814,42 @@ export default function SampleItems({ project }: { project: any }) {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Beschrijving
                     </label>
-                    <MdEditor
-                      modelValue={formData.description}
-                      onChange={(content) => setFormData({ ...formData, description: content })}
-                      language="en-US"
-                      theme="light"
-                      previewTheme="default"
-                      codeTheme="github"
-                      showCodeRowNumber={true}
-                      toolbars={[
-                        'bold',
-                        'italic',
-                        'strikeThrough',
-                        '-',
-                        'title',
-                        'unorderedList',
-                        'orderedList',
-                        '-',
-                        'quote',
-                        'code',
-                        'link',
-                        'image',
-                        '-',
-                        'revoke',
-                        'next',
-                        '-',
-                        'preview',
-                        'fullscreen'
-                      ]}
-                    />
+                    {editorsReady ? (
+                      <MdEditor
+                        key={`sample-description-${editorKey}`}
+                        modelValue={formData.description}
+                        onChange={(content) => setFormData({ ...formData, description: content })}
+                        language="en-US"
+                        theme="light"
+                        previewTheme="default"
+                        codeTheme="github"
+                        showCodeRowNumber={true}
+                        toolbars={[
+                          'bold',
+                          'italic',
+                          'strikeThrough',
+                          '-',
+                          'title',
+                          'unorderedList',
+                          'orderedList',
+                          '-',
+                          'quote',
+                          'code',
+                          'link',
+                          'image',
+                          '-',
+                          'revoke',
+                          'next',
+                          '-',
+                          'preview',
+                          'fullscreen'
+                        ]}
+                      />
+                    ) : (
+                      <div className="border border-gray-300 rounded-lg p-4 h-[300px] flex items-center justify-center">
+                        <span className="text-gray-500">Laden...</span>
+                      </div>
+                    )}
                     <p className="mt-1 text-xs text-gray-500">Bijvoorbeeld beschrijving van proces of andere details van de pagina.</p>
                   </div>
 
@@ -899,35 +923,42 @@ export default function SampleItems({ project }: { project: any }) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Beschrijving
                 </label>
-                <MdEditor
-                  modelValue={tempSampleInfo}
-                  onChange={setTempSampleInfo}
-                  language="en-US"
-                  theme="light"
-                  previewTheme="default"
-                  codeTheme="github"
-                  showCodeRowNumber={true}
-                  toolbars={[
-                    'bold',
-                    'italic',
-                    'strikeThrough',
-                    '-',
-                    'title',
-                    'unorderedList',
-                    'orderedList',
-                    '-',
-                    'quote',
-                    'code',
-                    'link',
-                    'image',
-                    '-',
-                    'revoke',
-                    'next',
-                    '-',
-                    'preview',
-                    'fullscreen'
-                  ]}
-                />
+                {editorsReady ? (
+                  <MdEditor
+                    key={`sample-info-${editorKey}`}
+                    modelValue={tempSampleInfo}
+                    onChange={setTempSampleInfo}
+                    language="en-US"
+                    theme="light"
+                    previewTheme="default"
+                    codeTheme="github"
+                    showCodeRowNumber={true}
+                    toolbars={[
+                      'bold',
+                      'italic',
+                      'strikeThrough',
+                      '-',
+                      'title',
+                      'unorderedList',
+                      'orderedList',
+                      '-',
+                      'quote',
+                      'code',
+                      'link',
+                      'image',
+                      '-',
+                      'revoke',
+                      'next',
+                      '-',
+                      'preview',
+                      'fullscreen'
+                    ]}
+                  />
+                ) : (
+                  <div className="border border-gray-300 rounded-lg p-4 h-[300px] flex items-center justify-center">
+                    <span className="text-gray-500">Laden...</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-6">

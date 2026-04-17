@@ -652,17 +652,18 @@ button.delete-modal-button:hover,
   }
 }
 
-/* External link styling */
-.krafters-markdown-preview a[target="_blank"],
-.finding-description a[target="_blank"],
-.whitespace-pre-wrap a[target="_blank"],
-.md-editor-preview a[target="_blank"],
-.md-editor-preview-wrapper a[target="_blank"],
-#md-editor-v3-preview a[target="_blank"] {
+/* Link styling - all links */
+.krafters-markdown-preview a,
+.finding-description a,
+.whitespace-pre-wrap a,
+.md-editor-preview a,
+.md-editor-preview-wrapper a,
+#md-editor-v3-preview a {
+  color: #2563eb;
   text-decoration: underline;
 }
 
-/* External link hover - alleen onderlijnen, geen kleurverandering */
+/* Link hover */
 .krafters-markdown-preview a:hover,
 .finding-description a:hover,
 .whitespace-pre-wrap a:hover,
@@ -670,7 +671,7 @@ button.delete-modal-button:hover,
 .md-editor-preview-wrapper a:hover,
 #md-editor-v3-preview a:hover {
   text-decoration: underline !important;
-  color: inherit !important;
+  color: #1d4ed8 !important;
 }
 
 /* External link icon */
@@ -694,6 +695,9 @@ button.delete-modal-button:hover,
 /* Markdown preview styling */
 .krafters-markdown-preview,
 .finding-description {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #374151;
   user-select: text;
   -webkit-user-select: text;
   -moz-user-select: text;

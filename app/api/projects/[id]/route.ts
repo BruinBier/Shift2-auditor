@@ -57,14 +57,93 @@ export async function PATCH(
     const { id } = params;
     const body = await request.json();
 
-    // Check if status is being changed to "Gereed"
-    const isBeingMarkedAsCompleted = body.status === 'Gereed';
-
     // Get current project to check previous status
     const currentProject = await prisma.project.findUnique({
       where: { id },
-      select: { status: true, hasReinspection: true },
+      select: { status: true },
     });
+
+    // Check if status is being changed FROM "Gereed" to something else (reactivation)
+    const isBeingReactivated = currentProject?.status === 'Gereed' && body.status && body.status !== 'Gereed';
+
+    // If project is being reactivated, clear all data from herinspectie project
+    if (isBeingReactivated) {
+      console.log('[PATCH] Project is being reactivated, clearing herinspectie data');
+
+      // Find the herinspectie project (child project)
+      const herinspectieProject = await prisma.project.findFirst({
+        where: { parentProjectId: id },
+      });
+
+      if (herinspectieProject) {
+        console.log(`[PATCH] Found herinspectie project: ${herinspectieProject.id}, deleting all data`);
+
+        // Delete all data from herinspectie project (in correct order due to foreign keys)
+        // First delete finding-related data
+        await prisma.findingOccurrence.deleteMany({
+          where: {
+            finding: {
+              projectId: herinspectieProject.id,
+            },
+          },
+        });
+
+        await prisma.findingUrl.deleteMany({
+          where: {
+            finding: {
+              projectId: herinspectieProject.id,
+            },
+          },
+        });
+
+        await prisma.findingAttachment.deleteMany({
+          where: {
+            finding: {
+              projectId: herinspectieProject.id,
+            },
+          },
+        });
+
+        await prisma.finding.deleteMany({
+          where: { projectId: herinspectieProject.id },
+        });
+
+        // Delete crawler results
+        await prisma.crawlerResult.deleteMany({
+          where: {
+            OR: [
+              {
+                scopeUrl: {
+                  projectId: herinspectieProject.id,
+                },
+              },
+              {
+                sampleItem: {
+                  projectId: herinspectieProject.id,
+                },
+              },
+            ],
+          },
+        });
+
+        // Delete sample items
+        await prisma.sampleItem.deleteMany({
+          where: { projectId: herinspectieProject.id },
+        });
+
+        // Delete scope URLs
+        await prisma.projectScopeUrl.deleteMany({
+          where: { projectId: herinspectieProject.id },
+        });
+
+        // Delete criterion assessments
+        await prisma.criterionAssessment.deleteMany({
+          where: { projectId: herinspectieProject.id },
+        });
+
+        console.log('[PATCH] Successfully cleared all data from herinspectie project');
+      }
+    }
 
     // Only update the fields that are provided in the request
     const project = await prisma.project.update({
@@ -72,57 +151,9 @@ export async function PATCH(
       data: body,
     });
 
-    // If project is being marked as completed AND it has reinspection, copy findings to v1.1
-    if (
-      isBeingMarkedAsCompleted &&
-      currentProject?.status !== 'Gereed' &&
-      currentProject?.hasReinspection
-    ) {
-      // Find the reinspection project (v1.1)
-      const reinspectionProject = await prisma.project.findFirst({
-        where: { parentProjectId: id },
-      });
-
-      if (reinspectionProject) {
-        // Get all findings from v1.0
-        const findings = await prisma.finding.findMany({
-          where: { projectId: id },
-          include: {
-            occurrences: true,
-            affectedUrls: true,
-          },
-        });
-
-        console.log(`Copying ${findings.length} findings from ${id} to ${reinspectionProject.id}`);
-
-        // Copy each finding to v1.1
-        for (const finding of findings) {
-          await prisma.finding.create({
-            data: {
-              projectId: reinspectionProject.id,
-              findingCode: finding.findingCode,
-              wcagCriterionId: finding.wcagCriterionId,
-              status: 'open', // Reset status to open for reinspection
-              impact: finding.impact,
-              responsibility: finding.responsibility,
-              description: finding.description,
-              advice: finding.advice,
-              evidence: finding.evidence,
-              notes: finding.notes,
-              sortOrder: finding.sortOrder,
-              // Note: We don't copy occurrences and affectedUrls yet
-              // These will be added during the actual reinspection
-            },
-          });
-        }
-
-        console.log(`Successfully copied findings to reinspection project`);
-      }
-    }
-
     return NextResponse.json({
       project,
-      findingsCopied: isBeingMarkedAsCompleted && currentProject?.hasReinspection,
+      dataCleared: isBeingReactivated,
     }, { status: 200 });
   } catch (error) {
     console.error('Error updating project:', error);

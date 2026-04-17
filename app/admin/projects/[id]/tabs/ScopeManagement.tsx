@@ -36,7 +36,22 @@ export default function ScopeManagement({ project }: { project: any }) {
     url: '',
     description: '',
   });
-  const [scopeInfo, setScopeInfo] = useState(project.scopeInfo || '');
+
+  // Default text for "WCAG 2.2 AA deelonderzoek content" research type
+  const getDefaultScopeInfo = () => {
+    if (project.researchType === 'WCAG 2.2 AA deelonderzoek content' && !project.scopeInfo) {
+      return `- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)
+- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).
+- Niet de live video's (wettelijke uitzondering voor de overheid)
+- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)
+- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)
+- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)
+- Niet de inhoud achter een inlog`;
+    }
+    return project.scopeInfo || '';
+  };
+
+  const [scopeInfo, setScopeInfo] = useState(getDefaultScopeInfo());
   const [showScopeInfoModal, setShowScopeInfoModal] = useState(false);
   const [tempScopeInfo, setTempScopeInfo] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -66,6 +81,37 @@ export default function ScopeManagement({ project }: { project: any }) {
       }
     );
   };
+
+  // Auto-save default scope info if empty for specific research types
+  useEffect(() => {
+    const autoSaveDefaultScopeInfo = async () => {
+      if (project.researchType === 'WCAG 2.2 AA deelonderzoek content' && !project.scopeInfo) {
+        const defaultText = `- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)
+- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).
+- Niet de live video's (wettelijke uitzondering voor de overheid)
+- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)
+- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)
+- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)
+- Niet de inhoud achter een inlog`;
+
+        try {
+          const response = await fetch(`/api/projects/${project.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scopeInfo: defaultText }),
+          });
+
+          if (response.ok) {
+            router.refresh();
+          }
+        } catch (error) {
+          console.error('Error auto-saving default scope info:', error);
+        }
+      }
+    };
+
+    autoSaveDefaultScopeInfo();
+  }, [project.id, project.researchType, project.scopeInfo, router]);
 
   // Close context menu on click outside or Escape key
   useEffect(() => {
@@ -478,7 +524,6 @@ export default function ScopeManagement({ project }: { project: any }) {
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">{page.title}</div>
                       </div>
                     </td>
                     <td className="py-4">
@@ -635,7 +680,6 @@ export default function ScopeManagement({ project }: { project: any }) {
                     <td className="py-4">
                       <div>
                         <div className="font-medium text-gray-900">{page.url}</div>
-                        <div className="text-sm text-gray-500">{page.title}</div>
                       </div>
                     </td>
                     <td className="py-4">
