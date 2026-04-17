@@ -42,8 +42,4 @@ temp-*.txt
 test-*.html
 nul
 
-# temporary migration folders (only committed migrations should be tracked)
-prisma/migrations/*_restore_*
-prisma/migrations/*_temp_*
-
 
