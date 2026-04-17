@@ -15,7 +15,8 @@
     "schema:update": "prisma migrate deploy && prisma generate && echo '✅ Schema updated - you can now run: npm run dev'",
     "export": "node scripts/export-report-simple.js",
     "backup": "tsx scripts/export-all-data.ts",
-    "restore": "tsx scripts/import-all-data.ts"
+    "restore": "tsx scripts/import-all-data.ts",
+    "cli": "tsx scripts/audit-cli.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
