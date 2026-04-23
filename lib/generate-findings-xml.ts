@@ -75,6 +75,92 @@ function generateParagraph(text: string, style?: string): string {
 }
 
 /**
+ * Convert a line of text with inline markdown links [text](url) to Word XML runs.
+ * Returns an array of XML strings to be placed inside a <w:p>.
+ */
+function generateRunsWithLinks(text: string, hyperlinkManager?: HyperlinkManager): string {
+  if (!hyperlinkManager) {
+    return `<w:r><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`;
+  }
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  let result = '';
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = linkRegex.exec(text)) !== null) {
+    const before = text.substring(lastIndex, match.index);
+    if (before) {
+      result += `<w:r><w:t xml:space="preserve">${escapeXml(before)}</w:t></w:r>`;
+    }
+    const linkText = match[1];
+    const linkUrl = match[2];
+    const relId = hyperlinkManager.getRelId(linkUrl);
+    result += `<w:hyperlink r:id="${relId}"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t xml:space="preserve">${escapeXml(linkText)}</w:t></w:r></w:hyperlink>`;
+    lastIndex = match.index + match[0].length;
+  }
+  const rest = text.substring(lastIndex);
+  if (rest) {
+    result += `<w:r><w:t xml:space="preserve">${escapeXml(rest)}</w:t></w:r>`;
+  }
+  return result;
+}
+
+/**
+ * Generate a paragraph that may contain inline markdown links
+ */
+function generateParagraphWithLinks(text: string, hyperlinkManager?: HyperlinkManager, style?: string): string {
+  const styleXml = style ? `<w:pStyle w:val="${style}"/>` : '';
+  const runs = generateRunsWithLinks(text, hyperlinkManager);
+  return `<w:p><w:pPr>${styleXml}</w:pPr>${runs}</w:p>`;
+}
+
+/**
+ * Generate a bullet list item paragraph (uses numId=4 for visible bullets)
+ */
+function generateBulletItem(text: string, hyperlinkManager?: HyperlinkManager): string {
+  const runs = generateRunsWithLinks(text, hyperlinkManager);
+  return `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr>${runs}</w:p>`;
+}
+
+/**
+ * Convert plain-text content with markdown-like bullets (lines starting with "- ")
+ * and inline markdown links [text](url) into Word XML.
+ * Regular paragraphs for normal text, bullet list items for "- " lines.
+ * Blank lines are preserved as paragraph breaks.
+ */
+function generateContentXml(text: string, hyperlinkManager?: HyperlinkManager): string {
+  if (!text) return '';
+  const lines = text.split('\n');
+  let xml = '';
+  let buffer: string[] = [];
+
+  const flushBuffer = () => {
+    if (buffer.length === 0) return;
+    const joined = buffer.join(' ').trim();
+    if (joined) xml += generateParagraphWithLinks(joined, hyperlinkManager);
+    buffer = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (line === '') {
+      // blank line: flush accumulated paragraph
+      flushBuffer();
+      continue;
+    }
+    // Detect markdown bullet at start of line: "- " or "* "
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      flushBuffer();
+      xml += generateBulletItem(bulletMatch[1], hyperlinkManager);
+    } else {
+      buffer.push(line);
+    }
+  }
+  flushBuffer();
+  return xml;
+}
+
+/**
  * Generate a heading
  */
 function generateHeading(text: string, level: number): string {
@@ -179,15 +265,15 @@ function generateFindingXml(finding: Finding, hyperlinkManager: HyperlinkManager
     }
   }
 
-  // Description (strip HTML tags first)
+  // Description (strip HTML tags, then split into paragraphs and bullet items)
   if (finding.description) {
-    xml += generateParagraph(stripHtml(finding.description));
+    xml += generateContentXml(stripHtml(finding.description), hyperlinkManager);
   }
 
-  // Advice as Kop5 heading with text on next paragraph (strip HTML tags first)
+  // Advice as Kop5 heading with content on next paragraph(s) (strip HTML tags first)
   if (finding.advice) {
     xml += `<w:p><w:pPr><w:pStyle w:val="Kop5"/></w:pPr><w:r><w:t>Advies</w:t></w:r></w:p>`;
-    xml += generateParagraph(stripHtml(finding.advice));
+    xml += generateContentXml(stripHtml(finding.advice), hyperlinkManager);
   }
 
   return xml;

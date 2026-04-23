@@ -7,6 +7,31 @@ import { useState, useEffect } from 'react';
 import { parseMarkdownTabs } from '@/lib/parse-tabs';
 import { formatProjectName } from '@/lib/format-project-name';
 import { useSearchParams } from 'next/navigation';
+import { getDriveFolderUrl } from '@/lib/drive-folders';
+import { marked } from 'marked';
+
+/**
+ * Render markdown of HTML als HTML-string. Als de input geen HTML-tags bevat
+ * (typisch markdown zoals `[tekst](url)`), wordt het via marked() geparsed.
+ * Links krijgen target="_blank" voor externe navigatie.
+ */
+function renderFindingHtml(input: string): string {
+  if (!input) return '';
+  // Eerst alle HTML-tags escapen zodat <p>, <br>, <figure> etc. als tekst
+  // verschijnen. Daarna markdown parsen (matched het gedrag van de admin-pagina).
+  const escaped = input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  let html: string;
+  try {
+    html = marked(escaped, { breaks: true, gfm: true }) as string;
+  } catch {
+    html = escaped;
+  }
+  // target="_blank" op alle links
+  return html.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
+}
 
 export default function OverDitOnderzoek({ project }: { project: any }) {
   const searchParams = useSearchParams();
@@ -593,6 +618,16 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             <p className="text-gray-700 leading-relaxed">
               Het onderzoek is uitgevoerd conform {project.researchTypeData?.version || 'WCAG 2.2'} niveau {project.researchTypeData?.level || 'A en AA'} (EN 301 549), volgens de evaluatiemethode WCAG-EM.
             </p>
+            <dl className="mt-6 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
+              <dt className="font-medium text-gray-600">Opdrachtgever:</dt>
+              <dd className="text-gray-900">{project.commissionedBy || project.clientProject?.name || 'n.v.t.'}</dd>
+              <dt className="font-medium text-gray-600">Website:</dt>
+              <dd className="text-gray-900">{scopeDomain || introUrl || 'n.v.t.'}</dd>
+              <dt className="font-medium text-gray-600">Rapportversie:</dt>
+              <dd className="text-gray-900">{Number(project.version).toFixed(1)}</dd>
+              <dt className="font-medium text-gray-600">Datum:</dt>
+              <dd className="text-gray-900">{format(reportDate, 'd MMMM yyyy', { locale: nl })}</dd>
+            </dl>
           </div>
         </section>
 
@@ -994,11 +1029,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                     )}
 
                                     {/* Description */}
-                                    <div dangerouslySetInnerHTML={{ __html: finding.description }} />
+                                    <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.description) }} />
 
                                     {/* Advice */}
                                     <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
-                                    <div dangerouslySetInnerHTML={{ __html: finding.advice }} />
+                                    <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.advice) }} />
                                   </div>
                                 )}
                               </div>
@@ -1160,11 +1195,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                     )}
 
                                     {/* Description */}
-                                    <div dangerouslySetInnerHTML={{ __html: finding.description }} />
+                                    <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.description) }} />
 
                                     {/* Advice */}
                                     <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
-                                    <div dangerouslySetInnerHTML={{ __html: finding.advice }} />
+                                    <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.advice) }} />
                                   </div>
                                 )}
                               </div>
@@ -1655,6 +1690,35 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           >
             Download Excel
           </a>
+          <a
+            href={`/api/reports/${project.id}/html`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center px-4 py-2 mt-3 bg-shift2-primary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium"
+          >
+            Bekijk HTML-versie
+          </a>
+          <a
+            href={`/api/reports/${project.id}/html-word`}
+            download
+            className="block w-full text-center px-4 py-2 mt-3 bg-shift2-primary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium"
+          >
+            html to word
+          </a>
+          {(() => {
+            const driveUrl = getDriveFolderUrl(project.title || '');
+            if (!driveUrl) return null;
+            return (
+              <a
+                href={driveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center px-4 py-2 mt-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Open Drive-map
+              </a>
+            );
+          })()}
         </div>
 
         {/* Scope */}

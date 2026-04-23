@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WCAG 2.2 AA Deelonderzoek content website gemeente Blaricum</title>
+    <link rel="stylesheet" href="https://cuatro.sim-cdn.nl/assets/fonts/shift2/brockmann/stylesheet.css">
+    <style>
+        :root {
+            --shift2-purple: #2a0a4a;
+            --shift2-accent: #8a2be2;
+            --bg-odd: #ffffff;
+            --bg-even: #f6f3fb;
+            --border: #6d5a99;
+            --text: #1a1a1a;
+            --muted: #555;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'brockmannregular', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            font-size: 17px;
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        header.logo-header {
+            padding: 2rem 1.5rem 1rem;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        header.logo-header img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        h1 {
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--shift2-purple);
+            font-size: 2.2rem;
+            line-height: 1.2;
+            margin: 1rem 0 1.5rem;
+        }
+
+        h2 {
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--shift2-purple);
+            font-size: 1.6rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid var(--shift2-accent);
+        }
+
+        h3 {
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--shift2-purple);
+            font-size: 1.25rem;
+            margin: 1.8rem 0 0.6rem;
+        }
+
+        h4 {
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--shift2-purple);
+            font-size: 1.05rem;
+            margin: 1.2rem 0 0.4rem;
+        }
+
+        h5 {
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1rem;
+            margin: 1rem 0 0.3rem;
+            font-style: italic;
+        }
+
+        p { margin: 0.6rem 0; }
+
+        a { color: var(--shift2-accent); }
+        a:hover { text-decoration: none; }
+
+        ul { padding-left: 1.4rem; }
+        li { margin: 0.3rem 0; }
+
+        section.content-block {
+            padding: 1.5rem 0;
+        }
+        section.content-block + section.content-block {
+            border-top: 1px solid var(--border);
+        }
+
+        details,
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 0.6rem 0;
+            background: #fff;
+            display: block;
+        }
+        details summary,
+        .panel > .panel-title {
+            padding: 0.8rem 1rem;
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--shift2-purple);
+            list-style: none;
+            display: block;
+        }
+        details summary::-webkit-details-marker { display: none; }
+        details summary h3,
+        details summary h4,
+        .panel > .panel-title h3,
+        .panel > .panel-title h4 {
+            display: inline;
+            margin: 0;
+        }
+        details > div,
+        .panel > .panel-body {
+            padding: 0 1rem 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.5rem 0.7rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        thead th {
+            background: var(--bg-even);
+            color: var(--shift2-purple);
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+        }
+        .bold { font-weight: bold; }
+        .fail { color: #b3261e; font-weight: bold; }
+
+        .result-label {
+            display: inline-block;
+            padding: 0.15rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .result-fail { background: #fde0de; color: #b3261e; }
+        .result-note { background: #fff4d6; color: #8a6200; }
+
+        .intro {
+            font-size: 1.1rem;
+            color: var(--muted);
+        }
+
+        .project-info {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 0.5rem 1.5rem;
+            margin: 1.5rem 0 0;
+            padding: 1rem 1.25rem;
+            background: var(--bg-even);
+            border-left: 4px solid var(--shift2-accent);
+            border-radius: 4px;
+        }
+        .project-info dt {
+            font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--shift2-purple);
+        }
+        .project-info dd {
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.7rem; }
+            h2 { font-size: 1.3rem; }
+            .container { padding: 1.5rem 1rem 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="logo-header">
+    <img src="/shift2-logo.png" alt="Logo Shift2">
+</header>
+
+<main class="container">
+
+    <h1>WCAG 2.2 AA Deelonderzoek content website gemeente Blaricum</h1>
+
+    <p class="intro">Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de website blaricum.nl, uitgevoerd in opdracht van Bel Combinatie.</p>
+
+    <dl class="project-info">
+        <dt>Opdrachtgever:</dt>
+        <dd>Bel Combinatie</dd>
+        <dt>Website:</dt>
+        <dd>blaricum.nl</dd>
+        <dt>Rapportversie:</dt>
+        <dd>1.0</dd>
+        <dt>Datum:</dt>
+        <dd>20 april 2026</dd>
+    </dl>
+
+    <section class="content-block">
+        <h2 id="samenvatting">Samenvatting</h2>
+        <p>Dit onderzoek is door Shift2 uitgevoerd tussen 6 april 2026 en 20 april 2026. Voor dit deelonderzoek is een representatieve steekproef samengesteld van 20 gepubliceerde webpagina's met verschillende contenttypen.</p>
+        <p>De onderzochte content voldoet niet volledig aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn 30 succescriteria beoordeeld. Er wordt voldaan aan 24 van deze 30 succescriteria (80%). Bij 6 succescriteria zijn afwijkingen vastgesteld.</p>
+        <p>De website van Gemeente Blaricum scoort op veel punten al goed. De aandachtspunten liggen op het vlak van paginastructuur en koppen. Op meerdere plekken ontbreekt een correcte lijstopmaak en sommige koppen beschrijven de inhoud van een sectie onvoldoende. De grootste uitdaging ligt bij de PDF-documenten: het jaarverslag klachtencoördinator is niet getagd, heeft onvoldoende contrast en is ingesteld op de verkeerde documenttaal. De handreiking participatie is over het algemeen goed gestructureerd, maar kent op enkele plekken structuurproblemen zoals ontbrekende koptagging en niet-getagde tekstkaders.</p>
+        <p>Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.</p>
+    </section>
+
+    <section class="content-block">
+        <h2 id="over-dit-onderzoek">Over dit onderzoek</h2>
+        <p>Voor de website is een deelonderzoek uitgevoerd naar de toegankelijkheid van de content, om vast te stellen in hoeverre deze voldoet aan WCAG 2.2 niveau A en AA (EN 301 549).</p>
+        <p>De geldigheid van dit onderzoeksrapport bedraagt drie jaar. Bij substantiële wijzigingen in de content adviseren wij een aanvullend of nieuw onderzoek uit te laten voeren.</p>
+
+        <div class="panel"><div class="panel-title"><h3>Afbakening van het deelonderzoek</h3></div><div class="panel-body">
+                <p>Dit deelonderzoek heeft uitsluitend betrekking op de content van de website die door de organisatie via het beheersysteem kan worden ingevoerd of aangepast.</p>
+                <p>Bij dit onderzoek zijn 30 van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
+                <p>De overige 25 succescriteria hebben betrekking op de technische basis van de website en worden beoordeeld in het afzonderlijk deelonderzoek techniek.</p>
+                <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>
+
+                <h4>Succescriteria beoordeeld in het technisch deelonderzoek</h4>
+                <p>Onderstaande succescriteria zijn in dit contentonderzoek niet beoordeeld en vallen onder het afzonderlijke deelonderzoek techniek:</p>
+                <table>
+                    <thead>
+                        <tr><th>SC</th><th>Naam</th><th>Niveau</th><th>Reden van uitsluiting</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><th scope="row">3.3.1</th><td>Foutidentificatie</td><td>A</td><td>Formuliervalidatie wordt volledig door het systeem afgehandeld</td></tr>
+                        <tr><th scope="row">3.3.3</th><td>Foutsuggestie</td><td>AA</td><td>Foutsuggesties worden door het systeem gegenereerd</td></tr>
+                        <tr><th scope="row">3.3.7</th><td>Overbodige invoer</td><td>A</td><td>Het hergebruik van eerder ingevoerde gegevens binnen processen is binnen het platform technisch ingericht en wordt centraal beheerd.</td></tr>
+                    </tbody>
+                </table>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Reikwijdte en werkwijze</h3></div><div class="panel-body">
+                <p>Het onderzoek is uitgevoerd op basis van een representatieve steekproef. Binnen deze steekproef zijn de aangetroffen toegankelijkheidsproblemen zo concreet mogelijk beschreven. Waar mogelijk is een aanbeveling opgenomen om de afwijking te verhelpen.</p>
+                <p>Dit onderzoek biedt geen uitputtend overzicht van alle mogelijke toegankelijkheidsproblemen. De bevindingen vormen een momentopname van de situatie ten tijde van het onderzoek.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Wat is WCAG?</h3></div><div class="panel-body">
+                <p>WCAG (<span lang="en">Web Content Accessibility Guidelines</span>) zijn internationaal erkende richtlijnen voor digitale toegankelijkheid, opgebouwd rond vier principes: Waarneembaar, Bedienbaar, Begrijpelijk en Robuust. Binnen deze principes zijn meetbare succescriteria vastgesteld.</p>
+                <p><a href="https://www.w3.org/Translations/WCAG22-nl" target="_blank" rel="noopener">Meer informatie: WCAG 2.2 (Nederlandse vertaling)</a></p>
+            </div></div>
+    </section>
+
+    <section class="content-block">
+        <h2 id="overzicht-resultaten">Overzicht resultaten</h2>
+        <p>De resultaten zijn weergegeven in twee overzichten: per succescriterium en per WCAG-principe.</p>
+
+        <div class="panel"><div class="panel-title"><h3>Resultaten per succescriterium</h3></div><div class="panel-body">
+                <table>
+                    <thead>
+                        <tr><th>Succescriterium</th><th>Niveau</th><th>Resultaat</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><th scope="row" class="bold">1.1.1 Niet-tekstuele content</th><td class="bold">A</td><td class="fail">Voldoet niet</td></tr>
+                        <tr><th scope="row">1.2.1 Louter-geluid en louter-videobeeld (vooraf opgenomen)</th><td>A</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row">1.2.2 Ondertitels voor doven en slechthorenden (vooraf opgenomen)</th><td>A</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row">1.2.3 Audiodescriptie of media-alternatief (vooraf opgenomen)</th><td>A</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row">1.2.4 Ondertitels voor doven en slechthorenden (live)</th><td>AA</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row">1.2.5 Audiodescriptie (vooraf opgenomen)</th><td>AA</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row" class="bold">1.3.1 Info en relaties</th><td class="bold">A</td><td class="fail">Voldoet niet</td></tr>
+                        <tr><th scope="row">1.3.2 Betekenisvolle volgorde</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">1.3.3 Zintuiglijke eigenschappen</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">1.3.5 Identificeer het doel van de invoer</th><td>AA</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row">1.4.1 Gebruik van kleur</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">1.4.2 Geluidsbediening</th><td>AA</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row" class="bold">1.4.3 Contrast (minimum)</th><td class="bold">AA</td><td class="fail">Voldoet niet</td></tr>
+                        <tr><th scope="row">1.4.5 Afbeeldingen van tekst</th><td>AA</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">1.4.10 Reflow</th><td>AA</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">1.4.11 Contrast van niet-tekstuele content</th><td>AA</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">2.1.2 Geen toetsenbordval</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">2.1.4 Enkel teken sneltoetsen</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">2.2.2 Pauzeren, stoppen of verbergen</th><td>A</td><td>niet aanwezig</td></tr>
+                        <tr><th scope="row">2.3.1 Drie flitsen of beneden drempelwaarde</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row" class="bold">2.4.2 Paginatitel</th><td class="bold">A</td><td class="fail">Voldoet niet</td></tr>
+                        <tr><th scope="row">2.4.4 Linkdoel (in context)</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row" class="bold">2.4.6 Koppen en labels</th><td class="bold">AA</td><td class="fail">Voldoet niet</td></tr>
+                        <tr><th scope="row">2.5.3 Label in naam</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">2.5.8 Grootte van het aanwijsgebied (minimum)</th><td>AA</td><td>Voldoet</td></tr>
+                        <tr><th scope="row" class="bold">3.1.1 Taal van de pagina</th><td class="bold">A</td><td class="fail">Voldoet niet</td></tr>
+                        <tr><th scope="row">3.1.2 Taal van onderdelen</th><td>AA</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">3.2.4 Consistente identificatie</th><td>AA</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">3.3.2 Labels of instructies</th><td>A</td><td>Voldoet</td></tr>
+                        <tr><th scope="row">4.1.2 Naam, rol en waarde</th><td>A</td><td>Voldoet</td></tr>
+                    </tbody>
+                </table>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Onderzoeksscores</h3></div><div class="panel-body">
+                <p>De tabel hieronder laat per WCAG-principe en per WCAG-niveau zien hoeveel succescriteria zijn getoetst en hoeveel daarvan goedgekeurd zijn.</p>
+                <table>
+                    <thead>
+                        <tr><th>WCAG Principe</th><th>Niveau A</th><th>Niveau AA</th><th>Totaal</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><th scope="row">Waarneembaar</th><td>7 / 9</td><td>6 / 7</td><td>13 / 16</td></tr>
+                        <tr><th scope="row">Bedienbaar</th><td>6 / 7</td><td>1 / 2</td><td>7 / 9</td></tr>
+                        <tr><th scope="row">Begrijpelijk</th><td>1 / 2</td><td>2 / 2</td><td>3 / 4</td></tr>
+                        <tr><th scope="row">Robuust</th><td>1 / 1</td><td>0 / 0</td><td>1 / 1</td></tr>
+                        <tr><th scope="row" class="bold">Totaal</th><td class="bold">15 / 19</td><td class="bold">9 / 11</td><td class="bold">24 / 30</td></tr>
+                    </tbody>
+                </table>
+            </div></div>
+    </section>
+
+    <section class="content-block">
+        <h2 id="bevindingen">Bevindingen</h2>
+        <p>Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.</p>
+
+        <h3>1.1.1 Niet-tekstuele content &nbsp;A</h3>
+        <p>Geef informatieve afbeeldingen en andere niet-tekstuele content een goed tekstalternatief.<br>
+        Informatie over succescriterium <a href="https://www.w3.org/Translations/WCAG22-nl#non-text-content" target="_blank" rel="noopener">1.1.1 Niet-tekstuele content</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-fail">Voldoet niet</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 1 (SC 1.1.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/overhangend-groen" target="_blank" rel="noopener">https://www.blaricum.nl/overhangend-groen</a></p>
+                <p>Op de pagina staat een afbeelding met voorbeelden van goed en verkeerd gesnoeide heggen. De tekst die bij de afbeelding hoort (de alt-tekst) is precies hetzelfde als het bijschrift onder de afbeelding. Hierdoor wordt dezelfde informatie twee keer voorgelezen aan gebruikers van hulpsoftware zoals een schermlezer. Omdat het bijschrift de afbeelding al goed uitlegt, is een alt-tekst niet nodig.</p>
+                <h5>Advies:</h5>
+                <p>Gebruik een lege alt-tekst (alt=""), zodat de informatie niet dubbel wordt voorgelezen.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 2 (SC 1.1.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/strooien-bij-gladheid" target="_blank" rel="noopener">https://www.blaricum.nl/strooien-bij-gladheid</a></p>
+                <p>Op de pagina is een interactieve kaart opgenomen die de strooiroutes van de gemeente Blaricum toont. Deze kaart is ingebonden via een iframe. Online kaarten en karteringsdiensten vallen onder een uitzondering voor de toegankelijkheidseisen, maar deze uitzondering geldt alleen voor de kaarttechniek, niet voor de informatie die via de kaart wordt aangeboden.</p>
+                <p>De informatie over de strooiroutes is momenteel alleen via de kaart beschikbaar. Op de pagina ontbreekt een tekstueel alternatief waarin deze informatie toegankelijk wordt aangeboden.<br>De kaart bevat een zoekfunctie, maar die is zelf ook niet toegankelijk voor gebruikers van hulpsoftware.</p>
+                <h5>Advies:</h5>
+                <p>Zorg dat de essentiële informatie uit de kaart (zoals welke straten onder welke strooiroute vallen) ook op een toegankelijke manier wordt aangeboden, bijvoorbeeld via een tekstueel overzicht, tabel of een aantoonbaar toegankelijke zoekfunctie.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 3 (SC 1.1.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/wethouder-anne-marie-kennis" target="_blank" rel="noopener">https://www.blaricum.nl/wethouder-anne-marie-kennis</a></p>
+                <p>Op de pagina "Wethouder Anne-Marie Kennis" staat een portretfoto van de wethouder. De alt-tekst is "Persoon met lichte outfit tegen een lichte en grijze achtergrond". Deze tekst beschrijft het uiterlijk en de achtergrond, maar maakt niet duidelijk dat het om een portretfoto van de wethouder zelf gaat. Gebruikers van hulpsoftware, zoals een schermlezer, krijgen daardoor uiterlijke details te horen zonder de context dat dit een portret van de wethouder is.</p>
+                <h5>Advies</h5>
+                <p>Geef de portretfoto een tekstalternatief dat duidelijk maakt dat het om een portret gaat en de persoon identificeert, bijvoorbeeld alt="Portretfoto Wethouder Anne-Marie Kennis".</p>
+            </div></div>
+
+        <h3>1.3.1 Info en relaties &nbsp;A</h3>
+        <p>Info, structuur en relaties in de content die je kan zien, moet ook in de code voor hulpsoftware beschikbaar zijn. <a href="https://www.w3.org/Translations/WCAG22-nl#info-and-relationships" target="_blank" rel="noopener">1.3.1 Info en relaties</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-fail">Voldoet niet</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 1 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl" target="_blank" rel="noopener">https://www.blaricum.nl</a></p>
+                <p>Op de homepage staat onder de kop "Of bent u op zoek naar..." een overzicht met twaalf links, zoals Nieuws, Gemeentelijke belastingen en Verhuizen. Visueel is dit een opsomming. Deze links staan echter in code niet als lijst opgemaakt. Daardoor kan hulpsoftware niet herkennen dat het om een lijst gaat. In de footer staan onder de kop "Volg de gemeente" twee links naar sociale media (Facebook en Instagram). Deze links zijn geplaatst in een p-element, terwijl ze visueel een opsomming vormen. Hierdoor is de lijststructuur niet programmatisch vastgelegd en kan hulpsoftware niet bepalen dat het om een lijst met meerdere items gaat.</p>
+                <h5>Advies:</h5>
+                <p>Plaats de links in een ongeordende lijst.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 2 (SC 1.3.1)</h4></div><div class="panel-body">
+                <ul>
+                    <li><a href="https://www.blaricum.nl/bekendmakingen-en-verordeningen" target="_blank" rel="noopener">https://www.blaricum.nl/bekendmakingen-en-verordeningen</a></li>
+                    <li><a href="https://www.blaricum.nl/duurzaam" target="_blank" rel="noopener">https://www.blaricum.nl/duurzaam</a></li>
+                </ul>
+                <p>Op meerdere pagina's klopt de koppenstructuur niet, waardoor de hiërarchie van de content niet goed wordt overgebracht aan hulpsoftware.</p>
+                <p>Op de pagina bekendmakingen en verordeningen volgt na de paginatitel (h1) direct een aantal koppen van niveau h3 zoals "Bekendmakingen", "Verordeningen" en "Bekendmakingen in uw buurt of wijk". Het niveau h2 ontbreekt, waardoor de structuur een stap overslaat.</p>
+                <p>Op de pagina duurzaam is de kop "Blaricum Duurzaam" opgemaakt als h2. De onderliggende berichten, zoals "Isolatieactie" en "Energieklus" zijn ook als h2 opgemaakt. Hierdoor is niet duidelijk dat deze onderdelen onder "Blaricum Duurzaam" vallen. Dit zorgt ervoor dat gebruikers van schermlezers de structuur van de pagina minder goed kunnen begrijpen en moeilijker kunnen navigeren.</p>
+                <h5>Advies:</h5>
+                <p>Zorg voor een logische en opeenvolgende koppenstructuur zonder niveaus over te slaan. Gebruik op de pagina "Bekendmakingen en verordeningen" koppen van niveau h2 in plaats van h3. Laat op de pagina "Duurzaam" de kop "Blaricum Duurzaam" staan als h2 en geef de onderliggende berichten een lager kopniveau.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 3 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/evenementenkalender" target="_blank" rel="noopener">https://www.blaricum.nl/evenementenkalender</a></p>
+                <p>Op de pagina staat een tabel waarin de maanden (zoals april en mei) als koppen zijn gemaakt met een kop-element. Dat is niet de juiste manier.<br>In een tabel gebruik je speciale kopcellen (th) om koppen aan te geven. Doordat hier h2 wordt gebruikt, begrijpen schermlezers de tabel minder goed.</p>
+                <h5>Advies</h5>
+                <p>Haal de H2-koppen uit de tabel. Dit probleem kun je op twee manieren oplossen:</p>
+                <ul>
+                    <li>Maak per maand een aparte tabel met de maandnaam als titel, of</li>
+                    <li>Zet de maand bij de datum (bijvoorbeeld "5 en 6 april 2026").<br>Verwijder daarnaast ook de lege rijen.</li>
+                </ul>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 4 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/evenementenkalender" target="_blank" rel="noopener">https://www.blaricum.nl/evenementenkalender</a></p>
+                <p>Op de pagina staat een tabel waarvan de bovenste rij visueel als kolomkoppen is opgemaakt maar in de code uit gewone datacellen (td) bestaat. Ook de eerste cel van elke data-rij (de datum-kolom) is een datacel, terwijl deze als rij-kop fungeert. Hierdoor kunnen hulptechnologieën niet bepalen welke kolom en welke rij bij welke informatie horen.</p>
+                <h5>Advies</h5>
+                <p>Markeer de bovenste rij als kolomkoppen door de cellen als th te taggen. Markeer ook de eerste cel van elke data-rij als rij-kop door die als th te taggen. Haal daarnaast de strong-elementen weg, omdat koppen via CSS al vet worden weergegeven.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 5 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Handreiking%20participatie%20BEL%20gemeenten.pdf?cb=L9e4BfDV" target="_blank" rel="noopener">Handreiking participatie BEL gemeenten.pdf</a></p>
+                <p>In het pdf document staan meerdere uitgelichte tekstkaders met een gele achtergrond die niet zijn getagd en daardoor niet worden voorgelezen door hulpsoftware. Een voorbeeld is de tekst op pagina 4: "Bereken welke vorm van participatie past." Dit probleem komt op meerdere pagina's voor.</p>
+                <h5>Advies</h5>
+                <p>Tag de uitgelichte tekstkaders als alinea-elementen in het bronbestand en exporteer het document daarna opnieuw als PDF.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 6 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Handreiking%20participatie%20BEL%20gemeenten.pdf?cb=L9e4BfDV" target="_blank" rel="noopener">Handreiking participatie BEL gemeenten.pdf</a></p>
+                <p>Op pagina 4 van het pdf document staat het overzicht "Bereken vorm van participatie" met drie rijen die elk een puntenbereik koppelen aan een omschrijving en een participatieniveau. Visueel is dit een overzichtstabel. In de tagstructuur zijn de drie rijen getagd als losse alinea's. De relatie tussen puntenbereik, omschrijving en participatieniveau is niet programmatisch vastgelegd.</p>
+                <h5>Advies</h5>
+                <p>Tag dit overzicht als een tabel in het bronbestand met een rij per puntenbereik en kolomkoppen voor puntenbereik, omschrijving en participatievorm. Exporteer het document daarna opnieuw als PDF.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 7 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Handreiking%20participatie%20BEL%20gemeenten.pdf?cb=L9e4BfDV" target="_blank" rel="noopener">Handreiking participatie BEL gemeenten.pdf</a></p>
+                <p>Op pagina 10 van het pdf document staat een klikbare link naar het Omgevingsloket. De link is niet als link getagd in de tagstructuur. Een screenreadergebruiker hoort de URL voorgelezen als gewone tekst en kan de link niet activeren.</p>
+                <h5>Advies</h5>
+                <p>Tag de URL als een klikbare link in het bronbestand en exporteer het document daarna opnieuw als PDF.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 8 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Jaarverslag%20klachtenco%C3%B6rdinator%202025.pdf?cb=TIGttiXs" target="_blank" rel="noopener">Jaarverslag klachtencoördinator 2025.pdf</a></p>
+                <p>Het volgende PDF-document is niet getagd. Dit wil zeggen dat er geen structuur is aangegeven in het bestand door middel van tags. Hulpsoftware (zoals een screenreader) kan hierdoor niet bepalen wat koppen, lijsten en dergelijke zijn en zal afbeeldingen negeren.</p>
+                <h5>Advies</h5>
+                <p>Als het bestand correct getagd wordt, kan hulpsoftware beter de structuur en relaties bepalen. Bij koppen kan dan bijvoorbeeld worden voorgelezen dat dit koppen zijn. In veel gevallen kan dit probleem worden opgelost door het document vanuit het bronbestand (meestal in Word of InDesign) opnieuw te exporteren naar PDF, maar dan inclusief tags of labels.<br>Omdat nu de tags ontbreken, kunnen andere succescriteria zoals 1.1.1 en 1.3.2 niet onderzocht worden. Let daarom op dat bij het oplossen van dit probleem nieuwe toegankelijkheidsproblemen kunnen ontstaan.</p>
+            </div></div>
+
+        <h3>1.4.3 Contrast (minimum) &nbsp;AA</h3>
+        <p>Alle teksten moeten voldoende kleurcontrast hebben. Tip: gebruik de Colour Contrast Analyzer om het kleurcontrast te bepalen.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#contrast-minimum" target="_blank" rel="noopener">1.4.3 Contrast (minimum)</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-fail">Voldoet niet</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 1 (SC 1.4.3)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Jaarverslag%20klachtenco%C3%B6rdinator%202025.pdf?cb=TIGttiXs" target="_blank" rel="noopener">Jaarverslag klachtencoördinator 2025.pdf</a></p>
+                <p>In het PDF-document staat op elke pagina een blauwe kolom met witte tekst. De tekstkleur #FFFFFF heeft onvoldoende contrast met de achtergrondkleur #629DD1. Het kleurcontrast is 2,9:1. Hierdoor is de tekst slecht leesbaar voor mensen met een verminderd gezichtsvermogen.</p>
+                <h5>Advies</h5>
+                <p>Het contrast van normale tekst moet minimaal 4,5:1 zijn en voor grote tekst minimaal 3,0:1. Maak de blauwe achtergrondkleur donkerder zodat het contrast met de witte tekst voldoet aan de eis.</p>
+            </div></div>
+
+        <h3>2.4.2 Paginatitel &nbsp;A</h3>
+        <p>Alle pagina's hebben een goede titel die het onderwerp beschrijft.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#page-titled" target="_blank" rel="noopener">2.4.2 Paginatitel</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-fail">Voldoet niet</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 1 (SC 2.4.2)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Jaarverslag%20klachtenco%C3%B6rdinator%202025.pdf?cb=TIGttiXs" target="_blank" rel="noopener">Jaarverslag klachtencoördinator 2025.pdf</a></p>
+                <p>De PDF heeft wel een titel ("Geanonimiseerd document"), maar deze beschrijft de inhoud van het document onvoldoende. Gebruikers van hulpsoftware, zoals een schermlezer, horen daardoor geen beschrijvende documenttitel.</p>
+                <h5>Advies</h5>
+                <p>Stel een beschrijvende titel in die de inhoud van het document weergeeft. Doe dit bij voorkeur al in het bronbestand (bijvoorbeeld in Word of InDesign) voordat je exporteert naar PDF.</p>
+            </div></div>
+
+        <h3>2.4.6 Koppen en labels &nbsp;AA</h3>
+        <p>Gebruik duidelijke koppen en tekstlabels die het onderwerp of doel beschrijven.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#headings-and-labels" target="_blank" rel="noopener">2.4.6 Koppen en labels</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-fail">Voldoet niet</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 1 (SC 2.4.6)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/openingstijden" target="_blank" rel="noopener">https://www.blaricum.nl/openingstijden</a></p>
+                <p>Op de pagina staat een lege kop direct onder de paginatitel. Gebruikers die via koppen navigeren, stuiten op een lege kopregel.</p>
+                <h5>Advies</h5>
+                <p>Vul het titelveld van het openingstijden-component in het CMS in met een beschrijvende tekst, bijvoorbeeld "Loket Burgerzaken".</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 2 (SC 2.4.6)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/form/contactformulier-blaricum/contactformulier-blaricum-0" target="_blank" rel="noopener">https://www.blaricum.nl/form/contactformulier-blaricum/contactformulier-blaricum-0</a></p>
+                <p>De h1 en h2 van stap 1 van het formulier zijn nagenoeg identiek: de h1 luidt "Contactformulier - Blaricum" en de h2 luidt "Contactformulier Blaricum". De h2 beschrijft de inhoud van de stap niet, zij herhaalt alleen de formuliernaam.</p>
+                <h5>Advies</h5>
+                <p>Vervang de h2 door een beschrijvende staptitel die aangeeft wat er in deze stap wordt gevraagd. Bijvoorbeeld "Over dit formulier".</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 3 (SC 2.4.6)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl" target="_blank" rel="noopener">https://www.blaricum.nl</a></p>
+                <p>Op de homepage staat een kop H2 met de tekst "Of bent u op zoek naar...". Deze kop beschrijft de inhoud van de sectie niet, maar stelt een vraag. Hierdoor is het voor gebruikers die via koppen navigeren niet duidelijk wat er in deze sectie staat.</p>
+                <h5>Advies</h5>
+                <p>Vervang de kop door een beschrijvende titel die aangeeft wat de sectie bevat, bijvoorbeeld "Veelgevraagde onderwerpen" of "Populaire onderwerpen".</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 4 (SC 2.4.6)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/overhangend-groen" target="_blank" rel="noopener">https://www.blaricum.nl/overhangend-groen</a></p>
+                <p>De Kop "Wees dit voor" op deze pagina beschrijft het onderwerp van de sectie niet duidelijk. Ook binnen de paginacontext blijft de betekenis onduidelijk. Hierdoor is voor gebruikers die via koppen navigeren niet duidelijk wat zij in deze sectie kunnen verwachten.</p>
+                <h5>Advies</h5>
+                <p>Gebruik een beschrijvende koptekst die het onderwerp van de alinea weergeeft, zoals "Regelmatig onderhoud voorkomt overlast".</p>
+            </div></div>
+
+        <h3>3.1.1 Taal van de pagina &nbsp;A</h3>
+        <p>Hulpsoftware moet de taal van de pagina kunnen bepalen, zodat bijvoorbeeld de juiste stem en intonatie gebruikt kan worden.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#language-of-page" target="_blank" rel="noopener">3.1.1 Taal van de pagina</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-fail">Voldoet niet</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Bevinding 1 (SC 3.1.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Jaarverslag%20klachtenco%C3%B6rdinator%202025.pdf?cb=TIGttiXs" target="_blank" rel="noopener">Jaarverslag klachtencoördinator 2025.pdf</a></p>
+                <p>Het PDF-document is Nederlandstalig, maar in de documenteigenschappen is Engels ingesteld als taal. Hierdoor leest een schermlezer de Nederlandse tekst voor met Engelse uitspraakregels. Gebruikers die blind of slechtziend zijn en afhankelijk zijn van een schermlezer kunnen de tekst hierdoor moeilijk of niet volgen.</p>
+                <h5>Advies</h5>
+                <p>Stel in het bronbestand de documenttaal in op Nederlands en exporteer het document daarna opnieuw als PDF.</p>
+            </div></div>
+    </section>
+
+    <section class="content-block">
+        <h2 id="opmerkingen">Opmerkingen</h2>
+        <p>De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.</p>
+
+        <h3>1.1.1 Niet-tekstuele content &nbsp;A</h3>
+        <p>Geef informatieve afbeeldingen en andere niet-tekstuele content een goed tekstalternatief.<br>
+        Informatie over succescriterium <a href="https://www.w3.org/Translations/WCAG22-nl#non-text-content" target="_blank" rel="noopener">1.1.1 Niet-tekstuele content</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-note">Voldoet maar met opmerking</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Opmerking 1 (SC 1.1.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Jaarverslag%20klachtenco%C3%B6rdinator%202025.pdf?cb=TIGttiXs" target="_blank" rel="noopener">Jaarverslag klachtencoördinator 2025.pdf</a></p>
+                <p>Het volgende PDF-document is niet getagd. Hierdoor zijn informatieve afbeeldingen niet gemarkeerd als figure en hebben zij geen tekstalternatief. Mensen die blind zijn en een schermlezer gebruiken krijgen deze informatie daardoor niet aangeboden. Omdat het document niet is getagd, is niet vast te stellen of afbeeldingen correct zijn verwerkt. Hierdoor wordt dit nu niet afgekeurd. Zodra het document wel wordt getagd, kan blijken dat informatieve afbeeldingen ontbreken of onjuist zijn getagd.</p>
+                <h5>Advies</h5>
+                <p>Zorg dat de PDF wordt voorzien van een volledige tags-structuur en maak daarbij onderscheid tussen informatieve en decoratieve afbeeldingen.<br>Tag informatieve afbeeldingen als figure en geef deze een kort en beschrijvend tekstalternatief dat de functie of inhoud van de afbeelding samenvat.<br>Markeer decoratieve afbeeldingen als artefact zodat deze worden genegeerd door schermlezers.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h4>Opmerking 2 (SC 1.1.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/college-van-burgemeester-en-wethouders" target="_blank" rel="noopener">https://www.blaricum.nl/college-van-burgemeester-en-wethouders</a></p>
+                <p>Op de pagina "College van burgemeester en wethouders" staan portretfoto's van de burgemeester en wethouders. De alt-tekst van deze foto's beschrijft het uiterlijk van de persoon (bijvoorbeeld alt="Burgemeester met ambtsketting gekleed in donker jasje met lichtblauwe sjaal"), maar maakt niet duidelijk dat het om een portretfoto gaat. Gebruikers van hulpsoftware, zoals een schermlezer, krijgen daardoor uiterlijke details te horen zonder de context dat dit een portret van de betreffende persoon is.</p>
+                <h5>Advies</h5>
+                <p>Geef portretfoto's een tekstalternatief dat duidelijk maakt dat het om een portret gaat en de persoon identificeert, bijvoorbeeld alt="Portretfoto Burgemeester Barbara de Reijke" of alt="Portretfoto Wethouder Anne-Marie Kennis".</p>
+            </div></div>
+
+        <h3>1.3.1 Info en relaties &nbsp;A</h3>
+        <p>Info, structuur en relaties in de content die je kan zien, moet ook in de code voor hulpsoftware beschikbaar zijn. <a href="https://www.w3.org/Translations/WCAG22-nl#info-and-relationships" target="_blank" rel="noopener">1.3.1 Info en relaties</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-note">Voldoet maar met opmerking</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Opmerking 1 (SC 1.3.1)</h4></div><div class="panel-body">
+                <p><a href="https://www.blaricum.nl/personen-met-verward-gedrag" target="_blank" rel="noopener">https://www.blaricum.nl/personen-met-verward-gedrag</a></p>
+                <p>De knop "Zorgmelding doorgeven" is opgemaakt als een link waarbij de volledige knoptekst in een strong-element staat. Het strong-element is bedoeld om nadruk aan te geven en is hier niet nodig. De opmaak van een knop hoort via CSS te worden geregeld.</p>
+                <h5>Advies</h5>
+                <p>Verwijder het strong-element en regel de opmaak via CSS.</p>
+            </div></div>
+
+        <h3>1.4.1 Gebruik van kleur &nbsp;A</h3>
+        <p>Gebruik niet alleen maar kleur om informatie over te brengen, bijvoorbeeld in grafieken, diagrammen en tabellen.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#use-of-color" target="_blank" rel="noopener">1.4.1 Gebruik van kleur</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-note">Voldoet maar met opmerking</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Opmerking 1 (SC 1.4.1)</h4></div><div class="panel-body">
+                <p><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Handreiking%20participatie%20BEL%20gemeenten.pdf?cb=L9e4BfDV" target="_blank" rel="noopener">Handreiking participatie BEL gemeenten.pdf</a></p>
+                <p>Op pagina 10 staat een klikbare link naar het Omgevingsloket. De link heeft geen onderstreping en wijkt niet af in kleur van de omringende tekst. De link is daardoor voor alle gebruikers visueel niet herkenbaar als klikbaar element.</p>
+                <h5>Advies</h5>
+                <p>Onderstreep de link of geef deze een afwijkende kleur zodat deze herkenbaar is als klikbaar element.</p>
+            </div></div>
+
+        <h3>1.4.3 Contrast (minimum) &nbsp;AA</h3>
+        <p>Alle teksten moeten voldoende kleurcontrast hebben. Tip: gebruik de Colour Contrast Analyzer om het kleurcontrast te bepalen.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#contrast-minimum" target="_blank" rel="noopener">1.4.3 Contrast (minimum)</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-note">Voldoet maar met opmerking</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Opmerking 1 (SC 1.4.3)</h4></div><div class="panel-body">
+                <p>Op de website is een versie voor hoog contrast aanwezig. Deze is aan te zetten door middel van een zogenaamde "contrast switch". Dit succescriterium is volledig getest in de modus voor hoog contrast. De versie voor hoog contrast wordt gezien als een alternatief voor de standaard versie.</p>
+                <p>Hierdoor kunnen er contrastproblemen zijn in de standaard versie. Deze zijn verder niet beoordeeld.</p>
+                <h5>Advies</h5>
+                <p>We adviseren om ook de standaard versie te voorzien van voldoende kleurcontrast in alle teksten. Dit bevordert de toegankelijkheid van de website voor bezoekers met een zichtbeperking.</p>
+                <p>Teksten met voldoende kleurcontrast lezen ook makkelijker voor alle lezers. Het lezen is hierdoor minder intensief, kost minder energie en het lezen wordt (onbewust) als prettiger ervaren. Hierdoor is de lezer eerder geneigd om over te gaan tot activatie.</p>
+                <p>De versie voor hoog contrast kan dan vervolgens ingezet worden voor een "verhoogd contrast", waarbij wordt voldaan aan succescriterium <a href="https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html" target="_blank" rel="noopener">WCAG 1.4.6 Verhoogd contrast (niveau AAA)</a>.</p>
+            </div></div>
+
+        <h3>1.4.11 Contrast van niet-tekstuele content &nbsp;AA</h3>
+        <p>Niet-tekstuele content op je website heeft voldoende kleurcontrast (3,0:1). Denk bijvoorbeeld aan belangrijke afbeeldingen en formuliervelden.<br>
+        <a href="https://www.w3.org/Translations/WCAG22-nl#non-text-contrast" target="_blank" rel="noopener">1.4.11 Contrast van niet-tekstuele content</a></p>
+        <p><span class="bold">Resultaat:</span> <span class="result-label result-note">Voldoet maar met opmerking</span></p>
+
+        <div class="panel"><div class="panel-title"><h4>Opmerking 1 (SC 1.4.11)</h4></div><div class="panel-body">
+                <p>Op de website is een versie voor hoog contrast aanwezig. Deze is aan te zetten door middel van een zogenaamde "contrast switch".<br>Dit succescriterium is volledig getest in de modus voor hoog contrast. De versie voor hoog contrast wordt gezien als een alternatief voor de standaard versie.<br>Hierdoor kunnen er contrastproblemen zijn met grafische elementen in de standaard versie. Deze zijn verder niet beoordeeld.</p>
+                <h5>Advies</h5>
+                <p>We adviseren om ook de standaard versie te voorzien van voldoende contrast voor grafische elementen, zoals iconen, knoppen en formuliervelden. Dit bevordert de toegankelijkheid van de website voor bezoekers met een zichtbeperking.<br>De versie voor hoog contrast kan dan vervolgens ingezet worden voor een "verhoogd contrast".</p>
+            </div></div>
+    </section>
+
+    <section class="content-block">
+        <h2 id="borging-en-vervolg">Borging en vervolg</h2>
+        <p>Omdat het onderzoek is uitgevoerd op basis van een steekproef, kunnen vergelijkbare afwijkingen ook voorkomen in pagina's die niet zijn onderzocht. Het is daarom raadzaam om de volledige website te controleren op vergelijkbare patronen en deze structureel te monitoren.</p>
+        <p>Daarnaast kunnen wijzigingen in de content of het publicatieproces nieuwe toegankelijkheidsrisico's met zich meebrengen. Structurele aandacht voor toegankelijkheid en periodieke herbeoordeling blijven daarom noodzakelijk.</p>
+    </section>
+
+    <section class="content-block">
+        <h2 id="onderzoeksdetails">Onderzoeksdetails</h2>
+        <p>Dit hoofdstuk bevat de onderzoeksverantwoording: de scope en steekproef van het onderzoek, de gehanteerde methode en de hulpmiddelen waarmee is getest.</p>
+
+        <div class="panel"><div class="panel-title"><h3>Scope</h3></div><div class="panel-body">
+                <p>Bij de URL staat de reden waarom een gedeelte wel of niet is meegenomen. Dit is conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.</p>
+                <p><a href="https://www.blaricum.nl" target="_blank" rel="noopener">https://www.blaricum.nl/</a> (URI-basis)</p>
+
+                <h4>Buiten scope</h4>
+                <ul>
+                    <li><a href="https://belcombinatie.mijnafspraakmaken.nl" target="_blank" rel="noopener">https://belcombinatie.mijnafspraakmaken.nl/</a> (Andere URI-basis en/of stijlkenmerken)</li>
+                    <li><a href="https://blaricum.bestuurlijkeinformatie.nl" target="_blank" rel="noopener">https://blaricum.bestuurlijkeinformatie.nl/</a> (Andere URI-basis en/of stijlkenmerken)</li>
+                    <li><a href="https://blaricum.notubiz.nl" target="_blank" rel="noopener">https://blaricum.notubiz.nl/</a> (Andere URI-basis en/of stijlkenmerken)</li>
+                    <li><a href="https://iburgerzaken.blaricum.nl/gaas-web/server/continue/StartGeboorte#burgerzaken" target="_blank" rel="noopener">https://iburgerzaken.blaricum.nl/gaas-web/server/continue/StartGeboorte</a> (Andere URI-basis en/of stijlkenmerken)</li>
+                    <li><a href="https://meldingen.belcombinatie.nl/incident/beschrijf" target="_blank" rel="noopener">https://meldingen.belcombinatie.nl/incident/beschrijf</a> (Andere URI-basis en/of stijlkenmerken)</li>
+                </ul>
+
+                <h4>Overige scope informatie</h4>
+                <p>De volgende content valt op grond van de Toegankelijkheidswet buiten de scope van dit onderzoek:</p>
+                <ul>
+                    <li>Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)</li>
+                    <li>Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).</li>
+                    <li>Niet de live video's (wettelijke uitzondering voor de overheid)</li>
+                    <li>Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)</li>
+                    <li>Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)</li>
+                    <li>Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)</li>
+                    <li>Niet de inhoud achter een inlog</li>
+                </ul>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Steekproef</h3></div><div class="panel-body">
+                <p>Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie: <a href="https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek" target="_blank" rel="noopener">https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek</a></p>
+
+                <h4>Volledige steekproef</h4>
+                <ul>
+                    <li><a href="https://www.blaricum.nl" target="_blank" rel="noopener">https://www.blaricum.nl</a></li>
+                    <li><a href="https://www.blaricum.nl/bekendmakingen-en-verordeningen" target="_blank" rel="noopener">https://www.blaricum.nl/bekendmakingen-en-verordeningen</a></li>
+                    <li><a href="https://www.blaricum.nl/college-van-burgemeester-en-wethouders" target="_blank" rel="noopener">https://www.blaricum.nl/college-van-burgemeester-en-wethouders</a></li>
+                    <li><a href="https://www.blaricum.nl/wethouder-anne-marie-kennis" target="_blank" rel="noopener">https://www.blaricum.nl/wethouder-anne-marie-kennis</a></li>
+                    <li><a href="https://www.blaricum.nl/bezwaarschriftencommissie" target="_blank" rel="noopener">https://www.blaricum.nl/bezwaarschriftencommissie</a></li>
+                    <li><a href="https://www.blaricum.nl/overhangend-groen" target="_blank" rel="noopener">https://www.blaricum.nl/overhangend-groen</a></li>
+                    <li><a href="https://www.blaricum.nl/personen-met-verward-gedrag" target="_blank" rel="noopener">https://www.blaricum.nl/personen-met-verward-gedrag</a></li>
+                    <li><a href="https://www.blaricum.nl/klacht-over-medewerker-of-bestuurder" target="_blank" rel="noopener">https://www.blaricum.nl/klacht-over-medewerker-of-bestuurder</a></li>
+                    <li><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Jaarverslag%20klachtenco%C3%B6rdinator%202025.pdf?cb=TIGttiXs" target="_blank" rel="noopener">Jaarverslag klachtencoördinator 2025.pdf</a></li>
+                    <li><a href="https://www.blaricum.nl/strooien-bij-gladheid" target="_blank" rel="noopener">https://www.blaricum.nl/strooien-bij-gladheid</a></li>
+                    <li><a href="https://www.blaricum.nl/gehandicaptenparkeerkaart" target="_blank" rel="noopener">https://www.blaricum.nl/gehandicaptenparkeerkaart</a></li>
+                    <li><a href="https://www.blaricum.nl/form/contactformulier-blaricum/contactformulier-blaricum-0" target="_blank" rel="noopener">Contactformulier Blaricum — stap 1</a></li>
+                    <li><a href="https://www.blaricum.nl/form/contactformulier-blaricum/uw-gegevens-1" target="_blank" rel="noopener">Contactformulier Blaricum — uw gegevens</a></li>
+                    <li><a href="https://www.blaricum.nl/form/contactformulier-blaricum/overzicht-2" target="_blank" rel="noopener">Contactformulier Blaricum — overzicht</a></li>
+                    <li><a href="https://www.blaricum.nl/openingstijden" target="_blank" rel="noopener">https://www.blaricum.nl/openingstijden</a></li>
+                    <li><a href="https://www.blaricum.nl/herinrichting-de-bijvanck" target="_blank" rel="noopener">https://www.blaricum.nl/herinrichting-de-bijvanck</a></li>
+                    <li><a href="https://www.blaricum.nl/duurzaam" target="_blank" rel="noopener">https://www.blaricum.nl/duurzaam</a></li>
+                    <li><a href="https://cuatro.sim-cdn.nl/blaricum8fbaa4/uploads/Handreiking%20participatie%20BEL%20gemeenten.pdf?cb=L9e4BfDV" target="_blank" rel="noopener">Handreiking participatie BEL gemeenten.pdf</a></li>
+                    <li><a href="https://www.blaricum.nl/run-op-paspoorten-wacht-niet-maak-nu-een-afspraak" target="_blank" rel="noopener">https://www.blaricum.nl/run-op-paspoorten-wacht-niet-maak-nu-een-afspraak</a></li>
+                    <li><a href="https://www.blaricum.nl/evenementenkalender" target="_blank" rel="noopener">https://www.blaricum.nl/evenementenkalender</a></li>
+                </ul>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Onderzoeksmethode en technieken</h3></div><div class="panel-body">
+                <p>Dit onderzoek is uitgevoerd conform de evaluatiemethode <a href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em" target="_blank" rel="noopener">WCAG-EM</a>. Deze methode is aanbevolen door <a href="https://www.digitoegankelijk.nl" target="_blank" rel="noopener">DigiToegankelijk (Logius)</a>. Bij het uitvoeren van dit onderzoek is ervan uitgegaan dat alle technieken van het W3C ondersteund worden en dus gebruikt mogen worden.</p>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Testomgeving</h3></div><div class="panel-body">
+                <p>Het basisniveau van ondersteuning bestaat uit gangbare webbrowsers en hulptechnologieën. Het onderzoek is uitgevoerd met:</p>
+                <ul>
+                    <li>Google Chrome, versie 143 (primair)</li>
+                    <li>Mozilla Firefox, versie 146</li>
+                    <li>Microsoft Edge, versie 143</li>
+                    <li>Adobe Acrobat Pro</li>
+                    <li>PDF Accessibility Checker (PAC)</li>
+                    <li>Color Contrast Analyzer</li>
+                    <li>NVDA (Windows) in combinatie met Google Chrome</li>
+                </ul>
+            </div></div>
+
+        <div class="panel"><div class="panel-title"><h3>Technologieën</h3></div><div class="panel-body">
+                <ul>
+                    <li>DOM</li>
+                    <li>HTML</li>
+                    <li>CSS</li>
+                    <li>SVG</li>
+                    <li>PDF</li>
+                </ul>
+            </div></div>
+    </section>
+
+</main>
+
+</body>
+</html>

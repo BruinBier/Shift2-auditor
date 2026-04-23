@@ -141,22 +141,29 @@ export function calculatePrincipleStats(project: ProjectWithRelations): Principl
     const levelA = criteriaForPrinciple.filter((a) => a.wcagCriterion.level === 'A');
     const levelAA = criteriaForPrinciple.filter((a) => a.wcagCriterion.level === 'AA');
 
+    // Teller "passed" telt zowel passed als not_present mee (consistent met /admin /voltooien).
+    // Noemer "total" telt alleen beoordeelde criteria mee: passed + failed + not_present
+    // (criteria met status unknown of not_tested zijn nog niet beoordeeld en tellen niet mee).
+    const isPassed = (a: any) => a.status === 'passed' || a.status === 'not_present';
+    const isEvaluated = (a: any) =>
+      a.status === 'passed' || a.status === 'failed' || a.status === 'not_present';
+
     return {
       principle,
       levelA: {
-        passed: levelA.filter((a) => a.status === 'passed').length,
+        passed: levelA.filter(isPassed).length,
         failed: levelA.filter((a) => a.status === 'failed').length,
-        total: levelA.length,
+        total: levelA.filter(isEvaluated).length,
       },
       levelAA: {
-        passed: levelAA.filter((a) => a.status === 'passed').length,
+        passed: levelAA.filter(isPassed).length,
         failed: levelAA.filter((a) => a.status === 'failed').length,
-        total: levelAA.length,
+        total: levelAA.filter(isEvaluated).length,
       },
       total: {
-        passed: criteriaForPrinciple.filter((a) => a.status === 'passed').length,
+        passed: criteriaForPrinciple.filter(isPassed).length,
         failed: criteriaForPrinciple.filter((a) => a.status === 'failed').length,
-        total: criteriaForPrinciple.length,
+        total: criteriaForPrinciple.filter(isEvaluated).length,
       },
     };
   });

@@ -917,6 +917,11 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                               </button>
                               <span className="font-medium text-sm text-gray-900">
                                 Bevinding {findingIndex + 1} (SC {group.criterion.code})
+                                {finding.findingCode && (
+                                  <span className="ml-2 text-xs font-mono text-gray-500">
+                                    [{finding.findingCode}]
+                                  </span>
+                                )}
                               </span>
                             </div>
                             <button

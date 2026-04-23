@@ -355,10 +355,10 @@ export async function GET(
       const levelA = criteriaForPrinciple.filter((a: any) => a.wcagCriterion.level === 'A');
       const levelAA = criteriaForPrinciple.filter((a: any) => a.wcagCriterion.level === 'AA');
 
-      // "Goedgekeurd" = only passed (not including not_present)
-      const countApproved = (arr: any[]) => arr.filter((a: any) => a.status === 'passed').length;
-      // "Getoetst" = total assessed (excludes not_tested)
-      const countTested = (arr: any[]) => arr.filter((a: any) => a.status !== 'not_tested').length;
+      // "Goedgekeurd" = passed + not_present (consistent met /admin /voltooien en /report)
+      const countApproved = (arr: any[]) => arr.filter((a: any) => a.status === 'passed' || a.status === 'not_present').length;
+      // "Getoetst" = passed + failed + not_present (alleen beoordeelde criteria; unknown/not_tested tellen niet mee)
+      const countTested = (arr: any[]) => arr.filter((a: any) => a.status === 'passed' || a.status === 'failed' || a.status === 'not_present').length;
 
       return {
         principle: principleLabels[principle] || principle,
@@ -1148,27 +1148,25 @@ export async function GET(
                 // Replace each cell value individually
                 // The format in XML is separate <w:t> tags for each part: "5 /" and "8"
 
-                // First, let's extract current values and replace them
-                const textMatches = row.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
-
-                if (textMatches && textMatches.length >= 7) {
-                  // Index 0: Principle name (already correct)
-                  // Index 1-2: Level A (e.g., "5 /" and "8")
-                  // Index 3-4: Level AA (e.g., "6 /" and "7")
-                  // Index 5-6: Total (e.g., "11 /" and "15")
-
-                  // Replace Level A
-                  row = row.replace(textMatches[1], `<w:t>${principleScore.levelA.approved} /</w:t>`);
-                  row = row.replace(textMatches[2], `<w:t> ${principleScore.levelA.tested}</w:t>`);
-
-                  // Replace Level AA
-                  row = row.replace(textMatches[3], `<w:t>${principleScore.levelAA.approved} /</w:t>`);
-                  row = row.replace(textMatches[4], `<w:t> ${principleScore.levelAA.tested}</w:t>`);
-
-                  // Replace Total
-                  row = row.replace(textMatches[5], `<w:t>${principleScore.total.approved} /</w:t>`);
-                  row = row.replace(textMatches[6], `<w:t> ${principleScore.total.tested}</w:t>`);
-                }
+                // Replace each <w:t>...</w:t> by INDEX, not by text content.
+                // String-based replace breaks when multiple cells share the same value
+                // (e.g. Robuust has multiple "0 /" tags), causing values to land in the wrong cell.
+                const newValues = [
+                  null, // [0] Principle name (keep as is)
+                  `${principleScore.levelA.approved} /`,
+                  ` ${principleScore.levelA.tested}`,
+                  `${principleScore.levelAA.approved} /`,
+                  ` ${principleScore.levelAA.tested}`,
+                  `${principleScore.total.approved} /`,
+                  ` ${principleScore.total.tested}`,
+                ];
+                let tagIndex = 0;
+                row = row.replace(/<w:t[^>]*>([^<]+)<\/w:t>/g, (match, _content) => {
+                  const replacement = newValues[tagIndex];
+                  tagIndex++;
+                  if (replacement === null || replacement === undefined) return match;
+                  return `<w:t>${replacement}</w:t>`;
+                });
 
                 updatedRows.push(row);
               }
@@ -1178,24 +1176,28 @@ export async function GET(
               const totalTextMatches = totalRow.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
 
               if (totalTextMatches && totalTextMatches.length >= 5) {
-                // Total row structure (6 text elements):
+                // Total row structure:
                 // [0]: "Totaal"
-                // [1]: "11 /" (Level A approved)
-                // [2]: " 16" (Level A tested)
-                // [3]: "9 /" (Level AA approved)
-                // [4]: " 11" (Level AA tested)
-                // [5]: "20/ 27" (Total - BOTH numbers in ONE tag!)
-
-                // Replace Level A total
-                totalRow = totalRow.replace(totalTextMatches[1], `<w:t>${totalScores.levelA.approved} /</w:t>`);
-                totalRow = totalRow.replace(totalTextMatches[2], `<w:t> ${totalScores.levelA.tested}</w:t>`);
-
-                // Replace Level AA total
-                totalRow = totalRow.replace(totalTextMatches[3], `<w:t>${totalScores.levelAA.approved} /</w:t>`);
-                totalRow = totalRow.replace(totalTextMatches[4], `<w:t> ${totalScores.levelAA.tested}</w:t>`);
-
-                // Replace overall total (note: both numbers are in one <w:t> tag)
-                totalRow = totalRow.replace(totalTextMatches[5], `<w:t>${totalScores.total.approved}/ ${totalScores.total.tested}</w:t>`);
+                // [1]: Level A approved + " /"
+                // [2]: Level A tested
+                // [3]: Level AA approved + " /"
+                // [4]: Level AA tested
+                // [5]: overall total (both numbers in ONE tag, e.g. "20/ 27")
+                const totalNewValues = [
+                  null, // [0] keep "Totaal"
+                  `${totalScores.levelA.approved} /`,
+                  ` ${totalScores.levelA.tested}`,
+                  `${totalScores.levelAA.approved} /`,
+                  ` ${totalScores.levelAA.tested}`,
+                  `${totalScores.total.approved}/ ${totalScores.total.tested}`,
+                ];
+                let totalTagIndex = 0;
+                totalRow = totalRow.replace(/<w:t[^>]*>([^<]+)<\/w:t>/g, (match, _content) => {
+                  const replacement = totalNewValues[totalTagIndex];
+                  totalTagIndex++;
+                  if (replacement === null || replacement === undefined) return match;
+                  return `<w:t>${replacement}</w:t>`;
+                });
               }
 
               updatedRows.push(totalRow);
