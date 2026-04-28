@@ -1,0 +1,21 @@
+{
+  "exportDate": "2026-04-28T14:08:17.881Z",
+  "version": "1.0",
+  "database": "shift2_auditor",
+  "tables": {
+    "opdrachtgevers": 8,
+    "projects": 16,
+    "project_notes": 0,
+    "findings": 239,
+    "finding_urls": 0,
+    "finding_occurrences": 251,
+    "sample_items": 152,
+    "project_scope_urls": 296,
+    "crawler_results": 35240,
+    "crawler_runs": 0,
+    "criterion_assessments": 413,
+    "quick_findings": 117,
+    "teams": 1,
+    "client_projects": 12
+  }
+}
