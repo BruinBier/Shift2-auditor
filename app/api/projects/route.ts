@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createDefaultOpmerkingen } from '@/lib/default-opmerkingen';
 
 export async function GET() {
   try {
@@ -211,7 +212,7 @@ export async function POST(request: NextRequest) {
         dateStart: body.dateStart ? new Date(body.dateStart) : null,
         dateEnd: body.dateEnd ? new Date(body.dateEnd) : null,
         researchStartedOn: body.researchStartedOn ? new Date(body.researchStartedOn) : null,
-        reportDate: body.reportDate ? new Date(body.reportDate) : new Date(),
+        reportDate: body.reportDate ? new Date(body.reportDate) : (body.dateEnd ? new Date(body.dateEnd) : new Date()),
         description: body.description,
         isAnonymous: body.isAnonymous || false,
         isPrivate: body.isPrivate || false,
@@ -244,6 +245,8 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`Created project ${project.id} with ${criteriaToCreate.length} criterion assessments`);
+
+    await createDefaultOpmerkingen(project.id, body.researchType);
 
     // If reinspection is enabled, create v1.1 project
     let reinspectionProject = null;
