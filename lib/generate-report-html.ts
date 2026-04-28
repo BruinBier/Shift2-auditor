@@ -8,6 +8,7 @@ import {
   AssessmentStatus,
   type ProjectWithRelations,
 } from '@/lib/report-calculations';
+import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -627,7 +628,7 @@ function renderOnderzoeksdetails(
       : '<p>Niet opgegeven.</p>';
 
   const userAgents = project.userAgents
-    ? paragraphsFromText(project.userAgents)
+    ? formatUserAgentsHtml(project.userAgents) || '<p>Niet opgegeven.</p>'
     : '<p>Niet opgegeven.</p>';
 
   return `<section class="content-block">

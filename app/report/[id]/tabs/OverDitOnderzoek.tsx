@@ -8,6 +8,7 @@ import { parseMarkdownTabs } from '@/lib/parse-tabs';
 import { formatProjectName } from '@/lib/format-project-name';
 import { useSearchParams } from 'next/navigation';
 import { getDriveFolderUrl } from '@/lib/drive-folders';
+import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 import { marked } from 'marked';
 
 /**
@@ -1561,7 +1562,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                     {project.userAgents ? (
                       <div
                         className="text-sm text-gray-700 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
-                        dangerouslySetInnerHTML={{ __html: project.userAgents }}
+                        dangerouslySetInnerHTML={{ __html: formatUserAgentsHtml(project.userAgents) }}
                       />
                     ) : (
                       <p className="text-sm text-gray-500 italic">Geen testomgeving informatie beschikbaar</p>
