@@ -13,7 +13,19 @@
  *   tsx scripts/audit-cli.ts create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=matig] [--sample-items=id1,id2]
  *   tsx scripts/audit-cli.ts create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]
  *   tsx scripts/audit-cli.ts set-assessment <projectId> --criterion=<id> --status=failed [--explanation=...]
+ *   tsx scripts/audit-cli.ts get-html <url> [--full] [--text]
+ *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...]
  */
+
+import * as fs from 'fs';
+import * as path from 'path';
+import {
+  getBrowser,
+  openPage,
+  ensureOutputDir,
+  slugifyUrl,
+  timestamp,
+} from './lib/browser-fetch';
 
 const BASE_URL = process.env.AUDIT_CLI_BASE_URL || 'http://localhost:3000';
 
@@ -250,6 +262,101 @@ async function setAssessment(projectId: string, flags: Flags) {
   print(result);
 }
 
+async function getHtml(url: string, flags: Flags) {
+  const wantFull = flags.full === 'true';
+  const wantText = flags.text === 'true';
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      const pageTitle = await page.title();
+      const finalUrl = page.url();
+
+      // Bepaal of we de hele pagina pakken of alleen <main>.
+      // Voor homepage (path === '/' of leeg) altijd volledig — daar staat de
+      // belangrijke content vaak in de header/footer.
+      const parsed = new URL(finalUrl);
+      const isHomepage = parsed.pathname === '' || parsed.pathname === '/';
+      const useFull = wantFull || isHomepage;
+
+      const content = await page.evaluate(
+        ({ useFull, wantText }) => {
+          const target =
+            useFull
+              ? document.documentElement
+              : (document.querySelector('main') as HTMLElement | null) || document.documentElement;
+          if (wantText) {
+            return (target as HTMLElement).innerText || '';
+          }
+          return useFull ? '<!doctype html>\n' + target.outerHTML : target.outerHTML;
+        },
+        { useFull, wantText },
+      );
+
+      const dir = ensureOutputDir();
+      const ext = wantText ? 'txt' : 'html';
+      const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.${ext}`);
+      fs.writeFileSync(file, content, 'utf8');
+
+      print({
+        url: finalUrl,
+        requestedUrl: url,
+        title: pageTitle,
+        scope: useFull ? 'document' : 'main',
+        homepageDetected: isHomepage,
+        format: wantText ? 'text' : 'html',
+        bytes: Buffer.byteLength(content, 'utf8'),
+        file,
+        browser: session.mode,
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+async function getScreenshot(url: string, flags: Flags) {
+  const fullPage = flags['full-page'] === 'true';
+  const selector = flags.selector && flags.selector !== 'true' ? flags.selector : null;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      const pageTitle = await page.title();
+      const finalUrl = page.url();
+      const dir = ensureOutputDir();
+      const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.png`);
+
+      if (selector) {
+        const handle = await page.$(selector);
+        if (!handle) {
+          throw new Error(`Selector niet gevonden op pagina: ${selector}`);
+        }
+        await handle.screenshot({ path: file as `${string}.png` });
+      } else {
+        await page.screenshot({ path: file as `${string}.png`, fullPage });
+      }
+
+      const stat = fs.statSync(file);
+      print({
+        url: finalUrl,
+        requestedUrl: url,
+        title: pageTitle,
+        mode: selector ? `selector:${selector}` : fullPage ? 'full-page' : 'viewport',
+        bytes: stat.size,
+        file,
+        browser: session.mode,
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -275,6 +382,10 @@ async function main() {
       );
     case 'set-assessment':
       return setAssessment(requirePositional(positional, 0, 'projectId'), flags);
+    case 'get-html':
+      return getHtml(requirePositional(positional, 0, 'url'), flags);
+    case 'get-screenshot':
+      return getScreenshot(requirePositional(positional, 0, 'url'), flags);
     default:
       console.error(
         `Unknown or missing command: ${command ?? '(none)'}\n\n` +
@@ -286,7 +397,9 @@ async function main() {
         `  create-sample-item <projectId> --title=... [--url=...] [--type=structured|random|pdf] [--description=...] [--screenshot=true]\n` +
         `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=open|published|resolved] [--evidence=...] [--sample-items=id1,id2]\n` +
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
-        `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n`
+        `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
+        `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
+        `  get-screenshot <url> [--full-page] [--selector=css]\n`
       );
       process.exit(1);
   }

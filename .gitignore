@@ -42,4 +42,7 @@ temp-*.txt
 test-*.html
 nul
 
+# audit-cli browser captures (html/screenshots)
+/tmp/audit-cli/
+
 

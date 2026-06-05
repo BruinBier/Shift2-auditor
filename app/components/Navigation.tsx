@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AuditSessionIndicator from './AuditSessionIndicator';
 
 export default function Navigation() {
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
@@ -75,7 +76,8 @@ export default function Navigation() {
               style={{ filter: 'brightness(0) invert(1)' }}
             />
           </Link>
-          <nav className="flex gap-8 text-sm relative">
+          <nav className="flex gap-8 text-sm relative items-center">
+            <AuditSessionIndicator />
             <Link
               href="/admin"
               className="flex items-center gap-2 text-white hover:text-gray-300"
