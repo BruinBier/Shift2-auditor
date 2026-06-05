@@ -220,8 +220,8 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     allCriteriaRows,
     principleStats
   );
-  const bevindingenHtml = renderBevindingenSectie(grouped, 'open');
-  const opmerkingenHtml = renderBevindingenSectie(grouped, 'resolved');
+  const bevindingenHtml = renderBevindingenSectie(grouped, 'bevinding');
+  const opmerkingenHtml = renderBevindingenSectie(grouped, 'opmerking');
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
     project,
@@ -469,9 +469,9 @@ function renderOverzichtResultaten(
 
 function renderBevindingenSectie(
   grouped: any[],
-  filterStatus: 'open' | 'resolved'
+  kind: 'bevinding' | 'opmerking'
 ): string {
-  const isOpmerkingen = filterStatus === 'resolved';
+  const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
   const intro = isOpmerkingen
     ? 'De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.'
@@ -498,8 +498,10 @@ function renderBevindingenSectie(
     {
       {
         const findings = ((crit as any).findings || []).filter((f: any) => {
-          if (isOpmerkingen) return f.status === 'resolved';
-          return f.status === 'open' || f.status === 'published';
+          // Bevindingen = met impact, opmerkingen = zonder impact.
+          // Status (open/resolved) wordt elders gebruikt voor het label.
+          if (isOpmerkingen) return f.impact == null;
+          return f.impact != null;
         });
         if (findings.length === 0) continue;
 
@@ -631,6 +633,10 @@ function renderOnderzoeksdetails(
     ? formatUserAgentsHtml(project.userAgents) || '<p>Niet opgegeven.</p>'
     : '<p>Niet opgegeven.</p>';
 
+  const scopeInfoHtml = project.scopeInfo
+    ? `<h4>Overige scope informatie</h4>${renderFindingMarkdown(project.scopeInfo)}`
+    : '';
+
   return `<section class="content-block">
   <h2 id="onderzoeksdetails">Onderzoeksdetails</h2>
   <p>Dit hoofdstuk bevat de onderzoeksverantwoording: de scope en steekproef van het onderzoek, de gehanteerde methode en de hulpmiddelen waarmee is getest.</p>
@@ -639,6 +645,7 @@ function renderOnderzoeksdetails(
     <p>Bij de URL staat de reden waarom een gedeelte wel of niet is meegenomen. Dit is conform de regels voor het bepalen van de scope in de evaluatiemethode WCAG-EM.</p>
     ${scopeInHtml}
     ${scopeOut.length > 0 ? '<h4>Buiten scope</h4>' + scopeOutHtml : ''}
+    ${scopeInfoHtml}
   </div></div>
 
   <div class="panel"><div class="panel-title"><h3>Steekproef</h3></div><div class="panel-body">

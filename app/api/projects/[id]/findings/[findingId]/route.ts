@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+async function upsertAssessment(
+  projectId: string,
+  wcagCriterionId: string,
+  status: 'passed' | 'failed',
+) {
+  const existing = await prisma.criterionAssessment.findFirst({
+    where: { projectId, wcagCriterionId },
+  });
+
+  if (existing) {
+    if (existing.status !== status) {
+      await prisma.criterionAssessment.update({
+        where: { id: existing.id },
+        data: { status },
+      });
+    }
+  } else {
+    await prisma.criterionAssessment.create({
+      data: { projectId, wcagCriterionId, status },
+    });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string; findingId: string }> }
@@ -48,6 +71,12 @@ export async function PUT(
     if (body.responsibility !== undefined) {
       updateData.responsibility = body.responsibility;
     }
+    if (body.interimReviewed !== undefined) {
+      updateData.interimReviewed = body.interimReviewed;
+    }
+    if (body.interimNotes !== undefined) {
+      updateData.interimNotes = body.interimNotes;
+    }
 
     console.log('Update data:', JSON.stringify(updateData, null, 2));
 
@@ -88,39 +117,48 @@ export async function PUT(
       }
     }
 
-    // If the finding status is "open" (afgekeurd), automatically update the criterion assessment to "failed"
-    if (body.status === 'open') {
-      console.log('Finding status is "open", updating criterion assessment to "failed"');
+    // Auto-update CriterionAssessment after a status change.
+    // Behavior depends on the project's check phase:
+    //   - nulmeting: keep legacy one-way logic (status=open → assessment=failed)
+    //   - tussencheck / herinspectie: bi-directional logic based on all
+    //     non-opmerking findings (impact != null) for this criterion.
+    //   - afgerond: do nothing (project is locked).
+    if (body.status !== undefined) {
+      const criterionId = updatedFinding.wcagCriterionId;
 
-      // Check if assessment already exists
-      const existingAssessment = await prisma.criterionAssessment.findFirst({
-        where: {
-          projectId: params.id,
-          wcagCriterionId: body.criterionId,
-        },
+      const project = await prisma.project.findUnique({
+        where: { id: params.id },
+        select: { checkPhase: true },
       });
 
-      if (existingAssessment) {
-        // Update existing assessment to "failed"
-        await prisma.criterionAssessment.update({
-          where: {
-            id: existingAssessment.id,
-          },
-          data: {
-            status: 'failed',
-          },
-        });
-        console.log('Updated existing assessment to "failed"');
-      } else {
-        // Create new assessment with status "failed"
-        await prisma.criterionAssessment.create({
-          data: {
-            projectId: params.id,
-            wcagCriterionId: body.criterionId,
-            status: 'failed',
-          },
-        });
-        console.log('Created new assessment with status "failed"');
+      if (project && project.checkPhase !== 'afgerond') {
+        if (project.checkPhase === 'nulmeting') {
+          if (body.status === 'open') {
+            console.log('[nulmeting] Finding status=open, setting assessment to "failed"');
+            await upsertAssessment(params.id, criterionId, 'failed');
+          }
+        } else {
+          // tussencheck or herinspectie: recalculate based on all real findings.
+          const realFindings = await prisma.finding.findMany({
+            where: {
+              projectId: params.id,
+              wcagCriterionId: criterionId,
+              impact: { not: null },
+            },
+            select: { status: true },
+          });
+
+          let newStatus: 'passed' | 'failed' | null = null;
+          if (realFindings.length > 0) {
+            const hasOpen = realFindings.some((f) => f.status === 'open');
+            newStatus = hasOpen ? 'failed' : 'passed';
+          }
+
+          if (newStatus) {
+            console.log(`[${project.checkPhase}] Recalculated assessment for criterion ${criterionId}: ${newStatus} (based on ${realFindings.length} real findings)`);
+            await upsertAssessment(params.id, criterionId, newStatus);
+          }
+        }
       }
     }
 

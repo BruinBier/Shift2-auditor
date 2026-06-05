@@ -575,6 +575,24 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
     }
   }
 
+  // Overige scope informatie (markdown -> bullets / paragraphs)
+  if (project.scopeInfo) {
+    children.push(heading(HeadingLevel.HEADING_4, 'Overige scope informatie'));
+    const scopeInfoLines = String(project.scopeInfo)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    for (const line of scopeInfoLines) {
+      // Markdown bullet (lines starting with - or *)
+      const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+      if (bulletMatch) {
+        children.push(bullet(bulletMatch[1]));
+      } else {
+        children.push(p(line));
+      }
+    }
+  }
+
   // Steekproef
   children.push(heading(HeadingLevel.HEADING_3, 'Steekproef'));
   children.push(
@@ -614,8 +632,16 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
   // Test environment
   children.push(heading(HeadingLevel.HEADING_3, 'Testomgeving'));
   if (project.userAgents) {
-    for (const para of textToParagraphs(stripHtml(project.userAgents))) {
-      children.push(para);
+    const userAgentLines = stripHtml(project.userAgents)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    if (userAgentLines.length > 0) {
+      for (const line of userAgentLines) {
+        children.push(bullet(line));
+      }
+    } else {
+      children.push(p('Niet opgegeven.'));
     }
   } else {
     children.push(p('Niet opgegeven.'));

@@ -107,6 +107,17 @@ export async function POST(
     const newSortOrder = (highestSortOrder?.sortOrder ?? -1) + 1;
     console.log('New finding will have sortOrder:', newSortOrder);
 
+    // Get the project's current check phase. New findings are tagged with the
+    // phase they were discovered in, and pre-marked as reviewed in tussencheck/
+    // herinspectie (you just created it, so by definition you've looked at it).
+    const projectForPhase = await prisma.project.findUnique({
+      where: { id: params.id },
+      select: { checkPhase: true },
+    });
+    const discoveredInPhase = projectForPhase?.checkPhase ?? 'nulmeting';
+    const interimReviewed =
+      discoveredInPhase === 'tussencheck' || discoveredInPhase === 'herinspectie';
+
     // Build create data object
     const createData: any = {
       projectId: params.id,
@@ -119,6 +130,8 @@ export async function POST(
       impact: body.impact !== undefined ? body.impact : null,
       responsibility: body.responsibility !== undefined ? body.responsibility : null,
       sortOrder: newSortOrder,
+      discoveredInPhase,
+      interimReviewed,
     };
 
     const finding = await prisma.finding.create({

@@ -6,6 +6,9 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
   const project = await prisma.project.findUnique({
     where: { id: params.id },
     include: {
+      childProjects: {
+        select: { id: true, version: true, status: true, checkPhase: true },
+      },
       clientProject: {
         include: {
           opdrachtgever: true,

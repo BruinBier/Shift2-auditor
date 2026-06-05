@@ -1876,8 +1876,12 @@ export async function GET(
               .replace(/"/g, '&quot;')
               .replace(/'/g, '&apos;');
 
+            // Force bullet list formatting (numId="5" for browsers, abstractNum 1)
+            // so each browser appears as a list item in the Word export.
+            const cleanPPr = '<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="5"/></w:numPr></w:pPr>';
+
             // Add 12pt (24 half-points) font size to run properties
-            return `<w:p>${pPr}<w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
+            return `<w:p>${cleanPPr}<w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escapedLine}</w:t></w:r></w:p>`;
           }).join('\n');
 
           // DEBUG: Check what we're about to remove

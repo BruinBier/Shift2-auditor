@@ -35,6 +35,7 @@ interface Project {
   parentProjectId?: string | null;
   planningSent: string | null;
   planningApproved: string | null;
+  cancellationReason?: string | null;
 }
 
 interface Props {
@@ -57,6 +58,9 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [generatedEmail, setGeneratedEmail] = useState({ subject: '', body: '' });
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancellingProject, setCancellingProject] = useState<Project | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     auditedByOrg: '',
@@ -904,8 +908,56 @@ export default function OnderzoekenTable({ projects }: Props) {
         return 'bg-yellow-100 text-yellow-800';
       case 'Gereed':
         return 'bg-green-100 text-green-800';
+      case 'Geannuleerd':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const openCancelModal = (project: Project) => {
+    setCancellingProject(project);
+    setCancellationReason(project.cancellationReason || '');
+    setShowCancelModal(true);
+    setOpenMenuId(null);
+  };
+
+  const closeCancelModal = () => {
+    setShowCancelModal(false);
+    setCancellingProject(null);
+    setCancellationReason('');
+  };
+
+  const handleCancelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cancellingProject) return;
+
+    const trimmedReason = cancellationReason.trim();
+    if (!trimmedReason) {
+      alert('Geef een reden op voor de annulering.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${cancellingProject.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'Geannuleerd',
+          cancellationReason: trimmedReason,
+        }),
+      });
+
+      if (response.ok) {
+        closeCancelModal();
+        router.refresh();
+      } else {
+        const error = await response.json();
+        alert(`Er is een fout opgetreden: ${error.error || 'Onbekende fout'}`);
+      }
+    } catch (error) {
+      console.error('Error cancelling project:', error);
+      alert('Er is een fout opgetreden bij het annuleren van het onderzoek.');
     }
   };
 
@@ -962,6 +1014,11 @@ export default function OnderzoekenTable({ projects }: Props) {
       if (organizationName.length > 0) {
         organizationName = organizationName.charAt(0).toUpperCase() + organizationName.slice(1).toLowerCase();
       }
+    } else {
+      // Title does not follow the "<prefix> - <name>" pattern.
+      // Fall back to the raw title so simple titles like "website Valkenswaard"
+      // are still shown completely instead of just the research type prefix.
+      return title.trim();
     }
 
     return `${researchType} ${organizationName}`;
@@ -1018,9 +1075,10 @@ export default function OnderzoekenTable({ projects }: Props) {
     return 0;
   });
 
-  // Separate active and completed projects
-  const activeProjects = sortedProjects.filter(p => p.status !== 'Gereed');
-  const completedProjects = sortedProjects.filter(p => p.status === 'Gereed');
+  // Separate active and completed projects ("Geannuleerd" telt als afgerond)
+  const isClosedStatus = (s: string) => s === 'Gereed' || s === 'Geannuleerd';
+  const activeProjects = sortedProjects.filter(p => !isClosedStatus(p.status));
+  const completedProjects = sortedProjects.filter(p => isClosedStatus(p.status));
 
   // Group active projects: nulmeting followed immediately by their herinspectie
   const groupedActiveProjects: Project[] = [];
@@ -1060,15 +1118,35 @@ export default function OnderzoekenTable({ projects }: Props) {
     // Skip if already processed (as a reinspection)
     if (processedCompletedIds.has(project.id)) return;
 
-    // Skip if this is a reinspection (it will be added after its parent)
+    // Skip if this is a reinspection — wordt na de parent toegevoegd (zie hieronder)
     if (project.parentProjectId) return;
 
     // Add the current project (nulmeting or standalone)
     groupedCompletedProjects.push(project);
     processedCompletedIds.add(project.id);
 
-    // Note: We don't add herinspectie projects to the completed section
-    // They remain in the active projects section based on their own status
+    // Add bijbehorende afgeronde herinspectie (Gereed of Geannuleerd) direct erna
+    if (project.hasReinspection) {
+      const reinspection = completedProjects.find(p => p.parentProjectId === project.id);
+      if (reinspection && !processedCompletedIds.has(reinspection.id)) {
+        groupedCompletedProjects.push(reinspection);
+        processedCompletedIds.add(reinspection.id);
+      }
+    }
+  });
+
+  // Geannuleerde herinspecties wiens parent nog actief is: toon ze met parent als context-rij
+  completedProjects.forEach((project) => {
+    if (processedCompletedIds.has(project.id)) return;
+    if (!project.parentProjectId) return;
+
+    const parent = projects.find(p => p.id === project.parentProjectId);
+    if (parent && !processedCompletedIds.has(parent.id)) {
+      groupedCompletedProjects.push(parent);
+      processedCompletedIds.add(parent.id);
+    }
+    groupedCompletedProjects.push(project);
+    processedCompletedIds.add(project.id);
   });
 
   // Count only nulmetingen and standalone projects (exclude herinspecties from count)
@@ -1568,7 +1646,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
                             {project.status}
                           </span>
-                          {project.hasReinspection && (
+                          {!isReinspection && project.researchType !== 'Extern project' && (
                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                               Nulmeting
                             </span>
@@ -1581,7 +1659,17 @@ export default function OnderzoekenTable({ projects }: Props) {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        <span>{project.researchType === 'Extern project' ? project.title : getSimplifiedTitle(project)}</span>
+                        <div className="flex flex-col gap-1">
+                          <span>{project.researchType === 'Extern project' ? project.title : getSimplifiedTitle(project)}</span>
+                          {project.status === 'Geannuleerd' && project.cancellationReason && (
+                            <span
+                              className="text-xs text-gray-500 italic"
+                              title={project.cancellationReason}
+                            >
+                              Reden: {project.cancellationReason}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -1716,6 +1804,17 @@ export default function OnderzoekenTable({ projects }: Props) {
                               </svg>
                               Genereer planningsmail
                             </button>
+                            {isReinspection && project.status !== 'Geannuleerd' && (
+                              <button
+                                onClick={() => openCancelModal(project)}
+                                className="project-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 hover:bg-gray-50"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Herinspectie annuleren
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
@@ -1889,6 +1988,17 @@ export default function OnderzoekenTable({ projects }: Props) {
                                 </svg>
                                 Genereer planningsmail
                               </button>
+                              {childReinspection.status !== 'Geannuleerd' && (
+                                <button
+                                  onClick={() => openCancelModal(childReinspection)}
+                                  className="project-menu-item w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-3 hover:bg-gray-50"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  Herinspectie annuleren
+                                </button>
+                              )}
                               <button
                                 onClick={() => {
                                   setOpenMenuId(null);
@@ -2017,17 +2127,23 @@ export default function OnderzoekenTable({ projects }: Props) {
                   {groupedCompletedProjects.map((project, index) => {
                     const isReinspection = !!project.parentProjectId;
                     const isNulmetingWithReinspection = project.hasReinspection;
-                    const isExpanded = expandedProjects.has(project.id);
 
-                    // Find child reinspection if this is a nulmeting
-                    // Only show herinspectie in completed section if it's also completed
-                    let childReinspection = null;
+                    // Find child reinspection (Gereed of Geannuleerd) als dit een nulmeting is
+                    let childReinspection: Project | null = null;
                     if (isNulmetingWithReinspection) {
-                      childReinspection = completedProjects.find(p => p.parentProjectId === project.id);
+                      childReinspection = completedProjects.find(p => p.parentProjectId === project.id) || null;
                     }
 
-                    // Skip herinspectie rows - they'll be rendered when parent is expanded
-                    if (isReinspection) return null;
+                    // Een geannuleerde herinspectie wordt altijd zichtbaar getoond onder parent (zonder uitklap)
+                    const childIsCancelled = childReinspection?.status === 'Geannuleerd';
+                    const isExpanded = expandedProjects.has(project.id) || childIsCancelled;
+
+                    // Skip herinspectie rows als parent in dezelfde tabel staat — wordt onder parent gerenderd.
+                    // Standalone weergave als parent ontbreekt (bv. parent verwijderd).
+                    if (isReinspection) {
+                      const parentInCompleted = groupedCompletedProjects.some(p => p.id === project.parentProjectId);
+                      if (parentInCompleted) return null;
+                    }
 
                     return (
                       <React.Fragment key={project.id}>
@@ -2059,21 +2175,36 @@ export default function OnderzoekenTable({ projects }: Props) {
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
                               {project.status}
                             </span>
-                            {project.hasReinspection && (
+                            {!isReinspection && project.researchType !== 'Extern project' && (
                               <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                                 Nulmeting
+                              </span>
+                            )}
+                            {isReinspection && (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
+                                Herinspectie
                               </span>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          <div className={isReinspection ? 'ml-6 flex items-center gap-2' : ''}>
-                            {isReinspection && (
-                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
+                          <div className={isReinspection ? 'ml-6 flex flex-col gap-1' : 'flex flex-col gap-1'}>
+                            <div className={isReinspection ? 'flex items-center gap-2' : ''}>
+                              {isReinspection && (
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              )}
+                              <span>{project.title}</span>
+                            </div>
+                            {project.status === 'Geannuleerd' && project.cancellationReason && (
+                              <span
+                                className="text-xs text-gray-500 italic"
+                                title={project.cancellationReason}
+                              >
+                                Reden: {project.cancellationReason}
+                              </span>
                             )}
-                            <span>{project.title}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
@@ -2237,7 +2368,17 @@ export default function OnderzoekenTable({ projects }: Props) {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">
-                            <span>{childReinspection.title}</span>
+                            <div className="flex flex-col gap-1">
+                              <span>{childReinspection.title}</span>
+                              {childReinspection.status === 'Geannuleerd' && childReinspection.cancellationReason && (
+                                <span
+                                  className="text-xs text-gray-500 italic"
+                                  title={childReinspection.cancellationReason}
+                                >
+                                  Reden: {childReinspection.cancellationReason}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">{Number(childReinspection.version).toFixed(1)}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">
@@ -2608,11 +2749,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startdatum <span className="text-gray-400">vereist</span>
+                      Startdatum {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required
+                      required={formData.status !== 'In de wacht'}
                       value={formData.dateStart}
                       onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -2621,11 +2762,11 @@ export default function OnderzoekenTable({ projects }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline <span className="text-gray-400">vereist</span>
+                      Deadline {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required
+                      required={formData.status !== 'In de wacht'}
                       value={formData.dateEnd}
                       onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -3141,11 +3282,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startdatum <span className="text-gray-400">vereist</span>
+                      Startdatum {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required
+                      required={formData.status !== 'In de wacht'}
                       value={formData.dateStart}
                       onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -3154,11 +3295,11 @@ export default function OnderzoekenTable({ projects }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline <span className="text-gray-400">vereist</span>
+                      Deadline {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required
+                      required={formData.status !== 'In de wacht'}
                       value={formData.dateEnd}
                       onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -3744,6 +3885,62 @@ export default function OnderzoekenTable({ projects }: Props) {
                   style={{ backgroundColor: '#3b82f6' }}
                 >
                   Opslaan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel reinspection modal */}
+      {showCancelModal && cancellingProject && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closeCancelModal}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Herinspectie annuleren
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              De herinspectie krijgt status &ldquo;Geannuleerd&rdquo; en verschijnt onder
+              afgeronde onderzoeken. Geef hieronder de reden op.
+            </p>
+            <form onSubmit={handleCancelSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="cancellationReason"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Reden van annulering *
+                </label>
+                <textarea
+                  id="cancellationReason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  required
+                  rows={4}
+                  autoFocus
+                  placeholder="Bijvoorbeeld: opdrachtgever heeft de herinspectie geannuleerd wegens..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
+                />
+              </div>
+              <div className="flex gap-3 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={closeCancelModal}
+                  className="flex-1 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Terug
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-2 text-white rounded-lg font-medium bg-red-600 hover:bg-red-700 transition-colors"
+                >
+                  Annuleer herinspectie
                 </button>
               </div>
             </form>

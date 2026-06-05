@@ -10,6 +10,8 @@ import CriteriaAssessments from './tabs/CriteriaAssessments';
 import FindingsManagement from './tabs/FindingsManagement';
 import Conclusion from './tabs/Conclusion';
 import Finalize from './tabs/Finalize';
+import Tussencheck from './tabs/Tussencheck';
+import AuditSessionIndicator from '@/app/components/AuditSessionIndicator';
 
 interface ProjectAdminTabsProps {
   project: any;
@@ -21,12 +23,95 @@ interface ProjectAdminTabsProps {
 export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [] }: ProjectAdminTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck'>('details');
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
   const [showBevindingenMenu, setShowBevindingenMenu] = useState(false);
   const [isFinalizingProject, setIsFinalizingProject] = useState(false);
   const [showFinalizedModal, setShowFinalizedModal] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
+  const [isChangingPhase, setIsChangingPhase] = useState(false);
+  const [showCreateReinspectionModal, setShowCreateReinspectionModal] = useState(false);
+  const [isCreatingReinspection, setIsCreatingReinspection] = useState(false);
+
+  const checkPhase: 'nulmeting' | 'tussencheck' | 'herinspectie' | 'afgerond' =
+    project.checkPhase ?? 'nulmeting';
+  const tussencheckActive = checkPhase === 'tussencheck' || checkPhase === 'herinspectie';
+
+  // A nulmeting that is afgerond ("Gereed") but has no child project yet
+  // can be turned into a herinspection on demand.
+  const canCreateReinspection =
+    project.status === 'Gereed' &&
+    !project.parentProjectId &&
+    (project.childProjects?.length ?? 0) === 0;
+
+  const handleCreateReinspection = async (startPhase: 'tussencheck' | 'herinspectie') => {
+    if (isCreatingReinspection) return;
+    setIsCreatingReinspection(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/create-reinspection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkPhase: startPhase }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Aanmaken mislukt');
+      }
+      const data = await res.json();
+      setShowCreateReinspectionModal(false);
+      // Navigate to the new child project
+      router.push(`/admin/projects/${data.project.id}?tab=tussencheck`);
+    } catch (e: any) {
+      alert('Fout bij aanmaken herinspectie: ' + e.message);
+    } finally {
+      setIsCreatingReinspection(false);
+    }
+  };
+
+  const getPhaseColor = (p: string) => {
+    switch (p) {
+      case 'nulmeting':
+        return 'bg-gray-100 text-gray-800';
+      case 'tussencheck':
+        return 'bg-purple-100 text-purple-800';
+      case 'herinspectie':
+        return 'bg-blue-100 text-blue-800';
+      case 'afgerond':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handlePhaseChange = async (target: 'tussencheck' | 'herinspectie' | 'afgerond') => {
+    if (isChangingPhase) return;
+    const messages: Record<typeof target, string> = {
+      tussencheck:
+        'Tussencheck starten? Je kunt vanaf nu bevindingen aanvinken als opgelost en het criterium wordt automatisch bijgewerkt.',
+      herinspectie:
+        'Tussencheck afronden en herinspectie starten? Alle "Nagelopen"-vinkjes worden teruggezet zodat je elke bevinding opnieuw kunt verifiëren.',
+      afgerond: 'Project afronden? Je kunt daarna geen bevindingen meer wijzigen.',
+    };
+    if (!confirm(messages[target])) return;
+
+    setIsChangingPhase(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/phase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkPhase: target }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Wijziging mislukt');
+      }
+      router.refresh();
+    } catch (e: any) {
+      alert('Fout bij faseovergang: ' + e.message);
+    } finally {
+      setIsChangingPhase(false);
+    }
+  };
 
   // Get status color based on status value
   const getStatusColor = (status: string) => {
@@ -115,12 +200,13 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
     }
   };
 
-  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize') => {
+  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck') => {
     const tabParam = tab === 'details' ? '' :
                      tab === 'scope' ? 'scope' :
                      tab === 'sample' ? 'steekproef' :
                      tab === 'findings' ? 'bevindingen' :
-                     tab === 'conclusion' ? 'conclusie' : 'voltooien';
+                     tab === 'conclusion' ? 'conclusie' :
+                     tab === 'tussencheck' ? 'tussencheck' : 'voltooien';
 
     const url = tabParam ? `/admin/projects/${project.id}?tab=${tabParam}` : `/admin/projects/${project.id}`;
     router.push(url);
@@ -139,6 +225,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
       setActiveTab('conclusion');
     } else if (tab === 'voltooien') {
       setActiveTab('finalize');
+    } else if (tab === 'tussencheck') {
+      setActiveTab('tussencheck');
     } else {
       setActiveTab('details');
     }
@@ -188,7 +276,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             </Link>
 
             {/* Navigation menu in header */}
-            <nav className="flex gap-8 text-sm">
+            <nav className="flex gap-8 text-sm items-center">
+              <AuditSessionIndicator />
               <Link
                 href="/admin"
                 className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
@@ -440,6 +529,18 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                 >
                   5. Voltooien
                 </button>
+                {tussencheckActive && (
+                  <button
+                    onClick={() => handleTabChange('tussencheck')}
+                    className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                      activeTab === 'tussencheck'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
+                    }`}
+                  >
+                    {checkPhase === 'tussencheck' ? 'Tussencheck' : 'Herinspectie'}
+                  </button>
+                )}
                   <div className="ml-auto flex gap-2" style={{ marginBottom: '8px' }}>
                     {activeTab === 'finalize' && (
                       <button
@@ -486,6 +587,38 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                 <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
                   {project.status}
                 </span>
+                <span
+                  className={`px-3 py-1 text-xs font-medium rounded-full ${getPhaseColor(checkPhase)}`}
+                  title="Fase van het onderzoek"
+                >
+                  Fase: {checkPhase}
+                </span>
+                {checkPhase === 'tussencheck' && (
+                  <button
+                    onClick={() => handlePhaseChange('herinspectie')}
+                    disabled={isChangingPhase}
+                    className="px-3 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 disabled:opacity-50"
+                  >
+                    Tussencheck afronden, start herinspectie
+                  </button>
+                )}
+                {checkPhase === 'herinspectie' && (
+                  <button
+                    onClick={() => handlePhaseChange('afgerond')}
+                    disabled={isChangingPhase}
+                    className="px-3 py-1 text-xs font-medium rounded bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50"
+                  >
+                    Herinspectie afronden
+                  </button>
+                )}
+                {canCreateReinspection && (
+                  <button
+                    onClick={() => setShowCreateReinspectionModal(true)}
+                    className="px-3 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 hover:bg-purple-200"
+                  >
+                    Herinspectie aanmaken
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -498,6 +631,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             {activeTab === 'findings' && <FindingsManagement project={project} allCriteria={allCriteria} researchTypeExplanations={researchTypeExplanations} />}
             {activeTab === 'conclusion' && <Conclusion project={project} />}
             {activeTab === 'finalize' && <Finalize project={project} allCriteria={allCriteria} />}
+            {activeTab === 'tussencheck' && <Tussencheck project={project} />}
           </div>
         </div>
       </div>
@@ -574,6 +708,56 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                 </svg>
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Reinspection Modal */}
+      {showCreateReinspectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+            <button
+              onClick={() => !isCreatingReinspection && setShowCreateReinspectionModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Herinspectie aanmaken</h3>
+            <p className="text-sm text-gray-700 mb-6">
+              Er wordt een nieuw v1.1-project aangemaakt met een kopie van de scope, steekproef en
+              bevindingen. Hoe wil je beginnen?
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleCreateReinspection('tussencheck')}
+                disabled={isCreatingReinspection}
+                className="w-full text-left p-4 border border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors disabled:opacity-50"
+              >
+                <div className="font-medium text-gray-900">Begin met tussencheck</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  Voor een tussentijds overleg met de klant. Je kunt bevindingen aanvinken als
+                  opgelost zonder dat het rapport definitief is.
+                </div>
+              </button>
+              <button
+                onClick={() => handleCreateReinspection('herinspectie')}
+                disabled={isCreatingReinspection}
+                className="w-full text-left p-4 border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors disabled:opacity-50"
+              >
+                <div className="font-medium text-gray-900">Begin direct met herinspectie</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  Definitieve herinspectie. Beoordeel elke bevinding eenmalig en rond af.
+                </div>
+              </button>
+            </div>
+
+            {isCreatingReinspection && (
+              <p className="text-xs text-gray-500 mt-4 text-center">Bezig met aanmaken...</p>
+            )}
           </div>
         </div>
       )}

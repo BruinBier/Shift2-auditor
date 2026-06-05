@@ -250,9 +250,9 @@ export async function POST(request: NextRequest) {
 
     // If reinspection is enabled, create v1.1 project
     let reinspectionProject = null;
-    if (body.hasReinspection && (body.reinspectionWeeks || body.reinspectionDate)) {
-      let reinspectionStart: Date;
-      let reinspectionEnd: Date;
+    if (body.hasReinspection) {
+      let reinspectionStart: Date | null = null;
+      let reinspectionEnd: Date | null = null;
 
       if (body.reinspectionDate) {
         // External projects: use specified date
@@ -268,14 +268,11 @@ export async function POST(request: NextRequest) {
         // Calculate reinspection deadline (1 week for reinspection)
         reinspectionEnd = new Date(reinspectionStart);
         reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
-      } else {
-        // Skip reinspection creation if neither date nor weeks provided
-        reinspectionStart = null as any;
-        reinspectionEnd = null as any;
       }
+      // If neither dates nor weeks+deadline are available (e.g. parent is "In de wacht"),
+      // create the reinspection without dates so it shows up under the parent and can be planned later.
 
-      if (reinspectionStart && reinspectionEnd) {
-
+      {
       reinspectionProject = await prisma.project.create({
         data: {
           kenmerk: kenmerk, // Same kenmerk as v1.0, version differentiates them
@@ -286,7 +283,7 @@ export async function POST(request: NextRequest) {
           researchType: body.researchType,
           version: 1.1,
           language: body.language || 'Nederlands',
-          status: 'Gepland',
+          status: body.status === 'In de wacht' ? 'In de wacht' : 'Gepland',
           clientName: body.clientName,
           commissionedBy: body.commissionedBy,
           clientProjectId: body.clientProjectId || null,
@@ -297,13 +294,14 @@ export async function POST(request: NextRequest) {
           dateStart: reinspectionStart,
           dateEnd: reinspectionEnd,
           researchStartedOn: null,
-          reportDate: reinspectionEnd,
+          reportDate: reinspectionEnd ?? new Date(),
           description: body.description,
           isAnonymous: body.isAnonymous || false,
           isPrivate: body.isPrivate || false,
           hasReinspection: false,
           reinspectionWeeks: null,
           parentProjectId: project.id,
+          checkPhase: 'tussencheck',
           summaryText: body.summaryText,
           researcherFeedbackText: body.researcherFeedbackText,
           aboutResearchText: body.aboutResearchText,

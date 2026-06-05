@@ -239,6 +239,9 @@ export async function POST(
             evidence: finding.evidence,
             notes: finding.notes,
             sortOrder: finding.sortOrder,
+            discoveredInPhase: finding.discoveredInPhase,
+            interimReviewed: false,
+            interimNotes: null,
           },
         });
 
@@ -313,6 +316,10 @@ export async function POST(
           // Other fields
           description: originalProject.description,
           notes: originalProject.notes,
+
+          // Tussencheck-fase activeren op het herinspectie-project
+          checkPhase: 'tussencheck',
+          checkPhaseStartedAt: new Date(),
         },
       });
 
