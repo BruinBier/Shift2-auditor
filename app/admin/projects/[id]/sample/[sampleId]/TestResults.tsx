@@ -49,6 +49,8 @@ export default function TestResults({ projectId, sampleItemId, crawlerResults, c
     try {
       const response = await fetch(`/api/sample-items/${sampleItemId}/crawler`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ withBrowser: true }),
       });
 
       const data = await response.json();

@@ -11,6 +11,8 @@ import FindingsManagement from './tabs/FindingsManagement';
 import Conclusion from './tabs/Conclusion';
 import Finalize from './tabs/Finalize';
 import Tussencheck from './tabs/Tussencheck';
+import Richtlijnen from './tabs/Richtlijnen';
+import CrawlAllButton from './CrawlAllButton';
 import AuditSessionIndicator from '@/app/components/AuditSessionIndicator';
 
 interface ProjectAdminTabsProps {
@@ -23,7 +25,7 @@ interface ProjectAdminTabsProps {
 export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [] }: ProjectAdminTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen'>('details');
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
   const [showBevindingenMenu, setShowBevindingenMenu] = useState(false);
   const [isFinalizingProject, setIsFinalizingProject] = useState(false);
@@ -200,13 +202,14 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
     }
   };
 
-  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck') => {
+  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen') => {
     const tabParam = tab === 'details' ? '' :
                      tab === 'scope' ? 'scope' :
                      tab === 'sample' ? 'steekproef' :
                      tab === 'findings' ? 'bevindingen' :
                      tab === 'conclusion' ? 'conclusie' :
-                     tab === 'tussencheck' ? 'tussencheck' : 'voltooien';
+                     tab === 'tussencheck' ? 'tussencheck' :
+                     tab === 'richtlijnen' ? 'richtlijnen' : 'voltooien';
 
     const url = tabParam ? `/admin/projects/${project.id}?tab=${tabParam}` : `/admin/projects/${project.id}`;
     router.push(url);
@@ -227,6 +230,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
       setActiveTab('finalize');
     } else if (tab === 'tussencheck') {
       setActiveTab('tussencheck');
+    } else if (tab === 'richtlijnen') {
+      setActiveTab('richtlijnen');
     } else {
       setActiveTab('details');
     }
@@ -541,6 +546,16 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                     {checkPhase === 'tussencheck' ? 'Tussencheck' : 'Herinspectie'}
                   </button>
                 )}
+                <button
+                  onClick={() => handleTabChange('richtlijnen')}
+                  className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                    activeTab === 'richtlijnen'
+                      ? 'border-shift2-primary text-shift2-primary'
+                      : 'border-transparent text-gray-500 tab-hover'
+                  }`}
+                >
+                  Richtlijnen
+                </button>
                   <div className="ml-auto flex gap-2" style={{ marginBottom: '8px' }}>
                     {activeTab === 'finalize' && (
                       <button
@@ -565,6 +580,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                         }
                       </button>
                     )}
+                    <CrawlAllButton projectId={project.id} />
                     <Link
                       href={`/report/${project.id}`}
                       className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors hover:opacity-90"
@@ -632,6 +648,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             {activeTab === 'conclusion' && <Conclusion project={project} />}
             {activeTab === 'finalize' && <Finalize project={project} allCriteria={allCriteria} />}
             {activeTab === 'tussencheck' && <Tussencheck project={project} />}
+            {activeTab === 'richtlijnen' && <Richtlijnen project={project} allCriteria={allCriteria} />}
           </div>
         </div>
       </div>

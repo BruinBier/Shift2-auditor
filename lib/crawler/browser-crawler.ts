@@ -237,6 +237,71 @@ export async function fetchHtmlWithBrowser(
 }
 
 /**
+ * Fetch HTML and run browser-based tests (contrast, label-in-name, auto-refresh)
+ * in dezelfde pageload. Veel efficiënter dan twee aparte browser-sessies.
+ */
+export async function fetchHtmlAndRunBrowserTests(
+  url: string,
+  options?: {
+    waitTime?: number;
+    userAgent?: string;
+  }
+): Promise<{ html: string; browserTestResults: any[] }> {
+  let page;
+  const browserTestResults: any[] = [];
+
+  try {
+    const browser = await getBrowser();
+    page = await browser.newPage();
+
+    if (options?.userAgent) {
+      await page.setUserAgent(options.userAgent);
+    }
+    await page.setViewport({ width: 1920, height: 1080 });
+
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await handleCookieConsent(page);
+
+    const waitTime = options?.waitTime || 2000;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+
+    const html = await page.content();
+
+    // Browser-tests draaien op dezelfde pagina
+    try {
+      const { testColorContrast, testLabelInName, testAutoRefresh, testHiddenWithFocusableContent, testTableHeaderCellMissingHeaderRole } = await import('./browser-tests');
+      const contrastResult = await testColorContrast(page);
+      browserTestResults.push(contrastResult);
+      const labelResult = await testLabelInName(page);
+      browserTestResults.push(labelResult);
+      const refreshResult = await testAutoRefresh(page, url);
+      browserTestResults.push(refreshResult);
+      const hiddenFocusableResult = await testHiddenWithFocusableContent(page);
+      browserTestResults.push(hiddenFocusableResult);
+      const tableHeaderResult = await testTableHeaderCellMissingHeaderRole(page);
+      browserTestResults.push(tableHeaderResult);
+    } catch (testErr) {
+      console.error('[BROWSER] Browser-test fout:', testErr instanceof Error ? testErr.message : testErr);
+    }
+
+    return { html, browserTestResults };
+
+  } catch (error) {
+    console.error(`[BROWSER] ✗ Failed to fetch+test ${url}:`, error instanceof Error ? error.message : error);
+    throw error;
+  } finally {
+    if (page) {
+      await page.close().catch(e => console.error('[BROWSER] Error closing page:', e));
+    }
+  }
+}
+
+/**
  * Fetch HTML and take a screenshot
  */
 export async function fetchHtmlWithScreenshot(

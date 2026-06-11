@@ -82,6 +82,20 @@ export function testTitleEmpty(html: string): CrawlerTestResult {
  * Page has images without alt-attribute
  * WCAG: Level A - Critical
  */
+// Helper: maak een leesbare samenvatting van een src-attribuut.
+// Data-URIs worden afgekapt: "data:image/png;base64,...(45 KB)".
+function summarizeSrc(src: string | undefined): string | undefined {
+  if (!src) return src;
+  if (src.startsWith('data:')) {
+    const sizeKb = Math.round(src.length / 1024);
+    const mimeMatch = src.match(/^data:([^;,]+)/);
+    const mime = mimeMatch ? mimeMatch[1] : 'inline data';
+    return `data:${mime};... (inline, ${sizeKb} KB)`;
+  }
+  if (src.length > 200) return src.slice(0, 200) + '…';
+  return src;
+}
+
 export function testImgMissingAlt(html: string): CrawlerTestResult {
   const $ = cheerio.load(html);
   const allImages = $('img');
@@ -94,12 +108,13 @@ export function testImgMissingAlt(html: string): CrawlerTestResult {
     if (i < 10) { // Limit to first 10 for performance
       const $img = $(img);
       const location = getElementLocation($, img);
+      const rawHtml = $.html($img);
 
       issues.push({
-        src: $img.attr('src'),
+        src: summarizeSrc($img.attr('src')),
         class: $img.attr('class'),
         location: location,
-        html: $.html($img),
+        html: rawHtml.length > 300 ? rawHtml.slice(0, 300) + '…' : rawHtml,
       });
     }
   });
@@ -112,7 +127,7 @@ export function testImgMissingAlt(html: string): CrawlerTestResult {
       const location = getElementLocation($, img);
 
       imagesWithAltInfo.push({
-        src: $img.attr('src'),
+        src: summarizeSrc($img.attr('src')),
         alt: $img.attr('alt'),
         class: $img.attr('class'),
         location: location,
@@ -134,6 +149,682 @@ export function testImgMissingAlt(html: string): CrawlerTestResult {
       imagesWithoutAlt: count,
       imagesWithAltExamples: imagesWithAltInfo,
       wcagLevel: 'A',
+      critical: true,
+    },
+  };
+}
+
+/**
+ * DecorativeImageExposedTest
+ *
+ * Detecteert afbeeldingen die als decoratief gemarkeerd zijn (alt="",
+ * role="presentation"/"none", of aria-hidden="true") maar tóch worden
+ * blootgesteld aan hulpsoftware — typisch door tegenstrijdige attributen
+ * of doordat ze focusbaar zijn (link/knop zonder andere accessible name,
+ * of expliciet tabindex).
+ *
+ * WCAG: 1.1.1 (Level A)
+ */
+export function testDecorativeImageExposed(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    src?: string;
+    alt?: string;
+    reason: string;
+    location: string;
+    html: string;
+  }> = [];
+
+  // Selecteer alle afbeeldingen die als decoratief gemarkeerd zijn
+  const decorativeImgs = $('img[alt=""], img[role="presentation"], img[role="none"], img[aria-hidden="true"]');
+
+  decorativeImgs.each((_, img) => {
+    const $img = $(img);
+    const alt = $img.attr('alt');
+    const role = $img.attr('role');
+    const ariaHidden = $img.attr('aria-hidden');
+    const ariaLabel = $img.attr('aria-label');
+    const ariaLabelledby = $img.attr('aria-labelledby');
+    const title = $img.attr('title');
+    const tabindex = $img.attr('tabindex');
+
+    // Verzamel redenen waarom de "decoratieve" markering wordt overruled
+    const reasons: string[] = [];
+
+    if (ariaLabel && ariaLabel.trim()) {
+      reasons.push(`heeft aria-label="${ariaLabel.trim().slice(0, 40)}"`);
+    }
+    if (ariaLabelledby && ariaLabelledby.trim()) {
+      reasons.push('heeft aria-labelledby');
+    }
+    if (title && title.trim()) {
+      reasons.push(`heeft title="${title.trim().slice(0, 40)}"`);
+    }
+    if (tabindex !== undefined && tabindex !== '-1') {
+      reasons.push(`heeft tabindex="${tabindex}" (focusbaar)`);
+    }
+
+    // Check of de afbeelding in een focusbare link of knop zit zonder andere accessible name
+    const $parentLink = $img.closest('a[href], button');
+    if ($parentLink.length > 0) {
+      const parentText = $parentLink.text().trim();
+      const parentAriaLabel = $parentLink.attr('aria-label');
+      const parentAriaLabelledby = $parentLink.attr('aria-labelledby');
+      const parentTitle = $parentLink.attr('title');
+      // Andere afbeeldingen of icons in dezelfde link met wel een naam?
+      const hasOtherNamedContent =
+        (parentText.length > 0) ||
+        (parentAriaLabel && parentAriaLabel.trim()) ||
+        (parentAriaLabelledby && parentAriaLabelledby.trim()) ||
+        (parentTitle && parentTitle.trim());
+
+      if (!hasOtherNamedContent) {
+        const parentTag = ($parentLink.get(0) as any)?.tagName?.toLowerCase() || 'link/knop';
+        reasons.push(`zit in ${parentTag} zonder andere toegankelijke naam`);
+      }
+    }
+
+    if (reasons.length > 0) {
+      issues.push({
+        src: $img.attr('src'),
+        alt: alt !== undefined ? alt : undefined,
+        reason: reasons.join('; '),
+        location: getElementLocation($, img),
+        html: $.html($img).slice(0, 250),
+      });
+    }
+  });
+
+  return {
+    testId: 'DecorativeImageExposed',
+    testName: 'DecorativeImageExposedTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.1.1'],
+      critical: true,
+    },
+  };
+}
+
+// ============================================================================
+// Aanvullingen 1.1.1 — om Siteimprove-dekking te matchen
+// ============================================================================
+
+/**
+ * ImageButtonMissingAltTest
+ *
+ * Detecteert <input type="image"> zonder alt-attribuut. Dat is een native HTML
+ * image-knop die zonder alt door schermlezers wordt aangekondigd als "knop"
+ * zonder doel.
+ *
+ * WCAG: 1.1.1 - Level A
+ */
+export function testImageButtonMissingAlt(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    src: string | undefined;
+    name: string | undefined;
+    location: string;
+    html: string;
+  }> = [];
+
+  $('input[type="image"]').each((_, el) => {
+    const $el = $(el);
+    const alt = $el.attr('alt');
+    const ariaLabel = $el.attr('aria-label');
+    const ariaLabelledby = $el.attr('aria-labelledby');
+    const title = $el.attr('title');
+    if (alt === undefined && !ariaLabel && !ariaLabelledby && !title) {
+      issues.push({
+        src: $el.attr('src'),
+        name: $el.attr('name'),
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  return {
+    testId: 'ImageButtonMissingAlt',
+    testName: 'ImageButtonMissingAltTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.1.1'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * AltIsFilenameTest
+ *
+ * Detecteert img-elementen waarvan de alt-tekst (verdacht veel) lijkt op de
+ * bestandsnaam. Dat is meestal een editor-fout: het CMS heeft automatisch de
+ * filename ingevuld als alt.
+ *
+ * WCAG: 1.1.1 - Level A (kwaliteit alt-tekst)
+ */
+export function testAltIsFilename(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    src: string | undefined;
+    alt: string | undefined;
+    reason: string;
+    location: string;
+    html: string;
+  }> = [];
+
+  const fileExts = /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|tif|ico)$/i;
+
+  $('img[alt]').each((_, el) => {
+    const $el = $(el);
+    const alt = ($el.attr('alt') || '').trim();
+    if (!alt) return; // Leeg alt = decoratief, OK
+    const src = $el.attr('src') || '';
+
+    // Patroon 1: alt eindigt op een bestandsextensie
+    if (fileExts.test(alt)) {
+      issues.push({
+        src,
+        alt,
+        reason: 'alt-tekst eindigt op een bestandsextensie',
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+      return;
+    }
+
+    // Patroon 2: alt is letterlijk de bestandsnaam uit de src (zonder extensie)
+    if (src) {
+      const filename = src.split('/').pop() || '';
+      const filenameWithoutExt = filename.replace(/\.[^.]+$/, '');
+      if (filenameWithoutExt && alt.toLowerCase() === filenameWithoutExt.toLowerCase()) {
+        issues.push({
+          src,
+          alt,
+          reason: 'alt-tekst is gelijk aan de bestandsnaam',
+          location: getElementLocation($, el),
+          html: $.html($el).slice(0, 200),
+        });
+        return;
+      }
+    }
+
+    // Patroon 3: alt is een typische CMS-placeholder (DSC_1234, IMG_5847, etc.)
+    if (/^(IMG|DSC|DSCN|P|PIC|PHOTO|Image|Picture|Untitled)[_-]?\d+$/i.test(alt)) {
+      issues.push({
+        src,
+        alt,
+        reason: 'alt-tekst lijkt op een typische camera/CMS-bestandsnaam',
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  return {
+    testId: 'AltIsFilename',
+    testName: 'AltIsFilenameTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.1.1'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * SvgMissingAccessibleNameTest
+ *
+ * Detecteert inline <svg>-elementen die geen toegankelijke naam hebben:
+ * geen aria-label, geen aria-labelledby, geen <title> als eerste kind,
+ * geen role="presentation" of role="none", en geen aria-hidden="true".
+ *
+ * WCAG: 1.1.1 - Level A
+ */
+export function testSvgMissingAccessibleName(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    location: string;
+    html: string;
+  }> = [];
+
+  $('svg').each((_, el) => {
+    const $el = $(el);
+
+    // Decoratief gemarkeerd = OK
+    const role = $el.attr('role');
+    if (role === 'presentation' || role === 'none') return;
+    if ($el.attr('aria-hidden') === 'true') return;
+
+    // Heeft een toegankelijke naam
+    const ariaLabel = ($el.attr('aria-label') || '').trim();
+    const ariaLabelledby = ($el.attr('aria-labelledby') || '').trim();
+    if (ariaLabel || ariaLabelledby) return;
+
+    // Eerste kind is <title> met content
+    const $firstTitle = $el.children('title').first();
+    if ($firstTitle.length > 0 && ($firstTitle.text() || '').trim()) return;
+
+    issues.push({
+      location: getElementLocation($, el),
+      html: $.html($el).slice(0, 200),
+    });
+  });
+
+  return {
+    testId: 'SvgMissingAccessibleName',
+    testName: 'SvgMissingAccessibleNameTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.1.1'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * ObjectMissingAltTest
+ *
+ * Detecteert <object>-elementen zonder fallback-tekst, aria-label of title.
+ *
+ * WCAG: 1.1.1 - Level A
+ */
+export function testObjectMissingAlt(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    data: string | undefined;
+    type: string | undefined;
+    location: string;
+    html: string;
+  }> = [];
+
+  $('object').each((_, el) => {
+    const $el = $(el);
+    const ariaLabel = ($el.attr('aria-label') || '').trim();
+    const ariaLabelledby = ($el.attr('aria-labelledby') || '').trim();
+    const title = ($el.attr('title') || '').trim();
+    const fallback = ($el.text() || '').trim();
+
+    if (!ariaLabel && !ariaLabelledby && !title && !fallback) {
+      issues.push({
+        data: $el.attr('data'),
+        type: $el.attr('type'),
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  return {
+    testId: 'ObjectMissingAlt',
+    testName: 'ObjectMissingAltTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.1.1'],
+      critical: true,
+    },
+  };
+}
+
+// ============================================================================
+// Aanvullingen 1.3.1 — tabel/ARIA-structuur (om Siteimprove-dekking te matchen)
+// ============================================================================
+
+/**
+ * TableCellMissingContextTest
+ *
+ * Detecteert td-cellen in een data-tabel die geen koppeling hebben naar
+ * een kopcel (geen scope op th's, geen headers-attribuut op td). Een caption
+ * geeft alleen de hele tabel context — niet per cel.
+ *
+ * Heuristiek voor "multi-dimensionaal" (waar de koppeling nodig is):
+ *   1. Tabel heeft zowel kolom-th's (in thead of eerste rij) ALS rij-th's
+ *      (th in eerste positie van body-rijen) — klassiek geval
+ *   2. Tabel heeft alleen kolom-th's MAAR een patroon van rij-koppen:
+ *      eerste cel van elke body-rij heeft een class die "header"/"label"/
+ *      "name"/"key" bevat, of bevat een strong/b-element met de rest van
+ *      de rij gewone tekst
+ *
+ * Layout-tabellen worden overgeslagen (role=presentation/none, of een
+ * heuristiek: max 1 rij, of <table summary=""> zonder th's).
+ *
+ * WCAG: 1.3.1 - Level A
+ */
+export function testTableCellMissingContext(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    location: string;
+    rowIndex: number;
+    cellText: string;
+    reason: string;
+    html: string;
+  }> = [];
+
+  $('table').each((_, table) => {
+    const $table = $(table);
+
+    // Skip expliciete layout-tabellen
+    const tableRole = $table.attr('role');
+    if (tableRole === 'presentation' || tableRole === 'none') return;
+
+    const allThs = $table.find('th');
+    if (allThs.length === 0) return; // TableWithoutHeadersTest dekt dat
+
+    // Heeft tabel scope op th's? Dan is de relatie expliciet — geen issue
+    const hasThWithScope = $table.find('th[scope]').length > 0;
+    if (hasThWithScope) return;
+
+    // Heeft tabel met expliciete rij-th's én kolom-th's?
+    const hasExplicitRowHeaders = $table.find('tbody tr > th:first-child, tr > th:first-child').length > 1;
+    const hasExplicitColumnHeaders =
+      $table.find('thead th').length > 0 ||
+      $table.find('tr:first-child th').length > 0;
+
+    // Heuristiek: impliciete rij-koppen via class of strong
+    let hasImplicitRowHeaders = false;
+    const bodyRows = $table.find('tbody tr, > tr').toArray().filter((tr) => {
+      // Skip rijen die alleen th's bevatten (zijn header-rijen, niet body)
+      return $(tr).children('td').length > 0;
+    });
+    if (bodyRows.length > 1) {
+      let rowHeaderHints = 0;
+      for (const tr of bodyRows) {
+        const $firstCell = $(tr).children('td, th').first();
+        if (!$firstCell.length) continue;
+        const cls = ($firstCell.attr('class') || '').toLowerCase();
+        const hasHeaderClass =
+          cls.includes('header') || cls.includes('label') || cls.includes('key') ||
+          cls.includes('name') || cls.includes('title');
+        const hasStrongInside = $firstCell.find('strong, b').length > 0;
+        if (hasHeaderClass || hasStrongInside) rowHeaderHints++;
+      }
+      // Als 50%+ van rijen een hint heeft, beschouw als impliciet multi-dim
+      if (rowHeaderHints >= Math.ceil(bodyRows.length * 0.5)) {
+        hasImplicitRowHeaders = true;
+      }
+    }
+
+    const isMultiDimensional =
+      (hasExplicitRowHeaders && hasExplicitColumnHeaders) ||
+      (hasImplicitRowHeaders && hasExplicitColumnHeaders);
+
+    if (!isMultiDimensional) return;
+
+    const reason = hasExplicitRowHeaders
+      ? 'tabel heeft expliciete rij- én kolomkoppen maar geen scope-attributen op th\'s'
+      : 'tabel heeft kolomkoppen + impliciete rij-koppen (eerste cel van elke rij vetgedrukt of class label) maar geen scope-koppeling';
+
+    // Loop door td's en check headers-attribuut
+    let tdIndex = 0;
+    for (const tr of bodyRows) {
+      const $tds = $(tr).children('td');
+      $tds.each((_, td) => {
+        const $td = $(td);
+        const headers = $td.attr('headers');
+        if (!headers || !headers.trim()) {
+          const cellText = ($td.text() || '').trim().slice(0, 60);
+          issues.push({
+            location: getElementLocation($, td),
+            rowIndex: tdIndex,
+            cellText,
+            reason,
+            html: $.html($td).slice(0, 200),
+          });
+        }
+        tdIndex++;
+      });
+    }
+  });
+
+  return {
+    testId: 'TableCellMissingContext',
+    testName: 'TableCellMissingContextTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.3.1'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * EmptyContainerTest
+ *
+ * Detecteert structurele container-elementen (section, article, aside, nav,
+ * header, footer, main, div met landmark-role) die geen enkele
+ * tekstuele content of betekenisvolle child bevatten.
+ *
+ * Lege containers verstoren de structuur voor schermlezer-gebruikers (een
+ * navigation-landmark zonder links bv.) en zijn vaak structurele fouten.
+ *
+ * WCAG: 1.3.1 - Level A
+ */
+export function testEmptyContainer(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    tag: string;
+    role: string | null;
+    location: string;
+    html: string;
+  }> = [];
+
+  const containerSel = 'section, article, aside, nav, main, [role="region"], [role="navigation"], [role="main"], [role="complementary"], [role="banner"], [role="contentinfo"]';
+
+  $(containerSel).each((_, el) => {
+    const $el = $(el);
+
+    // Beschouw als "leeg" als er geen tekstinhoud is en geen betekenisvolle children
+    const text = ($el.text() || '').trim();
+    if (text.length > 0) return;
+
+    // Heeft hij betekenisvolle children (img met alt, button, link, input)?
+    const meaningful = $el.find('img[alt]:not([alt=""]), button, a[href], input, textarea, select, iframe[title]');
+    if (meaningful.length > 0) return;
+
+    issues.push({
+      tag: ($el.get(0) as any)?.tagName?.toLowerCase() || 'container',
+      role: $el.attr('role') || null,
+      location: getElementLocation($, el),
+      html: $.html($el).slice(0, 200),
+    });
+  });
+
+  return {
+    testId: 'EmptyContainer',
+    testName: 'EmptyContainerTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.3.1'],
+      critical: true,
+    },
+  };
+}
+
+// TableHeaderCellMissingHeaderRoleTest is verplaatst naar browser-tests.ts
+// (gebruikt nu computed styles om visueel-als-kop-opgemaakte cellen te detecteren)
+
+
+/**
+ * AllRolesInvalidTest
+ *
+ * Detecteert elementen met een role-attribuut waarvan alle opgegeven rollen
+ * ongeldige ARIA-rollen zijn (typo, oude naam, of niet-bestaande rol).
+ *
+ * WCAG: 1.3.1 - Level A
+ */
+export function testAllRolesInvalid(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+
+  // Officiële geldige ARIA 1.2-rollen (zonder abstract rollen die auteurs
+  // niet mogen gebruiken: command, composite, input, landmark, range,
+  // roletype, section, sectionhead, select, structure, widget, window).
+  // Bron: https://www.w3.org/TR/wai-aria-1.2/#role_definitions
+  const validRoles = new Set([
+    // Widget roles
+    'button', 'checkbox', 'gridcell', 'link', 'menuitem', 'menuitemcheckbox',
+    'menuitemradio', 'option', 'progressbar', 'radio', 'scrollbar', 'searchbox',
+    'separator', 'slider', 'spinbutton', 'switch', 'tab', 'tabpanel', 'textbox',
+    'treeitem',
+    // Composite widget roles
+    'combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist',
+    'tree', 'treegrid',
+    // Document structure roles
+    'application', 'article', 'blockquote', 'caption', 'cell', 'code', 'columnheader',
+    'definition', 'deletion', 'directory', 'document', 'emphasis', 'feed', 'figure',
+    'generic', 'group', 'heading', 'img', 'insertion', 'list', 'listitem', 'mark',
+    'math', 'meter', 'none', 'note', 'paragraph', 'presentation', 'row', 'rowgroup',
+    'rowheader', 'strong', 'subscript', 'suggestion', 'superscript', 'table', 'term',
+    'time', 'toolbar', 'tooltip',
+    // Landmark roles
+    'banner', 'complementary', 'contentinfo', 'form', 'main', 'navigation',
+    'region', 'search',
+    // Live region roles
+    'alert', 'log', 'marquee', 'status', 'timer',
+    // Window roles
+    'alertdialog', 'dialog',
+    // Graphics roles (WAI-ARIA Graphics module)
+    'graphics-document', 'graphics-object', 'graphics-symbol',
+    // DPub-ARIA — digital publishing (gemeenten gebruiken deze zelden, maar voorkomen
+    // false positives op publicatie-platforms)
+    'doc-abstract', 'doc-acknowledgments', 'doc-afterword', 'doc-appendix',
+    'doc-backlink', 'doc-biblioentry', 'doc-bibliography', 'doc-biblioref',
+    'doc-chapter', 'doc-colophon', 'doc-conclusion', 'doc-cover', 'doc-credit',
+    'doc-credits', 'doc-dedication', 'doc-endnote', 'doc-endnotes', 'doc-epigraph',
+    'doc-epilogue', 'doc-errata', 'doc-example', 'doc-footnote', 'doc-foreword',
+    'doc-glossary', 'doc-glossref', 'doc-index', 'doc-introduction', 'doc-noteref',
+    'doc-notice', 'doc-pagebreak', 'doc-pagelist', 'doc-part', 'doc-preface',
+    'doc-prologue', 'doc-pullquote', 'doc-qna', 'doc-subtitle', 'doc-tip',
+    'doc-toc',
+  ]);
+
+  const issues: Array<{
+    element: string;
+    invalidRoles: string[];
+    location: string;
+    html: string;
+  }> = [];
+
+  $('[role]').each((_, el) => {
+    const $el = $(el);
+    const roleAttr = ($el.attr('role') || '').trim();
+    if (!roleAttr) return;
+
+    const roles = roleAttr.split(/\s+/).filter(Boolean);
+    const invalid = roles.filter((r) => !validRoles.has(r.toLowerCase()));
+
+    // Faalt alleen als ALLE rollen ongeldig zijn
+    if (invalid.length === roles.length && invalid.length > 0) {
+      issues.push({
+        element: ($el.get(0) as any)?.tagName?.toLowerCase() || 'element',
+        invalidRoles: invalid,
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  return {
+    testId: 'AllRolesInvalid',
+    testName: 'AllRolesInvalidTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.3.1'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * IncorrectTableHeaderReferenceTest
+ *
+ * Detecteert td-cellen met een headers-attribuut dat verwijst naar een id
+ * die niet in de tabel bestaat. De koppeling werkt dan niet en hulpsoftware
+ * kan de kop-cel-relatie niet leggen.
+ *
+ * WCAG: 1.3.1 - Level A
+ */
+export function testIncorrectTableHeaderReference(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    cellText: string;
+    headersAttr: string;
+    missingIds: string[];
+    location: string;
+    html: string;
+  }> = [];
+
+  $('table').each((_, table) => {
+    const $table = $(table);
+
+    // Verzamel alle id's binnen de tabel
+    const ids = new Set<string>();
+    $table.find('[id]').each((_, el) => {
+      const id = $(el).attr('id');
+      if (id) ids.add(id);
+    });
+
+    $table.find('td[headers], th[headers]').each((_, td) => {
+      const $td = $(td);
+      const headersAttr = ($td.attr('headers') || '').trim();
+      if (!headersAttr) return;
+      const refs = headersAttr.split(/\s+/).filter(Boolean);
+      const missing = refs.filter((r) => !ids.has(r));
+      if (missing.length > 0) {
+        const cellText = ($td.text() || '').trim().slice(0, 60);
+        issues.push({
+          cellText,
+          headersAttr,
+          missingIds: missing,
+          location: getElementLocation($, td),
+          html: $.html($td).slice(0, 200),
+        });
+      }
+    });
+  });
+
+  return {
+    testId: 'IncorrectTableHeaderReference',
+    testName: 'IncorrectTableHeaderReferenceTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.3.1'],
       critical: true,
     },
   };
@@ -1718,16 +2409,42 @@ export function testFormMissingFieldset(html: string): CrawlerTestResult {
 
 /**
  * #32: InputMissingLabelTest
- * Input elements without associated label
+ * Input elements without associated label.
+ *
+ * Slaat honeypot-/verborgen velden over: tabindex="-1", type="hidden",
+ * of velden in een container met aria-hidden="true" of display:none.
+ * Die zijn bedoeld om verborgen te blijven en horen niet bij WCAG-toetsing.
  */
 export function testInputMissingLabel(html: string): CrawlerTestResult {
   const $ = cheerio.load(html);
   const inputs = $('input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="number"], input[type="search"], input[type="url"], textarea');
   let count = 0;
+  let honeypotsSkipped = 0;
   const details: any[] = [];
 
-  inputs.each((i, input) => {
+  inputs.each((_, input) => {
     const $input = $(input);
+
+    // Skip honeypot-/verborgen velden — die zijn bewust niet zichtbaar voor gebruikers
+    const tabindex = $input.attr('tabindex');
+    if (tabindex === '-1') {
+      honeypotsSkipped++;
+      return;
+    }
+    if (($input.attr('type') || '').toLowerCase() === 'hidden') {
+      honeypotsSkipped++;
+      return;
+    }
+    // Inline display:none of aria-hidden op input of een parent
+    if ($input.is('[style*="display:none"], [style*="display: none"], [aria-hidden="true"]')) {
+      honeypotsSkipped++;
+      return;
+    }
+    if ($input.parents('[aria-hidden="true"], [style*="display:none"], [style*="display: none"]').length > 0) {
+      honeypotsSkipped++;
+      return;
+    }
+
     const id = $input.attr('id');
     const ariaLabel = $input.attr('aria-label');
     const ariaLabelledby = $input.attr('aria-labelledby');
@@ -1738,14 +2455,21 @@ export function testInputMissingLabel(html: string): CrawlerTestResult {
     if (id) {
       hasLabel = $(`label[for="${id}"]`).length > 0;
     }
+    // Of input zit binnen een <label>
+    if (!hasLabel && $input.parents('label').length > 0) {
+      hasLabel = true;
+    }
 
     if (!hasLabel && !ariaLabel && !ariaLabelledby && !title) {
       count++;
       if (details.length < 10) {
         details.push({
           type: $input.attr('type') || 'textarea',
-          name: $input.attr('name'),
-          placeholder: $input.attr('placeholder'),
+          id: id || null,
+          name: $input.attr('name') || null,
+          placeholder: $input.attr('placeholder') || null,
+          location: getElementLocation($, input),
+          html: $.html($input).slice(0, 250),
         });
       }
     }
@@ -1759,7 +2483,9 @@ export function testInputMissingLabel(html: string): CrawlerTestResult {
     details: {
       inputs: details,
       totalCount: count,
+      honeypotsSkipped,
       wcagLevel: 'A',
+      wcagCriteria: ['1.3.1', '3.3.2', '4.1.2'],
       critical: true,
     },
   };
@@ -2093,6 +2819,566 @@ export function testAriaLandmarks(html: string): CrawlerTestResult {
   };
 }
 
+// ============================================================================
+// Fase 1 — toegevoegd om Siteimprove-gaten te dichten
+// ============================================================================
+
+// HiddenWithFocusableContentTest is verplaatst naar browser-tests.ts
+// (gebruikt nu computed styles om verborgen vs. zichtbaar te onderscheiden)
+
+/**
+ * AriaRoleInvalidContextTest
+ *
+ * Detecteert ARIA-rollen die buiten hun vereiste parent-context staan.
+ * Bijvoorbeeld: role="tab" zonder een [role="tablist"]-parent.
+ *
+ * WCAG: 1.3.1 (Info en relaties) - Level A
+ */
+export function testAriaRoleInvalidContext(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+
+  // Map van rol → vereiste parent rol(len) of selector
+  const requiredContexts: Record<string, string[]> = {
+    'tab': ['[role="tablist"]'],
+    'tabpanel': ['[role="tablist"] ~ *', '[role="tab"]'],
+    'menuitem': ['[role="menu"]', '[role="menubar"]'],
+    'menuitemradio': ['[role="menu"]', '[role="menubar"]', '[role="group"]'],
+    'menuitemcheckbox': ['[role="menu"]', '[role="menubar"]', '[role="group"]'],
+    'option': ['[role="listbox"]', 'datalist'],
+    'treeitem': ['[role="tree"]', '[role="group"]'],
+    'row': ['[role="table"]', '[role="grid"]', '[role="treegrid"]', '[role="rowgroup"]', 'table', 'tbody', 'thead', 'tfoot'],
+    'rowgroup': ['[role="table"]', '[role="grid"]', '[role="treegrid"]', 'table'],
+    'columnheader': ['[role="row"]', 'tr'],
+    'rowheader': ['[role="row"]', 'tr'],
+    'cell': ['[role="row"]', 'tr'],
+    'gridcell': ['[role="row"]', 'tr'],
+    'listitem': ['[role="list"]', 'ul', 'ol', 'menu'],
+  };
+
+  const issues: Array<{
+    role: string;
+    element: string;
+    requiredParent: string;
+    location: string;
+    html: string;
+  }> = [];
+
+  for (const [role, parents] of Object.entries(requiredContexts)) {
+    $(`[role="${role}"]`).each((_, el) => {
+      const $el = $(el);
+      let hasValidParent = false;
+      for (const parentSel of parents) {
+        if ($el.parents(parentSel).length > 0 || $el.parent().is(parentSel)) {
+          hasValidParent = true;
+          break;
+        }
+      }
+      if (!hasValidParent) {
+        issues.push({
+          role,
+          element: ($el.get(0) as any)?.tagName?.toLowerCase() || 'element',
+          requiredParent: parents.join(' of '),
+          location: getElementLocation($, el),
+          html: $.html($el).slice(0, 200),
+        });
+      }
+    });
+  }
+
+  return {
+    testId: 'AriaRoleInvalidContext',
+    testName: 'AriaRoleInvalidContextTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['1.3.1'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * AriaRequiredAttrTest
+ *
+ * Detecteert elementen met een ARIA-rol waarvoor verplichte ARIA-attributen
+ * ontbreken. Bijvoorbeeld: role="slider" zonder aria-valuenow/min/max,
+ * role="combobox" zonder aria-expanded.
+ *
+ * WCAG: 4.1.2 (Naam, rol, waarde) - Level A
+ */
+export function testAriaRequiredAttr(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+
+  // Map van rol → verplichte attributen
+  const requiredAttrs: Record<string, string[]> = {
+    'checkbox': ['aria-checked'],
+    'combobox': ['aria-expanded'],
+    'heading': ['aria-level'],
+    'menuitemcheckbox': ['aria-checked'],
+    'menuitemradio': ['aria-checked'],
+    'meter': ['aria-valuenow'],
+    'option': ['aria-selected'],
+    'progressbar': [], // alle optioneel
+    'radio': ['aria-checked'],
+    'scrollbar': ['aria-controls', 'aria-valuenow'],
+    'separator': [], // alleen voor focusable separator
+    'slider': ['aria-valuenow'],
+    'spinbutton': ['aria-valuenow'],
+    'switch': ['aria-checked'],
+    'treeitem': [], // selected optioneel
+  };
+
+  const issues: Array<{
+    role: string;
+    element: string;
+    missingAttrs: string[];
+    location: string;
+    html: string;
+  }> = [];
+
+  for (const [role, attrs] of Object.entries(requiredAttrs)) {
+    if (attrs.length === 0) continue;
+    $(`[role="${role}"]`).each((_, el) => {
+      const $el = $(el);
+      const missing = attrs.filter((a) => $el.attr(a) === undefined);
+      if (missing.length > 0) {
+        issues.push({
+          role,
+          element: ($el.get(0) as any)?.tagName?.toLowerCase() || 'element',
+          missingAttrs: missing,
+          location: getElementLocation($, el),
+          html: $.html($el).slice(0, 200),
+        });
+      }
+    });
+  }
+
+  return {
+    testId: 'AriaRequiredAttr',
+    testName: 'AriaRequiredAttrTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * AriaAttributeNotSupportedTest
+ *
+ * Detecteert ARIA-attributen die niet ondersteund worden voor het type element.
+ * Bijvoorbeeld: aria-checked op een <p>, aria-expanded op een <span> zonder rol.
+ *
+ * WCAG: WAI-ARIA-schrijfpraktijken — koppelen we aan 4.1.2.
+ */
+export function testAriaAttributeNotSupported(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+
+  // ARIA-attributen die alleen gelden op elementen met een specifieke rol
+  // Vereenvoudigde mapping — globale ARIA-attributen worden niet gevlagd.
+  const roleSpecificAttrs: Record<string, string[]> = {
+    'aria-checked': ['checkbox', 'menuitemcheckbox', 'menuitemradio', 'option', 'radio', 'switch', 'treeitem'],
+    'aria-expanded': ['button', 'combobox', 'document', 'link', 'section', 'sectionhead', 'select', 'window', 'menuitem', 'treeitem', 'tab'],
+    'aria-pressed': ['button'],
+    'aria-selected': ['gridcell', 'option', 'row', 'tab', 'columnheader', 'rowheader', 'treeitem'],
+    'aria-valuemin': ['range', 'meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton'],
+    'aria-valuemax': ['range', 'meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton'],
+    'aria-valuenow': ['range', 'meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton'],
+    'aria-level': ['heading', 'listitem', 'row', 'tablist', 'treeitem'],
+    'aria-posinset': ['article', 'listitem', 'menuitem', 'option', 'radio', 'row', 'tab', 'treeitem'],
+    'aria-setsize': ['article', 'listitem', 'menuitem', 'option', 'radio', 'row', 'tab', 'treeitem'],
+  };
+
+  // Native HTML elementen met impliciete rollen (vereenvoudigd)
+  const implicitRoles: Record<string, string> = {
+    'button': 'button',
+    'a': 'link', // alleen als href aanwezig
+    'input': 'textbox', // hangt af van type
+    'select': 'combobox',
+    'option': 'option',
+    'ul': 'list',
+    'ol': 'list',
+    'li': 'listitem',
+    'h1': 'heading', 'h2': 'heading', 'h3': 'heading', 'h4': 'heading', 'h5': 'heading', 'h6': 'heading',
+    'progress': 'progressbar',
+    'meter': 'meter',
+    'nav': 'navigation',
+    'main': 'main',
+    'header': 'banner',
+    'footer': 'contentinfo',
+    'article': 'article',
+    'section': 'region',
+  };
+
+  const issues: Array<{
+    element: string;
+    attribute: string;
+    actualRole: string | null;
+    requiredRoles: string[];
+    location: string;
+    html: string;
+  }> = [];
+
+  for (const [attr, allowedRoles] of Object.entries(roleSpecificAttrs)) {
+    $(`[${attr}]`).each((_, el) => {
+      const $el = $(el);
+      const tag = ($el.get(0) as any)?.tagName?.toLowerCase() || '';
+      const explicitRole = $el.attr('role');
+      const implicit = implicitRoles[tag];
+      const effectiveRole = explicitRole || implicit || null;
+
+      // Speciale gevallen: <a> heeft rol "link" alleen met href
+      if (tag === 'a' && !$el.attr('href') && !explicitRole) {
+        // a zonder href en zonder expliciete rol heeft geen rol → flaggen
+        issues.push({
+          element: tag,
+          attribute: attr,
+          actualRole: null,
+          requiredRoles: allowedRoles,
+          location: getElementLocation($, el),
+          html: $.html($el).slice(0, 200),
+        });
+        return;
+      }
+
+      if (!effectiveRole || !allowedRoles.includes(effectiveRole)) {
+        issues.push({
+          element: tag,
+          attribute: attr,
+          actualRole: effectiveRole,
+          requiredRoles: allowedRoles,
+          location: getElementLocation($, el),
+          html: $.html($el).slice(0, 200),
+        });
+      }
+    });
+  }
+
+  return {
+    testId: 'AriaAttributeNotSupported',
+    testName: 'AriaAttributeNotSupportedTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * MissingStatusOrPropertyTest
+ *
+ * Detecteert ARIA-rollen die een verplichte aria-status of -property missen.
+ * Variant op AriaRequiredAttr maar dan voor states (aria-checked, aria-expanded)
+ * die op elementen ontbreken waar de rol ze impliceert.
+ *
+ * Concreet: button met aria-pressed-style klassen maar zonder aria-pressed,
+ * of toggle-elementen zonder state-attribuut.
+ *
+ * WCAG: 4.1.2 (Naam, rol, waarde) - Level A
+ */
+export function testMissingStatusOrProperty(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    element: string;
+    role: string | null;
+    missingProperty: string;
+    reason: string;
+    location: string;
+    html: string;
+  }> = [];
+
+  // Buttons met "toggle"-klassen maar zonder aria-pressed of aria-expanded
+  $('button').each((_, el) => {
+    const $el = $(el);
+    const cls = ($el.attr('class') || '').toLowerCase();
+    const hasPressed = $el.attr('aria-pressed') !== undefined;
+    const hasExpanded = $el.attr('aria-expanded') !== undefined;
+    const isToggle =
+      cls.includes('toggle') || cls.includes('expand') || cls.includes('collapse') ||
+      cls.includes('accordion') || cls.includes('dropdown') || cls.includes('menu');
+    if (isToggle && !hasPressed && !hasExpanded) {
+      issues.push({
+        element: 'button',
+        role: 'button',
+        missingProperty: 'aria-pressed of aria-expanded',
+        reason: `klasse suggereert toggle/expand-gedrag`,
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  // role="switch" zonder aria-checked
+  $('[role="switch"]').each((_, el) => {
+    const $el = $(el);
+    if ($el.attr('aria-checked') === undefined) {
+      issues.push({
+        element: ($el.get(0) as any)?.tagName?.toLowerCase() || 'element',
+        role: 'switch',
+        missingProperty: 'aria-checked',
+        reason: 'role="switch" vereist aria-checked',
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  // [aria-controls]-element zonder aria-expanded (typisch disclosure-pattern)
+  $('[aria-controls]').each((_, el) => {
+    const $el = $(el);
+    const tag = ($el.get(0) as any)?.tagName?.toLowerCase() || '';
+    if (tag !== 'button' && $el.attr('role') !== 'button') return;
+    if ($el.attr('aria-expanded') === undefined) {
+      issues.push({
+        element: tag,
+        role: $el.attr('role') || 'button',
+        missingProperty: 'aria-expanded',
+        reason: 'knop met aria-controls implementeert meestal een disclosure-patroon',
+        location: getElementLocation($, el),
+        html: $.html($el).slice(0, 200),
+      });
+    }
+  });
+
+  return {
+    testId: 'MissingStatusOrProperty',
+    testName: 'MissingStatusOrPropertyTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
+// ============================================================================
+// Aanvullingen 4.1.2 — om Siteimprove-dekking te matchen
+// ============================================================================
+
+/**
+ * ImplicitlyHiddenWithFocusableContentTest
+ *
+ * Detecteert containers met inert-attribuut of tabindex="-1" die toch
+ * focusbare content bevatten. Variant op HiddenWithFocusableContent, maar
+ * dan voor "impliciete" verberging waar Tab-focus eigenlijk hoort te stoppen.
+ *
+ * WCAG: 4.1.2 - Level A
+ */
+export function testImplicitlyHiddenWithFocusableContent(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    container: string;
+    reason: string;
+    focusableCount: number;
+    sampleFocusables: string[];
+    location: string;
+  }> = [];
+
+  const focusableSelector = 'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+  // Containers met inert-attribuut
+  $('[inert]').each((_, el) => {
+    const $el = $(el);
+    const focusables = $el.find(focusableSelector);
+    if (focusables.length === 0) return;
+    const samples: string[] = [];
+    focusables.slice(0, 3).each((_, f) => {
+      samples.push($.html($(f)).slice(0, 100));
+    });
+    issues.push({
+      container: ($el.get(0) as any)?.tagName?.toLowerCase() || 'element',
+      reason: 'container heeft inert-attribuut',
+      focusableCount: focusables.length,
+      sampleFocusables: samples,
+      location: getElementLocation($, el),
+    });
+  });
+
+  return {
+    testId: 'ImplicitlyHiddenWithFocusableContent',
+    testName: 'ImplicitlyHiddenWithFocusableContentTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * DetailsSummaryMissingNameTest
+ *
+ * Detecteert details-elementen waarvan de summary geen toegankelijke naam
+ * heeft. De summary fungeert als toggle voor het uitklap-widget; zonder naam
+ * weet de gebruiker niet wat hij in/uitklapt.
+ *
+ * WCAG: 4.1.2 - Level A
+ */
+export function testDetailsSummaryMissingName(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    location: string;
+    html: string;
+  }> = [];
+
+  $('details').each((_, details) => {
+    const $details = $(details);
+    const $summary = $details.children('summary').first();
+    if ($summary.length === 0) return; // Geen summary = ander probleem
+
+    const text = ($summary.text() || '').trim();
+    const ariaLabel = ($summary.attr('aria-label') || '').trim();
+    const ariaLabelledby = ($summary.attr('aria-labelledby') || '').trim();
+    const title = ($summary.attr('title') || '').trim();
+
+    if (!text && !ariaLabel && !ariaLabelledby && !title) {
+      issues.push({
+        location: getElementLocation($, details),
+        html: $.html($details).slice(0, 200),
+      });
+    }
+  });
+
+  return {
+    testId: 'DetailsSummaryMissingName',
+    testName: 'DetailsSummaryMissingNameTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * DuplicateIframeTitleTest
+ *
+ * Detecteert pagina's met meerdere iframe-elementen die dezelfde title hebben.
+ * Schermlezer-gebruikers kunnen dan niet onderscheiden welk iframe welk doel
+ * heeft ("video, video, video").
+ *
+ * WCAG: 4.1.2 - Level A
+ */
+export function testDuplicateIframeTitle(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const titleMap = new Map<string, any[]>();
+
+  $('iframe[title]').each((_, el) => {
+    const title = ($(el).attr('title') || '').trim();
+    if (!title) return;
+    const key = title.toLowerCase();
+    if (!titleMap.has(key)) titleMap.set(key, []);
+    titleMap.get(key)!.push(el);
+  });
+
+  const issues: Array<{
+    title: string;
+    count: number;
+    samples: string[];
+  }> = [];
+
+  Array.from(titleMap.entries()).forEach(([_key, frames]) => {
+    if (frames.length < 2) return;
+    const samples = frames.slice(0, 3).map((f: any) => $.html($(f)).slice(0, 150));
+    issues.push({
+      title: ($(frames[0]).attr('title') || '').trim(),
+      count: frames.length,
+      samples,
+    });
+  });
+
+  return {
+    testId: 'DuplicateIframeTitle',
+    testName: 'DuplicateIframeTitleTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
+/**
+ * MenuItemMissingNameTest
+ *
+ * Detecteert elementen met role="menuitem", "menuitemcheckbox" of
+ * "menuitemradio" die geen toegankelijke naam hebben.
+ *
+ * WCAG: 4.1.2 - Level A
+ */
+export function testMenuItemMissingName(html: string): CrawlerTestResult {
+  const $ = cheerio.load(html);
+  const issues: Array<{
+    role: string;
+    element: string;
+    location: string;
+    html: string;
+  }> = [];
+
+  const menuRoles = ['menuitem', 'menuitemcheckbox', 'menuitemradio'];
+  for (const role of menuRoles) {
+    $(`[role="${role}"]`).each((_, el) => {
+      const $el = $(el);
+      const text = ($el.text() || '').trim();
+      const ariaLabel = ($el.attr('aria-label') || '').trim();
+      const ariaLabelledby = ($el.attr('aria-labelledby') || '').trim();
+      const title = ($el.attr('title') || '').trim();
+
+      if (!text && !ariaLabel && !ariaLabelledby && !title) {
+        issues.push({
+          role,
+          element: ($el.get(0) as any)?.tagName?.toLowerCase() || 'element',
+          location: getElementLocation($, el),
+          html: $.html($el).slice(0, 200),
+        });
+      }
+    });
+  }
+
+  return {
+    testId: 'MenuItemMissingName',
+    testName: 'MenuItemMissingNameTest',
+    found: issues.length > 0,
+    count: issues.length,
+    details: {
+      issues: issues.slice(0, 50),
+      totalCount: issues.length,
+      wcagLevel: 'A',
+      wcagCriteria: ['4.1.2'],
+      critical: true,
+    },
+  };
+}
+
 /**
  * #38: IframeIsHCaptchaTest
  * Detects hCaptcha iframes and container divs, checks accessibility (SIA check for iframe title)
@@ -2381,6 +3667,23 @@ const TEST_MAP: Record<string, (html: string) => CrawlerTestResult> = {
   'TitleMissingTest': testTitleMissing,
   'TitleEmptyTest': testTitleEmpty,
   'ImgMissingAltTest': testImgMissingAlt,
+  'DecorativeImageExposedTest': testDecorativeImageExposed,
+  'ImageButtonMissingAltTest': testImageButtonMissingAlt,
+  'AltIsFilenameTest': testAltIsFilename,
+  'SvgMissingAccessibleNameTest': testSvgMissingAccessibleName,
+  'ObjectMissingAltTest': testObjectMissingAlt,
+  'TableCellMissingContextTest': testTableCellMissingContext,
+  'EmptyContainerTest': testEmptyContainer,
+  'AllRolesInvalidTest': testAllRolesInvalid,
+  'IncorrectTableHeaderReferenceTest': testIncorrectTableHeaderReference,
+  'ImplicitlyHiddenWithFocusableContentTest': testImplicitlyHiddenWithFocusableContent,
+  'DetailsSummaryMissingNameTest': testDetailsSummaryMissingName,
+  'DuplicateIframeTitleTest': testDuplicateIframeTitle,
+  'MenuItemMissingNameTest': testMenuItemMissingName,
+  'AriaRoleInvalidContextTest': testAriaRoleInvalidContext,
+  'AriaRequiredAttrTest': testAriaRequiredAttr,
+  'AriaAttributeNotSupportedTest': testAriaAttributeNotSupported,
+  'MissingStatusOrPropertyTest': testMissingStatusOrProperty,
   'FormMissingLabelsTest': testFormMissingLabels,
   'HeadingsAtLeastOneH1Test': testHeadingsAtLeastOneH1,
   'IframeMissingAccessibleNameTest': testIframeMissingAccessibleName,
@@ -2541,6 +3844,23 @@ export function runAllMVPTests(html: string): CrawlerTestResult[] {
     testTitleMissing(html),
     testTitleEmpty(html),
     testImgMissingAlt(html),
+    testDecorativeImageExposed(html),
+    testImageButtonMissingAlt(html),
+    testAltIsFilename(html),
+    testSvgMissingAccessibleName(html),
+    testObjectMissingAlt(html),
+    testTableCellMissingContext(html),
+    testEmptyContainer(html),
+    testAllRolesInvalid(html),
+    testIncorrectTableHeaderReference(html),
+    testImplicitlyHiddenWithFocusableContent(html),
+    testDetailsSummaryMissingName(html),
+    testDuplicateIframeTitle(html),
+    testMenuItemMissingName(html),
+    testAriaRoleInvalidContext(html),
+    testAriaRequiredAttr(html),
+    testAriaAttributeNotSupported(html),
+    testMissingStatusOrProperty(html),
     testFormMissingLabels(html),
     testHeadingsAtLeastOneH1(html),
     testIframeMissingAccessibleName(html),

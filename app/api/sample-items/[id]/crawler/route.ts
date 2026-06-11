@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { runAllMVPTests } from '@/lib/crawler/tests';
 import { runSingleTestByName, getAvailableTestNames } from '@/lib/crawler/test-runner';
-import { fetchHtmlWithBrowser } from '@/lib/crawler/browser-crawler';
+import { fetchHtmlWithBrowser, fetchHtmlAndRunBrowserTests } from '@/lib/crawler/browser-crawler';
 
 /**
  * POST /api/sample-items/[id]/crawler
@@ -13,9 +13,10 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Parse request body to get optional testName
+    // Parse request body to get optional testName + withBrowser flag
     const body = await request.json().catch(() => ({}));
     const testName = body.testName as string | undefined;
+    const withBrowser = body.withBrowser === true; // standaard uit voor backwards compat
 
     // If testName is provided, validate it
     if (testName) {
@@ -59,16 +60,28 @@ export async function POST(
     // This will execute JavaScript and handle cookie consent dialogs
     let html: string;
     let usedBrowser = false;
+    let browserTestResults: any[] = [];
 
     try {
       console.log(`[CRAWLER] ========================================`);
       console.log(`[CRAWLER] Attempting to use Puppeteer for ${sampleItem.url}`);
+      console.log(`[CRAWLER] withBrowser flag: ${withBrowser}`);
       console.log(`[CRAWLER] ========================================`);
 
-      html = await fetchHtmlWithBrowser(sampleItem.url, {
-        userAgent: 'Shift2-Auditor/1.0 (Accessibility Crawler; +https://shift2.nl)',
-        waitTime: 3000, // Wait 3 seconds for lazy-loaded content (like videos)
-      });
+      if (withBrowser) {
+        // Combineer fetch + browser-tests in één pageload
+        const result = await fetchHtmlAndRunBrowserTests(sampleItem.url, {
+          userAgent: 'Shift2-Auditor/1.0 (Accessibility Crawler; +https://shift2.nl)',
+          waitTime: 3000,
+        });
+        html = result.html;
+        browserTestResults = result.browserTestResults;
+      } else {
+        html = await fetchHtmlWithBrowser(sampleItem.url, {
+          userAgent: 'Shift2-Auditor/1.0 (Accessibility Crawler; +https://shift2.nl)',
+          waitTime: 3000,
+        });
+      }
 
       usedBrowser = true;
 
@@ -136,8 +149,9 @@ export async function POST(
       console.log(`[CRAWLER] Ran ${testResults.length} tests`);
     }
 
-    // Save crawler results to database
-    const results = testResults.map(test => ({
+    // Save crawler results to database — HTML-tests + browser-tests
+    const allTests = [...testResults, ...browserTestResults];
+    const results = allTests.map(test => ({
       sampleItemId: params.id,
       testId: test.testId,
       testName: test.testName,

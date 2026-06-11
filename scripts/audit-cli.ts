@@ -317,6 +317,146 @@ async function getHtml(url: string, flags: Flags) {
   }
 }
 
+async function testSamples(projectId: string, flags: Flags) {
+  const withBrowser = flags['with-browser'] !== 'false'; // standaard AAN voor dit commando
+
+  // Haal sample-items op via het bestaande endpoint
+  const samples = await api(`/api/projects/${projectId}/sample-items`);
+
+  // Project-titel ophalen voor de log (best effort)
+  let projectTitle = projectId;
+  try {
+    const allProjects = await api('/api/projects');
+    const p = allProjects.find((x: any) => x.id === projectId);
+    if (p) projectTitle = p.title;
+  } catch {}
+
+  process.stderr.write(`[test-samples] project: ${projectTitle}\n`);
+  process.stderr.write(`[test-samples] ${samples.length} sample-items gevonden\n\n`);
+
+  const summary: any[] = [];
+
+  for (let i = 0; i < samples.length; i++) {
+    const sample = samples[i];
+    if (!sample.url) {
+      process.stderr.write(`[${i + 1}/${samples.length}] ${sample.title} — SKIP (geen URL, type=${sample.sampleType})\n`);
+      summary.push({ sample: sample.title, skipped: true, reason: 'no url' });
+      continue;
+    }
+
+    process.stderr.write(`[${i + 1}/${samples.length}] ${sample.title} (${sample.url})\n`);
+
+    try {
+      const res = await api(`/api/sample-items/${sample.id}/crawler`, {
+        method: 'POST',
+        body: JSON.stringify({ withBrowser }),
+      });
+      process.stderr.write(`            → ${res.testsRun} tests gedraaid, ${res.testsFound} positief\n\n`);
+      summary.push({
+        sample: sample.title,
+        url: sample.url,
+        testsRun: res.testsRun,
+        testsFound: res.testsFound,
+      });
+    } catch (err: any) {
+      process.stderr.write(`            ✗ FOUT: ${err.message}\n\n`);
+      summary.push({ sample: sample.title, error: err.message });
+    }
+  }
+
+  process.stderr.write(`\n[test-samples] Klaar. Resultaten opgeslagen in DB. Bekijk de Richtlijnen-tab:\n`);
+  process.stderr.write(`              ${BASE_URL}/admin/projects/${projectId}?tab=richtlijnen\n`);
+
+  print({
+    projectId,
+    projectTitle,
+    samplesProcessed: summary.length,
+    summary,
+  });
+}
+
+async function runTests(url: string, flags: Flags) {
+  const verbose = flags.verbose === 'true';
+  const onlyFound = flags['only-found'] === 'true';
+  const withBrowser = flags['with-browser'] === 'true';
+
+  process.stderr.write(`[run-tests] ophalen ${url} ...\n`);
+  const session = await getBrowser();
+  let html = '';
+  let finalUrl = url;
+  let browserTestResults: any[] = [];
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      finalUrl = page.url();
+      html = await page.evaluate(() => '<!doctype html>\n' + document.documentElement.outerHTML);
+
+      if (withBrowser) {
+        process.stderr.write(`[run-tests] browser-tests draaien (contrast, label-in-naam, auto-refresh)...\n`);
+        const { testColorContrast, testLabelInName, testAutoRefresh, testHiddenWithFocusableContent, testTableHeaderCellMissingHeaderRole } = await import('../lib/crawler/browser-tests');
+        const contrastResult = await testColorContrast(page);
+        browserTestResults.push(contrastResult);
+        const labelResult = await testLabelInName(page);
+        browserTestResults.push(labelResult);
+        const refreshResult = await testAutoRefresh(page, url);
+        browserTestResults.push(refreshResult);
+        const hiddenFocusableResult = await testHiddenWithFocusableContent(page);
+        browserTestResults.push(hiddenFocusableResult);
+        const tableHeaderResult = await testTableHeaderCellMissingHeaderRole(page);
+        browserTestResults.push(tableHeaderResult);
+      }
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+  process.stderr.write(`[run-tests] HTML opgehaald (${Buffer.byteLength(html, 'utf8')} bytes). HTML-tests draaien...\n`);
+
+  const { runAllMVPTests } = await import('../lib/crawler/tests');
+  const all = runAllMVPTests(html);
+  // Filter inventarisatie-tests (testId 38-130) EN tests met details.informational=true.
+  const inventoryIds = new Set<string>();
+  for (let i = 38; i <= 131; i++) inventoryIds.add(String(i));
+  inventoryIds.add('10'); // testPageHasAriaHiddenElement
+  const specific = all.filter((r) => {
+    if (inventoryIds.has(r.testId)) return false;
+    if (r.details && (r.details as any).informational === true) return false;
+    return true;
+  });
+
+  // Combineer HTML-tests met browser-tests (contrast etc.)
+  const combined = [...specific, ...browserTestResults];
+  const issues = combined.filter((r) => r.found);
+  const passed = combined.filter((r) => !r.found);
+
+  // Live status naar stderr (jij ziet dit) — stdout krijgt straks JSON
+  process.stderr.write(`\n[run-tests] ${combined.length} pass/fail-tests gedraaid op ${finalUrl}\n`);
+  process.stderr.write(`[run-tests] ${issues.length} issues gevonden, ${passed.length} OK\n\n`);
+  if (verbose || issues.length > 0) {
+    process.stderr.write('ISSUES:\n');
+    for (const r of issues) {
+      process.stderr.write(`  [FAIL] ${r.testName} (${r.count} voorvallen)\n`);
+    }
+  }
+  if (verbose) {
+    process.stderr.write('\nOK:\n');
+    for (const r of passed) {
+      process.stderr.write(`  [PASS] ${r.testName}\n`);
+    }
+  }
+
+  const output = {
+    url: finalUrl,
+    requestedUrl: url,
+    htmlBytes: Buffer.byteLength(html, 'utf8'),
+    totalTests: combined.length,
+    issuesFound: issues.length,
+    results: onlyFound ? issues : combined,
+  };
+  print(output);
+}
+
 async function getScreenshot(url: string, flags: Flags) {
   const fullPage = flags['full-page'] === 'true';
   const selector = flags.selector && flags.selector !== 'true' ? flags.selector : null;
@@ -386,6 +526,10 @@ async function main() {
       return getHtml(requirePositional(positional, 0, 'url'), flags);
     case 'get-screenshot':
       return getScreenshot(requirePositional(positional, 0, 'url'), flags);
+    case 'run-tests':
+      return runTests(requirePositional(positional, 0, 'url'), flags);
+    case 'test-samples':
+      return testSamples(requirePositional(positional, 0, 'projectId'), flags);
     default:
       console.error(
         `Unknown or missing command: ${command ?? '(none)'}\n\n` +
@@ -399,7 +543,9 @@ async function main() {
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
         `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
-        `  get-screenshot <url> [--full-page] [--selector=css]\n`
+        `  get-screenshot <url> [--full-page] [--selector=css]\n` +
+        `  run-tests <url> [--verbose] [--only-found] [--with-browser]  # crawler-tests; --with-browser voegt contrast-test toe\n` +
+        `  test-samples <projectId> [--with-browser=false]  # crawler op alle sample-items van project; opslag in DB\n`
       );
       process.exit(1);
   }

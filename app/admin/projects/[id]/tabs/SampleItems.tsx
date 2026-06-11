@@ -350,7 +350,9 @@ export default function SampleItems({ project }: { project: any }) {
     setOpenMenuId(null);
 
     try {
-      const body = debugMode && selectedTest ? { testName: selectedTest } : {};
+      const body = debugMode && selectedTest
+        ? { testName: selectedTest, withBrowser: true }
+        : { withBrowser: true };
 
       const response = await fetch(`/api/sample-items/${itemId}/crawler`, {
         method: 'POST',
