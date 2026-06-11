@@ -17,12 +17,14 @@ export async function PUT(
       update: {
         status: body.status,
         notes: body.notes,
+        ...(body.explanation !== undefined ? { explanation: body.explanation } : {}),
       },
       create: {
         projectId: params.id,
         wcagCriterionId: params.criterionId,
         status: body.status,
         notes: body.notes,
+        explanation: body.explanation,
       },
       include: {
         wcagCriterion: true,
