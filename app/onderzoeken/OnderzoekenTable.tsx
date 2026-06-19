@@ -32,6 +32,7 @@ interface Project {
   commissionedBy: string | null;
   clientProject?: any;
   hasReinspection?: boolean;
+  reinspectionWeeks?: number | null;
   parentProjectId?: string | null;
   planningSent: string | null;
   planningApproved: string | null;
@@ -419,8 +420,8 @@ export default function OnderzoekenTable({ projects }: Props) {
       description: project.description || '',
       isAnonymous: project.isAnonymous,
       isPrivate: project.isPrivate,
-      hasReinspection: false,
-      reinspectionWeeks: 14,
+      hasReinspection: project.hasReinspection ?? false,
+      reinspectionWeeks: project.reinspectionWeeks ?? 14,
     });
 
     setShowEditModal(true);
@@ -1190,6 +1191,15 @@ export default function OnderzoekenTable({ projects }: Props) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Onderzoeken
+              </Link>
+              <Link
+                href="/technische-issues"
+                className="flex items-center gap-2 text-white hover:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Technische issues
               </Link>
               <div className="relative">
                 <button

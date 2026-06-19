@@ -273,6 +273,7 @@ model WCAGCriterion {
   findings            Finding[]
   researchTypes       ResearchTypeWCAGCriterion[]
   researchTypeExplanations ResearchTypeExplanation[]
+  technicalIssues     TechnicalIssue[]
 
   @@map("wcag_criteria")
 }
@@ -462,4 +463,27 @@ model CrawlerRun {
   project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("crawler_runs")
+}
+
+model TechnicalIssue {
+  id              String                @id @default(uuid())
+  title           String
+  description     String                @db.Text
+  request         String?               @db.Text
+  wcagCriterionId String?               @map("wcag_criterion_id")
+  impact          FindingImpact?
+  supplier        String?
+  status          TechnicalIssueStatus  @default(open)
+  githubIssueUrl  String?               @map("github_issue_url")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  wcagCriterion   WCAGCriterion?         @relation(fields: [wcagCriterionId], references: [id])
+
+  @@map("technical_issues")
+}
+
+enum TechnicalIssueStatus {
+  open
+  resolved
 }
