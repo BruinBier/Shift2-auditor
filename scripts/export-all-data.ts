@@ -158,6 +158,12 @@ async function exportAllData() {
       'id', 'opdrachtgeverId', 'projectId'
     ]);
 
+    const technicalIssues = await prisma.technicalIssue.findMany();
+    await exportTable('technical_issues', technicalIssues, [
+      'id', 'title', 'description', 'request', 'wcagCriterionId', 'impact',
+      'supplier', 'status', 'githubIssueUrl', 'createdAt', 'updatedAt'
+    ]);
+
     // Create metadata file
     const metadata = {
       exportDate: new Date().toISOString(),
@@ -178,6 +184,7 @@ async function exportAllData() {
         quick_findings: quickFindings.length,
         teams: teams.length,
         client_projects: clientProjects.length,
+        technical_issues: technicalIssues.length,
       }
     };
 

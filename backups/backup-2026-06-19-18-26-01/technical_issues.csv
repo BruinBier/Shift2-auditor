@@ -1,0 +1,10 @@
+id,title,description,request,wcagCriterionId,impact,supplier,status,githubIssueUrl,createdAt,updatedAt
+1997f159-676a-4419-81a3-c7f7b92c22e0,taalkeuze,"<Beschrijf het probleem en de impact voor gebruikers. Voorbeeld-URLs hier inline opnemen.>
+
+Voorbeelden:
+- https://...",,,,,open,https://github.com/BruinBier/technische-issues/issues/2,Fri Jun 19 2026 15:13:59 GMT+0200 (Midden-Europese zomertijd),Fri Jun 19 2026 15:13:59 GMT+0200 (Midden-Europese zomertijd)
+3b94106d-069b-421f-9aef-dc1f6d4222af,Interactieve kaart zonder naam/rol,"Op de pagina staat een interactieve kaart. De kaart is met de tabtoets te bereiken en krijgt zichtbaar focus, maar het focusbare kaartelement heeft geen naam en geen rol. Hulpsoftware kondigt het aan als ""klikbaar"" en leest in één keer de volledige inhoud van de kaart voor, inclusief alle markernamen en de zoomknoppen.
+
+Voorbeelden:
+- https://www.bedrijventerreinwolvega.nl/de-plantage (Weststellingwerf)
+- https://begraafplaatsduinrust.beverwijk.nl/ (Beverwijk)","Geef het focusbare kaartelement een toegankelijke naam en een passende rol, zodat hulpsoftware aankondigt dat het om een interactieve kaart gaat. De concrete invulling laten we aan de ontwikkelaars.",1f36c6a9-6e39-462e-8051-67c0ac31e0b2,serieus,SIMsite,open,https://github.com/BruinBier/technische-issues/issues/1,Fri Jun 19 2026 13:54:51 GMT+0200 (Midden-Europese zomertijd),Fri Jun 19 2026 15:24:45 GMT+0200 (Midden-Europese zomertijd)
