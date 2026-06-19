@@ -1,6 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+/**
+ * Recalculate the reinspection child's planned dates based on the parent's
+ * deadline (dateEnd) + reinspectionWeeks. Called after any parent update so
+ * changing the parent's deadline (or moving it out of "In de wacht") propagates
+ * to the v1.1 herinspectie project.
+ */
+async function syncReinspectionChild(parentId: string) {
+  const child = await prisma.project.findFirst({
+    where: { parentProjectId: parentId },
+    select: { id: true, status: true },
+  });
+  if (!child) return;
+
+  const parent = await prisma.project.findUnique({
+    where: { id: parentId },
+    select: {
+      status: true,
+      dateEnd: true,
+      reinspectionWeeks: true,
+    },
+  });
+  if (!parent || !parent.dateEnd || !parent.reinspectionWeeks) return;
+
+  const reinspectionStart = new Date(parent.dateEnd);
+  reinspectionStart.setDate(reinspectionStart.getDate() + parent.reinspectionWeeks * 7);
+  const reinspectionEnd = new Date(reinspectionStart);
+  reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
+
+  const nextStatus =
+    child.status === 'In de wacht' && parent.status !== 'In de wacht' ? 'Gepland' : child.status;
+
+  await prisma.project.update({
+    where: { id: child.id },
+    data: {
+      dateStart: reinspectionStart,
+      dateEnd: reinspectionEnd,
+      reportDate: reinspectionEnd,
+      status: nextStatus,
+    },
+  });
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -41,6 +83,8 @@ export async function PUT(
         reinspectionDate: body.reinspectionDate ? new Date(body.reinspectionDate) : null,
       },
     });
+
+    await syncReinspectionChild(id);
 
     return NextResponse.json(project, { status: 200 });
   } catch (error) {
@@ -150,6 +194,8 @@ export async function PATCH(
       where: { id },
       data: body,
     });
+
+    await syncReinspectionChild(id);
 
     return NextResponse.json({
       project,
