@@ -36,6 +36,9 @@ interface Project {
   parentProjectId?: string | null;
   planningSent: string | null;
   planningApproved: string | null;
+  scopeInScope?: string | null;
+  scopeOutOfScope?: string | null;
+  sampleClientPages?: string | null;
   cancellationReason?: string | null;
 }
 
@@ -846,6 +849,19 @@ export default function OnderzoekenTable({ projects }: Props) {
       : `de website ${websiteName}`;
 
     let body = `Hallo,\n\nBijgaand stuur ik je de planning voor het toegankelijkheidsonderzoek van ${subjectDescription}.\n\n`;
+
+    // Optional scope/sample blocks — use the field from the source-of-truth project
+    // (nulmeting for a reinspection, otherwise the project itself)
+    const scopeSource = nulmetingProject ?? project;
+    if (scopeSource.scopeInScope?.trim()) {
+      body += `Zoals besproken nemen we de volgende website mee in het onderzoek:\n${scopeSource.scopeInScope.trim()}\n\n`;
+    }
+    if (scopeSource.scopeOutOfScope?.trim()) {
+      body += `Buiten het onderzoek vallen:\n${scopeSource.scopeOutOfScope.trim()}\n\n`;
+    }
+    if (scopeSource.sampleClientPages?.trim()) {
+      body += `Daarnaast hebben jullie deze pagina's specifiek aangedragen:\n${scopeSource.sampleClientPages.trim()}\n\n`;
+    }
 
     // Show information based on project type
     if (isReinspection) {
@@ -2985,9 +3001,9 @@ export default function OnderzoekenTable({ projects }: Props) {
             }
           }}
         >
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
               <h2 className="text-xl font-semibold text-gray-900">Planningsmail</h2>
               <button
                 onClick={() => setShowEmailModal(false)}
@@ -3000,7 +3016,7 @@ export default function OnderzoekenTable({ projects }: Props) {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Subject */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Onderwerp</label>
@@ -3053,7 +3069,7 @@ export default function OnderzoekenTable({ projects }: Props) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 flex-shrink-0 bg-white rounded-b-lg">
               <button
                 onClick={() => setShowEmailModal(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -3065,8 +3081,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                   navigator.clipboard.writeText(`Onderwerp: ${generatedEmail.subject}\n\n${generatedEmail.body}`);
                   alert('Email volledig gekopieerd!');
                 }}
-                className="px-4 py-2 text-sm font-medium text-white rounded-lg"
-                style={{ backgroundColor: '#6b2d8f' }}
+                className="modal-save-button px-4 py-2 text-sm font-medium text-white rounded-lg bg-shift2-primary hover:opacity-90"
               >
                 Kopieer alles
               </button>
