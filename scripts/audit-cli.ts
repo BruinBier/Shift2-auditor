@@ -460,6 +460,7 @@ async function runTests(url: string, flags: Flags) {
 async function getScreenshot(url: string, flags: Flags) {
   const fullPage = flags['full-page'] === 'true';
   const selector = flags.selector && flags.selector !== 'true' ? flags.selector : null;
+  const keepCookieBanner = flags['keep-cookie-banner'] === 'true';
   const session = await getBrowser();
   try {
     const { page, cleanup } = await openPage(session, url);
@@ -468,6 +469,29 @@ async function getScreenshot(url: string, flags: Flags) {
       const finalUrl = page.url();
       const dir = ensureOutputDir();
       const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.png`);
+
+      if (!keepCookieBanner) {
+        // Verberg cookie-modals, banners en andere gebruikelijke overlays via CSS
+        // Alleen visueel — de DOM blijft ongewijzigd (relevant voor eventuele parallelle HTML-inspecties).
+        await page.addStyleTag({
+          content: `
+            [class*="CookieModal" i],
+            [class*="CookieBanner" i],
+            [class*="cookie-modal" i],
+            [class*="cookie-banner" i],
+            [class*="cookieOverlay" i],
+            [id*="cookie" i][class*="modal" i],
+            [id*="cookie" i][class*="banner" i],
+            [id*="cookiebar" i],
+            [id*="cookieconsent" i],
+            [class*="CookieConsent" i],
+            [aria-label*="cookie" i][role="dialog"] {
+              display: none !important;
+              visibility: hidden !important;
+            }
+          `,
+        });
+      }
 
       if (selector) {
         const handle = await page.$(selector);
@@ -543,7 +567,7 @@ async function main() {
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
         `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
-        `  get-screenshot <url> [--full-page] [--selector=css]\n` +
+        `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner]\n` +
         `  run-tests <url> [--verbose] [--only-found] [--with-browser]  # crawler-tests; --with-browser voegt contrast-test toe\n` +
         `  test-samples <projectId> [--with-browser=false]  # crawler op alle sample-items van project; opslag in DB\n`
       );

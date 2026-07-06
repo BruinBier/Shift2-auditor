@@ -12,6 +12,8 @@ import Conclusion from './tabs/Conclusion';
 import Finalize from './tabs/Finalize';
 import Tussencheck from './tabs/Tussencheck';
 import Richtlijnen from './tabs/Richtlijnen';
+import PagecheckProgress from './tabs/PagecheckProgress';
+import Fixlijst from './tabs/Fixlijst';
 import CrawlAllButton from './CrawlAllButton';
 import AuditSessionIndicator from '@/app/components/AuditSessionIndicator';
 
@@ -25,7 +27,9 @@ interface ProjectAdminTabsProps {
 export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [] }: ProjectAdminTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst'>('details');
+  const showProgressTab = (project.scopeUrls?.length ?? 0) > 100;
+  const showFixlijstTab = showProgressTab;
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
   const [showBevindingenMenu, setShowBevindingenMenu] = useState(false);
   const [isFinalizingProject, setIsFinalizingProject] = useState(false);
@@ -202,14 +206,16 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
     }
   };
 
-  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen') => {
+  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst') => {
     const tabParam = tab === 'details' ? '' :
                      tab === 'scope' ? 'scope' :
                      tab === 'sample' ? 'steekproef' :
                      tab === 'findings' ? 'bevindingen' :
                      tab === 'conclusion' ? 'conclusie' :
                      tab === 'tussencheck' ? 'tussencheck' :
-                     tab === 'richtlijnen' ? 'richtlijnen' : 'voltooien';
+                     tab === 'richtlijnen' ? 'richtlijnen' :
+                     tab === 'progress' ? 'voortgang' :
+                     tab === 'fixlijst' ? 'fixlijst' : 'voltooien';
 
     const url = tabParam ? `/admin/projects/${project.id}?tab=${tabParam}` : `/admin/projects/${project.id}`;
     router.push(url);
@@ -232,6 +238,10 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
       setActiveTab('tussencheck');
     } else if (tab === 'richtlijnen') {
       setActiveTab('richtlijnen');
+    } else if (tab === 'voortgang') {
+      setActiveTab('progress');
+    } else if (tab === 'fixlijst') {
+      setActiveTab('fixlijst');
     } else {
       setActiveTab('details');
     }
@@ -498,19 +508,33 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                 >
                   2. Steekproef
                 </button>
-                <button
-                  onClick={() => project.status !== 'Gereed' && handleTabChange('findings')}
-                  disabled={project.status === 'Gereed'}
-                  className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    project.status === 'Gereed'
-                      ? 'border-transparent text-gray-400 cursor-not-allowed'
-                      : activeTab === 'findings'
+                {showFixlijstTab && (
+                  <button
+                    onClick={() => handleTabChange('fixlijst')}
+                    className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                      activeTab === 'fixlijst'
                         ? 'border-shift2-primary text-shift2-primary'
                         : 'border-transparent text-gray-500 tab-hover'
-                  }`}
-                >
-                  3. Bevindingen
-                </button>
+                    }`}
+                  >
+                    Fixlijst
+                  </button>
+                )}
+                {!showFixlijstTab && (
+                  <button
+                    onClick={() => project.status !== 'Gereed' && handleTabChange('findings')}
+                    disabled={project.status === 'Gereed'}
+                    className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                      project.status === 'Gereed'
+                        ? 'border-transparent text-gray-400 cursor-not-allowed'
+                        : activeTab === 'findings'
+                          ? 'border-shift2-primary text-shift2-primary'
+                          : 'border-transparent text-gray-500 tab-hover'
+                    }`}
+                  >
+                    3. Bevindingen
+                  </button>
+                )}
                 <button
                   onClick={() => project.status !== 'Gereed' && handleTabChange('conclusion')}
                   disabled={project.status === 'Gereed'}
@@ -546,16 +570,30 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                     {checkPhase === 'tussencheck' ? 'Tussencheck' : 'Herinspectie'}
                   </button>
                 )}
-                <button
-                  onClick={() => handleTabChange('richtlijnen')}
-                  className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
-                    activeTab === 'richtlijnen'
-                      ? 'border-shift2-primary text-shift2-primary'
-                      : 'border-transparent text-gray-500 tab-hover'
-                  }`}
-                >
-                  Richtlijnen
-                </button>
+                {!showFixlijstTab && (
+                  <button
+                    onClick={() => handleTabChange('richtlijnen')}
+                    className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                      activeTab === 'richtlijnen'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
+                    }`}
+                  >
+                    Richtlijnen
+                  </button>
+                )}
+                {showProgressTab && (
+                  <button
+                    onClick={() => handleTabChange('progress')}
+                    className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                      activeTab === 'progress'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
+                    }`}
+                  >
+                    Voortgang
+                  </button>
+                )}
                   <div className="ml-auto flex gap-2" style={{ marginBottom: '8px' }}>
                     {activeTab === 'finalize' && (
                       <button
@@ -649,6 +687,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             {activeTab === 'finalize' && <Finalize project={project} allCriteria={allCriteria} />}
             {activeTab === 'tussencheck' && <Tussencheck project={project} />}
             {activeTab === 'richtlijnen' && <Richtlijnen project={project} allCriteria={allCriteria} />}
+            {activeTab === 'progress' && <PagecheckProgress project={project} />}
+            {activeTab === 'fixlijst' && <Fixlijst project={project} />}
           </div>
         </div>
       </div>
