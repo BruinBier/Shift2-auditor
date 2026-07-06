@@ -162,6 +162,9 @@ model Project {
   // Planning fields
   planningSent            DateTime?      @map("planning_sent")
   planningApproved        DateTime?      @map("planning_approved")
+  scopeInScope            String?        @map("scope_in_scope") @db.Text
+  scopeOutOfScope         String?        @map("scope_out_of_scope") @db.Text
+  sampleClientPages       String?        @map("sample_client_pages") @db.Text
 
   // External project fields
   isExternalProject       Boolean        @default(false) @map("is_external_project")

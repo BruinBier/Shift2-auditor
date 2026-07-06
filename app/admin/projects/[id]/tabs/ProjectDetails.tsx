@@ -35,6 +35,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [planningFormData, setPlanningFormData] = useState({
     planningSent: project.planningSent ? new Date(project.planningSent).toISOString().split('T')[0] : '',
     planningApproved: project.planningApproved ? new Date(project.planningApproved).toISOString().split('T')[0] : '',
+    scopeInScope: project.scopeInScope || '',
+    scopeOutOfScope: project.scopeOutOfScope || '',
+    sampleClientPages: project.sampleClientPages || '',
   });
 
   // Fetch opdrachtgevers, client projects, and notes
@@ -279,8 +282,11 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planningSent: planningFormData.planningSent || null,
-          planningApproved: planningFormData.planningApproved || null,
+          planningSent: planningFormData.planningSent ? new Date(planningFormData.planningSent).toISOString() : null,
+          planningApproved: planningFormData.planningApproved ? new Date(planningFormData.planningApproved).toISOString() : null,
+          scopeInScope: planningFormData.scopeInScope || null,
+          scopeOutOfScope: planningFormData.scopeOutOfScope || null,
+          sampleClientPages: planningFormData.sampleClientPages || null,
         }),
       });
 
@@ -293,6 +299,49 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     } catch (error) {
       console.error('Error updating planning:', error);
       alert('Fout bij het opslaan van de planning datums');
+    }
+  };
+
+  // Import planning scope/sample fields into real records
+  const [isImporting, setIsImporting] = useState(false);
+  const handleImportPlanning = async () => {
+    const hasContent =
+      project.scopeInScope || project.scopeOutOfScope || project.sampleClientPages;
+    if (!hasContent) {
+      alert("Er zijn geen scope- of steekproefpagina's in de planning ingevuld om te importeren.");
+      return;
+    }
+    if (
+      !confirm(
+        "De ingevulde scope-URL's en door de klant aangedragen pagina's worden toegevoegd aan de scope en de steekproef van dit project. Pagina's die er al staan worden overgeslagen. Doorgaan?"
+      )
+    ) {
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/import-planning`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const parts: string[] = [];
+        if (data.scopeInScopeCreated) parts.push(`${data.scopeInScopeCreated} in scope`);
+        if (data.scopeOutOfScopeCreated) parts.push(`${data.scopeOutOfScopeCreated} buiten scope`);
+        if (data.sampleItemsCreated) parts.push(`${data.sampleItemsCreated} steekproefpagina(s)`);
+        const summary = parts.length ? parts.join(', ') : 'niets nieuws';
+        const skipped = data.skipped ? ` (${data.skipped} overgeslagen, bestaan al)` : '';
+        alert(`Import voltooid: ${summary}${skipped}.`);
+        window.location.reload();
+      } else {
+        alert(`Fout bij importeren: ${data.error || 'onbekende fout'}`);
+      }
+    } catch (error) {
+      console.error('Error importing planning:', error);
+      alert('Fout bij het importeren van de planning');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -413,6 +462,36 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 <div className="text-sm text-gray-900">
                   {project.planningApproved ? format(new Date(project.planningApproved), 'd MMMM yyyy', { locale: nl }) : '-'}
                 </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-gray-200 space-y-3">
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">In scope</label>
+                <div className="text-sm text-gray-900 whitespace-pre-wrap">{project.scopeInScope || '-'}</div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Buiten scope</label>
+                <div className="text-sm text-gray-900 whitespace-pre-wrap">{project.scopeOutOfScope || '-'}</div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Door klant aangedragen pagina's</label>
+                <div className="text-sm text-gray-900 whitespace-pre-wrap">{project.sampleClientPages || '-'}</div>
+              </div>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleImportPlanning}
+                  disabled={isImporting}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {isImporting ? 'Bezig met importeren...' : 'Importeer naar scope & steekproef'}
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Zet de scope-URL's om naar scope-items en de aangedragen pagina's naar de steekproef. Bestaande pagina's worden overgeslagen.
+                </p>
               </div>
             </div>
           </div>
@@ -892,7 +971,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       {/* Edit Planning Modal */}
       {showPlanningModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Planning datums bewerken</h2>
@@ -907,7 +986,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             </div>
 
             {/* Content */}
-            <form onSubmit={handlePlanningSubmit} className="p-6 space-y-6">
+            <form onSubmit={handlePlanningSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="p-6 space-y-6 overflow-y-auto flex-1">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Planning verstuurd
@@ -932,8 +1012,56 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 />
               </div>
 
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Inhoud planningsmail</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Deze velden worden onder de openingsregel in de planningsmail opgenomen. Een leeg veld wordt overgeslagen.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  In scope
+                </label>
+                <textarea
+                  rows={4}
+                  value={planningFormData.scopeInScope}
+                  onChange={(e) => setPlanningFormData({ ...planningFormData, scopeInScope: e.target.value })}
+                  placeholder={'- Hoofdwebsite heuvelrug.nl\n- Formulieren onder /formulieren/'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Buiten scope
+                </label>
+                <textarea
+                  rows={4}
+                  value={planningFormData.scopeOutOfScope}
+                  onChange={(e) => setPlanningFormData({ ...planningFormData, scopeOutOfScope: e.target.value })}
+                  placeholder={'- Subsite raad.heuvelrug.nl\n- PDF-documenten ouder dan 2024'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Door klant aangedragen pagina's
+                </label>
+                <textarea
+                  rows={4}
+                  value={planningFormData.sampleClientPages}
+                  onChange={(e) => setPlanningFormData({ ...planningFormData, sampleClientPages: e.target.value })}
+                  placeholder={'- /contact\n- /producten/aanvragen'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
+                />
+              </div>
+
+              </div>
+
               {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-white">
                 <button
                   type="button"
                   onClick={() => setShowPlanningModal(false)}
