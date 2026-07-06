@@ -86,7 +86,7 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
 
     let projectWarning: string | null = null;
     try {
-      await addIssueToProjectAndSetStatus(result.nodeId, 'Ingediend');
+      await addIssueToProjectAndSetStatus(result.nodeId, 'Open');
     } catch (err) {
       projectWarning = err instanceof Error ? err.message : 'Project-assignment failed';
       console.error('Project assignment failed:', err);
