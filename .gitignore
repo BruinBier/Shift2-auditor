@@ -45,4 +45,11 @@ nul
 # audit-cli browser captures (html/screenshots)
 /tmp/audit-cli/
 
+# Claude Code local settings (per developer)
+.claude/settings.json
+
+# private files (blijven lokaal op schijf)
+Instructie_Toegankelijke_Videos.docx
+tmp_proj.json
+
 
