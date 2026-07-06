@@ -7,6 +7,73 @@ import { prisma } from '@/lib/prisma';
  * changing the parent's deadline (or moving it out of "In de wacht") propagates
  * to the v1.1 herinspectie project.
  */
+/**
+ * Create the v1.1 herinspectie child project for a parent that has
+ * hasReinspection=true but no child yet. This happens when the herinspectie
+ * checkbox is toggled on via the edit form (PUT) rather than at creation time
+ * (POST), since only POST created the child historically. Mirrors the field
+ * set + date calculation of the POST route. No-op when a child already exists.
+ */
+async function ensureReinspectionChild(parentId: string) {
+  const parent = await prisma.project.findUnique({ where: { id: parentId } });
+  if (!parent || !parent.hasReinspection) return;
+
+  const existingChild = await prisma.project.findFirst({
+    where: { parentProjectId: parentId },
+    select: { id: true },
+  });
+  if (existingChild) return;
+
+  // Same date logic as the POST route: reinspectionDate wins, else deadline + weeks,
+  // else leave dates empty so it can be planned later.
+  let reinspectionStart: Date | null = null;
+  let reinspectionEnd: Date | null = null;
+  if (parent.reinspectionDate) {
+    reinspectionStart = new Date(parent.reinspectionDate);
+    reinspectionEnd = new Date(reinspectionStart);
+    reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
+  } else if (parent.reinspectionWeeks && parent.dateEnd) {
+    reinspectionStart = new Date(parent.dateEnd);
+    reinspectionStart.setDate(reinspectionStart.getDate() + parent.reinspectionWeeks * 7);
+    reinspectionEnd = new Date(reinspectionStart);
+    reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
+  }
+
+  await prisma.project.create({
+    data: {
+      kenmerk: parent.kenmerk,
+      title: parent.title,
+      subject: parent.subject ?? '',
+      standard: parent.standard,
+      level: parent.level,
+      researchType: parent.researchType,
+      version: 1.1,
+      language: parent.language,
+      status: parent.status === 'In de wacht' ? 'In de wacht' : 'Gepland',
+      clientName: parent.clientName,
+      commissionedBy: parent.commissionedBy,
+      clientProjectId: parent.clientProjectId,
+      auditedByOrg: parent.auditedByOrg,
+      researcherName: parent.researcherName,
+      controllerName: parent.controllerName,
+      plannedTime: parent.plannedTime,
+      dateStart: reinspectionStart,
+      dateEnd: reinspectionEnd,
+      researchStartedOn: null,
+      reportDate: reinspectionEnd ?? new Date(),
+      description: parent.description,
+      isAnonymous: parent.isAnonymous,
+      isPrivate: parent.isPrivate,
+      hasReinspection: false,
+      reinspectionWeeks: null,
+      parentProjectId: parent.id,
+      checkPhase: 'tussencheck',
+    },
+  });
+
+  console.log(`Created missing reinspection child (v1.1) for parent ${parent.id} via edit`);
+}
+
 async function syncReinspectionChild(parentId: string) {
   const child = await prisma.project.findFirst({
     where: { parentProjectId: parentId },
@@ -72,7 +139,12 @@ export async function PUT(
         dateStart: body.dateStart ? new Date(body.dateStart) : null,
         dateEnd: body.dateEnd ? new Date(body.dateEnd) : null,
         researchStartedOn: body.researchStartedOn ? new Date(body.researchStartedOn) : null,
-        reportDate: body.reportDate ? new Date(body.reportDate) : new Date(),
+        // Default the rapportdatum to the deadline (dateEnd) rather than "today",
+        // so editing a project without an explicit reportDate doesn't reset it
+        // to the current date. Falls back to today only when there is no deadline.
+        reportDate: body.reportDate
+          ? new Date(body.reportDate)
+          : (body.dateEnd ? new Date(body.dateEnd) : new Date()),
         description: body.description,
         isAnonymous: body.isAnonymous || false,
         isPrivate: body.isPrivate || false,
@@ -84,6 +156,7 @@ export async function PUT(
       },
     });
 
+    await ensureReinspectionChild(id);
     await syncReinspectionChild(id);
 
     return NextResponse.json(project, { status: 200 });
