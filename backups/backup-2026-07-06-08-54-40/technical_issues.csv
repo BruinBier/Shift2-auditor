@@ -1,0 +1,94 @@
+id,title,description,request,wcagCriterionId,impact,supplier,status,githubIssueUrl,createdAt,updatedAt
+3b94106d-069b-421f-9aef-dc1f6d4222af,Interactieve kaart zonder naam/rol,"Op de pagina staat een interactieve kaart. De kaart is met de tabtoets te bereiken en krijgt zichtbaar focus, maar het focusbare kaartelement heeft geen naam en geen rol. Hulpsoftware kondigt het aan als ""klikbaar"" en leest in één keer de volledige inhoud van de kaart voor, inclusief alle markernamen en de zoomknoppen.
+
+Voorbeelden:
+- https://www.bedrijventerreinwolvega.nl/de-plantage (Weststellingwerf)
+- https://begraafplaatsduinrust.beverwijk.nl/ (Beverwijk)","Geef het focusbare kaartelement een toegankelijke naam en een passende rol, zodat hulpsoftware aankondigt dat het om een interactieve kaart gaat. De concrete invulling laten we aan de ontwikkelaars.",1f36c6a9-6e39-462e-8051-67c0ac31e0b2,serieus,Shift2,open,https://github.com/BruinBier/technische-issues/issues/1,Fri Jun 19 2026 13:54:51 GMT+0200 (Midden-Europese zomertijd),Wed Jun 24 2026 14:13:35 GMT+0200 (Midden-Europese zomertijd)
+6354eaf3-5f14-4a30-b72b-7999190f9afc,ReadSpeaker: contrast knoppen “Eenvoudige tekst” voldoet niet,"Gemeente Capelle aan den IJssel heeft bij een toegankelijkheidstest teruggekregen dat het contrast van de knoppen binnen ReadSpeaker, specifiek bij de functie “Eenvoudige tekst”, onvoldoende is.
+
+Capelle heeft dit nagevraagd bij ReadSpeaker. ReadSpeaker geeft aan dat de weergave zoals deze nu op de site van Capelle staat niet de originele styling van ReadSpeaker is. Twan heeft bevestigd dat wij dit zelf kunnen oplossen.
+
+Voorbeeld huidige situatie
+https://www.capelleaandenijssel.nl/ 
+
+Voorbeeld juiste weergave volgens ReadSpeaker
+https://www.laverhof.nl/
+
+**Probleem**
+De knoppen binnen ReadSpeaker “Eenvoudige tekst” hebben onvoldoende kleurcontrast. Hierdoor voldoen deze onderdelen mogelijk niet aan WCAG 2.2 succescriterium 1.4.3 Contrast minimum.
+
+**Gewenste oplossing**
+Pas de styling van de ReadSpeaker-knoppen aan, zodat het contrast van tekst/icoon ten opzichte van de achtergrond minimaal voldoet aan de toegankelijkheidseisen.",,,,,open,https://github.com/BruinBier/technische-issues/issues/7,Tue Jun 30 2026 17:38:47 GMT+0200 (Midden-Europese zomertijd),Tue Jun 30 2026 17:38:47 GMT+0200 (Midden-Europese zomertijd)
+16e2d7d5-5579-4954-8f44-6dee86b15879,Submenu’s hoofdnavigatie niet toegankelijk op mobiel met screenreader,"Bij het toegankelijkheidsonderzoek van Capelle aan den IJssel heeft Swink geconstateerd dat de submenu’s in de hoofdnavigatie op mobiel niet goed te openen zijn met een screenreader.
+
+
+Bevinding Swink
+
+Swink geeft aan dat de top-level links in de menubalk op mobiel niet goed werken met een screenreader. Bij activering met touch wordt de link geopend in plaats van het submenu. Daardoor zijn de submenu’s niet goed bereikbaar.
+
+Daarnaast wordt niet goed voorgelezen dat de top-level items ook links zijn. De screenreader leest alleen “submenu” voor.
+
+Analyse Cardan
+In de huidige implementatie zijn op mobiel wel losse button-elementen aanwezig om submenu’s te openen, maar deze zijn verborgen met aria-hidden=""true"" en tabindex=""-1"". Daardoor zijn deze buttons niet bereikbaar voor screenreadergebruikers, toetsenbordgebruikers en gebruikers die op mobiel swipen.
+
+In theorie kunnen deze buttons toegankelijk worden gemaakt, maar binnen de huidige menubar-implementatie levert dat waarschijnlijk extra complexiteit op met ARIA-rollen en interactie.","Cardan adviseert daarom om af te stappen van de huidige menubar-implementatie en een conventioneler navigatiemenu te gebruiken.
+
+Daarbij blijven top-level items gewone links en worden submenu’s geopend en gesloten met aparte buttons. Dit sluit aan bij het WAI-ARIA APG disclosure navigation pattern:
+
+https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation-hybrid/
+
+Dit patroon gebruikt een normale geneste lijst, gewone links en losse buttons voor submenu’s. De bediening werkt met de Tab-toets en kan eventueel aanvullend met pijltjestoetsen worden ondersteund.
+
+Gewenst resultaat
+
+Zorg ervoor dat het menu op mobiel met screenreader goed werkt.
+
+Concreet moet een gebruiker:
+
+de top-level links als link kunnen herkennen en openen;
+het submenu op mobiel met screenreader zelfstandig kunnen openen;
+het submenu ook weer kunnen sluiten;
+alle submenu-items kunnen bereiken en activeren.",1f36c6a9-6e39-462e-8051-67c0ac31e0b2,serieus,SIMsite0,open,https://github.com/BruinBier/technische-issues/issues/6,Mon Jun 29 2026 21:34:57 GMT+0200 (Midden-Europese zomertijd),Mon Jun 29 2026 21:39:45 GMT+0200 (Midden-Europese zomertijd)
+33d5cfb9-9569-407a-ba9b-be2242252d7a,Snelmenu Meertalige website,"**Uitgangspunt:** bij een meertalige website wordt de taalkeuze in het snelmenu getoond in de taal van de gebruiker zelf (""English"", ""Deutsch"", ""Français""). Een anderstalige bezoeker herkent dan zijn eigen taal. Een Nederlandse omschrijving als ""Engelse website"" werkt voor de doelgroep niet, omdat een Engelstalige bezoeker dat niet als zijn taal herkent.
+
+Op [www.heerlen.nl](https://www.heerlen.nl) staan in het snelmenu links naar andere taalversies van de website (NL, EN, DE, FR). Op dit moment is ervoor gekozen om alleen de taalcodes (""NL"", ""EN"", ""DE"", ""FR"") als zichtbare linktekst te tonen. Voor schermlezers is via een aria-label een uitgebreidere naam toegevoegd, bijvoorbeeld ""EN, English"" of ""DE, Deutsch"".
+
+Wanneer we deze lijn doortrekken (anderstalige tekst tonen aan de gebruiker), ontstaat het issue dat dit binnen ons CMS niet volledig mogelijk is. Er is geen optie om bij een menulink een waarde voor het `lang`-attribuut te selecteren of in te voeren. Zonder `lang`-attribuut leest een schermlezer de anderstalige tekst voor met de Nederlandse uitspraakregels. Volgens WCAG 3.1.2 (Taal van onderdelen) moet anderstalige content programmatisch als zodanig zijn gemarkeerd.
+
+Let op: het `lang`-attribuut is alleen nodig wanneer de taal van de link afwijkt van de paginataal. Op de Engelse versie van de site (waar `<html lang=""en"">` al staat) is `lang=""en""` op de link ""EN, English"" overbodig, want de pagina is al Engels. Op de Nederlandse versie is `lang=""en""` op diezelfde link wél nodig.
+
+**Voorbeeld huidige situatie (Nederlandse versie van de site):**
+- Zichtbaar: `EN`
+- aria-label: `EN, English`
+- HTML-link mist `lang=""en""`
+
+**Gewenst (Nederlandse versie van de site):**
+- Zichtbaar: `EN`
+- aria-label: `EN, English`
+- HTML-link heeft `lang=""en""` en `hreflang=""en""`
+
+De komma in de aria-label is in dit voorbeeld al correct geplaatst. De komma-instructie verderop is bedoeld om dit ook in de helptekst vast te leggen, zodat redacteuren het bij toekomstige taallinks niet vergeten.","**1. Nieuw veld ""Taal van de link (lang)"" toevoegen in het CMS Menulink bewerken**
+
+Direct onder het bestaande veld ""Menu link aria-label"":
+- Vrij invoerbaar tekstveld.
+- Optioneel.
+- Voorbeeldwaarden: `en`, `de`, `fr`.
+- Helptekst: ""Vul de taalcode in van de taal waarin de linktekst en/of het aria-label is geschreven. Hulpsoftware gebruikt dit voor de juiste uitspraak. Bijvoorbeeld `en` voor English. De taalcode (`EN`) wordt ook in het aria-label opgenomen, zodat spraaksoftware de zichtbare tekst kan matchen op de toegankelijke naam (WCAG 2.5.3 Label in Name).""
+
+In de frontend wordt de ingevulde waarde toegevoegd als `lang`-attribuut op de gerenderde `<a>` van de menu-link. Dezelfde waarde wordt ook als `hreflang`-attribuut toegevoegd (scope van dit issue, niet optioneel).
+
+**Slim renderen:** het CMS rendert het `lang`-attribuut alleen wanneer de ingevulde waarde verschilt van de paginataal (`<html lang=""..."">`). Voorbeeld: op de Engelse versie van de site (`lang=""en""`) wordt `lang=""en""` op de link ""EN, English"" weggelaten, omdat de pagina zelf al Engels is. Op de Nederlandse versie van diezelfde link wordt `lang=""en""` wél gerenderd. Dit voorkomt onnodige attributen in de HTML. Het `hreflang`-attribuut wordt altijd gerenderd, ongeacht de paginataal.
+
+**2. Helptekst onder ""Menu link aria-label"" aanpassen**
+
+De huidige helptekst luidt: ""Vul hier een aanvullende tekst in voor schermlezers, bijvoorbeeld 'Engelse vertaling van de website'.""
+
+Dit voorbeeld is verwarrend. Het suggereert dat de redacteur een Nederlandse omschrijving moet invullen, terwijl bij een taalkeuze-menu op een meertalige website juist de anderstalige taalnaam gewenst is (zodat een Engelstalige bezoeker ""English"" hoort en herkent).
+
+Daarnaast moet de helptekst de redacteur erop wijzen dat er een komma tussen de taalcode en de taalnaam hoort. Zonder komma plakken taalcode en taalnaam aan elkaar. Bij ""EN English"" leest een schermlezer dan ""enenglish"" voor (de ""EN"" wordt als Nederlandse afkorting gelezen en gaat direct over in het Engelse woord). De komma zorgt voor een natuurlijke spraakpauze in alle schermlezers (NVDA, JAWS, VoiceOver, TalkBack).
+
+De zichtbare taalcode (`EN`) hoort ook in de aria-label opgenomen te worden, zodat spraaksoftware de zichtbare tekst kan matchen op de toegankelijke naam (WCAG 2.5.3 Label in Name). Bij ""EN, English"" begint de aria-label met `EN`, wat overeenkomt met de zichtbare linktekst.
+
+Voorstel voor de nieuwe helptekst:
+
+""Vul hier een aanvullende tekst in voor schermlezers, zodat de link duidelijker is. Bij een taalkeuze-menu op een meertalige website: zet de taalkeuze in de taal van de gebruiker, zodat een anderstalige bezoeker zijn eigen taal herkent. Begin de aria-label met de zichtbare taalcode en plaats daarna een komma en de taalnaam, bijvoorbeeld `EN, English` of `DE, Deutsch`. De komma zorgt voor een natuurlijke pauze in de uitspraak door de schermlezer. De taalcode aan het begin zorgt dat spraaksoftware de zichtbare tekst kan matchen op de toegankelijke naam (WCAG 2.5.3 Label in Name).""",dbbfa87d-0ed1-4b4b-b63c-2a9f75ff5a4d,klein,Shift2,open,https://github.com/BruinBier/technische-issues/issues/5,Tue Jun 23 2026 17:34:27 GMT+0200 (Midden-Europese zomertijd),Wed Jun 24 2026 14:13:15 GMT+0200 (Midden-Europese zomertijd)
