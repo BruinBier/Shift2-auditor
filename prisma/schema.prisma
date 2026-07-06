@@ -490,3 +490,48 @@ enum TechnicalIssueStatus {
   open
   resolved
 }
+
+model CmsParagraph {
+  id          String                 @id @default(uuid())
+  name        String
+  slug        String                 @unique
+  description String?                @db.Text
+  order       Int                    @default(0)
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+
+  helpteksten CmsParagraphHelptext[]
+
+  @@map("cms_paragrafen")
+}
+
+model CmsParagraphHelptext {
+  id             String       @id @default(uuid())
+  paragraphId    String       @map("paragraph_id")
+  elementType    String       @map("element_type")
+  title          String
+  helpText       String       @map("help_text") @db.Text
+  wcagCriteria   String?      @map("wcag_criteria")
+  order          Int          @default(0)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  paragraph      CmsParagraph             @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
+  screenshots    CmsHelptextScreenshot[]
+
+  @@map("cms_paragraaf_helpteksten")
+}
+
+model CmsHelptextScreenshot {
+  id         String               @id @default(uuid())
+  helptextId String               @map("helptext_id")
+  path       String
+  caption    String?
+  alt        String?
+  order      Int                  @default(0)
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  helptext   CmsParagraphHelptext @relation(fields: [helptextId], references: [id], onDelete: Cascade)
+
+  @@map("cms_helptext_screenshots")
+}
