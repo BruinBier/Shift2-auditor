@@ -160,8 +160,20 @@ export default function Bevindingen({ project }: { project: any }) {
                       }
                     }
 
-                    if (statusFilter !== 'all' && finding.status !== statusFilter) {
-                      return false;
+                    if (statusFilter !== 'all') {
+                      if (finding.status !== statusFilter) {
+                        return false;
+                      }
+                    } else {
+                      // Bij het standaard "alle" filter: alleen opgeloste áfkeuringen verbergen —
+                      // die horen niet in het herinspectie-rapport. Opmerkingen worden bewust
+                      // met status 'resolved' opgeslagen (impact leeg) en moeten wél zichtbaar
+                      // blijven. Onderscheid: afkeuring = impact != null, opmerking = impact == null.
+                      // Alleen als de lezer expliciet op "Opgelost" filtert, worden opgeloste
+                      // afkeuringen alsnog getoond.
+                      if (finding.status === 'resolved' && finding.impact != null) {
+                        return false;
+                      }
                     }
 
                     if (impactFilter !== 'all' && finding.impact !== impactFilter) {
@@ -586,9 +598,11 @@ export default function Bevindingen({ project }: { project: any }) {
 
                               {/* Gevonden problemen */}
                               {criterion.filteredFindings.length > 0 && (() => {
-                                // Split findings into rejected findings and remarks
-                                const rejectedFindings = criterion.filteredFindings.filter((f: any) => f.status === 'open');
-                                const remarks = criterion.filteredFindings.filter((f: any) => f.status !== 'open');
+                                // Split findings into rejected findings and remarks:
+                                // echte bevinding = heeft een impact ingevuld
+                                // opmerking       = impact is leeg (los van status)
+                                const rejectedFindings = criterion.filteredFindings.filter((f: any) => f.impact != null);
+                                const remarks = criterion.filteredFindings.filter((f: any) => f.impact == null);
 
                                 if (criterion.code === '1.3.5') {
                                   console.log('Criterion 1.3.5 - Total findings:', criterion.filteredFindings.length);
@@ -624,9 +638,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                             </span>
                                             {finding.status && (
                                               <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                                finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                finding.impact != null && finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
                                               }`}>
-                                                {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                                                {finding.impact != null && finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
                                               </span>
                                             )}
                                             {finding.impact && finding.impact !== 'onbekend' && (

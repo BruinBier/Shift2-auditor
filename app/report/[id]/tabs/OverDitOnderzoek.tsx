@@ -206,20 +206,21 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       sortedCriteria
         .filter((assessment: any) => assessment.status === 'failed')
         .forEach((assessment: any) => {
-          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status === 'open') || [];
+          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.impact != null && f.status === 'open') || [];
           findings.forEach((finding: any) => {
             findingKeys.add(`${assessment.wcagCriterion.id}-${finding.id}`);
           });
         });
 
-      // Open all remarks accordions
+      // Open all remarks accordions (opmerking = impact leeg, ongeacht status;
+      // opmerkingen worden bewust met status 'resolved' opgeslagen)
       sortedCriteria
         .filter((assessment: any) => {
-          const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open');
+          const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.impact == null);
           return hasRemark;
         })
         .forEach((assessment: any) => {
-          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.status !== 'open') || [];
+          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.impact == null) || [];
           findings.forEach((finding: any) => {
             findingKeys.add(`opmerking-${assessment.wcagCriterion.id}-${finding.id}`);
           });
@@ -561,7 +562,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Toegankelijkheidsonderzoek {formatProjectName(project.subject || project.title, project.researchTypeData?.type)}
+              {[project.researchType, scopeUrl.replace(/^https?:\/\//, '')].filter(Boolean).join(' ') || `Toegankelijkheidsonderzoek ${formatProjectName(project.subject || project.title, project.researchTypeData?.type)}`}
             </h1>
           </div>
         </section>
@@ -902,8 +903,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 .filter((assessment: any) => assessment.status === 'failed')
                 .map((assessment: any, index: number) => {
                   const criterion = assessment.wcagCriterion;
-                  // Get findings with status 'open' (Afgekeurd) for this criterion
-                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.status === 'open') || [];
+                  // Get echte bevindingen (impact ingevuld) met status 'open' voor dit criterium
+                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.impact != null && f.status === 'open') || [];
 
                   return (
                     <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">
@@ -1057,19 +1058,19 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.
             </p>
 
-            {/* Criteria with remarks (findings with status !== 'open') */}
+            {/* Criteria met opmerkingen (impact leeg, ongeacht status) */}
             <div className="space-y-6">
               {sortedCriteria
                 .filter((assessment: any) => {
                   const criterion = assessment.wcagCriterion;
-                  // Show criteria that have findings with status !== 'open' (Opmerkingen)
-                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.status !== 'open');
+                  // Toon criteria die opmerkingen hebben (impact leeg, ongeacht status)
+                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.impact == null);
                   return hasRemark;
                 })
                 .map((assessment: any, index: number) => {
                   const criterion = assessment.wcagCriterion;
-                  // Get findings with status !== 'open' (Opmerkingen) for this criterion
-                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.status !== 'open') || [];
+                  // Get opmerkingen (impact leeg, ongeacht status) voor dit criterium
+                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.impact == null) || [];
 
                   return (
                     <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">
@@ -1216,7 +1217,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             {/* Show message if no remarks */}
             {sortedCriteria.filter((assessment: any) => {
               const criterion = assessment.wcagCriterion;
-              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.status !== 'open');
+              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.impact == null);
               return hasRemark;
             }).length === 0 && (
               <p className="text-sm text-gray-500 italic">Er zijn geen opmerkingen voor dit onderzoek.</p>

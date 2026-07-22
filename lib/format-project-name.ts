@@ -17,6 +17,20 @@ export function formatProjectName(name: string | null | undefined, type: string 
     formatted = parts[parts.length - 1].trim();
   }
 
+  // Remove a leading research-type word so we don't end up with a double prefix
+  // (e.g. title "website beverwijk.nl" + type "website" => "website Website beverwijk").
+  // Strip both the actual type and the common variants.
+  const typeWords = Array.from(
+    new Set([type, 'website', 'formulieren', 'formulier', 'app', 'documenten', 'document'])
+  ).filter(Boolean);
+  for (const tw of typeWords) {
+    const re = new RegExp(`^${tw}\\s+`, 'i');
+    if (re.test(formatted)) {
+      formatted = formatted.replace(re, '');
+      break;
+    }
+  }
+
   // Remove common prefixes
   formatted = formatted.replace(/^(https?:\/\/)?(www\.)?/i, '');
 

@@ -87,24 +87,11 @@ function statusLabel(status: AssessmentStatus | string): { label: string; klass:
 }
 
 function buildReportTitle(project: any, website: string): string {
+  // Gelijk aan de "Over dit onderzoek"-tab: onderzoekstype + domein.
+  // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
+  // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
   const rt = String(project.researchType || 'Deelonderzoek').trim();
-  const rtLower = rt.toLowerCase();
-  const hasStandard =
-    rtLower.includes(String(project.standard || '').toLowerCase()) ||
-    rtLower.includes('wcag');
-  const levelLower = String(project.level || '').toLowerCase();
-  const hasLevel =
-    rtLower.includes(`niveau ${levelLower}`) ||
-    rtLower.includes(` ${levelLower} `) ||
-    rtLower.endsWith(` ${levelLower}`);
-
-  if (hasStandard && hasLevel) {
-    return `${rt} website ${website}`.trim();
-  }
-  if (hasStandard) {
-    return `${rt} niveau ${project.level || 'AA'} website ${website}`.trim();
-  }
-  return `${project.standard || 'WCAG 2.2'} ${project.level || 'AA'} ${rt} website ${website}`.trim();
+  return [rt, website].filter(Boolean).join(' ').trim();
 }
 
 function compareWcagCodes(a: string, b: string): number {
@@ -177,11 +164,12 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const version = Number(project.version).toFixed(1);
   const datum = formatDateNl(project.reportDate);
   const title = buildReportTitle(project, website);
-  const intro = `Dit rapport beschrijft de resultaten van het ${
-    project.researchType || 'onderzoek'
-  } naar de toegankelijkheid van de content op de website ${escapeHtml(
-    website
-  )}, uitgevoerd in opdracht van ${escapeHtml(opdrachtgever)}.`;
+  // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
+  const introType = researchTypeData?.type || 'website';
+  const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
+  const intro = `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de ${escapeHtml(
+    introType
+  )} ${escapeHtml(introUrl)}.`;
 
   // Flat list of all criteria for "Resultaten per SC"
   const allCriteriaRows: Array<{

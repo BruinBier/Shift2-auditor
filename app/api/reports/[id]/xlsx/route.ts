@@ -88,8 +88,14 @@ export async function GET(
           // Use findings as-is (already sorted by createdAt desc from database query)
           const findings = criterion.findings;
 
-          // Filter for open findings only and number them
-          const openFindingsInCriterion = findings.filter((f: any) => f.status === 'open');
+          // Splitsing bevinding vs opmerking op basis van impact (niet status):
+          //   impact gezet + open      -> echte bevinding
+          //   impact leeg              -> opmerking (ongeacht status; opmerkingen
+          //                               worden bewust met status 'resolved' opgeslagen)
+          //   impact gezet + resolved  -> opgeloste afkeuring, uit rapport
+          const openFindingsInCriterion = findings.filter(
+            (f: any) => f.impact != null && f.status === 'open'
+          );
           openFindingsInCriterion.forEach((finding: any, index: number) => {
             openFindings.push({
               finding,
@@ -98,8 +104,9 @@ export async function GET(
             });
           });
 
-          // Filter for remarks (not open) and number them
-          const remarksInCriterion = findings.filter((f: any) => f.status !== 'open');
+          const remarksInCriterion = findings.filter(
+            (f: any) => f.impact == null
+          );
           remarksInCriterion.forEach((finding: any, index: number) => {
             remarks.push({
               finding,
@@ -331,9 +338,29 @@ export async function GET(
     // Generate the Excel file
     const buffer = await workbook.xlsx.writeBuffer();
 
-    // Create filename
-    const projectName = project.subject || project.kenmerk || 'project';
-    const filename = `Bevindingen toegankelijkheidsonderzoek ${projectName}.xlsx`;
+    // Create filename in format: "Bevindingen-{site}-{fase}-v{version}.xlsx"
+    // - site: hostname uit de meest voorkomende sample-URL (bv. "ijsselstein.nl")
+    // - fase: "nulmeting" bij v1.0, "herinspectie" bij v > 1
+    // - fallback op project.kenmerk/subject als er geen sample-URL beschikbaar is
+    const versionNum = Number(project.version || 1);
+    const versionStr = versionNum.toFixed(1);
+    const phaseLabel = versionNum > 1 ? 'herinspectie' : 'nulmeting';
+
+    let siteLabel = '';
+    const hostCounts = new Map<string, number>();
+    for (const s of project.sampleItems || []) {
+      if (!s.url) continue;
+      try {
+        const host = new URL(s.url).hostname.replace(/^www\./, '');
+        hostCounts.set(host, (hostCounts.get(host) || 0) + 1);
+      } catch {}
+    }
+    if (hostCounts.size > 0) {
+      siteLabel = [...hostCounts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    }
+    if (!siteLabel) siteLabel = project.subject || project.kenmerk || 'project';
+
+    const filename = `Bevindingen-${siteLabel}-${phaseLabel}-v${versionStr}.xlsx`;
 
     // Return the file
     return new NextResponse(buffer, {

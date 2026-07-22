@@ -105,25 +105,11 @@ function compareWcagCodes(a: string, b: string): number {
 }
 
 function buildReportTitle(project: any, website: string): string {
-  // Researchtype bevat vaak al "WCAG 2.2 AA" (bijv. "WCAG 2.2 AA deelonderzoek content").
-  // Voorkom dubbele "WCAG 2.2 AA" in de titel.
+  // Gelijk aan de "Over dit onderzoek"-tab en de HTML-export: onderzoekstype + domein.
+  // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
+  // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
   const rt = String(project.researchType || 'Deelonderzoek').trim();
-  const rtLower = rt.toLowerCase();
-  const hasStandard =
-    rtLower.includes(String(project.standard || '').toLowerCase()) ||
-    rtLower.includes('wcag');
-  const hasLevel =
-    rtLower.includes(`niveau ${String(project.level || '').toLowerCase()}`) ||
-    rtLower.includes(` ${String(project.level || '').toLowerCase()} `) ||
-    rtLower.includes(` ${String(project.level || '').toLowerCase()}`);
-
-  if (hasStandard && hasLevel) {
-    return `${rt} website ${website}`.trim();
-  }
-  if (hasStandard) {
-    return `${rt} niveau ${project.level || 'AA'} website ${website}`.trim();
-  }
-  return `${project.standard || 'WCAG 2.2'} ${project.level || 'AA'} ${rt} website ${website}`.trim();
+  return [rt, website].filter(Boolean).join(' ').trim();
 }
 
 function statusLabel(status: AssessmentStatus | string): string {
@@ -321,9 +307,10 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
   const version = Number(project.version).toFixed(1);
   const datum = formatDateNl(project.reportDate);
   const title = buildReportTitle(project, website);
-  const intro = `Dit rapport beschrijft de resultaten van het ${
-    project.researchType || 'onderzoek'
-  } naar de toegankelijkheid van de content op de website ${website}, uitgevoerd in opdracht van ${opdrachtgever}.`;
+  // Gelijk aan de "Over dit onderzoek"-tab en de HTML-export: kort "deelonderzoek" + type + URL met protocol.
+  const introType = researchTypeData?.type || 'website';
+  const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
+  const intro = `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de ${introType} ${introUrl}.`;
 
   const isContentOnderzoek = (project.researchType || '')
     .toLowerCase()
@@ -825,7 +812,14 @@ function renderSamenvatting(
 
   const paras: Paragraph[] = [];
 
-  if (researchTypeData?.summaryTemplate) {
+  // Als er een project-specifieke managementSummary is ingevuld (bijvoorbeeld
+  // voor een herinspectie met een eigen verhaal), gebruik die dan i.p.v. de
+  // generieke summaryTemplate. Consistent met wat het HTML-rapport toont.
+  if (project.managementSummary && String(project.managementSummary).trim()) {
+    for (const para of textToParagraphs(stripHtml(String(project.managementSummary)))) {
+      paras.push(para);
+    }
+  } else if (researchTypeData?.summaryTemplate) {
     const filled = String(researchTypeData.summaryTemplate)
       .replace(/\{dateStart\}/g, dateStartFormatted)
       .replace(/\{dateEnd\}/g, dateEndFormatted)
@@ -1040,6 +1034,12 @@ function renderBevindingenOrOpmerkingen(
   flatCriteria: any[],
   filterStatus: 'open' | 'resolved'
 ): any[] {
+  // Bevinding vs opmerking wordt bepaald door impact (niet door status):
+  //   impact gezet -> echte bevinding
+  //   impact leeg  -> opmerking
+  // Opmerkingen worden bewust met status 'resolved' opgeslagen en moeten wél
+  // getoond worden. Echte bevindingen met status 'resolved' zijn opgeloste
+  // afkeuringen (herinspectie) en horen niet in het rapport.
   const isOpmerkingen = filterStatus === 'resolved';
   const badgeLabel = isOpmerkingen
     ? 'Voldoet maar met opmerking'
@@ -1050,8 +1050,11 @@ function renderBevindingenOrOpmerkingen(
 
   for (const crit of flatCriteria) {
     const findings = (crit.findings || []).filter((f: any) => {
-      if (isOpmerkingen) return f.status === 'resolved';
-      return f.status === 'open' || f.status === 'published';
+      // Opmerking = impact leeg, ongeacht status (opmerkingen zijn 'resolved').
+      if (isOpmerkingen) return f.impact == null;
+      // Echte bevindingen: impact gezet EN open/published (opgeloste
+      // afkeuringen met status 'resolved' horen niet in het rapport).
+      return f.impact != null && (f.status === 'open' || f.status === 'published');
     });
     if (findings.length === 0) continue;
 
