@@ -46,6 +46,12 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
         },
         orderBy: { createdAt: 'desc' },
       },
+      advices: {
+        include: {
+          wcagCriterion: true,
+        },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      },
     },
   });
 

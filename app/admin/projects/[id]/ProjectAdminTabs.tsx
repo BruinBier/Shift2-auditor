@@ -95,7 +95,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
       tussencheck:
         'Tussencheck starten? Je kunt vanaf nu bevindingen aanvinken als opgelost en het criterium wordt automatisch bijgewerkt.',
       herinspectie:
-        'Tussencheck afronden en herinspectie starten? Alle "Nagelopen"-vinkjes worden teruggezet zodat je elke bevinding opnieuw kunt verifiëren.',
+        'Tussencheck afronden en herinspectie starten? Al je werk uit de tussencheck (vinkjes en notities) blijft bewaard.',
       afgerond: 'Project afronden? Je kunt daarna geen bevindingen meer wijzigen.',
     };
     if (!confirm(messages[target])) return;

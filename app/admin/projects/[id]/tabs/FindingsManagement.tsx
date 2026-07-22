@@ -985,13 +985,35 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                             <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
                               {group.criterion.code}
                             </span>
-                            {finding.status && (
-                              <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
-                              </span>
-                            )}
+                            {finding.status && (() => {
+                              // Twee losse badges: type + status.
+                              //   Type   : impact leeg -> "Opmerking" (grijs), impact gezet -> "Afgekeurd" (rood)
+                              //   Status : open -> "Open" (oranje), resolved -> "Opgelost" (groen)
+                              // In de nulmeting is de status-badge niet zinvol (alles is per definitie
+                              // "Open" en "Opgelost" bestaat pas na een herinspectie), dus tonen we die
+                              // alleen tijdens tussencheck of herinspectie.
+                              const typeLabel = finding.impact != null ? 'Afgekeurd' : 'Opmerking';
+                              const typeCls = finding.impact != null
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800';
+                              const statusLabel = finding.status === 'resolved' ? 'Opgelost' : 'Open';
+                              const statusCls = finding.status === 'resolved'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-orange-100 text-orange-800';
+                              const showStatusBadge = project.checkPhase && project.checkPhase !== 'nulmeting';
+                              return (
+                                <>
+                                  <span className={`px-2 py-0.5 text-xs font-medium rounded ${typeCls}`}>
+                                    {typeLabel}
+                                  </span>
+                                  {showStatusBadge && (
+                                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${statusCls}`}>
+                                      {statusLabel}
+                                    </span>
+                                  )}
+                                </>
+                              );
+                            })()}
                             {finding.impact && finding.impact !== 'onbekend' && (
                               <span
                                 className="px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 border"

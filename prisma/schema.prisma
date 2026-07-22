@@ -183,6 +183,7 @@ model Project {
   findings                Finding[]
   projectNotes            ProjectNote[]
   crawlerRuns             CrawlerRun[]
+  advices                 ProjectAdvice[]
 
   @@map("projects")
 }
@@ -277,6 +278,7 @@ model WCAGCriterion {
   researchTypes       ResearchTypeWCAGCriterion[]
   researchTypeExplanations ResearchTypeExplanation[]
   technicalIssues     TechnicalIssue[]
+  advices             ProjectAdvice[]
 
   @@map("wcag_criteria")
 }
@@ -534,4 +536,22 @@ model CmsHelptextScreenshot {
   helptext   CmsParagraphHelptext @relation(fields: [helptextId], references: [id], onDelete: Cascade)
 
   @@map("cms_helptext_screenshots")
+}
+
+model ProjectAdvice {
+  id              String    @id @default(uuid())
+  projectId       String    @map("project_id")
+  title           String
+  adviceText      String    @map("advice_text") @db.Text
+  reasonText      String    @map("reason_text") @db.Text
+  wcagCriterionId String?   @map("wcag_criterion_id")
+  sortOrder       Int       @default(0) @map("sort_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wcagCriterion   WCAGCriterion? @relation(fields: [wcagCriterionId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@map("project_advices")
 }
