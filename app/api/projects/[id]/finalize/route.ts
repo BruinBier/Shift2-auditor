@@ -240,8 +240,8 @@ export async function POST(
             notes: finding.notes,
             sortOrder: finding.sortOrder,
             discoveredInPhase: finding.discoveredInPhase,
-            interimReviewed: false,
-            interimNotes: null,
+            interimReviewed: finding.interimReviewed,
+            interimNotes: finding.interimNotes,
           },
         });
 

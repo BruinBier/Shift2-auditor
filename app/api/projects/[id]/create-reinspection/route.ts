@@ -208,7 +208,9 @@ export async function POST(
       });
     }
 
-    // Copy findings — preserve discoveredInPhase, reset interimReviewed
+    // Copy findings — preserve discoveredInPhase and tussencheck-state
+    // (interimReviewed + interimNotes) so werk uit de tussencheck niet
+    // opnieuw hoeft in de herinspectie.
     for (const finding of parent.findings) {
       const newFinding = await prisma.finding.create({
         data: {
@@ -224,8 +226,8 @@ export async function POST(
           notes: finding.notes,
           sortOrder: finding.sortOrder,
           discoveredInPhase: finding.discoveredInPhase,
-          interimReviewed: false,
-          interimNotes: null,
+          interimReviewed: finding.interimReviewed,
+          interimNotes: finding.interimNotes,
         },
       });
 

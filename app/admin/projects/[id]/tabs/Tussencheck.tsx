@@ -381,17 +381,13 @@ export default function Tussencheck({ project }: TussencheckProps) {
                         />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {isOpmerking ? (
-                          <span className="text-gray-300 text-xs">n.v.t.</span>
-                        ) : (
-                          <input
-                            type="checkbox"
-                            checked={f.status === 'resolved'}
-                            disabled={isBusy}
-                            onChange={() => toggleResolved(f)}
-                            className="w-4 h-4 cursor-pointer accent-green-600"
-                          />
-                        )}
+                        <input
+                          type="checkbox"
+                          checked={f.status === 'resolved'}
+                          disabled={isBusy}
+                          onChange={() => toggleResolved(f)}
+                          className="w-4 h-4 cursor-pointer accent-green-600"
+                        />
                       </td>
                       <td className="px-4 py-3 text-center">
                         <a

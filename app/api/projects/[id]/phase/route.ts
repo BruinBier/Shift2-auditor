@@ -41,13 +41,9 @@ export async function POST(
       );
     }
 
-    // Reset interimReviewed when entering herinspectie — verification starts fresh.
-    if (target === 'herinspectie') {
-      await prisma.finding.updateMany({
-        where: { projectId: params.id },
-        data: { interimReviewed: false },
-      });
-    }
+    // Tussencheck-status (interimReviewed + interimNotes) blijft staan
+    // bij overgang naar herinspectie: het werk uit de tussencheck moet
+    // niet opnieuw hoeven in de herinspectie.
 
     const updated = await prisma.project.update({
       where: { id: params.id },
