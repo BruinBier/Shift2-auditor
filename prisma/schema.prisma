@@ -555,3 +555,63 @@ model ProjectAdvice {
   @@index([projectId])
   @@map("project_advices")
 }
+
+enum VideoGemeente {
+  cranendonck
+  heeze_leende
+  valkenswaard
+}
+
+enum VideoFase {
+  voorbereiden
+  ondertiteling
+  audiodescriptie
+  transcript
+  publiceren
+}
+
+enum VideoFaseStatus {
+  todo
+  bezig
+  klaar
+  nvt
+}
+
+// Video A2-gemeenten: standalone omgeving voor het toegankelijk maken van YouTube-video's.
+// 5 vaste fasen per video (zie enum VideoFase). Max. 1 fase-timer tegelijk actief in het
+// hele systeem — afgedwongen via een partieel-unieke index op video_phases.timer_started_at.
+// Die index staat ALLEEN in de migratie-SQL (Prisma kan een partieel-unieke index met
+// WHERE-clause niet uitdrukken); niet verwijderen bij een migrate diff.
+model Video {
+  id        String        @id @default(uuid())
+  gemeente  VideoGemeente
+  titel     String
+  url       String
+  notities  String?       @db.Text
+  sortOrder Int           @default(0) @map("sort_order")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  phases    VideoPhase[]
+
+  @@index([gemeente])
+  @@map("videos")
+}
+
+model VideoPhase {
+  id             String          @id @default(uuid())
+  videoId        String          @map("video_id")
+  phase          VideoFase
+  status         VideoFaseStatus @default(todo)
+  seconds        Int             @default(0)
+  timerStartedAt DateTime?       @map("timer_started_at")
+  sortOrder      Int             @default(0) @map("sort_order")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  video          Video           @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, phase])
+  @@index([videoId])
+  @@map("video_phases")
+}

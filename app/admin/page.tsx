@@ -151,6 +151,13 @@ export default async function AdminPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Bekijk Onderzoeken</h3>
             <p className="text-sm text-gray-600">Bekijk alle gepubliceerde onderzoeken</p>
           </Link>
+          <Link
+            href="/admin/video-a2-gemeenten"
+            className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Video A2-gemeenten</h3>
+            <p className="text-sm text-gray-600">Beheer en tijdregistratie van toegankelijke video's</p>
+          </Link>
         </div>
       </div>
     </div>

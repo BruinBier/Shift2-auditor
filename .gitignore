@@ -52,4 +52,7 @@ nul
 Instructie_Toegankelijke_Videos.docx
 tmp_proj.json
 
+# database backups (lokaal, niet in Git - kan groot zijn en bevat data)
+/backups/
+
 
