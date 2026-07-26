@@ -476,10 +476,7 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
     marked.setOptions({
       renderer,
       breaks: true,
-      gfm: true,
-      sanitize: false, // We handle HTML manually
-      mangle: false,
-      headerIds: false
+      gfm: true
     });
   }, []);
 
