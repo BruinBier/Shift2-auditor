@@ -45,6 +45,9 @@ nul
 # audit-cli browser captures (html/screenshots)
 /tmp/audit-cli/
 
+# workflow-scratch (QuickFinding-bibliotheek die de audit-workflow wegschrijft)
+/tmp/qf-bibliotheek.json
+
 # Claude Code local settings (per developer)
 .claude/settings.json
 

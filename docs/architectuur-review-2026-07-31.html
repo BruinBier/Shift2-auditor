@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architectuur-review — Shift2 Auditor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose',
+    themeVariables: { fontFamily: 'ui-sans-serif, system-ui, sans-serif', fontSize: '13px' } });
+</script>
+<style>
+  .card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 8px 24px -12px rgba(0,0,0,.18); }
+  .mass { border-radius: 6px; display:flex; align-items:center; justify-content:center;
+          font-size:11px; font-weight:600; text-align:center; line-height:1.2; padding:4px; }
+  .iface { background:#1e293b; color:#fff; }
+  .impl  { background:#e2e8f0; color:#334155; border:1px dashed #94a3b8; }
+  .impl-deep { background:#cbd5e1; color:#1e293b; }
+  .dup { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+  .good { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
+         background:#f1f5f9; padding:1px 5px; border-radius:4px; color:#0f172a; }
+  pre code { background:transparent; padding:0; }
+  .mermaid { display:flex; justify-content:center; }
+  h2 { scroll-margin-top: 1rem; }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased">
+
+<div class="max-w-6xl mx-auto px-5 py-10">
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <header class="mb-10">
+    <p class="text-xs font-semibold tracking-widest text-slate-500 uppercase mb-2">Architectuur-review</p>
+    <h1 class="text-4xl font-bold text-slate-900 mb-3">Shift2 Auditor</h1>
+    <p class="text-slate-600 max-w-3xl leading-relaxed">
+      Verdiepingskansen: plekken waar een <strong>ondiepe module</strong> (interface bijna net zo complex als
+      de implementatie) verdiept kan worden tot een <strong>diepe module</strong> — veel gedrag achter een
+      kleine interface, op een schone naad. Doel: testbaarheid en navigeerbaarheid voor AI-agents.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2 text-xs">
+      <span class="px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-600">87 API-routes</span>
+      <span class="px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-600">468 losse scripts</span>
+      <span class="px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-600">154 crawler-tests</span>
+      <span class="px-2.5 py-1 rounded-full bg-red-50 border border-red-300 text-red-700 font-semibold">0 geautomatiseerde assertions</span>
+      <span class="px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-600">geen CONTEXT.md, geen ADRs</span>
+    </div>
+  </header>
+
+  <!-- ══════════════ SITUATIE ══════════════ -->
+  <section class="bg-white rounded-xl card-shadow p-7 mb-10">
+    <h2 class="text-xl font-bold text-slate-900 mb-4">De situatie in één plaatje</h2>
+    <p class="text-sm text-slate-600 mb-5 leading-relaxed">
+      Alle wrijving in deze codebase heeft dezelfde vorm: <em>één domeinregel, N keer opgeschreven.</em>
+      Er is nergens een module waar een regel woont. Elke aanroeper herhaalt hem — en de kopieën zijn al uit elkaar gelopen.
+    </p>
+    <div class="mermaid">
+graph LR
+    subgraph BRON["Bron van waarheid vandaag"]
+      direction TB
+      C1["CLAUDE.md<br/><i>proza</i>"]
+      C2["Commentaar<br/>in 5 bestanden"]
+      C3["Iemands hoofd"]
+    end
+    subgraph KOPIE["Implementaties"]
+      direction TB
+      K1["HTML-export"]
+      K2["DOCX-generator"]
+      K3["DOCX-template-route"]
+      K4["XLSX-export"]
+      K5["Scherm-tabs"]
+    end
+    C1 -.-> K1 & K2 & K3 & K4 & K5
+    C2 -.-> K1 & K2 & K3 & K4 & K5
+    K1 -.->|"al gedrift"| K2
+    K2 -.->|"al gedrift"| K3
+    style BRON fill:#fef3c7,stroke:#f59e0b
+    style KOPIE fill:#fee2e2,stroke:#ef4444
+    </div>
+    <div class="mt-6 grid md:grid-cols-3 gap-4 text-sm">
+      <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p class="font-semibold text-red-900 mb-1">Geen lokaliteit</p>
+        <p class="text-red-800 text-xs leading-relaxed">Eén regel wijzigen = 5 plekken vinden. Wie er 4 vindt, introduceert een verschil dat niemand ziet tot een klant belt.</p>
+      </div>
+      <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <p class="font-semibold text-amber-900 mb-1">Geen testoppervlak</p>
+        <p class="text-amber-800 text-xs leading-relaxed">De enige ingang van elke generator vereist een live database-rij. Er is geen naad waar filtering of opmaak controleerbaar is.</p>
+      </div>
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+        <p class="font-semibold text-slate-900 mb-1">Slecht navigeerbaar</p>
+        <p class="text-slate-700 text-xs leading-relaxed">468 scripts in <code>scripts/</code> zijn de facto het verificatiemechanisme: draaien tegen de live DB, printen, met het oog beoordelen.</p>
+      </div>
+    </div>
+  </section>
+
+  <h2 class="text-2xl font-bold text-slate-900 mb-1">Kandidaten</h2>
+  <p class="text-sm text-slate-500 mb-6">Vijf verdiepingskansen, gesorteerd op wat ik als eerste zou aanpakken.</p>
+
+  <!-- ══════════════ KANDIDAAT 1 ══════════════ -->
+  <article class="bg-white rounded-xl card-shadow p-7 mb-8 border-t-4 border-emerald-500">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <p class="text-xs font-semibold tracking-wider text-emerald-700 uppercase mb-1">Kandidaat 1</p>
+        <h3 class="text-2xl font-bold text-slate-900">De bevinding-vs-opmerking-regel als module</h3>
+      </div>
+      <span class="shrink-0 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-wide">Strong</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Bestanden</h4>
+        <ul class="text-sm text-slate-700 space-y-1 mb-5">
+          <li><code>lib/generate-report-html.ts:547-555</code></li>
+          <li><code>lib/generate-report-docx.ts:1101-1113</code></li>
+          <li><code>app/api/reports/[id]/xlsx/route.ts:96-109</code></li>
+          <li><code>app/api/reports/[id]/docx/route.ts:459,488-490</code></li>
+          <li><code>app/report/[id]/tabs/Bevindingen.tsx:174,604-605</code></li>
+          <li><code>app/report/[id]/tabs/OverDitOnderzoek.tsx:53-54,168</code></li>
+          <li class="text-slate-500 text-xs pt-1">+ <code>Resultaten.tsx:224</code>, <code>Fixlijst.tsx:165</code> (oude interpretatie)</li>
+        </ul>
+
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Probleem</h4>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          Het onderscheid <em>bevinding</em> (afkeuring, heeft impact) versus <em>opmerking</em>
+          (<code>impact == null</code>, <code>status = resolved</code>) is de kern van jouw domein. Het staat
+          nergens als functie. Het is <strong>vijf keer als predicaat overgetypt</strong>, elke keer met een
+          commentaarblok dat de regel in proza herhaalt.
+        </p>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          De kopieën zijn <strong>al uit elkaar gelopen</strong>. Een niet-heronderzoek met
+          <code>impact != null</code> en <code>status = 'resolved'</code>:
+        </p>
+        <div class="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 mb-3 leading-relaxed">
+          <span class="text-emerald-400">HTML/PDF/Word</span> → <span class="text-white">staat erin</span><br>
+          <span class="text-rose-400">DOCX</span> → <span class="text-white">valt eruit</span><br>
+          <span class="text-amber-400">XLSX</span> → <span class="text-white">valt eruit (geen 'published')</span><br>
+          <span class="text-sky-400">DOCX-template</span> → <span class="text-white">komt in de Opmerkingen-sectie</span>
+        </div>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Vier exports van hetzelfde onderzoek geven vier verschillende rapporten. Dat is niet een
+          bug die je gaat vinden door te kijken; hij zit in het verschil tussen vier bestanden.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Voor / na</h4>
+
+        <p class="text-[11px] font-semibold text-slate-500 uppercase mb-1.5">Nu — vijf ondiepe kopieën</p>
+        <div class="grid grid-cols-5 gap-1.5 mb-1">
+          <div class="mass dup h-14">HTML<br>:547</div>
+          <div class="mass dup h-14">DOCX<br>:1101</div>
+          <div class="mass dup h-14">XLSX<br>:96</div>
+          <div class="mass dup h-14">tmpl<br>:459</div>
+          <div class="mass dup h-14">UI<br>:174</div>
+        </div>
+        <p class="text-[10px] text-red-700 text-center mb-5 italic">interface = implementatie · geen lokaliteit · 4 verschillende uitkomsten</p>
+
+        <p class="text-[11px] font-semibold text-slate-500 uppercase mb-1.5">Na — één diepe module</p>
+        <div class="mass iface h-11 mb-0.5 text-[11px]">
+          isOpmerking(f) · isReportableFinding(f, ctx) · splitFindings(f[], ctx)
+        </div>
+        <div class="mass impl-deep h-24 mb-1">
+          impact-regel · status-regel (open/published/resolved)<br>
+          heronderzoek-uitzondering · fase-afhankelijkheid<br>
+          <span class="text-[10px] opacity-70">lib/finding-classification.ts</span>
+        </div>
+        <div class="grid grid-cols-5 gap-1.5">
+          <div class="mass good h-7 text-[10px]">HTML</div>
+          <div class="mass good h-7 text-[10px]">DOCX</div>
+          <div class="mass good h-7 text-[10px]">XLSX</div>
+          <div class="mass good h-7 text-[10px]">tmpl</div>
+          <div class="mass good h-7 text-[10px]">UI</div>
+        </div>
+        <p class="text-[10px] text-emerald-700 text-center mt-2 italic">5 aanroepers, 1 regel · pure functie, geen DB nodig</p>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-5 border-t border-slate-200 grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Oplossing</h4>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Eén module die de classificatie bezit. Neemt een finding plus de context die de regel nodig heeft
+          (is het een heronderzoek, welke <code>checkPhase</code>) en geeft antwoord op: is dit een opmerking,
+          en hoort dit in dit rapport. De vijf plekken worden aanroepen. De uitzonderingen die nu in
+          commentaar staan, worden regels code met een naam.
+        </p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Baten</h4>
+        <ul class="text-sm text-slate-700 space-y-2 leading-relaxed">
+          <li><strong>Lokaliteit:</strong> de regel verandert op één plek. Nu vind je er vier van de vijf en levert dat een stil verschil op tussen twee exports.</li>
+          <li><strong>Leverage:</strong> vijf aanroepers plus elke toekomstige export erven de correcte regel gratis.</li>
+          <li><strong>Testbaarheid:</strong> pure functie, findings-object in, boolean uit. Dit is de eerste plek in de codebase die zonder Postgres te testen is. De verschillen die je nu net beschreef zijn precies de testgevallen.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════ KANDIDAAT 2 ══════════════ -->
+  <article class="bg-white rounded-xl card-shadow p-7 mb-8 border-t-4 border-emerald-500">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <p class="text-xs font-semibold tracking-wider text-emerald-700 uppercase mb-1">Kandidaat 2</p>
+        <h3 class="text-2xl font-bold text-slate-900">Eén rapport-model achter <code class="text-xl">getReportData()</code></h3>
+      </div>
+      <span class="shrink-0 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-wide">Strong</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Bestanden</h4>
+        <ul class="text-sm text-slate-700 space-y-1 mb-5">
+          <li><code>lib/generate-report-html.ts:109-159</code></li>
+          <li><code>lib/generate-report-docx.ts:253-303</code> <span class="text-red-600 text-xs">(byte-identiek)</span></li>
+          <li><code>app/report/[id]/page.tsx:29-59</code></li>
+          <li><code>app/api/reports/[id]/docx/route.ts:234-265</code></li>
+          <li><code>app/api/reports/[id]/xlsx/route.ts:15-38</code></li>
+          <li><code>lib/report-calculations.ts:226-359</code></li>
+        </ul>
+
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Probleem</h4>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          Zes losse <code>prisma.project.findUnique</code>-aanroepen, vier verschillende include-vormen,
+          en — het scherpst — <strong>drie verschillende sorteringen van findings</strong>:
+        </p>
+        <div class="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 mb-3 leading-relaxed">
+          <span class="text-emerald-400">HTML + DOCX</span> → <code class="bg-transparent text-slate-100">createdAt: 'asc'</code><br>
+          <span class="text-rose-400">Scherm</span> → <code class="bg-transparent text-slate-100">createdAt: 'desc'</code><br>
+          <span class="text-amber-400">DOCX-template</span> → <code class="bg-transparent text-slate-100">sortOrder: 'asc'</code>
+        </div>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          Findings worden genummerd op arraypositie (<code>Bevinding ${idx + 1}</code>). Het scherm en de
+          export nummeren dus <strong>dezelfde bevindingen in omgekeerde volgorde</strong>. Als jij in de UI
+          naar B003 kijkt en de klant naar B003 in het Word-document, kijken jullie naar iets anders.
+        </p>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Daaronder: <code>generate-report-html.ts</code> en <code>generate-report-docx.ts</code> zijn een
+          <em>fork</em>. Regels 108-360 zijn hetzelfde programma twee keer geschreven, tot de
+          commentaarformulering aan toe — het DOCX-commentaar op <code>:324</code> zegt letterlijk
+          "Gelijk aan … de HTML-export". Dat is een onderhoudscontract in proza in plaats van in code.
+          Zes private helpers (<code>formatDateNl</code>, <code>compareWcagCodes</code>,
+          <code>buildReportTitle</code>, <code>statusLabel</code>, <code>stripHtml</code>,
+          <code>escapeHtml</code>) staan in beide bestanden.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Voor / na</h4>
+        <div class="mermaid">
+graph TB
+    subgraph NU["NU — 6 queries, 4 vormen, 3 sorteringen"]
+      direction TB
+      A1["scherm/page.tsx<br/>desc"] --> DB1[(DB)]
+      A2["html-export<br/>asc"] --> DB1
+      A3["docx-gen<br/>asc"] --> DB1
+      A4["docx-template<br/>sortOrder"] --> DB1
+      A5["xlsx<br/>desc"] --> DB1
+      A6["groupFindingsByHierarchy<br/><i>eigen import + 2 queries</i>"] --> DB1
+    end
+    style NU fill:#fee2e2,stroke:#ef4444
+    style DB1 fill:#fff
+        </div>
+        <div class="mermaid">
+graph TB
+    subgraph STRAKS["STRAKS — één naad"]
+      direction TB
+      B1["scherm"] --> M
+      B2["html"] --> M
+      B3["docx"] --> M
+      B4["template"] --> M
+      B5["xlsx"] --> M
+      M["<b>getReportData(projectId)</b><br/>→ ReportModel<br/><i>1 query · 1 sortering · statistiek erin</i>"] --> DB2[(DB)]
+    end
+    style STRAKS fill:#dcfce7,stroke:#22c55e
+    style M fill:#1e293b,color:#fff
+    style DB2 fill:#fff
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-5 border-t border-slate-200 grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Oplossing</h4>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          Eén module die een <code>projectId</code> aanneemt en een compleet, gesorteerd, doorgerekend
+          <em>rapport-model</em> teruggeeft: project, criteria gegroepeerd per principe, findings gesplitst in
+          bevindingen en opmerkingen (via kandidaat&nbsp;1), steekproef, statistiek, nulmeting-vergelijking.
+          Alle vijf renderpaden nemen dat model als invoer en doen alleen nog opmaak.
+        </p>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Dat maakt ook de dubbele DB-ronde weg in <code>word/route.ts</code> en
+          <code>html-word/route.ts</code> (die het project nog eens ophalen alleen voor de bestandsnaam),
+          en de verborgen derde en vierde query in <code>groupFindingsByHierarchy</code>
+          (<code>report-calculations.ts:227,248,274</code> — inclusief drie
+          <code>console.log</code>'s per finding die in productie draaien).
+        </p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Baten</h4>
+        <ul class="text-sm text-slate-700 space-y-2 leading-relaxed">
+          <li><strong>Lokaliteit:</strong> een relatie toevoegen aan het rapport = één plek. Nu zes, waarvan je er gegarandeerd één vergeet.</li>
+          <li><strong>Leverage:</strong> "dezelfde bevindingen, dezelfde nummers, overal" wordt een eigenschap van het systeem in plaats van iets wat je per export moet controleren.</li>
+          <li><strong>Testbaarheid:</strong> de naad verschuift. Boven de naad: één DB-afhankelijke module. Onder de naad: vijf pure <code>model → tekst</code>-functies. Een snapshot-test op de HTML-export wordt dan een gewone test met een verzonnen model — geen Postgres, geen project.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════ KANDIDAAT 3 ══════════════ -->
+  <article class="bg-white rounded-xl card-shadow p-7 mb-8 border-t-4 border-amber-500">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <p class="text-xs font-semibold tracking-wider text-amber-700 uppercase mb-1">Kandidaat 3</p>
+        <h3 class="text-2xl font-bold text-slate-900">Bevinding-aanmaken als domeinmodule, niet als route-logica</h3>
+      </div>
+      <span class="shrink-0 px-3 py-1.5 rounded-full bg-amber-500 text-white text-xs font-bold uppercase tracking-wide">Strong</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Bestanden</h4>
+        <ul class="text-sm text-slate-700 space-y-1 mb-5">
+          <li><code>app/api/projects/[id]/findings/route.ts:74-89,170-204</code></li>
+          <li><code>app/api/projects/[id]/findings/[findingId]/route.ts:4-25,120-163</code></li>
+          <li><code>app/api/projects/[id]/findings/from-crawler/route.ts:51-66,82</code></li>
+          <li><code>…/scope-urls/[urlId]/auto-create-findings/route.ts:105-120,171</code></li>
+          <li><code>app/api/sample-items/[id]/create-findings-from-tests/route.ts:168-188</code></li>
+          <li><code>app/api/findings/[id]/route.ts</code> <span class="text-xs text-slate-500">(dode route)</span></li>
+          <li><code>scripts/lib/finding-lint.ts</code>, <code>scripts/audit-cli.ts:262-276</code></li>
+        </ul>
+
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Probleem</h4>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          "Een bevinding aanmaken" is één domeinhandeling met vier onderdelen: code toekennen, occurrences
+          koppelen, de criterium-beoordeling bijwerken, en de schrijfregels controleren. Vier routes doen dit,
+          <strong>elk een andere deelverzameling</strong>:
+        </p>
+        <div class="overflow-x-auto mb-3">
+          <table class="w-full text-xs border border-slate-200">
+            <thead class="bg-slate-100">
+              <tr><th class="text-left p-1.5 font-semibold">Route</th><th class="p-1.5">code</th><th class="p-1.5">assessment</th><th class="p-1.5">lint</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="p-1.5"><code>findings</code> POST</td><td class="text-center">alg.&nbsp;1</td><td class="text-center text-emerald-600 font-bold">✓*</td><td class="text-center text-red-500">✗</td></tr>
+              <tr><td class="p-1.5"><code>[findingId]</code> PUT</td><td class="text-center">—</td><td class="text-center text-emerald-600 font-bold">✓ fase</td><td class="text-center text-red-500">✗</td></tr>
+              <tr><td class="p-1.5"><code>from-crawler</code></td><td class="text-center">alg.&nbsp;2</td><td class="text-center text-red-500 font-bold">✗</td><td class="text-center text-red-500">✗</td></tr>
+              <tr><td class="p-1.5"><code>auto-create-findings</code></td><td class="text-center">alg.&nbsp;2</td><td class="text-center text-red-500 font-bold">✗</td><td class="text-center text-red-500">✗</td></tr>
+              <tr><td class="p-1.5"><code>from-tests</code></td><td class="text-center">alg.&nbsp;3</td><td class="text-center text-red-500 font-bold">✗</td><td class="text-center text-red-500">✗</td></tr>
+              <tr class="bg-emerald-50"><td class="p-1.5">CLI</td><td class="text-center text-slate-400">via&nbsp;POST</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed mb-3">
+          <span class="font-semibold">*</span> de check is <code>body.status === 'open'</code> op de
+          <em>request body</em>, maar <code>:126</code> standaardiseert naar <code>'open'</code> als het veld
+          ontbreekt. Een POST zonder <code>status</code> maakt dus een open bevinding aan en slaat de
+          assessment-update over.
+        </p>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          <strong>Drie code-generatie-algoritmes, twee formaten, nul constraints.</strong>
+          <code>findingCode</code> heeft geen <code>@unique</code> in het schema, geen enkele route gebruikt
+          <code>$transaction</code>. Twee gelijktijdige POSTs lezen hetzelfde maximum en schrijven dezelfde
+          code. Erger: <code>from-tests</code> produceert <code>KENMERK-1-F001</code>, en de andere twee
+          algoritmes matchen op <code>^B(\d+)$</code> — zodra zo'n code bestaat, beginnen ze
+          <strong>stilletjes weer bij B001</strong>.
+        </p>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          En je <code>finding-lint.ts</code> — de handhaving van precies de schrijfregels waar je zoveel
+          moeite in hebt gestoken — leeft alleen in de CLI. De UI en de crawler-routes omzeilen hem volledig.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Voor / na</h4>
+        <div class="mermaid">
+graph LR
+    UI["UI"] --> R1["POST /findings<br/><small>code alg.1 + assessment</small>"]
+    CLI["CLI"] --> LINT["lint"] --> R1
+    CR["crawler"] --> R2["from-crawler<br/><small>code alg.2, GEEN assessment</small>"]
+    SC["scope-url"] --> R3["auto-create<br/><small>code alg.2, GEEN assessment</small>"]
+    ST["sample-test"] --> R4["from-tests<br/><small>code alg.3, GEEN assessment</small>"]
+    R1 --> DB[(DB)]
+    R2 --> DB
+    R3 --> DB
+    R4 --> DB
+    style R2 fill:#fee2e2,stroke:#ef4444
+    style R3 fill:#fee2e2,stroke:#ef4444
+    style R4 fill:#fee2e2,stroke:#ef4444
+    style LINT fill:#dcfce7,stroke:#22c55e
+        </div>
+        <p class="text-[10px] text-red-700 text-center mb-4 italic">4 routes · 3 algoritmes · lint alleen links</p>
+
+        <div class="mermaid">
+graph LR
+    UI2["UI"] --> M2
+    CLI2["CLI"] --> M2
+    CR2["crawler"] --> M2
+    SC2["scope-url"] --> M2
+    ST2["sample-test"] --> M2
+    M2["<b>createFinding(input)</b><br/><small>code · occurrences<br/>assessment · lint</small>"] --> DB2[(DB)]
+    style M2 fill:#1e293b,color:#fff
+        </div>
+        <p class="text-[10px] text-emerald-700 text-center italic">1 module · elke aanroeper krijgt alle vier de effecten</p>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-5 border-t border-slate-200 grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Oplossing</h4>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Eén module <code>createFinding(input)</code> die de hele handeling bezit: code toekennen (in een
+          transactie, met een <code>@@unique([projectId, findingCode])</code> in het schema als vangnet),
+          occurrences koppelen, de assessment fase-bewust bijwerken, en de schrijfregel-lint draaien. De vijf
+          routes worden aanroepen van vier tot tien regels. De dode route
+          <code>app/api/findings/[id]</code> — nul aanroepers in de hele UI — kan weg.
+        </p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Baten</h4>
+        <ul class="text-sm text-slate-700 space-y-2 leading-relaxed">
+          <li><strong>Lokaliteit:</strong> de assessment-regel die nu in twee implementaties bestaat en op drie plekken ontbreekt, wordt onvermijdelijk.</li>
+          <li><strong>Leverage:</strong> <code>finding-lint.ts</code> gaat gelden voor élke bevinding, ook die uit de UI. Jouw schrijfregels worden systeemgedrag in plaats van CLI-gedrag.</li>
+          <li><strong>Testbaarheid:</strong> code-toekenning en de fase-regel worden aanroepbaar zonder HTTP-server. De race is met een transactie plus constraint te dichten en te controleren.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-5 p-3.5 bg-amber-50 border-l-4 border-amber-400 rounded-r text-sm">
+      <span class="font-semibold text-amber-900">Let op — gedragsverandering.</span>
+      <span class="text-amber-900">Als de crawler-routes de assessment-update erbij krijgen, gaan die
+      criteria voortaan op <code>failed</code> waar dat nu niet gebeurt. Dat is waarschijnlijk wat je wilt,
+      maar het is een keuze om expliciet te maken — geen refactor-bijwerking.</span>
+    </div>
+  </article>
+
+  <!-- ══════════════ KANDIDAAT 4 ══════════════ -->
+  <article class="bg-white rounded-xl card-shadow p-7 mb-8 border-t-4 border-sky-500">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <p class="text-xs font-semibold tracking-wider text-sky-700 uppercase mb-1">Kandidaat 4</p>
+        <h3 class="text-2xl font-bold text-slate-900">Crawler-test als datastructuur, niet als functie + 4 registers</h3>
+      </div>
+      <span class="shrink-0 px-3 py-1.5 rounded-full bg-sky-500 text-white text-xs font-bold uppercase tracking-wide">Worth exploring</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Bestanden</h4>
+        <ul class="text-sm text-slate-700 space-y-1 mb-5">
+          <li><code>lib/crawler/tests.ts</code> — 4000 regels, <code>TEST_MAP:3663-3838</code>, <code>runAllMVPTests:3840-4000</code></li>
+          <li><code>lib/wcag-coverage.ts</code> — <code>TEST_COVERAGE</code>, 57 entries</li>
+          <li><code>lib/crawler/test-documentation.ts</code> — 4 entries</li>
+          <li><code>lib/formatter/*.ts</code> — 8 formatters</li>
+          <li><code>…/sample/[sampleId]/TestResults.tsx:349-541</code> — 6 hardcoded <code>testName ===</code>-takken</li>
+        </ul>
+
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Probleem</h4>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          Een crawler-test is geen ding in deze codebase — hij is een reeks losse vermeldingen in vijf
+          bestanden, verbonden door string-matching op <code>testId</code> en <code>testName</code>.
+          Eén test toevoegen kost <strong>minimaal 5 bewerkingen</strong>, en vergeet je er één, dan faalt het stil:
+        </p>
+        <div class="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 mb-3 leading-relaxed">
+          geen <code class="bg-transparent text-slate-100">TEST_MAP</code>-entry → mist in debug-modus<br>
+          geen regel in <code class="bg-transparent text-slate-100">runAllMVPTests</code> → <span class="text-rose-400">draait nooit</span><br>
+          geen <code class="bg-transparent text-slate-100">TEST_COVERAGE</code>-entry → Richtlijnen-tab leeg, detailpagina 404<br>
+          geen formatter → onleesbare output
+        </div>
+        <p class="text-sm text-slate-700 leading-relaxed mb-3">
+          De drift is <strong>meetbaar aanwezig</strong>: 154 in <code>TEST_MAP</code>, 153 in
+          <code>runAllMVPTests</code> — één test is alleen in debug-modus bereikbaar. 57 van de 154 hebben
+          een WCAG-mapping. 4 hebben documentatie. <code>testId '25'</code> komt twee keer voor, terwijl
+          <code>crawlerTestId</code> <code>@unique</code> is in Prisma.
+        </p>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Ook: elke test doet zijn eigen <code>cheerio.load(html)</code>, dus één pagina wordt ~153 keer
+          geparseerd. En <code>details</code> is <code>any</code>, wat de reden is dat elke formatter zijn
+          eigen <code>TestDetails</code>-interface overtypt zonder dat iets de match afdwingt.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Voor / na</h4>
+
+        <p class="text-[11px] font-semibold text-slate-500 uppercase mb-1.5">Nu — één test, vijf plaatsen</p>
+        <div class="space-y-1 mb-5">
+          <div class="mass dup h-8 text-[10px]">tests.ts — de functie</div>
+          <div class="mass dup h-8 text-[10px]">tests.ts — TEST_MAP (154)</div>
+          <div class="mass dup h-8 text-[10px]">tests.ts — runAllMVPTests (153) ⚠</div>
+          <div class="mass dup h-8 text-[10px]">wcag-coverage.ts — TEST_COVERAGE (57) ⚠</div>
+          <div class="mass dup h-8 text-[10px]">TestResults.tsx — testName === (6) ⚠</div>
+          <div class="mass dup h-8 text-[10px]">test-documentation.ts (4) ⚠</div>
+        </div>
+
+        <p class="text-[11px] font-semibold text-slate-500 uppercase mb-1.5">Na — één definitie</p>
+        <div class="mass iface h-9 mb-0.5 text-[11px]">CrawlerTest — id · sc · run · format</div>
+        <div class="mass impl-deep h-16 mb-1 text-[11px]">
+          één array van testdefinities<br>
+          <span class="text-[10px] opacity-70">registers worden afgeleid, niet onderhouden</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <div class="mass good h-8 text-[10px]">runner<br><span class="opacity-60">map()</span></div>
+          <div class="mass good h-8 text-[10px]">coverage<br><span class="opacity-60">map()</span></div>
+          <div class="mass good h-8 text-[10px]">UI<br><span class="opacity-60">lookup</span></div>
+        </div>
+        <p class="text-[10px] text-emerald-700 text-center mt-2 italic">nieuwe test = 1 bewerking · drift onmogelijk</p>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-5 border-t border-slate-200 grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Oplossing</h4>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Een test wordt één object: id, naam, WCAG-succescriterium, ernst, de <code>run</code>-functie, een
+          getypeerd <code>details</code>-resultaat en optioneel een formatter. Eén array is de bron.
+          <code>TEST_MAP</code>, <code>runAllMVPTests</code>, <code>TEST_COVERAGE</code> en de UI-dispatch
+          worden er allemaal uit afgeleid. Dubbele ids en ontbrekende mappings worden dan
+          type- of startfouten in plaats van stille gaten.
+        </p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Baten</h4>
+        <ul class="text-sm text-slate-700 space-y-2 leading-relaxed">
+          <li><strong>Lokaliteit:</strong> een test toevoegen of wijzigen raakt één plek. Dit is de plek in de codebase waar jij en een agent het vaakst nieuw werk toevoegen.</li>
+          <li><strong>Leverage:</strong> een test krijgt automatisch zijn SC-mapping, zijn plek in de runner en zijn weergave.</li>
+          <li><strong>Testbaarheid:</strong> de naad is er al — elke HTML-test is al een pure <code>(html) =&gt; result</code>-functie. Wat ontbreekt is de harnas. Met een definitie-array kun je per test fixtures meeleveren en de hele suite in één keer doorlopen.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-5 p-3.5 bg-sky-50 border-l-4 border-sky-400 rounded-r text-sm text-sky-900">
+      <span class="font-semibold">Waarom "worth exploring" en niet "strong":</span>
+      dit is de grootste ingreep van de vijf en raakt 4000 regels. De ~89 <code>createGenericTest</code>-tests
+      (element-tellers, <code>informational: true</code>) zijn bovendien misschien helemaal geen tests die je
+      wilt behouden. Dat is eerst een inhoudelijke vraag, dan pas een architectuurvraag.
+    </div>
+  </article>
+
+  <!-- ══════════════ KANDIDAAT 5 ══════════════ -->
+  <article class="bg-white rounded-xl card-shadow p-7 mb-10 border-t-4 border-slate-400">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <p class="text-xs font-semibold tracking-wider text-slate-600 uppercase mb-1">Kandidaat 5</p>
+        <h3 class="text-2xl font-bold text-slate-900">Route-conventies: één params-stijl, één prisma-stijl, één foutvorm</h3>
+      </div>
+      <span class="shrink-0 px-3 py-1.5 rounded-full bg-slate-500 text-white text-xs font-bold uppercase tracking-wide">Speculative</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Bestanden</h4>
+        <p class="text-sm text-slate-700 mb-5">Alle 87 <code>app/api/**/route.ts</code>, met name
+          <code>projects/[id]/route.ts:266-269</code>, <code>findings/route.ts:6 vs :66</code>,
+          <code>from-crawler/route.ts:2-4</code>, <code>auto-create-findings/route.ts:2-4</code>,
+          <code>assessments/route.ts:2-4</code>.</p>
+
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Probleem</h4>
+        <ul class="text-sm text-slate-700 space-y-2 leading-relaxed">
+          <li><strong>Twee params-conventies.</strong> 67 routes Next 14-sync, 20 routes Next 15-async — binnen één bestand zelfs: <code>findings/route.ts</code> GET is sync (<code>:6</code>), POST is async (<code>:66</code>).</li>
+          <li><strong>Twee Prisma-conventies.</strong> 82 gebruiken de singleton; 5 doen <code>new PrismaClient()</code> op moduleniveau, waarvan 3 een <code>$disconnect()</code> in een <code>finally</code> — die op een hot-reloading dev-server een client kan sluiten die een ander request nog gebruikt.</li>
+          <li><strong>Geen runtime-validatie.</strong> Geen zod, nergens. Enums (<code>klein|matig|serieus|kritiek</code>) worden nooit gecontroleerd; een verkeerde waarde wordt een Postgres-fout die als generieke 500 naar buiten komt. Scherpst: <code>projects/[id]/route.ts:266</code> geeft de rauwe request-body direct door als <code>data</code> aan <code>prisma.update</code>.</li>
+          <li><strong>Vier foutvormen</strong>, Engels in de ene route, Nederlands in de andere; sommige routes slikken de fout zonder <code>console.error</code>.</li>
+          <li><strong>Twee update-routes met disjuncte werkwoorden</strong> — <code>PATCH</code> op het geneste pad én <code>PUT</code> op het platte pad geven allebei 405. Dat is jouw bekende valkuil, en het is een symptoom hiervan.</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Voor / na</h4>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <p class="text-[11px] font-semibold text-slate-500 uppercase mb-1.5 text-center">Nu</p>
+            <div class="space-y-1">
+              <div class="mass dup h-6 text-[10px]">imports</div>
+              <div class="mass dup h-6 text-[10px]">params (2 stijlen)</div>
+              <div class="mass dup h-6 text-[10px]">prisma (2 stijlen)</div>
+              <div class="mass dup h-6 text-[10px]">try/catch (4 vormen)</div>
+              <div class="mass impl h-10 text-[10px]">de eigenlijke query</div>
+            </div>
+            <p class="text-[10px] text-red-700 text-center mt-1.5 italic">×87</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold text-slate-500 uppercase mb-1.5 text-center">Straks</p>
+            <div class="space-y-1">
+              <div class="mass iface h-6 text-[10px]">route(schema, fn)</div>
+              <div class="mass impl-deep h-[4.25rem] text-[10px]">de eigenlijke query</div>
+            </div>
+            <p class="text-[10px] text-emerald-700 text-center mt-1.5 italic">×87 · minder ruis per bestand</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Voor een AI-agent is dit het verschil tussen 87 bestanden waarin je elke keer moet vaststellen
+          <em>welke</em> conventie hier geldt, en 87 bestanden waarin alleen het interessante deel staat.
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-5 border-t border-slate-200 grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Oplossing</h4>
+        <p class="text-sm text-slate-700 leading-relaxed">
+          Een dunne route-helper die params, body-parsing, validatie en de foutvorm bezit; handlers geven
+          data terug of gooien. Plus één opruimronde: één params-stijl, één Prisma-stijl, de
+          <code>$disconnect()</code>-aanroepen eruit.
+        </p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Baten</h4>
+        <ul class="text-sm text-slate-700 space-y-2 leading-relaxed">
+          <li><strong>Lokaliteit:</strong> de foutvorm en de validatiestrategie zitten op één plek in plaats van 87 keer overgetypt.</li>
+          <li><strong>Leverage:</strong> een fout die nu een 500 met een Engelse string is, wordt een 400 met een bruikbaar bericht — voor elke route tegelijk.</li>
+          <li><strong>Testbaarheid:</strong> matig. Dit maakt de routes vooral <em>leesbaarder</em>; de echte testbaarheid komt uit kandidaat 3 (logica uit de route halen).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-5 p-3.5 bg-slate-100 border-l-4 border-slate-400 rounded-r text-sm text-slate-700">
+      <span class="font-semibold">Waarom "speculative":</span> het is een brede, ondiepe verbetering over
+      87 bestanden. Het maakt het rustiger, maar lost geen enkele bug op — behalve de 405-valkuil. Doe dit
+      als een opruimronde <em>nadat</em> 1 t/m 3 staan, niet ervoor.
+    </div>
+  </article>
+
+  <!-- ══════════════ TOP AANBEVELING ══════════════ -->
+  <section class="bg-slate-900 text-white rounded-xl card-shadow p-8 mb-10">
+    <p class="text-xs font-semibold tracking-widest text-emerald-400 uppercase mb-2">Top-aanbeveling</p>
+    <h2 class="text-2xl font-bold mb-4">Begin bij kandidaat 1 — de bevinding-vs-opmerking-regel</h2>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <p>
+          Het is de kleinste ingreep met het scherpste bewijs. De vijf kopieën <em>lopen aantoonbaar uiteen</em>:
+          een afgekeurde bevinding met <code class="bg-slate-700 text-slate-100">status = resolved</code> zit in
+          je HTML-rapport en niet in je DOCX. Dat is nu waar, in geleverd werk. Het is geen theoretische
+          verbetering.
+        </p>
+        <p>
+          Het is ook het scherpste stuk domeintaal dat je hebt. Bijna de helft van je memory-bestanden gaat
+          over deze grens — wanneer iets een opmerking is en geen fout, wanneer impact en
+          verantwoordelijkheid leeg blijven. Die kennis zit nu in jouw hoofd en in commentaarregels. In een
+          module wordt het iets waar een agent tegenaan loopt in plaats van iets wat hij moet weten.
+        </p>
+        <p>
+          En het is een pure functie. Het wordt het <strong>eerste stuk van deze codebase dat testbaar is
+          zonder Postgres</strong> — de eerste plek waar een testharnas überhaupt de moeite waard is.
+        </p>
+        <p class="text-slate-400 text-xs pt-2 border-t border-slate-700">
+          Daarna kandidaat 2, die kandidaat 1 als bouwsteen gebruikt: het rapport-model splitst findings
+          al in bevindingen en opmerkingen, dus de renderpaden kunnen de vraag niet meer verkeerd stellen.
+          Kandidaat 3 als derde. 4 en 5 zijn losse trajecten.
+        </p>
+      </div>
+      <div>
+        <div class="mermaid">
+graph TD
+    K1["<b>1 · classificatieregel</b><br/><small>klein · pure functie · direct bewijs</small>"]
+    K2["<b>2 · getReportData</b><br/><small>gebruikt 1</small>"]
+    K3["<b>3 · createFinding</b><br/><small>los te doen</small>"]
+    K4["4 · crawler-testdefinities<br/><small>groot, apart traject</small>"]
+    K5["5 · route-conventies<br/><small>opruimronde, later</small>"]
+    K1 --> K2
+    K2 -.-> K5
+    K3 -.-> K5
+    style K1 fill:#10b981,color:#fff,stroke:#059669,stroke-width:3px
+    style K2 fill:#34d399,color:#064e3b
+    style K3 fill:#fbbf24,color:#451a03
+    style K4 fill:#e2e8f0,color:#334155
+    style K5 fill:#e2e8f0,color:#334155
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ APART ══════════════ -->
+  <section class="bg-white rounded-xl card-shadow p-7 mb-10">
+    <h2 class="text-xl font-bold text-slate-900 mb-2">Los daarvan opgemerkt</h2>
+    <p class="text-sm text-slate-500 mb-5">Geen verdiepingskansen, maar wel dingen die je wilt weten.</p>
+    <div class="grid md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+      <div class="flex gap-3">
+        <span class="text-red-500 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>Dode code.</strong>
+          <code>lib/generate-criteria-table-xml.ts</code> heeft nul aanroepers en hardcodeert niveau
+          <code>'A'</code> voor elke rij. <code>app/api/findings/[id]/route.ts</code> heeft nul aanroepers in de UI.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-red-500 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>Race op findingCode.</strong> Geen
+          <code>@@unique([projectId, findingCode])</code> in het schema, geen transacties. Twee
+          gelijktijdige aanmaak-acties leveren dezelfde code op.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-amber-500 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>Spelfout in productie.</strong>
+          <code>docx/route.ts:360</code> zegt "Begrijpelijk" waar <code>report-calculations.ts:198</code>
+          "Begrijpbaar" zegt — dezelfde WCAG-principelabel, twee spellingen in twee rapporten.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-amber-500 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>console.log in productie.</strong>
+          <code>report-calculations.ts:309-311</code> logt drie regels per finding bij elke rapportgeneratie.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-slate-400 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>Dode statistiek.</strong>
+          <code>test-runner.ts:15-18</code> declareert <code>summary.high</code> en <code>summary.low</code>;
+          ze worden nooit opgehoogd en zijn altijd 0.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-slate-400 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>468 scripts.</strong> <code>scripts/</code> bevat
+          honderden eenmalige <code>add-*</code> / <code>fix-*</code> / <code>check-*</code>-bestanden. Een
+          opruimronde daar maakt de repo voor een agent meteen een stuk navigeerbaarder.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-slate-400 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>Vier "tests" die niets beweren.</strong>
+          <code>lib/formatter/*.test.ts</code> zijn <code>console.log</code>-scripts zonder assertions of
+          exitcode. Ze kunnen niet falen.</p>
+      </div>
+      <div class="flex gap-3">
+        <span class="text-slate-400 font-bold shrink-0">•</span>
+        <p class="text-slate-700 leading-relaxed"><strong>Vier kopieën quick-findings-data.</strong>
+          <code>lib/quick-findings-data.ts</code> (111 entries, alle <code>crawlerTestId: null</code>),
+          plus inline kopieën in <code>FindingsManagement.tsx:13</code>,
+          <code>api/seed-quick-findings/route.ts:4</code> en <code>scripts/seed-quick-findings.ts:6</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-xs text-slate-400 text-center pb-6">
+    Vocabulaire: <em>module · interface · diepte · naad · adapter · leverage · lokaliteit</em>.
+    Geen <code>CONTEXT.md</code> of ADRs aangetroffen — geen bestaande beslissingen tegengesproken.
+  </footer>
+
+</div>
+</body>
+</html>

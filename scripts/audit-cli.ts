@@ -26,6 +26,11 @@ import {
   slugifyUrl,
   timestamp,
 } from './lib/browser-fetch';
+import {
+  lintFinding,
+  formatLintIssues,
+  type FindingDraft,
+} from './lib/finding-lint';
 
 const BASE_URL = process.env.AUDIT_CLI_BASE_URL || 'http://localhost:3000';
 
@@ -202,6 +207,44 @@ async function createSampleItem(projectId: string, flags: Flags) {
   print(result);
 }
 
+/**
+ * Bouwt een FindingDraft uit de CLI-flags en haalt de criterium-code op waar
+ * die nodig is voor criterium-specifieke schrijfregels.
+ */
+async function draftFromFlags(flags: Flags): Promise<FindingDraft> {
+  let criterionCode: string | null = null;
+  if (flags.criterion) {
+    try {
+      const criteria = await api('/api/wcag-criteria');
+      const match = (Array.isArray(criteria) ? criteria : []).find(
+        (c: any) => c.id === flags.criterion || c.code === flags.criterion,
+      );
+      criterionCode = match?.code ?? null;
+    } catch {
+      // Zonder criterium-code draaien alleen de algemene regels. Geen blocker.
+    }
+  }
+  return {
+    description: flags.description,
+    advice: flags.advice,
+    impact: flags.impact ?? null,
+    responsibility: flags.responsibility ?? null,
+    status: flags.status || 'open',
+    criterionCode,
+    isPdf: flags.pdf === 'true' || flags.pdf === '1',
+  };
+}
+
+async function lintFindingCommand(flags: Flags) {
+  const draft = await draftFromFlags(flags);
+  const issues = lintFinding(draft);
+  if (flags.json === 'true') {
+    print({ issues, errors: issues.filter((i) => i.severity === 'error').length });
+    return;
+  }
+  console.log(formatLintIssues(issues));
+}
+
 async function createFinding(projectId: string, flags: Flags) {
   const body: Record<string, unknown> = {
     criterionId: requireFlag(flags, 'criterion'),
@@ -215,6 +258,23 @@ async function createFinding(projectId: string, flags: Flags) {
   if (flags['sample-items']) {
     body.sampleItemIds = flags['sample-items'].split(',').map((s) => s.trim()).filter(Boolean);
   }
+
+  // Schrijfregel-check vóór het wegschrijven. Harde fouten blokkeren; twijfel-
+  // gevallen worden alleen getoond. Omzeilen kan met --skip-lint.
+  if (flags['skip-lint'] !== 'true') {
+    const issues = lintFinding(await draftFromFlags(flags));
+    const errors = issues.filter((i) => i.severity === 'error');
+    if (issues.length > 0) {
+      console.error(formatLintIssues(issues));
+      console.error('');
+    }
+    if (errors.length > 0) {
+      throw new Error(
+        `Bevinding niet aangemaakt: ${errors.length} schrijfregel-fout(en). Pas de tekst aan, of gebruik --skip-lint als de linter er hier naast zit.`,
+      );
+    }
+  }
+
   const result = await api(`/api/projects/${projectId}/findings`, {
     method: 'POST',
     body: JSON.stringify(body),
@@ -536,6 +596,8 @@ async function main() {
       return searchQuickFindings(requirePositional(positional, 0, 'keyword'));
     case 'create-sample-item':
       return createSampleItem(requirePositional(positional, 0, 'projectId'), flags);
+    case 'lint-finding':
+      return lintFindingCommand(flags);
     case 'create-finding':
       return createFinding(requirePositional(positional, 0, 'projectId'), flags);
     case 'create-finding-from-quick':
@@ -563,7 +625,8 @@ async function main() {
         `  list-criteria\n` +
         `  search-quick-findings <keyword>\n` +
         `  create-sample-item <projectId> --title=... [--url=...] [--type=structured|random|pdf] [--description=...] [--screenshot=true]\n` +
-        `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=open|published|resolved] [--evidence=...] [--sample-items=id1,id2]\n` +
+        `  lint-finding --description=... [--advice=...] [--impact=...] [--responsibility=...] [--status=...] [--criterion=<id|code>] [--pdf] [--json]\n` +
+        `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=open|published|resolved] [--evidence=...] [--sample-items=id1,id2] [--skip-lint]\n` +
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
         `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +

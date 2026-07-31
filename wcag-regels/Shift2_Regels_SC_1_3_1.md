@@ -1,0 +1,21 @@
+# Shift2-beoordelingsregels SC 1.3.1
+
+> Vastgelegde Shift2-voorkeuren voor dit succescriterium: wanneer iets een afkeuring is,
+> wanneer een opmerking, en wanneer juist geen bevinding.
+> Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_3_1.md` als ze elkaar tegenspreken.
+
+## Regels
+
+- KOP ZONDER INHOUD: loop de koppenlijst van de pagina na en kijk of er twee koppen van HETZELFDE niveau direct achter elkaar staan, zonder tekst ertussen. De eerste kop heeft dan geen inhoud. Dat is een AFKEURING (matig, redacteur), QuickFinding a3fe111f-e625-4891-99b2-8b7792be6a4e. Kijk daarbij of de kop bedoeld is als groepstitel boven de onderwerpen die erna komen: adviseer dan die volgende koppen een niveau lager te maken, zodat ze er programmatisch onder vallen. Hoort er echt geen inhoud onder, dan kan de kop weg. Voorbeeld: BEV-03 B023 (energietransitie), waar "Wat speelt er allemaal in de gemeente?" als h2 direct gevolgd werd door de h2 "Energietransitie (aardgasvrij Beverwijk)". De auditor miste dit; Frits zag het.
+- KOPPEN: 1.3.1 gaat over het kopniveau, de nesting en of het wel een echt kop-element is. Of de KOPTEKST beschrijft waar het onderdeel over gaat, hoort onder 2.4.6. Kom je een kop tegen die zowel niet-beschrijvend is als verkeerd genest ("TIP!" als h3 onder een niet-passende h2), maak dan BEIDE bevindingen. Zie Shift2_Regels_SC_2_4_6.md.
+- LEGE KOP: concludeer nooit "lege kop" op basis van een regex als <h2></h2>. Check de werkelijke inhoud, want de tekst kan in een geneste <span>, <a> of <i18n> staan. Extra alert bij koppen met id="main-content" of vergelijkbare skip-targets.
+- em-element voor puur visuele cursivering (labels, titels van werken, namen): AFKEURING, impact klein, responsibility redacteur. Het em-element is alleen voor spraaknadruk. Advies: em verwijderen, cursivering via CSS. Geen suggestie voor het cite-element toevoegen, en geen tussenzin als "terwijl dat niet past bij het doel van dat element". Meerdere voorkomens samenvoegen in een bevinding.
+- strong rondom KNOP- of LINKtekst: OPMERKING, geen afkeuring. Impact en responsibility leeg. Advies eindigt met de zin "Dit is een best practice."
+- strong gebruikt als visuele subkop of overbodig binnen een kop: advies altijd in twee delen splitsen. 1) hulpsoftware kondigt een kop al programmatisch aan, het strong-element voegt daar niets aan toe, 2) de visuele opmaak kan met CSS geregeld worden. Niet schrijven dat het kop-element "zelf al voor de gewenste visuele nadruk zorgt".
+- Lijst met slechts een <li>: OPMERKING, geen afkeuring. Impact en responsibility leeg, advies eindigt met "Dit is een best practice."
+- Overzichtspagina waar een kaart bestaat uit titel-link + datum + afbeelding zonder tekstuele samenvatting: de titel hoeft GEEN kop te zijn. Geen bevinding. Alleen wel een bevinding als er onder de titel ook een samenvatting/intro staat.
+- FOOTER, sociale-media-links: actief controleren of ze in <ul><li> staan. Losse <a>-elementen in een <p> is een bevinding (matig, redacteur). QuickFinding bd5fa272-7ee8-4d25-ab73-ec05a88bdf21. Alleen op de homepage beoordelen. LET OP: controleer bij dezelfde links ook de LINKTEKST onder 2.4.4. Staat er alleen "Facebook" of "Instagram" zonder de organisatie, dan is dat een aparte afkeuring onder 2.4.4. Zie Shift2_Regels_SC_2_4_4.md. Eén footerkolom kan dus twee bevindingen opleveren.
+- FOOTER, adres en contactopties: actief controleren of het adres in een eigen <p> staat en telefoon/WhatsApp/contactformulier in een <ul><li>. Alles in een <p> met <br>-regeleinden is een bevinding (matig, redacteur). Noem letterlijk de kop van de footer-kolom en de concrete items, geen verzamelterm "contactgegevens". Alleen op de homepage beoordelen.
+- PDF met lijststructuur L > LI > LBody: correct onder WCAG. Een ontbrekend Lbl is GEEN 1.3.1-fout. Alleen afkeuren als de lijststructuur fundamenteel ontbreekt (losse P-elementen met bullet-tekens) of onjuist is.
+- Niet-getagde PDF: de ontbrekende tagstructuur afkeuren onder 1.3.1 (dit is de wortel-oorzaak).
+- Zelfde issue op meerdere paginas: NIET telkens een nieuwe bevinding. Bestaande bevinding uitbreiden met het extra sample-item.

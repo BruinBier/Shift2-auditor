@@ -18,6 +18,7 @@ export default function ReportTabs({ project }: ReportTabsProps) {
   const tabParam = searchParams.get('tab');
 
   const [activeTab, setActiveTab] = useState<'about' | 'results' | 'findings' | 'sample'>('about');
+  const [isDownloading, setIsDownloading] = useState(false);
   const [teamName, setTeamName] = useState('Shift2');
   const [aboutOrgText, setAboutOrgText] = useState('Wij maken zaken met de overheid eenvoudig, met digitale toegankelijkheid als vast onderdeel van onze dienstverlening.');
 
@@ -39,6 +40,39 @@ export default function ReportTabs({ project }: ReportTabsProps) {
       }
     }
   }, []);
+
+  // De PDF wordt server-side gemaakt en duurt een paar seconden. Daarom niet
+  // gewoon een link: de knop houdt zichtbaar dat er iets gebeurt.
+  const handleDownloadPdf = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/reports/${project.id}/accessible-pdf`);
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null);
+        throw new Error(detail?.error || `Server gaf status ${response.status}`);
+      }
+
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] || 'rapport.pdf';
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('PDF-download mislukt:', error);
+      alert(`Het maken van de PDF is niet gelukt.\n\n${error?.message ?? ''}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <>
@@ -115,9 +149,17 @@ export default function ReportTabs({ project }: ReportTabsProps) {
                 >
                   Steekproef
                 </button>
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloading}
+                  className="ml-auto px-4 py-2 rounded-lg text-sm font-medium transition-colors border disabled:opacity-60 disabled:cursor-wait"
+                  style={{ borderColor: '#6b2d8f', color: '#6b2d8f', marginBottom: '8px' }}
+                >
+                  {isDownloading ? 'PDF wordt gemaakt…' : 'Download PDF'}
+                </button>
                 <Link
                   href={`/admin/projects/${project.id}`}
-                  className="ml-auto px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
                   style={{ backgroundColor: '#6b2d8f', marginBottom: '8px' }}
                 >
                   Bekijk onderzoek

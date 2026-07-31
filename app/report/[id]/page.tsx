@@ -90,6 +90,22 @@ export default async function ReportPage({ params }: { params: { id: string } })
     criterionAssessments: filteredAssessments,
   };
 
+  // Bij een heronderzoek: datums van de nulmeting ophalen voor de samenvatting
+  let nulmetingDates = null;
+  if (project.checkPhase === 'herinspectie' && project.parentProjectId) {
+    const parent = await prisma.project.findUnique({
+      where: { id: project.parentProjectId },
+      select: { dateStart: true, dateEnd: true },
+    });
+
+    if (parent?.dateStart && parent?.dateEnd) {
+      nulmetingDates = {
+        dateStart: parent.dateStart.toISOString(),
+        dateEnd: parent.dateEnd.toISOString(),
+      };
+    }
+  }
+
   // Fetch research type data
   let researchTypeData = null;
   if (project.researchType) {
@@ -126,6 +142,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
     dateEnd: project.dateEnd?.toISOString() || null,
     reportDate: project.reportDate.toISOString(),
     userAgents: project.userAgents || null,
+    nulmetingDates,
     researchTypeData: researchTypeData,
     scopeInfo: scopeInfoHtml,
     sampleInfo: sampleInfoHtml,

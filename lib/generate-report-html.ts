@@ -125,6 +125,20 @@ export async function generateReportHtml(projectId: string): Promise<string> {
 
   if (!project) throw new Error('Project not found');
 
+  // Bij een heronderzoek: periode van de nulmeting ophalen uit het bovenliggende project
+  const isHeronderzoek = project.checkPhase === 'herinspectie';
+  const nulmetingProject =
+    isHeronderzoek && project.parentProjectId
+      ? await prisma.project.findUnique({
+          where: { id: project.parentProjectId },
+          select: { dateStart: true, dateEnd: true },
+        })
+      : null;
+  const nulmetingPeriode =
+    nulmetingProject?.dateStart && nulmetingProject?.dateEnd
+      ? `${formatDateNl(nulmetingProject.dateStart)} en ${formatDateNl(nulmetingProject.dateEnd)}`
+      : null;
+
   // Filter by research type + load research type data
   let filteredAssessments = project.criterionAssessments;
   let researchTypeData: any = null;
@@ -167,9 +181,16 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
   const introType = researchTypeData?.type || 'website';
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
-  const intro = `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de ${escapeHtml(
+  // De URL als echte link opnemen. Een kale URL in lopende tekst wordt bij de
+  // PDF-export niet als link herkend, wat een toegankelijkheidsfout oplevert.
+  const introLink = introUrl
+    ? `<a href="${escapeHtml(introUrl)}">${escapeHtml(introUrl)}</a>`
+    : '';
+  const intro = `Dit rapport beschrijft de resultaten van het ${
+    isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'
+  } naar de toegankelijkheid van de content op de ${escapeHtml(
     introType
-  )} ${escapeHtml(introUrl)}.`;
+  )} ${introLink}.`;
 
   // Flat list of all criteria for "Resultaten per SC"
   const allCriteriaRows: Array<{
@@ -201,15 +222,24 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const samenvattingHtml = renderSamenvatting(
     project,
     stats,
-    researchTypeData
+    researchTypeData,
+    nulmetingPeriode
   );
-  const overOnderzoekHtml = renderOverOnderzoek(project);
+  const overOnderzoekHtml = renderOverOnderzoek(project, researchTypeData);
   const overzichtHtml = renderOverzichtResultaten(
     allCriteriaRows,
     principleStats
   );
-  const bevindingenHtml = renderBevindingenSectie(grouped, 'bevinding');
-  const opmerkingenHtml = renderBevindingenSectie(grouped, 'opmerking');
+  const bevindingenHtml = renderBevindingenSectie(
+    grouped,
+    'bevinding',
+    isHeronderzoek
+  );
+  const opmerkingenHtml = renderBevindingenSectie(
+    grouped,
+    'opmerking',
+    isHeronderzoek
+  );
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
     project,
@@ -234,12 +264,12 @@ export async function generateReportHtml(projectId: string): Promise<string> {
 <main class="container">
   <h1>${escapeHtml(title)}</h1>
   <p class="intro">${intro}</p>
-  <dl class="project-info">
-    <dt>Opdrachtgever:</dt><dd>${escapeHtml(opdrachtgever)}</dd>
-    <dt>Website:</dt><dd>${escapeHtml(website)}</dd>
-    <dt>Rapportversie:</dt><dd>${escapeHtml(version)}</dd>
-    <dt>Datum:</dt><dd>${escapeHtml(datum)}</dd>
-  </dl>
+  <ul class="project-info">
+    <li><b>Opdrachtgever:</b> ${escapeHtml(opdrachtgever)}</li>
+    <li><b>Website:</b> ${escapeHtml(website)}</li>
+    <li><b>Rapportversie:</b> ${escapeHtml(version)}</li>
+    <li><b>Datum:</b> ${escapeHtml(datum)}</li>
+  </ul>
   ${samenvattingHtml}
   ${overOnderzoekHtml}
   ${overzichtHtml}
@@ -255,8 +285,11 @@ export async function generateReportHtml(projectId: string): Promise<string> {
 function renderSamenvatting(
   project: any,
   stats: any,
-  researchTypeData: any
+  researchTypeData: any,
+  nulmetingPeriode?: string | null
 ): string {
+  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting
+  const isHeronderzoek = project.checkPhase === 'herinspectie';
   const dateStartFormatted = project.dateStart
     ? formatDateNl(project.dateStart)
     : '[datum]';
@@ -280,7 +313,23 @@ function renderSamenvatting(
   let mainHtml: string;
 
   if (researchTypeData?.summaryTemplate) {
-    mainHtml = String(researchTypeData.summaryTemplate)
+    let summaryTemplate = String(researchTypeData.summaryTemplate);
+
+    // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
+    if (isHeronderzoek) {
+      summaryTemplate = summaryTemplate
+        .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+        .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
+
+      if (nulmetingPeriode) {
+        summaryTemplate = summaryTemplate.replace(
+          /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
+          `$1 De nulmeting vond plaats tussen ${escapeHtml(nulmetingPeriode)}.`
+        );
+      }
+    }
+
+    mainHtml = summaryTemplate
       .replace(/\{dateStart\}/g, dateStartFormatted)
       .replace(/\{dateEnd\}/g, dateEndFormatted)
       .replace(/\{totalPages\}/g, String(totalPages))
@@ -310,14 +359,21 @@ function renderSamenvatting(
   } else {
     const criteriaWord =
       failedCriteria === 1 ? 'succescriterium' : 'succescriteria';
-    mainHtml = `<p>Dit onderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(
+    const onderzoekWoord = isHeronderzoek ? 'heronderzoek' : 'deelonderzoek';
+    const nulmetingZin =
+      isHeronderzoek && nulmetingPeriode
+        ? ` De nulmeting vond plaats tussen ${escapeHtml(nulmetingPeriode)}.`
+        : '';
+    mainHtml = `<p>Dit ${
+      isHeronderzoek ? 'heronderzoek' : 'onderzoek'
+    } is door Shift2 uitgevoerd tussen ${escapeHtml(
       dateStartFormatted
     )} en ${escapeHtml(
       dateEndFormatted
-    )}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p>
+    )}.${nulmetingZin} Voor dit ${onderzoekWoord} is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p>
 <p>De onderzochte content voldoet ${
       percentage === 100 ? 'volledig' : 'niet volledig'
-    } aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.</p>`;
+    } aan WCAG 2.2 niveau A en AA. In dit ${onderzoekWoord} zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.</p>`;
   }
 
   const feedbackHtml = project.researcherFeedback
@@ -336,9 +392,11 @@ function renderSamenvatting(
 </section>`;
 }
 
-function renderOverOnderzoek(project: any): string {
+function renderOverOnderzoek(project: any, researchTypeData?: any): string {
   const standard = escapeHtml(project.standard || 'WCAG 2.2');
-  const level = escapeHtml(project.level || 'AA');
+  const level = escapeHtml(
+    researchTypeData?.level || project.level || 'A en AA'
+  );
   const researchType = escapeHtml(project.researchType || 'onderzoek');
   const isContentOnderzoek = (project.researchType || '')
     .toLowerCase()
@@ -457,7 +515,8 @@ function renderOverzichtResultaten(
 
 function renderBevindingenSectie(
   grouped: any[],
-  kind: 'bevinding' | 'opmerking'
+  kind: 'bevinding' | 'opmerking',
+  isHeronderzoek = false
 ): string {
   const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
@@ -488,6 +547,9 @@ function renderBevindingenSectie(
         const findings = ((crit as any).findings || []).filter((f: any) => {
           // Bevindingen = met impact, opmerkingen = zonder impact.
           // Status (open/resolved) wordt elders gebruikt voor het label.
+          // Bij een heronderzoek zijn punten met status 'resolved' opgelost
+          // en verdwijnen ze uit het rapport.
+          if (isHeronderzoek && f.status === 'resolved') return false;
           if (isOpmerkingen) return f.impact == null;
           return f.impact != null;
         });
@@ -725,13 +787,54 @@ thead th { background: var(--bg-even); color: var(--shift2-purple); font-family:
 .result-fail { background: #fde0de; color: #b3261e; }
 .result-note { background: #e6f5e7; color: #077D11; }
 .intro { font-size: 1.1rem; color: var(--muted); }
-.project-info { display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1.5rem; margin: 1.5rem 0 0; padding: 1rem 1.25rem; background: var(--bg-even); border-left: 4px solid var(--shift2-accent); border-radius: 4px; }
-.project-info dt { font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif; color: var(--shift2-purple); }
-.project-info dd { margin: 0; }
+.project-info { list-style: none; margin: 1.5rem 0 0; padding: 1rem 1.25rem; background: var(--bg-even); border-left: 4px solid var(--shift2-accent); border-radius: 4px; }
+.project-info li { margin: 0 0 0.5rem; }
+.project-info li:last-child { margin-bottom: 0; }
+.project-info b { font-family: 'brockmannbold', 'Helvetica Neue', Arial, sans-serif; color: var(--shift2-purple); font-weight: normal; }
 .researcher-feedback p { margin: 0.6rem 0; }
 @media (max-width: 600px) {
   h1 { font-size: 1.7rem; }
   h2 { font-size: 1.3rem; }
   .container { padding: 1.5rem 1rem 3rem; }
+}
+
+/* Print- en PDF-opmaak.
+   De schermweergave is ruim opgezet (17px basis) omdat je op een beeldscherm
+   scrollt. Op papier kost die ruimte pagina's: dezelfde inhoud liep van 17 naar
+   28 pagina's. Hieronder wordt de typografie teruggebracht naar drukwerkmaten
+   en worden de marges rond koppen en blokken strakker gezet. */
+@media print {
+  body { font-size: 11pt; line-height: 1.45; }
+
+  .container { max-width: none; padding: 0; margin: 0; }
+  .logo-header { padding: 0 0 0.5rem; margin: 0; }
+  .logo-header img { height: 34px; width: auto; }
+
+  h1 { font-size: 19pt; line-height: 1.15; margin: 0 0 0.6rem; }
+  h2 { font-size: 15pt; margin: 1.1rem 0 0.4rem; padding-bottom: 0.15rem; }
+  h3 { font-size: 12.5pt; margin: 0.8rem 0 0.3rem; }
+  h4 { font-size: 11.5pt; margin: 0.6rem 0 0.2rem; }
+  h5 { font-size: 11pt; margin: 0.5rem 0 0.15rem; }
+
+  p { margin: 0 0 0.45rem; }
+  .intro { font-size: 11.5pt; margin-bottom: 0.6rem; }
+
+  ul, ol { margin: 0.3rem 0 0.5rem; padding-left: 1.1rem; }
+  li { margin-bottom: 0.15rem; }
+
+  table { font-size: 9.5pt; margin: 0.5rem 0; }
+  th, td { padding: 0.28rem 0.45rem; }
+
+  section, .content-block { margin: 0 0 0.8rem; }
+  .panel { margin: 0.5rem 0; }
+  .panel-body { padding: 0.5rem 0.7rem; }
+  .project-info { margin: 0.7rem 0 0; padding: 0.5rem 0.8rem; }
+  .project-info li { margin-bottom: 0.2rem; }
+
+  /* Koppen niet los aan de onderkant van een pagina laten staan, en
+     tabelrijen niet over een paginabreuk splitsen. */
+  h1, h2, h3, h4, h5 { page-break-after: avoid; break-after: avoid; }
+  tr, li { page-break-inside: avoid; break-inside: avoid; }
+  thead { display: table-header-group; }
 }
 `;

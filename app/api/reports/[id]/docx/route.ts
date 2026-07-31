@@ -274,6 +274,15 @@ export async function GET(
       where: { name: project.researchType },
     });
 
+    // Bij een heronderzoek: datums van de nulmeting ophalen uit het bovenliggende project
+    const isHeronderzoek = project.checkPhase === 'herinspectie';
+    const nulmetingProject = isHeronderzoek && project.parentProjectId
+      ? await prisma.project.findUnique({
+          where: { id: project.parentProjectId },
+          select: { dateStart: true, dateEnd: true },
+        })
+      : null;
+
     console.log('[DOCX] Project found, loading template...');
     console.log('[DOCX DEBUG] project.researchType:', project.researchType);
     console.log('[DOCX DEBUG] researchTypeData:', researchTypeData);
@@ -319,6 +328,11 @@ export async function GET(
         year: 'numeric'
       });
     };
+
+    // Periode van de nulmeting, alleen gevuld bij een heronderzoek
+    const nulmetingPeriode = nulmetingProject?.dateStart && nulmetingProject?.dateEnd
+      ? `${formatDate(nulmetingProject.dateStart)} en ${formatDate(nulmetingProject.dateEnd)}`
+      : null;
 
     // Use researchStartedOn instead of dateStart for the report (same as web page)
     const dateStart = project.researchStartedOn ? new Date(project.researchStartedOn) : (project.dateStart ? new Date(project.dateStart) : null);
@@ -468,8 +482,12 @@ export async function GET(
 
     console.log(`[DOCX] Prepared ${findingsData.length} failed criteria with findings`);
 
-    // Prepare opmerkingen data (findings with status !== 'open')
-    const opmerkingenFindings = project.findings.filter(f => f.status !== 'open');
+    // Prepare opmerkingen data (findings with status !== 'open').
+    // Bij een heronderzoek betekent status 'resolved' dat het punt is opgelost;
+    // die opmerkingen verdwijnen dan uit het rapport.
+    const opmerkingenFindings = project.findings.filter(
+      (f) => f.status !== 'open' && !(isHeronderzoek && f.status === 'resolved')
+    );
 
     // Group opmerkingen by criterion
     const opmerkingenData = opmerkingenFindings.reduce((acc, finding) => {
@@ -593,9 +611,11 @@ export async function GET(
           }
         })();
 
+        const onderzoekLabel = isHeronderzoek ? 'heronderzoek' : 'deelonderzoek';
+
         return isFormulieren
-          ? `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content van de formulieren op ${websiteUrl}`
-          : `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de website ${websiteUrl}`;
+          ? `Dit rapport beschrijft de resultaten van het ${onderzoekLabel} naar de toegankelijkheid van de content van de formulieren op ${websiteUrl}`
+          : `Dit rapport beschrijft de resultaten van het ${onderzoekLabel} naar de toegankelijkheid van de content op de website ${websiteUrl}`;
       })(),
 
       aboutResearchText: project.aboutResearchText || `Voor dit project is een onderzoek uitgevoerd naar de toegankelijkheid van de content, om vast te stellen in hoeverre deze voldoet aan ${project.standard} niveau ${project.level} (EN 301 549).`,
@@ -696,6 +716,16 @@ export async function GET(
     if (documentXml) {
       xmlContent = documentXml.asText();
 
+      // Bij een heronderzoek: alleen de openingszin spreekt van heronderzoek.
+      // De overige vermeldingen van "deelonderzoek" gaan over de afbakening
+      // (alleen content, niet techniek) en blijven ongewijzigd.
+      if (isHeronderzoek) {
+        xmlContent = xmlContent.replace(
+          'Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid',
+          'Dit rapport beschrijft de resultaten van het heronderzoek naar de toegankelijkheid'
+        );
+      }
+
       // Replace any remaining hardcoded dates from old Wierden template
       console.log('[DOCX] Replacing hardcoded dates in template...');
       xmlContent = xmlContent.replace(/23 maart 2026/g, formatDate(project.reportDate));
@@ -737,7 +767,23 @@ export async function GET(
 
         // Use template from research type (SAME as website does)
         if (researchTypeData?.summaryTemplate) {
-          summaryText = researchTypeData.summaryTemplate
+          let summaryTemplate = researchTypeData.summaryTemplate;
+
+          // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
+          if (isHeronderzoek) {
+            summaryTemplate = summaryTemplate
+              .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+              .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
+
+            if (nulmetingPeriode) {
+              summaryTemplate = summaryTemplate.replace(
+                /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
+                `$1 De nulmeting vond plaats tussen ${nulmetingPeriode}.`
+              );
+            }
+          }
+
+          summaryText = summaryTemplate
             .replace(/\{dateStart\}/g, dateStartFormatted)
             .replace(/\{dateEnd\}/g, dateEndFormatted)
             .replace(/\{totalPages\}/g, String(totalPages))
@@ -754,7 +800,13 @@ export async function GET(
             .replace(/\{level\}/g, researchTypeData?.level || 'A en AA');
         } else {
           // Fallback template
-          summaryText = `Dit onderzoek is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.\n\nDe onderzochte content voldoet ${compliesFully} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`;
+          const nulmetingZin = isHeronderzoek && nulmetingPeriode
+            ? ` De nulmeting vond plaats tussen ${nulmetingPeriode}.`
+            : '';
+
+          const onderzoekWoord = isHeronderzoek ? 'heronderzoek' : 'deelonderzoek';
+
+          summaryText = `Dit ${isHeronderzoek ? 'heronderzoek' : 'onderzoek'} is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}.${nulmetingZin} Voor dit ${onderzoekWoord} is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.\n\nDe onderzochte content voldoet ${compliesFully} aan WCAG 2.2 niveau A en AA. In dit ${onderzoekWoord} zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`;
         }
 
         // Strip HTML tags from summary (template may contain HTML)

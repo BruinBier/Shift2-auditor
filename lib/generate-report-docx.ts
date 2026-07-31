@@ -269,6 +269,20 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
 
   if (!project) throw new Error('Project not found');
 
+  // Bij een heronderzoek: periode van de nulmeting ophalen uit het bovenliggende project
+  const isHeronderzoek = project.checkPhase === 'herinspectie';
+  const nulmetingProject =
+    isHeronderzoek && project.parentProjectId
+      ? await prisma.project.findUnique({
+          where: { id: project.parentProjectId },
+          select: { dateStart: true, dateEnd: true },
+        })
+      : null;
+  const nulmetingPeriode =
+    nulmetingProject?.dateStart && nulmetingProject?.dateEnd
+      ? `${formatDateNl(nulmetingProject.dateStart)} en ${formatDateNl(nulmetingProject.dateEnd)}`
+      : null;
+
   // Filter by research type
   let filteredAssessments = project.criterionAssessments;
   let researchTypeData: any = null;
@@ -310,7 +324,9 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
   // Gelijk aan de "Over dit onderzoek"-tab en de HTML-export: kort "deelonderzoek" + type + URL met protocol.
   const introType = researchTypeData?.type || 'website';
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
-  const intro = `Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de ${introType} ${introUrl}.`;
+  const intro = `Dit rapport beschrijft de resultaten van het ${
+    isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'
+  } naar de toegankelijkheid van de content op de ${introType} ${introUrl}.`;
 
   const isContentOnderzoek = (project.researchType || '')
     .toLowerCase()
@@ -400,7 +416,9 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
       spacing: { before: 240, after: 160 },
     })
   );
-  children.push(...renderSamenvatting(project, stats, researchTypeData));
+  children.push(
+    ...renderSamenvatting(project, stats, researchTypeData, nulmetingPeriode)
+  );
 
   // === OVER DIT ONDERZOEK ===
   children.push(
@@ -412,7 +430,7 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
         project.researchType || 'onderzoek'
       } uitgevoerd naar de toegankelijkheid, om vast te stellen in hoeverre deze voldoet aan ${
         project.standard || 'WCAG 2.2'
-      } niveau ${project.level || 'AA'} (EN 301 549).`
+      } niveau ${researchTypeData?.level || project.level || 'A en AA'} (EN 301 549).`
     )
   );
   children.push(
@@ -499,7 +517,9 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
       'Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.'
     )
   );
-  children.push(...renderBevindingenOrOpmerkingen(flatCriteria, 'open'));
+  children.push(
+    ...renderBevindingenOrOpmerkingen(flatCriteria, 'open', isHeronderzoek)
+  );
 
   // === OPMERKINGEN ===
   children.push(heading(HeadingLevel.HEADING_2, 'Opmerkingen', 'opmerkingen'));
@@ -508,7 +528,9 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
       'De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.'
     )
   );
-  children.push(...renderBevindingenOrOpmerkingen(flatCriteria, 'resolved'));
+  children.push(
+    ...renderBevindingenOrOpmerkingen(flatCriteria, 'resolved', isHeronderzoek)
+  );
 
   // === BORGING EN VERVOLG ===
   children.push(
@@ -789,7 +811,8 @@ export async function generateReportDocx(projectId: string): Promise<Buffer> {
 function renderSamenvatting(
   project: any,
   stats: any,
-  researchTypeData: any
+  researchTypeData: any,
+  nulmetingPeriode?: string | null
 ): Paragraph[] {
   const dateStartFormatted = project.dateStart
     ? formatDateNl(project.dateStart)
@@ -797,6 +820,14 @@ function renderSamenvatting(
   const dateEndFormatted = project.dateEnd
     ? formatDateNl(project.dateEnd)
     : '[datum]';
+
+  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting
+  const isHeronderzoek = project.checkPhase === 'herinspectie';
+  const onderzoekWoord = isHeronderzoek ? 'heronderzoek' : 'deelonderzoek';
+  const nulmetingZin =
+    isHeronderzoek && nulmetingPeriode
+      ? ` De nulmeting vond plaats tussen ${nulmetingPeriode}.`
+      : '';
 
   const totalPages = project.sampleItems?.length || 0;
   const passedCriteria = stats.effectivePassed || 0;
@@ -820,7 +851,22 @@ function renderSamenvatting(
       paras.push(para);
     }
   } else if (researchTypeData?.summaryTemplate) {
-    const filled = String(researchTypeData.summaryTemplate)
+    let summaryTemplate = String(researchTypeData.summaryTemplate);
+
+    if (isHeronderzoek) {
+      summaryTemplate = summaryTemplate
+        .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+        .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
+
+      if (nulmetingPeriode) {
+        summaryTemplate = summaryTemplate.replace(
+          /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
+          `$1 De nulmeting vond plaats tussen ${nulmetingPeriode}.`
+        );
+      }
+    }
+
+    const filled = summaryTemplate
       .replace(/\{dateStart\}/g, dateStartFormatted)
       .replace(/\{dateEnd\}/g, dateEndFormatted)
       .replace(/\{totalPages\}/g, String(totalPages))
@@ -855,14 +901,16 @@ function renderSamenvatting(
       failedCriteria === 1 ? 'succescriterium' : 'succescriteria';
     paras.push(
       p(
-        `Dit onderzoek is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.`
+        `Dit ${
+          isHeronderzoek ? 'heronderzoek' : 'onderzoek'
+        } is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}.${nulmetingZin} Voor dit ${onderzoekWoord} is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.`
       )
     );
     paras.push(
       p(
         `De onderzochte content voldoet ${
           percentage === 100 ? 'volledig' : 'niet volledig'
-        } aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.`
+        } aan WCAG 2.2 niveau A en AA. In dit ${onderzoekWoord} zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.`
       )
     );
   }
@@ -1032,7 +1080,8 @@ function scoresTable(principleStats: any[]) {
 
 function renderBevindingenOrOpmerkingen(
   flatCriteria: any[],
-  filterStatus: 'open' | 'resolved'
+  filterStatus: 'open' | 'resolved',
+  isHeronderzoek = false
 ): any[] {
   // Bevinding vs opmerking wordt bepaald door impact (niet door status):
   //   impact gezet -> echte bevinding
@@ -1050,8 +1099,14 @@ function renderBevindingenOrOpmerkingen(
 
   for (const crit of flatCriteria) {
     const findings = (crit.findings || []).filter((f: any) => {
-      // Opmerking = impact leeg, ongeacht status (opmerkingen zijn 'resolved').
-      if (isOpmerkingen) return f.impact == null;
+      // Opmerking = impact leeg. In een nulmeting/tussencheck worden opmerkingen
+      // met status 'resolved' opgeslagen en horen ze in het rapport. Bij een
+      // heronderzoek betekent 'resolved' juist dat het punt is opgelost, dus dan
+      // verdwijnt het uit het rapport.
+      if (isOpmerkingen) {
+        if (f.impact != null) return false;
+        return isHeronderzoek ? f.status !== 'resolved' : true;
+      }
       // Echte bevindingen: impact gezet EN open/published (opgeloste
       // afkeuringen met status 'resolved' horen niet in het rapport).
       return f.impact != null && (f.status === 'open' || f.status === 'published');

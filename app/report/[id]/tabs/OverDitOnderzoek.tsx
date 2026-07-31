@@ -47,6 +47,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const [openDetailsAccordions, setOpenDetailsAccordions] = useState<Set<string>>(new Set());
   const [openAfbakeningAccordions, setOpenAfbakeningAccordions] = useState<Set<string>>(new Set());
 
+  // Een opmerking heeft geen impact. Bij een heronderzoek betekent status
+  // 'resolved' dat het punt is opgelost; die verdwijnt dan uit het rapport.
+  const isHeronderzoekReport = project.checkPhase === 'herinspectie';
+  const isOpenOpmerking = (f: any) =>
+    f.impact == null && !(isHeronderzoekReport && f.status === 'resolved');
+
   const handleDownloadPdf = async () => {
     try {
       const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement;
@@ -90,53 +96,6 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       if (button) {
         button.disabled = false;
         button.textContent = 'Download PDF';
-      }
-    }
-  };
-
-  const handleDownloadDocx = async () => {
-    try {
-      const button = document.querySelector('[data-docx-button]') as HTMLButtonElement;
-      if (button) {
-        button.disabled = true;
-        button.textContent = 'Word wordt gegenereerd...';
-      }
-
-      // Call the server-side Word document generation API
-      const response = await fetch(`/api/reports/${project.id}/docx`);
-
-      if (!response.ok) {
-        throw new Error('Word generatie mislukt');
-      }
-
-      // Get the Word document blob
-      const docxBlob = await response.blob();
-
-      // Download the Word document
-      const url = window.URL.createObjectURL(docxBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      const fileName = `rapport-${project.subject || project.title}-v${project.version}.docx`.replace(/[^a-zA-Z0-9.-]/g, '_');
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-
-      // Cleanup
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      if (button) {
-        button.disabled = false;
-        button.textContent = 'Download Word';
-      }
-    } catch (error) {
-      console.error('Word generation error:', error);
-      alert('Er is een fout opgetreden bij het genereren van het Word document. Probeer het opnieuw.');
-
-      const button = document.querySelector('[data-docx-button]') as HTMLButtonElement;
-      if (button) {
-        button.disabled = false;
-        button.textContent = 'Download Word';
       }
     }
   };
@@ -216,11 +175,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       // opmerkingen worden bewust met status 'resolved' opgeslagen)
       sortedCriteria
         .filter((assessment: any) => {
-          const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.impact == null);
+          const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && isOpenOpmerking(f));
           return hasRemark;
         })
         .forEach((assessment: any) => {
-          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.impact == null) || [];
+          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && isOpenOpmerking(f)) || [];
           findings.forEach((finding: any) => {
             findingKeys.add(`opmerking-${assessment.wcagCriterion.id}-${finding.id}`);
           });
@@ -270,6 +229,14 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
     const isFormulieren = project.researchTypeData?.type === 'formulieren';
 
+    // Bij een heronderzoek wordt de periode van de nulmeting erbij vermeld
+    const isHeronderzoek = project.checkPhase === 'herinspectie';
+    const nulmetingStart = project.nulmetingDates?.dateStart ? new Date(project.nulmetingDates.dateStart) : null;
+    const nulmetingEnd = project.nulmetingDates?.dateEnd ? new Date(project.nulmetingDates.dateEnd) : null;
+    const nulmetingPeriode = nulmetingStart && nulmetingEnd
+      ? `${format(nulmetingStart, 'd MMMM yyyy', { locale: nl })} en ${format(nulmetingEnd, 'd MMMM yyyy', { locale: nl })}`
+      : null;
+
     // For formulieren projects: count in-scope URLs (each URL = one form)
     // For other projects: use total sample items
     const uniqueForms = isFormulieren && project.scopeUrls
@@ -278,7 +245,21 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
     // Check if research type has a custom summary template
     if (project.researchTypeData?.summaryTemplate) {
-      const template = project.researchTypeData.summaryTemplate;
+      let template = project.researchTypeData.summaryTemplate;
+
+      // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
+      if (isHeronderzoek) {
+        template = template
+          .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+          .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
+
+        if (nulmetingPeriode) {
+          template = template.replace(
+            /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
+            `$1 De nulmeting vond plaats tussen ${nulmetingPeriode}.`
+          );
+        }
+      }
 
       // Replace placeholders with actual values
       const summaryHtml = template
@@ -324,11 +305,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     return (
       <>
         <p className="mb-4">
-          Dit onderzoek is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
+          Dit {isHeronderzoek ? 'heronderzoek' : 'onderzoek'} is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}.{isHeronderzoek && nulmetingPeriode ? ` De nulmeting vond plaats tussen ${nulmetingPeriode}.` : ''} Voor dit {isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
         </p>
 
         <p className="mb-4">
-          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit deelonderzoek zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). Bij {failedCriteria} {failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.
+          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit {isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). Bij {failedCriteria} {failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.
         </p>
 
         {/* Researcher feedback if available */}
@@ -573,7 +554,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             <p className="text-gray-700 leading-relaxed mb-3">
               {(() => {
                 // Use reportIntroHeader if available
-                const template = project.researchTypeData?.reportIntroHeader;
+                // Bij een heronderzoek spreken we van heronderzoek in plaats van deelonderzoek
+                const rawTemplate = project.researchTypeData?.reportIntroHeader;
+                const template = rawTemplate && project.checkPhase === 'herinspectie'
+                  ? rawTemplate.replace(/\bdeelonderzoek\b/g, 'heronderzoek')
+                  : rawTemplate;
 
                 if (template) {
                   // Split the template by {url} placeholder
@@ -600,7 +585,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   // Fallback to default text
                   return (
                     <>
-                      Dit rapport beschrijft de resultaten van het deelonderzoek naar de toegankelijkheid van de content op de {project.researchTypeData?.type || 'website'}{' '}
+                      Dit rapport beschrijft de resultaten van het {project.checkPhase === 'herinspectie' ? 'heronderzoek' : 'deelonderzoek'} naar de toegankelijkheid van de content op de {project.researchTypeData?.type || 'website'}{' '}
                       <a
                         href={introUrl}
                         target="_blank"
@@ -1047,6 +1032,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   );
                 })}
             </div>
+
+            {/* Show message if no findings */}
+            {sortedCriteria.filter((a: any) => a.status === 'failed').length === 0 && (
+              <p className="text-sm text-gray-500 italic">Er zijn geen bevindingen vastgesteld.</p>
+            )}
           </div>
         </section>
 
@@ -1064,13 +1054,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 .filter((assessment: any) => {
                   const criterion = assessment.wcagCriterion;
                   // Toon criteria die opmerkingen hebben (impact leeg, ongeacht status)
-                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.impact == null);
+                  const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && isOpenOpmerking(f));
                   return hasRemark;
                 })
                 .map((assessment: any, index: number) => {
                   const criterion = assessment.wcagCriterion;
                   // Get opmerkingen (impact leeg, ongeacht status) voor dit criterium
-                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.impact == null) || [];
+                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && isOpenOpmerking(f)) || [];
 
                   return (
                     <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">
@@ -1217,10 +1207,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             {/* Show message if no remarks */}
             {sortedCriteria.filter((assessment: any) => {
               const criterion = assessment.wcagCriterion;
-              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && f.impact == null);
+              const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && isOpenOpmerking(f));
               return hasRemark;
             }).length === 0 && (
-              <p className="text-sm text-gray-500 italic">Er zijn geen opmerkingen voor dit onderzoek.</p>
+              <p className="text-sm text-gray-500 italic">Er zijn geen opmerkingen vastgesteld.</p>
             )}
           </div>
         </section>
@@ -1672,19 +1662,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           </dl>
         </div>
 
-        {/* Word Download */}
+        {/* Downloads */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-normal text-gray-900 mb-4">Onderzoeksresultaten</h2>
           <p className="text-sm text-gray-600 mb-4">
-            Download het rapport als Word document. Het document wordt automatisch gegenereerd.
+            Download het rapport of bekijk de HTML-versie. De documenten worden automatisch gegenereerd.
           </p>
-          <button
-            onClick={handleDownloadDocx}
-            data-docx-button
-            className="block w-full text-center px-4 py-2 bg-shift2-secondary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed mb-3"
-          >
-            Download Word
-          </button>
           <a
             href={`/api/reports/${project.id}/xlsx`}
             download
