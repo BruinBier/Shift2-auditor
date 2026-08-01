@@ -3,12 +3,10 @@
  *
  * Dit is een oordeel van de onderzoeker, geen eigenschap die uit de techniek volgt:
  * WCAG zijn minimale richtlijnen, dus soms is iets geen echte WCAG-fout maar wel
- * het benoemen waard. Dat oordeel wordt vastgelegd in het impact-veld:
+ * het benoemen waard. Dat oordeel staat in het veld `type`.
  *
- *   impact gezet -> echte bevinding (afkeuring)
- *   impact leeg  -> opmerking
- *
- * Bij een opmerking blijven impact en verantwoordelijkheid allebei leeg.
+ * Bij een opmerking blijven impact en verantwoordelijkheid leeg. `impact` gaat
+ * dus alleen over de ernst van een afkeuring, niet over de vraag of iets er een is.
  *
  * Het oplossen van een opmerking staat los van de vraag of de site voldoet:
  * een openstaande opmerking maakt een criterium niet "failed". Alleen echte
@@ -16,19 +14,33 @@
  */
 
 export type FindingLike = {
+  type?: string | null;
   impact?: string | null;
   status?: string | null;
   interimReviewed?: boolean | null;
 };
 
-/** Een opmerking: wel gemeld, maar geen afkeuring. */
+/**
+ * Een opmerking: wel gemeld, maar geen afkeuring.
+ *
+ * De kolom `type` is NOT NULL, dus hij ontbreekt alleen als een query het veld
+ * niet meelaadt (een `select` zonder `type`). Dan valt dit terug op de oude
+ * regel — dezelfde uitkomst, maar het wijst op een query die `type` mist.
+ */
 export function isOpmerking(f: FindingLike): boolean {
+  if (f.type != null) return f.type === 'opmerking';
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(
+      '[finding-classification] finding zonder `type` geclassificeerd via impact; ' +
+        'voeg `type` toe aan de select van deze query.'
+    );
+  }
   return f.impact == null;
 }
 
 /** Een echte bevinding: door de onderzoeker afgekeurd. */
 export function isBevinding(f: FindingLike): boolean {
-  return f.impact != null;
+  return !isOpmerking(f);
 }
 
 /** Een bevinding die nog openstaat. Telt mee voor de conclusie. */
