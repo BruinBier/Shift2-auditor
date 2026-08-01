@@ -8,6 +8,7 @@ import {
   getStatusColor,
 } from '@/lib/report-calculations';
 import { formatProjectName } from '@/lib/format-project-name';
+import { findingLabel, findingLabelClass, isOpgelosteBevinding } from '@/lib/finding-classification';
 
 export default function Bevindingen({ project }: { project: any }) {
   console.log('🔵 Bevindingen component loaded!');
@@ -171,7 +172,7 @@ export default function Bevindingen({ project }: { project: any }) {
                       // blijven. Onderscheid: afkeuring = impact != null, opmerking = impact == null.
                       // Alleen als de lezer expliciet op "Opgelost" filtert, worden opgeloste
                       // afkeuringen alsnog getoond.
-                      if (finding.status === 'resolved' && finding.impact != null) {
+                      if (isOpgelosteBevinding(finding)) {
                         return false;
                       }
                     }
@@ -637,10 +638,8 @@ export default function Bevindingen({ project }: { project: any }) {
                                               {criterion.code}
                                             </span>
                                             {finding.status && (
-                                              <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                                finding.impact != null && finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                                              }`}>
-                                                {finding.impact != null && finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                                              <span className={`px-2 py-0.5 text-xs font-medium rounded ${findingLabelClass(finding)}`}>
+                                                {findingLabel(finding)}
                                               </span>
                                             )}
                                             {finding.impact && finding.impact !== 'onbekend' && (
@@ -902,10 +901,8 @@ export default function Bevindingen({ project }: { project: any }) {
                                                     {criterion.code}
                                                   </span>
                                                   {finding.status && (
-                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                                      finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                                                    }`}>
-                                                      {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${findingLabelClass(finding)}`}>
+                                                      {findingLabel(finding)}
                                                     </span>
                                                   )}
                                                   {finding.impact && finding.impact !== 'onbekend' && (

@@ -39,3 +39,29 @@ export function isOpenBevinding(f: FindingLike): boolean {
 export function isOpgelosteBevinding(f: FindingLike): boolean {
   return isBevinding(f) && f.status === 'resolved';
 }
+
+/**
+ * Het label zoals de lezer het ziet:
+ *
+ *   afkeuring die nog openstaat -> "Afgekeurd"
+ *   afkeuring die is opgelost   -> "Opgelost"
+ *   opmerking                   -> "Opmerking"
+ *
+ * Een opgeloste afkeuring is geen opmerking: die had wél impact.
+ */
+export function findingLabel(f: FindingLike): 'Afgekeurd' | 'Opgelost' | 'Opmerking' {
+  if (isOpmerking(f)) return 'Opmerking';
+  return f.status === 'resolved' ? 'Opgelost' : 'Afgekeurd';
+}
+
+/** Tailwind-klassen die bij het label horen. */
+export function findingLabelClass(f: FindingLike): string {
+  switch (findingLabel(f)) {
+    case 'Afgekeurd':
+      return 'bg-red-100 text-red-800';
+    case 'Opgelost':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
