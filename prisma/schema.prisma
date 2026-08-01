@@ -321,6 +321,14 @@ model CriterionAssessment {
   @@map("criterion_assessments")
 }
 
+/// Het oordeel van de onderzoeker: is dit een afkeuring of niet?
+/// WCAG zijn minimale richtlijnen, dus soms is iets geen echte WCAG-fout maar
+/// wel het benoemen waard. Bij een opmerking blijven impact en responsibility leeg.
+enum FindingType {
+  bevinding
+  opmerking
+}
+
 enum FindingStatus {
   open
   published
@@ -372,6 +380,7 @@ model Finding {
   projectId          String                    @map("project_id")
   findingCode        String                    @map("finding_code")
   wcagCriterionId    String                    @map("wcag_criterion_id")
+  type               FindingType               @default(bevinding)
   status             FindingStatus             @default(open)
   impact             FindingImpact?
   responsibility     FindingResponsibility?
