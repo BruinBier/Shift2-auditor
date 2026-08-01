@@ -27,6 +27,8 @@ export interface FindingFormData {
   description: string;
   advice: string;
   status: string;
+  /** 'bevinding' (afkeuring) of 'opmerking' (geen WCAG-fout, wel het melden waard) */
+  type: string;
   responsibility: string;
   impact: string;
 }
@@ -52,8 +54,9 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
     description: '',
     advice: '',
     status: 'open',
-    responsibility: 'onbekend',
-    impact: 'onbekend',
+    type: 'bevinding',
+    responsibility: 'redacteur',
+    impact: 'klein',
   });
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -75,8 +78,9 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
         description: editingFinding.description || '',
         advice: editingFinding.advice || '',
         status: editingFinding.status || 'open',
-        responsibility: editingFinding.responsibility ?? 'onbekend',
-        impact: editingFinding.impact ?? 'onbekend',
+        type: editingFinding.type ?? (editingFinding.impact == null ? 'opmerking' : 'bevinding'),
+        responsibility: editingFinding.responsibility ?? 'redacteur',
+        impact: editingFinding.impact ?? 'klein',
       });
 
       // Load existing attachments from evidence
@@ -110,8 +114,9 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
         description: '',
         advice: '',
         status: 'open',
-        responsibility: 'onbekend',
-        impact: 'onbekend',
+        type: 'bevinding',
+        responsibility: 'redacteur',
+        impact: 'klein',
       });
       setAttachments([]);
       setSelectedSampleItemIds(new Set());
@@ -305,16 +310,18 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
         }
       }
 
-      // Create finding data with evidence JSON
-      // Set responsibility and impact to null if they are 'onbekend'
+      // Bij een opmerking blijven impact en verantwoordelijkheid leeg: die horen
+      // bij een afkeuring. Het formulier schakelt die velden dan ook uit.
+      const isOpmerking = formData.type === 'opmerking';
       const findingDataWithEvidence: any = {
         criterionId: formData.criterionId,
         description: formData.description,
         advice: formData.advice,
         status: formData.status,
+        type: formData.type,
         evidence: evidenceData.length > 0 ? JSON.stringify(evidenceData) : null,
-        responsibility: formData.responsibility !== 'onbekend' ? formData.responsibility : null,
-        impact: formData.impact !== 'onbekend' ? formData.impact : null,
+        responsibility: isOpmerking ? null : formData.responsibility,
+        impact: isOpmerking ? null : formData.impact,
       };
 
       await onSave(findingDataWithEvidence, editingFinding?.id, Array.from(selectedSampleItemIds));
@@ -669,31 +676,45 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                 )}
               </div>
 
-              {/* Status, Verantwoordelijkheid, Impact */}
+              {/* Soort, Verantwoordelijkheid, Impact */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status <span className="text-red-600">vereist</span>
+                    Soort <span className="text-red-600">vereist</span>
                   </label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    value={formData.type}
+                    onChange={(e) => {
+                      const type = e.target.value;
+                      // Een opmerking is geen afkeuring, dus die krijgt status
+                      // 'resolved' en geen impact of verantwoordelijkheid.
+                      setFormData({
+                        ...formData,
+                        type,
+                        status: type === 'opmerking' ? 'resolved' : 'open',
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="open">Afgekeurd</option>
-                    <option value="resolved">Opmerking</option>
+                    <option value="bevinding">Afgekeurd</option>
+                    <option value="opmerking">Opmerking</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Verantwoordelijkheid <span className="text-red-600">vereist</span>
+                    Verantwoordelijkheid{' '}
+                    {formData.type === 'opmerking' ? (
+                      <span className="text-gray-400 font-normal">niet bij een opmerking</span>
+                    ) : (
+                      <span className="text-red-600">vereist</span>
+                    )}
                   </label>
                   <select
                     value={formData.responsibility}
+                    disabled={formData.type === 'opmerking'}
                     onChange={(e) => setFormData({ ...formData, responsibility: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
                   >
-                    <option value="onbekend">Onbekend</option>
                     <option value="redacteur">Redacteur</option>
                     <option value="ontwikkelaar">Ontwikkelaar</option>
                     <option value="ontwerper">Ontwerper</option>
@@ -701,14 +722,19 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Impact <span className="text-red-600">vereist</span>
+                    Impact{' '}
+                    {formData.type === 'opmerking' ? (
+                      <span className="text-gray-400 font-normal">niet bij een opmerking</span>
+                    ) : (
+                      <span className="text-red-600">vereist</span>
+                    )}
                   </label>
                   <select
                     value={formData.impact}
+                    disabled={formData.type === 'opmerking'}
                     onChange={(e) => setFormData({ ...formData, impact: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
                   >
-                    <option value="onbekend">Onbekend</option>
                     <option value="klein">Klein</option>
                     <option value="matig">Matig</option>
                     <option value="serieus">Serieus</option>
