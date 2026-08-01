@@ -8,7 +8,7 @@ import {
   getStatusColor,
 } from '@/lib/report-calculations';
 import { formatProjectName } from '@/lib/format-project-name';
-import { findingLabel, findingLabelClass, isOpgelosteBevinding } from '@/lib/finding-classification';
+import { findingLabel, findingLabelClass, hoortInRapport } from '@/lib/finding-classification';
 
 export default function Bevindingen({ project }: { project: any }) {
   console.log('🔵 Bevindingen component loaded!');
@@ -166,13 +166,14 @@ export default function Bevindingen({ project }: { project: any }) {
                         return false;
                       }
                     } else {
-                      // Bij het standaard "alle" filter: alleen opgeloste áfkeuringen verbergen —
-                      // die horen niet in het herinspectie-rapport. Opmerkingen worden bewust
-                      // met status 'resolved' opgeslagen (impact leeg) en moeten wél zichtbaar
-                      // blijven. Onderscheid: afkeuring = impact != null, opmerking = impact == null.
-                      // Alleen als de lezer expliciet op "Opgelost" filtert, worden opgeloste
-                      // afkeuringen alsnog getoond.
-                      if (isOpgelosteBevinding(finding)) {
+                      // Bij het standaard "alle" filter: verbergen wat is opgelost.
+                      // Dat zijn opgeloste áfkeuringen, plus opmerkingen die in de
+                      // tussenfase zijn nagelopen en opgelost bevonden. Opmerkingen
+                      // die alleen maar status 'resolved' hebben omdat ze zo worden
+                      // opgeslagen (nulmeting) blijven wél staan — zie hoortInRapport.
+                      // Alleen als de lezer expliciet op "Opgelost" filtert, worden ze
+                      // alsnog getoond.
+                      if (!hoortInRapport(finding)) {
                         return false;
                       }
                     }
@@ -1141,7 +1142,7 @@ export default function Bevindingen({ project }: { project: any }) {
       <div className="space-y-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">
-            Filter bevindingen (36)
+            Filter bevindingen ({(project.findings ?? []).filter(hoortInRapport).length})
           </h3>
 
           {/* Search */}
