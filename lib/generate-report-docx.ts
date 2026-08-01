@@ -30,6 +30,7 @@ import {
   type ProjectWithRelations,
 } from '@/lib/report-calculations';
 import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
+import { getReportData } from '@/lib/report-data';
 
 // Colors
 const PURPLE = '2A0A4A';
@@ -251,63 +252,17 @@ function textToParagraphs(txt: string): Paragraph[] {
 // -----------------------------------
 
 export async function generateReportDocx(projectId: string): Promise<Buffer> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      clientProject: true,
-      scopeUrls: true,
-      sampleItems: { orderBy: { orderIndex: 'asc' } },
-      criterionAssessments: { include: { wcagCriterion: true } },
-      findings: {
-        include: {
-          wcagCriterion: true,
-          occurrences: { include: { sampleItem: true } },
-        },
-        // Sleepvolgorde van de onderzoeker; createdAt als terugval.
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-      },
-    },
-  });
+  const data = await getReportData(projectId);
+  if (!data) throw new Error('Project not found');
 
-  if (!project) throw new Error('Project not found');
+  const { project, researchTypeData, isHeronderzoek, nulmeting } = data;
 
-  // Bij een heronderzoek: periode van de nulmeting ophalen uit het bovenliggende project
-  const isHeronderzoek = project.checkPhase === 'herinspectie';
-  const nulmetingProject =
-    isHeronderzoek && project.parentProjectId
-      ? await prisma.project.findUnique({
-          where: { id: project.parentProjectId },
-          select: { dateStart: true, dateEnd: true },
-        })
-      : null;
   const nulmetingPeriode =
-    nulmetingProject?.dateStart && nulmetingProject?.dateEnd
-      ? `${formatDateNl(nulmetingProject.dateStart)} en ${formatDateNl(nulmetingProject.dateEnd)}`
+    nulmeting?.dateStart && nulmeting?.dateEnd
+      ? `${formatDateNl(nulmeting.dateStart)} en ${formatDateNl(nulmeting.dateEnd)}`
       : null;
 
-  // Filter by research type
-  let filteredAssessments = project.criterionAssessments;
-  let researchTypeData: any = null;
-  if (project.researchType) {
-    const rt = await prisma.researchType.findUnique({
-      where: { name: project.researchType },
-      include: { criteria: { select: { wcagCriterionId: true } } },
-    });
-    if (rt) {
-      researchTypeData = rt;
-      if (rt.criteria.length > 0) {
-        const allowed = new Set(rt.criteria.map((c) => c.wcagCriterionId));
-        filteredAssessments = project.criterionAssessments.filter((a) =>
-          allowed.has(a.wcagCriterion.id)
-        );
-      }
-    }
-  }
-
-  const projectForCalc = {
-    ...project,
-    criterionAssessments: filteredAssessments,
-  } as unknown as ProjectWithRelations;
+  const projectForCalc = data.projectForCalc as unknown as ProjectWithRelations;
 
   const grouped = await groupFindingsByHierarchy(projectForCalc);
   const stats = calculateReportStats(projectForCalc);

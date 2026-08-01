@@ -10,6 +10,7 @@ import {
 } from '@/lib/report-calculations';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 import { isOpmerking } from '@/lib/finding-classification';
+import { getReportData } from '@/lib/report-data';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -107,63 +108,17 @@ function compareWcagCodes(a: string, b: string): number {
 }
 
 export async function generateReportHtml(projectId: string): Promise<string> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      clientProject: true,
-      scopeUrls: true,
-      sampleItems: { orderBy: { orderIndex: 'asc' } },
-      criterionAssessments: { include: { wcagCriterion: true } },
-      findings: {
-        include: {
-          wcagCriterion: true,
-          occurrences: { include: { sampleItem: true } },
-        },
-        // Sleepvolgorde van de onderzoeker; createdAt als terugval.
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-      },
-    },
-  });
+  const data = await getReportData(projectId);
+  if (!data) throw new Error('Project not found');
 
-  if (!project) throw new Error('Project not found');
+  const { project, researchTypeData, isHeronderzoek, nulmeting } = data;
 
-  // Bij een heronderzoek: periode van de nulmeting ophalen uit het bovenliggende project
-  const isHeronderzoek = project.checkPhase === 'herinspectie';
-  const nulmetingProject =
-    isHeronderzoek && project.parentProjectId
-      ? await prisma.project.findUnique({
-          where: { id: project.parentProjectId },
-          select: { dateStart: true, dateEnd: true },
-        })
-      : null;
   const nulmetingPeriode =
-    nulmetingProject?.dateStart && nulmetingProject?.dateEnd
-      ? `${formatDateNl(nulmetingProject.dateStart)} en ${formatDateNl(nulmetingProject.dateEnd)}`
+    nulmeting?.dateStart && nulmeting?.dateEnd
+      ? `${formatDateNl(nulmeting.dateStart)} en ${formatDateNl(nulmeting.dateEnd)}`
       : null;
 
-  // Filter by research type + load research type data
-  let filteredAssessments = project.criterionAssessments;
-  let researchTypeData: any = null;
-  if (project.researchType) {
-    const researchType = await prisma.researchType.findUnique({
-      where: { name: project.researchType },
-      include: { criteria: { select: { wcagCriterionId: true } } },
-    });
-    if (researchType) {
-      researchTypeData = researchType;
-      if (researchType.criteria.length > 0) {
-        const allowed = new Set(researchType.criteria.map((c) => c.wcagCriterionId));
-        filteredAssessments = project.criterionAssessments.filter((a) =>
-          allowed.has(a.wcagCriterion.id)
-        );
-      }
-    }
-  }
-
-  const projectForCalc = {
-    ...project,
-    criterionAssessments: filteredAssessments,
-  } as unknown as ProjectWithRelations;
+  const projectForCalc = data.projectForCalc as unknown as ProjectWithRelations;
 
   const grouped = await groupFindingsByHierarchy(projectForCalc);
   const stats = calculateReportStats(projectForCalc);

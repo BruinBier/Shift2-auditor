@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import ReportTabs from './ReportTabs';
 import { marked } from 'marked';
 import { groupFindingsByHierarchy } from '@/lib/report-calculations';
+import { getReportData } from '@/lib/report-data';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -26,107 +27,35 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ReportPage({ params }: { params: { id: string } }) {
-  const project = await prisma.project.findUnique({
-    where: { id: params.id },
-    include: {
-      clientProject: true,
-      scopeUrls: true,
-      sampleItems: {
-        orderBy: { orderIndex: 'asc' },
-        include: {
-          _count: {
-            select: { occurrences: true },
-          },
-        },
-      },
-      criterionAssessments: {
-        include: {
-          wcagCriterion: true,
-        },
-      },
-      findings: {
-        include: {
-          wcagCriterion: true,
-          occurrences: {
-            include: {
-              sampleItem: true,
-            },
-          },
-        },
-        // sortOrder is de volgorde die de onderzoeker zelf instelt door
-        // bevindingen te slepen. Scherm, HTML, Word en Excel volgen die
-        // allemaal, zodat "Bevinding 1" overal dezelfde bevinding is.
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-      },
-    },
-  });
+  const data = await getReportData(params.id);
 
-  if (!project) {
+  if (!data) {
     notFound();
   }
 
-  // Filter criterionAssessments based on research type
-  let filteredAssessments = project.criterionAssessments;
-  if (project.researchType) {
-    const researchType = await prisma.researchType.findUnique({
-      where: { name: project.researchType },
-      include: {
-        criteria: {
-          select: {
-            wcagCriterionId: true,
-          },
-        },
-      },
-    });
+  const { project } = data;
+  const projectWithFilteredAssessments = data.projectForCalc;
 
-    if (researchType && researchType.criteria.length > 0) {
-      const allowedCriteriaIds = new Set(researchType.criteria.map(c => c.wcagCriterionId));
-      filteredAssessments = project.criterionAssessments.filter(
-        assessment => allowedCriteriaIds.has(assessment.wcagCriterion.id)
-      );
-    }
-  }
+  // Bij een heronderzoek: datums van de nulmeting voor de samenvatting
+  const nulmetingDates =
+    data.nulmeting?.dateStart && data.nulmeting?.dateEnd
+      ? {
+          dateStart: data.nulmeting.dateStart.toISOString(),
+          dateEnd: data.nulmeting.dateEnd.toISOString(),
+        }
+      : null;
 
-  // Update project with filtered assessments
-  const projectWithFilteredAssessments = {
-    ...project,
-    criterionAssessments: filteredAssessments,
-  };
-
-  // Bij een heronderzoek: datums van de nulmeting ophalen voor de samenvatting
-  let nulmetingDates = null;
-  if (project.checkPhase === 'herinspectie' && project.parentProjectId) {
-    const parent = await prisma.project.findUnique({
-      where: { id: project.parentProjectId },
-      select: { dateStart: true, dateEnd: true },
-    });
-
-    if (parent?.dateStart && parent?.dateEnd) {
-      nulmetingDates = {
-        dateStart: parent.dateStart.toISOString(),
-        dateEnd: parent.dateEnd.toISOString(),
-      };
-    }
-  }
-
-  // Fetch research type data
-  let researchTypeData = null;
-  if (project.researchType) {
-    const researchType = await prisma.researchType.findUnique({
-      where: { name: project.researchType },
-    });
-
-    // Convert markdown to HTML
-    if (researchType) {
-      researchTypeData = {
-        ...researchType,
-        reportIntro: researchType.reportIntro ? await marked.parse(researchType.reportIntro) : null,
-        reportIntroPdf: researchType.reportIntroPdf ? await marked.parse(researchType.reportIntroPdf) : null,
-        // summaryTemplate is passed through as-is (HTML with placeholders, not markdown)
-        summaryTemplate: researchType.summaryTemplate || null,
-      };
-    }
-  }
+  // De markdown-velden van het onderzoekstype naar HTML omzetten.
+  const rt = data.researchTypeData;
+  const researchTypeData = rt
+    ? {
+        ...rt,
+        reportIntro: rt.reportIntro ? await marked.parse(rt.reportIntro) : null,
+        reportIntroPdf: rt.reportIntroPdf ? await marked.parse(rt.reportIntroPdf) : null,
+        // summaryTemplate is HTML met placeholders, geen markdown.
+        summaryTemplate: rt.summaryTemplate || null,
+      }
+    : null;
 
   // Convert scopeInfo markdown to HTML
   const scopeInfoHtml = project.scopeInfo ? await marked.parse(project.scopeInfo) : null;

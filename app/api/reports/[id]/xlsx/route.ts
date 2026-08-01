@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import ExcelJS from 'exceljs';
 import { groupFindingsByHierarchy } from '@/lib/report-calculations';
 import { isOpmerking } from '@/lib/finding-classification';
+import { getReportData } from '@/lib/report-data';
 
 export async function GET(
   request: NextRequest,
@@ -12,45 +13,15 @@ export async function GET(
     const { id } = await context.params;
     console.log('[XLSX] Starting Excel export for project:', id);
 
-    // Fetch project with all necessary relations
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        criterionAssessments: {
-          include: {
-            wcagCriterion: true,
-          },
-        },
-        findings: {
-          include: {
-            wcagCriterion: true,
-            occurrences: {
-              include: {
-                sampleItem: true,
-              },
-            },
-          },
-          // Zelfde volgorde als het scherm en de HTML-/Word-export: de
-          // sleepvolgorde die de onderzoeker heeft ingesteld.
-          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-        },
-        sampleItems: {
-          orderBy: { orderIndex: 'asc' },
-        },
-      },
-    });
+    const data = await getReportData(id);
 
-    if (!project) {
+    if (!data) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Fetch research type data separately
-    let researchTypeData = null;
-    if (project.researchType) {
-      researchTypeData = await prisma.researchType.findUnique({
-        where: { name: project.researchType },
-      });
-    }
+    // Let op: deze export groepeert op het ongefilterde project, dus zonder
+    // de criteria-selectie van het onderzoekstype. Dat is bestaand gedrag.
+    const { project, researchTypeData } = data;
 
     // Group findings by hierarchy (same as report page)
     const groupedFindings = await groupFindingsByHierarchy(project as any);
