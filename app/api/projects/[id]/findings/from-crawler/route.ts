@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { typeVoorImpact } from '@/lib/finding-classification';
 
 const prisma = new PrismaClient();
 
@@ -80,6 +81,7 @@ export async function POST(
         findingCode,
         wcagCriterionId: wcagCriterion.id,
         status: quickFinding.status || 'open',
+        type: typeVoorImpact(quickFinding.impact),
         impact: quickFinding.impact,
         responsibility: quickFinding.responsibility,
         description: quickFinding.description,

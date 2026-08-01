@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { typeVoorImpact } from '@/lib/finding-classification';
 
 async function upsertAssessment(
   projectId: string,
@@ -67,6 +68,13 @@ export async function PUT(
     }
     if (body.impact !== undefined) {
       updateData.impact = body.impact;
+      // Impact en type horen bij elkaar: impact leegmaken maakt er een
+      // opmerking van, een impact invullen een afkeuring. Een expliciet
+      // meegestuurd type wint (zie hieronder).
+      updateData.type = typeVoorImpact(body.impact);
+    }
+    if (body.type !== undefined) {
+      updateData.type = body.type;
     }
     if (body.responsibility !== undefined) {
       updateData.responsibility = body.responsibility;

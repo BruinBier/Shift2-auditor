@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { typeVoorImpact } from '@/lib/finding-classification';
 
 interface CreateFindingsRequest {
   testIds: string[];
@@ -202,6 +203,7 @@ export async function POST(
             findingCode,
             wcagCriterionId,
             status: 'open',
+            type: typeVoorImpact(impact),
             impact: impact as any,
             responsibility: responsibility as any,
             description,

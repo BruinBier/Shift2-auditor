@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { typeVoorImpact } from '@/lib/finding-classification';
 
 export async function GET(
   request: NextRequest,
@@ -127,6 +128,7 @@ export async function POST(
       description: body.description || '',
       advice: body.advice || '',
       evidence: body.evidence,
+      type: body.type ?? typeVoorImpact(body.impact !== undefined ? body.impact : null),
       impact: body.impact !== undefined ? body.impact : null,
       responsibility: body.responsibility !== undefined ? body.responsibility : null,
       sortOrder: newSortOrder,

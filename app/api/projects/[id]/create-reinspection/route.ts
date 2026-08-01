@@ -218,6 +218,7 @@ export async function POST(
           findingCode: finding.findingCode,
           wcagCriterionId: finding.wcagCriterionId,
           status: finding.status,
+          type: finding.type,
           impact: finding.impact,
           responsibility: finding.responsibility,
           description: finding.description,

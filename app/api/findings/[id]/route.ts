@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { typeVoorImpact } from '@/lib/finding-classification';
 
 export async function GET(
   request: NextRequest,
@@ -40,7 +41,12 @@ export async function PATCH(
         ...(body.findingCode && { findingCode: body.findingCode }),
         ...(body.wcagCriterionId && { wcagCriterionId: body.wcagCriterionId }),
         ...(body.status && { status: body.status }),
-        ...(body.impact && { impact: body.impact }),
+        // impact en type horen bij elkaar; een expliciet type wint
+        ...(body.impact !== undefined && {
+          impact: body.impact,
+          type: typeVoorImpact(body.impact),
+        }),
+        ...(body.type !== undefined && { type: body.type }),
         ...(body.responsibility && { responsibility: body.responsibility }),
         ...(body.description !== undefined && { description: body.description }),
         ...(body.advice !== undefined && { advice: body.advice }),

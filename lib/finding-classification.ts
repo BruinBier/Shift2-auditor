@@ -43,6 +43,16 @@ export function isBevinding(f: FindingLike): boolean {
   return !isOpmerking(f);
 }
 
+/**
+ * Het type dat hoort bij een impact, voor het aanmaken en bijwerken van
+ * findings. Een opmerking heeft geen ernst, dus een lege impact betekent
+ * opmerking. Zo blijven de twee velden consistent zolang de invoerschermen
+ * `type` nog niet zelf meesturen.
+ */
+export function typeVoorImpact(impact: string | null | undefined): 'bevinding' | 'opmerking' {
+  return impact == null ? 'opmerking' : 'bevinding';
+}
+
 /** Een bevinding die nog openstaat. Telt mee voor de conclusie. */
 export function isOpenBevinding(f: FindingLike): boolean {
   return isBevinding(f) && (f.status === 'open' || f.status === 'published');
