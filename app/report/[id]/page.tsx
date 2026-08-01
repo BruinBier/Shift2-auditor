@@ -53,7 +53,10 @@ export default async function ReportPage({ params }: { params: { id: string } })
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        // sortOrder is de volgorde die de onderzoeker zelf instelt door
+        // bevindingen te slepen. Scherm, HTML, Word en Excel volgen die
+        // allemaal, zodat "Bevinding 1" overal dezelfde bevinding is.
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
       },
     },
   });

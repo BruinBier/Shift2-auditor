@@ -30,7 +30,9 @@ export async function GET(
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          // Zelfde volgorde als het scherm en de HTML-/Word-export: de
+          // sleepvolgorde die de onderzoeker heeft ingesteld.
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         },
         sampleItems: {
           orderBy: { orderIndex: 'asc' },

@@ -119,7 +119,8 @@ export async function generateReportHtml(projectId: string): Promise<string> {
           wcagCriterion: true,
           occurrences: { include: { sampleItem: true } },
         },
-        orderBy: { createdAt: 'asc' },
+        // Sleepvolgorde van de onderzoeker; createdAt als terugval.
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
       },
     },
   });
