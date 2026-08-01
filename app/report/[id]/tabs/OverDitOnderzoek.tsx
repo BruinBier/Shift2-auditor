@@ -8,6 +8,7 @@ import { parseMarkdownTabs } from '@/lib/parse-tabs';
 import { formatProjectName } from '@/lib/format-project-name';
 import { useSearchParams } from 'next/navigation';
 import { getDriveFolderUrl } from '@/lib/drive-folders';
+import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 import { marked } from 'marked';
 
@@ -47,11 +48,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const [openDetailsAccordions, setOpenDetailsAccordions] = useState<Set<string>>(new Set());
   const [openAfbakeningAccordions, setOpenAfbakeningAccordions] = useState<Set<string>>(new Set());
 
-  // Een opmerking heeft geen impact. Bij een heronderzoek betekent status
-  // 'resolved' dat het punt is opgelost; die verdwijnt dan uit het rapport.
+  // Bij een heronderzoek betekent status 'resolved' dat het punt is opgelost;
+  // die verdwijnt dan uit het rapport.
   const isHeronderzoekReport = project.checkPhase === 'herinspectie';
   const isOpenOpmerking = (f: any) =>
-    f.impact == null && !(isHeronderzoekReport && f.status === 'resolved');
+    isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
 
   const handleDownloadPdf = async () => {
     try {
@@ -165,7 +166,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       sortedCriteria
         .filter((assessment: any) => assessment.status === 'failed')
         .forEach((assessment: any) => {
-          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && f.impact != null && f.status === 'open') || [];
+          const findings = project.findings?.filter((f: any) => f.wcagCriterionId === assessment.wcagCriterion.id && isOpenBevinding(f)) || [];
           findings.forEach((finding: any) => {
             findingKeys.add(`${assessment.wcagCriterion.id}-${finding.id}`);
           });
@@ -889,7 +890,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 .map((assessment: any, index: number) => {
                   const criterion = assessment.wcagCriterion;
                   // Get echte bevindingen (impact ingevuld) met status 'open' voor dit criterium
-                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && f.impact != null && f.status === 'open') || [];
+                  const findings = project.findings?.filter((f: any) => f.wcagCriterionId === criterion.id && isOpenBevinding(f)) || [];
 
                   return (
                     <div key={criterion.id} className="border-b border-gray-200 pb-6 last:border-0">

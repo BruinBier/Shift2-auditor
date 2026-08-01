@@ -29,6 +29,7 @@ import {
   AssessmentStatus,
   type ProjectWithRelations,
 } from '@/lib/report-calculations';
+import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
 
 // Colors
 const PURPLE = '2A0A4A';
@@ -1099,17 +1100,16 @@ function renderBevindingenOrOpmerkingen(
 
   for (const crit of flatCriteria) {
     const findings = (crit.findings || []).filter((f: any) => {
-      // Opmerking = impact leeg. In een nulmeting/tussencheck worden opmerkingen
-      // met status 'resolved' opgeslagen en horen ze in het rapport. Bij een
-      // heronderzoek betekent 'resolved' juist dat het punt is opgelost, dus dan
-      // verdwijnt het uit het rapport.
+      // In een nulmeting/tussencheck worden opmerkingen met status 'resolved'
+      // opgeslagen en horen ze in het rapport. Bij een heronderzoek betekent
+      // 'resolved' juist dat het punt is opgelost, dus dan verdwijnt het.
       if (isOpmerkingen) {
-        if (f.impact != null) return false;
+        if (!isOpmerking(f)) return false;
         return isHeronderzoek ? f.status !== 'resolved' : true;
       }
-      // Echte bevindingen: impact gezet EN open/published (opgeloste
-      // afkeuringen met status 'resolved' horen niet in het rapport).
-      return f.impact != null && (f.status === 'open' || f.status === 'published');
+      // Echte bevindingen die nog openstaan; opgeloste afkeuringen horen
+      // niet in het rapport.
+      return isOpenBevinding(f);
     });
     if (findings.length === 0) continue;
 

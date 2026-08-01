@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { marked } from 'marked';
 import FindingDialog, { FindingFormData } from './FindingDialog';
+import { isOpmerking } from '@/lib/finding-classification';
 import QuickFindingDialog from './QuickFindingDialog';
 import ExplanationDialog from './ExplanationDialog';
 
@@ -989,10 +990,10 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                               // In de nulmeting is de status-badge niet zinvol (alles is per definitie
                               // "Open" en "Opgelost" bestaat pas na een herinspectie), dus tonen we die
                               // alleen tijdens tussencheck of herinspectie.
-                              const typeLabel = finding.impact != null ? 'Afgekeurd' : 'Opmerking';
-                              const typeCls = finding.impact != null
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800';
+                              const typeLabel = isOpmerking(finding) ? 'Opmerking' : 'Afgekeurd';
+                              const typeCls = isOpmerking(finding)
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-red-100 text-red-800';
                               const statusLabel = finding.status === 'resolved' ? 'Opgelost' : 'Open';
                               const statusCls = finding.status === 'resolved'
                                 ? 'bg-green-100 text-green-800'

@@ -8,7 +8,7 @@ import {
   getStatusColor,
 } from '@/lib/report-calculations';
 import { formatProjectName } from '@/lib/format-project-name';
-import { findingLabel, findingLabelClass, hoortInRapport } from '@/lib/finding-classification';
+import { findingLabel, findingLabelClass, hoortInRapport, isOpmerking } from '@/lib/finding-classification';
 
 export default function Bevindingen({ project }: { project: any }) {
   console.log('🔵 Bevindingen component loaded!');
@@ -603,8 +603,8 @@ export default function Bevindingen({ project }: { project: any }) {
                                 // Split findings into rejected findings and remarks:
                                 // echte bevinding = heeft een impact ingevuld
                                 // opmerking       = impact is leeg (los van status)
-                                const rejectedFindings = criterion.filteredFindings.filter((f: any) => f.impact != null);
-                                const remarks = criterion.filteredFindings.filter((f: any) => f.impact == null);
+                                const rejectedFindings = criterion.filteredFindings.filter((f: any) => !isOpmerking(f));
+                                const remarks = criterion.filteredFindings.filter(isOpmerking);
 
                                 if (criterion.code === '1.3.5') {
                                   console.log('Criterion 1.3.5 - Total findings:', criterion.filteredFindings.length);

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { isOpmerking, isOpgelosteBevinding } from '@/lib/finding-classification';
 
 interface TussencheckProps {
   project: any;
@@ -43,11 +44,11 @@ export default function Tussencheck({ project }: TussencheckProps) {
   const findings = useMemo(() => {
     const list = (project.findings ?? []) as any[];
     // Sort same way as the report's Bevindingen tab:
-    //   1) real findings (impact != null) before opmerkingen (impact == null)
+    //   1) echte bevindingen voor opmerkingen
     //   2) within each group, by sortOrder (then findingCode as tie-breaker)
     return list.slice().sort((a, b) => {
-      const aIsOpmerking = a.impact == null ? 1 : 0;
-      const bIsOpmerking = b.impact == null ? 1 : 0;
+      const aIsOpmerking = isOpmerking(a) ? 1 : 0;
+      const bIsOpmerking = isOpmerking(b) ? 1 : 0;
       if (aIsOpmerking !== bIsOpmerking) return aIsOpmerking - bIsOpmerking;
       const so = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
       if (so !== 0) return so;
@@ -56,8 +57,8 @@ export default function Tussencheck({ project }: TussencheckProps) {
   }, [project.findings]);
 
   // Voortgangs-tellers
-  const realFindings = findings.filter((f) => f.impact != null);
-  const opmerkingen = findings.filter((f) => f.impact == null);
+  const realFindings = findings.filter((f) => !isOpmerking(f));
+  const opmerkingen = findings.filter(isOpmerking);
   const reviewedCount = findings.filter((f) => f.interimReviewed).length;
   const realResolvedCount = realFindings.filter((f) => f.status === 'resolved').length;
   const realOpenCount = realFindings.filter((f) => f.status === 'open').length;
@@ -68,15 +69,15 @@ export default function Tussencheck({ project }: TussencheckProps) {
       case 'all':
         return true;
       case 'open':
-        return f.impact != null && f.status === 'open';
+        return !isOpmerking(f) && f.status === 'open';
       case 'resolved':
-        return f.impact != null && f.status === 'resolved';
+        return isOpgelosteBevinding(f);
       case 'reviewed':
         return f.interimReviewed;
       case 'unreviewed':
         return !f.interimReviewed;
       case 'opmerking':
-        return f.impact == null;
+        return isOpmerking(f);
       default:
         return true;
     }
@@ -125,7 +126,7 @@ export default function Tussencheck({ project }: TussencheckProps) {
 
     for (const f of visibleFindings) {
       const key = `${f.wcagCriterion?.code ?? '?'} — ${f.wcagCriterion?.title ?? ''}`;
-      const target = f.impact == null ? opmerkingen : bevindingen;
+      const target = isOpmerking(f) ? opmerkingen : bevindingen;
       if (!target.has(key)) target.set(key, []);
       target.get(key)!.push(f);
     }
@@ -309,14 +310,14 @@ export default function Tussencheck({ project }: TussencheckProps) {
               </thead>
               <tbody>
                 {items.map((f) => {
-                  const isOpmerking = f.impact == null;
+                  const opmerking = isOpmerking(f);
                   const isBusy = busyId === f.id;
                   return (
                     <tr key={f.id} className="border-t border-gray-200 hover:bg-gray-50">
                       <td className="px-4 py-3 font-mono text-xs text-gray-700">{f.findingCode}</td>
                       <td className="px-4 py-3 font-mono text-xs text-gray-700">{f.wcagCriterion?.code ?? '?'}</td>
                       <td className="px-4 py-3 text-xs">
-                        {isOpmerking ? (
+                        {opmerking ? (
                           <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded">opmerking</span>
                         ) : (
                           <span className="px-2 py-0.5 bg-orange-100 text-orange-800 rounded">{f.impact}</span>

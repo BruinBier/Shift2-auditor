@@ -9,6 +9,7 @@ import {
   type ProjectWithRelations,
 } from '@/lib/report-calculations';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
+import { isOpmerking } from '@/lib/finding-classification';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -545,13 +546,12 @@ function renderBevindingenSectie(
     {
       {
         const findings = ((crit as any).findings || []).filter((f: any) => {
-          // Bevindingen = met impact, opmerkingen = zonder impact.
+          // Bevinding of opmerking staat in het type-veld.
           // Status (open/resolved) wordt elders gebruikt voor het label.
           // Bij een heronderzoek zijn punten met status 'resolved' opgelost
           // en verdwijnen ze uit het rapport.
           if (isHeronderzoek && f.status === 'resolved') return false;
-          if (isOpmerkingen) return f.impact == null;
-          return f.impact != null;
+          return isOpmerkingen ? isOpmerking(f) : !isOpmerking(f);
         });
         if (findings.length === 0) continue;
 

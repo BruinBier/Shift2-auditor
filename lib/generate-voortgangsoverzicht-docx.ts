@@ -8,6 +8,7 @@ import {
 } from 'docx';
 import { prisma } from '@/lib/prisma';
 import { marked } from 'marked';
+import { isOpmerking } from '@/lib/finding-classification';
 
 const PURPLE = '6B2D8F';
 const GRAY = '6B7280';
@@ -90,10 +91,8 @@ function groupFindings(findings: FindingForExport[]): GroupedFindings {
   };
 
   for (const f of findings) {
-    const isOpmerking = f.impact == null;
-
     // Opmerking → always its own group, regardless of reviewed state
-    if (isOpmerking) {
+    if (isOpmerking(f)) {
       groups.opmerkingen.push(f);
       continue;
     }

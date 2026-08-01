@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import ExcelJS from 'exceljs';
 import { groupFindingsByHierarchy } from '@/lib/report-calculations';
+import { isOpmerking } from '@/lib/finding-classification';
 
 export async function GET(
   request: NextRequest,
@@ -88,13 +89,12 @@ export async function GET(
           // Use findings as-is (already sorted by createdAt desc from database query)
           const findings = criterion.findings;
 
-          // Splitsing bevinding vs opmerking op basis van impact (niet status):
-          //   impact gezet + open      -> echte bevinding
-          //   impact leeg              -> opmerking (ongeacht status; opmerkingen
-          //                               worden bewust met status 'resolved' opgeslagen)
-          //   impact gezet + resolved  -> opgeloste afkeuring, uit rapport
+          // Bevinding of opmerking staat in het type-veld; de status bepaalt
+          // daarnaast of een afkeuring nog openstaat. Een opgeloste afkeuring
+          // hoort niet in dit overzicht. Opmerkingen worden apart verzameld,
+          // ongeacht status: die staan bewust vaak op 'resolved'.
           const openFindingsInCriterion = findings.filter(
-            (f: any) => f.impact != null && f.status === 'open'
+            (f: any) => !isOpmerking(f) && f.status === 'open'
           );
           openFindingsInCriterion.forEach((finding: any, index: number) => {
             openFindings.push({
@@ -104,9 +104,7 @@ export async function GET(
             });
           });
 
-          const remarksInCriterion = findings.filter(
-            (f: any) => f.impact == null
-          );
+          const remarksInCriterion = findings.filter(isOpmerking);
           remarksInCriterion.forEach((finding: any, index: number) => {
             remarks.push({
               finding,
