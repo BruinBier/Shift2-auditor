@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { typeVoorImpact } from '@/lib/finding-classification';
+import { createFindingWithCode } from '@/lib/finding-code';
 
 const prisma = new PrismaClient();
 
@@ -103,23 +104,6 @@ export async function POST(
           continue;
         }
 
-        // Generate a unique finding code
-        const existingCodes = await prisma.finding.findMany({
-          where: { projectId },
-          orderBy: { findingCode: 'desc' },
-          take: 1,
-        });
-
-        let nextNumber = 1;
-        if (existingCodes.length > 0) {
-          const lastCode = existingCodes[0].findingCode;
-          const match = lastCode.match(/^B(\d+)$/);
-          if (match) {
-            nextNumber = parseInt(match[1]) + 1;
-          }
-        }
-        const findingCode = `B${nextNumber.toString().padStart(3, '0')}`;
-
         // Get the highest sort order
         const lastFinding = await prisma.finding.findFirst({
           where: { projectId },
@@ -161,8 +145,9 @@ export async function POST(
           }
         }
 
-        // Create the Finding in draft status
-        const finding = await prisma.finding.create({
+        // Create the Finding in draft status. De code wordt binnen de
+        // transactie toegekend; deze lus maakt er meerdere achter elkaar aan.
+        const finding = await createFindingWithCode(projectId, (findingCode) => ({
           data: {
             projectId,
             findingCode,
@@ -182,9 +167,9 @@ export async function POST(
               },
             },
           },
-        });
+        }));
 
-        createdFindings.push(findingCode);
+        createdFindings.push(finding.findingCode);
       }
     }
 

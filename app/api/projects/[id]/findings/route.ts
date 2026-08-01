@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
+import { createFindingWithCode } from '@/lib/finding-code';
 
 export async function GET(
   request: NextRequest,
@@ -72,25 +73,6 @@ export async function POST(
 
     console.log('POST finding - projectId:', params.id, 'body:', body);
 
-    // Generate finding code automatically.
-    // Use the HIGHEST existing findingCode number + 1 (not count-based),
-    // so deleted findings don't cause duplicate codes when new ones are added.
-    const existingFindings = await prisma.finding.findMany({
-      where: { projectId: params.id },
-      select: { findingCode: true },
-    });
-    let maxNumber = 0;
-    for (const f of existingFindings) {
-      const m = (f.findingCode || '').match(/^B(\d+)$/);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (!Number.isNaN(n) && n > maxNumber) maxNumber = n;
-      }
-    }
-    const findingCode = `B${String(maxNumber + 1).padStart(3, '0')}`;
-
-    console.log('Generated finding code:', findingCode, '(max existing:', maxNumber, ')');
-
     // Get the highest sortOrder for this criterion to place new finding at the bottom
     const highestSortOrder = await prisma.finding.findFirst({
       where: {
@@ -119,10 +101,10 @@ export async function POST(
     const interimReviewed =
       discoveredInPhase === 'tussencheck' || discoveredInPhase === 'herinspectie';
 
-    // Build create data object
+    // Build create data object. findingCode wordt door createFindingWithCode
+    // toegekend, binnen de transactie die de finding aanmaakt.
     const createData: any = {
       projectId: params.id,
-      findingCode: findingCode,
       wcagCriterionId: body.criterionId,
       status: body.status || 'open',
       description: body.description || '',
@@ -136,8 +118,8 @@ export async function POST(
       interimReviewed,
     };
 
-    const finding = await prisma.finding.create({
-      data: createData,
+    const finding = await createFindingWithCode(params.id, (findingCode) => ({
+      data: { ...createData, findingCode },
       include: {
         project: {
           select: {
@@ -149,7 +131,7 @@ export async function POST(
         wcagCriterion: true,
         occurrences: true,
       },
-    });
+    }));
 
     console.log('Finding created successfully:', finding.id);
 
@@ -206,8 +188,11 @@ export async function POST(
     }
 
     return NextResponse.json(finding, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating finding:', error);
-    return NextResponse.json({ error: 'Failed to create finding' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create finding', details: error?.message },
+      { status: 500 }
+    );
   }
 }

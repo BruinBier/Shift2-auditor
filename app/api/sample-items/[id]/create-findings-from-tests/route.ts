@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
+import { createFindingWithCode } from '@/lib/finding-code';
 
 interface CreateFindingsRequest {
   testIds: string[];
@@ -166,28 +167,6 @@ export async function POST(
           continue;
         }
 
-        // Generate a unique finding code
-        const existingFindings = await prisma.finding.findMany({
-          where: { projectId },
-          orderBy: { findingCode: 'desc' },
-          take: 1,
-        });
-
-        let nextNumber = 1;
-        if (existingFindings.length > 0) {
-          const lastCode = existingFindings[0].findingCode;
-          // Match pattern like "B001", "SHP-3-F5", etc.
-          const match = lastCode.match(/(\d+)$/);
-          if (match) {
-            nextNumber = parseInt(match[1]) + 1;
-          }
-        }
-
-        // Use project kenmerk if available
-        const projectCode = sampleItem.project.kenmerk || 'B';
-        const version = sampleItem.project.version || 1;
-        const findingCode = `${projectCode}-${version}-F${nextNumber.toString().padStart(3, '0')}`;
-
         // Get the highest sort order
         const lastFinding = await prisma.finding.findFirst({
           where: { projectId },
@@ -197,7 +176,10 @@ export async function POST(
         const sortOrder = (lastFinding?.sortOrder || 0) + 1;
 
         // Create the Finding with FindingOccurrence
-        const finding = await prisma.finding.create({
+        // De code wordt binnen de transactie toegekend. Deze route gebruikte
+        // een afwijkend formaat (KENMERK-v-F###); nu overal B### zoals de
+        // andere aanmaakroutes.
+        const finding = await createFindingWithCode(projectId, (findingCode) => ({
           data: {
             projectId,
             findingCode,
@@ -223,7 +205,7 @@ export async function POST(
               },
             },
           },
-        });
+        }));
 
         createdFindings.push({
           findingCode: finding.findingCode,

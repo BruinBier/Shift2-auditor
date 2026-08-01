@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { typeVoorImpact } from '@/lib/finding-classification';
+import { createFindingWithCode } from '@/lib/finding-code';
 
 const prisma = new PrismaClient();
 
@@ -49,23 +50,6 @@ export async function POST(
       );
     }
 
-    // Generate a unique finding code
-    const existingFindings = await prisma.finding.findMany({
-      where: { projectId },
-      orderBy: { findingCode: 'desc' },
-      take: 1,
-    });
-
-    let nextNumber = 1;
-    if (existingFindings.length > 0) {
-      const lastCode = existingFindings[0].findingCode;
-      const match = lastCode.match(/^B(\d+)$/);
-      if (match) {
-        nextNumber = parseInt(match[1]) + 1;
-      }
-    }
-    const findingCode = `B${nextNumber.toString().padStart(3, '0')}`;
-
     // Get the highest sort order
     const lastFinding = await prisma.finding.findFirst({
       where: { projectId },
@@ -74,8 +58,9 @@ export async function POST(
     });
     const sortOrder = (lastFinding?.sortOrder || 0) + 1;
 
-    // Create the Finding with FindingUrls in a transaction
-    const finding = await prisma.finding.create({
+    // findingCode wordt binnen de transactie toegekend, zodat twee
+    // gelijktijdige aanmaakacties niet dezelfde code krijgen.
+    const finding = await createFindingWithCode(projectId, (findingCode) => ({
       data: {
         projectId,
         findingCode,
@@ -101,12 +86,12 @@ export async function POST(
         },
         wcagCriterion: true,
       },
-    });
+    }));
 
     return NextResponse.json({
       success: true,
       finding,
-      message: `Bevinding ${findingCode} is aangemaakt met ${scopeUrlIds.length} pagina's`,
+      message: `Bevinding ${finding.findingCode} is aangemaakt met ${scopeUrlIds.length} pagina's`,
     });
   } catch (error) {
     console.error('Error creating finding from crawler:', error);

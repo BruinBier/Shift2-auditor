@@ -401,6 +401,10 @@ model Finding {
   affectedUrls    FindingUrl[]
   attachments     FindingAttachment[]
 
+  /// Vangnet tegen dubbele codes: vier routes kenden findingCode toe met een
+  /// lezen-dan-schrijven zonder transactie, waardoor twee findings dezelfde
+  /// code konden krijgen. Zie lib/finding-code.ts.
+  @@unique([projectId, findingCode])
   @@map("findings")
 }
 
