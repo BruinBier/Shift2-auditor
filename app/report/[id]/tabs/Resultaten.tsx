@@ -6,6 +6,11 @@ import {
   getPrincipleLabel,
 } from '@/lib/report-calculations';
 import { formatProjectName } from '@/lib/format-project-name';
+import {
+  isOpenBevinding,
+  isOpgelosteBevinding,
+  isBevinding,
+} from '@/lib/finding-classification';
 
 export default function Resultaten({ project }: { project: any }) {
   const stats = calculateReportStats(project);
@@ -13,10 +18,10 @@ export default function Resultaten({ project }: { project: any }) {
 
   // Group assessments by criterion with finding count
   const criteriaWithResults = project.criterionAssessments.map((assessment: any) => {
+    // Alleen echte bevindingen tellen; opmerkingen horen niet in dit aantal.
     const findingsCount = project.findings.filter(
       (f: any) =>
-        f.wcagCriterionId === assessment.wcagCriterion.id &&
-        (f.status === 'published' || f.status === 'open')
+        f.wcagCriterionId === assessment.wcagCriterion.id && isOpenBevinding(f)
     ).length;
 
     return {
@@ -209,19 +214,19 @@ export default function Resultaten({ project }: { project: any }) {
             <div className="flex justify-between">
               <dt className="text-sm text-gray-600">Openstaand</dt>
               <dd className="text-sm font-medium text-red-600">
-                {project.findings.filter((f: any) => f.status === 'open').length}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-sm text-gray-600">Gepubliceerd</dt>
-              <dd className="text-sm font-medium text-gray-900">
-                {project.findings.filter((f: any) => f.status === 'published').length}
+                {project.findings.filter(isOpenBevinding).length}
               </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-sm text-gray-600">Opgelost</dt>
               <dd className="text-sm font-medium text-gray-900">
-                {project.findings.filter((f: any) => f.status === 'resolved').length}
+                {project.findings.filter(isOpgelosteBevinding).length}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-sm text-gray-600">Opmerkingen</dt>
+              <dd className="text-sm font-medium text-gray-900">
+                {project.findings.filter((f: any) => !isBevinding(f)).length}
               </dd>
             </div>
           </dl>
