@@ -1684,7 +1684,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             Bekijk HTML-versie
           </a>
           <a
-            href={`/api/reports/${project.id}/html-word`}
+            href={`/api/reports/${project.id}/word`}
             download
             className="block w-full text-center px-4 py-2 mt-3 bg-shift2-primary text-white rounded-lg hover:bg-shift2-accent transition-colors text-sm font-medium"
           >
