@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
 import { createFindingWithCode } from '@/lib/finding-code';
+import { lintFinding, type LintIssue } from '@/lib/finding-lint';
 
 export async function GET(
   request: NextRequest,
@@ -101,6 +102,8 @@ export async function POST(
     const interimReviewed =
       discoveredInPhase === 'tussencheck' || discoveredInPhase === 'herinspectie';
 
+    let lintWarnings: LintIssue[] = [];
+
     // Build create data object. findingCode wordt door createFindingWithCode
     // toegekend, binnen de transactie die de finding aanmaakt.
     const createData: any = {
@@ -117,6 +120,38 @@ export async function POST(
       discoveredInPhase,
       interimReviewed,
     };
+
+    // Schrijfregel-check. Draaide eerder alleen in de CLI, waardoor
+    // bevindingen uit de UI en de crawler er langs gingen. Harde fouten
+    // blokkeren; waarschuwingen komen mee in het antwoord. Omzeilen kan met
+    // skipLint, voor de gevallen waarin de linter er naast zit.
+    if (body.skipLint !== true) {
+      const criterion = await prisma.wCAGCriterion.findUnique({
+        where: { id: body.criterionId },
+        select: { code: true },
+      });
+      const issues = lintFinding({
+        description: createData.description,
+        advice: createData.advice,
+        impact: createData.impact,
+        responsibility: createData.responsibility,
+        status: createData.status,
+        type: createData.type,
+        criterionCode: criterion?.code,
+      });
+      const errors = issues.filter((i) => i.severity === 'error');
+      if (errors.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Bevinding voldoet niet aan de schrijfregels',
+            lintIssues: issues,
+            hint: 'Pas de tekst aan, of stuur skipLint mee als de linter er hier naast zit.',
+          },
+          { status: 422 }
+        );
+      }
+      if (issues.length > 0) lintWarnings = issues;
+    }
 
     const finding = await createFindingWithCode(params.id, (findingCode) => ({
       data: { ...createData, findingCode },
@@ -187,7 +222,10 @@ export async function POST(
       }
     }
 
-    return NextResponse.json(finding, { status: 201 });
+    return NextResponse.json(
+      lintWarnings.length > 0 ? { ...finding, lintWarnings } : finding,
+      { status: 201 }
+    );
   } catch (error: any) {
     console.error('Error creating finding:', error);
     return NextResponse.json(

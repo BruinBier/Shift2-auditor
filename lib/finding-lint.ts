@@ -32,6 +32,8 @@ export interface FindingDraft {
   impact?: string | null;
   responsibility?: string | null;
   status?: string | null;
+  /** 'bevinding' of 'opmerking'. Bepaalt of impact en verantwoordelijkheid horen. */
+  type?: string | null;
   /** SC-code zoals "1.1.1". Alleen gebruikt voor criterium-specifieke regels. */
   criterionCode?: string | null;
   /** Zet op true bij een bevinding over een PDF; activeert de tag-jargonregels. */
@@ -261,7 +263,12 @@ export function lintFinding(draft: FindingDraft): LintIssue[] {
 
   // --- Status, impact en verantwoordelijkheid -----------------------------
 
-  const isOpmerking = draft.status === 'resolved';
+  // Bevinding of opmerking staat in het type-veld. Wordt dat niet meegegeven,
+  // dan valt dit terug op de oude afleiding: een opmerking heeft geen impact.
+  // Let op: status 'resolved' is géén signaal. Een afkeuring die bij de
+  // herinspectie is opgelost staat ook op resolved en houdt zijn impact.
+  const isOpmerking =
+    draft.type != null ? draft.type === 'opmerking' : draft.impact == null;
   const hasImpact = !!draft.impact && draft.impact !== 'onbekend';
   const hasResponsibility = !!draft.responsibility && draft.responsibility !== 'onbekend';
 
@@ -270,7 +277,7 @@ export function lintFinding(draft: FindingDraft): LintIssue[] {
       severity: 'error',
       rule: 'opmerking-zonder-impact',
       field: 'impact',
-      message: `Een opmerking (status resolved) krijgt geen impact. Nu ingevuld als "${draft.impact}". Laat leeg.`,
+      message: `Een opmerking krijgt geen impact. Nu ingevuld als "${draft.impact}". Laat leeg.`,
     });
   }
   if (isOpmerking && hasResponsibility) {
@@ -278,16 +285,18 @@ export function lintFinding(draft: FindingDraft): LintIssue[] {
       severity: 'error',
       rule: 'opmerking-zonder-verantwoordelijkheid',
       field: 'responsibility',
-      message: `Een opmerking (status resolved) krijgt geen verantwoordelijkheid. Nu ingevuld als "${draft.responsibility}". Laat leeg.`,
+      message: `Een opmerking krijgt geen verantwoordelijkheid. Nu ingevuld als "${draft.responsibility}". Laat leeg.`,
     });
   }
-  if (!isOpmerking && draft.status === 'open') {
+  // Een afkeuring hoort impact en verantwoordelijkheid te hebben, ook als hij
+  // inmiddels is opgelost: dat blijft een afkeuring, alleen met status resolved.
+  if (!isOpmerking) {
     if (!draft.impact) {
       issues.push({
         severity: 'warn',
         rule: 'afkeuring-heeft-impact',
         field: 'impact',
-        message: 'Een afkeuring (status open) hoort een impact te hebben.',
+        message: 'Een afkeuring hoort een impact te hebben.',
       });
     }
     if (!draft.responsibility) {
@@ -295,7 +304,7 @@ export function lintFinding(draft: FindingDraft): LintIssue[] {
         severity: 'warn',
         rule: 'afkeuring-heeft-verantwoordelijkheid',
         field: 'responsibility',
-        message: 'Een afkeuring (status open) hoort een verantwoordelijkheid te hebben.',
+        message: 'Een afkeuring hoort een verantwoordelijkheid te hebben.',
       });
     }
   }

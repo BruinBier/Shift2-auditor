@@ -331,7 +331,10 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
       // by replacing the entire page. Calling onClose() here would cause a race condition.
     } catch (error) {
       console.error('Error saving finding:', error);
-      alert('Er is een fout opgetreden bij het opslaan van de bevinding.');
+      // De melding van de server bevat bij schrijfregel-fouten per regel wat
+      // er aangepast moet worden; die is bruikbaarder dan een algemene tekst.
+      const melding = error instanceof Error && error.message ? error.message : null;
+      alert(melding ?? 'Er is een fout opgetreden bij het opslaan van de bevinding.');
     } finally {
       setIsSaving(false);
     }

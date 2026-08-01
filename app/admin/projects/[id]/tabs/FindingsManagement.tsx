@@ -567,6 +567,21 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('Save failed:', errorData);
+
+        // Schrijfregel-fouten: toon per regel wat er aangepast moet worden,
+        // in plaats van alleen "voldoet niet aan de schrijfregels".
+        if (response.status === 422 && Array.isArray(errorData.lintIssues)) {
+          const regels = errorData.lintIssues
+            .filter((i: any) => i.severity === 'error')
+            .map((i: any) => {
+              const stuk = i.excerpt ? `\n   gevonden: "${i.excerpt}"` : '';
+              const tip = i.suggestion ? `\n   voorstel: ${i.suggestion}` : '';
+              return `• ${i.message}${stuk}${tip}`;
+            })
+            .join('\n\n');
+          throw new Error(`Schrijfregels:\n\n${regels}`);
+        }
+
         throw new Error(errorData.error || 'Failed to save finding');
       }
 

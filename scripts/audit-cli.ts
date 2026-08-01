@@ -30,7 +30,7 @@ import {
   lintFinding,
   formatLintIssues,
   type FindingDraft,
-} from './lib/finding-lint';
+} from '../lib/finding-lint';
 
 const BASE_URL = process.env.AUDIT_CLI_BASE_URL || 'http://localhost:3000';
 
