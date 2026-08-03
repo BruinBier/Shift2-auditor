@@ -109,7 +109,7 @@ async function exportAllData() {
     const sampleItems = await prisma.sampleItem.findMany();
     await exportTable('sample_items', sampleItems, [
       'id', 'projectId', 'sampleType', 'title', 'url', 'description',
-      'orderIndex', 'makeScreenshot', 'screenshotPath', 'screenshotAlt', 'createdAt', 'updatedAt'
+      'orderIndex', 'makeScreenshot', 'screenshotPath', 'screenshotAlt', 'auditHtmlPath', 'auditCapturedAt', 'createdAt', 'updatedAt'
     ]);
 
     // 8. Project Scope URLs
