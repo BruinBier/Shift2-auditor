@@ -40,6 +40,10 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   succescriterium valt, krijgt een eigen bevinding.
 - **Niet dezelfde zaak twee keer uitleggen** in andere woorden.
 - **Geen overbodige uitleg over hoe WCAG werkt.**
+- **Geen overbodige "van de gemeente"** of vergelijkbare bezitsbepaling. Schrijf "de links naar
+  de sociale media", niet "de links naar de sociale media van de gemeente". De bevinding staat
+  al in het rapport van die organisatie. Wél noemen waar het inhoudelijk uitmaakt, zoals bij
+  2.4.4 waar het probleem juist is dat de linktekst de organisatie niet noemt.
 
 ## Toon en formulering
 
@@ -59,6 +63,10 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   maak er één bullet van ("In de video's van X en Y ...").
 - **Site-breed patroon?** Koppel aan één representatief sample (meestal de homepage) en
   zet in de description "Dit patroon is op alle pagina's van de website aanwezig".
+  **Uitzondering: header en footer.** Staat er al "In de footer" of "Boven aan de pagina", dan
+  is die zin overbodig: een footer staat per definitie op elke pagina. Header en footer worden
+  bovendien alleen op het homepage-sample beoordeeld, dus de bevinding hangt sowieso aan één
+  sample-item.
 
 ## Terminologie
 
@@ -106,11 +114,48 @@ Sluit het advies van een opmerking af met "Dit is een best practice." waar dat p
 
 ## Voor je een bevinding aanmaakt
 
-1. **Check de QuickFinding-bibliotheek** — bestaat er al een passende template? Gebruik die
-   als basis in plaats van iets nieuws te schrijven.
+1. **Check de QuickFinding-bibliotheek** — bestaat er al een passende template? Doe dit
+   **meteen** bij het constateren van een issue, niet pas nadat je zelf een tekst hebt bedacht.
+
+   Bij een treffer is de QuickFinding-tekst het **uitgangspunt**, niet een eigen formulering
+   die er ongeveer op lijkt. Neem description en advice letterlijk over. Aanpassen mag alleen
+   om placeholders in te vullen of om iets te schrappen dat feitelijk niet klopt met deze site.
+   **Voeg niets toe wat niet in de QuickFinding staat.**
+
+   Meld expliciet wat je hebt gevonden: "QuickFinding X gevonden, tekst ongewijzigd overgenomen"
+   of "niets passends gevonden, zelf geformuleerd".
 2. **Check bestaande bevindingen in het project** — hetzelfde criterium met dezelfde oorzaak
    op een andere pagina? Breid dan de bestaande bevinding uit met het nieuwe sample-item in
    plaats van een duplicaat aan te maken. Meld dit proactief en vraag of het samengevoegd
    moet worden; beslis het niet zelf.
    Een andere **oorzaak** onder hetzelfde criterium is wél een aparte bevinding (1.3.1
    strong-in-kop is iets anders dan 1.3.1 br-als-lijst).
+
+### Neem je een QuickFinding over: vul de placeholders in
+
+QuickFindings zijn sjablonen voor hergebruik over alle projecten. Ze bevatten placeholders als
+`[organisatie]`, `ORGANISATIE` of `gemeente X`, en soms zinnen die op deze site niet kloppen.
+Loop **zowel de description als de advice** na voordat je wegschrijft:
+
+- Vul placeholders in met de werkelijke naam. `"Logo [organisatie]"` wordt
+  `"Logo gemeente Utrechtse Heuvelrug"`. Een bevinding met blokhaken erin komt zo in het
+  rapport bij de opdrachtgever terecht.
+- Schrap of pas aan wat feitelijk niet klopt. Verwijst de QuickFinding naar "de kop Volg ons"
+  terwijl de footer van deze site geen koppen heeft, haal die verwijzing dan weg.
+- Laat de placeholder in de bibliotheek zelf ongemoeid; alleen de bevinding wordt specifiek.
+
+## Kun je iets niet beoordelen? Melden, niet weglaten
+
+Kom je bij een criterium iets tegen dat je niet zelf kunt vaststellen (een uitzondering die
+een inhoudelijk oordeel vraagt, een meting die niet lukt), zet het criterium dan op
+`niet_te_bepalen` en formuleer de concrete vraag voor de onderzoeker, met de gegevens die je
+wél hebt.
+
+Laat het **nooit stilzwijgend vallen** en vul geen `voldoet` in omdat je het niet kon toetsen.
+Een gemist issue is de enige categorie fouten die onzichtbaar blijft: de onderzoeker kan geen
+akkoord geven op een bevinding die nooit is voorgesteld.
+
+Voorbeeld bij 2.5.8: "Op deze pagina is [element] 18 bij 18 pixels, terwijl 24 bij 24 het
+minimum is. Is dezelfde functie elders bereikbaar via een knop of link die wél groot genoeg is
+(uitzondering 'gelijkwaardig'), of is deze vormgeving noodzakelijk (uitzondering
+'essentieel')?"

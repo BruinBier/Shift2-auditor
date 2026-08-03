@@ -1,7 +1,7 @@
 export const meta = {
   name: 'audit-samples',
   description: 'Per sample: audit alle succescriteria van het onderzoekstype met de Shift2-beoordelingsregels en de checklists, verifieer, en match tegen bestaande QuickFindings',
-  whenToUse: 'Voor een WCAG-audit waarbij per sample-pagina elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Levert een voorstel-rapport plus een lijst met vragen die handmatig in de browser beantwoord moeten worden; schrijft niets naar de database.',
+  whenToUse: 'Voor een WCAG-audit waarbij per sample elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Werkt op HTML-pagina\'s en op PDF-documenten (die krijgen een eigen beoordeling op documentstructuur). Levert een voorstel-rapport plus een lijst met vragen die handmatig beantwoord moeten worden; schrijft niets naar de database.',
   phases: [
     { title: 'Voorbereiden', detail: 'Project, samples, SC-set en QuickFindings ophalen' },
     { title: 'Auditen', detail: 'Eén auditor-agent per sample gaat alle SC\'s af (Shift2-regels + wcag-checklists)' },
@@ -143,12 +143,14 @@ if (!context.quickFindingsPad || !context.aantalQuickFindings) {
   log(`LET OP: geen QuickFinding-bibliotheek (pad=${context.quickFindingsPad || 'leeg'}, aantal=${context.aantalQuickFindings || 0}). De match-fase kan geen duplicaten herkennen; controleer de voorstellen zelf tegen de bibliotheek.`)
 }
 
-// Alleen HTML-pagina's auditen: samples met een echte http(s)-URL. PDF/URL-loze
-// samples slaan we over (die vereisen PAC-output die de workflow niet heeft).
-// PDF-samples horen hier NIET bij: die vereisen PAC-output (PDF Accessibility Checker) die
-// deze workflow niet heeft. Zonder die output kun je een PDF niet betrouwbaar beoordelen, dus
-// filteren we op sampleType EN op de .pdf-extensie in de URL (een sample kan als 'structured'
-// zijn aangemaakt terwijl de URL naar een PDF wijst).
+// Samples splitsen in HTML-pagina's en PDF-documenten. Beide worden geauditeerd, maar met
+// een eigen prompt: een PDF beoordeel je op de documentstructuur (tags, titel, taal), niet
+// op DOM en screenshot.
+const isPdfSample = (s) =>
+  typeof s.url === 'string' &&
+  /^https?:\/\//i.test(s.url) &&
+  (s.sampleType === 'pdf' || /\.pdf(\?|#|$)/i.test(s.url))
+
 const htmlSamples = context.samples.filter(
   (s) =>
     typeof s.url === 'string' &&
@@ -156,7 +158,11 @@ const htmlSamples = context.samples.filter(
     s.sampleType !== 'pdf' &&
     !/\.pdf(\?|#|$)/i.test(s.url),
 )
-const overgeslagen = context.samples.filter((s) => !htmlSamples.includes(s))
+const pdfSamples = context.samples.filter(isPdfSample)
+// Wat overblijft heeft geen bruikbare URL en kan niet opgehaald worden.
+const overgeslagen = context.samples.filter(
+  (s) => !htmlSamples.includes(s) && !pdfSamples.includes(s),
+)
 
 // Index van bestaande bevindingen per sampleId → set van criteriumcodes,
 // zodat we straks 'nieuw' vs 'bestaat_al' kunnen labelen (verse audit — de
@@ -169,8 +175,9 @@ for (const f of context.existingFindings || []) {
   }
 }
 
-if (!htmlSamples.length) {
-  return { error: 'Geen HTML-samples (met http(s)-URL) om te auditen.', overgeslagen }
+const alleAuditbaar = [...htmlSamples, ...pdfSamples]
+if (!alleAuditbaar.length) {
+  return { error: 'Geen samples met een bruikbare http(s)-URL om te auditen.', overgeslagen }
 }
 
 // Sample-selectie:
@@ -179,12 +186,12 @@ if (!htmlSamples.length) {
 //   opts.maxSamples     — testlimiet: alleen de eerste N
 // Let op: het homepage-sample wordt hieronder apart bepaald uit ALLE html-samples, ook als
 // het zelf niet geauditeerd wordt. De auditor moet immers weten of hij op de homepage zit.
-let teAuditen = htmlSamples
+let teAuditen = alleAuditbaar
 if (Array.isArray(opts.sampleIds) && opts.sampleIds.length) {
   const wil = new Set(opts.sampleIds)
-  teAuditen = htmlSamples.filter((s) => wil.has(s.id))
-  const nietGevonden = opts.sampleIds.filter((id) => !htmlSamples.some((s) => s.id === id))
-  if (nietGevonden.length) log(`LET OP: ${nietGevonden.length} opgegeven sample-id(s) niet gevonden of geen HTML-sample: ${nietGevonden.join(', ')}`)
+  teAuditen = alleAuditbaar.filter((s) => wil.has(s.id))
+  const nietGevonden = opts.sampleIds.filter((id) => !alleAuditbaar.some((s) => s.id === id))
+  if (nietGevonden.length) log(`LET OP: ${nietGevonden.length} opgegeven sample-id(s) niet gevonden of zonder bruikbare URL: ${nietGevonden.join(', ')}`)
 }
 if (Array.isArray(opts.skipSampleIds) && opts.skipSampleIds.length) {
   const skip = new Set(opts.skipSampleIds)
@@ -196,7 +203,7 @@ if (Number.isInteger(opts.maxSamples) && opts.maxSamples > 0) {
   teAuditen = teAuditen.slice(0, opts.maxSamples)
 }
 if (!teAuditen.length) {
-  return { error: 'Geen samples over om te auditen na filtering.', htmlSamples: htmlSamples.map((s) => ({ id: s.id, title: s.title })) }
+  return { error: 'Geen samples over om te auditen na filtering.', beschikbaar: alleAuditbaar.map((s) => ({ id: s.id, title: s.title })) }
 }
 
 // Welk sample is de homepage? Alleen daar worden header en footer beoordeeld; op alle
@@ -221,7 +228,8 @@ if (!homepageSample) {
   log(`Homepage-sample: "${homepageSample.title}". Daar worden header, main en footer beoordeeld; bij de overige samples alleen de main-content.`)
 }
 
-log(`${teAuditen.length} van ${htmlSamples.length} HTML-samples × ${context.criteria.length} criteria (onderzoekstype: ${context.researchTypeName}). ${overgeslagen.length} niet-HTML samples overgeslagen. ${context.existingFindings?.length || 0} bestaande bevindingen als referentie. QuickFinding-bibliotheek: ${context.aantalQuickFindings || 0} stuks in ${context.quickFindingsPad || '(geen pad)'}.`)
+const aantalPdfTeAuditen = teAuditen.filter(isPdfSample).length
+log(`${teAuditen.length} samples te auditen (${teAuditen.length - aantalPdfTeAuditen} HTML, ${aantalPdfTeAuditen} PDF) × ${context.criteria.length} criteria (onderzoekstype: ${context.researchTypeName}). ${overgeslagen.length} samples zonder bruikbare URL overgeslagen. ${context.existingFindings?.length || 0} bestaande bevindingen als referentie. QuickFinding-bibliotheek: ${context.aantalQuickFindings || 0} stuks in ${context.quickFindingsPad || '(geen pad)'}.`)
 
 // ---------------------------------------------------------------------------
 // SC-MANIFEST — welke criteria een browsertest vereisen, en met welke vraag.
@@ -239,17 +247,22 @@ const INTERACTIEVE_SC = {
   '1.2.3': 'Bevatten de videos op {pagina} visuele informatie die niet hoorbaar wordt genoemd (naam-in-beeld, locatie-labels, lower thirds)? En is er ruimte in het audiospoor voor audiodescriptie?',
   '1.2.5': 'Is er in de videos op {pagina} ruimte in het audiospoor voor audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Graag per video, met tijdstip.',
   '1.4.3': 'Heeft de hoogcontrast-/toegankelijkheidsknop op {pagina} zelf voldoende contrast? En zo ja, voldoet de hoog-contrast-versie inhoudelijk? Blijven daarbij ook de logos en afbeeldingen met tekst leesbaar in die weergave (let op het footer-logo)?',
-  '1.4.10': 'Kun je {pagina} checken op 320px breedte (DevTools responsive mode of het venster versmallen)? Werkt alles zonder horizontaal scrollen, en valt er geen content weg?',
   '1.4.11': 'Heeft de hoogcontrast-/toegankelijkheidsknop op {pagina} zelf voldoende contrast (geldt voor 1.4.11 net als voor 1.4.3)?',
-  '2.1.2': 'Kun je met Tab door {pagina} navigeren en bevestigen dat je nergens vast komt te zitten (modals, custom dropdowns, embeds)?',
 }
+
+// 2.1.2 en 1.4.10 staan bewust NIET in INTERACTIEVE_SC: beide zijn te automatiseren via de
+// audit-sessie-Chrome. 2.1.2 door Tab te versturen en document.activeElement uit te lezen,
+// 1.4.10 door de viewport op exact 320 CSS-pixels te zetten en scrollWidth te vergelijken.
+// Zie wcag-regels/Shift2_Regels_SC_2_1_2.md en Shift2_Regels_SC_1_4_10.md. Lukt de test niet,
+// dan zet de auditor het criterium zelf op 'niet_te_bepalen' met de vraag voor de onderzoeker.
 
 // Criteria waarvoor een Shift2_Regels-bestand in wcag-regels/ bestaat. Puur om de
 // auditor gericht te verwijzen; ontbreekt een code hier, dan is er (nog) geen
 // regelbestand en beoordeelt de auditor op checklist + WCAG-tekst.
 const SC_MET_REGELBESTAND = [
   '1.1.1', '1.2.3', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.5',
-  '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '4.1.2',
+  '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '2.5.3', '2.5.8',
+  '3.2.4', '4.1.2',
 ]
 
 // Vaste, gesorteerde SC-lijst die aan ELKE auditor wordt meegegeven.
@@ -399,6 +412,112 @@ const QF_MATCH_SCHEMA = {
 }
 
 // ---------------------------------------------------------------------------
+// PDF-AUDITPROMPT
+//
+// Een PDF beoordeel je niet op DOM en screenshot maar op de documentstructuur. De
+// kernvraag is of het document getagd is: zonder tags bestaat er geen structuur om te
+// toetsen en vervalt een reeks criteria (zie wcag-regels/Shift2_Regels_SC_1_3_1.md).
+// De agent stelt dat zelf vast met pdf-lib of PyMuPDF; PAC-output is daarvoor niet nodig.
+// ---------------------------------------------------------------------------
+const pdfPrompt = (sample) => `Je bent WCAG-auditor en beoordeelt ÉÉN PDF-document tegen ELK van de onderstaande succescriteria. Sla NIETS over: geef voor elk criterium een status.
+
+SAMPLE
+  id:    ${sample.id}
+  titel: ${sample.title}
+  url:   ${sample.url}
+  type:  PDF-document
+
+STAP 1 — HAAL HET DOCUMENT OP EN LEES DE STRUCTUUR UIT
+Download het bestand naar tmp/pdf/ en bepaal machinaal:
+  - Is het document GETAGD? Kijk of de catalog een /StructTreeRoot heeft en of /MarkInfo met
+    /Marked true aanwezig is. Controleer ter bevestiging of die sleutels überhaupt in het
+    bestand voorkomen.
+  - Documenttitel: staat er een /Title in de Info-dictionary? En staat /DisplayDocTitle op
+    true in /ViewerPreferences? Ontbreekt dat laatste, dan toont de viewer de bestandsnaam.
+  - Taal: staat /Lang in de catalog?
+  - PDF/UA-vlag in de XMP-metadata.
+  - Aantal pagina's, aantal afbeeldingen, aanwezigheid van een tekstlaag.
+
+Gebruik hiervoor Python met PyMuPDF (\`import fitz\`) of Node met pdf-lib. Beide zijn
+beschikbaar. Voorbeelden staan in tmp/pdfcheck.mjs en tmp/pdf_render.py.
+
+LET OP bij het uitlezen van de metadata: een PDF bevat ook de metadata van elk INGEBED
+object (afbeeldingen, kleurprofielen). Een grep over de ruwe bytes vindt daardoor titels die
+niet de documenttitel zijn. Volg altijd de objectverwijzing vanuit de catalog.
+
+STAP 2 — BEKIJK DE PAGINA'S
+Render de pagina's naar afbeeldingen en bekijk ze. Sommige beoordelingen kun je alleen op
+beeld doen.
+
+STAP 3 — BEOORDEEL
+
+IS HET DOCUMENT NIET GETAGD, dan geldt dit dwingend (zie Shift2_Regels_SC_1_3_1.md):
+  - 1.3.1 → AFGEKEURD. De ontbrekende tagstructuur is de wortel-oorzaak.
+  - 1.1.1 → OPMERKING (status 'opmerking'), geen afkeuring. Zonder tags kun je niet
+    vaststellen wat er aan tekstalternatieven ontbreekt.
+  - 1.3.2 leesvolgorde → 'niet_te_bepalen'. Er is geen programmatische leesvolgorde.
+  - 1.4.5 afbeeldingen van tekst → 'niet_te_bepalen'. Zonder tags is er voor hulptechnologie
+    geen onderscheid tussen tekst en afbeelding. Dat jij de tekst in een afbeelding kunt
+    uitsnijden en lezen, maakt het nog geen zelfstandig oordeel.
+  - 3.2.4 consistente identificatie → 'niet_te_bepalen'. Zonder tags zijn er geen
+    programmatisch herkenbare onderdelen waarvan de identificatie te vergelijken valt.
+  Keur deze vier dus NIET apart af als gevolg van dezelfde oorzaak, en vul er ook nooit
+  'voldoet' bij in.
+
+MAAR: deze twee criteria beoordeel je bij een ongetagd document WEL gewoon. Ze gaan over de
+inhoudelijke kwaliteit van de TEKST, en die staat er ook zonder tags. Geef er een echt oordeel
+over (voldoet of afgekeurd); zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
+  - 2.4.4 linkdoel → lees of de tekst van een link of webadres duidelijk maakt waar hij heen
+    leidt. "Klik hier" of "lees meer" zonder context is ook in een PDF een afkeuring. Wat je
+    hier NIET beoordeelt: dat de link niet klikbaar is; dat valt onder 1.3.1.
+  - 2.4.6 koppen en labels → kijk of de koppen boven de paragrafen de lading dekken van wat
+    eronder staat. Dat de kop technisch niet als kop is vastgelegd, is een 1.3.1-kwestie.
+
+ALTIJD, ook bij een niet-getagd document:
+  - 2.4.2 paginatitel → ontbreekt de documenttitel, of staat DisplayDocTitle niet aan
+    waardoor de viewer de bestandsnaam toont, dan is dat een AFKEURING.
+  - 3.1.1 taal → ontbreekt /Lang, dan een AFKEURING. Staat het er, dan 'voldoet'.
+
+NIET ZELF BEOORDELEN:
+  - 1.4.3 contrast → ALTIJD 'niet_te_bepalen' bij een PDF. De onderzoeker controleert het
+    contrast in PDF-documenten handmatig. Meet het niet uit en schrijf er geen voorstel voor.
+    Zet in 'reden': "Contrast in PDF-documenten wordt handmatig door de onderzoeker
+    gecontroleerd."
+
+NIET VAN TOEPASSING op een PDF: 1.4.10 reflow, 2.1.2 toetsenbordval, 2.5.3 label in naam,
+2.5.8 grootte aanwijsgebied. Zet die op 'niet_aanwezig'.
+
+IS HET DOCUMENT WEL GETAGD, dan gaat het om de KWALITEIT van de tags: leesvolgorde,
+koppenniveaus, tekstalternatieven, lijststructuur, tabelkoppen. Die kwaliteit kun je zonder
+PAC-output (PDF Accessibility Checker) niet betrouwbaar beoordelen. Zet de criteria die
+daarvan afhangen op 'niet_te_bepalen' met als reden dat de onderzoeker PAC-output moet
+aanleveren, en meld dat expliciet.
+
+TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
+${scList}${bronnenSectie}
+
+STATUS per criterium:
+  voldoet          — geen probleem gevonden
+  afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
+  opmerking        — best-practice/randgeval, geen echte fout; voorstelBevinding zonder impact/responsibility
+  niet_aanwezig    — het criterium is niet van toepassing op dit document
+  niet_te_bepalen  — kan niet worden vastgesteld; zet de concrete vraag in 'reden'
+
+SCHRIJFREGELS voor voorstelBevinding.description:
+  - Begin NIET met de URL. Start met "In het document..." of "Op pagina 2...".
+  - Kort en concreet: locatie, kernprobleem, effect voor de gebruiker. Meestal 3 zinnen.
+  - Geen em-dash (—) of en-dash (–).
+  - GEEN interne tagnamen: niet Figure, ImageData, Alt-attribuut, LBody, Lbl. Schrijf
+    "als afbeelding aangemerkt", "tekstalternatief", "lijststructuur".
+  - Geen toolnamen in het advies (niet Canva, Word, InDesign). Spreek over "het brondocument".
+    Adobe Acrobat mag wel bij concrete tag-stappen.
+  - Formuleer vanuit voorlezen/horen: hulpsoftware leest voor, laat niets zien.
+Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar|ontwerper.
+Bij opmerking: laat impact en responsibility leeg.
+
+Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requiredCodes.length} assessments, één per code.`
+
+// ---------------------------------------------------------------------------
 // FASE 2/3/4 — pipeline per sample: audit → verifieer → QuickFinding-match.
 // pipeline() zonder barrier: sample B kan al auditen terwijl sample A verifieert.
 // ---------------------------------------------------------------------------
@@ -406,8 +525,16 @@ const results = await pipeline(
   teAuditen,
 
   // Stage 1 — AUDIT: één agent per sample, gaat ALLE SC's af.
+  // PDF-samples krijgen een eigen prompt: daar beoordeel je de documentstructuur
+  // (tags, titel, taal) in plaats van DOM en screenshot.
   (sample) =>
-    agent(
+    isPdfSample(sample)
+      ? agent(pdfPrompt(sample), {
+          label: `audit-pdf:${sample.title}`,
+          phase: 'Auditen',
+          schema: AUDIT_SCHEMA,
+        })
+      : agent(
       `Je bent WCAG-auditor. Beoordeel ÉÉN sample-pagina tegen ELK van de onderstaande succescriteria. Sla NIETS over: geef voor elk criterium een status.
 
 SAMPLE
@@ -451,9 +578,14 @@ STATUS per criterium:
 UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags heeft):
   Een niet-getagde PDF heeft één wortel-oorzaak: de tag-structuur ontbreekt. Keur die af onder 1.3.1.
   Criteria die je alléén kunt beoordelen wanneer er tags zijn, keur je NIET apart af als gevolg van diezelfde
-  oorzaak. Met name 1.3.2 (leesvolgorde): zonder tags is er geen programmatische leesvolgorde om te toetsen,
-  dus zet 1.3.2 op 'niet_te_bepalen' met die reden. Je stelt geen fout vast op iets dat zonder tags niet
-  bestaat om te checken. (Dit geldt specifiek voor niet-getagde PDF's, niet als algemene regel voor webpagina's.)
+  oorzaak. Je stelt geen fout vast op iets dat zonder tags niet bestaat om te checken. Concreet:
+    - 1.3.2 (leesvolgorde): 'niet_te_bepalen' — zonder tags is er geen programmatische leesvolgorde
+    - 2.4.4 (linkdoel): 'niet_te_bepalen' — zonder tags is er geen linkstructuur. Ook als webadressen
+      als platte tekst in het document staan en niet klikbaar zijn, is dat hier GEEN 2.4.4-bevinding
+    - 1.4.5 (afbeeldingen van tekst): 'niet_te_bepalen' — zonder tags is niet vast te stellen wat als
+      afbeelding en wat als tekst is aangemerkt
+    - 1.1.1 (tekstalternatieven): opmerking, niet afgekeurd — zonder tags kun je niet vaststellen wat ontbreekt
+  (Dit geldt specifiek voor niet-getagde PDF's, niet als algemene regel voor webpagina's.)
 
 SCHRIJFREGELS voor voorstelBevinding.description (belangrijk):
   - Begin NIET met de URL. Start met "Op de pagina..." / "In de footer...".
@@ -492,7 +624,9 @@ Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requi
     return agent(
       `Je bent een kritische WCAG-verifier. Een andere auditor beoordeelde sample "${sample.title}" (${sample.url || 'geen URL'}). Controleer UITSLUITEND de onderstaande afkeuringen en opmerkingen: klopt het oordeel, en is de beschrijving correct en niet overdreven? Probeer elk oordeel te weerleggen; bevestig alleen wat standhoudt.
 ${
-  homepageSample && sample.id === homepageSample.id
+  isPdfSample(sample)
+    ? `\nDit is een PDF-DOCUMENT, geen webpagina. De main-content-regel geldt hier niet; het hele document hoort beoordeeld te worden.\n`
+    : homepageSample && sample.id === homepageSample.id
     ? `\nDit is het homepage-sample: header, main-content en footer horen hier allemaal beoordeeld te worden.\n`
     : `\nDit is GEEN homepage-sample. Alleen de main-content mag beoordeeld worden. WEERLEG elke bevinding die over de header, de sitebrede navigatie, de toegankelijkheidsbalk of de footer gaat, ook als de bevinding inhoudelijk klopt: die onderdelen worden alleen op het homepage-sample${homepageSample ? ` ("${homepageSample.title}")` : ''} gerapporteerd. Zet gecorrigeerdeStatus dan op 'niet_aanwezig' met als toelichting dat het buiten de main-content van deze pagina valt. Zie wcag-regels/Shift2_Scope_Per_Sample.md.\n`
 }
@@ -506,7 +640,9 @@ Lees daarnaast \`wcag-regels/Shift2_Schrijfregels.md\` en toets elke description
 
 Weerleg een oordeel expliciet als het in strijd is met een Shift2-regel. Typische gevallen: een afkeuring op een telefoonnummer- of e-maillink onder 2.4.4, een afkeuring op een teaser-afbeelding met alt="", of een afkeuring waar de regels een opmerking voorschrijven (zet dan gecorrigeerdeStatus op 'opmerking').
 
-LET OP bij een niet-getagde PDF: weerleg een afkeuring van 1.3.2 (leesvolgorde). Zonder tags is er geen programmatische leesvolgorde om te toetsen, dus dat hoort 'niet_te_bepalen' te zijn, niet afgekeurd. De ontbrekende tag-structuur wordt al onder 1.3.1 afgekeurd; keur het gevolg niet apart af.
+LET OP bij een niet-getagde PDF: de ontbrekende tagstructuur wordt al onder 1.3.1 afgekeurd. Weerleg elke afkeuring die een GEVOLG is van diezelfde oorzaak en zet gecorrigeerdeStatus op 'niet_te_bepalen': 1.3.2 (geen programmatische leesvolgorde), 1.4.5 (zonder tags geen onderscheid tussen tekst en afbeelding) en 3.2.4 (geen programmatisch herkenbare onderdelen om te vergelijken). Weerleg ook een AFKEURING onder 1.1.1: die hoort bij een ongetagde PDF een opmerking te zijn.
+Maar 2.4.4 en 2.4.6 horen bij een ongetagd document WEL beoordeeld te worden: die gaan over de inhoudelijke kwaliteit van de tekst, en die staat er ook zonder tags. Weerleg een afkeuring daar dus NIET met het argument "het document is niet getagd". Weerleg wel een 2.4.4-afkeuring die erover gaat dat de link niet klikbaar is; dat valt onder 1.3.1.
+Weerleg bij een PDF verder elke 1.4.3-bevinding over contrast: dat controleert de onderzoeker handmatig, dus dat hoort 'niet_te_bepalen' te zijn.
 
 Haal zo nodig zelf de pagina op:
   npm run cli -- get-html ${sample.url || '<url>'} --text
@@ -645,11 +781,12 @@ const openVragenPerCriterium = [...new Set(handmatigeChecks.flatMap((h) => h.teC
   }))
 
 const aantalVragen = handmatigeChecks.reduce((n, h) => n + h.vragen.length, 0)
-log(`Klaar. ${rapport.length} HTML-samples verwerkt. ${nieuweAfk.length} nieuwe afkeuringen, ${bestaandeAfk.length} overlappen met bestaande bevindingen. ${aantalVragen} vragen voor handmatige controle in de browser (${openVragenPerCriterium.length} criteria). ${gaten.length ? gaten.length + ' sample(s) met ontbrekende criteria!' : 'Geen enkel criterium overgeslagen.'}`)
+log(`Klaar. ${rapport.length} samples verwerkt (waarvan ${aantalPdfTeAuditen} PDF). ${nieuweAfk.length} nieuwe afkeuringen, ${bestaandeAfk.length} overlappen met bestaande bevindingen. ${aantalVragen} vragen voor handmatige controle (${openVragenPerCriterium.length} criteria). ${gaten.length ? gaten.length + ' sample(s) met ontbrekende criteria!' : 'Geen enkel criterium overgeslagen.'}`)
 
 return {
   onderzoekstype: context.researchTypeName,
-  aantalHtmlSamples: rapport.length,
+  aantalSamples: rapport.length,
+  aantalPdfSamples: aantalPdfTeAuditen,
   overgeslagenSamples: overgeslagen.map((s) => ({ title: s.title, sampleType: s.sampleType })),
   aantalCriteriaPerSample: requiredCodes.length,
   afkeuringenTotaal: alleAfk.length,

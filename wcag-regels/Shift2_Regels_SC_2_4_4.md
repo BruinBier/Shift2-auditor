@@ -19,6 +19,12 @@ Pak de volledige `<a>` uit de HTML en loop deze volgorde af:
    Het icoon staat vrijwel altijd op `aria-hidden`, dus meestal blijft één tekstspan over.
 3. `title` telt alleen mee als er verder geen enkele naam is.
 
+Let op bij stap 3: een naam die **uitsluitend** uit `title` komt is ONVOLDOENDE en blijft een
+afkeuring. `title` verschijnt alleen bij aanwijzen met de muis, is op touchscreens vrijwel
+onbereikbaar en wordt wisselend door schermlezers ondersteund. Concludeer dus niet "er is een
+naam, dus geen bevinding" zodra je een `title` ziet. Zie `Shift2_Regels_SC_4_1_2.md` voor de
+volledige regel en de formulering.
+
 Let op een visueel verborgen span (`position:absolute;left:-9999px`, `sr-only`, `visually-hidden`).
 Die telt WEL mee als naam, ook al zie je op de screenshot alleen een icoon. Dat kun je alleen
 in de HTML zien.
@@ -70,11 +76,29 @@ Aanleiding: duurzaam.beverwijk.nl (2026-07-27), footerkolom "Blijf op de hoogte"
 facebook.com/gemeentebeverwijk en instagram.com/gemeentebeverwijk. De auditor gaf 2.4.4
 "voldoet" en miste dit; Frits wees erop.
 
+## Niet-getagde PDF: 2.4.4 WEL beoordelen
+
+Beoordeel 2.4.4 ook bij een niet-getagd document. Dit criterium gaat over de **tekst** van de
+link, en die staat er ook zonder tags. Kijk naar de pagina: zie je een link of een webadres in
+de lopende tekst, lees dan of die tekst duidelijk maakt waar hij heen leidt. Een "klik hier"
+of "lees meer" zonder context is ook in een PDF een afkeuring.
+
+Wat je hier NIET beoordeelt: dat de link niet klikbaar is. Dat webadressen als platte tekst in
+het document staan zonder werkende link, is een gevolg van de ontbrekende tagstructuur en
+wordt al onder 1.3.1 afgekeurd. Maak daar geen aparte 2.4.4-bevinding van.
+
+Geef dus een echt oordeel (voldoet of afkeuring op de linktekst); zet 2.4.4 niet op
+`niet_te_bepalen` met "geen tags" als reden.
+
+Vastgelegd door Frits op 2026-08-02 bij UTHEU-01. Eerst stond 2.4.4 in de vervallijst voor
+ongetagde PDF's; Frits corrigeerde dat: de linktekst is visueel te toetsen, alleen de
+klikbaarheid niet.
+
 ## Regels
 
 - Link in een eigen <p> of <li> krijgt GEEN programmatische context van een kop of alinea die erboven staat maar niet in hetzelfde element zit. "Lees meer..." in een eigen <p> is dus een AFKEURING, ook al oogt de kaart visueel als een geheel. Niet wegredeneren met "de kop staat er wel bij". QuickFinding d7494b0a-a187-4930-bef7-05083ff5705d.
 - Advies bij generieke linktekst: 1) maak de linktekst specifiek ("Lees meer over Fysieke overlegtafel"), OF 2) plaats de link in dezelfde alinea als de beschrijvende tekst. NOOIT adviseren om de hele kaart of container klikbaar te maken.
 - Telefoonnummer of e-mailadres als linktekst: GEEN bevinding, ongeacht het voorwoord ("Telefoon:", "Bel:", "Mail:") en ongeacht waar de href heen wijst (tel:, mailto:, whatsapp, sms:, leeg of kapot). Niet voorleggen als concept en ook niet als opmerking, gewoon overslaan. Een kapotte href is een functioneel issue, geen WCAG-issue.
 - X/Twitter-mismatch in de footer (X-logo zichtbaar, toegankelijke naam zegt nog "Twitter"): OPMERKING onder 2.4.4, status resolved, impact en responsibility leeg. Niet onder 2.5.3 (vereist zichtbare tekst) en niet onder 1.1.1. Een keer plaatsen, op het homepage-sample.
-- Link zonder enige toegankelijke naam (afbeelding-link met leeg alt): zowel 2.4.4 als 4.1.2 afkeuren, twee aparte bevindingen. Framing 2.4.4: "weten niet waar de link heen gaat". Framing 4.1.2: "hulpsoftware kan de link niet goed aankondigen". Noem in elk dat het issue ook onder het andere criterium valt.
+- Link zonder enige toegankelijke naam (afbeelding-link met leeg alt): zowel 2.4.4 als 4.1.2 afkeuren, twee aparte bevindingen. Framing 2.4.4: "weten niet waar de link heen gaat". Framing 4.1.2: "hulpsoftware kan de link niet goed aankondigen". Schrijf beide bevindingen volledig zelfstandig en verwijs in de tekst NIET naar het andere criterium: het zijn losse issues, en een SC-code hoort niet in een bevindingstekst.
 - Formuleer vanuit voorlezen en horen: hulpsoftware LEEST VOOR, het "laat niets zien".

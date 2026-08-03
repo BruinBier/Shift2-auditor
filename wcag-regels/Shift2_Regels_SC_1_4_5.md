@@ -11,3 +11,6 @@
 - Het toegankelijkheidsprobleem van zon poster loopt via 1.1.1 (tekstalternatief) en het aanvullen van ontbrekende info als echte tekst.
 - Let op het verschil: een uitgetypt tekstblok dat zonder reden als screenshot is geplaatst valt NIET onder de uitzondering en kan wel een 1.4.5-bevinding zijn.
 - 1.4.5 en 1.4.3 zijn aparte toetsingen. Dat een poster onder de 1.4.5-uitzondering valt, maakt hem niet immuun voor 1.4.3.
+- NIET-GETAGDE PDF: zet 1.4.5 op niet_te_bepalen. Zonder tags is er voor hulptechnologie geen onderscheid tussen tekst en afbeelding: de hele opbouw van het document is onzichtbaar. Je kunt dan niet over één afbeelding zeggen dat díe het probleem is, want geen enkele tekst in het document is als tekst beschikbaar. De wortel-oorzaak wordt al onder 1.3.1 afgekeurd.
+  Let op de valkuil: dat je als auditor de tekst in een afbeelding kunt uitsnijden en lezen, betekent niet dat er een zelfstandig 1.4.5-oordeel te vellen is. Wat je kunt meten is iets anders dan wat er te beoordelen valt.
+  Zie `Shift2_Regels_SC_1_3_1.md` voor de volledige lijst criteria die bij een ongetagde PDF vervallen (1.1.1, 1.3.2, 1.4.5, 2.4.4). Vastgelegd door Frits op 2026-08-02 bij UTHEU-01; Claude stelde eerst voor 1.4.5 wél per geval te beoordelen, Frits corrigeerde dat.

@@ -18,6 +18,28 @@ tijdens eerdere audits zijn gegeven.
 2. `wcag-checklists/Richtlijnen_Grensgevallen_SC_<code>.md` — als die bestaat
 3. `wcag-regels/Shift2_Regels_SC_<code>.md` — deze regels, doorslaggevend
 
+## Waar de norm zelf nog in beweging is
+
+Bij sommige criteria is de WCAG-tekst zelf onduidelijk en loopt daar een discussie over bij
+het W3C. In die gevallen staat in het regelbestand een sectie "Waar de norm zelf nog
+onduidelijk is" met het issuenummer erbij. Dat maakt zichtbaar dat onze regel een
+onderbouwde **interpretatie** is en geen letterlijke norm.
+
+Op dit moment vastgelegd:
+
+| SC | W3C-issue | Waar het over gaat |
+|---|---|---|
+| 1.3.5 | [#5213](https://github.com/w3c/wcag/issues/5213) | Browser-autocomplete is een bijwerking, niet het doel. "De browser vult het toch wel in" is geen geldig argument. |
+| 2.5.3 | [#5171](https://github.com/w3c/wcag/issues/5171) | Een slogan in een logo hoeft niet in de toegankelijke naam. F96 dekt dit geval niet. |
+| 3.2.4 | [#5225](https://github.com/w3c/wcag/issues/5225) | Vijf onduidelijkheden: consistent versus identiek, geldt het binnen één pagina, wat is een "component". |
+
+Bronnen om periodiek te raadplegen:
+- [github.com/w3c/wcag/issues](https://github.com/w3c/wcag/issues) — hier staat waar de norm
+  onduidelijk is. Het nuttigst bij een grensgeval.
+- [github.com/w3c/wcag/commits/main/guidelines](https://github.com/w3c/wcag/commits/main/guidelines)
+  — errata en tekstwijzigingen. Grotendeels redactioneel (terminologie, verwijzingen), dus
+  zelden aanleiding om een regel aan te passen.
+
 ## Scope per sample
 
 `Shift2_Scope_Per_Sample.md` bepaalt welk **deel van de pagina** je überhaupt beoordeelt.

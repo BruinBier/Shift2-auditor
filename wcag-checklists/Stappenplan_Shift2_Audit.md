@@ -129,9 +129,8 @@ We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan struct
 
 ### Stap 5a — Eerste pagina: de homepage
 
-**Input van gebruiker (Claude vraagt expliciet):**
-- Een **screenshot van de volledige homepage** (boven én onder de vouw, geen alleen-zichtbare-deel screenshot)
-- De **outerHTML** van de pagina (volledige DOM zoals na rendering — niet alleen de server-HTML)
+**Input van gebruiker:**
+- Akkoord om met het voorgestelde homepage-steekproefitem te starten. De gebruiker hoeft geen screenshot of HTML aan te leveren.
 
 **Waarom volledig (en niet alleen `<main>`):**
 - Op de homepage worden ook structuur-elementen beoordeeld die buiten `<main>` staan: header, hoofdnavigatie, **footer**, skip-links, landmarks
@@ -174,7 +173,8 @@ We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan struct
 | 4.1.2 | Naam, rol en waarde |
 
 **Actie van Claude:**
-- Pas met de check beginnen wanneer beide inputs binnen zijn — niet zelf de pagina ophalen
+- Leg eerst via `npm run cli -- capture-sample-evidence <projectId> <sampleItemId>` de volledige screenshot en gerenderde DOM/outerHTML vast als auditbewijs bij het steekproefitem. Voor de homepage wordt altijd het volledige document vastgelegd.
+- Controleer in de uitvoer dat beide paden en `capturedAt` zijn opgeslagen. Deze actie maakt nooit een bevinding aan.
 - Loop de criteria in deze tabel één voor één na voor de hele pagina, inclusief header, hoofdnavigatie, hoofdinhoud én footer
 - Per criterium beoordelen tegen de regels uit `wcag-checklists/Checklist_SC_X_X_X.md` en de memory-feedback (jargon, vorm, lengte, etc.)
 - **Hergebruik vóór zelf formuleren — vaste volgorde per geconstateerd issue:**
@@ -190,9 +190,8 @@ We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan struct
 
 ### Stap 5b — Volgende pagina's (na de homepage)
 
-**Input van gebruiker (Claude vraagt per pagina expliciet):**
-- Een **screenshot van de pagina** (volledige pagina, inclusief alles wat zichtbaar wordt na scrollen)
-- De **outerHTML van het `<main>`-element** (dus zonder header, hoofdnavigatie en footer — die zijn al in stap 5a beoordeeld)
+**Input van gebruiker:**
+- Akkoord om met het voorgestelde steekproefitem te starten. De gebruiker hoeft geen screenshot of HTML aan te leveren.
 
 **Te checken WCAG-criteria:**
 Dezelfde lijst als stap 5a, met de volgende uitzonderingen die op de homepage al zijn afgehandeld en niet meer per pagina worden gecheckt:
@@ -204,7 +203,8 @@ Dezelfde lijst als stap 5a, met de volgende uitzonderingen die op de homepage al
 De footer wordt niet opnieuw beoordeeld — die is al volledig gechecked in stap 5a.
 
 **Actie van Claude:**
-- Pas met de check beginnen wanneer beide inputs binnen zijn — niet zelf de pagina ophalen
+- Leg eerst via `npm run cli -- capture-sample-evidence <projectId> <sampleItemId>` een volledige screenshot en de gerenderde outerHTML van `<main>` vast als auditbewijs. Gebruik `--full` alleen wanneer het volledige document inhoudelijk nodig is.
+- Controleer in de uitvoer dat beide paden en `capturedAt` zijn opgeslagen. Deze actie maakt nooit een bevinding aan.
 - Loop dezelfde criteria-tabel als in stap 5a na, met de hierboven genoemde uitzonderingen
 - Volg de "Hergebruik vóór zelf formuleren"-volgorde uit stap 5a (QuickFindings → andere projecten → zelf formuleren)
 - Bij issues die al op de homepage zijn gevonden (bv. social-media-lijst in footer): geen nieuwe bevinding aanmaken — die is al gekoppeld aan het Homepage-sample-item. Pas alleen het bestaande sample-item-koppelingenlijstje uit als hetzelfde issue zich ook op deze pagina voordoet (zie [[feedback_merge_repeat_issues]])
@@ -249,6 +249,7 @@ Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch
 - Vergelijk de stijl met BEL-01 t/m BEL-04, GRJW-01, Heerlen-01 (allemaal status Gereed)
 
 **Actie van Claude:**
+- **Eerst de bevindingen controleren op dubbelingen.** Bij het schrijven van de feedback heb je alle bevindingen naast elkaar; dat is het moment om te zien of er twee keer hetzelfde staat. Haal de volledige lijst op met description, criterium en gekoppelde sample-items, en kijk of er bevindingen zijn met dezelfde tekst op hetzelfde sample, of hetzelfde issue onder hetzelfde criterium op verschillende samples (die horen samengevoegd, zie [[feedback_merge_repeat_issues]]). Meld wat je vindt en vraag of het weg mag; verwijder niets zelf.
 - Eerste concept zelf schrijven op basis van de bevindingen
 - Concept aan gebruiker voorleggen voor akkoord en aanpassingen
 - Pas na akkoord opslaan via `PATCH /api/projects/<id>` met `{"researcherFeedback": "<p>...</p><p>...</p>"}`
@@ -262,5 +263,72 @@ Pas na akkoord op samenvatting en feedback:
 - Vraag aan gebruiker of het project op status "Gereed" gezet moet worden
 - Bij ja: `PATCH /api/projects/<id>` met `{"status": "Gereed"}`
 - Toon eindlink naar het rapport: `/report/<id>`
+
+---
+
+## Stap 7 — Tussencheck en herinspectie
+
+Na de nulmeting pakt de opdrachtgever de bevindingen op. De onderzoeker controleert dat in de
+**tussencheck** en legt het eindresultaat vast in de **herinspectie**.
+
+### Hoe het in de tool zit
+
+Bij het afronden van de nulmeting ontstaat een **kindproject** (versie 1.1) dat scope,
+steekproef, assessments en alle bevindingen overneemt. Het bovenliggende project blijft bestaan
+als versie 1.0: dat is en blijft het nulmetingsrapport.
+
+Elk project heeft een fase (`checkPhase`): `nulmeting` → `tussencheck` → `herinspectie` →
+`afgerond`. Elke bevinding onthoudt in welke fase hij is ontdekt (`discoveredInPhase`), en
+heeft twee velden voor de tussencheck: `interimReviewed` (nagelopen) en `interimNotes`
+(wat de onderzoeker zag).
+
+### Wat je toetst
+
+**Alleen de succescriteria waar bevindingen op zaten.** Bij een herinspectie loop je niet de
+hele steekproef opnieuw af. Criteria zonder bevindingen houden hun status uit de nulmeting:
+stond 2.4.6 op "voldoet", dan blijft dat zo.
+
+### Per bevinding
+
+| Uitkomst | Wat je doet |
+|---|---|
+| Opgelost | status naar `resolved` |
+| Niet opgelost | laat op `open` staan; het criterium blijft afgekeurd |
+| Nieuw ontdekt | nieuwe bevinding met `discoveredInPhase: herinspectie` |
+
+**Let op: een opgeloste bevinding blijft een BEVINDING.** Maak de impact niet leeg om aan te
+geven dat iets is opgelost. Impact en type zijn aan elkaar gekoppeld (lege impact = opmerking),
+en dan verandert een serieuze afkeuring stilletjes in een opmerking. Bij Heerlen-01 gebeurde
+dat met tien bevindingen. De API beschermt hier inmiddels tegen, maar wijzig het type nooit met
+de hand bij een opgelost punt.
+
+### Per opmerking
+
+Opmerkingen blijven staan. Is er iets mee gedaan, vink dan `interimReviewed` aan en noteer in
+`interimNotes` wat je zag. Alleen afgevinkte opmerkingen verdwijnen uit het herinspectierapport;
+de rest blijft zichtbaar.
+
+### Hoe het rapport eruitziet
+
+Wat is opgelost, **verdwijnt uit het herinspectierapport**. Je laat opgeloste bevindingen dus
+niet staan met het label "opgelost" erbij. Het criterium gaat van "Voldoet niet" naar "Voldoet",
+en dát laat zien dat er gerepareerd is.
+
+Bij een volledig geslaagde herinspectie ziet de opdrachtgever:
+
+| Onderdeel | Inhoud |
+|---|---|
+| Scores | bijvoorbeeld 30 van 30 (100%) |
+| Bevindingen | leeg |
+| Opmerkingen | leeg, als ze in de tussencheck zijn afgevinkt |
+| **Feedback van onderzoeker** | hier vertel je wat er is opgelost |
+
+De feedback is de plek waar het verhaal staat. Het rapport beschrijft de situatie nu, de
+feedback beschrijft de weg ernaartoe. Benoem concreet wat er is verbeterd, in dezelfde stijl
+als stap 6b. Voorbeeld uit Heerlen-01 v1.1: "De bevindingen uit het eerdere onderzoek zijn
+opgelost. In de footer staan de sociale-media-links nu als opsomming, met een linktekst die
+duidelijk maakt dat het om de pagina van de gemeente gaat."
+
+Wie de details van vóór de reparatie wil zien, leest het nulmetingsrapport (versie 1.0).
 
 ---
