@@ -17,6 +17,11 @@ export async function PATCH(
       ...(body.orderIndex !== undefined && { orderIndex: body.orderIndex }),
       ...(body.makeScreenshot !== undefined && { makeScreenshot: body.makeScreenshot }),
       ...(body.screenshotAlt !== undefined && { screenshotAlt: body.screenshotAlt }),
+      ...(body.screenshotPath !== undefined && { screenshotPath: body.screenshotPath }),
+      ...(body.auditHtmlPath !== undefined && { auditHtmlPath: body.auditHtmlPath }),
+      ...(body.auditCapturedAt !== undefined && {
+        auditCapturedAt: body.auditCapturedAt ? new Date(body.auditCapturedAt) : null,
+      }),
       ...(body.notes !== undefined && { notes: body.notes }),
     };
 

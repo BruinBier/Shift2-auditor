@@ -238,14 +238,70 @@ model SampleItem {
   makeScreenshot Boolean      @default(false) @map("make_screenshot")
   screenshotPath String?      @map("screenshot_path")
   screenshotAlt  String?      @map("screenshot_alt")
+  auditHtmlPath  String?      @map("audit_html_path")
+  auditCapturedAt DateTime?   @map("audit_captured_at")
   notes          String?      @db.Text
   crawledAt      DateTime?    @map("crawled_at")
 
   project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   occurrences    FindingOccurrence[]
   crawlerResults CrawlerResult[]
+  criterionChecks SampleCriterionCheck[]
 
   @@map("sample_items")
+}
+
+/// Beoordeling van één succescriterium op één steekproefitem.
+///
+/// Waarom naast CriterionAssessment: dat model legt de status per PROJECT vast en zegt dus
+/// niets over de vraag of pagina 7 daadwerkelijk op 2.4.6 is nagelopen. Zonder deze tabel is
+/// een overgeslagen criterium onzichtbaar: geen bevinding kan "alles in orde" betekenen of
+/// "hier is niet naar gekeken".
+///
+/// De project-brede status in CriterionAssessment wordt hieruit afgeleid: staat er ergens een
+/// afkeuring, dan is het criterium afgekeurd. Alleen opmerkingen tellen als goedgekeurd.
+model SampleCriterionCheck {
+  id              String                @id @default(uuid())
+  sampleItemId    String                @map("sample_item_id")
+  wcagCriterionId String                @map("wcag_criterion_id")
+  status          SampleCheckStatus
+  /// Toelichting van de auditor: waarom deze status, of de vraag die nog beantwoord moet worden.
+  reden           String?               @db.Text
+  /// Waar het oordeel vandaan komt, zodat bij twijfel te herleiden is wie het vaststelde.
+  bron            SampleCheckBron       @default(workflow)
+  /// Alleen relevant bij een voorstel-bevinding: is die aan de onderzoeker voorgelegd en akkoord?
+  akkoord         SampleCheckAkkoord?
+  checkedAt       DateTime              @default(now()) @map("checked_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  sampleItem      SampleItem            @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
+  wcagCriterion   WCAGCriterion         @relation(fields: [wcagCriterionId], references: [id])
+
+  @@unique([sampleItemId, wcagCriterionId])
+  @@map("sample_criterion_checks")
+}
+
+/// Bewust een eigen enum naast AssessmentStatus: daar staat `not_tested` voor twee dingen die
+/// hier uit elkaar moeten blijven. `niet_te_bepalen` betekent "beoordeeld, maar er staat nog
+/// een vraag open" en blokkeert het afronden; `niet_aanwezig` is een afgerond oordeel.
+enum SampleCheckStatus {
+  voldoet
+  afgekeurd
+  opmerking
+  niet_aanwezig
+  niet_te_bepalen
+}
+
+enum SampleCheckBron {
+  workflow
+  gesprek
+  handmatig
+}
+
+enum SampleCheckAkkoord {
+  voorgesteld
+  akkoord
+  afgewezen
 }
 
 enum WCAGLevel {
@@ -279,6 +335,7 @@ model WCAGCriterion {
   researchTypeExplanations ResearchTypeExplanation[]
   technicalIssues     TechnicalIssue[]
   advices             ProjectAdvice[]
+  sampleChecks        SampleCriterionCheck[]
 
   @@map("wcag_criteria")
 }
