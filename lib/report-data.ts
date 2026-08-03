@@ -55,7 +55,13 @@ export async function getReportData(projectId: string) {
   if (project.researchType) {
     const rt = await prisma.researchType.findUnique({
       where: { name: project.researchType },
-      include: { criteria: { select: { wcagCriterionId: true } } },
+      // De code is nodig in het rapport: daarmee bepaalt de afbakeningstekst of criteria als
+      // 3.3.1 wél in dit onderzoekstype zitten en de uitsluitingstabel dus vervalt.
+      include: {
+        criteria: {
+          select: { wcagCriterionId: true, wcagCriterion: { select: { code: true } } },
+        },
+      },
     });
     if (rt) {
       researchTypeData = rt;

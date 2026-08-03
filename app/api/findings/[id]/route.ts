@@ -35,6 +35,23 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
+
+    // Nodig om te bepalen of een leeggemaakte impact het type mag veranderen.
+    const bestaand = await prisma.finding.findUnique({
+      where: { id: params.id },
+      select: { type: true, status: true },
+    });
+    if (!bestaand) {
+      return NextResponse.json({ error: 'Finding not found' }, { status: 404 });
+    }
+
+    // Impact en type horen bij elkaar, MAAR een opgeloste afkeuring blijft een
+    // afkeuring. Bij een herinspectie wordt de impact soms leeggemaakt omdat het
+    // probleem weg is; zou het type dan meeveranderen, dan wordt een serieuze
+    // bevinding stil een opmerking en telt hij niet meer mee voor de conclusie.
+    const wordtOpgelost = (body.status ?? bestaand.status) === 'resolved';
+    const behoudType = wordtOpgelost && bestaand.type === 'bevinding';
+
     const finding = await prisma.finding.update({
       where: { id: params.id },
       data: {
@@ -44,7 +61,7 @@ export async function PATCH(
         // impact en type horen bij elkaar; een expliciet type wint
         ...(body.impact !== undefined && {
           impact: body.impact,
-          type: typeVoorImpact(body.impact),
+          ...(behoudType ? {} : { type: typeVoorImpact(body.impact) }),
         }),
         ...(body.type !== undefined && { type: body.type }),
         ...(body.responsibility && { responsibility: body.responsibility }),

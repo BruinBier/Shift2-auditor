@@ -68,10 +68,21 @@ export async function PUT(
     }
     if (body.impact !== undefined) {
       updateData.impact = body.impact;
-      // Impact en type horen bij elkaar: impact leegmaken maakt er een
-      // opmerking van, een impact invullen een afkeuring. Een expliciet
-      // meegestuurd type wint (zie hieronder).
-      updateData.type = typeVoorImpact(body.impact);
+      // Impact en type horen bij elkaar: impact leegmaken maakt er een opmerking
+      // van, een impact invullen een afkeuring. Een expliciet meegestuurd type
+      // wint (zie hieronder).
+      //
+      // UITZONDERING: een OPGELOSTE afkeuring blijft een afkeuring. Bij een
+      // herinspectie wordt de impact soms leeggemaakt omdat het probleem weg is;
+      // zou het type dan meeveranderen, dan wordt een serieuze bevinding stil een
+      // opmerking en telt hij niet meer mee voor de conclusie. Dat is precies wat
+      // er bij Heerlen-01 gebeurde: tien afkeuringen werden opmerkingen.
+      const wordtOpgelost =
+        (body.status ?? existingFinding.status) === 'resolved';
+      const wasAfkeuring = existingFinding.type === 'bevinding';
+      if (!(wordtOpgelost && wasAfkeuring)) {
+        updateData.type = typeVoorImpact(body.impact);
+      }
     }
     if (body.type !== undefined) {
       updateData.type = body.type;
