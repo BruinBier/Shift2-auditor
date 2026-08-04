@@ -106,6 +106,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const sleutel = (s: string, c: string) => `${s}::${c}`;
     const index = new Map(checks.map((c) => [sleutel(c.sampleItemId, c.wcagCriterionId), c]));
 
+    /**
+     * Vraagt deze 'niet_te_bepalen' nog iets van de onderzoeker, of staat de uitkomst vast?
+     *
+     * Twee gevallen die niet op de zinsbouw te onderscheiden zijn:
+     *   - Contrast in een PDF (1.4.3 / 1.4.11) meet de onderzoeker altijd handmatig. Dat is
+     *     werk dat openstaat, of de reden nu op een vraagteken eindigt of op een opsomming van
+     *     wat er gemeten moet worden.
+     *   - Bij een ongetagde PDF is 1.1.1, 1.3.2, 1.4.5 en 2.4.4 niet te beoordelen zolang de
+     *     tags ontbreken. Daar valt niets uit te zoeken; dat is een vaststelling.
+     *
+     * Een vraagteken alleen is te grof: twee registraties met dezelfde betekenis kwamen
+     * verschillend uit de bus omdat de ene met een vraagzin eindigde en de andere met een
+     * opsomming.
+     */
+    const CONTRAST_CODES = new Set(['1.4.3', '1.4.11']);
+    const VERVALT_ZONDER_TAGS = new Set(['1.1.1', '1.3.2', '1.4.5', '2.4.4', '3.1.2', '3.2.4']);
+    const isOpenstaand = (code: string, reden: string | null, isPdf: boolean) => {
+      if (isPdf && CONTRAST_CODES.has(code)) return true;
+      if (isPdf && VERVALT_ZONDER_TAGS.has(code)) return false;
+      return /\?/.test(reden ?? '');
+    };
+
     const ontbrekend: any[] = [];
     const zonderOnderbouwing: any[] = [];
     const openVragen: any[] = [];
@@ -153,7 +175,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             sample: r.sample.title,
             sampleId: r.sample.id,
             vraag: r.check!.reden,
-            isVraag: /\?/.test(r.check!.reden ?? ''),
+            isVraag: isOpenstaand(crit.code, r.check!.reden, r.sample.sampleType === 'pdf'),
           })),
       });
     }
@@ -188,7 +210,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             // staat de uitkomst vast: het criterium is pas te beoordelen als het document
             // getagd is, en daar valt niets over uit te zoeken. Alleen een echte vraagzin telt
             // als openstaande vraag; de rest is een vaststelling.
-            isVraag: /\?/.test(check.reden ?? ''),
+            isVraag: isOpenstaand(crit.code, check.reden, sample.sampleType === 'pdf'),
           });
         }
       }
