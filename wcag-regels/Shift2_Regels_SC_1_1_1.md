@@ -69,6 +69,7 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 - Gebruik de term "tekstalternatief", niet "tekstbeschrijving". Formuleer alt als iets dat informatie OVERBRENGT, niet als iets dat de afbeelding "beschrijft".
 - Inline base64-afbeelding (src begint met data:image) zonder alt: dit is een plak-incident van een redacteur, geen template-issue. Verantwoordelijkheid redacteur.
 - Niet-getagde PDF onder 1.1.1: opmerking (status resolved, impact en responsibility leeg). Zonder tags kun je niet vaststellen wat er ontbreekt. De structuur-bevinding hoort onder 1.3.1.
+  **Noem geen kaarten in die opmerking.** Kaarten vallen onder de wettelijke uitzondering voor de overheid; ze in het rapport opsommen suggereert dat de organisatie er iets specifieks mee moet, terwijl ze na het taggen gewoon een label-alt mogen hebben. Beschrijf dus alleen het logo, de diagrammen, foto's en andere informatieve beelden. Vastgelegd door Frits op 2026-08-04 bij UTHEU-01 B010 (Beleidsvisie horeca en terrassen).
 - **EEN LOGO IN EEN PDF MOET ALTIJD GETAGD ZIJN.** Het logo is geen versiering: het zegt van wie het document is, en bij een gemeentelijk document is dat de afzender. Die informatie hoort een schermlezer voor te lezen. Het logo moet dus als `/Figure` met een `/Alt` in de tagboom staan, niet als `/Artifact` (dat betekent "overslaan").
   Concludeer dus nooit dat een ongetagd of als Artifact gemarkeerd logo "correct wordt overgeslagen". Dat is een AFKEURING.
   Vastgelegd door Frits op 2026-08-04 bij BEV-04 (bevinding B016, Openbare besluitenlijst).

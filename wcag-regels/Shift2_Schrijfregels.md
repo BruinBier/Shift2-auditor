@@ -161,6 +161,25 @@ Loop **zowel de description als de advice** na voordat je wegschrijft:
   terwijl de footer van deze site geen koppen heeft, haal die verwijzing dan weg.
 - Laat de placeholder in de bibliotheek zelf ongemoeid; alleen de bevinding wordt specifiek.
 
+## Schrijf bevindingen via de API, niet rechtstreeks in de database
+
+Gebruik `POST /api/projects/<id>/findings` om een bevinding aan te maken en
+`PUT /api/projects/<id>/findings/<findingId>` om er een te wijzigen. Niet Prisma of een los
+script dat de tabel `findings` aanpast.
+
+Reden: de API draait `lib/finding-lint.ts` over elke description en advice, en weigert de
+bevinding met een 422 als er een schrijfregel wordt overtreden. Die controle vangt dingen die
+je zelf over het hoofd ziet. Schrijf je rechtstreeks naar de database, dan gaat de bevinding er
+gewoon in en komt de fout in het rapport bij de opdrachtgever terecht.
+
+Voorbeeld: op 2026-08-04 zijn B035 en B036 via de database weggeschreven met het woord
+"afsteken" in het advies. De linter had dat afgekeurd ("beeldspraak vanuit het zien; schrijf dat
+de tekst voldoende contrast heeft"), maar kwam er niet aan te pas. Pas toen dezelfde formulering
+later wél via de API ging, kwam de fout aan het licht.
+
+Voor de dekkingslijst (`sampleCriterionCheck`) geldt dit niet: daar is geen linter en is de
+Prisma-route prima.
+
 ## Kun je iets niet beoordelen? Melden, niet weglaten
 
 Kom je bij een criterium iets tegen dat je niet zelf kunt vaststellen (een uitzondering die
