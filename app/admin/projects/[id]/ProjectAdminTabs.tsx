@@ -10,6 +10,7 @@ import CriteriaAssessments from './tabs/CriteriaAssessments';
 import FindingsManagement from './tabs/FindingsManagement';
 import Conclusion from './tabs/Conclusion';
 import Finalize from './tabs/Finalize';
+import Dekking from './tabs/Dekking';
 import Tussencheck from './tabs/Tussencheck';
 import Richtlijnen from './tabs/Richtlijnen';
 import PagecheckProgress from './tabs/PagecheckProgress';
@@ -27,7 +28,7 @@ interface ProjectAdminTabsProps {
 export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [] }: ProjectAdminTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'dekking' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst'>('details');
   const showProgressTab = (project.scopeUrls?.length ?? 0) > 100;
   const showFixlijstTab = showProgressTab;
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
@@ -206,11 +207,12 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
     }
   };
 
-  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst') => {
+  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'dekking' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst') => {
     const tabParam = tab === 'details' ? '' :
                      tab === 'scope' ? 'scope' :
                      tab === 'sample' ? 'steekproef' :
                      tab === 'findings' ? 'bevindingen' :
+                     tab === 'dekking' ? 'dekking' :
                      tab === 'conclusion' ? 'conclusie' :
                      tab === 'tussencheck' ? 'tussencheck' :
                      tab === 'richtlijnen' ? 'richtlijnen' :
@@ -230,6 +232,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
       setActiveTab('scope');
     } else if (tab === 'bevindingen') {
       setActiveTab('findings');
+    } else if (tab === 'dekking') {
+      setActiveTab('dekking');
     } else if (tab === 'conclusie') {
       setActiveTab('conclusion');
     } else if (tab === 'voltooien') {
@@ -549,6 +553,19 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                   </button>
                 )}
                 <button
+                  onClick={() => project.status !== 'Gereed' && handleTabChange('dekking')}
+                  disabled={project.status === 'Gereed'}
+                  className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                    project.status === 'Gereed'
+                      ? 'border-transparent text-gray-400 cursor-not-allowed'
+                      : activeTab === 'dekking'
+                        ? 'border-shift2-primary text-shift2-primary'
+                        : 'border-transparent text-gray-500 tab-hover'
+                  }`}
+                >
+                  4. Dekking
+                </button>
+                <button
                   onClick={() => project.status !== 'Gereed' && handleTabChange('conclusion')}
                   disabled={project.status === 'Gereed'}
                   className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
@@ -559,7 +576,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                         : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
-                  4. Conclusie
+                  5. Conclusie
                 </button>
                 <button
                   onClick={() => handleTabChange('finalize')}
@@ -569,7 +586,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                       : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
-                  5. Voltooien
+                  6. Voltooien
                 </button>
                 {tussencheckActive && (
                   <button
@@ -696,6 +713,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             {activeTab === 'scope' && <ScopeManagement project={project} />}
             {activeTab === 'sample' && <SampleItems project={project} />}
             {activeTab === 'findings' && <FindingsManagement project={project} allCriteria={allCriteria} researchTypeExplanations={researchTypeExplanations} />}
+            {activeTab === 'dekking' && <Dekking projectId={project.id} />}
             {activeTab === 'conclusion' && <Conclusion project={project} />}
             {activeTab === 'finalize' && <Finalize project={project} allCriteria={allCriteria} />}
             {activeTab === 'tussencheck' && <Tussencheck project={project} />}
