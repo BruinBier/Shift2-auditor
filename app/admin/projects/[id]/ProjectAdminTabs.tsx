@@ -563,7 +563,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                         : 'border-transparent text-gray-500 tab-hover'
                   }`}
                 >
-                  4. Dekking
+                  4. Per criterium
                 </button>
                 <button
                   onClick={() => project.status !== 'Gereed' && handleTabChange('conclusion')}

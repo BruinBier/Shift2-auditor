@@ -2,17 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 /**
- * Dekkingscontrole: is elk criterium op elk steekproefitem daadwerkelijk nagelopen?
+ * Overzicht per succescriterium: wat is er gevonden, en is er nergens overgeslagen?
  *
- * Waarom naast derive-assessments: dat endpoint leidt de project-status af uit wat er WEL
- * beoordeeld is. Het zegt niets over wat ontbreekt. Staat 2.4.6 op vijftien van de twintig
- * samples geregistreerd, dan komt er gewoon een status uit en valt niet op dat vijf pagina's
- * zijn overgeslagen. Een gat in de dekking is per definitie onzichtbaar in de uitkomst.
+ * Twee vragen in één beeld, want ze horen bij elkaar:
+ *
+ *   1. Wat leverde elk criterium op — welke bevindingen, op welke pagina's. Dit is de vraag
+ *      die je bij elke audit stelt, en die nergens anders beantwoord werd: CriteriaAssessments
+ *      toont wel de status per criterium, maar niet de bevindingen eronder.
+ *
+ *   2. Is elk criterium op elk steekproefitem daadwerkelijk nagelopen. Staat 2.4.6 op vijftien
+ *      van de twintig samples geregistreerd, dan komt er gewoon een status uit en valt niet op
+ *      dat vijf pagina's zijn overgeslagen. Een gat in de dekking is per definitie onzichtbaar
+ *      in de uitkomst.
  *
  * Drie soorten gaten, oplopend in ernst:
- *   1. ontbrekend      — geen rij: er is niet naar gekeken, en niemand weet dat
+ *   1. ontbrekend         — geen rij: er is niet naar gekeken, en niemand weet dat
  *   2. zonderOnderbouwing — status 'voldoet' met een leeg reden-veld: aangenomen, niet onderzocht
- *   3. openVragen      — 'niet_te_bepalen': bewust opengelaten, wacht op de onderzoeker
+ *   3. openVragen         — 'niet_te_bepalen': bewust opengelaten, wacht op de onderzoeker
  *
  * Nummer 2 is het venijnigst. Een afkeuring komt in het rapport terecht en wordt gelezen; een
  * goedkeuring levert geen tekst op waar een fout aan het licht komt. Zonder onderbouwing is
@@ -68,6 +74,35 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       },
     });
 
+    const assessments = await prisma.criterionAssessment.findMany({
+      where: { projectId: params.id },
+      select: { wcagCriterionId: true, status: true },
+    });
+    const statusPerCriterium = new Map(assessments.map((a) => [a.wcagCriterionId, a.status]));
+
+    const findings = await prisma.finding.findMany({
+      where: { projectId: params.id },
+      select: {
+        id: true,
+        findingCode: true,
+        wcagCriterionId: true,
+        type: true,
+        status: true,
+        impact: true,
+        responsibility: true,
+        description: true,
+        occurrences: { select: { sampleItem: { select: { id: true, title: true } } } },
+      },
+      orderBy: { findingCode: 'asc' },
+    });
+
+    const findingsPerCriterium = new Map<string, typeof findings>();
+    for (const f of findings) {
+      const lijst = findingsPerCriterium.get(f.wcagCriterionId) ?? [];
+      lijst.push(f);
+      findingsPerCriterium.set(f.wcagCriterionId, lijst);
+    }
+
     const sleutel = (s: string, c: string) => `${s}::${c}`;
     const index = new Map(checks.map((c) => [sleutel(c.sampleItemId, c.wcagCriterionId), c]));
 
@@ -75,6 +110,48 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const zonderOnderbouwing: any[] = [];
     const openVragen: any[] = [];
     const perSample: any[] = [];
+    const perCriterium: any[] = [];
+
+    // Per criterium: de bevindingen, de telling over de samples en de openstaande vragen.
+    for (const crit of criteria) {
+      const rijen = samples.map((s) => ({ sample: s, check: index.get(sleutel(s.id, crit.id)) }));
+      const aanwezig = rijen.filter((r) => r.check);
+      const tel = (st: string) => aanwezig.filter((r) => r.check!.status === st).length;
+
+      const eigenFindings = (findingsPerCriterium.get(crit.id) ?? []).map((f) => ({
+        id: f.id,
+        code: f.findingCode,
+        type: f.type,
+        status: f.status,
+        impact: f.impact,
+        responsibility: f.responsibility,
+        description: f.description,
+        samples: f.occurrences.map((o) => o.sampleItem?.title).filter(Boolean),
+      }));
+
+      perCriterium.push({
+        criterionId: crit.id,
+        code: crit.code,
+        titel: crit.titleNl,
+        niveau: crit.level,
+        projectStatus: statusPerCriterium.get(crit.id) ?? null,
+        bevindingen: eigenFindings.filter((f) => f.type === 'bevinding'),
+        opmerkingen: eigenFindings.filter((f) => f.type !== 'bevinding'),
+        beoordeeld: aanwezig.length,
+        verwacht: samples.length,
+        telling: {
+          voldoet: tel('voldoet'),
+          afgekeurd: tel('afgekeurd'),
+          opmerking: tel('opmerking'),
+          niet_aanwezig: tel('niet_aanwezig'),
+          niet_te_bepalen: tel('niet_te_bepalen'),
+        },
+        // De vragen staan hier ook, zodat je ze bij het criterium ziet waar ze bij horen.
+        vragen: aanwezig
+          .filter((r) => r.check!.status === 'niet_te_bepalen')
+          .map((r) => ({ sample: r.sample.title, sampleId: r.sample.id, vraag: r.check!.reden })),
+      });
+    }
 
     for (const sample of samples) {
       let beoordeeld = 0;
@@ -126,6 +203,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     ontbrekend.sort(sorteerCode);
     zonderOnderbouwing.sort(sorteerCode);
     openVragen.sort(sorteerCode);
+    perCriterium.sort(sorteerCode);
 
     const verwacht = samples.length * criteria.length;
 
@@ -140,10 +218,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         ontbrekend: ontbrekend.length,
         zonderOnderbouwing: zonderOnderbouwing.length,
         openVragen: openVragen.length,
+        bevindingen: findings.filter((f) => f.type === 'bevinding').length,
+        opmerkingen: findings.filter((f) => f.type !== 'bevinding').length,
       },
       // Alleen compleet als er geen gaten zijn EN elke goedkeuring onderbouwd is.
       // Open vragen blokkeren niet: die zijn bewust opengelaten en wachten op de onderzoeker.
       dekkingCompleet: ontbrekend.length === 0 && zonderOnderbouwing.length === 0,
+      perCriterium,
       perSample,
       ontbrekend,
       zonderOnderbouwing,
