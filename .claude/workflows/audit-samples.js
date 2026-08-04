@@ -530,16 +530,23 @@ daarvan afhangen op 'niet_te_bepalen' met als reden dat de onderzoeker PAC-outpu
 aanleveren, en meld dat expliciet.
 
 DAT GELDT OOK VOOR EEN GOEDKEURING. De verleiding is groot om te concluderen dat iets wél goed
-staat — "het logo is als Artifact gemarkeerd en wordt dus correct overgeslagen", "de tabel heeft
-TH-cellen met Scope". Zulke markeringen staan meestal in een gecomprimeerde objectstroom die je
-niet kunt uitlezen. Vind je ze niet, dan is dat geen bewijs dat ze ontbreken, maar het is
-evenmin bewijs dat ze er zijn. Zet het criterium dan op 'niet_te_bepalen', niet op 'voldoet'.
-Een onterechte goedkeuring komt nergens in het rapport terecht en blijft daardoor onzichtbaar.
+staat — "de tabel heeft TH-cellen met Scope", "de afbeelding heeft een Alt". Zulke markeringen
+staan meestal in een gecomprimeerde objectstroom die je niet kunt uitlezen. Vind je ze niet, dan
+is dat geen bewijs dat ze ontbreken, maar het is evenmin bewijs dat ze er zijn. Zet het criterium
+dan op 'niet_te_bepalen', niet op 'voldoet'. Een onterechte goedkeuring komt nergens in het
+rapport terecht en blijft daardoor onzichtbaar.
+
+EEN LOGO MOET ALTIJD GETAGD ZIJN. Het logo is geen versiering: het zegt van wie het document is,
+en die informatie hoort een schermlezer voor te lezen. Het hoort als /Figure met een /Alt in de
+tagboom te staan, niet als /Artifact (dat betekent "overslaan"). Concludeer dus NOOIT dat een
+ongetagd of als Artifact gemarkeerd logo "correct wordt overgeslagen omdat het decoratief is".
+Dat is een AFKEURING.
 
 Voorbeeld van de fout die je moet vermijden: bij BEV-04 concludeerde de audit dat het logo in
-een getagde besluitenlijst als Artifact was gemarkeerd en zette 1.1.1 op 'voldoet'. Er stonden
-nul /Artifact- en nul /Figure-voorkomens in de bytes, en bij controle in Acrobat bleek het logo
-helemaal niet getagd.
+een getagde besluitenlijst als Artifact was gemarkeerd en dus correct werd overgeslagen, en zette
+1.1.1 op 'voldoet'. Twee fouten in één: er stonden nul /Artifact- en nul /Figure-voorkomens in de
+bytes (een aanname over wat er stond), en een als Artifact gemarkeerd logo zou sowieso fout zijn
+geweest (een verkeerde regel over wat er hoort te staan).
 
 TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
 ${scList}${bronnenSectie}
