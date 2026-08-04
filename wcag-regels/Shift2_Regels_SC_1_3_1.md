@@ -4,6 +4,28 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_3_1.md` als ze elkaar tegenspreken.
 
+## 1.3.1 is meer dan koppen
+
+Dit criterium gaat over álle structuur die visueel zichtbaar is en ook in de code moet staan.
+Loop bij elk sample minstens deze punten langs; een pagina met een correcte koppenstructuur kan
+op een ander punt gewoon een afkeuring hebben:
+
+| Wat | Hoe je het meet |
+|---|---|
+| Koppen: niveau, nesting, echte kop-elementen | koppenlijst opvragen met de uitklapblokken open |
+| Lijsten: `ul`/`ol` waar visueel een opsomming staat | `main.querySelectorAll('ul, ol, li')` |
+| Tabellen: koprijen, of tabel voor vormgeving | `main.querySelectorAll('table th, table td')` |
+| **`em` en `i` voor visuele cursivering** | `main.querySelectorAll('em, i')` |
+| `strong` en `b` zonder inhoudelijk gewicht | `main.querySelectorAll('strong, b')` |
+| Alinea's: losse regels met `br` in plaats van `p` | `main.querySelectorAll('br')` |
+
+Schrijf in `reden` wat je op elk van deze punten hebt gevonden, niet alleen over de koppen. Een
+onderbouwing die alleen de koppenstructuur beschrijft, dekt het criterium niet.
+
+Aanleiding: BEV-03 (2026-08-04). De audit zette 1.3.1 op twee samples op `opmerking` met een
+onderbouwing over de koppenstructuur, terwijl er op diezelfde pagina's `em`-elementen om gewone
+zinnen stonden. Dat is een afkeuring (B011), en die stond er al.
+
 ## Regels
 
 - KOP ZONDER INHOUD: loop de koppenlijst van de pagina na en kijk of er twee koppen van HETZELFDE niveau direct achter elkaar staan, zonder tekst ertussen. Dat is een AFKEURING (klein tot matig, redacteur), QuickFinding a3fe111f-e625-4891-99b2-8b7792be6a4e.
@@ -16,7 +38,8 @@
 - TABELKOPPEN ONTBREKEN: is de bovenste rij visueel een koprij maar in de code gewone `td`-cellen, dan is dat een AFKEURING (klein, redacteur). QuickFindings fc7eeab0-... en e1dfc0a8-... (die twee overlappen). Voorbeeld: UTHEU-01 B021.
   RIJKOPPEN: eis die alleen als de eerste kolom de rij BENOEMT en de overige cellen eigenschappen daarvan zijn (bijvoorbeeld "Paspoort" met daarnaast kosten en geldigheidsduur). Is de eerste kolom een volgnummer of gewoon het eerste gegeven, dan zijn er geen rijkoppen nodig; dan zou hulpsoftware bij elke cel dat nummer voorlezen.
 - LEGE KOP: concludeer nooit "lege kop" op basis van een regex als <h2></h2>. Check de werkelijke inhoud, want de tekst kan in een geneste <span>, <a> of <i18n> staan. Extra alert bij koppen met id="main-content" of vergelijkbare skip-targets.
-- em-element voor puur visuele cursivering (labels, titels van werken, namen): AFKEURING, impact klein, responsibility redacteur. Het em-element is alleen voor spraaknadruk. Advies: em verwijderen, cursivering via CSS. Geen suggestie voor het cite-element toevoegen, en geen tussenzin als "terwijl dat niet past bij het doel van dat element". Meerdere voorkomens samenvoegen in een bevinding.
+- em-element voor puur visuele cursivering (labels, titels van werken, namen, gewone zinnen): **AFKEURING**, impact klein, responsibility redacteur. Nooit een opmerking: het em-element is alleen voor spraaknadruk, en tekst die geen nadruk heeft hoort er niet in te staan. Advies: em verwijderen; wil de redacteur de tekst cursief tonen, dan via de stijl "schuingedrukt" in het CMS (niet via CSS, want dat kan een redacteur niet). Geen suggestie voor het cite-element toevoegen, en geen tussenzin als "terwijl dat niet past bij het doel van dat element". Meerdere voorkomens samenvoegen in één bevinding.
+  Meet dit in de gerenderde pagina met de uitklapblokken open: `main.querySelectorAll('em, i')`. Staat er een em omheen een gewone zin, dan is dat de afkeuring — ook als de koppenstructuur op diezelfde pagina verder in orde is. Beoordeel 1.3.1 dus niet alleen op koppen. Voorbeeld: BEV-03 B011, duurzaam.beverwijk.nl/subsidies-en-leningen, waar "Werkt de knop niet of kun je de pdf niet lezen?" en "Hieronder staan alle verwijzingen op een rij:" allebei in een em staan.
 - strong rondom KNOP- of LINKtekst: OPMERKING, geen afkeuring. Impact en responsibility leeg. Advies eindigt met de zin "Dit is een best practice."
 - strong gebruikt als visuele subkop of overbodig binnen een kop: advies altijd in twee delen splitsen. 1) hulpsoftware kondigt een kop al programmatisch aan, het strong-element voegt daar niets aan toe, 2) de visuele opmaak kan met CSS geregeld worden. Niet schrijven dat het kop-element "zelf al voor de gewenste visuele nadruk zorgt".
 - Lijst met slechts een <li>: OPMERKING, geen afkeuring. Impact en responsibility leeg, advies eindigt met "Dit is een best practice."
