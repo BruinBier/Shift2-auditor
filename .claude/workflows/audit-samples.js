@@ -246,15 +246,20 @@ log(`${teAuditen.length} samples te auditen (${teAuditen.length - aantalPdfTeAud
 const INTERACTIEVE_SC = {
   '1.2.3': 'Wordt de tekst die in de videos op {pagina} in beeld staat, ook uitgesproken? Noem daarbij zelf de tijdstippen en teksten die je met de videoscan hebt gevonden, zodat er alleen geluisterd hoeft te worden.',
   '1.2.5': 'Is er in de videos op {pagina} ruimte in het audiospoor voor audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Noem de tijdstippen die je zelf hebt gevonden.',
-  '1.4.3': 'Heeft de hoogcontrast-/toegankelijkheidsknop op {pagina} zelf voldoende contrast? En zo ja, voldoet de hoog-contrast-versie inhoudelijk? Blijven daarbij ook de logos en afbeeldingen met tekst leesbaar in die weergave (let op het footer-logo)?',
-  '1.4.11': 'Heeft de hoogcontrast-/toegankelijkheidsknop op {pagina} zelf voldoende contrast (geldt voor 1.4.11 net als voor 1.4.3)?',
 }
 
-// 2.1.2 en 1.4.10 staan bewust NIET in INTERACTIEVE_SC: beide zijn te automatiseren via de
-// audit-sessie-Chrome. 2.1.2 door Tab te versturen en document.activeElement uit te lezen,
-// 1.4.10 door de viewport op exact 320 CSS-pixels te zetten en scrollWidth te vergelijken.
-// Zie wcag-regels/Shift2_Regels_SC_2_1_2.md en Shift2_Regels_SC_1_4_10.md. Lukt de test niet,
-// dan zet de auditor het criterium zelf op 'niet_te_bepalen' met de vraag voor de onderzoeker.
+// Vier criteria staan hier bewust NIET in: ze zijn te meten in de audit-sessie-Chrome.
+//   2.1.2  — Tab versturen en document.activeElement uitlezen
+//   1.4.10 — viewport op exact 320 CSS-pixels, scrollWidth vergelijken
+//   1.4.3 en 1.4.11 — pixelmeting op de hoogcontrastknop
+// Lukt de meting niet, dan zet de auditor het criterium zelf op 'niet_te_bepalen' met de
+// concrete vraag én de reden waarom het niet lukte.
+//
+// Bij 1.4.3/1.4.11 komt er nog iets bij: de knop staat in de HEADER en is op elke pagina
+// dezelfde, dus je meet hem één keer op het homepage-sample. Twaalf samples leverden anders
+// twaalf identieke vragen op waar één meting had moeten staan.
+// Zie wcag-regels/Shift2_Regels_SC_1_4_3.md, _1_4_11.md, _2_1_2.md, _1_4_10.md en
+// Shift2_Scope_Per_Sample.md.
 
 // Criteria waarvoor een Shift2_Regels-bestand in wcag-regels/ bestaat. Puur om de
 // auditor gericht te verwijzen; ontbreekt een code hier, dan is er (nog) geen

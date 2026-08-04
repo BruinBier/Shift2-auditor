@@ -4,14 +4,18 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_4_11.md` als ze elkaar tegenspreken.
 
-## Niet uit HTML of screenshot te bepalen
+## De contrastknop meet je ZELF, en maar één keer
 
-Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen`
-(of `niet_aanwezig` als het aantoonbaar niet van toepassing is) en noteer de vraag in `reden`.
+Net als bij 1.4.3: het contrast van de hoogcontrastknop is een pixelmeting die je zelf uitvoert
+in de audit-sessie-Chrome, niet een vraag aan de onderzoeker. Zie de meetmethode hieronder en
+in `Shift2_Regels_SC_1_4_3.md`.
 
-**Vraag voor de onderzoeker:**
+De knop staat in de header en is op elke pagina dezelfde. Meet hem één keer, op het
+**homepage-sample**. Op vervolgpagina's beoordeel je alleen de main-content; de knop hoort daar
+niet bij (zie `Shift2_Scope_Per_Sample.md`). Twaalf samples leveren dus één knop-oordeel op.
 
-> Heeft de hoogcontrast-/toegankelijkheidsknop op [pagina] zelf voldoende contrast (geldt voor 1.4.11 net als voor 1.4.3)?
+Lukt de meting niet, dan pas `niet_te_bepalen` met de concrete vraag én de reden waarom het
+niet lukte.
 
 ## Contrastknop zonder tekst valt onder 1.4.11, niet onder 1.4.3
 

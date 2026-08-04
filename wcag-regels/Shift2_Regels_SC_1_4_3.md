@@ -4,14 +4,30 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_4_3.md` als ze elkaar tegenspreken.
 
-## Niet uit HTML of screenshot te bepalen
+## De contrastknop meet je ZELF, en maar één keer
 
-Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen`
-(of `niet_aanwezig` als het aantoonbaar niet van toepassing is) en noteer de vraag in `reden`.
+Twee dingen die vaak misgaan:
 
-**Vraag voor de onderzoeker:**
+**1. Vraag het niet, meet het.** Het contrast van de hoogcontrastknop is een pixelmeting die
+je zelf uitvoert in de audit-sessie-Chrome. De methode staat hieronder, met drie uitgewerkte
+voorbeelden. Zet 1.4.3 dus niet standaard op `niet_te_bepalen` met een vraag erbij: meet, en
+noteer in `reden` de gemeten kleuren en de verhouding.
 
-> Heeft de hoogcontrast-/toegankelijkheidsknop op [pagina] zelf voldoende contrast? En zo ja, voldoet de hoog-contrast-versie inhoudelijk? Blijven daarbij ook de logo's en afbeeldingen met tekst leesbaar in die weergave (let op het footer-logo)?
+Lukt de meting niet (knop niet gevonden, scripts draaien niet, pagina laadt niet), dan pas
+`niet_te_bepalen` met de concrete vraag én de reden waarom het niet lukte.
+
+**2. Eén knop, één beoordeling.** De hoogcontrastknop staat in de header en is op elke pagina
+dezelfde. Meet hem één keer, op het **homepage-sample**. Op vervolgpagina's beoordeel je alleen
+de main-content; de knop hoort daar niet bij. Zie `Shift2_Scope_Per_Sample.md`.
+
+Twaalf samples leveren dus één knop-oordeel op, niet twaalf. Herhaal de vraag of de meting niet
+per pagina.
+
+Wat op een vervolgpagina wél onder 1.4.3 valt: tekst in een afbeelding in de main-content, want
+die schakelt niet mee met de knop. Zie de uitzondering onderaan.
+
+**Uitzondering voor PDF's:** die volgen een eigen route (`niet_te_bepalen`, Frits meet het
+handmatig). Zie de regels onderaan.
 
 ## Testvolgorde met een hoogcontrast-knop
 
@@ -87,8 +103,9 @@ Bevinding B006 in BEV-03.
 
 ## Regels
 
-- Heeft de site een hoogcontrast-knop of toegankelijkheidsmenu met hoog-contrast-optie? Dan wordt de standaardversie niet meer inhoudelijk op contrast getoetst, mits die knop zelf voldoende contrast heeft. Dat laatste kan alleen de onderzoeker vaststellen.
-- Bij bevestiging "knop heeft voldoende contrast": een opmerking op het homepage-sample (status resolved, impact en responsibility leeg), QuickFinding 0dd88736-4c57-421b-b45c-af8fd46cfc38. Daarna HTML-paginas niet meer inhoudelijk op 1.4.3 checken.
+- Heeft de site een hoogcontrast-knop of toegankelijkheidsmenu met hoog-contrast-optie? Dan wordt de standaardversie niet meer inhoudelijk op contrast getoetst, mits die knop zelf voldoende contrast heeft. Dat meet je zelf; zie de meetmethode hierboven.
+- Meet de knop op het homepage-sample. Haalt hij de eis, dan een opmerking op dat sample (status resolved, impact en responsibility leeg), QuickFinding 0dd88736-4c57-421b-b45c-af8fd46cfc38. Op de vervolgpagina's zet je 1.4.3 op `voldoet` met als reden dat de knop op de homepage is gemeten en de main-content geen afbeeldingen met tekst bevat; herhaal die meting niet.
+- Haalt de knop de eis NIET, dan is de hoogcontrast-route geen geldig alternatief en toets je de standaardversie alsnog inhoudelijk op contrast.
 - UITZONDERING: tekst IN een afbeelding (poster, infographic, banner) schakelt NIET mee met de hoogcontrast-knop. Die toets je WEL op 1.4.3, ook op paginas waar je de reguliere contrastcheck overslaat. Toets aan 4,5:1 (niet 3:1), want bij een afbeelding is de font-size niet uitleesbaar en kun je niet vaststellen of het als grote tekst telt.
 - Staat de informatie van de afbeelding VOLLEDIG als echte tekst op de pagina, dan is de afbeelding niet meer de enige drager en valt de tekst-in-afbeelding onder een 1.4.3-uitzondering. Is het alternatief incompleet, dan blijft de contrasteis gelden.
 - PDF-documenten: 1.4.3 wel per stuk inhoudelijk checken. De hoogcontrast-knop op de website geldt niet voor PDFs.
