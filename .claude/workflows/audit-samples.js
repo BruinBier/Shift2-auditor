@@ -244,8 +244,8 @@ log(`${teAuditen.length} samples te auditen (${teAuditen.length - aantalPdfTeAud
 // vraagtekst voor de gebundelde vragenlijst aan het eind.
 // ---------------------------------------------------------------------------
 const INTERACTIEVE_SC = {
-  '1.2.3': 'Bevatten de videos op {pagina} visuele informatie die niet hoorbaar wordt genoemd (naam-in-beeld, locatie-labels, lower thirds)? En is er ruimte in het audiospoor voor audiodescriptie?',
-  '1.2.5': 'Is er in de videos op {pagina} ruimte in het audiospoor voor audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Graag per video, met tijdstip.',
+  '1.2.3': 'Wordt de tekst die in de videos op {pagina} in beeld staat, ook uitgesproken? Noem daarbij zelf de tijdstippen en teksten die je met de videoscan hebt gevonden, zodat er alleen geluisterd hoeft te worden.',
+  '1.2.5': 'Is er in de videos op {pagina} ruimte in het audiospoor voor audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Noem de tijdstippen die je zelf hebt gevonden.',
   '1.4.3': 'Heeft de hoogcontrast-/toegankelijkheidsknop op {pagina} zelf voldoende contrast? En zo ja, voldoet de hoog-contrast-versie inhoudelijk? Blijven daarbij ook de logos en afbeeldingen met tekst leesbaar in die weergave (let op het footer-logo)?',
   '1.4.11': 'Heeft de hoogcontrast-/toegankelijkheidsknop op {pagina} zelf voldoende contrast (geldt voor 1.4.11 net als voor 1.4.3)?',
 }
@@ -260,7 +260,7 @@ const INTERACTIEVE_SC = {
 // auditor gericht te verwijzen; ontbreekt een code hier, dan is er (nog) geen
 // regelbestand en beoordeelt de auditor op checklist + WCAG-tekst.
 const SC_MET_REGELBESTAND = [
-  '1.1.1', '1.2.3', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.5',
+  '1.1.1', '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.5',
   '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '2.5.3', '2.5.8',
   '3.2.4', '4.1.2',
 ]
@@ -306,6 +306,12 @@ Lees eenmalig, vóór je begint:
   - \`wcag-checklists/Project_Instructie_WCAG_Audit.md\` — werkwijze en bevindingformat
   - \`wcag-checklists/Voorbeelden_Bevindingen.md\` — schrijfstijl en toon
   - \`wcag-regels/README.md\` — hoe de regels zich tot de checklists verhouden
+
+Staat er een video op de pagina (een \`iframe\` met een YouTube- of Vimeo-speler, of een
+\`video\`-element in de main-content), lees dan ook:
+  - \`wcag-regels/Shift2_Werkwijze_Video.md\` — hoe je 1.2.1 t/m 1.2.5 onderzoekt. Belangrijk:
+    er bestaat ook OPEN ondertiteling die in het beeld gebrand zit en dus niet in de speler-API
+    staat. Concludeer nooit "geen ondertiteling" op basis van de API alleen; scan eerst frames.
 
 Bestanden voor deze audit:
 ${bronnenLijst}

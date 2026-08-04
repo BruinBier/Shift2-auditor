@@ -55,6 +55,16 @@ geen gedachtestreepjes, geen codeblokken). Lees dat bestand één keer voor je b
 
 Bij tegenspraak wint het SC-bestand, want dat is specifieker.
 
+## Video's
+
+Staat er een video op de pagina, lees dan `Shift2_Werkwijze_Video.md`. Dat bestand beschrijft
+het onderzoek dat aan 1.2.1 t/m 1.2.5 voorafgaat: scope bepalen, ondertiteling vaststellen en
+frames scannen met `scripts/video-scan.mjs`.
+
+De belangrijkste valkuil staat daar: naast **gesloten** ondertiteling, die je uit de speler kunt
+uitlezen, bestaat er **open** ondertiteling die in het beeld gebrand zit en nergens in de API
+staat. Alleen op de speler afgaan levert onterechte 1.2.2-bevindingen op.
+
 ## Interactieve criteria
 
 Sommige criteria zijn niet uit HTML of een screenshot te bepalen en vereisen een test
@@ -80,8 +90,11 @@ De workflow `.claude/workflows/audit-samples.js` zet deze criteria automatisch o
 | SC | Bestand | Interactief |
 |---|---|---|
 | 1.1.1 | `Shift2_Regels_SC_1_1_1.md` | |
-| 1.2.3 | `Shift2_Regels_SC_1_2_3.md` | ja |
-| 1.2.5 | `Shift2_Regels_SC_1_2_5.md` | ja |
+| 1.2.1 | `Shift2_Regels_SC_1_2_1.md` | |
+| 1.2.2 | `Shift2_Regels_SC_1_2_2.md` | |
+| 1.2.3 | `Shift2_Regels_SC_1_2_3.md` | deels |
+| 1.2.4 | `Shift2_Regels_SC_1_2_4.md` | |
+| 1.2.5 | `Shift2_Regels_SC_1_2_5.md` | deels |
 | 1.3.1 | `Shift2_Regels_SC_1_3_1.md` | |
 | 1.3.2 | `Shift2_Regels_SC_1_3_2.md` | |
 | 1.3.3 | `Shift2_Regels_SC_1_3_3.md` | |

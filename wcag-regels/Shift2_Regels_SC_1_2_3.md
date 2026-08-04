@@ -4,14 +4,32 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_2_3.md` als ze elkaar tegenspreken.
 
-## Niet uit HTML of screenshot te bepalen
+## Deels zelf te onderzoeken, deels een vraag
 
-Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen`
-(of `niet_aanwezig` als het aantoonbaar niet van toepassing is) en noteer de vraag in `reden`.
+Uit HTML of screenshot alleen is dit niet te bepalen, maar met een videoscan wél voor de helft.
+Zie `Shift2_Werkwijze_Video.md` voor de methode.
 
-**Vraag voor de onderzoeker:**
+**Wat je zelf vaststelt** door frames te scannen op YouTube: welke tekst er in beeld staat en op
+welk tijdstip. Naambalkjes, locatie- en datumlabels, tekst-op-beeld. Dat zijn precies de
+voorbeelden die in de bevinding moeten, in de vorm `MM:SS "tekst"`. Verzamel ze zelf; vraag er
+niet naar.
 
-> Bevatten de videos op [pagina] visuele informatie die niet hoorbaar wordt genoemd (naam-in-beeld, locatie-labels, lower thirds)? En is er ruimte in het audiospoor voor audiodescriptie?
+**Wat je niet kunt vaststellen** is of die tekst ook wordt uitgesproken. Daarvoor moet je
+luisteren.
+
+**Vraag voor de onderzoeker** (met je eigen bevindingen erbij, zodat er alleen geluisterd hoeft
+te worden):
+
+> In de video 'X' op [pagina] staat op 00:09 "Suzanne Klaassen, Wethouder Beverwijk" in beeld en
+> op 00:43 "Jeroen Brakenhoff, Brakenhoff Transport". Worden deze namen en functies ook
+> uitgesproken?
+
+Wordt het uitgesproken, dan is er geen bevinding. Zo niet, dan schrijf je de bevinding met de
+tijdstippen die je al hebt. Zolang het antwoord ontbreekt: `niet_te_bepalen` met deze vraag in
+`reden`, nooit stilzwijgend op `voldoet`.
+
+Vind je bij het scannen géén tekst in beeld, dan kun je zelf op `voldoet` zetten: er is dan geen
+visuele informatie die hoorbaar gemaakt moet worden.
 
 ## Regels
 
