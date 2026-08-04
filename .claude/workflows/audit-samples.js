@@ -518,11 +518,15 @@ TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één
 ${scList}${bronnenSectie}
 
 STATUS per criterium:
-  voldoet          — geen probleem gevonden; zet in 'reden' WAT je hebt onderzocht
+  voldoet          — het criterium is van toepassing EN er is geen probleem; zet in 'reden' WAT je hebt onderzocht
   afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
   opmerking        — best-practice/randgeval, geen echte fout; voorstelBevinding zonder impact/responsibility
-  niet_aanwezig    — het criterium is niet van toepassing op dit document
+  niet_aanwezig    — datgene waar het criterium over gaat, staat niet in dit document
   niet_te_bepalen  — kan niet worden vastgesteld; zie hieronder wat er in 'reden' hoort
+
+'voldoet' of 'niet_aanwezig'? Kijk naar WAAR HET CRITERIUM OVER GAAT, niet naar wat er verder in
+het document staat. Schrijf je in 'reden' iets als "het document bevat geen ...", dan hoort de
+status 'niet_aanwezig' te zijn; met 'voldoet' spreken status en onderbouwing elkaar tegen.
 
 'niet_te_bepalen' kent twee soorten, en het verschil zit in 'reden':
 
@@ -616,11 +620,24 @@ Gebruik de screenshot ook om te toetsen of wat je in de HTML ziet daadwerkelijk 
 TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
 ${scList}${bronnenSectie}${interactieveSectie}
 STATUS per criterium:
-  voldoet          — geen probleem gevonden
+  voldoet          — het criterium is van toepassing EN er is geen probleem gevonden
   afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
   opmerking        — best-practice/randgeval, geen echte fout; voorstelBevinding zonder impact/responsibility
-  niet_aanwezig    — het criterium is niet van toepassing op deze pagina
+  niet_aanwezig    — datgene waar het criterium over gaat, staat niet op deze pagina
   niet_te_bepalen  — kan niet uit HTML/screenshot worden bepaald (bv. toetsenbord, reflow, contrast-check die interactie vereist)
+
+'voldoet' of 'niet_aanwezig'? Kijk naar WAAR HET CRITERIUM OVER GAAT, niet naar wat er verder op
+de pagina staat. Is dat er niet, dan is het 'niet_aanwezig' — ook als er iets verwants staat dat
+er net buiten valt.
+
+Voorbeeld van de fout die je moet vermijden: 2.2.2 gaat over content die AUTOMATISCH beweegt,
+knippert of bijwerkt en langer dan vijf seconden duurt. Staat er een video die de gebruiker zelf
+moet starten, dan is er niets dat automatisch beweegt en is 2.2.2 'niet_aanwezig'. Niet 'voldoet'
+omdat er nu eenmaal media op de pagina staat. Zo ook: een pagina zonder formulier is voor 3.3.1
+en 3.3.2 'niet_aanwezig', niet 'voldoet'.
+
+Schrijf je in 'reden' iets als "er is geen ... aanwezig", dan hoort de status 'niet_aanwezig' te
+zijn. Staat er 'voldoet', dan spreken status en onderbouwing elkaar tegen.
 
 UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags heeft):
   Een niet-getagde PDF heeft één wortel-oorzaak: de tag-structuur ontbreekt. Keur die af onder 1.3.1.
