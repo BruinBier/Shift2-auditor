@@ -271,7 +271,7 @@ const INTERACTIEVE_SC = {}
 // regelbestand en beoordeelt de auditor op checklist + WCAG-tekst.
 const SC_MET_REGELBESTAND = [
   '1.1.1', '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.5',
-  '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '2.5.3', '2.5.8',
+  '1.4.1', '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '2.5.3', '2.5.8',
   '3.2.4', '4.1.2',
 ]
 
@@ -486,14 +486,26 @@ IS HET DOCUMENT NIET GETAGD, dan geldt dit dwingend (zie Shift2_Regels_SC_1_3_1.
   Keur deze vier dus NIET apart af als gevolg van dezelfde oorzaak, en vul er ook nooit
   'voldoet' bij in.
 
-MAAR: deze twee criteria beoordeel je bij een ongetagd document WEL gewoon. Ze gaan over de
-inhoudelijke kwaliteit van de TEKST, en die staat er ook zonder tags. Geef er een echt oordeel
-over (voldoet of afgekeurd); zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
+MAAR: deze criteria beoordeel je bij een ongetagd document WEL gewoon. Ze gaan over wat je ZIET
+en LEEST, en dat staat er ook zonder tags. Geef er een echt oordeel over (voldoet of afgekeurd);
+zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
   - 2.4.4 linkdoel → lees of de tekst van een link of webadres duidelijk maakt waar hij heen
     leidt. "Klik hier" of "lees meer" zonder context is ook in een PDF een afkeuring. Wat je
     hier NIET beoordeelt: dat de link niet klikbaar is; dat valt onder 1.3.1.
   - 2.4.6 koppen en labels → kijk of de koppen boven de paragrafen de lading dekken van wat
     eronder staat. Dat de kop technisch niet als kop is vastgelegd, is een 1.3.1-kwestie.
+  - 1.4.1 gebruik van kleur → is kleur de enige manier waarop informatie wordt overgedragen?
+    Denk aan een cirkeldiagram waarvan de segmenten alleen via de legendakleur te herleiden
+    zijn, of twee tinten die nauwelijks van elkaar verschillen. Wie kleurenblind is loopt daar
+    visueel tegenaan, los van wat een schermlezer met het document kan. Er is een QuickFinding
+    "PDF - grafieken en diagrammen enkel afhankelijk van kleur" (impact klein, ontwerper).
+    LET OP: een kaart met een kleurverloop en getallen in de legenda (bijvoorbeeld een
+    hittekaart met graden) is GEEN 1.4.1-bevinding; kaarten vallen onder de wettelijke
+    uitzondering voor de overheid.
+
+Het onderscheid met 1.4.5: dat criterium heeft tags nodig omdat de vraag is wat er als
+afbeelding is AANGEMERKT, een eigenschap van de code. Bij 1.4.1 is de vraag of kleur de enige
+drager is, en dat zie je met het oog.
 
 ALTIJD, ook bij een niet-getagd document:
   - 2.4.2 paginatitel → ontbreekt de documenttitel, of staat DisplayDocTitle niet aan
@@ -717,7 +729,9 @@ Lees daarnaast \`wcag-regels/Shift2_Schrijfregels.md\` en toets elke description
 Weerleg een oordeel expliciet als het in strijd is met een Shift2-regel. Typische gevallen: een afkeuring op een telefoonnummer- of e-maillink onder 2.4.4, een afkeuring op een teaser-afbeelding met alt="", of een afkeuring waar de regels een opmerking voorschrijven (zet dan gecorrigeerdeStatus op 'opmerking').
 
 LET OP bij een niet-getagde PDF: de ontbrekende tagstructuur wordt al onder 1.3.1 afgekeurd. Weerleg elke afkeuring die een GEVOLG is van diezelfde oorzaak en zet gecorrigeerdeStatus op 'niet_te_bepalen': 1.3.2 (geen programmatische leesvolgorde), 1.4.5 (zonder tags geen onderscheid tussen tekst en afbeelding) en 3.2.4 (geen programmatisch herkenbare onderdelen om te vergelijken). Weerleg ook een AFKEURING onder 1.1.1: die hoort bij een ongetagde PDF een opmerking te zijn.
-Maar 2.4.4 en 2.4.6 horen bij een ongetagd document WEL beoordeeld te worden: die gaan over de inhoudelijke kwaliteit van de tekst, en die staat er ook zonder tags. Weerleg een afkeuring daar dus NIET met het argument "het document is niet getagd". Weerleg wel een 2.4.4-afkeuring die erover gaat dat de link niet klikbaar is; dat valt onder 1.3.1.
+Maar 2.4.4, 2.4.6 en 1.4.1 horen bij een ongetagd document WEL beoordeeld te worden: die gaan over wat je ziet en leest, en dat staat er ook zonder tags. Weerleg een afkeuring daar dus NIET met het argument "het document is niet getagd". Weerleg wel een 2.4.4-afkeuring die erover gaat dat de link niet klikbaar is; dat valt onder 1.3.1.
+
+Het onderscheid: 1.4.5 heeft tags nodig omdat de vraag is wat er als afbeelding is AANGEMERKT, een eigenschap van de code. 1.4.1 heeft ze niet nodig omdat de vraag is of kleur de enige drager van informatie is; wie kleurenblind is loopt daar visueel tegenaan, los van wat een schermlezer met het document kan.
 Weerleg bij een PDF verder elke 1.4.3-bevinding over contrast: dat controleert de onderzoeker handmatig, dus dat hoort 'niet_te_bepalen' te zijn.
 
 Haal zo nodig zelf de pagina op:

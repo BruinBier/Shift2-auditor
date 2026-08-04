@@ -66,11 +66,22 @@ per criterium: gaat het over iets **programmatisch** (dat bestaat zonder tags ni
 |---|---|
 | **2.4.4** | Zie je een link of een webadres in de tekst? Lees dan of die tekst duidelijk maakt waar hij heen leidt. Geen "klik hier" of "lees meer" zonder context. Dat de link niet klikbaar is, is hier niet de vraag. |
 | **2.4.6** | Staan er koppen boven de paragrafen? Beoordeel of die tekst de lading van de alinea dekt. De technische werking van de kop valt onder 1.3.1, de inhoudelijke relevantie onder 2.4.6. |
+| **1.4.1** | Is kleur de enige manier waarop informatie wordt overgedragen? Denk aan een grafiek waarvan de segmenten alleen via de legendakleur te herleiden zijn, of een link die alleen rood is zonder onderstreping. |
+| **1.4.3** | Contrast, maar alleen als meting: `niet_te_bepalen` met de opmerking dat de onderzoeker het handmatig doet. Zie `Shift2_Regels_SC_1_4_3.md`. |
 
-Bij 2.4.4 en 2.4.6 geef je dus een echt oordeel: voldoet, of een afkeuring als de tekst niet
+Bij 2.4.4, 2.4.6 en 1.4.1 geef je dus een echt oordeel: voldoet, of een afkeuring als het niet
 deugt. Zet ze niet op `niet_te_bepalen` met "geen tags" als reden.
 
-Vastgelegd door Frits op 2026-08-02 bij UTHEU-01. Eerst stonden 2.4.6 en 3.2.4 allebei in de
-vervallijst; Frits corrigeerde dat: 2.4.4 en 2.4.6 gaan over de tekst zelf en zijn visueel te
-toetsen.
+**Waar de grens ligt.** Vervalt een criterium of niet? Vraag je af of je het probleem met je
+ogen kunt vaststellen:
+
+- **1.4.5** heeft tags nodig, want de vraag is wat er als afbeelding is *aangemerkt* — dat is
+  een eigenschap van de code, niet van het beeld.
+- **1.4.1** heeft ze niet nodig, want de vraag is of kleur de enige drager is. Wie kleurenblind
+  is, loopt daar visueel tegenaan, los van wat een schermlezer met het document kan.
+
+Vastgelegd door Frits op 2026-08-02 bij UTHEU-01 (2.4.4 en 2.4.6) en op 2026-08-04 bij BEV-03
+(1.4.1). In beide gevallen zette Claude te veel criteria in de vervallijst; Frits corrigeerde
+dat. Bij 1.4.1 ging het om de cirkeldiagrammen op pagina 8 van de Groenvisie, waar de segmenten
+geen labels hebben en twee groentinten nauwelijks van elkaar verschillen.
 - Zelfde issue op meerdere paginas: NIET telkens een nieuwe bevinding. Bestaande bevinding uitbreiden met het extra sample-item.

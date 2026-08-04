@@ -75,16 +75,35 @@ De belangrijkste valkuil staat daar: naast **gesloten** ondertiteling, die je ui
 uitlezen, bestaat er **open** ondertiteling die in het beeld gebrand zit en nergens in de API
 staat. Alleen op de speler afgaan levert onterechte 1.2.2-bevindingen op.
 
-## Interactieve criteria
+## Criteria die een browsertest vereisen
 
-Sommige criteria zijn niet uit HTML of een screenshot te bepalen en vereisen een test
-in de browser. Die bestanden beginnen met een blok "Niet uit HTML of screenshot te
-bepalen" en bevatten de vraag die de onderzoeker moet beantwoorden.
+Sommige criteria zijn niet uit de HTML of een screenshot alleen te bepalen. Ze zijn wél te
+**meten** in de audit-sessie-Chrome; ga er dus niet standaard een vraag van maken:
 
-Op dit moment: **1.2.3 · 1.2.5 · 1.4.3 · 1.4.10 · 1.4.11 · 2.1.2**
+| SC | Hoe je het meet |
+|---|---|
+| 1.4.3 · 1.4.11 | Pixelmeting op de hoogcontrastknop. Eén keer, op het homepage-sample: de knop staat in de header en is op elke pagina dezelfde. |
+| 1.4.10 | Viewport op exact 320 CSS-pixels, `scrollWidth` vergelijken. |
+| 2.1.2 | Tab versturen en `document.activeElement` uitlezen. |
+| 2.5.3 · 2.5.8 | Zichtbare tekst tegen de toegankelijke naam; `getBoundingClientRect` voor de afmeting. |
+| 1.2.3 · 1.2.5 | Audiospoor en transcript-knop uitlezen, en via de open ondertiteling nagaan of tekst-in-beeld ook gesproken wordt. Zie `Shift2_Werkwijze_Video.md`. |
 
-De workflow `.claude/workflows/audit-samples.js` zet deze criteria automatisch op
-`niet_te_bepalen` en bundelt de vragen aan het eind van het rapport.
+Lukt de meting niet, dan pas `niet_te_bepalen` met de concrete vraag **en** de reden waarom het
+niet lukte. `INTERACTIEVE_SC` in de workflow is leeg: geen enkel criterium gaat nog automatisch
+op `niet_te_bepalen` zonder onderzoek.
+
+Wat wél altijd naar de onderzoeker gaat: **contrast in PDF-documenten** (1.4.3 en 1.4.11), dat
+meet Frits handmatig.
+
+## Open vraag of vaststelling?
+
+`niet_te_bepalen` kent twee soorten, en dat verschil hoort uit `reden` te blijken:
+
+- **Open vraag** — de onderzoeker kan het uitzoeken. Zet de concrete vraag erin, met alles wat
+  je zelf al hebt vastgesteld, zodat er zo min mogelijk werk overblijft.
+- **Vaststelling** — de uitkomst staat vast. Bij een ongetagde PDF vervallen 1.1.1, 1.3.2, 1.4.5
+  en 2.4.4 zolang de tags ontbreken; daar valt niets uit te zoeken. Schrijf dan geen vraagzin,
+  en zeker niet "is er een getagde versie beschikbaar?" — die is er niet, en dat is de bevinding.
 
 ## Onderhoud
 
@@ -109,6 +128,7 @@ De workflow `.claude/workflows/audit-samples.js` zet deze criteria automatisch o
 | 1.3.2 | `Shift2_Regels_SC_1_3_2.md` | |
 | 1.3.3 | `Shift2_Regels_SC_1_3_3.md` | |
 | 1.3.5 | `Shift2_Regels_SC_1_3_5.md` | |
+| 1.4.1 | `Shift2_Regels_SC_1_4_1.md` | |
 | 1.4.3 | `Shift2_Regels_SC_1_4_3.md` | ja |
 | 1.4.5 | `Shift2_Regels_SC_1_4_5.md` | |
 | 1.4.10 | `Shift2_Regels_SC_1_4_10.md` | ja |
