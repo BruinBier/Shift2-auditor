@@ -372,6 +372,32 @@ async function getSampleChecks(sampleId: string, flags: Flags) {
 }
 
 /**
+ * Dekkingscontrole over het hele project: is elk criterium op elk sample nagelopen?
+ *
+ * Zonder --full alleen de samenvatting en de gaten; de volledige lijst per sample is bij
+ * twintig samples en 33 criteria te lang om in één keer te lezen.
+ */
+async function getDekking(projectId: string, flags: Flags) {
+  const result = await api(`/api/projects/${projectId}/dekking`);
+  if (flags.full === 'true') {
+    print(result);
+    return;
+  }
+  print({
+    project: result.project,
+    samenvatting: result.samenvatting,
+    dekkingCompleet: result.dekkingCompleet,
+    // De gaten zelf, want daar gaat het om. Samples die compleet zijn hoeven niet in beeld.
+    onvolledigeSamples: (result.perSample || [])
+      .filter((s: any) => !s.volledig)
+      .map((s: any) => ({ titel: s.titel, beoordeeld: `${s.beoordeeld}/${s.verwacht}`, mist: s.ontbrekendeCodes })),
+    ontbrekend: result.ontbrekend,
+    zonderOnderbouwing: result.zonderOnderbouwing,
+    openVragen: result.openVragen,
+  });
+}
+
+/**
  * Markeert één beoordeling als akkoord of afgewezen, nadat de onderzoeker erop heeft gereageerd.
  */
 async function setCheckAkkoord(sampleId: string, code: string, flags: Flags) {
@@ -780,6 +806,8 @@ async function main() {
       );
     case 'get-sample-checks':
       return getSampleChecks(requirePositional(positional, 0, 'sampleId'), flags);
+    case 'get-dekking':
+      return getDekking(requirePositional(positional, 0, 'projectId'), flags);
     case 'set-check-akkoord':
       return setCheckAkkoord(
         requirePositional(positional, 0, 'sampleId'),
@@ -820,6 +848,7 @@ async function main() {
         `  test-samples <projectId> [--with-browser=false]  # crawler op alle sample-items van project; opslag in DB\n` +
         `  save-sample-checks <sampleId> <bestand.json> [--bron=workflow|gesprek|handmatig]  # dekking per criterium wegschrijven\n` +
         `  get-sample-checks <sampleId> [--full]            # hoeveel criteria beoordeeld, wat staat nog open\n` +
+        `  get-dekking <projectId> [--full]                 # dekkingscontrole: waar is niet gekeken, welke goedkeuring is niet onderbouwd\n` +
         `  set-check-akkoord <sampleId> <code> --akkoord=akkoord|afgewezen|voorgesteld\n`
       );
       process.exit(1);

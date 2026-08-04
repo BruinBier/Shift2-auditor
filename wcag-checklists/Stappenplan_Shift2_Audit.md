@@ -221,7 +221,31 @@ De footer wordt niet opnieuw beoordeeld — die is al volledig gechecked in stap
 
 Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch** door met deze afrondende stappen. Niet stoppen na de bevindingen-fase en wachten op verzoek — dit is onderdeel van de standaardworkflow. De volgorde is strikt:
 
-### Stap 6a — Assessment-statussen controleren
+### Stap 6a — Dekkingscontrole: is er nergens overgeslagen?
+
+**Waarom deze stap eerst.** Alle volgende stappen kijken naar wat er gevónden is: welke bevindingen er zijn, welke statussen daaruit volgen, wat er in de samenvatting moet. Geen van die stappen ziet wat er níet is gedaan. Staat 2.4.6 op vijftien van de twintig samples geregistreerd, dan komt er gewoon een status uit en valt niet op dat vijf pagina's zijn overgeslagen. Een gat in de dekking is per definitie onzichtbaar in de uitkomst; je moet er apart naar kijken.
+
+**Actie van Claude:**
+
+```bash
+npm run cli -- get-dekking <projectId>
+```
+
+Dat geeft drie soorten gaten, oplopend in ernst:
+
+| Wat | Betekenis | Wat te doen |
+|---|---|---|
+| `ontbrekend` | Geen registratie: er is niet naar gekeken | Alsnog beoordelen, of vastleggen waarom niet |
+| `zonderOnderbouwing` | Status `voldoet` met een leeg `reden`-veld | Alsnog onderbouwen, of opnieuw beoordelen |
+| `openVragen` | Status `niet_te_bepalen` | Aan de onderzoeker voorleggen |
+
+`ontbrekend` en `zonderOnderbouwing` moeten op nul staan voordat je verder gaat; `dekkingCompleet` in de uitvoer zegt of dat zo is. Open vragen blokkeren niet: die zijn bewust opengelaten.
+
+**Waarom een lege `reden` bij `voldoet` als gat telt.** Een afkeuring komt in het rapport en wordt gelezen, dus daar valt een fout op. Een goedkeuring levert geen tekst op: het criterium staat groen en er is niets om over te struikelen. `voldoet` is dus de status waar een fout onzichtbaar blijft, en zonder toelichting is niet te zien of het oordeel uit onderzoek komt of uit gemakzucht.
+
+**Leg de uitkomst aan de gebruiker voor**, ook als er niets ontbreekt. Bij twintig samples en 33 criteria zijn dat 660 registraties; het getal "660 van 660, geen gaten" is zelf het resultaat van deze stap. Bundel de open vragen per criterium, niet per sample: dezelfde vraag komt vaak op meerdere pagina's terug.
+
+### Stap 6b — Assessment-statussen controleren
 
 **Eerst** alle WCAG-criterium-assessments nalopen, vóór de management-samenvatting. Bij het wegschrijven van een open bevinding zet de tool het criterium automatisch op `failed`, maar dat is geen volledige controle:
 - Criteria zónder bevinding staan vaak op `not_present` of nog op niets — moeten naar `passed` als ze daadwerkelijk getoetst zijn
@@ -233,9 +257,9 @@ Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch
 - Maak een overzicht van alle 30 SC's (of het aantal van het researchtype) met huidige status en koppeling aan eventuele bevindingen
 - Markeer welke statussen mogelijk niet kloppen (bv. `not_present` waar wel iets is getoetst, `failed` zonder bevinding, lege status)
 - Leg het overzicht aan de gebruiker voor; vraag expliciet om de statussen handmatig bij te werken of, indien gewenst, op te geven welke wijzigingen Claude moet doen via `set-assessment`
-- Wacht op bevestiging dat alle statussen kloppen vóór door te gaan met stap 6b
+- Wacht op bevestiging dat alle statussen kloppen vóór door te gaan met stap 6c
 
-### Stap 6b — Onderzoeker-feedback schrijven (verschijnt op tabblad Conclusie)
+### Stap 6c — Onderzoeker-feedback schrijven (verschijnt op tabblad Conclusie)
 
 **Wat het is:** een uitgeschreven tekst die op het Conclusie-tabblad als "Feedback van onderzoeker" verschijnt. Dit is in de praktijk **de samenvatting voor de opdrachtgever**: wat ging goed en wat kan beter, in lekentaal. Komt in het veld `researcherFeedback` op het project (let op: niet `researcherFeedbackText` — dat veld is een ander oud veld).
 
@@ -257,7 +281,7 @@ Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch
 **Niet invullen:**
 - `managementSummary` blijft leeg (consistent met de meeste Gereed-projecten). Alleen URK-01 heeft dit veld gevuld met een procedurele tekst over de scope; dat is een uitzondering en bij een gewoon deelonderzoek content niet nodig.
 
-### Stap 6c — Project finaliseren
+### Stap 6d — Project finaliseren
 
 Pas na akkoord op samenvatting en feedback:
 - Vraag aan gebruiker of het project op status "Gereed" gezet moet worden
