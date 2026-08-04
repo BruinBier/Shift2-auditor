@@ -123,21 +123,102 @@ Dit is een generiek draaiboek, niet gebonden aan één specifiek project.
 
 ---
 
-## Stap 5 — Bevindingen verzamelen per pagina
+## Stap 5 — De audit draaien
 
-We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan structured/random door elkaar, dan formulieren, dan PDF's). Per pagina checkt Claude de WCAG-criteria die voor het researchtype van toepassing zijn; de specifieke criteria-lijst en de inputs per pagina-type worden in losse substappen vastgelegd.
+De volgorde is: **eerst de machine helemaal klaar, dan pas beoordelen.** Claude draait de
+workflow over de hele steekproef, schrijft de uitkomst weg, en pas daarna bekijken jullie samen
+wat eruit kwam. Niet pagina voor pagina in gesprek terwijl de audit loopt.
 
-### Stap 5a — Eerste pagina: de homepage
+Reden: zolang de audit loopt, zie je alleen wat er gevonden is. Wat overgeslagen is valt pas op
+als alles er staat en je het overzicht per criterium erbij pakt.
 
-**Input van gebruiker:**
-- Akkoord om met het voorgestelde homepage-steekproefitem te starten. De gebruiker hoeft geen screenshot of HTML aan te leveren.
+### Stap 5a — De workflow draaien
 
-**Waarom volledig (en niet alleen `<main>`):**
-- Op de homepage worden ook structuur-elementen beoordeeld die buiten `<main>` staan: header, hoofdnavigatie, **footer**, skip-links, landmarks
-- De footer is meestal op elke pagina identiek; door hem hier volledig te beoordelen hoeven we hem bij latere pagina's niet opnieuw te checken
-- Bij latere pagina's wordt in een aparte substap besproken welke inputs nodig zijn (vaak alleen `<main>`, zonder header en footer)
+**Actie van Claude:**
 
-**Te checken WCAG-criteria (deelonderzoek content, 30 SC's):**
+1. Controleer dat de audit-sessie-Chrome draait (`curl -s http://localhost:9222/json/version`).
+   Zo niet: vraag de gebruiker "Audit-sessie starten" aan te klikken in de tool.
+2. Start de workflow met het **pad**, niet met de naam:
+
+   ```
+   Workflow({ scriptPath: ".claude/workflows/audit-samples.js",
+              args: { projectId: "<id>" } })
+   ```
+
+   Met `{name: "audit-samples"}` draait een oude gecachete kopie; wijzigingen in de regels werken
+   dan niet door.
+3. Wacht tot de workflow klaar is. Bij twaalf samples duurt dat ongeveer twintig minuten.
+
+**Wat de workflow doet:** één auditor-agent per sample, allemaal tegelijk. Elke agent loopt álle
+criteria van het onderzoekstype af, leest daarbij de bestanden uit `wcag-regels/` en
+`wcag-checklists/`, en levert per criterium een status met onderbouwing. Daarna controleert een
+verifier de afkeuringen en wordt elk voorstel tegen de QuickFinding-bibliotheek gehouden.
+
+**Wat de workflow NIET doet:** wegschrijven. Het resultaat is een voorstel-rapport; de database
+blijft ongemoeid tot stap 5b.
+
+De bestaande bevindingen in het project gaan als referentie mee. Elke afkeuring krijgt daardoor
+het label `nieuw` of `bestaat_al`, zodat meteen zichtbaar is wat de vorige ronde miste.
+
+### Stap 5b — Registraties wegschrijven
+
+Schrijf per sample de beoordelingen weg naar de dekkingslijst met een PUT naar
+`/api/sample-items/<sampleId>/criterion-checks`, met `bron: "workflow"`.
+
+Dit gaat over de **dekkingslijst**, niet over bevindingen. Die laatste komen pas in stap 5d, na
+akkoord. Voor de dekkingslijst is de Prisma-route prima; voor bevindingen niet (zie
+`wcag-regels/Shift2_Schrijfregels.md`).
+
+### Stap 5c — Vergelijken met wat er al lag
+
+Had het project al bevindingen, leg die dan naast de verse audit:
+
+- **Bestaande bevinding niet teruggekomen als afkeuring?** Zoek uit waarom. Soms is het terecht
+  (de regels zijn aangescherpt), soms mist de audit iets, soms zit er een fout in de regel zelf.
+- **Nieuwe afkeuring die er nog niet was?** Die gaat in stap 5d naar de gebruiker.
+
+Meld de uitkomst voordat je verder gaat. Bij BEV-04 (2026-08-04) leverde deze vergelijking drie
+fouten van de audit op, en elk daarvan legde een leemte in de regels bloot.
+
+### Stap 5d — Bevindingen één voor één voorleggen
+
+Geef eerst een **kort overzicht** van wat er gevonden is: per sample de afkeuringen en
+opmerkingen, één regel elk. Daarna leg je ze **één voor één** voor, met de volledige tekst van
+description en advice.
+
+Per bevinding:
+
+- Controleer eerst de QuickFinding-bibliotheek; bij een treffer neem je die tekst als
+  uitgangspunt en vul je alleen de placeholders in
+- Controleer of er al een bevinding voor hetzelfde issue bestaat; zo ja, koppel het sample aan
+  de bestaande in plaats van een duplicaat te maken
+- Wacht op akkoord voordat je wegschrijft
+- Schrijf bevindingen via de API (`POST /api/projects/<id>/findings`), nooit rechtstreeks via
+  Prisma: de API draait de schrijfregel-linter
+
+Verandert er iets aan het oordeel, werk dan **ook de registratie in de dekkingslijst bij**, met
+`bron: "gesprek"` en de afweging erin. Zo is achteraf te verantwoorden waarom iets géén bevinding
+werd.
+
+### Wat de auditor zelf meet en wat naar de gebruiker gaat
+
+Deze criteria meet de auditor zelf in de audit-sessie-Chrome; ze horen niet standaard als vraag
+terug te komen:
+
+| SC | Hoe |
+|---|---|
+| 1.4.3 · 1.4.11 | Pixelmeting op de hoogcontrastknop, **één keer** op het homepage-sample |
+| 1.4.10 | Viewport op exact 320 CSS-pixels, `scrollWidth` vergelijken |
+| 2.1.2 | Tab versturen en `document.activeElement` uitlezen |
+| 2.5.3 · 2.5.8 | Zichtbare tekst tegen toegankelijke naam; `getBoundingClientRect` |
+| 1.2.3 · 1.2.5 | Audiospoor en transcript-knop uitlezen, open ondertiteling scannen |
+
+Wat wél altijd naar de gebruiker gaat: **contrast in PDF-documenten**. Dat meet de onderzoeker
+handmatig met de Colour Contrast Analyser.
+
+### De criteria van het onderzoekstype
+
+Voor een deelonderzoek content website (30 SC's):
 
 | SC | Naam |
 |---|---|
@@ -172,54 +253,19 @@ We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan struct
 | 3.3.2 | Labels of instructies |
 | 4.1.2 | Naam, rol en waarde |
 
-**Actie van Claude:**
-- Leg eerst via `npm run cli -- capture-sample-evidence <projectId> <sampleItemId>` de volledige screenshot en gerenderde DOM/outerHTML vast als auditbewijs bij het steekproefitem. Voor de homepage wordt altijd het volledige document vastgelegd.
-- Controleer in de uitvoer dat beide paden en `capturedAt` zijn opgeslagen. Deze actie maakt nooit een bevinding aan.
-- Loop de criteria in deze tabel één voor één na voor de hele pagina, inclusief header, hoofdnavigatie, hoofdinhoud én footer
-- Per criterium beoordelen tegen de regels uit `wcag-checklists/Checklist_SC_X_X_X.md` en de memory-feedback (jargon, vorm, lengte, etc.)
-- **Hergebruik vóór zelf formuleren — vaste volgorde per geconstateerd issue:**
-  1. **QuickFindings (snelle bevindingen)** eerst raadplegen — dit is de centrale bibliotheek met hergebruikbare templates op `/admin/bevindingen`. Via CLI: `npm run cli -- search-quick-findings <keyword>` (per SC of trefwoord). Als er een passende QuickFinding is, gebruik `create-finding-from-quick` (memory-regel "Eerst QuickFinding-bibliotheek checken")
-  2. **Findings in andere Shift2-projecten** — als geen QuickFinding past, kijken hoe vergelijkbare issues elders zijn geformuleerd. Alle projecten zijn relevant, ongeacht researchType (ook PDF-only en formulier-onderzoeken). Doel: terugkerende gemeente-issues niet missen (cookiebanner, accessibility-overlays, vergelijkbare CMS-templates), schrijfstijl consistent houden, en bestaande formuleringen hergebruiken. Praktisch: `npm run cli -- list-projects` en per project `get-project <id>`
-  3. **Zelf formuleren** — alleen als hergebruik niet mogelijk is. Volg de schrijfregels uit de memory-feedback (Cardan-stijl, geen URL in description, geen em-dash, geen technisch jargon, kort en to-the-point, etc.)
-- **Concept-review vóór wegschrijven (verplicht):** Claude schrijft bevindingen **niet** direct weg naar de tool. Per bevinding eerst een concept tonen in chat met: SC, description, advice, impact, responsibility, status, gekoppelde sample-items. De gebruiker geeft akkoord of vraagt aanpassing (formulering, splitsen, samenvoegen, schrappen). Pas na akkoord uitvoeren via `create-finding` of `create-finding-from-quick`. Reviewmodus: **per bevinding** (één tegelijk), niet in batches per criterium of per pagina — fijnmazige controle weegt zwaarder dan snelheid
+Bij het onderzoekstype mét formulieren komen daar 3.3.1, 3.3.3 en 3.3.4 bij (33 SC's).
 
-**Resultaat:**
-- Homepage volledig nagelopen (inclusief footer — voor alle volgende pagina's hoeft de footer niet meer opnieuw)
-- Bevindingen aangemaakt en gekoppeld aan het Homepage-SampleItem
-- Klaar om door te gaan naar de tweede pagina
-
-### Stap 5b — Volgende pagina's (na de homepage)
-
-**Input van gebruiker:**
-- Akkoord om met het voorgestelde steekproefitem te starten. De gebruiker hoeft geen screenshot of HTML aan te leveren.
-
-**Te checken WCAG-criteria:**
-Dezelfde lijst als stap 5a, met de volgende uitzonderingen die op de homepage al zijn afgehandeld en niet meer per pagina worden gecheckt:
-- **1.4.3 Contrast (minimum)** — alleen checken bij PDF-pagina's; bij formulier-pagina's vragen of de hoogcontrast-knop op die pagina voldoende contrast heeft (zie [[feedback_1_4_3_contrast_switch_workflow]])
-- **1.4.11 Contrast van niet-tekstuele content** — idem als 1.4.3
-- **1.4.10 Reflow** — per pagina actief aan gebruiker vragen om 320px-check (zie [[feedback_1_4_10_reflow_ask_per_page]])
-- **2.1.2 Geen toetsenbordval** — per pagina actief aan gebruiker vragen om Tab-test (zie [[feedback_2_1_2_keyboard_trap_ask_per_page]])
-
-De footer wordt niet opnieuw beoordeeld — die is al volledig gechecked in stap 5a.
-
-**Actie van Claude:**
-- Leg eerst via `npm run cli -- capture-sample-evidence <projectId> <sampleItemId>` een volledige screenshot en de gerenderde outerHTML van `<main>` vast als auditbewijs. Gebruik `--full` alleen wanneer het volledige document inhoudelijk nodig is.
-- Controleer in de uitvoer dat beide paden en `capturedAt` zijn opgeslagen. Deze actie maakt nooit een bevinding aan.
-- Loop dezelfde criteria-tabel als in stap 5a na, met de hierboven genoemde uitzonderingen
-- Volg de "Hergebruik vóór zelf formuleren"-volgorde uit stap 5a (QuickFindings → andere projecten → zelf formuleren)
-- Bij issues die al op de homepage zijn gevonden (bv. social-media-lijst in footer): geen nieuwe bevinding aanmaken — die is al gekoppeld aan het Homepage-sample-item. Pas alleen het bestaande sample-item-koppelingenlijstje uit als hetzelfde issue zich ook op deze pagina voordoet (zie [[feedback_merge_repeat_issues]])
-- **Concept-review per bevinding** blijft van kracht: niet direct wegschrijven
-
-**Resultaat:**
-- Pagina volledig nagelopen op de van toepassing zijnde SC's
-- Bevindingen aangemaakt of bestaande bevindingen uitgebreid met deze pagina
-- Klaar om door te gaan naar de volgende pagina
+**Resultaat van stap 5:**
+- Elk criterium op elk steekproefitem beoordeeld en vastgelegd in de dekkingslijst
+- Bevindingen aangemaakt na akkoord, met de afwegingen in `reden`
+- Klaar voor de dekkingscontrole in stap 6a
 
 ---
 
-## Stap 6 — Rapportage afronden (automatisch na laatste pagina)
 
-Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch** door met deze afrondende stappen. Niet stoppen na de bevindingen-fase en wachten op verzoek — dit is onderdeel van de standaardworkflow. De volgorde is strikt:
+## Stap 6 — Rapportage afronden (automatisch na de bevindingen)
+
+Zodra de bevindingen uit stap 5d zijn weggeschreven, gaat Claude **automatisch** door met deze afrondende stappen. Niet stoppen en wachten op verzoek — dit is onderdeel van de standaardworkflow. De volgorde is strikt:
 
 ### Stap 6a — Dekkingscontrole: is er nergens overgeslagen?
 
