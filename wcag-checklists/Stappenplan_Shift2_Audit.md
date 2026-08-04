@@ -341,9 +341,34 @@ Bij BEV-03 (2026-08-04) stond in de feedback dat de standaardweergave te weinig 
 **Niet invullen:**
 - `managementSummary` blijft leeg (consistent met de meeste Gereed-projecten). Alleen URK-01 heeft dit veld gevuld met een procedurele tekst over de scope; dat is een uitzondering en bij een gewoon deelonderzoek content niet nodig.
 
-### Stap 6d — Project finaliseren
+### Stap 6d — De oplevering controleren
 
-Pas na akkoord op samenvatting en feedback:
+De tekst is nu klaar, maar het rapport gaat in **drie vormen** naar de opdrachtgever. Die moeten
+alle drie kloppen voordat de nulmeting dicht kan. Doe deze controle pas als de feedback definitief
+is, want alle drie de vormen worden uit dezelfde gegevens opgebouwd.
+
+| Vorm | Waar | Wat je controleert |
+|---|---|---|
+| **HTML** | `/report/<id>` | De vier tabbladen: klopt de tekst, staan de bevindingen er compleet in, kloppen de aantallen? |
+| **Word** | `/api/reports/<id>/docx` | Opent het bestand zonder foutmelding, staat de opmaak goed, zijn de koppen en tabellen intact? |
+| **Excel** | `/api/reports/<id>/xlsx` | Staan alle bevindingen en opmerkingen erin, met de juiste kolommen? |
+
+Beide downloads staan als knop op het tabblad Voltooien.
+
+**Actie van Claude:** open de HTML-versie en loop hem na. Meld wat je ziet: het aantal
+bevindingen en opmerkingen, of de conclusie-tekst er goed in staat, en of er iets ontbreekt of
+dubbel staat.
+
+**Wat de gebruiker doet:** het Word- en Excel-bestand downloaden en openen. Die controle kan
+Claude niet doen, want een gedownload bestand valt buiten wat er te lezen is. Meld dus expliciet
+dat die twee nog nagekeken moeten worden en wacht op bevestiging.
+
+Is er iets mis met een van de drie, dan wordt dat eerst opgelost. Pas als alle drie in orde zijn,
+gaat het project naar stap 6e.
+
+### Stap 6e — Project finaliseren
+
+Pas na akkoord op samenvatting, feedback én de oplevering uit 6d:
 - Vraag aan gebruiker of het project op status "Gereed" gezet moet worden
 - Bij ja: `PATCH /api/projects/<id>` met `{"status": "Gereed"}`
 - Toon eindlink naar het rapport: `/report/<id>`
@@ -409,7 +434,7 @@ Bij een volledig geslaagde herinspectie ziet de opdrachtgever:
 
 De feedback is de plek waar het verhaal staat. Het rapport beschrijft de situatie nu, de
 feedback beschrijft de weg ernaartoe. Benoem concreet wat er is verbeterd, in dezelfde stijl
-als stap 6b. Voorbeeld uit Heerlen-01 v1.1: "De bevindingen uit het eerdere onderzoek zijn
+als stap 6c. Voorbeeld uit Heerlen-01 v1.1: "De bevindingen uit het eerdere onderzoek zijn
 opgelost. In de footer staan de sociale-media-links nu als opsomming, met een linktekst die
 duidelijk maakt dat het om de pagina van de gemeente gaat."
 
