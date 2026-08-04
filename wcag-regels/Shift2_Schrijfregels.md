@@ -130,6 +130,23 @@ Sluit het advies van een opmerking af met "Dit is een best practice." waar dat p
    moet worden; beslis het niet zelf.
    Een andere **oorzaak** onder hetzelfde criterium is wél een aparte bevinding (1.3.1
    strong-in-kop is iets anders dan 1.3.1 br-als-lijst).
+3. **Is dit onderdeel al onder een ander criterium behandeld?** Zo ja, en lost het advies daar
+   dit probleem mee op, schrijf het dan niet nog eens op. Je hoeft niet alles te benoemen wat
+   niet goed is; het rapport moet de opdrachtgever vertellen wát er moet gebeuren, niet elk
+   criterium uitputtend afvinken.
+
+   Voorbeeld: staan de cirkeldiagrammen en kaarten al onder 1.4.1 afgekeurd omdat kleur de
+   enige drager is, dan hoeft een mogelijk te laag contrast tussen aangrenzende segmenten er
+   niet als losse 1.4.11-bevinding naast. Het advies bij 1.4.1 (labels of arcering erbij) lost
+   dat mee op, en het beeldmateriaal moet toch opnieuw gemaakt worden.
+
+   Zet de afweging wél in `reden` in de dekkingslijst, zodat achteraf te verantwoorden is dat
+   je ernaar hebt gekeken en waarom er geen aparte bevinding kwam.
+
+   Let op de grens: gaat het om een **ander probleem** dat met dezelfde ingreep niet is
+   opgelost, dan is het wél een aparte bevinding. Een afbeelding zonder tekstalternatief (1.1.1)
+   en een link zonder naam (4.1.2) zijn twee losse bevindingen, ook al gaat het om hetzelfde
+   element.
 
 ### Neem je een QuickFinding over: vul de placeholders in
 
