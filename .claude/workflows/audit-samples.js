@@ -243,23 +243,28 @@ log(`${teAuditen.length} samples te auditen (${teAuditen.length - aantalPdfTeAud
 // interactieve criteria deterministisch op 'niet_te_bepalen' te zetten, en de
 // vraagtekst voor de gebundelde vragenlijst aan het eind.
 // ---------------------------------------------------------------------------
-const INTERACTIEVE_SC = {
-  '1.2.3': 'Wordt de tekst die in de videos op {pagina} in beeld staat, ook uitgesproken? Noem daarbij zelf de tijdstippen en teksten die je met de videoscan hebt gevonden, zodat er alleen geluisterd hoeft te worden.',
-  '1.2.5': 'Is er in de videos op {pagina} ruimte in het audiospoor voor audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Noem de tijdstippen die je zelf hebt gevonden.',
-}
+const INTERACTIEVE_SC = {}
 
-// Vier criteria staan hier bewust NIET in: ze zijn te meten in de audit-sessie-Chrome.
+// Deze tabel is LEEG en dat is bewust: er is geen enkel criterium meer dat standaard, zonder
+// onderzoek, op 'niet_te_bepalen' gaat. Elk criterium dat hier ooit in stond is nu zelf te
+// meten in de audit-sessie-Chrome:
+//
 //   2.1.2  — Tab versturen en document.activeElement uitlezen
 //   1.4.10 — viewport op exact 320 CSS-pixels, scrollWidth vergelijken
-//   1.4.3 en 1.4.11 — pixelmeting op de hoogcontrastknop
-// Lukt de meting niet, dan zet de auditor het criterium zelf op 'niet_te_bepalen' met de
+//   1.4.3 en 1.4.11 — pixelmeting op de hoogcontrastknop. Die knop staat in de HEADER en is
+//            op elke pagina dezelfde: één meting op het homepage-sample, niet twaalf keer.
+//   1.2.3 en 1.2.5 — apart audiospoor uitlezen (adaptiveFormats met audioTrack), transcript-
+//            knop zoeken, en via de open ondertiteling nagaan of de tekst in beeld ook
+//            gesproken wordt. Bij 1.2.3 pas een vraag als er géén ondertiteling is; bij 1.2.5
+//            bepaalt de ruimte-vraag alleen de vorm van het advies, niet of er een bevinding is.
+//
+// Lukt een meting niet, dan zet de auditor het criterium zelf op 'niet_te_bepalen' met de
 // concrete vraag én de reden waarom het niet lukte.
 //
-// Bij 1.4.3/1.4.11 komt er nog iets bij: de knop staat in de HEADER en is op elke pagina
-// dezelfde, dus je meet hem één keer op het homepage-sample. Twaalf samples leverden anders
-// twaalf identieke vragen op waar één meting had moeten staan.
-// Zie wcag-regels/Shift2_Regels_SC_1_4_3.md, _1_4_11.md, _2_1_2.md, _1_4_10.md en
-// Shift2_Scope_Per_Sample.md.
+// De tabel blijft bestaan omdat de structuur eromheen (deterministisch overschrijven, vragen
+// bundelen) nog gebruikt wordt zodra er een nieuw interactief criterium bij komt.
+// Zie wcag-regels/Shift2_Regels_SC_1_4_3.md, _1_4_11.md, _2_1_2.md, _1_4_10.md, _1_2_3.md,
+// _1_2_5.md, Shift2_Werkwijze_Video.md en Shift2_Scope_Per_Sample.md.
 
 // Criteria waarvoor een Shift2_Regels-bestand in wcag-regels/ bestaat. Puur om de
 // auditor gericht te verwijzen; ontbreekt een code hier, dan is er (nog) geen
@@ -314,9 +319,14 @@ Lees eenmalig, vóór je begint:
 
 Staat er een video op de pagina (een \`iframe\` met een YouTube- of Vimeo-speler, of een
 \`video\`-element in de main-content), lees dan ook:
-  - \`wcag-regels/Shift2_Werkwijze_Video.md\` — hoe je 1.2.1 t/m 1.2.5 onderzoekt. Belangrijk:
-    er bestaat ook OPEN ondertiteling die in het beeld gebrand zit en dus niet in de speler-API
-    staat. Concludeer nooit "geen ondertiteling" op basis van de API alleen; scan eerst frames.
+  - \`wcag-regels/Shift2_Werkwijze_Video.md\` — hoe je 1.2.1 t/m 1.2.5 onderzoekt. Twee dingen
+    die je zelf moet uitzoeken in plaats van vragen:
+      * OPEN ondertiteling zit in het beeld gebrand en staat niet in de speler-API. Concludeer
+        nooit "geen ondertiteling" op basis van de API alleen; scan eerst frames.
+      * Of tekst in beeld ook wordt UITGESPROKEN lees je af uit diezelfde open ondertiteling:
+        staat er een naambalkje terwijl de ondertiteling iets heel anders zegt, dan wordt de
+        naam niet uitgesproken. Vraag dat dus niet aan de onderzoeker. Alleen bij een video
+        zonder ondertiteling én zonder transcript blijft die vraag over.
 
 Bestanden voor deze audit:
 ${bronnenLijst}

@@ -124,17 +124,39 @@ en daarom hoort daar het bewijs bij. Een leeg `reden`-veld betekent: aangenomen,
 
 | Claude zelf | Vraag aan de onderzoeker |
 |---|---|
-| Is er een video, ingesloten of gelinkt | Wordt de naam in beeld ook **uitgesproken**? |
-| Titel en duur | Is er **ruimte in het audiospoor** voor audiodescriptie? |
-| Gesloten ondertiteling: aanwezig, automatisch of niet | Klopt de ondertiteling inhoudelijk? |
-| Open ondertiteling: aanwezig en over welk deel | Bevat het geluid informatie die niet in beeld is? |
+| Is er een video, ingesloten of gelinkt | Is er **ruimte in het audiospoor** voor audiodescriptie? |
+| Titel en duur | Klopt de ondertiteling inhoudelijk? |
+| Gesloten ondertiteling: aanwezig, automatisch of niet | Bevat het geluid informatie die niet in beeld is? |
+| Open ondertiteling: aanwezig en over welk deel | Wordt de tekst uitgesproken — **alleen als er géén ondertiteling is** |
 | Naambalkjes en tekst in beeld, mét tijdstip | |
 | Transcript-knop bij de speler | |
+| **Audiodescriptie: apart audiospoor aanwezig of niet** | |
+| **Of tekst-in-beeld hoorbaar is — via de open ondertiteling** | |
 
-Claude kan dus de **voorbeelden met tijdstip** zelf verzamelen. Wat overblijft voor de
-onderzoeker is horen: of de visuele informatie ook hoorbaar is, en of er stiltes zijn waarin
-audiodescriptie past. Dat zijn precies de twee vragen uit `Shift2_Regels_SC_1_2_3.md` en
-`Shift2_Regels_SC_1_2_5.md`.
+### Audiodescriptie zelf vaststellen
+
+Audiodescriptie is een **tweede audiospoor**. Lees de `adaptiveFormats` uit
+`ytInitialPlayerResponse` en kijk of er formats met een `audioTrack` zijn; is er maar één spoor,
+dan is er geen audiodescriptie. Bij een andere speler: zoek een knop of menu-optie
+"audiodescriptie".
+
+Let op wat dat wel en niet bewijst. Geen apart spoor betekent: geen audiodescriptie. Het betekent
+**niet** dat de tekst in beeld onhoorbaar is — de spreker kan hem gewoon zelf noemen. Zie
+`Shift2_Regels_SC_1_2_3.md` voor de drie routes die 1.2.3 accepteert.
+
+### Open ondertiteling beantwoordt de luistervraag
+
+Heeft de video open ondertiteling, dan geeft die weer wat er gesproken wordt. Leg dan per
+tijdstip de tekst in beeld naast de ondertiteling eronder: zegt de ondertiteling op dat moment
+iets heel anders, dan wordt de tekst in beeld niet uitgesproken. Controleer ook het frame ervoor
+en erna, want iemand kan zich net vóór of ná het naambalkje voorstellen.
+
+Zo vervalt de luistervraag helemaal. Alleen bij een video **zonder** ondertiteling en zonder
+transcript blijft die vraag staan.
+
+Wat sowieso voor de onderzoeker overblijft, is of er stiltes in het audiospoor zitten waarin
+audiodescriptie past. Dat antwoord bepaalt de vorm van het 1.2.5-advies, niet of er een bevinding
+is; zie `Shift2_Regels_SC_1_2_5.md`.
 
 ## Volgorde bij het beoordelen
 
@@ -143,8 +165,11 @@ audiodescriptie past. Dat zijn precies de twee vragen uit `Shift2_Regels_SC_1_2_
    een afkeuring; automatisch gegenereerde ondertiteling ook (zie de QuickFindings).
 3. **1.2.1** — is het een video zonder geluid of alleen audio? Meestal `niet_aanwezig`.
 4. **1.2.4** — alleen bij een live-uitzending. Meestal `niet_aanwezig`.
-5. **1.2.3 en 1.2.5** — frames scannen op tekst in beeld, tijdstippen verzamelen, en de twee
-   luistervragen aan de onderzoeker voorleggen. Zie de regelbestanden voor de vaste teksten.
+5. **1.2.3 en 1.2.5** — frames scannen op tekst in beeld en tijdstippen verzamelen. Stel daarna
+   zelf vast: is er een apart audiospoor, is er een transcript-knop, en zegt de open
+   ondertiteling op die tijdstippen iets anders dan wat er in beeld staat? Zijn alle drie de
+   routes dicht, dan is het een afkeuring zonder dat je iets hoeft te vragen. Zie de
+   regelbestanden voor de vaste teksten.
 
 Controleer bij 1.2.3 eerst of de speler een transcript-knop heeft: dan is er een geldig
 alternatief en vervalt de bevinding.

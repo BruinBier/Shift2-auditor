@@ -4,29 +4,60 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_2_3.md` als ze elkaar tegenspreken.
 
-## Deels zelf te onderzoeken, deels een vraag
+## Meestal zelf te bepalen; vraag alleen als het echt niet anders kan
 
-Uit HTML of screenshot alleen is dit niet te bepalen, maar met een videoscan wél voor de helft.
-Zie `Shift2_Werkwijze_Video.md` voor de methode.
+Uit HTML of screenshot alleen is dit niet te bepalen, maar met een videoscan kom je meestal
+helemaal rond. Zie `Shift2_Werkwijze_Video.md` voor de methode.
 
-**Wat je zelf vaststelt** door frames te scannen op YouTube: welke tekst er in beeld staat en op
-welk tijdstip. Naambalkjes, locatie- en datumlabels, tekst-op-beeld. Dat zijn precies de
-voorbeelden die in de bevinding moeten, in de vorm `MM:SS "tekst"`. Verzamel ze zelf; vraag er
-niet naar.
+1.2.3 accepteert **drie** manieren om visuele informatie beschikbaar te maken. Loop ze in deze
+volgorde af; de eerste twee stel je altijd zelf vast.
 
-**Wat je niet kunt vaststellen** is of die tekst ook wordt uitgesproken. Daarvoor moet je
-luisteren.
+**1. Audiodescriptie — een apart audiospoor.** Lees de `adaptiveFormats` uit
+`ytInitialPlayerResponse` en kijk of er formats met een `audioTrack` zijn. Is er maar één spoor,
+dan is er geen audiodescriptie. Bij een andere speler: is er een knop of menu-optie
+"audiodescriptie"?
 
-**Vraag voor de onderzoeker** (met je eigen bevindingen erbij, zodat er alleen geluisterd hoeft
-te worden):
+**2. Een transcript op de pagina of bij de speler.** Is die er, dan is er een geldig alternatief
+en vervalt de bevinding (zie ook 1.1.1).
+
+**3. De spreker zegt het gewoon zelf.** Dit is bij gemeentevideo's de meest voorkomende situatie:
+iemand die zichzelf voorstelt met "Ik ben Suzanne Klaassen, wethouder in Beverwijk" maakt de
+naam-in-beeld hoorbaar, en dan is er geen bevinding.
+
+> Let op: uit "geen audiodescriptie-knop" volgt NIET dat de tekst onhoorbaar is. Dat bewijst
+> alleen dat route 1 dicht is. Route 3 blijft open, en die is in de praktijk de belangrijkste.
+
+### Route 3 zelf beantwoorden: lees de open ondertiteling
+
+Heeft de video **open ondertiteling** (in het beeld gebrand), dan geeft die weer wat er gesproken
+wordt. Vergelijk dan per tijdstip de tekst in beeld met de ondertiteling eronder:
+
+- Staat er een naambalkje en zegt de ondertiteling op dat moment iets heel anders, dan wordt de
+  naam niet uitgesproken. **Afkeuring**, en je hoeft niets te vragen.
+- Staat er tekst in beeld zonder ondertiteling eronder (zoals een titelkaart), dan wordt die tekst
+  niet uitgesproken.
+- Komt de tekst uit beeld terug in de ondertiteling, dan is hij wél hoorbaar en is er op dat punt
+  geen bevinding.
+
+Controleer ook het frame ervoor en erna: iemand kan zich net vóór of ná het naambalkje voorstellen.
+
+Voorbeeld (BEV-03, 2026-08-04): op 00:09 staat "Suzanne Klaassen, Wethouder Beverwijk" in beeld
+terwijl de ondertiteling zegt "Onze ondernemers kunnen daardoor niet meer uitbreiden", en op 00:15
+loopt ze door met "En dat raakt onze lokale economie". Ze stelt zich nergens voor. Geen apart
+audiospoor, geen transcript-knop. Alle drie de routes dicht, dus afkeuring — zonder vraag aan de
+onderzoeker.
+
+### Alleen zónder ondertiteling blijft er een vraag over
+
+Is er geen ondertiteling en ook geen transcript, dan kun je niet horen of de spreker de tekst
+zelf noemt. Dan pas `niet_te_bepalen`, met je eigen bevindingen erbij zodat er alleen geluisterd
+hoeft te worden:
 
 > In de video 'X' op [pagina] staat op 00:09 "Suzanne Klaassen, Wethouder Beverwijk" in beeld en
-> op 00:43 "Jeroen Brakenhoff, Brakenhoff Transport". Worden deze namen en functies ook
-> uitgesproken?
+> op 00:43 "Jeroen Brakenhoff, Brakenhoff Transport". Er is geen audiodescriptie-spoor en geen
+> transcript. Worden deze namen en functies in de video zelf uitgesproken?
 
-Wordt het uitgesproken, dan is er geen bevinding. Zo niet, dan schrijf je de bevinding met de
-tijdstippen die je al hebt. Zolang het antwoord ontbreekt: `niet_te_bepalen` met deze vraag in
-`reden`, nooit stilzwijgend op `voldoet`.
+Nooit stilzwijgend op `voldoet` zetten omdat je het niet kon horen.
 
 ## Geen visuele informatie gevonden: zelf op voldoet, mét bewijs in `reden`
 
