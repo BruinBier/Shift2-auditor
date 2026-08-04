@@ -109,6 +109,32 @@ Aanleiding: heuvelrug.nl (2026-08-02), logo-link met `<img class="logo-img" alt=
 auditor schreef 1.1.1 en 4.1.2 correct als aparte bevindingen, maar sloot 4.1.2 af met "Dit
 issue valt ook onder succescriterium 1.1.1". Frits wees erop dat het twee losse issues zijn.
 
+## Niet-getagde PDF: 4.1.2 vervalt
+
+Bij een PDF zonder tags zet je 4.1.2 op `niet_te_bepalen`. Rapporteer het niet als losse fout:
+de wortel-oorzaak is dat de tagstructuur ontbreekt, en die is al afgekeurd onder 1.3.1.
+
+4.1.2 gaat over naam, rol en waarde in de **code**. Zonder tags is er geen structuur waarin die
+kunnen zitten, dus valt er over een afzonderlijk element geen zelfstandig oordeel te vellen.
+
+### Beperkte uitzondering: écht invulbare formuliervelden
+
+Alleen bij een **invulbaar formulier** (`/AcroForm` met invulvelden, keuzerondjes of
+selectievakjes) is 4.1.2 zonder tags te beoordelen. Zulke velden moet de gebruiker zelf
+bedienen, en de toegankelijke naam zit dan in de tooltip `/TU`, niet in de interne veldnaam `/T`.
+
+**Ga niet af op de techniek maar op de functie.** Een knop die als link werkt, blijft een link,
+ook als de bouwer hem toevallig als AcroForm-pushbutton (`/FT /Btn` met `/Ff 65536`) heeft
+opgeslagen in plaats van als Link-annotatie. Zo'n knop valt gewoon onder de vervalregel
+hierboven; hoe hij intern is opgeslagen, hoort de beoordeling niet te veranderen.
+
+Wat je bij zo'n knop **wel** beoordeelt is 2.4.4: het zichtbare opschrift, mits de knop
+daadwerkelijk klikbaar is. Zie `Shift2_Regels_SC_1_3_1.md` voor de volledige lijst.
+
+Vastgelegd door Frits op 2026-08-04 bij BEV-03. Claude zette 4.1.2 eerst op `niet_te_bepalen`,
+draaide dat terug toen bleek dat de acht knoppen AcroForm-pushbuttons zonder `/TU` waren, en
+Frits corrigeerde dat opnieuw: er zijn geen tags, en het zijn links, geen invulvelden.
+
 ## Regels
 
 - Focus verschilt van 2.4.4: 4.1.2 gaat erover dat hulpsoftware een interactief element kan herkennen (naam, rol, waarde), 2.4.4 gaat erover of de gebruiker het linkdoel begrijpt.

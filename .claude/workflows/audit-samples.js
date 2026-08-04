@@ -670,10 +670,14 @@ UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags
   Criteria die je alléén kunt beoordelen wanneer er tags zijn, keur je NIET apart af als gevolg van diezelfde
   oorzaak. Je stelt geen fout vast op iets dat zonder tags niet bestaat om te checken. Concreet:
     - 1.3.2 (leesvolgorde): 'niet_te_bepalen' — zonder tags is er geen programmatische leesvolgorde
-    - 2.4.4 (linkdoel): 'niet_te_bepalen' — zonder tags is er geen linkstructuur. Ook als webadressen
-      als platte tekst in het document staan en niet klikbaar zijn, is dat hier GEEN 2.4.4-bevinding
     - 1.4.5 (afbeeldingen van tekst): 'niet_te_bepalen' — zonder tags is niet vast te stellen wat als
       afbeelding en wat als tekst is aangemerkt
+    - 4.1.2 (naam, rol, waarde): 'niet_te_bepalen' — zonder tags is er geen structuur waarin naam en
+      rol kunnen zitten. Alleen bij een ECHT invulbaar formulier (invulvelden, keuzerondjes,
+      selectievakjes) is het zonder tags te beoordelen; de toegankelijke naam zit dan in de
+      tooltip /TU. GA AF OP DE FUNCTIE, NIET OP DE TECHNIEK: een knop die als link werkt blijft
+      een link en valt hier gewoon onder, ook als de bouwer hem als AcroForm-pushbutton
+      (/FT /Btn met /Ff 65536) heeft opgeslagen in plaats van als Link-annotatie.
     - 1.1.1 (tekstalternatieven): opmerking, niet afgekeurd — zonder tags kun je niet vaststellen wat ontbreekt
   (Dit geldt specifiek voor niet-getagde PDF's, niet als algemene regel voor webpagina's.)
 

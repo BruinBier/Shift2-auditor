@@ -59,6 +59,7 @@ per criterium: gaat het over iets **programmatisch** (dat bestaat zonder tags ni
 | **1.3.2** | `niet_te_bepalen` | geen programmatische leesvolgorde |
 | **1.4.5** | `niet_te_bepalen` | geen onderscheid tussen tekst en afbeelding voor hulptechnologie |
 | **3.2.4** | `niet_te_bepalen` | geen herkenbare onderdelen om de identificatie van te vergelijken |
+| **4.1.2** | `niet_te_bepalen` | geen structuur waarin naam, rol en waarde kunnen zitten. Alleen bij een écht invulbaar formulier (invulvelden, keuzerondjes, selectievakjes) is het zonder tags te beoordelen. Een knop die als link werkt valt hier gewoon onder, ook als hij intern als AcroForm-pushbutton is opgeslagen: ga af op de functie, niet op de techniek. Zie `Shift2_Regels_SC_4_1_2.md`. |
 
 **WEL beoordelen — visueel te toetsen, ook zonder tags:**
 
