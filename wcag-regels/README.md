@@ -47,6 +47,16 @@ Kort: op de homepage header, main en footer; op elk ander sample alleen de main-
 Lees dat bestand voordat je aan een criterium begint, anders rapporteer je sitebrede
 problemen bij elk sample opnieuw.
 
+## Voldoet of niet aanwezig?
+
+`Shift2_Voldoet_Of_Niet_Aanwezig.md` legt uit wanneer een criterium gehaald is en wanneer het
+niet van toepassing is. Kern: kijk naar wat het criterium **eist**, niet naar wat er op de
+pagina staat. 2.3.1 zegt "er mag niets flitsen" en daar houdt een statische pagina zich aan
+(`voldoet`); 2.2.2 zegt "als er iets automatisch beweegt, moet je het kunnen pauzeren" en die
+eis is zonder beweging leeg (`niet_aanwezig`).
+
+Dat verschil gaat in beide richtingen mis. Lees het bestand één keer voor je begint.
+
 ## Schrijfregels
 
 `Shift2_Schrijfregels.md` geldt voor **elke** bevinding, ongeacht het criterium: structuur

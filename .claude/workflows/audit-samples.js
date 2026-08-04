@@ -312,6 +312,7 @@ Volgorde per criterium:
 
 Lees eenmalig, vóór je begint:
   - \`wcag-regels/Shift2_Scope_Per_Sample.md\` — VERPLICHT. Welk deel van de pagina je beoordeelt (header/main/footer) en waarom.
+  - \`wcag-regels/Shift2_Voldoet_Of_Niet_Aanwezig.md\` — VERPLICHT. Wanneer een criterium gehaald is en wanneer het niet van toepassing is. Dat verschil gaat vaak mis in beide richtingen.
   - \`wcag-regels/Shift2_Schrijfregels.md\` — VERPLICHT. De schrijfregels voor elke bevinding: structuur, toon, terminologie, wat je niet doet. Bindend, ook waar ze afwijken van de projectinstructie.
   - \`wcag-checklists/Project_Instructie_WCAG_Audit.md\` — werkwijze en bevindingformat
   - \`wcag-checklists/Voorbeelden_Bevindingen.md\` — schrijfstijl en toon
@@ -626,18 +627,29 @@ STATUS per criterium:
   niet_aanwezig    — datgene waar het criterium over gaat, staat niet op deze pagina
   niet_te_bepalen  — kan niet uit HTML/screenshot worden bepaald (bv. toetsenbord, reflow, contrast-check die interactie vereist)
 
-'voldoet' of 'niet_aanwezig'? Kijk naar WAAR HET CRITERIUM OVER GAAT, niet naar wat er verder op
-de pagina staat. Is dat er niet, dan is het 'niet_aanwezig' — ook als er iets verwants staat dat
-er net buiten valt.
+'voldoet' of 'niet_aanwezig'? Lees \`wcag-regels/Shift2_Voldoet_Of_Niet_Aanwezig.md\`. Kern:
+kijk naar wat het criterium EIST, niet naar wat er op de pagina staat.
 
-Voorbeeld van de fout die je moet vermijden: 2.2.2 gaat over content die AUTOMATISCH beweegt,
-knippert of bijwerkt en langer dan vijf seconden duurt. Staat er een video die de gebruiker zelf
-moet starten, dan is er niets dat automatisch beweegt en is 2.2.2 'niet_aanwezig'. Niet 'voldoet'
-omdat er nu eenmaal media op de pagina staat. Zo ook: een pagina zonder formulier is voor 3.3.1
-en 3.3.2 'niet_aanwezig', niet 'voldoet'.
+  - Stelt het criterium een eis waaraan je ook zonder bijzonderheden voldoet? -> 'voldoet'
+    2.3.1 (niets flitst vaker dan 3x per seconde), 1.4.1 (geen informatie via kleur alleen),
+    1.3.3 (geen instructies die op vorm of locatie leunen), 3.1.2 (geen ongemarkeerde
+    anderstalige passages). Een statische Nederlandse pagina VOLDOET daaraan.
 
-Schrijf je in 'reden' iets als "er is geen ... aanwezig", dan hoort de status 'niet_aanwezig' te
-zijn. Staat er 'voldoet', dan spreken status en onderbouwing elkaar tegen.
+  - Vereist het criterium dat er eerst iets aanwezig is? -> 'niet_aanwezig' als dat er niet is
+    2.2.2 en 1.4.2 (content of geluid dat AUTOMATISCH start), 1.2.x (media), 3.3.1 en 3.3.2
+    (formulier). Zonder dat is de eis leeg en valt er niets te toetsen.
+
+Het scherpste onderscheid: 2.3.1 zegt "er mag niets flitsen" — daar houdt een statische pagina
+zich aan, dus 'voldoet'. 2.2.2 zegt "als er iets automatisch beweegt, moet je het kunnen
+pauzeren" — zonder automatische beweging is die eis leeg, dus 'niet_aanwezig'.
+
+Let op: media op de pagina maakt niet élk media-criterium van toepassing. Bij een video die de
+gebruiker zelf start zijn 2.2.2 en 1.4.2 nog steeds 'niet_aanwezig' (niets start automatisch),
+terwijl 1.2.2, 1.2.3, 1.2.5 en 2.3.1 wél beoordeeld moeten worden.
+
+Ga niet af op de zinsbouw van je eigen reden: "er is geen flitsende content" onderbouwt juist
+'voldoet' bij 2.3.1, terwijl "er is geen automatisch startende video" bij 2.2.2 'niet_aanwezig'
+onderbouwt.
 
 UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags heeft):
   Een niet-getagde PDF heeft één wortel-oorzaak: de tag-structuur ontbreekt. Keur die af onder 1.3.1.
