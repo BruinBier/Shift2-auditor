@@ -34,6 +34,39 @@ hetzelfde icoon op een vaste donkerblauwe achtergrond `#003C49` en komt op 9,65:
 De volledige testvolgorde (eerst de knop in de normale weergave, daarna de pagina in de
 hoogcontrastweergave) staat in `Shift2_Regels_SC_1_4_3.md`.
 
+## Alleen wat je NODIG hebt om iets te begrijpen of te bedienen
+
+1.4.11 geldt niet voor elk gekleurd element. De vraag is of het grafische onderdeel nodig is om
+de inhoud te begrijpen of het element te bedienen. Is het weg te denken zonder dat iemand iets
+mist, dan is het decoratief en valt het buiten dit criterium.
+
+**Geen bevinding:**
+
+| Wat | Waarom |
+|---|---|
+| Omranding van een knop met tekst erin | De knop is te herkennen aan zijn tekst; de rand voegt niets toe |
+| Opsommingstekens (bolletjes, streepjes) | De lijstitems staan als tekst onder elkaar; wie het bolletje niet ziet mist geen informatie |
+| Decoratieve lijnen, vlakken en achtergrondvormen | Dragen geen informatie |
+| Een kleurvlak dat alleen de opmaak verzorgt | Idem |
+
+**Wel beoordelen:**
+
+| Wat | Waarom |
+|---|---|
+| Een icoon zonder tekst ernaast | Dat icoon is de enige aanduiding van de functie |
+| Focusindicator | Nodig om te zien waar je bent bij toetsenbordbediening |
+| De rand van een invulveld zonder andere markering | Nodig om te zien waar je moet typen |
+| Segmenten van een grafiek, legendasymbolen | Dragen de informatie zelf |
+| Een streepje of pijl dat een status aanduidt | Draagt informatie |
+
+Twijfel je? Denk het element weg en kijk of er informatie verdwijnt. Zo niet, dan is het
+decoratief.
+
+Aanleiding: BEV-03 (2026-08-04), Financiële wegwijzer. De blauwe opsommingsbolletjes halen met
+`#41C0F0` op wit maar 2,1:1, maar zijn decoratief: de lijstitems staan als tekst onder elkaar en
+de indeling in subsidies en leningen blijkt al uit de kolommen. Ook de omranding van de acht
+knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
+
 ## Regels
 
 - Zelfde hoogcontrast-werkwijze als 1.4.3: heeft de site een hoogcontrast-knop met voldoende eigen contrast, dan een opmerking op het homepage-sample (status resolved, impact en responsibility leeg), QuickFinding 0a811ca3-e7b3-4909-846a-68525eb55948, en daarna HTML-paginas niet meer inhoudelijk checken.
