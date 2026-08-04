@@ -291,6 +291,16 @@ Dat geeft drie soorten gaten, oplopend in ernst:
 
 **Leg de uitkomst aan de gebruiker voor**, ook als er niets ontbreekt. Bij twintig samples en 33 criteria zijn dat 660 registraties; het getal "660 van 660, geen gaten" is zelf het resultaat van deze stap. Bundel de open vragen per criterium, niet per sample: dezelfde vraag komt vaak op meerdere pagina's terug.
 
+**Controleer in dezelfde stap of bevindingen en dekkingslijst elkaar niet tegenspreken.** Dit is het moment waarop je alle bevindingen naast alle registraties hebt liggen; later in het proces heb je dat overzicht niet meer.
+
+Drie controles:
+
+1. **Elke open bevinding hoort een registratie `afgekeurd` te hebben** op elk sample waar hij aan hangt. Staat daar `voldoet` of `opmerking`, dan klopt er iets niet: of de bevinding is achterhaald, of de audit heeft hem gemist. Zoek uit welke van de twee.
+2. **Elke registratie `afgekeurd` hoort een bevinding te hebben.** Zo niet, dan is er een afkeuring vastgesteld die nooit is uitgeschreven.
+3. **Staan er twee bevindingen die hetzelfde zeggen?** Zelfde tekst op hetzelfde sample, of hetzelfde issue onder hetzelfde criterium op verschillende samples. Die horen samengevoegd (zie [[feedback_merge_repeat_issues]]). Meld wat je vindt en vraag of het weg mag; verwijder niets zelf.
+
+Bij BEV-03 (2026-08-04) leverde deze controle drie tegenstrijdigheden op: 1.4.3 stond project-breed op `passed` terwijl er twee open bevindingen onder hingen, en B011 en B015 stonden in de dekkingslijst als opmerking terwijl het bevindingen waren.
+
 ### Stap 6b — Assessment-statussen controleren
 
 **Eerst** alle WCAG-criterium-assessments nalopen, vóór de management-samenvatting. Bij het wegschrijven van een open bevinding zet de tool het criterium automatisch op `failed`, maar dat is geen volledige controle:
@@ -309,6 +319,10 @@ Dat geeft drie soorten gaten, oplopend in ernst:
 
 **Wat het is:** een uitgeschreven tekst die op het Conclusie-tabblad als "Feedback van onderzoeker" verschijnt. Dit is in de praktijk **de samenvatting voor de opdrachtgever**: wat ging goed en wat kan beter, in lekentaal. Komt in het veld `researcherFeedback` op het project (let op: niet `researcherFeedbackText` — dat veld is een ander oud veld).
 
+**Waarom pas hier en niet eerder.** De feedback beschrijft de uitkomst, dus die moet vaststaan. Schrijf je hem vóór de controles in 6a en 6b, dan baseer je hem op cijfers en statussen die nog gaan schuiven.
+
+Bij BEV-03 (2026-08-04) stond in de feedback dat de standaardweergave te weinig contrast had en dat de hoogcontrastknop dat ondervangt. Na de metingen bleek het omgekeerde: de knop was prima (11,99:1), en het probleem zat juist ín de hoogcontrastweergave, waar het footer-logo zwart wordt. Die alinea moest volledig herschreven worden.
+
 **Schrijfregels (zie [[feedback_management_summary_style]]):**
 - Leek-taal, geen SC-codes (niet "1.3.1", maar "structuur van de pagina")
 - Geen jargon (geen "ARIA", "DOM"); "hulpsoftware" mag, want dat gebruiken de andere projecten ook
@@ -319,7 +333,7 @@ Dat geeft drie soorten gaten, oplopend in ernst:
 - Vergelijk de stijl met BEL-01 t/m BEL-04, GRJW-01, Heerlen-01 (allemaal status Gereed)
 
 **Actie van Claude:**
-- **Eerst de bevindingen controleren op dubbelingen.** Bij het schrijven van de feedback heb je alle bevindingen naast elkaar; dat is het moment om te zien of er twee keer hetzelfde staat. Haal de volledige lijst op met description, criterium en gekoppelde sample-items, en kijk of er bevindingen zijn met dezelfde tekst op hetzelfde sample, of hetzelfde issue onder hetzelfde criterium op verschillende samples (die horen samengevoegd, zie [[feedback_merge_repeat_issues]]). Meld wat je vindt en vraag of het weg mag; verwijder niets zelf.
+- De duplicaat-check is al in stap 6a gedaan, samen met de dekkingscontrole. Kwam daar iets uit, dan moet dat opgelost zijn voordat je de feedback schrijft: de tekst hieronder beschrijft immers wat er gevonden is.
 - Eerste concept zelf schrijven op basis van de bevindingen
 - Concept aan gebruiker voorleggen voor akkoord en aanpassingen
 - Pas na akkoord opslaan via `PATCH /api/projects/<id>` met `{"researcherFeedback": "<p>...</p><p>...</p>"}`
