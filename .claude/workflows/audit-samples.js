@@ -512,7 +512,24 @@ STATUS per criterium:
   afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
   opmerking        — best-practice/randgeval, geen echte fout; voorstelBevinding zonder impact/responsibility
   niet_aanwezig    — het criterium is niet van toepassing op dit document
-  niet_te_bepalen  — kan niet worden vastgesteld; zet de concrete vraag in 'reden'
+  niet_te_bepalen  — kan niet worden vastgesteld; zie hieronder wat er in 'reden' hoort
+
+'niet_te_bepalen' kent twee soorten, en het verschil zit in 'reden':
+
+  (a) De onderzoeker kan het nog uitzoeken. Zet dan de CONCRETE VRAAG in 'reden', met alles
+      wat jij al hebt vastgesteld erbij, zodat er zo min mogelijk werk overblijft.
+      Voorbeeld: "In de video staat op 00:09 'Suzanne Klaassen, Wethouder Beverwijk' in beeld.
+      Wordt die naam ook uitgesproken?"
+
+  (b) De uitkomst staat al vast en er valt niets meer uit te zoeken. Zet dan de VASTSTELLING
+      in 'reden', ZONDER vraagzin. Dit geldt vooral bij een ongetagde PDF: 1.1.1, 1.3.2, 1.4.5
+      en 2.4.4 zijn daar niet te beoordelen omdat de structuur ontbreekt, en dat verandert pas
+      als het document getagd wordt. Schrijf dus niet "is er een getagde versie beschikbaar?"
+      — die is er niet, en dat IS de bevinding, geen vraag.
+
+Verzin geen vraag om een 'niet_te_bepalen' te rechtvaardigen. Een vraag die de onderzoeker niet
+kan beantwoorden, of waarvan het antwoord al vaststaat, kost alleen aandacht die naar de echte
+vragen had moeten gaan.
 
 'reden' bij 'voldoet' is niet optioneel. Een afkeuring komt in het rapport en wordt gelezen,
 dus daar valt een fout op. Een goedkeuring levert geen tekst op: het criterium staat groen en

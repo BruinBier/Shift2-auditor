@@ -149,7 +149,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         // De vragen staan hier ook, zodat je ze bij het criterium ziet waar ze bij horen.
         vragen: aanwezig
           .filter((r) => r.check!.status === 'niet_te_bepalen')
-          .map((r) => ({ sample: r.sample.title, sampleId: r.sample.id, vraag: r.check!.reden })),
+          .map((r) => ({
+            sample: r.sample.title,
+            sampleId: r.sample.id,
+            vraag: r.check!.reden,
+            isVraag: /\?/.test(r.check!.reden ?? ''),
+          })),
       });
     }
 
@@ -179,6 +184,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             sampleId: sample.id,
             code: crit.code,
             vraag: check.reden ?? null,
+            // Niet elke 'niet_te_bepalen' vraagt iets van de onderzoeker. Bij een ongetagde PDF
+            // staat de uitkomst vast: het criterium is pas te beoordelen als het document
+            // getagd is, en daar valt niets over uit te zoeken. Alleen een echte vraagzin telt
+            // als openstaande vraag; de rest is een vaststelling.
+            isVraag: /\?/.test(check.reden ?? ''),
           });
         }
       }
@@ -217,7 +227,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         geregistreerd: checks.length,
         ontbrekend: ontbrekend.length,
         zonderOnderbouwing: zonderOnderbouwing.length,
-        openVragen: openVragen.length,
+        openVragen: openVragen.filter((v) => v.isVraag).length,
+        // Vastgesteld dat het niet te beoordelen valt, zonder dat er iets uit te zoeken is
+        // (bijvoorbeeld elk criterium dat bij een ongetagde PDF vervalt).
+        nietTeBeoordelen: openVragen.filter((v) => !v.isVraag).length,
         bevindingen: findings.filter((f) => f.type === 'bevinding').length,
         opmerkingen: findings.filter((f) => f.type !== 'bevinding').length,
       },

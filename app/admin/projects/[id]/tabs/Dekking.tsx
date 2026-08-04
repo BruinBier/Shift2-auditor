@@ -25,7 +25,7 @@ type Bevinding = {
   samples: string[];
 };
 
-type Vraag = { sample: string; sampleId: string; vraag: string | null };
+type Vraag = { sample: string; sampleId: string; vraag: string | null; isVraag: boolean };
 
 type CriteriumRij = {
   criterionId: string;
@@ -62,6 +62,7 @@ type Dekking = {
     ontbrekend: number;
     zonderOnderbouwing: number;
     openVragen: number;
+    nietTeBeoordelen: number;
     bevindingen: number;
     opmerkingen: number;
   };
@@ -86,6 +87,11 @@ function CriteriumBlok({ rij, projectId }: { rij: CriteriumRij; projectId: strin
   const heeftInhoud = rij.bevindingen.length > 0 || rij.opmerkingen.length > 0 || rij.vragen.length > 0;
   const [open, setOpen] = useState(false);
   const label = rij.projectStatus ? STATUS_LABEL[rij.projectStatus] : null;
+
+  // Niet elke 'niet te bepalen' vraagt iets van de onderzoeker. Bij een ongetagde PDF staat de
+  // uitkomst vast en valt er niets uit te zoeken; dat is een vaststelling, geen open vraag.
+  const echteVragen = rij.vragen.filter((v) => v.isVraag);
+  const vaststellingen = rij.vragen.filter((v) => !v.isVraag);
 
   return (
     <li className="py-3">
@@ -112,9 +118,14 @@ function CriteriumBlok({ rij, projectId }: { rij: CriteriumRij; projectId: strin
                 {rij.opmerkingen.length === 1 ? 'opmerking' : 'opmerkingen'}
               </span>
             )}
-            {rij.vragen.length > 0 && (
+            {echteVragen.length > 0 && (
               <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                {rij.vragen.length} {rij.vragen.length === 1 ? 'vraag' : 'vragen'}
+                {echteVragen.length} {echteVragen.length === 1 ? 'vraag' : 'vragen'}
+              </span>
+            )}
+            {vaststellingen.length > 0 && (
+              <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                {vaststellingen.length}× niet te beoordelen
               </span>
             )}
             {!heeftInhoud && <span className="text-xs text-gray-400">niets gevonden</span>}
@@ -174,13 +185,23 @@ function CriteriumBlok({ rij, projectId }: { rij: CriteriumRij; projectId: strin
                 </div>
               ))}
 
-              {rij.vragen.map((v, i) => (
+              {echteVragen.map((v, i) => (
                 <div
-                  key={`${v.sampleId}-${i}`}
+                  key={`v-${v.sampleId}-${i}`}
                   className="rounded border border-amber-200 bg-amber-50 p-3"
                 >
                   <p className="text-xs font-medium text-amber-900">Vraag · {v.sample}</p>
                   {v.vraag && <p className="text-sm text-amber-900 mt-1">{v.vraag}</p>}
+                </div>
+              ))}
+
+              {vaststellingen.map((v, i) => (
+                <div
+                  key={`n-${v.sampleId}-${i}`}
+                  className="rounded border border-gray-200 bg-gray-50 p-3"
+                >
+                  <p className="text-xs font-medium text-gray-700">Niet te beoordelen · {v.sample}</p>
+                  {v.vraag && <p className="text-sm text-gray-700 mt-1">{v.vraag}</p>}
                 </div>
               ))}
             </div>
@@ -317,6 +338,11 @@ export default function Dekking({ projectId }: { projectId: string }) {
           {s.openVragen > 0 && (
             <span className="px-3 py-1.5 rounded text-sm font-medium bg-amber-100 text-amber-800">
               {s.openVragen} {s.openVragen === 1 ? 'open vraag' : 'open vragen'}
+            </span>
+          )}
+          {s.nietTeBeoordelen > 0 && (
+            <span className="px-3 py-1.5 rounded text-sm font-medium bg-gray-100 text-gray-700">
+              {s.nietTeBeoordelen}× niet te beoordelen
             </span>
           )}
           <span className="text-sm text-gray-600">
