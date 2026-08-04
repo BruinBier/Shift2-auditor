@@ -499,9 +499,11 @@ zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
     zijn, of twee tinten die nauwelijks van elkaar verschillen. Wie kleurenblind is loopt daar
     visueel tegenaan, los van wat een schermlezer met het document kan. Er is een QuickFinding
     "PDF - grafieken en diagrammen enkel afhankelijk van kleur" (impact klein, ontwerper).
-    LET OP: een kaart met een kleurverloop en getallen in de legenda (bijvoorbeeld een
-    hittekaart met graden) is GEEN 1.4.1-bevinding; kaarten vallen onder de wettelijke
-    uitzondering voor de overheid.
+    LET OP: de kaarten-uitzondering geldt hier NIET. Kaarten zijn uitgezonderd bij 1.1.1 en
+    1.4.5, niet bij 1.4.1. Een hittekaart waarvan de temperatuurzones alleen aan hun kleur te
+    herkennen zijn, is dus WEL een 1.4.1-afkeuring: rood en oranje zijn voor iemand met
+    protanopie nagenoeg gelijk. Je keurt niet af dat de kaart niet in tekst is uitgeschreven
+    (dat valt onder de uitzondering), maar dat de legenda en de zones alleen op kleur werken.
 
 Het onderscheid met 1.4.5: dat criterium heeft tags nodig omdat de vraag is wat er als
 afbeelding is AANGEMERKT, een eigenschap van de code. Bij 1.4.1 is de vraag of kleur de enige

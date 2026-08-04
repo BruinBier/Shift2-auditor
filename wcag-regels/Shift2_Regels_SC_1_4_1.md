@@ -44,13 +44,32 @@ paginanummers en grafieknamen in; ga niet zelf herformuleren.
 
 ## Wat GEEN bevinding is
 
-- **Kaarten met een kleurverloop en getallen in de legenda**, zoals een hittekaart met
-  temperatuurklassen. Kaarten vallen onder de wettelijke uitzondering voor de overheid, en een
-  verloop van koel naar warm is een betekenisvolle weergave, geen willekeurige codering. Zie de
-  kaarten-uitzondering bij 1.1.1.
 - **Kleur als extra ondersteuning** naast tekst of vorm. Een rode knop met het woord
   "Verwijderen" erin voldoet gewoon.
 - **Decoratief kleurgebruik** dat geen informatie draagt.
+
+## LET OP: de kaarten-uitzondering geldt NIET voor 1.4.1
+
+Kaarten hebben een uitzondering bij **1.1.1** en **1.4.5**, en die is er niet voor niets: de
+visuele complexiteit van een geografische kaart is niet in een kort tekstalternatief te vangen.
+Voor 1.1.1 volstaat een beschrijving van het doel ("Hittekaart van Beverwijk met
+temperatuurzones"), mits de belangrijkste gegevens elders als tekst staan.
+
+Bij **1.4.1 bestaat die uitzondering niet**. De regel is universeel: gebruik je kleur om
+informatie over te dragen, dan moet er een alternatief zijn voor wie die kleur niet kan zien.
+
+Het verschil zit in wat je afkeurt:
+
+- **Niet** afkeuren: dat de kaart als geheel niet in tekst is uitgeschreven. Dat valt onder de
+  uitzondering.
+- **Wel** afkeuren: dat de legenda en de bijbehorende zones alleen aan hun kleur te herkennen
+  zijn. Een rood en een oranje bolletje zijn voor iemand met protanopie nagenoeg gelijk.
+
+Oplossing die je adviseert: zet letters of cijfers in de legendabolletjes én op de kaartvlakken
+zelf, of plaats de waarde als tekstlabel in het vlak.
+
+Vastgelegd door Frits op 2026-08-04 bij BEV-03. Claude trok eerst de 1.1.1-uitzondering door
+naar 1.4.1 en liet de hittekaart op pagina 19 van de Groenvisie vallen; Frits corrigeerde dat.
 
 ## Advies
 
