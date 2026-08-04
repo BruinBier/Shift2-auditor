@@ -503,11 +503,20 @@ TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één
 ${scList}${bronnenSectie}
 
 STATUS per criterium:
-  voldoet          — geen probleem gevonden
+  voldoet          — geen probleem gevonden; zet in 'reden' WAT je hebt onderzocht
   afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
   opmerking        — best-practice/randgeval, geen echte fout; voorstelBevinding zonder impact/responsibility
   niet_aanwezig    — het criterium is niet van toepassing op dit document
   niet_te_bepalen  — kan niet worden vastgesteld; zet de concrete vraag in 'reden'
+
+'reden' bij 'voldoet' is niet optioneel. Een afkeuring komt in het rapport en wordt gelezen,
+dus daar valt een fout op. Een goedkeuring levert geen tekst op: het criterium staat groen en
+er is niets om over te struikelen. 'voldoet' is dus de status waar een fout onzichtbaar blijft.
+Noteer daarom kort waarop je het baseert, zodat de onderzoeker het bij het nalopen van de
+dekkingslijst kan wegen zonder de pagina zelf te openen. Bijvoorbeeld: "Alle 14 afbeeldingen
+nagelopen, elk met een passend tekstalternatief" of "31 frames gescand op 3-seconde-interval,
+geen tekst of handelingen in beeld". Schrijf niet "geen probleem gevonden" of "lijkt in orde":
+dat herhaalt de status en zegt niets over wat je hebt gedaan.
 
 SCHRIJFREGELS voor voorstelBevinding.description:
   - Begin NIET met de URL. Start met "In het document..." of "Op pagina 2...".

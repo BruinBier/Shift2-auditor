@@ -96,8 +96,29 @@ Loop ze langs en noteer per frame:
 - **Locatie- of datumlabels**
 - **Tekst in beeld** die niet wordt uitgesproken
 - **Open ondertiteling** — loopt die de hele video door, of maar een deel?
+- **Handelingen zonder tekst** — iemand bedient een apparaat, wijst iets aan op een kaart, doet
+  iets voor. Daar staat geen letter bij, maar het is wél visuele informatie.
 
 De tijdstippen die je zo vindt gaan letterlijk in de bevinding, in de vorm `00:09 "tekst"`.
+
+Zoek dus niet alleen naar letters. Een video kan volledig tekstloos zijn en tóch visuele
+informatie bevatten die iemand die blind is mist. Zie je zo'n handeling, leg de video dan voor
+met de vraag of het ook wordt verteld.
+
+## Wat je zelf beslist en wat je voorlegt
+
+Leg alleen voor wat er echt toe doet. Een vraag die de onderzoeker met "akkoord" beantwoordt,
+voegt niets toe en verdringt de vragen die wél aandacht nodig hebben.
+
+Vind je niets dat hoorbaar gemaakt moet worden, zet 1.2.3 en 1.2.5 dan zelf op `voldoet`. Maar
+noteer in het veld `reden` van de dekkingslijst waaróp je dat baseert: aantal frames, interval,
+wat er in beeld stond. De onderzoeker ziet die lijst per sample naast alle andere criteria en
+kan zo wegen of het oordeel klopt, zonder de video te openen.
+
+Waarom juist bij een goedkeuring: een afkeuring komt in het rapport terecht en wordt gelezen,
+dus daar valt een fout op. Een goedkeuring levert geen tekst op — het criterium staat groen en
+er is niets om over te struikelen. `voldoet` is dus de status waar een fout onzichtbaar blijft,
+en daarom hoort daar het bewijs bij. Een leeg `reden`-veld betekent: aangenomen, niet onderzocht.
 
 ## Wat Claude WEL en NIET kan
 

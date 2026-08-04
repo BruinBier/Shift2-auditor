@@ -16,8 +16,13 @@ is: daarvoor moet je luisteren of er natuurlijke pauzes zijn.
 > uitgesproken. Is er in het audiospoor ruimte voor audiodescriptie (natuurlijke pauzes), of
 > wordt er continu gesproken? Graag met tijdstip.
 
-Zolang het antwoord ontbreekt: `niet_te_bepalen` met deze vraag in `reden`. Vind je bij het
-scannen géén tekst in beeld, dan kun je zelf op `voldoet` zetten.
+Zolang het antwoord ontbreekt: `niet_te_bepalen` met deze vraag in `reden`.
+
+Vind je bij het scannen niets dat hoorbaar gemaakt moet worden, zet het dan **zelf** op
+`voldoet` en noteer in `reden` wat je hebt gescand (aantal frames, interval, wat er in beeld
+stond). Dezelfde regel als bij 1.2.3: niet voorleggen, wel het bewijs vastleggen, want een
+goedkeuring levert geen tekst in het rapport op waar een fout aan het licht komt. Let daarbij
+op dat de scan alleen tékst vindt en geen handelingen; zie `Shift2_Regels_SC_1_2_3.md`.
 
 Stel deze vraag samen met die van 1.2.3, in één keer: het gaat om dezelfde video en de
 onderzoeker hoeft hem dan maar één keer te bekijken.

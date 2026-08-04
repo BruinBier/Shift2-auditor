@@ -28,8 +28,32 @@ Wordt het uitgesproken, dan is er geen bevinding. Zo niet, dan schrijf je de bev
 tijdstippen die je al hebt. Zolang het antwoord ontbreekt: `niet_te_bepalen` met deze vraag in
 `reden`, nooit stilzwijgend op `voldoet`.
 
-Vind je bij het scannen géén tekst in beeld, dan kun je zelf op `voldoet` zetten: er is dan geen
-visuele informatie die hoorbaar gemaakt moet worden.
+## Geen visuele informatie gevonden: zelf op voldoet, mét bewijs in `reden`
+
+Vind je bij het scannen niets dat hoorbaar gemaakt moet worden, zet het criterium dan **zelf** op
+`voldoet`. Leg het niet voor: bij een vanzelfsprekend antwoord voegt een akkoordvraag niets toe,
+en te veel routinevragen maken de vragen die er wél toe doen minder zichtbaar.
+
+Maar `voldoet` is de status waar een fout onzichtbaar blijft. Een afkeuring komt in het rapport
+en wordt gelezen; een goedkeuring levert geen tekst op om over te struikelen. Noteer daarom in
+`reden` waaróp je het baseert, zodat de onderzoeker het bij het nalopen van de dekkingslijst in
+één oogopslag kan wegen:
+
+> 31 frames gescand op 3-seconde-interval. Alleen sprekers in beeld, geen naambalkjes, geen
+> tekst-op-beeld, geen handelingen die worden voorgedaan. Frames in tmp/frames/.
+
+Een leeg `reden`-veld bij `voldoet` betekent dat er niet is onderzocht maar aangenomen. Laat het
+dus nooit leeg.
+
+## Let op: tekst is niet alle visuele informatie
+
+De scan vindt tekst in beeld. Die vindt géén handelingen. Denk aan iemand die een apparaat
+bedient en zegt "en dan draai je deze knop", iets aanwijst op een kaart, of iets voordoet zonder
+het te benoemen. Geen letter tekst, wél visuele informatie die iemand die blind is mist.
+
+Beoordeel de frames dus op wat er te zien is, niet alleen op of er letters staan. Zie je
+handelingen, aanwijzingen, apparaten, kaarten of schermen, leg het dan wél voor met de vraag of
+het ook wordt verteld.
 
 ## Regels
 
