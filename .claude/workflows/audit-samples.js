@@ -529,6 +529,18 @@ PAC-output (PDF Accessibility Checker) niet betrouwbaar beoordelen. Zet de crite
 daarvan afhangen op 'niet_te_bepalen' met als reden dat de onderzoeker PAC-output moet
 aanleveren, en meld dat expliciet.
 
+DAT GELDT OOK VOOR EEN GOEDKEURING. De verleiding is groot om te concluderen dat iets wél goed
+staat — "het logo is als Artifact gemarkeerd en wordt dus correct overgeslagen", "de tabel heeft
+TH-cellen met Scope". Zulke markeringen staan meestal in een gecomprimeerde objectstroom die je
+niet kunt uitlezen. Vind je ze niet, dan is dat geen bewijs dat ze ontbreken, maar het is
+evenmin bewijs dat ze er zijn. Zet het criterium dan op 'niet_te_bepalen', niet op 'voldoet'.
+Een onterechte goedkeuring komt nergens in het rapport terecht en blijft daardoor onzichtbaar.
+
+Voorbeeld van de fout die je moet vermijden: bij BEV-04 concludeerde de audit dat het logo in
+een getagde besluitenlijst als Artifact was gemarkeerd en zette 1.1.1 op 'voldoet'. Er stonden
+nul /Artifact- en nul /Figure-voorkomens in de bytes, en bij controle in Acrobat bleek het logo
+helemaal niet getagd.
+
 TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
 ${scList}${bronnenSectie}
 
