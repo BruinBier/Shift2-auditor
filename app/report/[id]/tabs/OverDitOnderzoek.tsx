@@ -557,9 +557,20 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 // Use reportIntroHeader if available
                 // Bij een heronderzoek spreken we van heronderzoek in plaats van deelonderzoek
                 const rawTemplate = project.researchTypeData?.reportIntroHeader;
-                const template = rawTemplate && project.checkPhase === 'herinspectie'
-                  ? rawTemplate.replace(/\bdeelonderzoek\b/g, 'heronderzoek')
+                const withPhase = rawTemplate && project.checkPhase === 'herinspectie'
+                  ? rawTemplate
+                      .replace(/\bdeelonderzoek\b/g, 'heronderzoek')
+                      .replace(/\bcontentonderzoek\b/g, 'contentheronderzoek')
                   : rawTemplate;
+                // {opdrachtgever} invullen; laat de zin netjes eindigen als de
+                // opdrachtgever niet is ingevuld.
+                const opdrachtgeverNaam =
+                  project.commissionedBy || project.clientProject?.name || '';
+                const template = withPhase
+                  ? (opdrachtgeverNaam
+                      ? withPhase.replace(/\{opdrachtgever\}/g, opdrachtgeverNaam)
+                      : withPhase.replace(/,?\s*uitgevoerd in opdracht van \{opdrachtgever\}/g, ''))
+                  : withPhase;
 
                 if (template) {
                   // Split the template by {url} placeholder
@@ -584,9 +595,14 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   );
                 } else {
                   // Fallback to default text
+                  // In de introzin het hoogste niveau kort noemen ("AA"), niet
+                  // de volledige reeks "A en AA" die elders wordt gebruikt.
+                  const introLevel = (project.researchTypeData?.level || 'AA').split(/\s+en\s+/i).pop()!.trim();
+                  const onderzoekLabel = `${project.researchTypeData?.version || 'WCAG 2.2'} ${introLevel}-content${project.checkPhase === 'herinspectie' ? 'her' : ''}onderzoek`;
+                  const opdrachtgever = project.commissionedBy || project.clientProject?.name || '';
                   return (
                     <>
-                      Dit rapport beschrijft de resultaten van het {project.checkPhase === 'herinspectie' ? 'heronderzoek' : 'deelonderzoek'} naar de toegankelijkheid van de content op de {project.researchTypeData?.type || 'website'}{' '}
+                      Dit rapport beschrijft de resultaten van het {onderzoekLabel} naar de digitale toegankelijkheid van{' '}
                       <a
                         href={introUrl}
                         target="_blank"
@@ -598,13 +614,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </a>
+                      {opdrachtgever ? `, uitgevoerd in opdracht van ${opdrachtgever}.` : '.'}
                     </>
                   );
                 }
               })()}
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              Het onderzoek is uitgevoerd conform {project.researchTypeData?.version || 'WCAG 2.2'} niveau {project.researchTypeData?.level || 'A en AA'} (EN 301 549), volgens de evaluatiemethode WCAG-EM.
             </p>
             <dl className="mt-6 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
               <dt className="font-medium text-gray-600">Opdrachtgever:</dt>

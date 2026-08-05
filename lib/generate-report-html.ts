@@ -136,18 +136,28 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const datum = formatDateNl(project.reportDate);
   const title = buildReportTitle(project, website);
   // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
-  const introType = researchTypeData?.type || 'website';
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
   // De URL als echte link opnemen. Een kale URL in lopende tekst wordt bij de
   // PDF-export niet als link herkend, wat een toegankelijkheidsfout oplevert.
   const introLink = introUrl
     ? `<a href="${escapeHtml(introUrl)}">${escapeHtml(introUrl)}</a>`
     : '';
-  const intro = `Dit rapport beschrijft de resultaten van het ${
-    isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'
-  } naar de toegankelijkheid van de content op de ${escapeHtml(
-    introType
-  )} ${introLink}.`;
+  // In de introzin het hoogste niveau kort noemen ("AA"), niet de volledige
+  // reeks "A en AA" die elders in het rapport wordt gebruikt.
+  const introLevel = (researchTypeData?.level || project.level || 'AA')
+    .split(/\s+en\s+/i)
+    .pop()!
+    .trim();
+  const onderzoekLabel = `${
+    researchTypeData?.version || project.standard || 'WCAG 2.2'
+  } ${introLevel}-content${isHeronderzoek ? 'her' : ''}onderzoek`;
+  const introOpdrachtgever =
+    opdrachtgever && opdrachtgever !== 'n.v.t.'
+      ? `, uitgevoerd in opdracht van ${escapeHtml(opdrachtgever)}.`
+      : '.';
+  const intro = `Dit rapport beschrijft de resultaten van het ${escapeHtml(
+    onderzoekLabel
+  )} naar de digitale toegankelijkheid van ${introLink}${introOpdrachtgever}`;
 
   // Flat list of all criteria for "Resultaten per SC"
   const allCriteriaRows: Array<{
