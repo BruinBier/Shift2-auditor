@@ -463,9 +463,13 @@ export default function Finalize({ project, allCriteria }: FinalizeProps) {
             <div className="border-t border-gray-200 pt-6 mt-6">
               <h4 className="text-sm font-semibold text-gray-900 mb-4">Downloads</h4>
               <div className="space-y-3">
-                {/* Word Download */}
+                {/* Word Download
+                    Gebruikt /word: die route bouwt het document op uit het
+                    HTML-rapport, zodat teksten op één plek staan. De oudere
+                    /docx-route vult een vast Word-sjabloon en loopt daardoor
+                    achter op tekstwijzigingen. */}
                 <a
-                  href={`/api/reports/${project.id}/docx`}
+                  href={`/api/reports/${project.id}/word`}
                   className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                   download
                 >
