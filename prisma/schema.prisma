@@ -160,6 +160,13 @@ model Project {
   interimCheckLabel       String?        @map("interim_check_label")
 
   // Planning fields
+  // De eerste twee stappen van het voorbereidingsproces gebeuren buiten de
+  // tool (mail in Outlook, gesprek in Teams) en worden daarom met de hand
+  // afgevinkt. De datum legt vast wanneer het gebeurde.
+  invitationSent          DateTime?      @map("invitation_sent")
+  scopeCallHeld           DateTime?      @map("scope_call_held")
+  /// Transcript van het scopegesprek; de bron voor de scope-afspraken.
+  scopeCallTranscript     String?        @map("scope_call_transcript") @db.Text
   planningSent            DateTime?      @map("planning_sent")
   planningApproved        DateTime?      @map("planning_approved")
   scopeInScope            String?        @map("scope_in_scope") @db.Text
