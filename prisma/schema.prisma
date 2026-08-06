@@ -184,8 +184,30 @@ model Project {
   projectNotes            ProjectNote[]
   crawlerRuns             CrawlerRun[]
   advices                 ProjectAdvice[]
+  planningChanges         ProjectPlanningChange[]
 
   @@map("projects")
+}
+
+/// Verschuivingen van de planning, met de reden erbij. Zo is achteraf te
+/// verantwoorden waarom een herinspectie later heeft plaatsgevonden dan
+/// oorspronkelijk gepland. Elke verschuiving is een eigen regel, zodat ook
+/// een tweede of derde uitstel zichtbaar blijft.
+model ProjectPlanningChange {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  oldDateStart  DateTime? @map("old_date_start")
+  oldDateEnd    DateTime? @map("old_date_end")
+  newDateStart  DateTime? @map("new_date_start")
+  newDateEnd    DateTime? @map("new_date_end")
+  reason        String   @db.Text
+  authorName    String   @map("author_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_planning_changes")
 }
 
 model ProjectNote {

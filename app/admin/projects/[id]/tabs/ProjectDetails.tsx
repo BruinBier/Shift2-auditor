@@ -32,6 +32,11 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [projectStatus, setProjectStatus] = useState(project.status);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [showPlanningModal, setShowPlanningModal] = useState(false);
+  const [showPostponeModal, setShowPostponeModal] = useState(false);
+  const [planningChanges, setPlanningChanges] = useState<any[]>([]);
+  const [postponeWeeks, setPostponeWeeks] = useState('2');
+  const [postponeReason, setPostponeReason] = useState('');
+  const [isPostponing, setIsPostponing] = useState(false);
   const [planningFormData, setPlanningFormData] = useState({
     planningSent: project.planningSent ? new Date(project.planningSent).toISOString().split('T')[0] : '',
     planningApproved: project.planningApproved ? new Date(project.planningApproved).toISOString().split('T')[0] : '',
@@ -60,6 +65,12 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         if (notesResponse.ok) {
           const data = await notesResponse.json();
           setProjectNotes(data);
+        }
+
+        const changesResponse = await fetch(`/api/projects/${project.id}/postpone`);
+        if (changesResponse.ok) {
+          const data = await changesResponse.json();
+          if (Array.isArray(data)) setPlanningChanges(data);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -302,6 +313,39 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     }
   };
 
+  const handlePostponeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postponeReason.trim()) {
+      alert('Geef een reden voor het uitstel.');
+      return;
+    }
+
+    setIsPostponing(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/postpone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weeks: Number(postponeWeeks),
+          reason: postponeReason.trim(),
+          authorName: project.researcherName || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const err = await response.json().catch(() => ({}));
+        alert(err.error || 'Het uitstellen is niet gelukt.');
+      }
+    } catch (error) {
+      console.error('Error postponing planning:', error);
+      alert('Het uitstellen is niet gelukt.');
+    } finally {
+      setIsPostponing(false);
+    }
+  };
+
   // Import planning scope/sample fields into real records
   const [isImporting, setIsImporting] = useState(false);
   const handleImportPlanning = async () => {
@@ -344,6 +388,63 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       setIsImporting(false);
     }
   };
+
+  /**
+   * De afspraken die bij de nulmeting zijn gemaakt: wanneer de planning is
+   * verstuurd en akkoord bevonden, en wat er is afgesproken over scope en
+   * steekproef. Bij een vervolgonderzoek horen deze onder het kopje
+   * Nulmeting, want daar zijn ze vastgelegd.
+   */
+  const planningAfspraken = (() => {
+    // De afspraken zijn bij de nulmeting vastgelegd. Bij een vervolgonderzoek
+    // staan ze dus op het bovenliggende project; bij een nulmeting op het
+    // project zelf.
+    const bron = project.parentProject ?? project;
+    return (
+    <>
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">Planning verstuurd</label>
+        <div className="text-sm text-gray-900">
+          {bron.planningSent ? format(new Date(bron.planningSent), 'd MMMM yyyy', { locale: nl }) : '-'}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">Planning akkoord</label>
+        <div className="text-sm text-gray-900">
+          {bron.planningApproved ? format(new Date(bron.planningApproved), 'd MMMM yyyy', { locale: nl }) : '-'}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">In scope</label>
+        <div className="text-sm text-gray-900 whitespace-pre-wrap">{bron.scopeInScope || '-'}</div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">Buiten scope</label>
+        <div className="text-sm text-gray-900 whitespace-pre-wrap">{bron.scopeOutOfScope || '-'}</div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">Door klant aangedragen pagina&apos;s</label>
+        <div className="text-sm text-gray-900 whitespace-pre-wrap">{bron.sampleClientPages || '-'}</div>
+      </div>
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={handleImportPlanning}
+          disabled={isImporting}
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          {isImporting ? 'Bezig met importeren...' : 'Importeer naar scope & steekproef'}
+        </button>
+        <p className="text-xs text-gray-500 mt-1">
+          Zet de scope-URL&apos;s om naar scope-items en de aangedragen pagina&apos;s naar de steekproef. Bestaande pagina&apos;s worden overgeslagen.
+        </p>
+      </div>
+    </>
+    );
+  })();
 
   return (
     <div className="space-y-6">
@@ -414,14 +515,61 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               </svg>
               <h3 className="font-semibold text-gray-900">Planning</h3>
             </div>
-            <button
-              onClick={() => setShowPlanningModal(true)}
-              className="text-sm text-shift2-primary hover:underline"
-            >
-              Bewerken
-            </button>
+            <div className="flex items-center gap-3">
+              {(project.dateStart || project.dateEnd) && (
+                <button
+                  onClick={() => setShowPostponeModal(true)}
+                  className="text-sm text-shift2-primary hover:underline"
+                >
+                  Uitstellen
+                </button>
+              )}
+              <button
+                onClick={() => setShowPlanningModal(true)}
+                className="text-sm text-shift2-primary hover:underline"
+              >
+                Bewerken
+              </button>
+            </div>
           </div>
           <div className="p-4 space-y-4">
+            {/* Bij een vervolgonderzoek eerst de nulmeting, zodat je ziet
+                vanaf welk moment de hersteltermijn loopt. */}
+            {project.parentProject && (
+              <div className="pb-3 border-b border-gray-200">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                  Nulmeting
+                </div>
+                <div className="text-sm text-gray-900">
+                  {project.parentProject.dateStart && project.parentProject.dateEnd
+                    ? `${format(new Date(project.parentProject.dateStart), 'd MMMM', { locale: nl })} tot ${format(new Date(project.parentProject.dateEnd), 'd MMMM yyyy', { locale: nl })}`
+                    : 'Nog niet gepland'}
+                </div>
+                {project.parentProject.reportDate && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    Rapport {format(new Date(project.parentProject.reportDate), 'd MMMM yyyy', { locale: nl })}
+                    {(() => {
+                      const weken = Math.floor(
+                        (Date.now() - new Date(project.parentProject.reportDate).getTime()) /
+                          (7 * 24 * 60 * 60 * 1000)
+                      );
+                      if (weken < 1) return null;
+                      return ` (${weken} ${weken === 1 ? 'week' : 'weken'} geleden)`;
+                    })()}
+                  </div>
+                )}
+                <div className="mt-3 space-y-3">{planningAfspraken}</div>
+              </div>
+            )}
+            {/* Dit kopje benoemt wélk onderzoek dit is, niet in welke fase het
+                zit. Een vervolgonderzoek is een herinspectie, of het nu in de
+                tussencheck of de eindcontrole zit; die fase staat boven aan de
+                pagina. */}
+            {project.parentProject && (
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Herinspectie
+              </div>
+            )}
             <div>
               <label className="block text-sm text-gray-500 mb-1">Startdatum</label>
               <div className="text-sm text-gray-900">
@@ -450,50 +598,33 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               <label className="block text-sm text-gray-500 mb-1">Geplande tijd</label>
               <div className="text-sm text-gray-900">{project.plannedTime || '-'}</div>
             </div>
-            <div className="pt-2 border-t border-gray-200">
-              <div className="mb-3">
-                <label className="block text-sm text-gray-500 mb-1">Planning verstuurd</label>
-                <div className="text-sm text-gray-900">
-                  {project.planningSent ? format(new Date(project.planningSent), 'd MMMM yyyy', { locale: nl }) : '-'}
-                </div>
+            {planningChanges.length > 0 && (
+              <div className="pt-2 border-t border-gray-200">
+                <label className="block text-sm text-gray-500 mb-2">Uitgesteld</label>
+                <ul className="space-y-2">
+                  {planningChanges.map((c) => (
+                    <li key={c.id} className="text-sm text-gray-900">
+                      <span className="text-gray-500">
+                        {c.oldDateStart ? format(new Date(c.oldDateStart), 'd MMM', { locale: nl }) : '-'}
+                        {' → '}
+                        {c.newDateStart ? format(new Date(c.newDateStart), 'd MMM yyyy', { locale: nl }) : '-'}
+                      </span>
+                      {' — '}
+                      {c.reason}
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        {format(new Date(c.createdAt), 'd MMMM yyyy', { locale: nl })}
+                        {c.authorName ? ` — ${c.authorName}` : ''}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Planning akkoord</label>
-                <div className="text-sm text-gray-900">
-                  {project.planningApproved ? format(new Date(project.planningApproved), 'd MMMM yyyy', { locale: nl }) : '-'}
-                </div>
-              </div>
-            </div>
-            <div className="pt-2 border-t border-gray-200 space-y-3">
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">In scope</label>
-                <div className="text-sm text-gray-900 whitespace-pre-wrap">{project.scopeInScope || '-'}</div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Buiten scope</label>
-                <div className="text-sm text-gray-900 whitespace-pre-wrap">{project.scopeOutOfScope || '-'}</div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Door klant aangedragen pagina's</label>
-                <div className="text-sm text-gray-900 whitespace-pre-wrap">{project.sampleClientPages || '-'}</div>
-              </div>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleImportPlanning}
-                  disabled={isImporting}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {isImporting ? 'Bezig met importeren...' : 'Importeer naar scope & steekproef'}
-                </button>
-                <p className="text-xs text-gray-500 mt-1">
-                  Zet de scope-URL's om naar scope-items en de aangedragen pagina's naar de steekproef. Bestaande pagina's worden overgeslagen.
-                </p>
-              </div>
-            </div>
+            )}
+            {/* Bij een nulmeting horen de afspraken gewoon onderaan; bij een
+                vervolgonderzoek staan ze hierboven onder het kopje Nulmeting. */}
+            {!project.parentProject && (
+              <div className="pt-2 border-t border-gray-200 space-y-3">{planningAfspraken}</div>
+            )}
           </div>
         </div>
 
@@ -969,6 +1100,77 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       )}
 
       {/* Edit Planning Modal */}
+      {showPostponeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Planning uitstellen</h2>
+              <button
+                onClick={() => setShowPostponeModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Sluiten"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handlePostponeSubmit}>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600">
+                  Startdatum, deadline en rapportdatum schuiven allemaal even ver op,
+                  zodat de looptijd gelijk blijft.
+                </p>
+                <div>
+                  <label htmlFor="postpone-weeks" className="block text-sm text-gray-700 mb-1">
+                    Aantal weken
+                  </label>
+                  <input
+                    id="postpone-weeks"
+                    type="number"
+                    min={1}
+                    value={postponeWeeks}
+                    onChange={(e) => setPostponeWeeks(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="postpone-reason" className="block text-sm text-gray-700 mb-1">
+                    Reden
+                  </label>
+                  <textarea
+                    id="postpone-reason"
+                    value={postponeReason}
+                    onChange={(e) => setPostponeReason(e.target.value)}
+                    rows={3}
+                    placeholder="Bijvoorbeeld: klant is nog niet klaar met het herstel."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowPostponeModal(false)}
+                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                >
+                  Annuleren
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPostponing}
+                  className="px-4 py-2 text-sm bg-shift2-primary text-white rounded-lg hover:bg-shift2-accent disabled:opacity-50"
+                >
+                  {isPostponing ? 'Bezig...' : 'Uitstellen'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {showPlanningModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">

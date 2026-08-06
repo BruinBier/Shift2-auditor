@@ -9,6 +9,23 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
       childProjects: {
         select: { id: true, version: true, status: true, checkPhase: true },
       },
+      // Voor het Planning-blok: bij een vervolgonderzoek tonen we de datums
+      // van de nulmeting, want daar begint de hersteltermijn.
+      parentProject: {
+        select: {
+          id: true,
+          version: true,
+          status: true,
+          dateStart: true,
+          dateEnd: true,
+          reportDate: true,
+          planningSent: true,
+          planningApproved: true,
+          scopeInScope: true,
+          scopeOutOfScope: true,
+          sampleClientPages: true,
+        },
+      },
       clientProject: {
         include: {
           opdrachtgever: true,
