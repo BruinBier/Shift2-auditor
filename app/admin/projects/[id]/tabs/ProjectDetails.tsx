@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
+import VoorbereidingStappen from './VoorbereidingStappen';
 import 'md-editor-rt/lib/style.css';
 
 const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
@@ -33,11 +34,18 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showPostponeModal, setShowPostponeModal] = useState(false);
+  const [showTranscriptModal, setShowTranscriptModal] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
   const [planningChanges, setPlanningChanges] = useState<any[]>([]);
   const [postponeWeeks, setPostponeWeeks] = useState('2');
   const [postponeReason, setPostponeReason] = useState('');
   const [isPostponing, setIsPostponing] = useState(false);
   const [planningFormData, setPlanningFormData] = useState({
+    dateStart: project.dateStart ? new Date(project.dateStart).toISOString().split('T')[0] : '',
+    dateEnd: project.dateEnd ? new Date(project.dateEnd).toISOString().split('T')[0] : '',
+    hasReinspection: Boolean(project.hasReinspection),
+    reinspectionWeeks: project.reinspectionWeeks ? String(project.reinspectionWeeks) : '12',
     planningSent: project.planningSent ? new Date(project.planningSent).toISOString().split('T')[0] : '',
     planningApproved: project.planningApproved ? new Date(project.planningApproved).toISOString().split('T')[0] : '',
     scopeInScope: project.scopeInScope || '',
@@ -293,6 +301,17 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          dateStart: planningFormData.dateStart ? new Date(planningFormData.dateStart).toISOString() : null,
+          dateEnd: planningFormData.dateEnd ? new Date(planningFormData.dateEnd).toISOString() : null,
+          // De rapportdatum is de deadline: bij de intake staat die nog op de
+          // dag van aanmaken, omdat de planning dan nog niet bekend is.
+          ...(planningFormData.dateEnd
+            ? { reportDate: new Date(planningFormData.dateEnd).toISOString() }
+            : {}),
+          hasReinspection: planningFormData.hasReinspection,
+          reinspectionWeeks: planningFormData.hasReinspection
+            ? Number(planningFormData.reinspectionWeeks) || null
+            : null,
           planningSent: planningFormData.planningSent ? new Date(planningFormData.planningSent).toISOString() : null,
           planningApproved: planningFormData.planningApproved ? new Date(planningFormData.planningApproved).toISOString() : null,
           scopeInScope: planningFormData.scopeInScope || null,
@@ -310,6 +329,99 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     } catch (error) {
       console.error('Error updating planning:', error);
       alert('Fout bij het opslaan van de planning datums');
+    }
+  };
+
+  /**
+   * Een onderzoek loopt standaard twee weken; de herinspectie start een aantal
+   * weken na de deadline en duurt een week. Je geeft de startdatum, de rest
+   * volgt daaruit maar blijft aanpasbaar.
+   */
+  const LOOPTIJD_DAGEN = 14;
+
+  const plusDagen = (datum: string, dagen: number) => {
+    if (!datum) return '';
+    const d = new Date(`${datum}T00:00:00`);
+    d.setDate(d.getDate() + dagen);
+    return d.toISOString().split('T')[0];
+  };
+
+  const zetStartdatum = (nieuweStart: string) => {
+    setPlanningFormData((vorige) => ({
+      ...vorige,
+      dateStart: nieuweStart,
+      // De deadline schuift mee zolang die het standaardpatroon volgt of nog
+      // leeg is. Een handmatig afwijkende deadline blijft staan.
+      dateEnd:
+        !vorige.dateEnd || vorige.dateEnd === plusDagen(vorige.dateStart, LOOPTIJD_DAGEN)
+          ? plusDagen(nieuweStart, LOOPTIJD_DAGEN)
+          : vorige.dateEnd,
+    }));
+  };
+
+  const herinspectieStart = planningFormData.hasReinspection
+    ? plusDagen(planningFormData.dateEnd, Number(planningFormData.reinspectionWeeks || 0) * 7)
+    : '';
+
+  /**
+   * Maakt van een tekstvak een opsomming: bij Enter komt er meteen een streepje
+   * op de nieuwe regel, en geplakte tekst krijgt er per regel een.
+   * Zo hoeft de opmaak niet met de hand te worden bijgehouden.
+   */
+  const bulletVeld = (
+    waarde: string,
+    zet: (nieuw: string) => void
+  ) => ({
+    value: waarde,
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => zet(e.target.value),
+    onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key !== 'Enter' || e.shiftKey) return;
+      e.preventDefault();
+      const el = e.currentTarget;
+      const voor = waarde.slice(0, el.selectionStart);
+      const na = waarde.slice(el.selectionEnd);
+      const nieuw = `${voor}\n- ${na}`;
+      zet(nieuw);
+      // Cursor achter het nieuwe streepje zetten.
+      const positie = voor.length + 3;
+      requestAnimationFrame(() => el.setSelectionRange(positie, positie));
+    },
+    onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const tekst = e.clipboardData.getData('text');
+      if (!tekst.includes('\n')) return;
+      e.preventDefault();
+      const el = e.currentTarget;
+      const regels = tekst
+        .split('\n')
+        .map((r) => r.trim())
+        .filter(Boolean)
+        .map((r) => (/^[-*•]\s/.test(r) ? r : `- ${r}`));
+      const voor = waarde.slice(0, el.selectionStart);
+      const na = waarde.slice(el.selectionEnd);
+      const prefix = voor && !voor.endsWith('\n') ? '\n' : '';
+      zet(`${voor}${prefix}${regels.join('\n')}${na}`);
+    },
+  });
+
+  const handleTranscriptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingTranscript(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scopeCallTranscript: transcript.trim() || null }),
+      });
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        alert('Het opslaan van het transcript is niet gelukt.');
+      }
+    } catch (error) {
+      console.error('Error saving transcript:', error);
+      alert('Het opslaan van het transcript is niet gelukt.');
+    } finally {
+      setIsSavingTranscript(false);
     }
   };
 
@@ -400,6 +512,37 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     // staan ze dus op het bovenliggende project; bij een nulmeting op het
     // project zelf.
     const bron = project.parentProject ?? project;
+
+    // URL's per regel als klikbare link tonen. Losse tekst met lange, gecodeerde
+    // PDF-adressen wordt anders een onleesbaar blok.
+    const alsLijst = (waarde: string | null | undefined) => {
+      const regels = (waarde || '')
+        .split('\n')
+        .map((r) => r.trim().replace(/^[-*•]\s*/, '')) // een getypt streepje hoort bij de opmaak, niet bij de tekst
+        .filter(Boolean);
+      if (!regels.length) return <div className="text-sm text-gray-900">-</div>;
+      return (
+        <ul className="list-disc list-outside pl-5 space-y-1 marker:text-gray-400">
+          {regels.map((r, i) => (
+            <li key={i} className="text-sm">
+              {/^https?:\/\//i.test(r) ? (
+                <a
+                  href={r}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-shift2-primary hover:underline break-all"
+                >
+                  {decodeURI(r).replace(/^https?:\/\/(www\.)?/i, '')}
+                </a>
+              ) : (
+                <span className="text-gray-900">{r}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      );
+    };
+
     return (
     <>
       <div>
@@ -416,15 +559,15 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       </div>
       <div>
         <label className="block text-sm text-gray-500 mb-1">In scope</label>
-        <div className="text-sm text-gray-900 whitespace-pre-wrap">{bron.scopeInScope || '-'}</div>
+        {alsLijst(bron.scopeInScope)}
       </div>
       <div>
         <label className="block text-sm text-gray-500 mb-1">Buiten scope</label>
-        <div className="text-sm text-gray-900 whitespace-pre-wrap">{bron.scopeOutOfScope || '-'}</div>
+        {alsLijst(bron.scopeOutOfScope)}
       </div>
       <div>
         <label className="block text-sm text-gray-500 mb-1">Door klant aangedragen pagina&apos;s</label>
-        <div className="text-sm text-gray-900 whitespace-pre-wrap">{bron.sampleClientPages || '-'}</div>
+        {alsLijst(bron.sampleClientPages)}
       </div>
       <div className="pt-2">
         <button
@@ -470,6 +613,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 disabled={isUpdatingStatus}
                 className="w-full text-sm text-gray-900 border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
+                <option value="Intake">Intake</option>
                 <option value="Gepland">Gepland</option>
                 <option value="In uitvoering">In uitvoering</option>
                 <option value="Controle">Controle</option>
@@ -515,30 +659,32 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               </svg>
               <h3 className="font-semibold text-gray-900">Planning</h3>
             </div>
-            <div className="flex items-center gap-3">
-              {(project.dateStart || project.dateEnd) && (
-                <button
-                  onClick={() => setShowPostponeModal(true)}
-                  className="text-sm text-shift2-primary hover:underline"
-                >
-                  Uitstellen
-                </button>
-              )}
-              <button
-                onClick={() => setShowPlanningModal(true)}
-                className="text-sm text-shift2-primary hover:underline"
-              >
-                Bewerken
-              </button>
-            </div>
+            <button
+              onClick={() => setShowPlanningModal(true)}
+              className="text-sm text-shift2-primary hover:underline"
+            >
+              Bewerken
+            </button>
           </div>
           <div className="p-4 space-y-4">
             {/* Bij een vervolgonderzoek eerst de nulmeting, zodat je ziet
                 vanaf welk moment de hersteltermijn loopt. */}
             {project.parentProject && (
               <div className="pb-3 border-b border-gray-200">
-                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                  Nulmeting
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Nulmeting
+                  </div>
+                  {/* De nulmeting is een ander onderzoek; die planning verplaats
+                      je op zijn eigen pagina, niet van hieruit. */}
+                  <button
+                    type="button"
+                    disabled
+                    title="De planning van de nulmeting pas je aan op de pagina van dat onderzoek."
+                    className="text-sm text-gray-300 cursor-not-allowed"
+                  >
+                    Uitstellen
+                  </button>
                 </div>
                 <div className="text-sm text-gray-900">
                   {project.parentProject.dateStart && project.parentProject.dateEnd
@@ -565,11 +711,44 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 zit. Een vervolgonderzoek is een herinspectie, of het nu in de
                 tussencheck of de eindcontrole zit; die fase staat boven aan de
                 pagina. */}
-            {project.parentProject && (
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Herinspectie
-              </div>
-            )}
+            <div className="flex items-center justify-between">
+              {project.parentProject ? (
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Herinspectie
+                </div>
+              ) : (
+                <span />
+              )}
+              {/* Een afgerond onderzoek verplaats je niet meer. */}
+              {(() => {
+                const heeftPlanning = Boolean(project.dateStart || project.dateEnd);
+                // projectStatus volgt de keuzelijst hierboven, zodat de knop
+                // meteen meebeweegt als je de status wijzigt.
+                const afgerond = projectStatus === 'Gereed' || projectStatus === 'Geannuleerd';
+                if (!heeftPlanning) return null;
+                if (afgerond) {
+                  return (
+                    <button
+                      type="button"
+                      disabled
+                      title="Dit onderzoek is afgerond en kan niet meer worden verplaatst."
+                      className="text-sm text-gray-300 cursor-not-allowed"
+                    >
+                      Uitstellen
+                    </button>
+                  );
+                }
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setShowPostponeModal(true)}
+                    className="text-sm text-shift2-primary hover:underline"
+                  >
+                    Uitstellen
+                  </button>
+                );
+              })()}
+            </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Startdatum</label>
               <div className="text-sm text-gray-900">
@@ -598,6 +777,37 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               <label className="block text-sm text-gray-500 mb-1">Geplande tijd</label>
               <div className="text-sm text-gray-900">{project.plannedTime || '-'}</div>
             </div>
+            {/* Staat er een hertest gepland, toon dan wanneer die valt. Het
+                v1.1-project wordt pas aangemaakt bij het afronden van dit
+                onderzoek, want dan pas kloppen de datums en de inhoud. */}
+            {project.hasReinspection && !project.childProjects?.length && (
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Hertest</label>
+                {(() => {
+                  if (!project.dateEnd || !project.reinspectionWeeks) {
+                    return (
+                      <div className="text-sm text-gray-900">
+                        Gepland, datum volgt uit de deadline
+                      </div>
+                    );
+                  }
+                  const start = new Date(project.dateEnd);
+                  start.setDate(start.getDate() + project.reinspectionWeeks * 7);
+                  return (
+                    <div className="text-sm text-gray-900">
+                      {format(start, 'd MMMM yyyy', { locale: nl })}
+                      <span className="text-gray-500">
+                        {' '}
+                        ({project.reinspectionWeeks} weken na de deadline)
+                      </span>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        Wordt aangemaakt bij het afronden van dit onderzoek.
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
             {planningChanges.length > 0 && (
               <div className="pt-2 border-t border-gray-200">
                 <label className="block text-sm text-gray-500 mb-2">Uitgesteld</label>
@@ -625,6 +835,37 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             {!project.parentProject && (
               <div className="pt-2 border-t border-gray-200 space-y-3">{planningAfspraken}</div>
             )}
+            {/* Transcript van het scopegesprek: de bron voor de scope-afspraken
+                hierboven. Hoort bij dit onderzoek, niet bij de nulmeting. */}
+            <div className="pt-2 border-t border-gray-200">
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="scope-transcript" className="block text-sm text-gray-500">
+                  Transcript scopegesprek
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTranscript(project.scopeCallTranscript || '');
+                    setShowTranscriptModal(true);
+                  }}
+                  className="text-sm text-shift2-primary hover:underline"
+                >
+                  {project.scopeCallTranscript ? 'Bewerken' : 'Toevoegen'}
+                </button>
+              </div>
+              {project.scopeCallTranscript ? (
+                <details>
+                  <summary className="text-sm text-gray-900 cursor-pointer">
+                    {project.scopeCallTranscript.trim().split(/\s+/).length} woorden
+                  </summary>
+                  <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded p-3 max-h-64 overflow-y-auto">
+                    {project.scopeCallTranscript}
+                  </div>
+                </details>
+              ) : (
+                <div className="text-sm text-gray-900">-</div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -826,8 +1067,17 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         </div>
         </div>
 
-        {/* Column 2: Statistieken + Bijlagen */}
+        {/* Column 2: Voorbereiding + Statistieken + Bijlagen */}
         <div className="space-y-6">
+          {/* Het routekaartje hoort bij de voorbereiding. Zodra de planning
+              akkoord is of het onderzoek loopt, is het niet meer nuttig en
+              zou het alleen maar onafgevinkte stappen tonen van iets wat al
+              lang achter de rug is. */}
+          {!project.planningApproved &&
+            projectStatus !== 'Gereed' &&
+            projectStatus !== 'Geannuleerd' && (
+              <VoorbereidingStappen project={project} />
+            )}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center gap-2">
@@ -1100,6 +1350,58 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       )}
 
       {/* Edit Planning Modal */}
+      {showTranscriptModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Transcript scopegesprek</h2>
+              <button
+                onClick={() => setShowTranscriptModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Sluiten"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleTranscriptSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="p-6 flex-1 min-h-0 overflow-y-auto">
+                <p className="text-sm text-gray-600 mb-3">
+                  Plak hier het transcript van het Teams-gesprek. Daaruit volgen de
+                  afspraken over de scope en de pagina&apos;s die de klant wil laten
+                  meenemen.
+                </p>
+                <textarea
+                  id="scope-transcript"
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  rows={16}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+                  placeholder="Plak het transcript..."
+                />
+              </div>
+              <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowTranscriptModal(false)}
+                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                >
+                  Annuleren
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingTranscript}
+                  className="px-4 py-2 text-sm bg-shift2-primary text-white rounded-lg hover:bg-shift2-accent disabled:opacity-50"
+                >
+                  {isSavingTranscript ? 'Bezig...' : 'Opslaan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {showPostponeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -1190,6 +1492,90 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             {/* Content */}
             <form onSubmit={handlePlanningSubmit} className="flex flex-col flex-1 min-h-0">
               <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="pl-start" className="block text-sm font-medium text-gray-700 mb-1">
+                    Startdatum
+                  </label>
+                  <input
+                    id="pl-start"
+                    type="date"
+                    value={planningFormData.dateStart}
+                    onChange={(e) => zetStartdatum(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary text-sm"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pl-eind" className="block text-sm font-medium text-gray-700 mb-1">
+                    Deadline
+                  </label>
+                  <input
+                    id="pl-eind"
+                    type="date"
+                    value={planningFormData.dateEnd}
+                    onChange={(e) =>
+                      setPlanningFormData({ ...planningFormData, dateEnd: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Standaard twee weken na de start.</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Soort onderzoek
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-900">
+                    <input
+                      type="radio"
+                      name="soort"
+                      checked={!planningFormData.hasReinspection}
+                      onChange={() =>
+                        setPlanningFormData({ ...planningFormData, hasReinspection: false })
+                      }
+                    />
+                    Nulmeting
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-900">
+                    <input
+                      type="radio"
+                      name="soort"
+                      checked={planningFormData.hasReinspection}
+                      onChange={() =>
+                        setPlanningFormData({ ...planningFormData, hasReinspection: true })
+                      }
+                    />
+                    Nulmeting met hertest
+                  </label>
+                </div>
+                {planningFormData.hasReinspection && (
+                  <div className="mt-3 pl-6">
+                    <label htmlFor="pl-weken" className="block text-sm text-gray-700 mb-1">
+                      Weken tot de hertest
+                    </label>
+                    <input
+                      id="pl-weken"
+                      type="number"
+                      min={1}
+                      value={planningFormData.reinspectionWeeks}
+                      onChange={(e) =>
+                        setPlanningFormData({ ...planningFormData, reinspectionWeeks: e.target.value })
+                      }
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                    {herinspectieStart && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Hertest start op{' '}
+                        {format(new Date(`${herinspectieStart}T00:00:00`), 'd MMMM yyyy', { locale: nl })}
+                        , en duurt een week.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Planning verstuurd
@@ -1227,8 +1613,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 </label>
                 <textarea
                   rows={4}
-                  value={planningFormData.scopeInScope}
-                  onChange={(e) => setPlanningFormData({ ...planningFormData, scopeInScope: e.target.value })}
+                  {...bulletVeld(planningFormData.scopeInScope, (v) =>
+                    setPlanningFormData({ ...planningFormData, scopeInScope: v })
+                  )}
                   placeholder={'- Hoofdwebsite heuvelrug.nl\n- Formulieren onder /formulieren/'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
                 />
@@ -1240,8 +1627,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 </label>
                 <textarea
                   rows={4}
-                  value={planningFormData.scopeOutOfScope}
-                  onChange={(e) => setPlanningFormData({ ...planningFormData, scopeOutOfScope: e.target.value })}
+                  {...bulletVeld(planningFormData.scopeOutOfScope, (v) =>
+                    setPlanningFormData({ ...planningFormData, scopeOutOfScope: v })
+                  )}
                   placeholder={'- Subsite raad.heuvelrug.nl\n- PDF-documenten ouder dan 2024'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
                 />
@@ -1253,8 +1641,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 </label>
                 <textarea
                   rows={4}
-                  value={planningFormData.sampleClientPages}
-                  onChange={(e) => setPlanningFormData({ ...planningFormData, sampleClientPages: e.target.value })}
+                  {...bulletVeld(planningFormData.sampleClientPages, (v) =>
+                    setPlanningFormData({ ...planningFormData, sampleClientPages: v })
+                  )}
                   placeholder={'- /contact\n- /producten/aanvragen'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
                 />

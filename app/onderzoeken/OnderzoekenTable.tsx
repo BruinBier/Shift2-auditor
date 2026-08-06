@@ -1400,15 +1400,23 @@ export default function OnderzoekenTable({ projects }: Props) {
               </div>
               Extern project
             </button>
-            <button
-              onClick={openCreateModal}
-              className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors"
+            {/* Intake is de korte route vanuit het CRM; het volledige
+                formulier blijft voor uitzonderingen. */}
+            <a
+              href="/admin/intake"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-green-500 bg-white hover:bg-gray-50 transition-colors"
             >
               <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                 </svg>
               </div>
+              Nieuwe intake
+            </a>
+            <button
+              onClick={openCreateModal}
+              className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+            >
               Nieuw onderzoek
             </button>
           </div>
@@ -2682,6 +2690,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
+                    <option value="Intake">Intake</option>
                     <option value="Gepland">Gepland</option>
                     <option value="In uitvoering">In uitvoering</option>
                     <option value="Controle">Controle</option>
@@ -3214,6 +3223,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
+                    <option value="Intake">Intake</option>
                     <option value="Gepland">Gepland</option>
                     <option value="In uitvoering">In uitvoering</option>
                     <option value="Controle">Controle</option>
@@ -3661,6 +3671,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     defaultValue="Gepland"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   >
+                    <option value="Intake">Intake</option>
                     <option value="Gepland">Gepland</option>
                     <option value="In uitvoering">In uitvoering</option>
                     <option value="Gereed">Gereed</option>
@@ -3853,6 +3864,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                   defaultValue={editingProject.status}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
+                  <option value="Intake">Intake</option>
                   <option value="Gepland">Gepland</option>
                   <option value="In uitvoering">In uitvoering</option>
                   <option value="Afgerond">Afgerond</option>
