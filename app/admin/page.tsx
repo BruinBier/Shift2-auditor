@@ -35,20 +35,40 @@ function datumNl(d: Date): string {
   return format(d, 'd MMMM', { locale: nl });
 }
 
-/** Eén blok met een gekleurde kop en de onderzoeken die erin vallen. */
-function Blok({ titel, kleur, regels }: { titel: string; kleur: string; regels: Regel[] }) {
+/**
+ * Eén blok met een gekleurde kop en de onderzoeken die erin vallen.
+ * Met `tweeKolommen` staan de regels naast elkaar; dat is bedoeld voor een
+ * blok over de volle breedte.
+ */
+function Blok({
+  titel,
+  kleur,
+  regels,
+  tweeKolommen = false,
+}: {
+  titel: string;
+  kleur: string;
+  regels: Regel[];
+  tweeKolommen?: boolean;
+}) {
   return (
     <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className={`px-5 py-3 flex items-baseline justify-between text-white ${kleur}`}>
         <h2 className="font-semibold">{titel}</h2>
         <span className="text-sm">{regels.length}</span>
       </div>
-      <ul className="divide-y divide-gray-100">
+      <ul
+        className={
+          tweeKolommen
+            ? 'grid grid-cols-1 md:grid-cols-2 md:divide-x divide-gray-100'
+            : 'divide-y divide-gray-100'
+        }
+      >
         {regels.map((r) => (
-          <li key={r.id}>
+          <li key={r.id} className={tweeKolommen ? 'border-b border-gray-100' : undefined}>
             <Link
               href={`/admin/projects/${r.id}`}
-              className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors"
+              className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors h-full"
             >
               <div className="flex items-baseline gap-3">
                 <span className="text-sm font-medium text-gray-900 w-28 flex-shrink-0">
@@ -226,25 +246,41 @@ export default async function AdminPage() {
             <p className="text-gray-600">Er loopt op dit moment geen onderzoek.</p>
           </div>
         ) : (
-          // Links wat jij moet doen, rechts wat er zonder jouw toedoen speelt.
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <div className="space-y-6">
-              {blokken
-                .filter((b) => b.titel === 'Actie nodig')
-                .map((blok) => (
-                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-                ))}
+          <div className="space-y-6">
+            {/* Links wat jij moet doen, rechts wat er zonder jouw toedoen speelt. */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <div className="space-y-6">
+                {blokken
+                  .filter((b) => b.titel === 'Actie nodig')
+                  .map((blok) => (
+                    <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+                  ))}
+              </div>
+              <div className="space-y-6">
+                {blokken
+                  .filter((b) => b.titel !== 'Actie nodig' && b.titel !== 'Wacht op iemand anders')
+                  .map((blok) => (
+                    <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+                  ))}
+                {doorlopend.length > 0 && (
+                  <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
+                )}
+              </div>
             </div>
-            <div className="space-y-6">
-              {blokken
-                .filter((b) => b.titel !== 'Actie nodig')
-                .map((blok) => (
-                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-                ))}
-              {doorlopend.length > 0 && (
-                <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
-              )}
-            </div>
+
+            {/* Wachten kost de meeste ruimte door de redenen, dus dat blok
+                staat over de volle breedte met de regels in twee kolommen. */}
+            {blokken
+              .filter((b) => b.titel === 'Wacht op iemand anders')
+              .map((blok) => (
+                <Blok
+                  key={blok.titel}
+                  titel={blok.titel}
+                  kleur={blok.kleur}
+                  regels={blok.regels}
+                  tweeKolommen
+                />
+              ))}
           </div>
         )}
 
