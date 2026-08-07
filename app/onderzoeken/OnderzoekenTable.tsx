@@ -60,8 +60,6 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showExternalProjectModal, setShowExternalProjectModal] = useState(false);
-  const [showEditExternalProjectModal, setShowEditExternalProjectModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [generatedEmail, setGeneratedEmail] = useState({ subject: '', body: '' });
@@ -109,9 +107,6 @@ export default function OnderzoekenTable({ projects }: Props) {
   const [availableOpdrachtgevers, setAvailableOpdrachtgevers] = useState<Array<{ id: string; kenmerk: string; naam: string }>>([]);
   const [clientProjects, setClientProjects] = useState<any[]>([]);
   const [filteredClientProjects, setFilteredClientProjects] = useState<any[]>([]);
-  const [externalFormOpdrachtgever, setExternalFormOpdrachtgever] = useState<string>('');
-  const [externalFormFilteredProjects, setExternalFormFilteredProjects] = useState<any[]>([]);
-  const [externalFormClientProject, setExternalFormClientProject] = useState<string>('');
   const [editingCell, setEditingCell] = useState<{ projectId: string; field: 'planningSent' | 'planningApproved' } | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const itemsPerPage = 20;
@@ -125,28 +120,6 @@ export default function OnderzoekenTable({ projects }: Props) {
       console.log(`    parentProjectId: ${p.parentProjectId}`);
     });
   }, [projects]);
-
-  // Handle external project reinspection checkbox toggle
-  useEffect(() => {
-    const checkbox = document.getElementById('externalHasReinspection') as HTMLInputElement;
-    const weeksField = document.getElementById('externalReinspectionWeeksField');
-
-    if (checkbox && weeksField) {
-      const handleCheckboxChange = () => {
-        if (checkbox.checked) {
-          weeksField.classList.remove('hidden');
-        } else {
-          weeksField.classList.add('hidden');
-        }
-      };
-
-      checkbox.addEventListener('change', handleCheckboxChange);
-
-      return () => {
-        checkbox.removeEventListener('change', handleCheckboxChange);
-      };
-    }
-  }, [showExternalProjectModal]);
 
   // Close context menu on click outside or Escape key
   useEffect(() => {
@@ -343,18 +316,6 @@ export default function OnderzoekenTable({ projects }: Props) {
     }
   }, [formData.auditedByOrg, clientProjects]);
 
-  // Filter client projects based on external form opdrachtgever
-  useEffect(() => {
-    if (externalFormOpdrachtgever) {
-      const filtered = clientProjects.filter(
-        (project) => project.opdrachtgever.naam === externalFormOpdrachtgever
-      );
-      setExternalFormFilteredProjects(filtered);
-    } else {
-      setExternalFormFilteredProjects([]);
-    }
-  }, [externalFormOpdrachtgever, clientProjects]);
-
   // Auto-fill fields when research type is selected
   useEffect(() => {
     const fetchResearchTypeData = async () => {
@@ -380,14 +341,6 @@ export default function OnderzoekenTable({ projects }: Props) {
   }, [formData.researchType, editingProject]);
 
   const openEditModal = (project: Project) => {
-    // Check if this is an external project
-    if (project.researchType === 'Extern project') {
-      setEditingProject(project);
-      setShowEditExternalProjectModal(true);
-      setOpenMenuId(null);
-      return;
-    }
-
     setEditingProject(project);
 
     // Format dates for input fields
@@ -592,117 +545,6 @@ export default function OnderzoekenTable({ projects }: Props) {
     } catch (error) {
       console.error('Error creating project:', error);
       alert('Er is een fout opgetreden bij het aanmaken van het onderzoek.');
-    }
-  };
-
-  const openExternalProjectModal = () => {
-    setShowExternalProjectModal(true);
-  };
-
-  const closeExternalProjectModal = () => {
-    setShowExternalProjectModal(false);
-  };
-
-  const handleExternalProjectSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-
-    const commissionedBy = formData.get('commissionedBy') as string;
-    const hasReinspection = formData.get('hasReinspection') === 'on';
-    const reinspectionDate = hasReinspection ? formData.get('reinspectionDate') as string : undefined;
-
-    const data = {
-      title: formData.get('title') as string,
-      subject: '', // Required field - empty for external projects
-      commissionedBy: commissionedBy,
-      auditedByOrg: commissionedBy, // Set auditedByOrg same as commissionedBy for kenmerk generation
-      researcherName: formData.get('researcherName') as string,
-      dateStart: formData.get('dateStart') as string || null,
-      dateEnd: formData.get('dateEnd') as string,
-      status: formData.get('status') as string,
-      researchType: 'Extern project', // Required field - mark as external
-      isExternalProject: true,
-      reportDate: formData.get('dateEnd') as string, // Use deadline as report date
-      clientProjectId: formData.get('clientProjectId') as string || null, // Include clientProjectId if selected
-      hasReinspection,
-      reinspectionDate,
-    };
-
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        closeExternalProjectModal();
-        router.refresh();
-      } else {
-        const error = await response.json();
-        alert(`Er is een fout opgetreden: ${error.error || 'Onbekende fout'}`);
-      }
-    } catch (error) {
-      console.error('Error creating external project:', error);
-      alert('Er is een fout opgetreden bij het aanmaken van het externe project.');
-    }
-  };
-
-  const closeEditExternalProjectModal = () => {
-    setShowEditExternalProjectModal(false);
-    setEditingProject(null);
-    setExternalFormOpdrachtgever('');
-  };
-
-  const handleEditExternalProjectSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!editingProject) return;
-
-    const formData = new FormData(e.currentTarget);
-
-    const commissionedBy = formData.get('commissionedBy') as string;
-    const hasReinspection = formData.get('hasReinspection') === 'on';
-    const reinspectionDate = hasReinspection ? formData.get('reinspectionDate') as string : undefined;
-
-    const data = {
-      title: formData.get('title') as string,
-      subject: '', // Required field - empty for external projects
-      commissionedBy: commissionedBy,
-      auditedByOrg: commissionedBy, // Set auditedByOrg same as commissionedBy for kenmerk generation
-      researcherName: formData.get('researcherName') as string,
-      dateStart: formData.get('dateStart') as string || null,
-      dateEnd: formData.get('dateEnd') as string,
-      status: formData.get('status') as string,
-      researchType: 'Extern project', // Required field - mark as external
-      isExternalProject: true,
-      reportDate: formData.get('dateEnd') as string, // Use deadline as report date
-      clientProjectId: formData.get('clientProjectId') as string || null, // Include clientProjectId if selected
-      hasReinspection,
-      reinspectionDate,
-    };
-
-    try {
-      const response = await fetch(`/api/projects/${editingProject.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        closeEditExternalProjectModal();
-        router.refresh();
-      } else {
-        const error = await response.json();
-        alert(`Er is een fout opgetreden: ${error.error || 'Onbekende fout'}`);
-      }
-    } catch (error) {
-      console.error('Error updating external project:', error);
-      alert('Er is een fout opgetreden bij het bijwerken van het externe project.');
     }
   };
 
@@ -1430,17 +1272,6 @@ export default function OnderzoekenTable({ projects }: Props) {
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowExternalProjectModal(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-blue-500 bg-white hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-              Extern project
-            </button>
             {/* Intake is de korte route vanuit het CRM; het volledige
                 formulier blijft voor uitzonderingen. */}
             <a
@@ -1723,7 +1554,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
                             {project.status}
                           </span>
-                          {!isReinspection && project.researchType !== 'Extern project' && (
+                          {!isReinspection && (
                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                               Nulmeting
                             </span>
@@ -1738,7 +1569,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex flex-col gap-1">
-                          <span>{project.researchType === 'Extern project' ? project.title : getSimplifiedTitle(project)}</span>
+                          <span>{getSimplifiedTitle(project)}</span>
                           {project.status === 'Geannuleerd' && project.cancellationReason && (
                             <span
                               className="text-xs text-gray-500 italic"
@@ -1827,7 +1658,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center gap-2">
-                      {project.researchType !== 'Extern project' && (
+                      {(
                         <Link
                           href={`/admin/projects/${project.id}`}
                           className="text-gray-400 hover:text-gray-600"
@@ -1932,7 +1763,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      <span>{childReinspection.researchType === 'Extern project' ? childReinspection.title : getSimplifiedTitle(childReinspection)}</span>
+                      <span>{getSimplifiedTitle(childReinspection)}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{Number(childReinspection.version).toFixed(1)}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -2012,7 +1843,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">
-                        {childReinspection.researchType !== 'Extern project' && (
+                        {(
                           <Link
                             href={`/admin/projects/${childReinspection.id}`}
                             className="text-gray-400 hover:text-gray-600"
@@ -2309,7 +2140,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
                               {project.status}
                             </span>
-                            {!isReinspection && project.researchType !== 'Extern project' && (
+                            {!isReinspection && (
                               <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                                 Nulmeting
                               </span>
@@ -2410,7 +2241,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <div className="flex items-center gap-2">
-                            {project.researchType !== 'Extern project' && (
+                            {(
                               <Link
                                 href={`/admin/projects/${project.id}`}
                                 className="text-gray-400 hover:text-gray-600"
@@ -2584,7 +2415,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <div className="flex items-center gap-2">
-                              {childReinspection.researchType !== 'Extern project' && (
+                              {(
                                 <Link
                                   href={`/admin/projects/${childReinspection.id}`}
                                   className="text-gray-400 hover:text-gray-600"
@@ -3636,400 +3467,6 @@ export default function OnderzoekenTable({ projects }: Props) {
       )}
 
       {/* External Project Modal */}
-      {showExternalProjectModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              closeExternalProjectModal();
-            }
-          }}
-        >
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
-              <h2 className="text-xl font-semibold text-gray-900">Extern project toevoegen</h2>
-              <button
-                onClick={closeExternalProjectModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleExternalProjectSubmit} className="p-6">
-              <div className="space-y-6">
-                <p className="text-sm text-gray-600">
-                  Voeg een project toe dat door een externe partij (zoals Cardan) wordt uitgevoerd. Deze projecten zijn alleen zichtbaar in de tabel voor monitoring doeleinden.
-                </p>
-
-                {/* Titel */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Titel <span className="text-gray-400">vereist</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="bijv. WCAG 2.2 AA - Website gemeente X"
-                  />
-                </div>
-
-                {/* Opdrachtgever */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Opdrachtgever <span className="text-gray-400">vereist</span>
-                  </label>
-                  <select
-                    name="commissionedBy"
-                    required
-                    value={externalFormOpdrachtgever}
-                    onChange={(e) => setExternalFormOpdrachtgever(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Selecteer...</option>
-                    {availableOpdrachtgevers.map((opdrachtgever) => (
-                      <option key={opdrachtgever.id} value={opdrachtgever.naam}>
-                        {opdrachtgever.kenmerk} - {opdrachtgever.naam}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Project */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project
-                  </label>
-                  <select
-                    name="clientProjectId"
-                    disabled={!externalFormOpdrachtgever}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Geen project</option>
-                    {externalFormOpdrachtgever && externalFormFilteredProjects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                  {!externalFormOpdrachtgever && (
-                    <p className="mt-1 text-xs text-gray-500">Selecteer eerst een opdrachtgever</p>
-                  )}
-                </div>
-
-                {/* Externe auditor */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Externe auditor <span className="text-gray-400">vereist</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="researcherName"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="bijv. Cardan"
-                  />
-                </div>
-
-                {/* Startdatum en Deadline */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startdatum
-                    </label>
-                    <input
-                      type="date"
-                      name="dateStart"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline <span className="text-gray-400">vereist</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="dateEnd"
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    defaultValue="Gepland"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="Intake">Intake</option>
-                    <option value="Gepland">Gepland</option>
-                    <option value="In uitvoering">In uitvoering</option>
-                    <option value="Gereed">Gereed</option>
-                  </select>
-                </div>
-
-                {/* Herinspectie */}
-                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="externalHasReinspection"
-                      name="hasReinspection"
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="externalHasReinspection" className="text-sm font-medium text-gray-700">
-                      Herinspectie inplannen
-                    </label>
-                  </div>
-
-                  {/* Herinspectie datum (conditionally shown) */}
-                  <div id="externalReinspectionWeeksField" className="hidden mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Herinspectie datum
-                    </label>
-                    <input
-                      type="date"
-                      name="reinspectionDate"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                    />
-                    <p className="mt-2 text-xs text-gray-500">
-                      Er wordt automatisch een tweede project (v1.1) aangemaakt voor de herinspectie. Bevindingen worden gekopieerd wanneer v1.0 op "Gereed" wordt gezet.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit button */}
-              <div className="mt-8 flex gap-3">
-                <button
-                  type="button"
-                  onClick={closeExternalProjectModal}
-                  className="flex-1 px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Annuleren
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-2 text-white rounded-lg font-medium transition-colors"
-                  style={{ backgroundColor: '#3b82f6' }}
-                >
-                  Toevoegen
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit External Project Modal */}
-      {showEditExternalProjectModal && editingProject && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              closeEditExternalProjectModal();
-            }
-          }}
-        >
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Extern project bewerken</h2>
-              <button
-                onClick={closeEditExternalProjectModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={handleEditExternalProjectSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Titel onderzoek *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  defaultValue={editingProject.title}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Bijv. Herinspectie website Werkenvoorbel"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Opdrachtgever *
-                </label>
-                <select
-                  name="commissionedBy"
-                  required
-                  value={externalFormOpdrachtgever || editingProject.commissionedBy || ''}
-                  onChange={(e) => {
-                    setExternalFormOpdrachtgever(e.target.value);
-                    setExternalFormClientProject('');
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Selecteer opdrachtgever...</option>
-                  {availableOpdrachtgevers.map((og) => (
-                    <option key={og.id} value={og.naam}>
-                      {og.naam}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {externalFormOpdrachtgever && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project (optioneel)
-                  </label>
-                  <select
-                    name="clientProjectId"
-                    value={externalFormClientProject || editingProject.clientProjectId || ''}
-                    onChange={(e) => setExternalFormClientProject(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Geen project</option>
-                    {clientProjects
-                      .filter((cp) => cp.opdrachtgever.naam === externalFormOpdrachtgever)
-                      .map((cp) => (
-                        <option key={cp.id} value={cp.id}>
-                          {cp.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Externe auditor *
-                </label>
-                <input
-                  type="text"
-                  name="researcherName"
-                  required
-                  defaultValue={editingProject.researcherName || ''}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Bijv. John Doe"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Startdatum (optioneel)
-                  </label>
-                  <input
-                    type="date"
-                    name="dateStart"
-                    defaultValue={editingProject.dateStart ? new Date(editingProject.dateStart).toISOString().split('T')[0] : ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Deadline *
-                  </label>
-                  <input
-                    type="date"
-                    name="dateEnd"
-                    required
-                    defaultValue={editingProject.dateEnd ? new Date(editingProject.dateEnd).toISOString().split('T')[0] : ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status *
-                </label>
-                <select
-                  name="status"
-                  required
-                  defaultValue={editingProject.status}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Intake">Intake</option>
-                  <option value="Gepland">Gepland</option>
-                  <option value="In uitvoering">In uitvoering</option>
-                  <option value="Afgerond">Afgerond</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="hasReinspection"
-                    defaultChecked={editingProject.hasReinspection}
-                    onChange={(e) => {
-                      const checkbox = e.target;
-                      const dateInput = checkbox.closest('form')?.querySelector('input[name="reinspectionDate"]') as HTMLInputElement;
-                      if (dateInput) {
-                        dateInput.disabled = !checkbox.checked;
-                        if (!checkbox.checked) {
-                          dateInput.value = '';
-                        }
-                      }
-                    }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Herinspectie</span>
-                </label>
-              </div>
-
-              {editingProject.hasReinspection && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Herinspectie datum
-                  </label>
-                  <input
-                    type="date"
-                    name="reinspectionDate"
-                    defaultValue={editingProject.reinspectionDate ? new Date(editingProject.reinspectionDate).toISOString().split('T')[0] : ''}
-                    disabled={!editingProject.hasReinspection}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={closeEditExternalProjectModal}
-                  className="flex-1 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Annuleren
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-2 text-white rounded-lg font-medium transition-colors"
-                  style={{ backgroundColor: '#3b82f6' }}
-                >
-                  Opslaan
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Cancel reinspection modal */}
       {showCancelModal && cancellingProject && (
