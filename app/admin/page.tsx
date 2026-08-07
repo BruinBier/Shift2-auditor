@@ -194,18 +194,30 @@ export default async function AdminPage() {
                     <li key={r.id}>
                       <Link
                         href={`/admin/projects/${r.id}`}
-                        className="flex items-baseline gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
+                        className="block px-5 py-3 hover:bg-gray-50 transition-colors"
                       >
-                        <span className="text-sm font-medium text-gray-900 w-24 flex-shrink-0">
-                          {r.kenmerk}
-                        </span>
-                        <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
-                          {r.titel}
-                          {r.bureau && (
-                            <span className="ml-2 text-xs text-amber-700">{r.bureau}</span>
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-sm font-medium text-gray-900 w-28 flex-shrink-0">
+                            {r.kenmerk}
+                          </span>
+                          <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
+                            {r.titel}
+                            {r.bureau && (
+                              <span className="ml-2 text-xs text-amber-700">{r.bureau}</span>
+                            )}
+                          </span>
+                          {/* Korte toelichtingen passen naast de titel; een reden
+                              van wachten is vaak een hele zin en krijgt een eigen
+                              regel, zodat de rij niet buiten beeld loopt. */}
+                          {r.toelichting.length <= 40 && (
+                            <span className="text-sm text-gray-500 flex-shrink-0">
+                              {r.toelichting}
+                            </span>
                           )}
-                        </span>
-                        <span className="text-sm text-gray-500 flex-shrink-0">{r.toelichting}</span>
+                        </div>
+                        {r.toelichting.length > 40 && (
+                          <p className="text-sm text-gray-500 mt-1 ml-28 pl-3">{r.toelichting}</p>
+                        )}
                       </Link>
                     </li>
                   ))}
