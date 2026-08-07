@@ -1016,6 +1016,14 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                     <span className="font-medium text-gray-700">Project:</span>
                     <div className="text-gray-900 mt-1">{project.clientProject.name}</div>
                   </div>
+                  {/* Het nummer waaronder de opdracht in het CRM staat. Kan
+                      over meerdere websites van dezelfde opdracht gedeeld zijn. */}
+                  {project.clientProject.projectnummer && (
+                    <div>
+                      <span className="font-medium text-gray-700">CRM-nummer:</span>
+                      <div className="text-gray-900 mt-1">{project.clientProject.projectnummer}</div>
+                    </div>
+                  )}
                   <div>
                     <span className="font-medium text-gray-700">Projectdetails:</span>
                     <div
