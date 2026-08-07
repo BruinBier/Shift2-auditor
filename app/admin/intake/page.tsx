@@ -11,6 +11,7 @@ import Link from 'next/link';
  */
 
 const BUREAUS = ['Shift2', 'Cardan'];
+const ACCOUNTMANAGERS = ['Katja', 'Guus', 'Nick van de Venn'];
 
 export default function IntakePage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function IntakePage() {
   const [opdrachtgeverKenmerk, setOpdrachtgeverKenmerk] = useState('');
   const [contactnaam, setContactnaam] = useState('');
   const [contactEmail, setContactEmail] = useState('');
-  const [accountmanager, setAccountmanager] = useState('Katja');
+  const [accountmanager, setAccountmanager] = useState(ACCOUNTMANAGERS[0]);
 
   const [kenmerk, setKenmerk] = useState('');
   const [projectnummer, setProjectnummer] = useState('');
@@ -199,8 +200,11 @@ export default function IntakePage() {
                 onChange={(e) => setAccountmanager(e.target.value)}
                 className={veld}
               >
-                <option value="Katja">Katja</option>
-                <option value="Guus">Guus</option>
+                {ACCOUNTMANAGERS.map((naam) => (
+                  <option key={naam} value={naam}>
+                    {naam}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
