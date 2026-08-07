@@ -35,6 +35,47 @@ function datumNl(d: Date): string {
   return format(d, 'd MMMM', { locale: nl });
 }
 
+/** Eén blok met een gekleurde kop en de onderzoeken die erin vallen. */
+function Blok({ titel, kleur, regels }: { titel: string; kleur: string; regels: Regel[] }) {
+  return (
+    <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className={`px-5 py-3 flex items-baseline justify-between text-white ${kleur}`}>
+        <h2 className="font-semibold">{titel}</h2>
+        <span className="text-sm">{regels.length}</span>
+      </div>
+      <ul className="divide-y divide-gray-100">
+        {regels.map((r) => (
+          <li key={r.id}>
+            <Link
+              href={`/admin/projects/${r.id}`}
+              className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-baseline gap-3">
+                <span className="text-sm font-medium text-gray-900 w-28 flex-shrink-0">
+                  {r.kenmerk}
+                </span>
+                <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
+                  {r.titel}
+                  {r.bureau && <span className="ml-2 text-xs text-amber-700">{r.bureau}</span>}
+                </span>
+                {/* Korte toelichtingen passen naast de titel; een reden van
+                    wachten is vaak een hele zin en krijgt een eigen regel,
+                    zodat de rij niet buiten beeld loopt. */}
+                {r.toelichting && r.toelichting.length <= 40 && (
+                  <span className="text-sm text-gray-500 flex-shrink-0">{r.toelichting}</span>
+                )}
+              </div>
+              {r.toelichting && r.toelichting.length > 40 && (
+                <p className="text-sm text-gray-500 mt-1 ml-28 pl-3">{r.toelichting}</p>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default async function AdminPage() {
   const projects = await prisma.project.findMany({
     where: { status: { notIn: ['Gereed', 'Geannuleerd'] } },
@@ -59,7 +100,8 @@ export default async function AdminPage() {
     };
 
     if (p.isOngoing) {
-      doorlopend.push({ ...basis, toelichting: 'doorlopend' });
+      // Geen toelichting: dat het doorlopend is, zegt de kop van het blok al.
+      doorlopend.push({ ...basis, toelichting: '' });
       continue;
     }
 
@@ -146,11 +188,13 @@ export default async function AdminPage() {
     }
   }
 
+  // De kleur zegt hoe dringend het blok is: groen loopt, rood vraagt actie,
+  // amber ligt stil bij een ander, blauw is informatief.
   const blokken = [
-    { titel: 'Loopt nu', regels: loopt, kleur: 'text-green-700' },
-    { titel: 'Actie nodig', regels: actie, kleur: 'text-amber-700' },
-    { titel: 'Wacht op iemand anders', regels: wacht, kleur: 'text-gray-600' },
-    { titel: 'Komt eraan', regels: komtEraan, kleur: 'text-gray-600' },
+    { titel: 'Loopt nu', regels: loopt, kleur: 'bg-green-600' },
+    { titel: 'Actie nodig', regels: actie, kleur: 'bg-red-600' },
+    { titel: 'Wacht op iemand anders', regels: wacht, kleur: 'bg-amber-500' },
+    { titel: 'Komt eraan', regels: komtEraan, kleur: 'bg-blue-600' },
   ].filter((b) => b.regels.length > 0);
 
   return (
@@ -182,72 +226,25 @@ export default async function AdminPage() {
             <p className="text-gray-600">Er loopt op dit moment geen onderzoek.</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {blokken.map((blok) => (
-              <section key={blok.titel} className="bg-white rounded-lg border border-gray-200">
-                <div className="px-5 py-3 border-b border-gray-200 flex items-baseline justify-between">
-                  <h2 className={`font-semibold ${blok.kleur}`}>{blok.titel}</h2>
-                  <span className="text-sm text-gray-400">{blok.regels.length}</span>
-                </div>
-                <ul className="divide-y divide-gray-100">
-                  {blok.regels.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        href={`/admin/projects/${r.id}`}
-                        className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-baseline gap-3">
-                          <span className="text-sm font-medium text-gray-900 w-28 flex-shrink-0">
-                            {r.kenmerk}
-                          </span>
-                          <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
-                            {r.titel}
-                            {r.bureau && (
-                              <span className="ml-2 text-xs text-amber-700">{r.bureau}</span>
-                            )}
-                          </span>
-                          {/* Korte toelichtingen passen naast de titel; een reden
-                              van wachten is vaak een hele zin en krijgt een eigen
-                              regel, zodat de rij niet buiten beeld loopt. */}
-                          {r.toelichting.length <= 40 && (
-                            <span className="text-sm text-gray-500 flex-shrink-0">
-                              {r.toelichting}
-                            </span>
-                          )}
-                        </div>
-                        {r.toelichting.length > 40 && (
-                          <p className="text-sm text-gray-500 mt-1 ml-28 pl-3">{r.toelichting}</p>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-
-            {doorlopend.length > 0 && (
-              <section className="bg-white rounded-lg border border-gray-200">
-                <div className="px-5 py-3 border-b border-gray-200 flex items-baseline justify-between">
-                  <h2 className="font-semibold text-gray-600">Doorlopend</h2>
-                  <span className="text-sm text-gray-400">{doorlopend.length}</span>
-                </div>
-                <ul className="divide-y divide-gray-100">
-                  {doorlopend.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        href={`/admin/projects/${r.id}`}
-                        className="lijstrij flex items-baseline gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
-                      >
-                        <span className="text-sm font-medium text-gray-900 w-24 flex-shrink-0">
-                          {r.kenmerk}
-                        </span>
-                        <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">{r.titel}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+          // Links wat jij moet doen, rechts wat er zonder jouw toedoen speelt.
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="space-y-6">
+              {blokken
+                .filter((b) => b.titel === 'Actie nodig')
+                .map((blok) => (
+                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+                ))}
+            </div>
+            <div className="space-y-6">
+              {blokken
+                .filter((b) => b.titel !== 'Actie nodig')
+                .map((blok) => (
+                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+                ))}
+              {doorlopend.length > 0 && (
+                <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
+              )}
+            </div>
           </div>
         )}
 
