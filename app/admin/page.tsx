@@ -194,7 +194,7 @@ export default async function AdminPage() {
                     <li key={r.id}>
                       <Link
                         href={`/admin/projects/${r.id}`}
-                        className="block px-5 py-3 hover:bg-gray-50 transition-colors"
+                        className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-baseline gap-3">
                           <span className="text-sm font-medium text-gray-900 w-28 flex-shrink-0">
@@ -236,7 +236,7 @@ export default async function AdminPage() {
                     <li key={r.id}>
                       <Link
                         href={`/admin/projects/${r.id}`}
-                        className="flex items-baseline gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
+                        className="lijstrij flex items-baseline gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
                       >
                         <span className="text-sm font-medium text-gray-900 w-24 flex-shrink-0">
                           {r.kenmerk}
