@@ -271,11 +271,31 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const handleStatusChange = async (newStatus: string) => {
     if (isUpdatingStatus) return;
 
-    const confirmed = confirm(`Weet je zeker dat je de status wilt wijzigen naar "${newStatus}"?`);
-    if (!confirmed) {
-      // Reset dropdown to current value
-      setProjectStatus(project.status);
-      return;
+    // Bij "In de wacht" hoort een reden: over een paar maanden weet je anders
+    // niet meer waarom een onderzoek stilligt.
+    let reden: string | undefined;
+    if (newStatus === 'In de wacht') {
+      const ingevuld = prompt(
+        'Waarom komt dit onderzoek in de wacht?',
+        project.cancellationReason || ''
+      );
+      if (ingevuld === null) {
+        setProjectStatus(project.status);
+        return;
+      }
+      if (!ingevuld.trim()) {
+        alert('Geef een reden op.');
+        setProjectStatus(project.status);
+        return;
+      }
+      reden = ingevuld.trim();
+    } else {
+      const confirmed = confirm(`Weet je zeker dat je de status wilt wijzigen naar "${newStatus}"?`);
+      if (!confirmed) {
+        // Reset dropdown to current value
+        setProjectStatus(project.status);
+        return;
+      }
     }
 
     setIsUpdatingStatus(true);
@@ -284,7 +304,10 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       const response = await fetch(`/api/projects/${project.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          ...(reden ? { cancellationReason: reden } : {}),
+        }),
       });
 
       if (response.ok) {
@@ -631,6 +654,11 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 <option value="In de wacht">In de wacht</option>
                 <option value="Gereed">Gereed</option>
               </select>
+              {/* Waarom het onderzoek stilligt of is gestopt. */}
+              {(projectStatus === 'In de wacht' || projectStatus === 'Geannuleerd') &&
+                project.cancellationReason && (
+                  <p className="text-xs text-gray-500 mt-1">{project.cancellationReason}</p>
+                )}
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Onderzoekstype</label>

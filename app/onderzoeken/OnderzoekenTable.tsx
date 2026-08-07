@@ -1575,7 +1575,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex flex-col gap-1">
                           <span>{getSimplifiedTitle(project)}</span>
-                          {project.status === 'Geannuleerd' && project.cancellationReason && (
+                          {(project.status === 'Geannuleerd' || project.status === 'In de wacht') && project.cancellationReason && (
                             <span
                               className="text-xs text-gray-500 italic"
                               title={project.cancellationReason}
@@ -2159,7 +2159,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                               )}
                               <span>{project.title}</span>
                             </div>
-                            {project.status === 'Geannuleerd' && project.cancellationReason && (
+                            {(project.status === 'Geannuleerd' || project.status === 'In de wacht') && project.cancellationReason && (
                               <span
                                 className="text-xs text-gray-500 italic"
                                 title={project.cancellationReason}
@@ -2331,7 +2331,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                           <td className="px-6 py-4 text-sm text-gray-900">
                             <div className="flex flex-col gap-1">
                               <span>{childReinspection.title}</span>
-                              {childReinspection.status === 'Geannuleerd' && childReinspection.cancellationReason && (
+                              {(childReinspection.status === 'Geannuleerd' || childReinspection.status === 'In de wacht') && childReinspection.cancellationReason && (
                                 <span
                                   className="text-xs text-gray-500 italic"
                                   title={childReinspection.cancellationReason}
