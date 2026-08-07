@@ -40,6 +40,9 @@ interface Project {
   scopeOutOfScope?: string | null;
   sampleClientPages?: string | null;
   cancellationReason?: string | null;
+  /** Naam van het bureau dat de audit uitvoert, als we het niet zelf doen. */
+  externalBureau?: string | null;
+  isOngoing?: boolean;
 }
 
 interface Props {
@@ -1081,6 +1084,22 @@ export default function OnderzoekenTable({ projects }: Props) {
            matchesPlanning && matchesOnderzoeker && matchesControleur && matchesOnderzoekstype;
   });
 
+  /**
+   * Voert een ander bureau de audit uit, dan staat dat als label onder de
+   * status. Bij het overgrote deel van de onderzoeken doen we het zelf, dus
+   * een eigen kolom zou vooral leegte tonen; een label valt juist op omdat
+   * het er meestal niet staat.
+   */
+  const bureauLabel = (project: any) => {
+    const bureau = project.externalBureau;
+    if (!bureau) return null;
+    return (
+      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-amber-100 text-amber-800">
+        {bureau}
+      </span>
+    );
+  };
+
   // Wat nu loopt eerst, dan wat gepland staat, dan wat stilligt. Binnen elke
   // groep op startdatum. Zonder deze volgorde komen projecten zonder datum
   // ("In de wacht") bovenaan, boven het werk waar je mee bezig bent.
@@ -1675,7 +1694,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                 return (
                   <React.Fragment key={project.id}>
                     {/* Nulmeting row */}
-                    <tr className={project.researchType === 'Extern project' ? 'bg-green-50' : ''}>
+                    {/* Het type "Extern project" bestaat niet meer; wie de audit
+                        uitvoert staat nu als label onder de status. */}
+                    <tr>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
                           {isNulmetingWithReinspection && (
@@ -1712,6 +1733,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                               Herinspectie
                             </span>
                           )}
+                          {bureauLabel(project)}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
@@ -1906,6 +1928,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                         <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                           Herinspectie
                         </span>
+                        {bureauLabel(childReinspection)}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -2178,9 +2201,12 @@ export default function OnderzoekenTable({ projects }: Props) {
                     <tr key={project.id}>
                       <td className="px-6 py-4 text-sm text-gray-900">{getKenmerk(project)}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
-                          {project.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
+                            {project.status}
+                          </span>
+                          {bureauLabel(project)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{project.title}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
@@ -2293,6 +2319,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                                 Herinspectie
                               </span>
                             )}
+                            {bureauLabel(project)}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
@@ -2473,6 +2500,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                               <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
                                 Herinspectie
                               </span>
+                              {bureauLabel(childReinspection)}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">
