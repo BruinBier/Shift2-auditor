@@ -142,9 +142,13 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       handmatig: false,
     },
     {
+      // De website staat er al vanaf de intake; de scope is pas af als na het
+      // scopegesprek ook de overige informatie is ingevuld, met de wettelijke
+      // uitzonderingen. "Buiten scope" telt niet mee: dat mag leeg blijven als
+      // er niets specifieks is uitgesloten.
       key: 'scope',
       label: 'Scope ingevuld',
-      klaar: Boolean(project.scopeInScope?.trim()),
+      klaar: Boolean(project.scopeInScope?.trim() && project.scopeInfo?.trim()),
       datum: null,
       handmatig: false,
     },
