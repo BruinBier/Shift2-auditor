@@ -273,20 +273,17 @@ export default async function AdminPage() {
               })}
             </div>
 
-            {/* Tweede rij: wat er aankomt naast het werk dat doorloopt. */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {blokken
-                .filter((b) => b.titel === 'Komt eraan')
-                .map((blok) => (
-                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-                ))}
-              {doorlopend.length > 0 && (
-                <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
-              )}
-            </div>
+            {/* Tweede rij: over de volle breedte met de regels onder elkaar,
+                want in een halve kolom is er geen ruimte voor de titel plus
+                het soort onderzoek. */}
+            {blokken
+              .filter((b) => b.titel === 'Komt eraan')
+              .map((blok) => (
+                <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+              ))}
 
-            {/* Onderaan: waar je op een ander wacht. Dat kost de meeste ruimte
-                door de redenen, dus over de volle breedte in twee kolommen. */}
+            {/* Waar je op een ander wacht. Dat kost de meeste ruimte door de
+                redenen, dus over de volle breedte in twee kolommen. */}
             {blokken
               .filter((b) => b.titel === 'Wacht op iemand anders')
               .map((blok) => (
@@ -298,6 +295,12 @@ export default async function AdminPage() {
                   tweeKolommen
                 />
               ))}
+
+            {/* Helemaal onderaan: werk zonder begin of eind, dus zonder
+                urgentie. */}
+            {doorlopend.length > 0 && (
+              <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
+            )}
           </div>
         )}
 
