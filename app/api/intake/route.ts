@@ -137,6 +137,8 @@ export async function POST(request: Request) {
         externalBureau: isExtern ? uitvoerder : null,
         researcherName: isExtern ? null : CONTROLEUR,
         controllerName: CONTROLEUR,
+        // Standaard de accountmanager van de klant; per onderzoek aan te passen.
+        accountmanager: opdrachtgever.accountmanager,
         hasReinspection: hertest,
         reinspectionWeeks: hertest ? Number(body.reinspectionWeeks) || 12 : null,
         reportDate: new Date(),

@@ -117,6 +117,10 @@ model Project {
   clientProjectId         String?        @map("client_project_id")
   auditedByOrg            String         @default("Shift2") @map("audited_by_org")
   researcherName          String?        @map("researcher_name")
+  /// De sales die dit onderzoek binnenhaalde. Staat ook op de opdrachtgever,
+  /// maar kan per onderzoek afwijken; die waarde is de standaard bij het
+  /// aanmaken.
+  accountmanager          String?
   controllerName          String?        @map("controller_name")
   plannedTime             String?        @map("planned_time")
   dateStart               DateTime?      @map("date_start")

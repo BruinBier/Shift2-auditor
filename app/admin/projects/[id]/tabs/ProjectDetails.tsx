@@ -12,6 +12,9 @@ const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor),
   loading: () => <div className="border border-gray-300 rounded-lg p-4 text-sm text-gray-500">Editor laden...</div>
 });
 
+/** Wie het werk binnenhaalt. Dezelfde lijst als in het intakeformulier. */
+const ACCOUNTMANAGERS = ['Katja', 'Guus', 'Nick van de Venn'];
+
 export default function ProjectDetails({ project, relatedProjects = [] }: { project: any; relatedProjects?: any[] }) {
   const [newNoteContent, setNewNoteContent] = useState('');
   const [projectNotes, setProjectNotes] = useState<any[]>([]);
@@ -35,6 +38,12 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showPostponeModal, setShowPostponeModal] = useState(false);
   const [isOngoing, setIsOngoing] = useState(Boolean(project.isOngoing));
+  // Valt terug op de accountmanager van de opdrachtgever zolang er voor dit
+  // onderzoek nog niets is gekozen.
+  const [accountmanager, setAccountmanager] = useState(
+    project.accountmanager || project.clientProject?.opdrachtgever?.accountmanager || ''
+  );
+  const [isSavingAccountmanager, setIsSavingAccountmanager] = useState(false);
   const [isSavingOngoing, setIsSavingOngoing] = useState(false);
   const [showTranscriptModal, setShowTranscriptModal] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -679,6 +688,49 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             <div>
               <label className="block text-sm text-gray-500 mb-1">Controleur</label>
               <div className="text-sm text-gray-900">{project.controllerName || '-'}</div>
+            </div>
+            {/* De sales staat ook op de opdrachtgever, maar kan per onderzoek
+                afwijken; die waarde is hier de standaard. */}
+            <div>
+              <label htmlFor="accountmanager" className="block text-sm text-gray-500 mb-1">
+                Accountmanager
+              </label>
+              <select
+                id="accountmanager"
+                value={accountmanager}
+                disabled={isSavingAccountmanager}
+                onChange={async (e) => {
+                  const nieuw = e.target.value;
+                  const vorige = accountmanager;
+                  setAccountmanager(nieuw);
+                  setIsSavingAccountmanager(true);
+                  try {
+                    const res = await fetch(`/api/projects/${project.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ accountmanager: nieuw || null }),
+                    });
+                    if (!res.ok) {
+                      setAccountmanager(vorige);
+                      alert('Het opslaan is niet gelukt.');
+                    }
+                  } catch (error) {
+                    console.error('Error saving accountmanager:', error);
+                    setAccountmanager(vorige);
+                    alert('Het opslaan is niet gelukt.');
+                  } finally {
+                    setIsSavingAccountmanager(false);
+                  }
+                }}
+                className="text-sm text-gray-900 border border-gray-300 rounded px-2 py-1 disabled:opacity-50"
+              >
+                <option value="">-</option>
+                {ACCOUNTMANAGERS.map((naam) => (
+                  <option key={naam} value={naam}>
+                    {naam}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Beschrijving</label>
