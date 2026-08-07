@@ -178,10 +178,20 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   const zetStap = async (key: string, aan: boolean) => {
     setBezig(key);
     try {
+      // Met een akkoord op de planning is de voorbereiding klaar; het
+      // onderzoek staat dan niet meer in de intakefase.
+      const statusVolgt =
+        key === 'planningApproved' && aan && project.status === 'Intake'
+          ? { status: 'Gepland' }
+          : {};
+
       const res = await fetch(`/api/projects/${project.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [key]: aan ? new Date().toISOString() : null }),
+        body: JSON.stringify({
+          [key]: aan ? new Date().toISOString() : null,
+          ...statusVolgt,
+        }),
       });
       // Volledige herlaad: de projectpagina is een servercomponent, en
       // router.refresh() vernieuwt de doorgegeven project-props hier niet.

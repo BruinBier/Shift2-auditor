@@ -1,7 +1,30 @@
 import { prisma } from '@/lib/prisma';
 import OnderzoekenTable from './OnderzoekenTable';
 
+/**
+ * Een onderzoek waarvan de startdatum is bereikt loopt; de status hoort dat
+ * te volgen. Anders blijft er "Gepland" staan bij werk dat al begonnen is,
+ * en klopt het overzicht niet meer.
+ *
+ * Alleen vanaf Gepland: staat een onderzoek In de wacht of Geannuleerd, dan
+ * is dat een bewuste keuze die we niet overschrijven.
+ */
+async function statusVolgtDePlanning() {
+  const vandaag = new Date();
+  vandaag.setHours(23, 59, 59, 999);
+
+  await prisma.project.updateMany({
+    where: {
+      status: 'Gepland',
+      dateStart: { not: null, lte: vandaag },
+    },
+    data: { status: 'In uitvoering' },
+  });
+}
+
 export default async function OnderzoekekenPage() {
+  await statusVolgtDePlanning();
+
   const projects = await prisma.project.findMany({
     include: {
       clientProject: true,
