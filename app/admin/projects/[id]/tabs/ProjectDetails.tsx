@@ -34,6 +34,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showPostponeModal, setShowPostponeModal] = useState(false);
+  const [isOngoing, setIsOngoing] = useState(Boolean(project.isOngoing));
+  const [isSavingOngoing, setIsSavingOngoing] = useState(false);
   const [showTranscriptModal, setShowTranscriptModal] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isSavingTranscript, setIsSavingTranscript] = useState(false);
@@ -624,6 +626,43 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             <div>
               <label className="block text-sm text-gray-500 mb-1">Onderzoekstype</label>
               <div className="text-sm text-gray-900">{project.researchType}</div>
+            </div>
+            {/* Doorlopend werk krijgt een eigen sectie in de onderzoekenlijst,
+                los van de onderzoeken met een begin- en einddatum. */}
+            <div>
+              <label className="flex items-center gap-2 text-sm text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={isOngoing}
+                  disabled={isSavingOngoing}
+                  onChange={async (e) => {
+                    const nieuw = e.target.checked;
+                    setIsOngoing(nieuw);
+                    setIsSavingOngoing(true);
+                    try {
+                      const res = await fetch(`/api/projects/${project.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isOngoing: nieuw }),
+                      });
+                      if (!res.ok) {
+                        setIsOngoing(!nieuw);
+                        alert('Het opslaan is niet gelukt.');
+                      }
+                    } catch (error) {
+                      console.error('Error saving isOngoing:', error);
+                      setIsOngoing(!nieuw);
+                      alert('Het opslaan is niet gelukt.');
+                    } finally {
+                      setIsSavingOngoing(false);
+                    }
+                  }}
+                />
+                Doorlopend project
+              </label>
+              <p className="text-xs text-gray-500 mt-1 ml-6">
+                Werk zonder begin- en einddatum, zoals monitoring.
+              </p>
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Versie</label>

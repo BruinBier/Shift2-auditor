@@ -1081,12 +1081,27 @@ export default function OnderzoekenTable({ projects }: Props) {
            matchesPlanning && matchesOnderzoeker && matchesControleur && matchesOnderzoekstype;
   });
 
-  // Sort projects - by date ascending (oldest first)
+  // Wat nu loopt eerst, dan wat gepland staat, dan wat stilligt. Binnen elke
+  // groep op startdatum. Zonder deze volgorde komen projecten zonder datum
+  // ("In de wacht") bovenaan, boven het werk waar je mee bezig bent.
+  const statusVolgorde: Record<string, number> = {
+    'In uitvoering': 0,
+    Controle: 1,
+    Gepland: 2,
+    Intake: 3,
+    'In de wacht': 4,
+  };
+
   const sortedProjects = [...filteredProjects].sort((a, b) => {
     if (sortBy === 'dateStart') {
-      const dateA = a.dateStart ? new Date(a.dateStart).getTime() : 0;
-      const dateB = b.dateStart ? new Date(b.dateStart).getTime() : 0;
-      return dateA - dateB; // Ascending order (oldest first)
+      const rangA = statusVolgorde[a.status] ?? 9;
+      const rangB = statusVolgorde[b.status] ?? 9;
+      if (rangA !== rangB) return rangA - rangB;
+
+      // Zonder startdatum achteraan binnen de eigen groep.
+      const dateA = a.dateStart ? new Date(a.dateStart).getTime() : Infinity;
+      const dateB = b.dateStart ? new Date(b.dateStart).getTime() : Infinity;
+      return dateA - dateB;
     }
 
     return 0;
@@ -1094,7 +1109,14 @@ export default function OnderzoekenTable({ projects }: Props) {
 
   // Separate active and completed projects ("Geannuleerd" telt als afgerond)
   const isClosedStatus = (s: string) => s === 'Gereed' || s === 'Geannuleerd';
-  const activeProjects = sortedProjects.filter(p => !isClosedStatus(p.status));
+  // Doorlopend werk (template-monitoring, pagechecks) heeft geen planning en
+  // hoort niet tussen de onderzoeken die wél een begin en eind hebben.
+  const ongoingProjects = sortedProjects.filter(
+    p => (p as any).isOngoing && !isClosedStatus(p.status)
+  );
+  const activeProjects = sortedProjects.filter(
+    p => !isClosedStatus(p.status) && !(p as any).isOngoing
+  );
   const completedProjects = sortedProjects.filter(p => isClosedStatus(p.status));
 
   // Group active projects: nulmeting followed immediately by their herinspectie
@@ -2128,6 +2150,58 @@ export default function OnderzoekenTable({ projects }: Props) {
         </div>
 
         {/* Completed Projects Section */}
+        {/* Doorlopend werk: geen planning, dus ook geen datumkolommen. */}
+        {ongoingProjects.length > 0 && (
+          <>
+            <div className="mt-12 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Doorlopende projecten ({ongoingProjects.length})
+              </h2>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 mb-4">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kenmerk</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titel</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Opdrachtgever</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {ongoingProjects.map((project) => (
+                    <tr key={project.id}>
+                      <td className="px-6 py-4 text-sm text-gray-900">{getKenmerk(project)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
+                          {project.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{project.title}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {project.clientProject?.name || project.commissionedBy || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <a
+                          href={`/admin/projects/${project.id}`}
+                          className="text-sm text-shift2-primary hover:underline"
+                        >
+                          Openen
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
         {groupedCompletedProjects.length > 0 && (
           <>
             {/* Section Header */}

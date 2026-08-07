@@ -175,6 +175,10 @@ model Project {
 
   // External project fields
   isExternalProject       Boolean        @default(false) @map("is_external_project")
+  /// Doorlopend werk zonder begin- en einddatum, zoals template-monitoring.
+  /// Krijgt een eigen sectie in de onderzoekenlijst, want het hoort niet
+  /// tussen de onderzoeken met een planning.
+  isOngoing               Boolean        @default(false) @map("is_ongoing")
   externalBureau          String?        @map("external_bureau")
 
   createdAt               DateTime       @default(now()) @map("created_at")

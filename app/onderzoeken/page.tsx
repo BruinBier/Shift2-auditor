@@ -17,6 +17,8 @@ async function statusVolgtDePlanning() {
     where: {
       status: 'Gepland',
       dateStart: { not: null, lte: vandaag },
+      // Doorlopend werk heeft geen planning die af kan lopen.
+      isOngoing: false,
     },
     data: { status: 'In uitvoering' },
   });
@@ -46,6 +48,7 @@ export default async function OnderzoekekenPage() {
     clientProject: project.clientProject,
     parentProjectId: project.parentProjectId,
     hasReinspection: project.hasReinspection,
+    isOngoing: project.isOngoing,
   } as any));
 
   return <OnderzoekenTable projects={projectsData} />;
