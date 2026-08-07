@@ -932,6 +932,18 @@ export default function OnderzoekenTable({ projects }: Props) {
    * een eigen kolom zou vooral leegte tonen; een label valt juist op omdat
    * het er meestal niet staat.
    */
+  /**
+   * Welke ronde dit onderzoek is. Normaal volgt dat uit de parent-relatie:
+   * hangt het onder een ander onderzoek, dan is het een herinspectie. Een
+   * aanvullende ronde staat los — de eerdere rondes zijn soms door een ander
+   * bureau gedaan en staan niet in deze tool — en blijkt dan uit het
+   * onderzoekstype.
+   */
+  const rondeLabel = (project: any) => {
+    if (/aanvullend/i.test(project.researchType || '')) return 'Aanvullend onderzoek';
+    return project.parentProjectId ? 'Herinspectie' : 'Nulmeting';
+  };
+
   const bureauLabel = (project: any) => {
     const bureau = project.externalBureau;
     if (!bureau) return null;
@@ -1554,16 +1566,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
                             {project.status}
                           </span>
-                          {!isReinspection && (
-                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
-                              Nulmeting
-                            </span>
-                          )}
-                          {isReinspection && (
-                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
-                              Herinspectie
-                            </span>
-                          )}
+                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
+                            {rondeLabel(project)}
+                          </span>
                           {bureauLabel(project)}
                         </div>
                       </td>
@@ -1756,9 +1761,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(childReinspection.status)}`}>
                           {childReinspection.status}
                         </span>
-                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
-                          Herinspectie
-                        </span>
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">{rondeLabel(childReinspection)}</span>
                         {bureauLabel(childReinspection)}
                       </div>
                     </td>
@@ -2140,16 +2143,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(project.status)}`}>
                               {project.status}
                             </span>
-                            {!isReinspection && (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
-                                Nulmeting
-                              </span>
-                            )}
-                            {isReinspection && (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
-                                Herinspectie
-                              </span>
-                            )}
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
+                            {rondeLabel(project)}
+                          </span>
                             {bureauLabel(project)}
                           </div>
                         </td>
@@ -2328,9 +2324,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                               <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(childReinspection.status)}`}>
                                 {childReinspection.status}
                               </span>
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">
-                                Herinspectie
-                              </span>
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-blue-100 text-blue-700">{rondeLabel(childReinspection)}</span>
                               {bureauLabel(childReinspection)}
                             </div>
                           </td>
