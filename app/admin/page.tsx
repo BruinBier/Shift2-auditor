@@ -25,6 +25,8 @@ type Regel = {
   titel: string;
   toelichting: string;
   bureau?: string | null;
+  /** Nulmeting, herinspectie of een aanvullende ronde. */
+  ronde?: string;
 };
 
 function dagenGeleden(d: Date): number {
@@ -76,6 +78,9 @@ function Blok({
                 </span>
                 <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
                   {r.titel}
+                  {r.ronde && (
+                    <span className="ml-2 text-xs text-blue-700">{r.ronde}</span>
+                  )}
                   {r.bureau && <span className="ml-2 text-xs text-amber-700">{r.bureau}</span>}
                 </span>
                 {/* Korte toelichtingen passen naast de titel; een reden van
@@ -112,16 +117,25 @@ export default async function AdminPage() {
     // Nulmeting en herinspectie delen hetzelfde kenmerk; het versienummer
     // houdt ze uit elkaar.
     const isVervolg = Boolean(p.parentProjectId);
+    // Dezelfde indeling als in de onderzoekenlijst: een aanvullende ronde
+    // blijkt uit het onderzoekstype, een herinspectie uit de parent-relatie.
+    const ronde = /aanvullend/i.test(p.researchType || '')
+      ? 'Aanvullend onderzoek'
+      : isVervolg
+        ? 'Herinspectie'
+        : 'Nulmeting';
     const basis = {
       id: p.id,
       kenmerk: `${p.kenmerk ?? '(geen kenmerk)'}${isVervolg ? ' v1.1' : ''}`,
       titel: p.title,
       bureau: p.externalBureau,
+      ronde,
     };
 
     if (p.isOngoing) {
       // Geen toelichting: dat het doorlopend is, zegt de kop van het blok al.
-      doorlopend.push({ ...basis, toelichting: '' });
+      // En doorlopend werk is geen nulmeting of herinspectie.
+      doorlopend.push({ ...basis, toelichting: '', ronde: undefined });
       continue;
     }
 
@@ -247,29 +261,32 @@ export default async function AdminPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Links wat jij moet doen, rechts wat er zonder jouw toedoen speelt. */}
+            {/* Bovenste rij: wat jij moet doen links, wat er nu draait rechts.
+                Expliciet in die volgorde, niet zoals ze in de lijst staan. */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              <div className="space-y-6">
-                {blokken
-                  .filter((b) => b.titel === 'Actie nodig')
-                  .map((blok) => (
-                    <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-                  ))}
-              </div>
-              <div className="space-y-6">
-                {blokken
-                  .filter((b) => b.titel !== 'Actie nodig' && b.titel !== 'Wacht op iemand anders')
-                  .map((blok) => (
-                    <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-                  ))}
-                {doorlopend.length > 0 && (
-                  <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
-                )}
-              </div>
+              {['Actie nodig', 'Loopt nu'].map((naam) => {
+                const blok = blokken.find((b) => b.titel === naam);
+                if (!blok) return null;
+                return (
+                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+                );
+              })}
             </div>
 
-            {/* Wachten kost de meeste ruimte door de redenen, dus dat blok
-                staat over de volle breedte met de regels in twee kolommen. */}
+            {/* Tweede rij: wat er aankomt naast het werk dat doorloopt. */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {blokken
+                .filter((b) => b.titel === 'Komt eraan')
+                .map((blok) => (
+                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
+                ))}
+              {doorlopend.length > 0 && (
+                <Blok titel="Doorlopend" kleur="bg-gray-500" regels={doorlopend} />
+              )}
+            </div>
+
+            {/* Onderaan: waar je op een ander wacht. Dat kost de meeste ruimte
+                door de redenen, dus over de volle breedte in twee kolommen. */}
             {blokken
               .filter((b) => b.titel === 'Wacht op iemand anders')
               .map((blok) => (
