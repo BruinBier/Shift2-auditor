@@ -46,12 +46,29 @@ export default async function ReportPage({ params }: { params: { id: string } })
       : null;
 
   // De markdown-velden van het onderzoekstype naar HTML omzetten.
+  //
+  // De teksten van het onderzoekstype zijn geschreven voor een nulmeting en
+  // worden gedeeld door alle projecten met dat type; ze staan dus niet per
+  // project in de database en mogen daar ook niet worden aangepast. Bij een
+  // heronderzoek vervangen we "deelonderzoek" daarom hier, bij het renderen.
+  // De verwijzingen naar het "deelonderzoek techniek" blijven staan: dat is
+  // een ander onderzoek en heet ook bij een heronderzoek zo.
+  const toHeronderzoek = (text: string) =>
+    data.isHeronderzoek
+      ? text
+          // Het meervoud "deelonderzoeken" valt buiten de woordgrens en
+          // "deelonderzoek techniek" wordt overgeslagen: beide slaan op het
+          // andere deelonderzoek en heten ook bij een heronderzoek zo.
+          .replace(/\bdeelonderzoek\b(?!\s+techniek)/gi, 'heronderzoek')
+          .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek')
+      : text;
+
   const rt = data.researchTypeData;
   const researchTypeData = rt
     ? {
         ...rt,
-        reportIntro: rt.reportIntro ? await marked.parse(rt.reportIntro) : null,
-        reportIntroPdf: rt.reportIntroPdf ? await marked.parse(rt.reportIntroPdf) : null,
+        reportIntro: rt.reportIntro ? await marked.parse(toHeronderzoek(rt.reportIntro)) : null,
+        reportIntroPdf: rt.reportIntroPdf ? await marked.parse(toHeronderzoek(rt.reportIntroPdf)) : null,
         // summaryTemplate is HTML met placeholders, geen markdown.
         summaryTemplate: rt.summaryTemplate || null,
       }

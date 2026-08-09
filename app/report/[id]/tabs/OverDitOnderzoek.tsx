@@ -50,7 +50,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
   // Bij een heronderzoek betekent status 'resolved' dat het punt is opgelost;
   // die verdwijnt dan uit het rapport.
-  const isHeronderzoekReport = project.checkPhase === 'herinspectie';
+  //
+  // Toetst niet alleen op de lopende fase: zodra een herinspectie is afgerond
+  // gaat checkPhase naar 'afgerond', en dan bleef het rapport zichzelf ten
+  // onrechte als nulmeting presenteren. Een kindproject is per definitie een
+  // heronderzoek, ongeacht de fase waarin het staat.
+  const isHeronderzoekReport =
+    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
   const isOpenOpmerking = (f: any) =>
     isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
 
@@ -231,7 +237,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     const isFormulieren = project.researchTypeData?.type === 'formulieren';
 
     // Bij een heronderzoek wordt de periode van de nulmeting erbij vermeld
-    const isHeronderzoek = project.checkPhase === 'herinspectie';
+    const isHeronderzoek = isHeronderzoekReport;
     const nulmetingStart = project.nulmetingDates?.dateStart ? new Date(project.nulmetingDates.dateStart) : null;
     const nulmetingEnd = project.nulmetingDates?.dateEnd ? new Date(project.nulmetingDates.dateEnd) : null;
     const nulmetingPeriode = nulmetingStart && nulmetingEnd
@@ -252,6 +258,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       if (isHeronderzoek) {
         template = template
           .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+          // De steekproef is bij het afronden overgenomen uit de nulmeting;
+          // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
+          // op het verkeerde been zetten.
+          .replace(
+            /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
+            "Voor dit heronderzoek zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld."
+          )
           .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
 
         if (nulmetingPeriode) {
@@ -544,7 +557,20 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {[project.researchType, scopeUrl.replace(/^https?:\/\//, '')].filter(Boolean).join(' ') || `Toegankelijkheidsonderzoek ${formatProjectName(project.subject || project.title, project.researchTypeData?.type)}`}
+              {(() => {
+                // De kop komt uit researchType + scope-URL, niet uit het titelveld.
+                // Nulmeting en herinspectie delen dat onderzoekstype en kregen
+                // daardoor een identieke kop. Spreek bij een herinspectie van
+                // heronderzoek, net als in de introtekst hieronder.
+                const researchType = isHeronderzoekReport && project.researchType
+                  ? project.researchType
+                      .replace(/\bdeelonderzoek\b/gi, 'heronderzoek')
+                      .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek')
+                  : project.researchType;
+
+                return [researchType, scopeUrl.replace(/^https?:\/\//, '')].filter(Boolean).join(' ')
+                  || `Toegankelijkheidsonderzoek ${formatProjectName(project.subject || project.title, project.researchTypeData?.type)}`;
+              })()}
             </h1>
           </div>
         </section>
@@ -557,7 +583,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 // Use reportIntroHeader if available
                 // Bij een heronderzoek spreken we van heronderzoek in plaats van deelonderzoek
                 const rawTemplate = project.researchTypeData?.reportIntroHeader;
-                const withPhase = rawTemplate && project.checkPhase === 'herinspectie'
+                const withPhase = rawTemplate && isHeronderzoekReport
                   ? rawTemplate
                       .replace(/\bdeelonderzoek\b/g, 'heronderzoek')
                       .replace(/\bcontentonderzoek\b/g, 'contentheronderzoek')
@@ -598,7 +624,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   // In de introzin het hoogste niveau kort noemen ("AA"), niet
                   // de volledige reeks "A en AA" die elders wordt gebruikt.
                   const introLevel = (project.researchTypeData?.level || 'AA').split(/\s+en\s+/i).pop()!.trim();
-                  const onderzoekLabel = `${project.researchTypeData?.version || 'WCAG 2.2'} ${introLevel}-content${project.checkPhase === 'herinspectie' ? 'her' : ''}onderzoek`;
+                  const onderzoekLabel = `${project.researchTypeData?.version || 'WCAG 2.2'} ${introLevel}-content${isHeronderzoekReport ? 'her' : ''}onderzoek`;
                   const opdrachtgever = project.commissionedBy || project.clientProject?.name || '';
                   return (
                     <>

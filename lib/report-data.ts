@@ -40,7 +40,15 @@ export async function getReportData(projectId: string) {
   if (!project) return null;
 
   // Bij een heronderzoek: periode van de nulmeting uit het bovenliggende project.
-  const isHeronderzoek = project.checkPhase === 'herinspectie';
+  //
+  // Toetst niet alleen op de lopende fase. Zodra een herinspectie is afgerond
+  // gaat checkPhase naar 'afgerond', en dan presenteerde het rapport zichzelf
+  // weer als nulmeting: kop met "deelonderzoek" én alle opgeloste bevindingen
+  // terug in het rapport. Een kindproject is per definitie een heronderzoek,
+  // ongeacht de fase. Alleen op 'afgerond' toetsen kan niet: een afgeronde
+  // nulmeting heeft die status ook.
+  const isHeronderzoek =
+    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
   const nulmeting =
     isHeronderzoek && project.parentProjectId
       ? await prisma.project.findUnique({

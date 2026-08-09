@@ -88,11 +88,22 @@ function statusLabel(status: AssessmentStatus | string): { label: string; klass:
   }
 }
 
-function buildReportTitle(project: any, website: string): string {
+function buildReportTitle(
+  project: any,
+  website: string,
+  isHeronderzoek = false
+): string {
   // Gelijk aan de "Over dit onderzoek"-tab: onderzoekstype + domein.
   // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
   // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
-  const rt = String(project.researchType || 'Deelonderzoek').trim();
+  let rt = String(project.researchType || 'Deelonderzoek').trim();
+  // Nulmeting en heronderzoek delen hetzelfde onderzoekstype en kregen daardoor
+  // een identieke kop. Spreek bij een heronderzoek van heronderzoek.
+  if (isHeronderzoek) {
+    rt = rt
+      .replace(/\bdeelonderzoek\b/gi, 'heronderzoek')
+      .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
+  }
   return [rt, website].filter(Boolean).join(' ').trim();
 }
 
@@ -134,7 +145,7 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const website = scopeDomain || project.subject || '';
   const version = Number(project.version).toFixed(1);
   const datum = formatDateNl(project.reportDate);
-  const title = buildReportTitle(project, website);
+  const title = buildReportTitle(project, website, isHeronderzoek);
   // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
   // De URL als echte link opnemen. Een kale URL in lopende tekst wordt bij de
@@ -255,8 +266,11 @@ function renderSamenvatting(
   researchTypeData: any,
   nulmetingPeriode?: string | null
 ): string {
-  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting
-  const isHeronderzoek = project.checkPhase === 'herinspectie';
+  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting.
+  // Zelfde toets als in report-data.ts: na afronden staat checkPhase op
+  // 'afgerond', maar een kindproject blijft een heronderzoek.
+  const isHeronderzoek =
+    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
   const dateStartFormatted = project.dateStart
     ? formatDateNl(project.dateStart)
     : '[datum]';
@@ -286,6 +300,13 @@ function renderSamenvatting(
     if (isHeronderzoek) {
       summaryTemplate = summaryTemplate
         .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+        // De steekproef is bij het afronden overgenomen uit de nulmeting;
+        // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
+        // op het verkeerde been zetten.
+        .replace(
+          /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
+          "Voor dit heronderzoek zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld."
+        )
         .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
 
       if (nulmetingPeriode) {
@@ -364,7 +385,19 @@ function renderOverOnderzoek(project: any, researchTypeData?: any): string {
   const level = escapeHtml(
     researchTypeData?.level || project.level || 'A en AA'
   );
-  const researchType = escapeHtml(project.researchType || 'onderzoek');
+  // Bij een heronderzoek de aanduiding meebewegen met de kop. De verwijzingen
+  // naar het "deelonderzoek techniek" verderop blijven staan: dat is een ander
+  // onderzoek en heet ook bij een heronderzoek zo.
+  const isHeronderzoek =
+    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
+  const researchType = escapeHtml(
+    isHeronderzoek
+      ? String(project.researchType || 'onderzoek').replace(
+          /\bdeelonderzoek\b/gi,
+          'heronderzoek'
+        )
+      : project.researchType || 'onderzoek'
+  );
   const isContentOnderzoek = (project.researchType || '')
     .toLowerCase()
     .includes('content');
@@ -411,7 +444,7 @@ ${UITGESLOTEN.map((u) => `        <tr><th scope="row">${u.code}</th><td>${u.naam
 
   const afbakeningPanel = isContentOnderzoek
     ? `<div class="panel"><div class="panel-title"><h3>Afbakening van het onderzoek</h3></div><div class="panel-body">
-    <p>Dit deelonderzoek heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
+    <p>Dit ${isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
     <p>Bij dit onderzoek zijn ${aantalBeoordeeld} van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
     ${tweedeAlinea}
     <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>${uitsluitingHtml}
