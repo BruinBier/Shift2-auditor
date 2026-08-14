@@ -164,6 +164,29 @@ async function exportAllData() {
       'supplier', 'status', 'githubIssueUrl', 'createdAt', 'updatedAt'
     ]);
 
+    // 16. Sampleoordelen — het oordeel per sample per criterium.
+    // Ontbrak in deze export zolang de tabel niet in schema.prisma stond, terwijl
+    // het de grootste verzameling onderzoeksresultaten van het hele systeem is.
+    const criterionChecks = await prisma.sampleCriterionCheck.findMany();
+    await exportTable('sample_criterion_checks', criterionChecks, [
+      'id', 'sampleItemId', 'wcagCriterionId', 'status', 'reden', 'bron',
+      'akkoord', 'checkedAt', 'updatedAt'
+    ]);
+
+    // 17. Waarnemingen — de ruwe observaties van de onderzoeker.
+    const waarnemingen = await prisma.waarneming.findMany();
+    await exportTable('waarnemingen', waarnemingen, [
+      'id', 'projectId', 'sampleItemId', 'url', 'tekst', 'screenshotPath',
+      'status', 'findingId', 'createdAt', 'updatedAt'
+    ]);
+
+    // 18. Planningswijzigingen — stond evenmin in het schema, dus evenmin hierin.
+    const planningChanges = await prisma.projectPlanningChange.findMany();
+    await exportTable('project_planning_changes', planningChanges, [
+      'id', 'projectId', 'oldDateStart', 'oldDateEnd', 'newDateStart',
+      'newDateEnd', 'reason', 'authorName', 'createdAt'
+    ]);
+
     // Create metadata file
     const metadata = {
       exportDate: new Date().toISOString(),
@@ -185,6 +208,9 @@ async function exportAllData() {
         teams: teams.length,
         client_projects: clientProjects.length,
         technical_issues: technicalIssues.length,
+        sample_criterion_checks: criterionChecks.length,
+        waarnemingen: waarnemingen.length,
+        project_planning_changes: planningChanges.length,
       }
     };
 
