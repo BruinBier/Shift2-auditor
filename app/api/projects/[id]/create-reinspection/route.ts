@@ -32,7 +32,7 @@ export async function POST(
       where: { id: params.id },
       include: {
         scopeUrls: { include: { crawlerResults: true } },
-        sampleItems: { include: { crawlerResults: true } },
+        sampleItems: { include: { crawlerResults: true, criterionChecks: true } },
         criterionAssessments: true,
         findings: {
           include: {
@@ -191,6 +191,26 @@ export async function POST(
             count: cr.count,
             details: cr.details,
           },
+        });
+      }
+
+      // De herinspectie begint waar de nulmeting stopte: de sampleoordelen gaan
+      // mee, met behoud van checkedAt. Aan die datum is straks te zien wat nog
+      // van de vorige ronde is en wat deze ronde opnieuw is beoordeeld — zonder
+      // dat onderscheid zou een herinspectierapport "voldoet" kunnen zeggen op
+      // grond van een oordeel van een jaar eerder.
+      if (sampleItem.criterionChecks?.length) {
+        await prisma.sampleCriterionCheck.createMany({
+          data: sampleItem.criterionChecks.map((c: any) => ({
+            sampleItemId: newSampleItem.id,
+            wcagCriterionId: c.wcagCriterionId,
+            status: c.status,
+            reden: c.reden,
+            bron: c.bron,
+            akkoord: c.akkoord,
+            checkedAt: c.checkedAt,
+          })),
+          skipDuplicates: true,
         });
       }
     }

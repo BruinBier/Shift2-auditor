@@ -24,6 +24,7 @@ export async function POST(
         sampleItems: {
           include: {
             crawlerResults: true,
+            criterionChecks: true,
           },
         },
         criterionAssessments: true,
@@ -218,6 +219,25 @@ export async function POST(
             count: crawlerResult.count,
             details: crawlerResult.details,
           },
+        });
+      }
+
+      // Sampleoordelen meekopiëren, met behoud van checkedAt. Die datum maakt
+      // straks zichtbaar wat nog van de vorige ronde is en wat opnieuw is
+      // beoordeeld. Ging eerder verloren, waardoor de matrix in een kopie leeg
+      // begon — zie docs/adr/0001-akkoord-als-poort.md.
+      if (sampleItem.criterionChecks?.length) {
+        await prisma.sampleCriterionCheck.createMany({
+          data: sampleItem.criterionChecks.map((c: any) => ({
+            sampleItemId: newSampleItem.id,
+            wcagCriterionId: c.wcagCriterionId,
+            status: c.status,
+            reden: c.reden,
+            bron: c.bron,
+            akkoord: c.akkoord,
+            checkedAt: c.checkedAt,
+          })),
+          skipDuplicates: true,
         });
       }
     }
