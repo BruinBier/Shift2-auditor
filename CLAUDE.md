@@ -40,10 +40,15 @@ npm run cli -- get-project <projectId>            # scope URLs, sample items, fi
 npm run cli -- list-criteria                       # all WCAG criterion IDs + codes
 npm run cli -- search-quick-findings <keyword>     # reuse finding templates
 
+# Pagina's bekijken — altijd via de CLI, nooit via een ingebouwde browser
+npm run cli -- get-html <url> [--text] [--full]
+npm run cli -- get-screenshot <url> [--full-page] [--selector=css]
+
 # Write
 npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured
-npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --sample-items=<sampleItemId1>,<sampleItemId2>
+npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --responsibility=redacteur --sample-items=<sampleItemId1>,<sampleItemId2>
 npm run cli -- create-finding-from-quick <projectId> <quickFindingId> --sample-items=<sampleItemId>
+npm run cli -- save-checks <projectId> --bron=workflow < oordelen.json   # oordeel per sample per criterium
 npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=failed
 ```
 
@@ -51,20 +56,35 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 1. `list-projects` → find the target project
 2. `get-project <id>` → read existing context (don't duplicate findings)
 3. `create-sample-item` for each page you review → get `sampleItemId`s
-4. `create-finding` with the `sampleItemId`s → auto-sets criterion assessment to `failed`
+4. `create-finding` with the `sampleItemId`s → komt binnen als **voorstel**, en telt pas mee nadat de onderzoeker akkoord geeft
 
 **Valid enum values:**
 - `--impact`: `klein` | `matig` | `serieus` | `kritiek` | `onbekend`
 - `--responsibility`: `redacteur` | `ontwikkelaar` | `ontwerper` | `onbekend`
-- `--status` (finding): `open` | `published` | `resolved` (default `open`)
+- `--status` (finding): `voorstel` | `open` | `published` | `resolved` | `afgewezen` (default `voorstel`)
 - `--status` (assessment): `passed` | `failed` | `not_present` | `unknown` | `not_tested`
 - `--type` (sample): `structured` | `random` | `pdf`
+- `--bron` (save-checks): `workflow` | `gesprek` | `handmatig`
 
 **Notes:**
-- Finding codes are auto-generated as `B001`, `B002`, ... per project — don't pass one.
+- Wat jij aanmaakt is een **voorstel**, geen bevinding. Het telt nergens mee — niet in het criteriumoordeel, niet in het rapport — tot de onderzoeker akkoord geeft in het tabblad "Waar sta ik". Zie `docs/adr/0001-akkoord-als-poort.md` en de woordenlijst in `CONTEXT.md`.
+- Finding codes worden toegekend: `V001` voor een voorstel, `B001` pas bij akkoord. Geef er zelf nooit een mee.
+- Het criteriumoordeel volgt uit de bevindingen en wordt herberekend bij aanmaken, wijzigen en verwijderen (`lib/criterion-assessment.ts`). Zet het niet zelf met `set-assessment` tenzij je het echt handmatig wilt overrulen.
+- Een opmerking (`type=opmerking`, geen impact) keurt een criterium **niet** af.
 - Linking uses `SampleItem + FindingOccurrence` (the manual/UI path), not `ScopeUrl + FindingUrl` (crawler path).
-- Creating a finding with `status=open` auto-upserts the criterion's assessment to `failed` — this is existing API behavior.
 - Override base URL if needed: `AUDIT_CLI_BASE_URL=http://localhost:3001 npm run cli -- ...`
+
+### Welke browser gebruik je waarvoor
+
+**Gebruik voor het beoordelen van websites altijd `get-html` en `get-screenshot`.** Die draaien een echte browser, dus de JavaScript van de site werkt.
+
+**Gebruik daarvoor nooit een ingebouwde browser-pane.** Daar hydrateert React niet: de HTML staat er, maar er hangt geen enkele klikafhandelaar aan. Een knop doet dan niets, een uitklapmenu klapt niet uit, zoeksuggesties verschijnen niet — en dat ziet er precies zo uit als een echte bevinding. Op 15 augustus 2026 leverde dat drie afkeuringen op heuvelrug.nl op die geen van drieën bestonden.
+
+`get-html` geeft een veld `gehydrateerd` terug. Staat dat op `false`, dan is er iets mis met de pagina zelf: trek dan geen conclusies over toetsenbord, menu's, schakelknoppen of zoeksuggesties.
+
+**Moet je klikken, typen of schakelen om iets te kunnen beoordelen?** Start dan `npm run chrome:debug`. Dat opent een Chrome met foutopsporing op poort 9222, waar de CLI op aansluit met behoud van cookies en sessies. Let op: wat een test daar aanzet (zoals een hoogcontrastmodus in `localStorage`) blijft staan en beïnvloedt de volgende meting — zet het na afloop terug.
+
+**Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
 ## Database & Prisma Workflow
 
