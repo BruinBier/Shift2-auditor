@@ -295,6 +295,16 @@ export default function Stapel({
               >
                 Dit is techniek
               </button>
+
+              {/* Het moment waarop je merkt dat de tekst niet deugt, is juist dit
+                  moment. Eerst akkoord geven en daarna herstellen zou betekenen
+                  dat je iets goedkeurt waarvan je weet dat het niet klopt. */}
+              <a
+                href={`/admin/projects/${projectId}/findings/${huidig.voorstel.id}`}
+                className="rounded px-4 py-2 text-sm text-gray-500 underline hover:bg-gray-50"
+              >
+                Tekst aanpassen
+              </a>
             </div>
           )}
         </div>

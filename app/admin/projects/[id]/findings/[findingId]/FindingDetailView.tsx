@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { marked } from 'marked';
 import FindingDialog from '../../tabs/FindingDialog';
 import FindingNotesSection from './FindingNotesSection';
+import { findingLabel, findingLabelClass } from '@/lib/finding-classification';
 
 interface FindingDetailViewProps {
   project: any;
@@ -668,12 +669,12 @@ export default function FindingDetailView({ project, finding, allCriteria, findi
                     {finding.wcagCriterion?.code}
                   </span>
 
-                  {/* Status */}
+                  {/* Status. Ging eerder uit van twee statussen — open betekende
+                      afgekeurd, al het andere opmerking — waardoor een voorstel
+                      als "Opmerking" werd bestempeld en `type` werd genegeerd. */}
                   {finding.status && (
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                      finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${findingLabelClass(finding)}`}>
+                      {findingLabel(finding)}
                     </span>
                   )}
 

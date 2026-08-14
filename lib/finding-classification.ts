@@ -96,13 +96,23 @@ export function hoortInRapport(f: FindingLike): boolean {
 /**
  * Het label zoals de lezer het ziet:
  *
+ *   nog geen akkoord            -> "Voorstel"
+ *   afgewezen                   -> "Afgewezen"
  *   afkeuring die nog openstaat -> "Afgekeurd"
  *   afkeuring die is opgelost   -> "Opgelost"
  *   opmerking                   -> "Opmerking"
  *
  * Een opgeloste afkeuring is geen opmerking: die had wél impact.
+ *
+ * Waar het staat in het proces gaat vóór wat het inhoudelijk is: een voorstel dat
+ * een opmerking wordt heet eerst "Voorstel", want het telt nog nergens mee. Zie
+ * docs/adr/0001-akkoord-als-poort.md.
  */
-export function findingLabel(f: FindingLike): 'Afgekeurd' | 'Opgelost' | 'Opmerking' {
+export type FindingLabel = 'Voorstel' | 'Afgewezen' | 'Afgekeurd' | 'Opgelost' | 'Opmerking';
+
+export function findingLabel(f: FindingLike): FindingLabel {
+  if (f.status === 'voorstel') return 'Voorstel';
+  if (f.status === 'afgewezen') return 'Afgewezen';
   if (isOpmerking(f)) return 'Opmerking';
   return f.status === 'resolved' ? 'Opgelost' : 'Afgekeurd';
 }
@@ -114,6 +124,10 @@ export function findingLabelClass(f: FindingLike): string {
       return 'bg-red-100 text-red-800';
     case 'Opgelost':
       return 'bg-green-100 text-green-800';
+    case 'Voorstel':
+      return 'bg-purple-100 text-purple-800';
+    case 'Afgewezen':
+      return 'bg-gray-100 text-gray-500 line-through';
     default:
       return 'bg-gray-100 text-gray-800';
   }
