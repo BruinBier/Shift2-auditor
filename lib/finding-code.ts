@@ -16,6 +16,17 @@ import type { Prisma } from '@prisma/client';
  */
 
 /**
+ * `V` voor een voorstel, `B` voor een akkoord bevonden bevinding.
+ *
+ * Twee reeksen, omdat afwijzingen bewaard blijven en hun code voorgoed bezet
+ * houden. Bij machinale voorstellen over twintig samples maal drieëndertig
+ * criteria zouden de gaten de B-reeks onbruikbaar maken — B001, B007, B023 — en
+ * dat suggereert in een auditrapport dat er bevindingen zijn weggehaald. Gaten in
+ * de V-reeks ziet niemand. Zie docs/adr/0001-akkoord-als-poort.md.
+ */
+export type CodePrefix = 'B' | 'V';
+
+/**
  * Het eerstvolgende vrije nummer binnen een project.
  *
  * De rij van het project wordt eerst vergrendeld (SELECT ... FOR UPDATE), zodat
@@ -25,19 +36,21 @@ import type { Prisma } from '@prisma/client';
  */
 export async function nextFindingCode(
   tx: Prisma.TransactionClient,
-  projectId: string
+  projectId: string,
+  prefix: CodePrefix = 'B'
 ): Promise<string> {
   await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
 
   // Hoogste bestaande nummer + 1, niet het aantal: verwijderde findings mogen
   // niet tot hergebruik van een code leiden.
+  const patroon = `^${prefix}[0-9]+$`;
   const rijen = await tx.$queryRaw<{ max: number | null }[]>`
     SELECT MAX(CAST(SUBSTRING(finding_code FROM 2) AS INTEGER)) AS max
     FROM findings
-    WHERE project_id = ${projectId} AND finding_code ~ '^B[0-9]+$'
+    WHERE project_id = ${projectId} AND finding_code ~ ${patroon}
   `;
   const max = rijen[0]?.max ?? 0;
-  return `B${String(max + 1).padStart(3, '0')}`;
+  return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
 /**
@@ -49,6 +62,7 @@ export async function nextFindingCode(
 export async function createFindingWithCode<T>(
   projectId: string,
   bouwData: (findingCode: string) => Prisma.FindingCreateArgs,
+  prefix: CodePrefix = 'B',
   pogingen = 5
 ): Promise<any> {
   let laatsteFout: unknown = null;
@@ -56,7 +70,7 @@ export async function createFindingWithCode<T>(
   for (let poging = 0; poging < pogingen; poging++) {
     try {
       return await prisma.$transaction(async (tx) => {
-        const findingCode = await nextFindingCode(tx, projectId);
+        const findingCode = await nextFindingCode(tx, projectId, prefix);
         return tx.finding.create(bouwData(findingCode) as any);
       });
     } catch (err: any) {
@@ -79,4 +93,47 @@ export async function createFindingWithCode<T>(
   }
 
   throw laatsteFout ?? new Error('Kon geen vrije findingcode toekennen');
+}
+
+/**
+ * Geeft een voorstel zijn bevindingcode op het moment van akkoord.
+ *
+ * De B-reeks blijft zo aaneengesloten: alleen goedgekeurd werk krijgt een nummer.
+ * Dezelfde vergrendeling en dezelfde herkansing bij botsing als bij het aanmaken.
+ * Draagt de finding al een B-code, dan blijft die staan.
+ */
+export async function kenBevindingCodeToe(
+  projectId: string,
+  findingId: string,
+  pogingen = 5
+): Promise<string> {
+  let laatsteFout: unknown = null;
+
+  for (let poging = 0; poging < pogingen; poging++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const huidig = await tx.finding.findUnique({
+          where: { id: findingId },
+          select: { findingCode: true },
+        });
+        if (huidig?.findingCode?.startsWith('B')) return huidig.findingCode;
+
+        const findingCode = await nextFindingCode(tx, projectId, 'B');
+        await tx.finding.update({ where: { id: findingId }, data: { findingCode } });
+        return findingCode;
+      });
+    } catch (err: any) {
+      const isBotsing =
+        err?.code === 'P2002' ||
+        /P2002|Unique constraint failed/i.test(String(err?.message ?? ''));
+      if (isBotsing) {
+        laatsteFout = err;
+        await new Promise((r) => setTimeout(r, 20 * (poging + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw laatsteFout ?? new Error('Kon geen vrije bevindingcode toekennen');
 }
