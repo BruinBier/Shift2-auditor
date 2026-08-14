@@ -106,12 +106,22 @@ async function listProjects() {
 }
 
 async function getProject(projectId: string) {
+  // Deelverzamelingen mogen ontbreken, maar niet stilzwijgend: een lege lijst
+  // door een mislukte aanroep is niet te onderscheiden van een lege lijst in de
+  // database. De assessments-route had jarenlang geen GET; de CLI meldde daardoor
+  // stelselmatig nul oordelen. De waarschuwing gaat naar stderr, zodat stdout
+  // pure JSON blijft.
+  const zachtFalen = (naam: string) => (err: unknown) => {
+    console.error(`[audit-cli] waarschuwing: ${naam} ophalen mislukte — ${String(err)}`);
+    return [] as unknown[];
+  };
+
   const [allProjects, scopeUrls, sampleItems, findings, assessments] = await Promise.all([
     api('/api/projects'),
-    api(`/api/projects/${projectId}/scope-urls`).catch(() => []),
-    api(`/api/projects/${projectId}/sample-items`).catch(() => []),
-    api(`/api/projects/${projectId}/findings`).catch(() => []),
-    api(`/api/projects/${projectId}/assessments`).catch(() => []),
+    api(`/api/projects/${projectId}/scope-urls`).catch(zachtFalen('scope-urls')),
+    api(`/api/projects/${projectId}/sample-items`).catch(zachtFalen('sample-items')),
+    api(`/api/projects/${projectId}/findings`).catch(zachtFalen('findings')),
+    api(`/api/projects/${projectId}/assessments`).catch(zachtFalen('assessments')),
   ]);
   const project = (Array.isArray(allProjects) ? allProjects : []).find((p: any) => p.id === projectId);
   if (!project) {
