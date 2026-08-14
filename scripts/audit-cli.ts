@@ -418,6 +418,18 @@ async function getHtml(url: string, flags: Flags) {
         { useFull, wantText },
       );
 
+      // Leeft deze pagina? Op een React-site die niet hydrateert staat de HTML er
+      // wel, maar hangt er geen enkele klikafhandelaar aan. Elke interactieve
+      // toets levert dan een vals negatief op dat er precies uitziet als een
+      // echte bevinding: de knop doet niets, de suggesties verschijnen niet, het
+      // menu klapt niet uit. Zonder dit veld is dat niet te onderscheiden van
+      // een site die werkelijk stuk is.
+      const gehydrateerd = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('body *')).some((e) =>
+          Object.keys(e).some((k) => k.startsWith('__react') || k.startsWith('__vue')),
+        ),
+      );
+
       const dir = ensureOutputDir();
       const ext = wantText ? 'txt' : 'html';
       const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.${ext}`);
@@ -433,6 +445,10 @@ async function getHtml(url: string, flags: Flags) {
         bytes: Buffer.byteLength(content, 'utf8'),
         file,
         browser: session.mode,
+        gehydrateerd,
+        waarschuwing: gehydrateerd
+          ? undefined
+          : 'De JavaScript van deze pagina draait niet: er hangen geen klikafhandelaars aan. Trek hieruit GEEN conclusies over interactieve criteria (toetsenbord, uitklapmenu, zoeksuggesties, schakelknoppen). Start de audit-Chrome met `npm run chrome:debug` en haal de pagina opnieuw op.',
       });
     } finally {
       await cleanup();

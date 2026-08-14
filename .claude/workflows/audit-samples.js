@@ -442,6 +442,16 @@ Gebruik de screenshot ook om te toetsen of wat je in de HTML ziet daadwerkelijk 
 
 TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
 ${scList}${bronnenSectie}${interactieveSectie}
+\`get-html\` geeft een veld \`gehydrateerd\` terug. Normaal staat dat op true: de CLI haalt
+de pagina met een echte browser op, dus de JavaScript van de site draait.
+
+Staat het op false, dan is er iets mis met de pagina zelf — een scriptfout, een geblokkeerd
+bestand. De HTML is er dan wel, maar er hangt geen enkele klikafhandelaar aan. Een knop
+doet niets, een menu klapt niet uit, zoeksuggesties verschijnen niet, en dat ziet er
+precies zo uit als een echte bevinding. Zet in dat geval alles wat interactie vereist op
+'niet_te_bepalen' en meld in je antwoord dat de pagina niet gehydrateerd was. Verzin geen
+afkeuring op iets dat je niet hebt kunnen bedienen.
+
 STATUS per criterium:
   voldoet          — geen probleem gevonden
   afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
