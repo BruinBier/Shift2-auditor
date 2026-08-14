@@ -23,6 +23,16 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
         orderBy: { orderIndex: 'asc' },
         include: {
           crawlerResults: true,
+          // Het oordeel per criterium op dit sample. Voedt het "Waar sta ik"-scherm.
+          criterionChecks: {
+            select: {
+              wcagCriterionId: true,
+              status: true,
+              reden: true,
+              bron: true,
+              akkoord: true,
+            },
+          },
         },
       },
       criterionAssessments: {

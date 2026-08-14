@@ -14,6 +14,7 @@ import Tussencheck from './tabs/Tussencheck';
 import Richtlijnen from './tabs/Richtlijnen';
 import PagecheckProgress from './tabs/PagecheckProgress';
 import Fixlijst from './tabs/Fixlijst';
+import WaarStaIk from './tabs/WaarStaIk';
 import CrawlAllButton from './CrawlAllButton';
 import AuditSessionIndicator from '@/app/components/AuditSessionIndicator';
 
@@ -27,7 +28,7 @@ interface ProjectAdminTabsProps {
 export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [] }: ProjectAdminTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst' | 'stand'>('details');
   const showProgressTab = (project.scopeUrls?.length ?? 0) > 100;
   const showFixlijstTab = showProgressTab;
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
@@ -206,7 +207,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
     }
   };
 
-  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst') => {
+  const handleTabChange = (tab: 'details' | 'scope' | 'sample' | 'findings' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst' | 'stand') => {
     const tabParam = tab === 'details' ? '' :
                      tab === 'scope' ? 'scope' :
                      tab === 'sample' ? 'steekproef' :
@@ -215,7 +216,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                      tab === 'tussencheck' ? 'tussencheck' :
                      tab === 'richtlijnen' ? 'richtlijnen' :
                      tab === 'progress' ? 'voortgang' :
-                     tab === 'fixlijst' ? 'fixlijst' : 'voltooien';
+                     tab === 'fixlijst' ? 'fixlijst' :
+                     tab === 'stand' ? 'stand' : 'voltooien';
 
     const url = tabParam ? `/admin/projects/${project.id}?tab=${tabParam}` : `/admin/projects/${project.id}`;
     router.push(url);
@@ -242,6 +244,8 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
       setActiveTab('progress');
     } else if (tab === 'fixlijst') {
       setActiveTab('fixlijst');
+    } else if (tab === 'stand') {
+      setActiveTab('stand');
     } else {
       setActiveTab('details');
     }
@@ -607,6 +611,16 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                     Voortgang
                   </button>
                 )}
+                <button
+                  onClick={() => handleTabChange('stand')}
+                  className={`pt-2 pb-6 px-3 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
+                    activeTab === 'stand'
+                      ? 'border-shift2-primary text-shift2-primary'
+                      : 'border-transparent text-gray-500 tab-hover'
+                  }`}
+                >
+                  Waar sta ik?
+                </button>
                   <div className="ml-auto flex gap-2" style={{ marginBottom: '8px' }}>
                     {activeTab === 'finalize' && (
                       <button
@@ -702,6 +716,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             {activeTab === 'richtlijnen' && <Richtlijnen project={project} allCriteria={allCriteria} />}
             {activeTab === 'progress' && <PagecheckProgress project={project} />}
             {activeTab === 'fixlijst' && <Fixlijst project={project} />}
+            {activeTab === 'stand' && <WaarStaIk project={project} allCriteria={allCriteria} />}
           </div>
         </div>
       </div>
