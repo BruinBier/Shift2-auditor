@@ -216,12 +216,12 @@ export default function Stapel({
               <label className="mb-1 block text-sm font-medium text-gray-800">
                 {uitgang === 'afwijzen'
                   ? 'Waarom is dit geen bevinding?'
-                  : 'Waarom is dit techniek en geen content?'}
+                  : 'Toelichting (mag leeg)'}
               </label>
               <p className="mb-2 text-xs text-gray-500">
                 {uitgang === 'afwijzen'
                   ? 'Deze reden blijft bewaard, zodat een volgende auditronde dezelfde vondst niet opnieuw voorstelt.'
-                  : 'Er wordt een technisch issue aangemaakt voor de leverancier; dit voorstel wordt afgewezen met een verwijzing daarheen.'}
+                  : 'Er wordt een technisch issue aangemaakt voor de leverancier en dit voorstel wordt afgewezen met een verwijzing daarheen. Die verwijzing vertelt het verhaal al, dus een toelichting hoeft alleen als je iets wilt vastleggen dat er niet in staat.'}
               </p>
               <textarea
                 value={reden}
@@ -229,12 +229,16 @@ export default function Stapel({
                 rows={3}
                 autoFocus
                 className="w-full rounded border border-gray-300 p-2 text-sm"
-                placeholder="Korte toelichting"
+                placeholder={
+                  uitgang === 'afwijzen'
+                    ? 'Korte toelichting'
+                    : 'Optioneel — laat leeg om alleen de verwijzing vast te leggen'
+                }
               />
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
-                  disabled={bezig || !reden.trim()}
+                  disabled={bezig || (uitgang === 'afwijzen' && !reden.trim())}
                   onClick={() => beoordeel(huidig.voorstel.id, uitgang)}
                   className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
                 >

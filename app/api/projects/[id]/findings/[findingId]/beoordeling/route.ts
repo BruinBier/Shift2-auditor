@@ -54,12 +54,18 @@ export async function POST(
       );
     }
 
-    // Afwijzen en doorzetten vragen om een reden. Zonder reden is een afwijzing
-    // niets waard: de volgende auditronde kan er dan niets mee.
+    // Afwijzen vraagt om een reden: zonder reden is de afwijzing niets waard,
+    // want dan kan de volgende auditronde er niets mee en komt dezelfde
+    // onterechte vondst gewoon terug.
+    //
+    // Bij doorzetten is dat anders. Daar vertelt de verwijzing naar het
+    // technische issue het verhaal al — wat er mis is en wie het oplost. Een
+    // reden mag, maar verplicht stellen levert vooral plichtmatige tekst op; hij
+    // wordt hieronder anders zelf samengesteld.
     const reden: string | undefined = body.reden?.trim() || undefined;
-    if (actie !== 'akkoord' && !reden) {
+    if (actie === 'afwijzen' && !reden) {
       return NextResponse.json(
-        { error: 'Bij afwijzen en doorzetten is een reden verplicht' },
+        { error: 'Bij afwijzen is een reden verplicht' },
         { status: 400 }
       );
     }
@@ -117,7 +123,7 @@ export async function POST(
       where: { id: finding.id },
       data: {
         status: 'afgewezen',
-        afwijzingsreden: reden,
+        afwijzingsreden: reden ?? `Doorgezet naar technisch issue: ${issue.title}`,
         technicalIssueId: issue.id,
       },
       include: { wcagCriterion: true, occurrences: true },
