@@ -445,9 +445,22 @@ ${scList}${bronnenSectie}${interactieveSectie}
 STATUS per criterium:
   voldoet          — geen probleem gevonden
   afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
-  opmerking        — best-practice/randgeval, geen echte fout; voorstelBevinding zonder impact/responsibility
+  opmerking        — je hebt VASTGESTELD wat er aan de hand is, en het is geen echte WCAG-fout maar wel het benoemen waard; voorstelBevinding zonder impact/responsibility
   niet_aanwezig    — het criterium is niet van toepassing op deze pagina
   niet_te_bepalen  — kan niet uit HTML/screenshot worden bepaald (bv. toetsenbord, reflow, contrast-check die interactie vereist)
+
+TWIJFEL IS GEEN OPMERKING. Een opmerking is een oordeel dat je hebt kunnen vellen;
+'niet_te_bepalen' is de status voor wat je niet kúnt vaststellen. Gebruik 'opmerking'
+dus nooit als vergaarbak voor onzekerheid.
+Drie tekenen dat je 'niet_te_bepalen' bedoelt en geen opmerking:
+  - je schrijft "mogelijk", "waarschijnlijk", "lijkt erop" of "vermoedelijk" in de beschrijving
+  - je eindigt de reden met een vraag aan de onderzoeker
+  - je oordeel hangt af van iets dat je niet hebt gezien: een schermlezer, toetsenbord,
+    zoom, of een interactie die je niet kunt uitvoeren
+In die gevallen: zet 'niet_te_bepalen', LAAT voorstelBevinding leeg, en schrijf in 'reden'
+de concrete vraag die de onderzoeker in de browser moet beantwoorden. Een voorstel én een
+vraag tegelijk aanleveren is tegenstrijdig: de onderzoeker kan dan niet beoordelen zonder
+eerst zelf te kijken, en dan had het geen voorstel moeten zijn.
 
 UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags heeft):
   Een niet-getagde PDF heeft één wortel-oorzaak: de tag-structuur ontbreekt. Keur die af onder 1.3.1.
@@ -506,6 +519,8 @@ TOETS TEGEN DE BRON, niet tegen je eigen WCAG-geheugen. Lees met je Read-tool vo
 Lees daarnaast \`wcag-regels/Shift2_Schrijfregels.md\` en toets elke description en advice daaraan: geen URL aan het begin, geen gedachtestreepjes, geen HTML-codeblokken, geen vindplaats-lijst, hulpsoftware LEEST VOOR (laat niets zien), "tekstalternatief" niet "tekstbeschrijving", maximaal twee a drie voorbeelden, en bij een opmerking impact en responsibility leeg.
 
 Weerleg een oordeel expliciet als het in strijd is met een Shift2-regel. Typische gevallen: een afkeuring op een telefoonnummer- of e-maillink onder 2.4.4, een afkeuring op een teaser-afbeelding met alt="", of een afkeuring waar de regels een opmerking voorschrijven (zet dan gecorrigeerdeStatus op 'opmerking').
+
+WEERLEG OOK ELKE TWIJFEL DIE ALS OPMERKING IS VERPAKT. Een opmerking is een oordeel dat de auditor heeft kunnen vellen; onzekerheid hoort op 'niet_te_bepalen'. Zie je in de beschrijving of de reden woorden als "mogelijk", "waarschijnlijk", "lijkt erop" of "vermoedelijk", of eindigt de reden met een vraag aan de onderzoeker, of hangt het oordeel af van een schermlezer, toetsenbord of zoom die de auditor niet heeft gebruikt — zet gecorrigeerdeStatus dan op 'niet_te_bepalen' met als toelichting welke vraag er nog openstaat. Een voorstel en een vraag tegelijk is tegenstrijdig: de onderzoeker kan zo niet beoordelen zonder eerst zelf te kijken.
 
 LET OP bij een niet-getagde PDF: weerleg een afkeuring van 1.3.2 (leesvolgorde). Zonder tags is er geen programmatische leesvolgorde om te toetsen, dus dat hoort 'niet_te_bepalen' te zijn, niet afgekeurd. De ontbrekende tag-structuur wordt al onder 1.3.1 afgekeurd; keur het gevolg niet apart af.
 
