@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { marked } from 'marked';
 import FindingDialog, { FindingFormData } from './FindingDialog';
-import { isOpmerking } from '@/lib/finding-classification';
+import { findingLabel, findingLabelClass, isOpenBevinding } from '@/lib/finding-classification';
 import QuickFindingDialog from './QuickFindingDialog';
 import ExplanationDialog from './ExplanationDialog';
 
@@ -883,20 +883,45 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                       const isDragging = draggedFinding === finding.id;
                       const isDragOver = dragOverFinding === finding.id;
 
+                      // Waar staat dit punt in het proces? Eén bron voor label, kleur en
+                      // kopregel, zodat de lijst niet zijn eigen statuskennis bijhoudt.
+                      const label = findingLabel(finding);
+                      const isVoorstel = label === 'Voorstel';
+                      const isAfgewezen = label === 'Afgewezen';
+
+                      // Een voorstel wacht nog op akkoord en een afwijzing telt niet meer
+                      // mee (zie docs/adr/0001-akkoord-als-poort.md). Een gekleurde rand
+                      // links zet ze apart van de echte bevindingen, ook als de kaart is
+                      // ingeklapt en de badges niet in beeld staan. Verbergen doen we niet.
+                      const accentClass = isVoorstel
+                        ? 'border-l-4 border-l-purple-400 bg-purple-50'
+                        : isAfgewezen
+                        ? 'border-l-4 border-l-gray-400 bg-gray-50'
+                        : 'bg-white';
+
+                      // "Bevinding" klopt alleen voor wat de poort door is; een voorstel
+                      // is nog een voorstel en een afwijzing is er geen meer.
+                      const kopNoemer = isVoorstel
+                        ? 'Voorstel'
+                        : isAfgewezen
+                        ? 'Afgewezen voorstel'
+                        : 'Bevinding';
+
                       return (
                         <div
                           key={finding.id}
                           id={`finding-${finding.id}`}
                           onDragOver={(e) => handleDragOver(e, finding.id)}
                           onDrop={(e) => handleDrop(e, finding.id, group.criterion.id)}
-                          className={`bg-white border border-gray-200 rounded-lg transition-all scroll-mt-4 ${
+                          className={`border border-gray-200 rounded-lg transition-all scroll-mt-4 ${accentClass} ${
                             isDragging ? 'opacity-50' : ''
                           } ${
                             isDragOver ? 'border-blue-500 border-2' : ''
                           }`}
                         >
-                          {/* Finding header */}
-                          <div className="px-4 py-3 flex items-center justify-between bg-white relative">
+                          {/* Finding header. Geen eigen achtergrond: de kaart bepaalt de
+                              kleur, zodat de tint van een voorstel of afwijzing doorloopt. */}
+                          <div className="px-4 py-3 flex items-center justify-between relative">
                             {/* Drag handle */}
                             <div
                               draggable={true}
@@ -928,14 +953,21 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                               </button>
-                              <span className="font-medium text-sm text-gray-900">
-                                Bevinding {findingIndex + 1} (SC {group.criterion.code})
+                              <span className={`font-medium text-sm ${isAfgewezen ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                {kopNoemer} {findingIndex + 1} (SC {group.criterion.code})
                                 {finding.findingCode && (
                                   <span className="ml-2 text-xs font-mono text-gray-500">
                                     [{finding.findingCode}]
                                   </span>
                                 )}
                               </span>
+                              {/* Ingeklapt is de kop alles wat de lezer ziet; de badges
+                                  hieronder staan dan niet in beeld. */}
+                              {isCollapsed && finding.status && (
+                                <span className={`px-2 py-0.5 text-xs font-medium rounded ${findingLabelClass(finding)}`}>
+                                  {label}
+                                </span>
+                              )}
                             </div>
                             <button
                               onClick={(e) => {
@@ -998,35 +1030,16 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                             <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
                               {group.criterion.code}
                             </span>
-                            {finding.status && (() => {
-                              // Twee losse badges: type + status.
-                              //   Type   : impact leeg -> "Opmerking" (grijs), impact gezet -> "Afgekeurd" (rood)
-                              //   Status : open -> "Open" (oranje), resolved -> "Opgelost" (groen)
-                              // In de nulmeting is de status-badge niet zinvol (alles is per definitie
-                              // "Open" en "Opgelost" bestaat pas na een herinspectie), dus tonen we die
-                              // alleen tijdens tussencheck of herinspectie.
-                              const typeLabel = isOpmerking(finding) ? 'Opmerking' : 'Afgekeurd';
-                              const typeCls = isOpmerking(finding)
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-red-100 text-red-800';
-                              const statusLabel = finding.status === 'resolved' ? 'Opgelost' : 'Open';
-                              const statusCls = finding.status === 'resolved'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-orange-100 text-orange-800';
-                              const showStatusBadge = project.checkPhase && project.checkPhase !== 'nulmeting';
-                              return (
-                                <>
-                                  <span className={`px-2 py-0.5 text-xs font-medium rounded ${typeCls}`}>
-                                    {typeLabel}
-                                  </span>
-                                  {showStatusBadge && (
-                                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${statusCls}`}>
-                                      {statusLabel}
-                                    </span>
-                                  )}
-                                </>
-                              );
-                            })()}
+                            {/* Eén label uit de helper in plaats van twee zelfgemaakte badges
+                                (type + open/opgelost). Die eigen logica kende alleen `open` en
+                                `resolved`, waardoor een voorstel als "Afgekeurd" en een afwijzing
+                                als "Open" in de lijst stond — precies wat de poort moet voorkomen.
+                                Zie lib/finding-classification.ts. */}
+                            {finding.status && (
+                              <span className={`px-2 py-0.5 text-xs font-medium rounded ${findingLabelClass(finding)}`}>
+                                {label}
+                              </span>
+                            )}
                             {finding.impact && finding.impact !== 'onbekend' && (
                               <span
                                 className="px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 border"
@@ -1074,6 +1087,16 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                               </span>
                             )}
                           </div>
+
+                          {/* Waarom afgewezen. Zonder de reden is een afwijzing niet van een
+                              vergeten bevinding te onderscheiden; de tekst blijft bewaard,
+                              dus tonen we hem hier ook. */}
+                          {isAfgewezen && finding.afwijzingsreden && (
+                            <div className="text-sm text-gray-600 border-l-2 border-gray-300 pl-3">
+                              <span className="font-medium">Afgewezen: </span>
+                              {finding.afwijzingsreden}
+                            </div>
+                          )}
 
                           {/* Affected URLs (from crawler) */}
                           {finding.affectedUrls && finding.affectedUrls.length > 0 && (
@@ -1375,14 +1398,24 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
             const criterionFindings = project.findings.filter(
               (f: any) => f.wcagCriterionId === criterion.id
             );
-            // Count all findings for this criterion
-            const findingsCount = criterionFindings.length;
+            // Alleen wat meetelt. Voorstellen wachten nog op akkoord en
+            // afwijzingen zijn verworpen; die meetellen in het getal naast een
+            // criterium maakt de zijbalk onbetrouwbaar — je ziet dan een hoger
+            // aantal dan er bevindingen in je rapport staan.
+            const echteBevindingen = criterionFindings.filter(
+              (f: any) => f.status !== 'voorstel' && f.status !== 'afgewezen'
+            );
+            const findingsCount = echteBevindingen.length;
+            const voorstellenCount = criterionFindings.filter(
+              (f: any) => f.status === 'voorstel'
+            ).length;
 
             // Determine badge color based on assessment status, then findings
             let badgeColor;
 
-            // Check if there are open findings (afgekeurd)
-            const hasOpenFindings = criterionFindings.some((f: any) => f.status === 'open');
+            // Een opmerking is geen afkeuring, dus die kleurt het criterium niet
+            // rood; isOpenBevinding() kent dat onderscheid al.
+            const hasOpenFindings = criterionFindings.some((f: any) => isOpenBevinding(f));
 
             // Priority: assessment status first, then findings
             if (assessment?.status === 'passed') {
@@ -1443,6 +1476,14 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
                       aria-label={`${findingsCount} ${findingsCount === 1 ? 'bevinding' : 'bevindingen'}`}
                     >
                       {findingsCount}
+                    </span>
+                  )}
+                  {voorstellenCount > 0 && (
+                    <span
+                      className="flex-shrink-0 px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded text-[10px] font-medium"
+                      aria-label={`${voorstellenCount} ${voorstellenCount === 1 ? 'voorstel wacht' : 'voorstellen wachten'} op akkoord`}
+                    >
+                      {voorstellenCount}
                     </span>
                   )}
                 </div>
