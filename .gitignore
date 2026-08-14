@@ -42,11 +42,11 @@ temp-*.txt
 test-*.html
 nul
 
-# audit-cli browser captures (html/screenshots)
-/tmp/audit-cli/
-
-# workflow-scratch (QuickFinding-bibliotheek die de audit-workflow wegschrijft)
-/tmp/qf-bibliotheek.json
+# Werkmap van de audit-CLI en de workflows: opgehaalde HTML, screenshots,
+# tekstextracties en de QuickFinding-bibliotheek. Eén run op twee samples liet
+# hier al ruim 4 MB achter. Eerder stonden alleen /tmp/audit-cli/ en
+# /tmp/qf-bibliotheek.json genoemd, waardoor de rest wel in git-status opdook.
+/tmp/
 
 # Claude Code local settings (per developer)
 .claude/settings.json
