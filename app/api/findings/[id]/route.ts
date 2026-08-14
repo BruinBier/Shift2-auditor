@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
+import { herberekenCriteriumOordelen } from '@/lib/criterion-assessment';
 
 export async function GET(
   request: NextRequest,
@@ -35,6 +36,14 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
+
+    // Het oude criterium onthouden: verplaatst deze wijziging de bevinding naar
+    // een ander criterium, dan moeten beide opnieuw bepaald worden.
+    const voor = await prisma.finding.findUnique({
+      where: { id: params.id },
+      select: { projectId: true, wcagCriterionId: true },
+    });
+
     const finding = await prisma.finding.update({
       where: { id: params.id },
       data: {
@@ -61,6 +70,12 @@ export async function PATCH(
         },
       },
     });
+
+    await herberekenCriteriumOordelen(finding.projectId, [
+      voor?.wcagCriterionId,
+      finding.wcagCriterionId,
+    ]);
+
     return NextResponse.json(finding);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update finding' }, { status: 500 });

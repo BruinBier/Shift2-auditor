@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { typeVoorImpact } from '@/lib/finding-classification';
 import { createFindingWithCode } from '@/lib/finding-code';
+import { herberekenCriteriumOordeel } from '@/lib/criterion-assessment';
 
 const prisma = new PrismaClient();
 
@@ -87,6 +88,10 @@ export async function POST(
         wcagCriterion: true,
       },
     }));
+
+    // Deze route maakte wel bevindingen aan, maar liet het criteriumoordeel
+    // ongemoeid — het criterium bleef dus op zijn oude status staan.
+    await herberekenCriteriumOordeel(projectId, wcagCriterion.id);
 
     return NextResponse.json({
       success: true,

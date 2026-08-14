@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
 import { createFindingWithCode } from '@/lib/finding-code';
+import { herberekenCriteriumOordeel } from '@/lib/criterion-assessment';
 import { lintFinding, type LintIssue } from '@/lib/finding-lint';
 
 export async function GET(
@@ -153,20 +154,25 @@ export async function POST(
       if (issues.length > 0) lintWarnings = issues;
     }
 
-    const finding = await createFindingWithCode(params.id, (findingCode) => ({
-      data: { ...createData, findingCode },
-      include: {
-        project: {
-          select: {
-            id: true,
-            title: true,
-            subject: true,
+    // Een voorstel krijgt een code uit de V-reeks; de B-code volgt pas bij akkoord.
+    const finding = await createFindingWithCode(
+      params.id,
+      (findingCode) => ({
+        data: { ...createData, findingCode },
+        include: {
+          project: {
+            select: {
+              id: true,
+              title: true,
+              subject: true,
+            },
           },
+          wcagCriterion: true,
+          occurrences: true,
         },
-        wcagCriterion: true,
-        occurrences: true,
-      },
-    }));
+      }),
+      createData.status === 'voorstel' ? 'V' : 'B'
+    );
 
     console.log('Finding created successfully:', finding.id);
 
@@ -186,41 +192,9 @@ export async function POST(
       console.log('Created', occurrences.length, 'FindingOccurrence records');
     }
 
-    // If the finding status is "open" (afgekeurd), automatically update the criterion assessment to "failed"
-    if (body.status === 'open') {
-      console.log('Finding status is "open", updating criterion assessment to "failed"');
-
-      // Check if assessment already exists
-      const existingAssessment = await prisma.criterionAssessment.findFirst({
-        where: {
-          projectId: params.id,
-          wcagCriterionId: body.criterionId,
-        },
-      });
-
-      if (existingAssessment) {
-        // Update existing assessment to "failed"
-        await prisma.criterionAssessment.update({
-          where: {
-            id: existingAssessment.id,
-          },
-          data: {
-            status: 'failed',
-          },
-        });
-        console.log('Updated existing assessment to "failed"');
-      } else {
-        // Create new assessment with status "failed"
-        await prisma.criterionAssessment.create({
-          data: {
-            projectId: params.id,
-            wcagCriterionId: body.criterionId,
-            status: 'failed',
-          },
-        });
-        console.log('Created new assessment with status "failed"');
-      }
-    }
+    // Het criteriumoordeel volgt uit de bevindingen; het wordt hier niet los
+    // gezet. Zie lib/criterion-assessment.ts en docs/adr/0001-akkoord-als-poort.md.
+    await herberekenCriteriumOordeel(params.id, body.criterionId);
 
     return NextResponse.json(
       lintWarnings.length > 0 ? { ...finding, lintWarnings } : finding,

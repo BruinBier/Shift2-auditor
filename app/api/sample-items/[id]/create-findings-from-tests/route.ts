@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
 import { createFindingWithCode } from '@/lib/finding-code';
+import { herberekenCriteriumOordelen } from '@/lib/criterion-assessment';
 
 interface CreateFindingsRequest {
   testIds: string[];
@@ -51,6 +52,9 @@ export async function POST(
 
     const projectId = sampleItem.projectId;
     const createdFindings = [];
+    // Deze lus maakt bevindingen aan onder verschillende criteria; die worden na
+    // afloop in één keer herberekend. Ook deze route liet het oordeel eerder staan.
+    const geraakteCriteria = new Set<string>();
     const errors = [];
 
     console.log(`[CREATE-FINDINGS] Processing ${sampleItem.crawlerResults.length} test results`);
@@ -212,6 +216,7 @@ export async function POST(
           testName: result.testName,
           id: finding.id,
         });
+        geraakteCriteria.add(wcagCriterionId);
 
       } catch (error) {
         console.error(`[CREATE-FINDINGS] Error creating finding for test ${result.testId}:`, error);
@@ -222,6 +227,8 @@ export async function POST(
         });
       }
     }
+
+    await herberekenCriteriumOordelen(projectId, Array.from(geraakteCriteria));
 
     console.log(`[CREATE-FINDINGS] Completed: ${createdFindings.length} findings created, ${errors.length} errors`);
 

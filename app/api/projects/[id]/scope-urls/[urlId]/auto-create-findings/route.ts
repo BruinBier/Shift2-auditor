@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { typeVoorImpact } from '@/lib/finding-classification';
 import { createFindingWithCode } from '@/lib/finding-code';
+import { herberekenCriteriumOordelen } from '@/lib/criterion-assessment';
 
 const prisma = new PrismaClient();
 
@@ -71,6 +72,9 @@ export async function POST(
 
     const createdFindings: string[] = [];
     const updatedFindings: string[] = [];
+    // De lus maakt bevindingen aan onder verschillende criteria; die worden na
+    // afloop in één keer herberekend.
+    const geraakteCriteria = new Set<string>();
 
     for (const quickFinding of quickFindings) {
       // Check if finding already exists for this QuickFinding
@@ -170,8 +174,13 @@ export async function POST(
         }));
 
         createdFindings.push(finding.findingCode);
+        geraakteCriteria.add(wcagCriterion.id);
       }
     }
+
+    // Deze route liet het criteriumoordeel ongemoeid: er werden bevindingen
+    // aangemaakt zonder dat het criterium ooit op 'failed' kwam.
+    await herberekenCriteriumOordelen(projectId, Array.from(geraakteCriteria));
 
     const totalChanges = createdFindings.length + updatedFindings.length;
 
