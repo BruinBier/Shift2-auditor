@@ -1,12 +1,13 @@
 export const meta = {
   name: 'audit-samples',
-  description: 'Per sample: audit alle succescriteria van het onderzoekstype met de Shift2-beoordelingsregels en de checklists, verifieer, en match tegen bestaande QuickFindings',
-  whenToUse: 'Voor een WCAG-audit waarbij per sample-pagina elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Levert een voorstel-rapport plus een lijst met vragen die handmatig in de browser beantwoord moeten worden; schrijft niets naar de database.',
+  description: 'Per sample: audit alle succescriteria van het onderzoekstype met de Shift2-beoordelingsregels en de checklists, verifieer, match tegen bestaande QuickFindings, en schrijf de uitkomsten weg als voorstel',
+  whenToUse: 'Voor een WCAG-audit waarbij per sample-pagina elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Schrijft het oordeel per sample per criterium weg en maakt de afkeuringen aan als voorstel — die tellen nergens mee tot de onderzoeker akkoord geeft. Levert daarnaast een lijst met vragen die handmatig in de browser beantwoord moeten worden. Draai met args.drooglopen = true om alleen te rapporteren.',
   phases: [
     { title: 'Voorbereiden', detail: 'Project, samples, SC-set en QuickFindings ophalen' },
     { title: 'Auditen', detail: 'Eén auditor-agent per sample gaat alle SC\'s af (Shift2-regels + wcag-checklists)' },
     { title: 'Verifiëren', detail: 'Verifier-agent controleert de afkeuringen per sample' },
     { title: 'QuickFinding-match', detail: 'Per afkeuring: bestaat er al een passende QuickFinding?' },
+    { title: 'Wegschrijven', detail: 'Sampleoordelen opslaan en afkeuringen aanmaken als voorstel' },
   ],
 }
 
@@ -596,6 +597,125 @@ const rapport = clean.map((row) => {
   }
 })
 
+// ---------------------------------------------------------------------------
+// FASE 4 — WEGSCHRIJVEN. Tot nu toe eindigde deze workflow bij een rapport en
+// verdwenen de oordelen zodra het venster dichtging: van de zeshonderd
+// beoordelingen bleef alleen over wat fout was. Daardoor was niet te zien of een
+// criterium in orde was of nooit bekeken.
+//
+// De oordelen gaan nu naar sample_criterion_checks, en de afkeuringen worden
+// aangemaakt als voorstel — niet als bevinding. Ze tellen dus nergens mee tot de
+// onderzoeker akkoord geeft. Zie docs/adr/0001-akkoord-als-poort.md.
+//
+// Draai met args.drooglopen = true om alleen te rapporteren, zonder te schrijven.
+// ---------------------------------------------------------------------------
+const drooglopen = opts.drooglopen === true
+
+let schrijfResultaat = { overgeslagen: true, reden: 'drooglopen' }
+
+if (!drooglopen) {
+  phase('Wegschrijven')
+
+  const schrijvers = await parallel(
+    rapport.map((row) => () => {
+      const sampleId = row.sampleId
+      if (!sampleId || !row.assessments?.length) return Promise.resolve(null)
+
+      // Alleen wat nieuw is wordt een voorstel; bestaat er al een bevinding op
+      // deze combinatie, dan zou een tweede een duplicaat zijn.
+      const nieuweVoorstellen = row.assessments.filter(
+        (a) =>
+          (a.status === 'afgekeurd' || a.status === 'opmerking') &&
+          a.nieuwOfBestaand === 'nieuw' &&
+          a.voorstelBevinding,
+      )
+
+      const oordelen = row.assessments.map((a) => ({
+        sampleItemId: sampleId,
+        criterionCode: a.code,
+        status: a.status,
+        reden: a.reden || null,
+      }))
+
+      return agent(
+        `Schrijf de uitkomsten van sample "${row.sampleTitle}" weg met de audit-CLI. De dev-server draait; werkdirectory is de repo-root.
+
+STAP 1 — de oordelen per criterium.
+Schrijf onderstaande JSON naar een tijdelijk bestand en pijp het naar de CLI:
+
+  npm run cli -- save-checks ${projectId} --bron=workflow < <jouw-bestand>.json
+
+Controleer het antwoord: "geschreven" hoort ${oordelen.length} te zijn en "overgeslagen" 0. Is dat niet zo, meld dan wat er misging; verzin geen tweede poging met andere codes.
+
+DE OORDELEN:
+${JSON.stringify(oordelen, null, 1)}
+
+STAP 2 — de afkeuringen als voorstel.
+${
+  nieuweVoorstellen.length === 0
+    ? 'Er zijn geen nieuwe afkeuringen of opmerkingen op dit sample. Sla deze stap over.'
+    : `Maak per punt hieronder een voorstel aan met:
+
+  npm run cli -- create-finding ${projectId} --criterion=<criteriumId> --description="..." --advice="..." --status=voorstel --sample-items=${sampleId} [--impact=...]
+
+Let op:
+  - --status=voorstel is verplicht. Een voorstel telt nergens mee tot de onderzoeker akkoord geeft; maak dus GEEN bevinding met status open.
+  - Bij een opmerking laat je --impact weg; die heeft geen ernst.
+  - Het criteriumId haal je uit \`npm run cli -- list-criteria\` (niet de code, de id).
+  - Gebruik --skip-lint NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens wcag-regels/Shift2_Schrijfregels.md en probeer opnieuw.
+
+DE PUNTEN:
+${JSON.stringify(
+  nieuweVoorstellen.map((a) => ({
+    code: a.code,
+    status: a.status,
+    description: a.voorstelBevinding?.description,
+    advice: a.voorstelBevinding?.advice,
+    impact: a.status === 'opmerking' ? null : a.voorstelBevinding?.impact,
+    bestaandeQuickFinding: a.bestaandeQuickFinding?.title || null,
+  })),
+  null,
+  1,
+)}`
+}
+
+Geef terug hoeveel oordelen zijn weggeschreven, hoeveel voorstellen zijn aangemaakt met welke codes, en wat er eventueel misging.`,
+        {
+          label: `schrijf:${row.sampleTitle}`,
+          phase: 'Wegschrijven',
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['sampleTitle', 'oordelenGeschreven', 'voorstellenAangemaakt'],
+            properties: {
+              sampleTitle: { type: 'string' },
+              oordelenGeschreven: { type: 'number' },
+              voorstellenAangemaakt: { type: 'array', items: { type: 'string' } },
+              fouten: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+      )
+    }),
+  )
+
+  const gelukt = schrijvers.filter(Boolean)
+  const totaalOordelen = gelukt.reduce((n, s) => n + (s.oordelenGeschreven || 0), 0)
+  const totaalVoorstellen = gelukt.flatMap((s) => s.voorstellenAangemaakt || [])
+  const schrijffouten = gelukt.flatMap((s) => s.fouten || [])
+
+  log(
+    `Weggeschreven: ${totaalOordelen} sampleoordelen, ${totaalVoorstellen.length} voorstellen (${totaalVoorstellen.join(', ') || 'geen'}). ${schrijffouten.length ? schrijffouten.length + ' fout(en).' : ''}`,
+  )
+
+  schrijfResultaat = {
+    overgeslagen: false,
+    oordelenGeschreven: totaalOordelen,
+    voorstellen: totaalVoorstellen,
+    fouten: schrijffouten,
+  }
+}
+
 // Volledigheids-check: welke sample×SC-combinaties ontbreken? (zou 0 moeten zijn)
 const gaten = []
 for (const row of rapport) {
@@ -649,6 +769,7 @@ log(`Klaar. ${rapport.length} HTML-samples verwerkt. ${nieuweAfk.length} nieuwe 
 
 return {
   onderzoekstype: context.researchTypeName,
+  wegschrijven: schrijfResultaat,
   aantalHtmlSamples: rapport.length,
   overgeslagenSamples: overgeslagen.map((s) => ({ title: s.title, sampleType: s.sampleType })),
   aantalCriteriaPerSample: requiredCodes.length,

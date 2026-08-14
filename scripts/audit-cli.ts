@@ -319,6 +319,57 @@ async function createFindingFromQuick(projectId: string, quickFindingId: string,
   print(result);
 }
 
+/**
+ * Sampleoordelen wegschrijven: het oordeel per criterium voor een pagina.
+ *
+ * De oordelen komen via stdin binnen als JSON, niet als vlaggen — het gaat om
+ * tientallen regels per sample, met redenen die vaak meerdere zinnen beslaan.
+ *
+ *   npm run cli -- save-checks <projectId> --bron=workflow < oordelen.json
+ *
+ * Verwacht formaat:
+ *   [{ "sampleItemId": "...", "criterionCode": "1.4.3",
+ *      "status": "voldoet", "reden": "..." }]
+ */
+async function saveChecks(projectId: string, flags: Flags) {
+  const invoer = await leesStdin();
+  if (!invoer.trim()) {
+    throw new Error('Geen invoer op stdin. Gebruik: save-checks <projectId> < oordelen.json');
+  }
+
+  let checks: unknown;
+  try {
+    // Een BOM aan het begin sloopt JSON.parse. PowerShell schrijft die er bij
+    // `Out-File -Encoding utf8` standaard voor, dus dit komt op Windows vaak voor.
+    checks = JSON.parse(invoer.replace(/^﻿/, ''));
+  } catch (err) {
+    throw new Error(`Kon de invoer niet als JSON lezen: ${String(err)}`);
+  }
+  if (!Array.isArray(checks)) {
+    throw new Error('De invoer moet een JSON-array van oordelen zijn.');
+  }
+
+  const result = await api(`/api/projects/${projectId}/criterion-checks`, {
+    method: 'POST',
+    body: JSON.stringify({ bron: flags.bron || 'workflow', checks }),
+  });
+  print(result);
+}
+
+function leesStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (c) => (data += c));
+    process.stdin.on('end', () => resolve(data));
+    process.stdin.on('error', reject);
+  });
+}
+
+async function getChecks(projectId: string) {
+  print(await api(`/api/projects/${projectId}/criterion-checks`));
+}
+
 async function setAssessment(projectId: string, flags: Flags) {
   const body: Record<string, unknown> = {
     wcagCriterionId: requireFlag(flags, 'criterion'),
@@ -618,6 +669,10 @@ async function main() {
       );
     case 'set-assessment':
       return setAssessment(requirePositional(positional, 0, 'projectId'), flags);
+    case 'save-checks':
+      return saveChecks(requirePositional(positional, 0, 'projectId'), flags);
+    case 'get-checks':
+      return getChecks(requirePositional(positional, 0, 'projectId'));
     case 'get-html':
       return getHtml(requirePositional(positional, 0, 'url'), flags);
     case 'get-screenshot':
@@ -636,9 +691,11 @@ async function main() {
         `  search-quick-findings <keyword>\n` +
         `  create-sample-item <projectId> --title=... [--url=...] [--type=structured|random|pdf] [--description=...] [--screenshot=true]\n` +
         `  lint-finding --description=... [--advice=...] [--impact=...] [--responsibility=...] [--status=...] [--criterion=<id|code>] [--pdf] [--json]\n` +
-        `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=open|published|resolved] [--evidence=...] [--sample-items=id1,id2] [--skip-lint]\n` +
+        `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=voorstel|open|published|resolved] [--evidence=...] [--sample-items=id1,id2] [--skip-lint]\n` +
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
         `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
+        `  save-checks <projectId> [--bron=workflow|gesprek|handmatig] < oordelen.json   # sampleoordelen wegschrijven\n` +
+        `  get-checks <projectId>                           # de opgeslagen sampleoordelen\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
         `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner]\n` +
         `  run-tests <url> [--verbose] [--only-found] [--with-browser]  # crawler-tests; --with-browser voegt contrast-test toe\n` +
