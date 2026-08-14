@@ -656,11 +656,12 @@ ${
     ? 'Er zijn geen nieuwe afkeuringen of opmerkingen op dit sample. Sla deze stap over.'
     : `Maak per punt hieronder een voorstel aan met:
 
-  npm run cli -- create-finding ${projectId} --criterion=<criteriumId> --description="..." --advice="..." --status=voorstel --sample-items=${sampleId} [--impact=...]
+  npm run cli -- create-finding ${projectId} --criterion=<criteriumId> --description="..." --advice="..." --status=voorstel --sample-items=${sampleId} [--impact=...] [--responsibility=...]
 
 Let op:
   - --status=voorstel is verplicht. Een voorstel telt nergens mee tot de onderzoeker akkoord geeft; maak dus GEEN bevinding met status open.
-  - Bij een opmerking laat je --impact weg; die heeft geen ernst.
+  - Bij een afkeuring geef je ZOWEL --impact als --responsibility mee; de auditor heeft die bepaald en ze staan hieronder. Zonder responsibility klaagt de schrijfregel-linter, en moet de onderzoeker het alsnog met de hand invullen.
+  - Bij een opmerking laat je --impact en --responsibility allebei weg; die heeft geen ernst en geen adressant.
   - Het criteriumId haal je uit \`npm run cli -- list-criteria\` (niet de code, de id).
   - Gebruik --skip-lint NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens wcag-regels/Shift2_Schrijfregels.md en probeer opnieuw.
 
@@ -672,6 +673,7 @@ ${JSON.stringify(
     description: a.voorstelBevinding?.description,
     advice: a.voorstelBevinding?.advice,
     impact: a.status === 'opmerking' ? null : a.voorstelBevinding?.impact,
+    responsibility: a.status === 'opmerking' ? null : a.voorstelBevinding?.responsibility,
     bestaandeQuickFinding: a.bestaandeQuickFinding?.title || null,
   })),
   null,
