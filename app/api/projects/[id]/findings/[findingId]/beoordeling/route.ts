@@ -71,14 +71,42 @@ export async function POST(
     }
 
     if (actie === 'akkoord') {
+      // Bevinding of opmerking is het oordeel van de ONDERZOEKER, niet iets dat
+      // uit de techniek volgt — zie lib/finding-classification.ts. De agent doet
+      // een voorstel; bij het akkoord mag dat worden omgezet.
+      //
+      // Een te strenge afkeuring valt op bij het nalezen, een te milde opmerking
+      // glijdt erdoorheen. Daarom kan het bij elk voorstel, niet alleen waar de
+      // agent twijfel meldt: die twijfel is bij V004 juist niet gemeld.
+      const gevraagdType: string | undefined = body.type;
+      if (gevraagdType && gevraagdType !== 'bevinding' && gevraagdType !== 'opmerking') {
+        return NextResponse.json(
+          { error: "type moet 'bevinding' of 'opmerking' zijn" },
+          { status: 400 }
+        );
+      }
+      const nieuwType = (gevraagdType ?? finding.type) as 'bevinding' | 'opmerking';
+
       const findingCode = await kenBevindingCodeToe(params.id, finding.id);
       const bijgewerkt = await prisma.finding.update({
         where: { id: finding.id },
-        data: { status: 'open', akkoordOp: new Date() },
+        data: {
+          status: 'open',
+          akkoordOp: new Date(),
+          type: nieuwType,
+          // Een opmerking heeft geen ernst en geen adressant; die velden horen
+          // leeg te zijn zodra het er een wordt.
+          ...(nieuwType === 'opmerking' ? { impact: null, responsibility: null } : {}),
+        },
         include: { wcagCriterion: true, occurrences: true },
       });
       const oordeel = await herberekenCriteriumOordeel(params.id, finding.wcagCriterionId);
-      return NextResponse.json({ finding: bijgewerkt, findingCode, criteriumOordeel: oordeel });
+      return NextResponse.json({
+        finding: bijgewerkt,
+        findingCode,
+        typeGewijzigd: nieuwType !== finding.type,
+        criteriumOordeel: oordeel,
+      });
     }
 
     if (actie === 'afwijzen') {

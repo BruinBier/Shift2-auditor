@@ -41,7 +41,7 @@ export default function Stapel({
   const [uitgang, setUitgang] = useState<'afwijzen' | 'doorzetten' | null>(null);
   const [reden, setReden] = useState('');
 
-  const beoordeel = async (findingId: string, actie: string) => {
+  const beoordeel = async (findingId: string, actie: string, type?: string) => {
     setBezig(true);
     setFout(null);
     try {
@@ -50,7 +50,7 @@ export default function Stapel({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ actie, reden: reden.trim() || undefined }),
+          body: JSON.stringify({ actie, type, reden: reden.trim() || undefined }),
         }
       );
       if (!res.ok) {
@@ -258,14 +258,27 @@ export default function Stapel({
             </div>
           ) : (
             <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={bezig}
-                onClick={() => beoordeel(huidig.voorstel.id, 'akkoord')}
-                className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
-              >
-                Akkoord
-              </button>
+              {/* Bevinding of opmerking is het oordeel van de onderzoeker. De
+                  keuze van de agent staat vooraan; de andere ernaast, altijd —
+                  je kunt vooraf niet weten welke hij verkeerd inschatte. */}
+              {(huidig.voorstel.type === 'opmerking'
+                ? ['opmerking', 'bevinding']
+                : ['bevinding', 'opmerking']
+              ).map((soort, i) => (
+                <button
+                  key={soort}
+                  type="button"
+                  disabled={bezig}
+                  onClick={() => beoordeel(huidig.voorstel.id, 'akkoord', soort)}
+                  className={`rounded px-4 py-2 text-sm font-medium disabled:opacity-40 ${
+                    i === 0
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'border border-green-600 text-green-700 hover:bg-green-50'
+                  }`}
+                >
+                  Akkoord als {soort}
+                </button>
+              ))}
               <button
                 type="button"
                 disabled={bezig}
