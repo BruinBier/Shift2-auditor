@@ -260,7 +260,11 @@ async function createFinding(projectId: string, flags: Flags) {
     criterionId: requireFlag(flags, 'criterion'),
     description: requireFlag(flags, 'description'),
     advice: requireFlag(flags, 'advice'),
-    status: flags.status || 'open',
+    // Standaard een voorstel: deze CLI wordt door agents gebruikt, en wat een
+    // agent vindt hoort langs de onderzoeker voordat het meetelt. Wie bewust een
+    // bevinding wil aanmaken geeft --status=open mee.
+    // Zie docs/adr/0001-akkoord-als-poort.md.
+    status: flags.status || 'voorstel',
   };
   if (flags.impact) body.impact = flags.impact;
   if (flags.responsibility) body.responsibility = flags.responsibility;

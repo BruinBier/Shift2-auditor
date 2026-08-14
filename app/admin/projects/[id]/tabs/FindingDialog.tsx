@@ -246,7 +246,19 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
     }
   };
 
-  const handleSubmit = async () => {
+  /**
+   * `alsVoorstel` slaat op als voorstel in plaats van als bevinding.
+   *
+   * Wat je hier invult is geen grondstof: je kiest het criterium, schrijft de
+   * tekst volgens de schrijfregels en zet impact en verantwoordelijkheid. Alle
+   * oordelen die de poort zou vragen heb je dan al geveld, dus standaard slaat
+   * "Opslaan" gewoon een bevinding op — een verplichte goedkeuring van je eigen
+   * werk is een loze klik, en dat soort klikken leert iedereen wegdrukken.
+   *
+   * De uitzondering is dat je iets snel noteert om later uit te werken. Daar is
+   * deze knop voor: vrijwillig, niet verplicht. Zie docs/adr/0001-akkoord-als-poort.md.
+   */
+  const handleSubmit = async (alsVoorstel = false) => {
     // Validate required fields
     if (!formData.description || formData.description.trim() === '') {
       alert('Beschrijving is verplicht');
@@ -317,7 +329,7 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
         criterionId: formData.criterionId,
         description: formData.description,
         advice: formData.advice,
-        status: formData.status,
+        status: alsVoorstel ? 'voorstel' : formData.status,
         type: formData.type,
         evidence: evidenceData.length > 0 ? JSON.stringify(evidenceData) : null,
         responsibility: isOpmerking ? null : formData.responsibility,
@@ -691,10 +703,20 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                       const type = e.target.value;
                       // Een opmerking is geen afkeuring, dus die krijgt status
                       // 'resolved' en geen impact of verantwoordelijkheid.
+                      //
+                      // Maar niet vóór de poort: een voorstel of een afwijzing
+                      // houdt zijn status. Zonder deze uitzondering ging een
+                      // voorstel dat je hier even van type wisselde zonder
+                      // akkoord door de poort — of sprong het meteen naar
+                      // 'resolved'. Akkoord geven doe je in "Waar sta ik".
+                      const voorDePoort =
+                        formData.status === 'voorstel' || formData.status === 'afgewezen';
                       setFormData({
                         ...formData,
                         type,
-                        status: type === 'opmerking' ? 'resolved' : 'open',
+                        ...(voorDePoort
+                          ? {}
+                          : { status: type === 'opmerking' ? 'resolved' : 'open' }),
                       });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -928,12 +950,27 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-start gap-2">
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={isSaving}
             className="modal-save-button px-6 py-2 bg-[#1f0036] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? 'Opslaan...' : 'Opslaan'}
           </button>
+          {/* Voor wie iets snel noteert om later uit te werken: dan telt het nog
+              nergens mee en komt het in "Waar sta ik" op de stapel te liggen.
+              Alleen bij een nieuwe bevinding — een bestaande terugzetten naar
+              voorstel zou een goedkeuring ongedaan maken. */}
+          {!editingFinding && (
+            <button
+              type="button"
+              onClick={() => handleSubmit(true)}
+              disabled={isSaving}
+              title="Nog niet af? Dan telt het nergens mee tot je het goedkeurt."
+              className="px-6 py-2 bg-white text-purple-800 rounded-lg border border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-50"
+            >
+              Opslaan als voorstel
+            </button>
+          )}
           <button
             type="button"
             className="px-6 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
