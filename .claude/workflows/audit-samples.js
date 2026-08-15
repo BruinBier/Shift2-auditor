@@ -378,16 +378,28 @@ const AUDIT_SCHEMA = {
           code: { type: 'string', enum: requiredCodes },
           status: { type: 'string', enum: STATUS_ENUM },
           reden: { type: 'string' },
-          // Alleen invullen bij 'afgekeurd' of 'opmerking'.
-          voorstelBevinding: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['description', 'advice'],
-            properties: {
-              description: { type: 'string' },
-              advice: { type: 'string' },
-              impact: { type: 'string' },
-              responsibility: { type: 'string' },
+          /**
+           * Alleen invullen bij 'afgekeurd' of 'opmerking'. Een lijst, want één
+           * criterium kan op één pagina meerdere losse punten opleveren — de
+           * Shift2-regels schrijven dat soms zelfs voor. Bij 2.4.4 op de homepage
+           * bijvoorbeeld: de sociale-media-links missen de organisatienaam
+           * (afkeuring), én het eerste icoon toont het X-logo terwijl de naam nog
+           * "twitter" zegt (opmerking). Met één voorstel per criterium moest de
+           * auditor het tweede punt in de reden kwijt, waar niemand het oppakt.
+           */
+          voorstellen: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['type', 'description', 'advice'],
+              properties: {
+                type: { type: 'string', enum: ['bevinding', 'opmerking'] },
+                description: { type: 'string' },
+                advice: { type: 'string' },
+                impact: { type: 'string' },
+                responsibility: { type: 'string' },
+              },
             },
           },
         },
@@ -498,10 +510,21 @@ afkeuring op iets dat je niet hebt kunnen bedienen.
 
 STATUS per criterium:
   voldoet          — geen probleem gevonden
-  afgekeurd        — echte WCAG-fout; vul voorstelBevinding (description + advice)
-  opmerking        — je hebt VASTGESTELD wat er aan de hand is, en het is geen echte WCAG-fout maar wel het benoemen waard; voorstelBevinding zonder impact/responsibility
+  afgekeurd        — echte WCAG-fout; vul voorstellen[]
+  opmerking        — je hebt VASTGESTELD wat er aan de hand is, en het is geen echte WCAG-fout maar wel het benoemen waard; vul voorstellen[] zonder impact/responsibility
   niet_aanwezig    — het criterium is niet van toepassing op deze pagina
   niet_te_bepalen  — kan niet uit HTML/screenshot worden bepaald (bv. toetsenbord, reflow, contrast-check die interactie vereist)
+
+MEERDERE PUNTEN OP ÉÉN CRITERIUM MAG. \`voorstellen\` is een lijst. Vind je op deze
+pagina twee losse zaken onder hetzelfde criterium, zet ze er dan allebei in, elk met
+een eigen \`type\` ('bevinding' of 'opmerking'). Propt ze NIET samen in één tekst en
+schrijf het tweede punt niet weg in 'reden' — daar pakt niemand het op.
+Voorbeeld: bij 2.4.4 kunnen de sociale-media-links de organisatienaam missen (bevinding)
+terwijl daarnaast het eerste icoon het X-logo toont met "twitter" als naam (opmerking).
+De Shift2-regels schrijven zo'n splitsing soms zelfs expliciet voor.
+De \`status\` van het criterium is de zwaarste van je voorstellen: staat er één
+'bevinding' tussen, dan is de status 'afgekeurd'; zijn het alleen opmerkingen, dan
+'opmerking'.
 
 TWIJFEL IS GEEN OPMERKING. Een opmerking is een oordeel dat je hebt kunnen vellen;
 'niet_te_bepalen' is de status voor wat je niet kúnt vaststellen. Gebruik 'opmerking'
@@ -511,7 +534,7 @@ Drie tekenen dat je 'niet_te_bepalen' bedoelt en geen opmerking:
   - je eindigt de reden met een vraag aan de onderzoeker
   - je oordeel hangt af van iets dat je niet hebt gezien: een schermlezer, toetsenbord,
     zoom, of een interactie die je niet kunt uitvoeren
-In die gevallen: zet 'niet_te_bepalen', LAAT voorstelBevinding leeg, en schrijf in 'reden'
+In die gevallen: zet 'niet_te_bepalen', LAAT voorstellen leeg, en schrijf in 'reden'
 de concrete vraag die de onderzoeker in de browser moet beantwoorden. Een voorstel én een
 vraag tegelijk aanleveren is tegenstrijdig: de onderzoeker kan dan niet beoordelen zonder
 eerst zelf te kijken, en dan had het geen voorstel moeten zijn.
@@ -523,7 +546,7 @@ UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags
   dus zet 1.3.2 op 'niet_te_bepalen' met die reden. Je stelt geen fout vast op iets dat zonder tags niet
   bestaat om te checken. (Dit geldt specifiek voor niet-getagde PDF's, niet als algemene regel voor webpagina's.)
 
-SCHRIJFREGELS voor voorstelBevinding.description (belangrijk):
+SCHRIJFREGELS voor elke voorstellen[].description (belangrijk):
   - Begin NIET met de URL. Start met "Op de pagina..." / "In de footer...".
   - Kort en concreet: locatie, kernprobleem, effect voor de gebruiker. Meestal 3 zinnen.
   - Geen em-dash (—) of en-dash (–). Splits in losse zinnen of gebruik een komma.
@@ -549,7 +572,17 @@ Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requi
       if (a.status === 'niet_te_bepalen' || a.status === 'niet_aanwezig') continue
       a.reden = `[automatisch op niet_te_bepalen gezet: ${a.code} vereist een browsertest] ${a.reden || ''}`.trim()
       a.status = 'niet_te_bepalen'
-      a.voorstelBevinding = null
+      a.voorstellen = []
+    }
+
+    // Vangnet 2: de status hoort de zwaarste van de voorstellen te zijn. Zet de
+    // auditor 'opmerking' terwijl er een bevinding tussen staat, dan zou die
+    // bevinding het criterium niet afkeuren.
+    for (const a of audit.assessments) {
+      const lijst = a.voorstellen || []
+      if (!lijst.length) continue
+      const zwaarste = lijst.some((v) => v.type === 'bevinding') ? 'afgekeurd' : 'opmerking'
+      if (a.status === 'afgekeurd' || a.status === 'opmerking') a.status = zwaarste
     }
     const teControleren = audit.assessments.filter(
       (a) => a.status === 'afgekeurd' || a.status === 'opmerking',
@@ -619,7 +652,13 @@ Geef per code terug of het bevestigd is (bevestigd=true/false), een korte toelic
       `Bepaal per afgekeurd criterium of er AL een passende QuickFinding bestaat in de bibliotheek, zodat we geen duplicaat aanmaken.
 
 AFKEURINGEN/OPMERKINGEN voor sample "${sample.title}":
-${JSON.stringify(relevante.map((a) => ({ code: a.code, description: a.voorstelBevinding?.description })), null, 2)}
+${JSON.stringify(
+  relevante.flatMap((a) =>
+    (a.voorstellen || []).map((v) => ({ code: a.code, type: v.type, description: v.description })),
+  ),
+  null,
+  2,
+)}
 
 DE QUICKFINDING-BIBLIOTHEEK staat in \`${context.quickFindingsPad}\` (${context.aantalQuickFindings} stuks, JSON-array met id, title, criterionCode, description). Lees hem zelf; hij staat bewust niet in deze prompt.
 
@@ -658,7 +697,7 @@ const rapport = clean.map((row) => {
       bestaandeBevindingCode: bestaandeCode || null,
       geverifieerd: v ? v.bevestigd : null,
       verificatie: v?.toelichting || null,
-      voorstelBevinding: a.voorstelBevinding || null,
+      voorstellen: a.voorstellen || [],
       bestaandeQuickFinding: qf?.bestaatAl ? { id: qf.quickFindingId, title: qf.quickFindingTitle } : null,
       quickFindingToelichting: qf?.toelichting || null,
     }
@@ -701,12 +740,26 @@ if (!drooglopen) {
 
       // Alleen wat nieuw is wordt een voorstel; bestaat er al een bevinding op
       // deze combinatie, dan zou een tweede een duplicaat zijn.
-      const nieuweVoorstellen = row.assessments.filter(
-        (a) =>
-          (a.status === 'afgekeurd' || a.status === 'opmerking') &&
-          a.nieuwOfBestaand === 'nieuw' &&
-          a.voorstelBevinding,
-      )
+      // Vlak uit: één criterium kan meerdere voorstellen opleveren, elk met een
+      // eigen type. Ze worden hieronder ook als losse voorstellen aangemaakt.
+      const nieuweVoorstellen = row.assessments
+        .filter(
+          (a) =>
+            (a.status === 'afgekeurd' || a.status === 'opmerking') &&
+            a.nieuwOfBestaand === 'nieuw' &&
+            (a.voorstellen || []).length,
+        )
+        .flatMap((a) =>
+          a.voorstellen.map((v) => ({
+            code: a.code,
+            type: v.type,
+            description: v.description,
+            advice: v.advice,
+            impact: v.type === 'opmerking' ? null : v.impact,
+            responsibility: v.type === 'opmerking' ? null : v.responsibility,
+            bestaandeQuickFinding: a.bestaandeQuickFinding?.title || null,
+          })),
+        )
 
       const oordelen = row.assessments.map((a) => ({
         sampleItemId: sampleId,
@@ -732,31 +785,20 @@ STAP 2 — de afkeuringen als voorstel.
 ${
   nieuweVoorstellen.length === 0
     ? 'Er zijn geen nieuwe afkeuringen of opmerkingen op dit sample. Sla deze stap over.'
-    : `Maak per punt hieronder een voorstel aan met:
+    : `Maak per punt hieronder een APART voorstel aan met:
 
   npm run cli -- create-finding ${projectId} --criterion=<criteriumId> --description="..." --advice="..." --status=voorstel --sample-items=${sampleId} [--impact=...] [--responsibility=...]
 
 Let op:
+  - Er staan ${nieuweVoorstellen.length} punten in de lijst; maak er dus ${nieuweVoorstellen.length} aan. Staan er twee onder hetzelfde criterium, dan zijn dat twee losse voorstellen — voeg ze NIET samen.
   - --status=voorstel is verplicht. Een voorstel telt nergens mee tot de onderzoeker akkoord geeft; maak dus GEEN bevinding met status open.
-  - Bij een afkeuring geef je ZOWEL --impact als --responsibility mee; de auditor heeft die bepaald en ze staan hieronder. Zonder responsibility klaagt de schrijfregel-linter, en moet de onderzoeker het alsnog met de hand invullen.
-  - Bij een opmerking laat je --impact en --responsibility allebei weg; die heeft geen ernst en geen adressant.
+  - Bij type 'bevinding' geef je ZOWEL --impact als --responsibility mee; de auditor heeft die bepaald en ze staan hieronder. Zonder responsibility klaagt de schrijfregel-linter, en moet de onderzoeker het alsnog met de hand invullen.
+  - Bij type 'opmerking' laat je --impact en --responsibility allebei weg; die heeft geen ernst en geen adressant.
   - Het criteriumId haal je uit \`npm run cli -- list-criteria\` (niet de code, de id).
   - Gebruik --skip-lint NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens wcag-regels/Shift2_Schrijfregels.md en probeer opnieuw.
 
 DE PUNTEN:
-${JSON.stringify(
-  nieuweVoorstellen.map((a) => ({
-    code: a.code,
-    status: a.status,
-    description: a.voorstelBevinding?.description,
-    advice: a.voorstelBevinding?.advice,
-    impact: a.status === 'opmerking' ? null : a.voorstelBevinding?.impact,
-    responsibility: a.status === 'opmerking' ? null : a.voorstelBevinding?.responsibility,
-    bestaandeQuickFinding: a.bestaandeQuickFinding?.title || null,
-  })),
-  null,
-  1,
-)}`
+${JSON.stringify(nieuweVoorstellen, null, 1)}`
 }
 
 Geef terug hoeveel oordelen zijn weggeschreven, hoeveel voorstellen zijn aangemaakt met welke codes, en wat er eventueel misging.`,
