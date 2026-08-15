@@ -68,6 +68,27 @@ Aanleiding: 1.1.1 op heuvelrug.nl (2026-08-15). De onderbouwing begon met "alle
 img-elementen op de pagina nagelopen" en beschreef vervolgens alleen de header en de
 hero. Of de footer was bekeken viel niet na te gaan.
 
+## Bij "niet aanwezig": noem wat je hebt gezocht
+
+Een leeg resultaat en een mislukte zoekactie zien er in een onderbouwing precies
+hetzelfde uit. "Er staat geen video op deze pagina" is niet te toetsen; "gezocht op
+video, audio, iframe, embed en object, en op ingesloten spelers van YouTube, Vimeo en
+Bright — geen van alle aanwezig" wel.
+
+Noem daarom de elementen en patronen die je hebt afgezocht, en maak dat rijtje volledig
+voor het criterium. Laat je er een weg, dan is dat precies het gat waar het volgende
+geval in valt.
+
+**Controleer je zoekactie op iets waarvan je wéét dat het er is.** Draait er een script
+of een zoekopdracht onder, test die dan eerst op een patroon dat zeker voorkomt. Komt
+daar ook nul uit, dan is niet de pagina leeg maar je gereedschap stuk.
+
+Aanleiding: 1.2.1 op heuvelrug.nl (2026-08-15). Een controle op video, audio, iframe,
+embed, object en source gaf zes keurige nullen — maar de gebruikte reguliere expressie
+was kapot, zodat alles nul gaf. De uitkomst klopte toevallig; het bewijs was waardeloos.
+Een tweede, werkende controle liet zien dat er zeven `source`-elementen zijn (in
+`picture`, voor responsieve afbeeldingen — geen media in de zin van 1.2.1).
+
 ## Hoe je de main-content afbakent
 
 Neem het `<main>`-element, of als dat ontbreekt het gebied tussen de sitebrede navigatie en
