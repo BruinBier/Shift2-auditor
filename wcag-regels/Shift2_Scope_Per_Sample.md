@@ -30,6 +30,44 @@ gelden impliciet voor de hele website.
 - Kom je op een vervolgpagina toch iets in header of footer tegen: niet rapporteren. Hoort
   het bij de homepage, dan hoort het daar thuis.
 
+## Eerst vaststellen: is dit de homepage?
+
+Doe dit vóór het eerste criterium, niet onderweg. Je hoeft het niet te onthouden of te
+raden — `npm run cli -- get-html` zegt het in elk antwoord:
+
+| | `homepageDetected` | `scope` | Wat je terugkrijgt |
+|---|---|---|---|
+| Homepage | `true` | `document` | de hele pagina, inclusief header en footer |
+| Elk ander sample | `false` | `main` | alleen de main-content |
+
+Op een vervolgpagina krijg je de footer dus niet eens terug. Staat er `scope: "main"` en
+schrijf je toch iets over de header of de footer, dan heb je materiaal gebruikt dat je
+niet is aangereikt — controleer dan waar die bewering vandaan komt.
+
+Andersom net zo belangrijk: staat er `homepageDetected: true`, dan hoort de footer bij je
+beoordeling en mag je hem niet overslaan.
+
+## Verantwoord in de onderbouwing wat je hebt nagelopen
+
+Noem de gebieden afzonderlijk. Op het homepage-sample zijn dat er drie: header,
+main-content en footer. Op elk ander sample schrijf je expliciet dat header en footer
+buiten beschouwing blijven, zodat een lezer ziet dat het bewust is overgeslagen en niet
+vergeten.
+
+Schrijf nooit "alle afbeeldingen nagelopen" of "de hele pagina bekeken" en vervolgens
+alleen wat er bovenaan staat. Dan is niet te toetsen of de onderkant werkelijk is
+bekeken, en juist daar zitten de sociale-media-icoontjes, de externe-link-markeringen
+en soms logo's van samenwerkingspartners.
+
+**Maak op de homepage een full-page screenshot, geen viewport-opname.** Een
+viewport-opname toont alleen het eerste scherm; de footer staat er niet op. Wie daarop
+beoordeelt mist de onderkant zonder het te merken, en de onderbouwing beweert dan iets
+wat niet is gedaan.
+
+Aanleiding: 1.1.1 op heuvelrug.nl (2026-08-15). De onderbouwing begon met "alle
+img-elementen op de pagina nagelopen" en beschreef vervolgens alleen de header en de
+hero. Of de footer was bekeken viel niet na te gaan.
+
 ## Hoe je de main-content afbakent
 
 Neem het `<main>`-element, of als dat ontbreekt het gebied tussen de sitebrede navigatie en

@@ -39,6 +39,8 @@ interface Huisregels {
   bestandsnaam: string;
   regels: string | null;
   schrijfregels: string | null;
+  /** Welk deel van de pagina bij dit sample hoort. Bepaalt of de footer meetelt. */
+  scope: string | null;
 }
 
 /**
@@ -199,6 +201,16 @@ function bespreekBlok(opties: {
     r.push(
       `Voor ${code} bestaat nog geen regelbestand. Als we het eens worden, is dat het eerste.`
     );
+  }
+
+  // Zonder de scoperegel is niet te beoordelen of de footer meetelt, en dat verandert
+  // per sample: op de homepage wel, daarbuiten niet. Die werd wel opgehaald maar niet
+  // meegestuurd, waardoor een assistent dat zelf moest verzinnen.
+  if (huisregels?.scope) {
+    r.push('');
+    r.push('## Welk deel van de pagina hoort bij dit sample');
+    r.push('');
+    r.push(huisregels.scope.trim());
   }
 
   if (huisregels?.schrijfregels) {
