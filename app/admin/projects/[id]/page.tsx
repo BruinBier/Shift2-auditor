@@ -40,6 +40,14 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
           wcagCriterion: true,
         },
       },
+      // De ruwe observaties van de onderzoeker, voor het "Waar sta ik"-scherm.
+      waarnemingen: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          sampleItem: { select: { id: true, title: true } },
+          finding: { select: { id: true, findingCode: true, status: true } },
+        },
+      },
       findings: {
         include: {
           wcagCriterion: true,

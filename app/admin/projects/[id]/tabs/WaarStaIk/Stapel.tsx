@@ -402,14 +402,14 @@ export default function Stapel({
             >
               Niet van toepassing
             </button>
-            {/* Zag je wél iets, dan hoort daar een bevinding bij. Die schrijf je in
-                het bevindingenformulier; de vraag blijft tot zolang openstaan, want
-                een afkeuring zonder onderbouwing is precies wat we niet willen. */}
+            {/* Zag je wél iets, noteer het dan als waarneming: ruw, in je eigen
+                woorden. De vraag blijft openstaan tot je hem beantwoordt — een
+                afkeuring zonder onderbouwing is precies wat de poort voorkomt. */}
             <a
-              href={`/admin/projects/${projectId}?tab=bevindingen`}
+              href={`?tab=stand&weergave=waarnemingen&sample=${huidig.cel.sampleId}`}
               className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
             >
-              Ik zie iets — bevinding schrijven
+              Ik zie iets — noteren
             </a>
           </div>
 

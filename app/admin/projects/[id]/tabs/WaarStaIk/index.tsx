@@ -18,6 +18,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { bouwStand } from './gegevens';
 import Matrix from './Matrix';
 import Stapel from './Stapel';
+import Waarnemingen from './Waarnemingen';
 
 export default function WaarStaIk({
   project,
@@ -32,6 +33,18 @@ export default function WaarStaIk({
 
   const stand = useMemo(() => bouwStand(project, allCriteria), [project, allCriteria]);
   const focus = searchParams.get('focus');
+  const weergave = searchParams.get('weergave');
+
+  const waarnemingen: any[] = project?.waarnemingen ?? [];
+  const openWaarnemingen = waarnemingen.filter((w) => w.status === 'open').length;
+
+  const zetWeergave = (nieuw: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nieuw) params.set('weergave', nieuw);
+    else params.delete('weergave');
+    params.delete('focus');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const zetFocus = (nieuw: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -62,6 +75,22 @@ export default function WaarStaIk({
             {totalen.onbeoordeeld} combinaties nog niet beoordeeld
           </span>
         )}
+        <button
+          type="button"
+          onClick={() => zetWeergave(weergave === 'waarnemingen' ? null : 'waarnemingen')}
+          className={`ml-auto rounded px-3 py-1.5 text-sm font-medium ${
+            weergave === 'waarnemingen'
+              ? 'bg-gray-900 text-white'
+              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {weergave === 'waarnemingen' ? 'Terug naar de matrix' : 'Ik zie iets'}
+          {openWaarnemingen > 0 && weergave !== 'waarnemingen' && (
+            <span className="ml-2 rounded bg-amber-100 px-1.5 text-xs text-amber-800">
+              {openWaarnemingen}
+            </span>
+          )}
+        </button>
       </div>
 
       {totalen.onbeoordeeld === totalen.samples * totalen.criteria && (
@@ -72,7 +101,14 @@ export default function WaarStaIk({
         </div>
       )}
 
-      {focus ? (
+      {weergave === 'waarnemingen' ? (
+        <Waarnemingen
+          projectId={project.id}
+          samples={stand.samples}
+          waarnemingen={waarnemingen}
+          standaardSampleId={searchParams.get('sample')}
+        />
+      ) : focus ? (
         <Stapel
           stand={stand}
           focus={focus}
