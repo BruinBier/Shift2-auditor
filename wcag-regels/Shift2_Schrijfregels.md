@@ -38,7 +38,15 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   homepage"). De gekoppelde sample-items tonen de rest al.
 - **Geen andere criteria erin mengen.** Een verwant probleem dat onder een ander
   succescriterium valt, krijgt een eigen bevinding.
-- **Niet dezelfde zaak twee keer uitleggen** in andere woorden.
+- **Niet dezelfde zaak twee keer uitleggen** in andere woorden. Het komt er bijna altijd
+  zo in: eerst vanuit de software, dan vanuit de gebruiker. "Hulpsoftware kondigt geen
+  lijst aan en noemt het aantal items niet, zodat wie de pagina laat voorlezen niet hoort
+  dat het om een opsomming gaat en hoeveel er zijn" is één feit in twee jassen. Kies de
+  kant van de gebruiker; die staat toch al voorgeschreven als derde zin.
+- **Geen bewijsvoering in de bevinding.** Wat je hebt nagekeken en wat in orde was, hoort
+  in de onderbouwing van het oordeel, niet in de bevinding. "De eerste en derde
+  footerkolom doen dit wel goed" zegt de lezer van het rapport niets over het probleem dat
+  hij moet oplossen.
 - **Geen overbodige uitleg over hoe WCAG werkt.**
 
 ## Toon en formulering
