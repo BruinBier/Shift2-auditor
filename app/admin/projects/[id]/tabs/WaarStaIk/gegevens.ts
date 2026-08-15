@@ -23,6 +23,8 @@ export interface Sample {
   id: string;
   title: string;
   type: string;
+  /** Leeg bij een PDF-sample. Gaat mee in het besprekingsblok. */
+  url: string | null;
 }
 
 export interface Criterion {
@@ -99,6 +101,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     id: s.id,
     title: s.title,
     type: s.sampleType,
+    url: s.url ?? null,
   }));
 
   const criteria: Criterion[] = (allCriteria ?? []).map((c: any) => ({
