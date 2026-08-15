@@ -72,6 +72,11 @@ const CONTEXT_SCHEMA = {
     // De match-agent leest het bestand zelf en filtert op criteriumcode.
     quickFindingsPad: { type: 'string' },
     aantalQuickFindings: { type: 'number' },
+    // De SC-codes waarvoor in wcag-regels/ een Shift2_Regels-bestand staat, en de
+    // codes met een grensgevallen-bestand in wcag-checklists/. Uitgelezen in
+    // plaats van vast in dit script, zodat een nieuwe regel meteen meetelt.
+    regelbestanden: { type: 'array', items: { type: 'string' } },
+    grensgevallen: { type: 'array', items: { type: 'string' } },
     // Bestaande bevindingen in het project — puur om in het eindrapport
     // afkeuringen te labelen als 'nieuw' of 'bestaat_al'. De auditors zien
     // deze NIET (verse audit).
@@ -149,6 +154,13 @@ Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het sche
    a) \`existingFindings\`: alles met status 'open', 'published' of 'resolved'. Geef per bevinding terug: findingCode, criterion (de code, bv. "1.3.1"), sampleItemIds (de id's uit occurrences[].sampleItem.id of occurrences[].sampleItemId), en de eerste ~150 tekens van description. Deze worden NIET aan de auditors getoond; ze dienen alleen om later te labelen wat nieuw is.
 
    b) \`afwijzingen\`: alles met status 'afgewezen'. Geef per stuk terug: criterion (de code), reden (het veld \`afwijzingsreden\`) en de eerste ~120 tekens van description. Deze worden de auditors WEL getoond, zodat ze een eerder verworpen vondst niet opnieuw voorstellen. Sla er een over als \`afwijzingsreden\` leeg is; zonder reden valt er niets van te leren.
+
+5. Welke Shift2-regelbestanden en grensgevallen-bestanden er zijn. Lees de mappen uit; typ geen lijst uit je hoofd over:
+   \`\`\`
+   ls wcag-regels/ | grep '^Shift2_Regels_SC_'
+   ls wcag-checklists/ | grep '^Richtlijnen_Grensgevallen_SC_'
+   \`\`\`
+   Zet de SC-codes in \`regelbestanden\` respectievelijk \`grensgevallen\`, met punten in plaats van underscores: \`Shift2_Regels_SC_3_3_2.md\` wordt "3.3.2". Neem ALLE gevonden bestanden op — deze lijst bepaalt waar de auditors naar verwezen worden, en een regel die hier ontbreekt wordt door niemand gelezen.
 
 Geef puur de verzamelde data terug. Verzin niets; laat een lege array als iets niet bestaat.`,
   { label: 'scout:context', phase: 'Voorbereiden', schema: CONTEXT_SCHEMA },
@@ -267,13 +279,24 @@ const INTERACTIEVE_SC = {
   '2.1.2': 'Kun je met Tab door {pagina} navigeren en bevestigen dat je nergens vast komt te zitten (modals, custom dropdowns, embeds)?',
 }
 
-// Criteria waarvoor een Shift2_Regels-bestand in wcag-regels/ bestaat. Puur om de
-// auditor gericht te verwijzen; ontbreekt een code hier, dan is er (nog) geen
-// regelbestand en beoordeelt de auditor op checklist + WCAG-tekst.
-const SC_MET_REGELBESTAND = [
+/**
+ * Criteria waarvoor een Shift2_Regels-bestand bestaat, zoals de scout ze in
+ * wcag-regels/ heeft aangetroffen.
+ *
+ * Dit stond eerder als vaste lijst in dit script. Dat is een stille val: schrijf
+ * je een nieuwe regel en vergeet je de code hier toe te voegen, dan lezen de
+ * agents hem nooit en merk je dat niet — het oordeel ziet er gewoon uit. Het
+ * script zelf kan de map niet uitlezen (geen bestandssysteem), dus de scout doet
+ * het en geeft de lijst terug. De vaste lijst blijft als terugval, voor het geval
+ * de scout er niet bij kan.
+ */
+const REGELS_TERUGVAL = [
   '1.1.1', '1.2.3', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.5',
   '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '4.1.2',
 ]
+const SC_MET_REGELBESTAND = Array.isArray(context.regelbestanden) && context.regelbestanden.length
+  ? context.regelbestanden
+  : REGELS_TERUGVAL
 
 // Vaste, gesorteerde SC-lijst die aan ELKE auditor wordt meegegeven.
 const scList = context.criteria
@@ -287,7 +310,10 @@ const interactieveCodes = requiredCodes.filter((code) => INTERACTIEVE_SC[code])
 // Per criterium de te lezen bronbestanden. De agents lezen ze zelf met hun Read-tool;
 // samen zijn ze honderden KB's, dus inplakken kan niet en is ook niet nodig.
 // Grensgevallen-bestanden bestaan alleen voor een handvol SC's.
-const GRENSGEVALLEN = ['1.1.1', '1.3.1', '2.4.4', '2.4.6']
+const GRENSGEVALLEN =
+  Array.isArray(context.grensgevallen) && context.grensgevallen.length
+    ? context.grensgevallen
+    : ['1.1.1', '1.3.1', '2.4.4', '2.4.6']
 const slug = (code) => code.replace(/\./g, '_')
 const bronnenLijst = requiredCodes
   .map((code) => {
