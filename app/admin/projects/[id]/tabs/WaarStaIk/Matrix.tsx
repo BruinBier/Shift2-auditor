@@ -172,7 +172,13 @@ export default function Matrix({
             </button>
           </div>
 
-          {stand.werkVoorKolom(gekozen.sampleId) > 0 && (
+          {/* Alleen als er op DIT vakje werk ligt. Eerder keek dit naar de hele
+              kolom, waardoor de knop ook verscheen bij een criterium dat allang
+              was afgehandeld — dan suggereert hij werk dat er niet is. */}
+          {(gekozen.status === 'niet_te_bepalen' ||
+            stand.voorstellen.some(
+              (v) => v.sampleId === gekozen.sampleId && v.code === gekozen.code,
+            )) && (
             <button
               type="button"
               onClick={() => openStapel(`cel:${gekozen.sampleId}:${gekozen.code}`)}
@@ -189,8 +195,16 @@ export default function Matrix({
             </div>
           )}
 
+          {/* De onderbouwing van de auditor, niet de rapporttekst. Die staat
+              hieronder bij de bevinding. Zonder dit onderscheid lijkt het alsof
+              dit de tekst is die de opdrachtgever straks leest. */}
           {gekozen.status !== 'niet_te_bepalen' && gekozen.reden && (
-            <p className="mb-3 text-sm text-gray-700">{gekozen.reden}</p>
+            <div className="mb-3">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                Onderbouwing van het oordeel
+              </p>
+              <p className="whitespace-pre-line text-sm text-gray-700">{gekozen.reden}</p>
+            </div>
           )}
 
           {gekozen.status === null && (
