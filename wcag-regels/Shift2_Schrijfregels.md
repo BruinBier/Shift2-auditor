@@ -72,6 +72,10 @@ communicatiemedewerkers.
 | node | element |
 | tekstbeschrijving | **tekstalternatief** |
 | "beschrijft wat er in de afbeelding staat" | "brengt de informatie over" |
+| pipe-teken, pipe | **verticale streepje (|)** |
+| bullet, bulletpoint | opsommingsteken |
+| whitespace | witruimte |
+| string | tekst |
 
 HTML-elementnamen (`strong`, `em`, `h1`, `ul`, `li`, `th`) mogen wel genoemd worden, maar
 inline in de lopende tekst, niet als los codeblok.
