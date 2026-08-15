@@ -96,3 +96,13 @@ In het tekstalternatief staat de AFZENDER, niet de bestemming van de link. Dus "
 TESTMETHODE: start een auditsessie en bekijk de gerenderde pagina. Uit de opgehaalde code alleen zie je niet of een afbeelding een logo is: een bestandsnaam met "logo" erin zegt niets, en een logo zonder dat woord in de naam mis je. Je moet de afbeelding gezien hebben om te weten wat erin staat en hoe het tekstalternatief moet luiden.
 
 Aanleiding: heuvelrug.nl (2026-08-15), logo met alt="" in de header. Besluit van Frits tijdens het doorlopen van 1.1.1 op Home.
+
+### 2026-08-15
+
+Twee regels over wat een leeg tekstalternatief goedpraat, en wat niet.
+
+- TEASERFOTO MET alt="" IS ALLEEN GOED IN EEN OVERZICHT. De uitzondering hangt aan de context: in een nieuws- of productoverzicht dragen de titel-link en de teasertekst de betekenis al. Staat dezelfde foto op een detailpagina of los in de lopende tekst, dan geldt de uitzondering niet en is een leeg tekstalternatief een afkeuring. Noteer in de onderbouwing dat het om een overzicht gaat — anders is niet na te gaan waarop de uitzondering steunde.
+
+- ICOON MET aria-hidden: CONTROLEER OF DE BETEKENIS ERGENS ANDERS LANDT. Dat er tekst naast staat is niet genoeg, en aria-hidden is op zichzelf geen fout. Kijk naar twee dingen: draagt de tekst ernaast alles wat het icoon overbrengt, of zit er een omhulsel omheen dat het icoon zelf benoemt (`role="img"` met een `aria-label`)? Is een van beide waar, dan is het goed. Verbergt het icoon iets wat nergens landt — een PDF-icoontje naast "Jaarverslag", een pijl naar buiten bij een externe link, een vinkje dat een status aangeeft, een vlag voor een taal — dan is het een afkeuring, want die informatie valt weg. Voorbeeld van een goede opbouw: heuvelrug.nl zet het externe-link-icoontje in een `<span role="img" aria-label="externe link">` met het glyph eronder op aria-hidden. Schrijf in de onderbouwing wát de betekenis draagt, niet dát er tekst stond.
+
+Aanleiding: 1.1.1 op Home (heuvelrug.nl, 2026-08-15). Bij het nalopen van de onderbouwing bleek dat de auditor de teaser-uitzondering had toegepast zonder de overzichtscontext te noemen, en dat "hebben altijd tekst naast zich" als afdoende was opgeschreven zonder die tekst inhoudelijk te controleren.

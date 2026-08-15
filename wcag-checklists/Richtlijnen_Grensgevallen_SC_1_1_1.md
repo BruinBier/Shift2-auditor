@@ -46,7 +46,9 @@
 | Logo in link, `alt="Gemeente Wierden"`, `title="Naar de homepagina"` op de link | PASS | PASS |
 | Logo in link, `alt=""` | FAIL — logo is informatief | n.v.t. (geen accessible name → F89) |
 | Logo niet in link, `alt="Gemeente Wierden"` | PASS | n.v.t. |
-| Logo in link samen met zichtbare tekst "Home" | PASS (`alt=""` mag) | PASS |
+| Logo in link samen met zichtbare tekst "Home" | FAIL — een logo krijgt altijd een alt | PASS |
+
+**Shift2-huisregel, strenger dan WCAG:** een logo krijgt áltijd een tekstalternatief, ongeacht wat voor logo het is en ongeacht welke tekst er naast of elders op de pagina staat. Een leeg tekstalternatief is bij een logo dus altijd een afkeuring. Zoek niet naar de organisatienaam in de footer, de paginatitel of de lopende tekst: dat maakt voor het oordeel niets uit. Het tekstalternatief bevat alle tekst die op het logo staat. Zie `wcag-regels/Shift2_Regels_SC_1_1_1.md`.
 
 ---
 
