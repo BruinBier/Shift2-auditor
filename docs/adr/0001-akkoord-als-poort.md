@@ -123,9 +123,20 @@ apart uitgefilterd moet worden. Precies die fout zat al in de rapportberekening,
 waar `open` en `published` per ongeluk gelijk werden behandeld. Als waarde in
 `FindingStatus` is de poort onmogelijk te vergeten.
 
-**Afwijzingen verwijderen.** Afgevallen omdat de duplicaatcontrole in
-`audit-samples` tegen bestaande bevindingen kijkt. Een verwijderd voorstel staat
-daar niet tussen, dus dezelfde onterechte vondst zou elke run terugkomen.
+**Afwijzingen verwijderen.** Afgevallen omdat een verwijderd voorstel niets
+nalaat: dezelfde onterechte vondst komt dan elke ronde terug.
+
+Bewaren alleen was daar overigens niet genoeg voor. De auditors in
+`audit-samples` zien de bestaande bevindingen bewust **niet** — een agent die de
+vorige ronde voor zich heeft, praat die na in plaats van opnieuw te kijken. De
+afwijzingen worden hun daarom apart aangeboden, gegroepeerd per criterium en met
+de reden erbij. Dat is negatieve kennis ("hier is naar gekeken en het is verworpen
+omdat X"), en die lokt geen napraten uit; ze voorkomt dat dezelfde discussie elke
+ronde terugkomt. De verifier krijgt dezelfde lijst als tweede vangnet.
+
+Komt een afwijzing vaker terug, dan hoort ze thuis in een Shift2-regel onder
+`wcag-regels/`. Daar is ze pas echt geleerd: die regels zijn bindend en gaan voor
+de checklist en voor het WCAG-geheugen van het model.
 
 **Alleen een "nagekeken"-vlag per sample.** Afgevallen omdat dat een bewering is
 zonder onderbouwing. De workflow berekent de sampleoordelen al; ze werden alleen

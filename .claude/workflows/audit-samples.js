@@ -89,6 +89,24 @@ const CONTEXT_SCHEMA = {
         },
       },
     },
+    // Eerder afgewezen voorstellen. Deze worden de auditors WEL getoond, anders
+    // dan de bevindingen. Een afwijzing is negatieve kennis — "hier hebben we
+    // naar gekeken en besloten dat het geen bevinding is, omdat X" — en die lokt
+    // geen napraten uit; ze voorkomt juist dat dezelfde discussie elke ronde
+    // terugkomt. Zie docs/adr/0001-akkoord-als-poort.md.
+    afwijzingen: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['criterion', 'reden'],
+        properties: {
+          criterion: { type: 'string' },
+          reden: { type: 'string' },
+          description: { type: 'string' },
+        },
+      },
+    },
   },
 }
 
@@ -126,7 +144,11 @@ Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het sche
    \`\`\`
    Maak de map \`tmp/\` zo nodig eerst aan. Geef in het schema \`quickFindingsPad\` = "tmp/qf-bibliotheek.json" en \`aantalQuickFindings\` = het getal dat het commando print. Controleer dat het bestand bestaat en dat het aantal klopt; de inhoud hoef je niet te lezen of terug te geven.
 
-4. \`curl -s "http://localhost:3000/api/projects/${projectId}/findings"\` — de BESTAANDE bevindingen. Geef per bevinding terug: findingCode, criterion (de code, bv. "1.3.1"), sampleItemIds (de id's uit occurrences[].sampleItem.id of occurrences[].sampleItemId), en de eerste ~150 tekens van description. Deze worden NIET aan de auditors getoond; ze dienen alleen om later te labelen wat nieuw is.
+4. \`curl -s "http://localhost:3000/api/projects/${projectId}/findings"\` — de BESTAANDE bevindingen. Splits die response in tweeën:
+
+   a) \`existingFindings\`: alles met status 'open', 'published' of 'resolved'. Geef per bevinding terug: findingCode, criterion (de code, bv. "1.3.1"), sampleItemIds (de id's uit occurrences[].sampleItem.id of occurrences[].sampleItemId), en de eerste ~150 tekens van description. Deze worden NIET aan de auditors getoond; ze dienen alleen om later te labelen wat nieuw is.
+
+   b) \`afwijzingen\`: alles met status 'afgewezen'. Geef per stuk terug: criterion (de code), reden (het veld \`afwijzingsreden\`) en de eerste ~120 tekens van description. Deze worden de auditors WEL getoond, zodat ze een eerder verworpen vondst niet opnieuw voorstellen. Sla er een over als \`afwijzingsreden\` leeg is; zonder reden valt er niets van te leren.
 
 Geef puur de verzamelde data terug. Verzin niets; laat een lege array als iets niet bestaat.`,
   { label: 'scout:context', phase: 'Voorbereiden', schema: CONTEXT_SCHEMA },
@@ -222,7 +244,7 @@ if (!homepageSample) {
   log(`Homepage-sample: "${homepageSample.title}". Daar worden header, main en footer beoordeeld; bij de overige samples alleen de main-content.`)
 }
 
-log(`${teAuditen.length} van ${htmlSamples.length} HTML-samples × ${context.criteria.length} criteria (onderzoekstype: ${context.researchTypeName}). ${overgeslagen.length} niet-HTML samples overgeslagen. ${context.existingFindings?.length || 0} bestaande bevindingen als referentie. QuickFinding-bibliotheek: ${context.aantalQuickFindings || 0} stuks in ${context.quickFindingsPad || '(geen pad)'}.`)
+log(`${teAuditen.length} van ${htmlSamples.length} HTML-samples × ${context.criteria.length} criteria (onderzoekstype: ${context.researchTypeName}). ${overgeslagen.length} niet-HTML samples overgeslagen. ${context.existingFindings?.length || 0} bestaande bevindingen als referentie (auditors zien die niet). ${context.afwijzingen?.length || 0} eerdere afwijzingen — die krijgen de auditors wel te zien. QuickFinding-bibliotheek: ${context.aantalQuickFindings || 0} stuks in ${context.quickFindingsPad || '(geen pad)'}.`)
 
 // ---------------------------------------------------------------------------
 // SC-MANIFEST — welke criteria een browsertest vereisen, en met welke vraag.
@@ -300,6 +322,28 @@ ${bronnenLijst}
 
 Bestaat een bestand niet, beoordeel dan op de WCAG-tekst en vermeld dat in 'reden'.
 Het Shift2-regelbestand bevat precies de correcties die eerder op audits zijn gegeven: hoe een randgeval beoordeeld hoort te worden, welke formuleringen vastliggen en wanneer iets juist GEEN bevinding is. Sla het niet over.\n`
+
+// Eerder afgewezen voorstellen, gegroepeerd per criterium. Dit is het enige wat
+// de auditors van vorige rondes te zien krijgen: geen bevindingen (die zouden ze
+// napraten in plaats van opnieuw kijken), wel de oordelen die de onderzoeker
+// heeft verworpen en waarom.
+const afwijzingenPerCode = new Map()
+for (const a of context.afwijzingen || []) {
+  if (!a.criterion || !a.reden) continue
+  if (!afwijzingenPerCode.has(a.criterion)) afwijzingenPerCode.set(a.criterion, [])
+  afwijzingenPerCode.get(a.criterion).push(a)
+}
+
+const afwijzingenSectie = afwijzingenPerCode.size
+  ? `\n\nEERDER AFGEWEZEN OP DIT PROJECT — ${afwijzingenPerCode.size} criteria
+De onderzoeker heeft deze vondsten al eens beoordeeld en verworpen. Stel ze niet opnieuw voor tenzij je iets ziet dat wezenlijk anders is dan wat hier staat; leg in dat geval in 'reden' uit waarin het verschilt.
+${[...afwijzingenPerCode.entries()]
+  .map(
+    ([code, lijst]) =>
+      `  ${code}:\n${lijst.map((a) => `    - afgewezen omdat: ${a.reden}${a.description ? ` (ging over: ${a.description})` : ''}`).join('\n')}`,
+  )
+  .join('\n')}\n`
+  : ''
 
 const interactieveSectie = interactieveCodes.length
   ? `\n\nINTERACTIEVE CRITERIA — ${interactieveCodes.join(', ')}
@@ -441,7 +485,7 @@ Een leeg tekstalternatief (alt="") betekent NIET dat een afbeelding decoratief i
 Gebruik de screenshot ook om te toetsen of wat je in de HTML ziet daadwerkelijk zichtbaar is, en of visuele volgorde en codevolgorde overeenkomen.
 
 TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
-${scList}${bronnenSectie}${interactieveSectie}
+${scList}${bronnenSectie}${afwijzingenSectie}${interactieveSectie}
 \`get-html\` geeft een veld \`gehydrateerd\` terug. Normaal staat dat op true: de CLI haalt
 de pagina met een echte browser op, dus de JavaScript van de site draait.
 
@@ -530,7 +574,16 @@ Lees daarnaast \`wcag-regels/Shift2_Schrijfregels.md\` en toets elke description
 
 Weerleg een oordeel expliciet als het in strijd is met een Shift2-regel. Typische gevallen: een afkeuring op een telefoonnummer- of e-maillink onder 2.4.4, een afkeuring op een teaser-afbeelding met alt="", of een afkeuring waar de regels een opmerking voorschrijven (zet dan gecorrigeerdeStatus op 'opmerking').
 
-WEERLEG OOK ELKE TWIJFEL DIE ALS OPMERKING IS VERPAKT. Een opmerking is een oordeel dat de auditor heeft kunnen vellen; onzekerheid hoort op 'niet_te_bepalen'. Zie je in de beschrijving of de reden woorden als "mogelijk", "waarschijnlijk", "lijkt erop" of "vermoedelijk", of eindigt de reden met een vraag aan de onderzoeker, of hangt het oordeel af van een schermlezer, toetsenbord of zoom die de auditor niet heeft gebruikt — zet gecorrigeerdeStatus dan op 'niet_te_bepalen' met als toelichting welke vraag er nog openstaat. Een voorstel en een vraag tegelijk is tegenstrijdig: de onderzoeker kan zo niet beoordelen zonder eerst zelf te kijken.
+${
+  afwijzingenPerCode.size
+    ? `WEERLEG WAT AL EENS IS AFGEWEZEN. De onderzoeker heeft op dit project eerder vondsten verworpen; die staan hieronder met de reden. Komt een oordeel daarop neer, zet gecorrigeerdeStatus dan op 'voldoet' en verwijs naar de eerdere afwijzing — tenzij de auditor aantoonbaar iets anders beschrijft.
+${[...afwijzingenPerCode.entries()]
+        .map(([code, lijst]) => `  ${code}: ${lijst.map((a) => a.reden).join(' | ')}`)
+        .join('\n')}
+
+`
+    : ''
+}WEERLEG OOK ELKE TWIJFEL DIE ALS OPMERKING IS VERPAKT. Een opmerking is een oordeel dat de auditor heeft kunnen vellen; onzekerheid hoort op 'niet_te_bepalen'. Zie je in de beschrijving of de reden woorden als "mogelijk", "waarschijnlijk", "lijkt erop" of "vermoedelijk", of eindigt de reden met een vraag aan de onderzoeker, of hangt het oordeel af van een schermlezer, toetsenbord of zoom die de auditor niet heeft gebruikt — zet gecorrigeerdeStatus dan op 'niet_te_bepalen' met als toelichting welke vraag er nog openstaat. Een voorstel en een vraag tegelijk is tegenstrijdig: de onderzoeker kan zo niet beoordelen zonder eerst zelf te kijken.
 
 LET OP bij een niet-getagde PDF: weerleg een afkeuring van 1.3.2 (leesvolgorde). Zonder tags is er geen programmatische leesvolgorde om te toetsen, dus dat hoort 'niet_te_bepalen' te zijn, niet afgekeurd. De ontbrekende tag-structuur wordt al onder 1.3.1 afgekeurd; keur het gevolg niet apart af.
 
