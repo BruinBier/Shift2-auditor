@@ -132,10 +132,18 @@ function bespreekBlok(opties: {
   );
   r.push('');
   r.push('Leg me je redenering gewoon uit — daar wil ik op kunnen reageren. Zet de');
-  r.push('uitkomst daarna in dit blok, want dat lees ik machinaal terug in mijn');
-  r.push('auditsysteem. Laat weg wat niet verandert.');
+  r.push('uitkomst daarna in twee losse blokken, want die lees ik machinaal terug in');
+  r.push('mijn auditsysteem. Ze gaan elk naar een andere plek, dus houd ze gescheiden:');
+  r.push('de regel geldt voor alle volgende audits, de tekst alleen voor dit geval.');
+  r.push('Laat weg wat niet verandert.');
   r.push('');
-  r.push('```uitkomst');
+  r.push('```regel');
+  r.push('De regel die dit vastlegt voor de volgende keer, in lopende tekst.');
+  r.push('Schrijf hem zo dat hij ook geldt voor een andere website en een');
+  r.push('andere auditor. Noem de aanleiding niet — die voeg ik zelf toe.');
+  r.push('```');
+  r.push('');
+  r.push('```tekst');
   r.push('bezwaar: terecht | onterecht');
   r.push('status: voldoet | afgekeurd | opmerking | niet_aanwezig | niet_te_bepalen');
   r.push('voorstel: behouden | herschrijven | afwijzen');
@@ -143,7 +151,6 @@ function bespreekBlok(opties: {
   r.push('impact: klein | matig | serieus | kritiek');
   r.push('bevinding: de herschreven bevindingstekst (mag over meer regels)');
   r.push('advies: het herschreven advies');
-  r.push('regel: de regel die dit vastlegt voor de volgende keer');
   r.push('```');
   r.push('');
   r.push('## De zaak');
@@ -320,8 +327,27 @@ function laatDoorlopen(tekst: string): string {
  *
  * Wat er niet in staat, verandert niet. Zo kun je ook alleen een regel terugsturen.
  */
+/**
+ * Leest het regelveld.
+ *
+ * Vrije tekst mag: wat je in dat veld plakt ís de regel. Staat er toch een
+ * `regel:`-sleutel of een omheining omheen, dan wordt die eraf gehaald — je zult
+ * nu eenmaal soms het hele antwoord in het verkeerde vak plakken.
+ */
+export function leesRegel(tekst: string): string | null {
+  const omheind = tekst.match(/```(?:regel|uitkomst)?\s*\n([\s\S]*?)```/);
+  let body = (omheind ? omheind[1] : tekst).trim();
+
+  const metSleutel = body.match(/^\s*regel\s*:\s*([\s\S]*)$/i);
+  if (metSleutel) body = metSleutel[1].trim();
+
+  // De sjabloontekst uit het blok, ongewijzigd teruggeplakt.
+  if (!body || body.startsWith('De regel die dit vastlegt')) return null;
+  return laatDoorlopen(body);
+}
+
 export function leesUitkomst(tekst: string): Uitkomst | null {
-  const omheind = tekst.match(/```(?:uitkomst)?\s*\n([\s\S]*?)```/);
+  const omheind = tekst.match(/```(?:tekst|uitkomst)?\s*\n([\s\S]*?)```/);
   const body = omheind ? omheind[1] : tekst;
 
   const uit: Record<string, string[]> = {};
@@ -390,6 +416,8 @@ export default function Stapel({
   const [gekopieerd, setGekopieerd] = useState(false);
   /** Wat er uit het overleg terugkomt, en wat ermee gebeurd is. */
   const [uitkomstTekst, setUitkomstTekst] = useState('');
+  /** Het regelspoor apart, want het gaat naar een andere plek dan de tekst. */
+  const [regelInvoer, setRegelInvoer] = useState('');
   const [gedaan, setGedaan] = useState<string[] | null>(null);
   /** Vooraf opgehaald, zodat de klik zelf niets meer hoeft af te wachten. */
   const [huisregels, setHuisregels] = useState<Huisregels | null>(null);
@@ -723,6 +751,7 @@ export default function Stapel({
 
       setGedaan(stappen);
       setUitkomstTekst('');
+      setRegelInvoer('');
       // Paneel dicht: wat je hierna wilt is de nieuwe tekst lezen en beslissen, en
       // dat staat op de kaart eronder. Bleef het paneel open, dan moest je eerst een
       // knop "Terug" vinden voor je kon zien wat je zojuist had vastgelegd.
@@ -825,32 +854,58 @@ export default function Stapel({
       {/* De terugweg. Zonder deze helft eindigt elk overleg in overtypen, en komt
           de regel alleen in wcag-regels/ als iemand daar met een editor bij kan. */}
       <div className="mt-4 border-t border-blue-200 pt-3">
-        <label className="mb-1 block text-sm font-medium text-gray-800">
-          En terug: plak hier de uitkomst
-        </label>
-        <p className="mb-2 text-xs text-gray-600">
-          Het <code className="rounded bg-white px-1">uitkomst</code>-blok uit het
-          antwoord. De rest van het gesprek mag je weglaten — plakken van alles werkt
-          ook, ik pak er het blok uit.
+        <p className="mb-1 text-sm font-medium text-gray-800">En terug: de uitkomst</p>
+        <p className="mb-3 text-xs text-gray-600">
+          Twee sporen, twee bestemmingen. De regel gaat naar{' '}
+          <code className="rounded bg-white px-1">wcag-regels/</code> en geldt voor alle
+          volgende audits; de tekst gaat naar deze ene bevinding.
         </p>
-        <textarea
-          value={uitkomstTekst}
-          onChange={(e) => {
-            setUitkomstTekst(e.target.value);
-            setGedaan(null);
-          }}
-          rows={5}
-          className="w-full rounded border border-gray-300 p-2 font-mono text-xs"
-          placeholder={'```uitkomst\nbezwaar: terecht\n…\n```'}
-        />
+
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium text-gray-700">
+            De regel — voor de volgende keer
+          </label>
+          <textarea
+            value={regelInvoer}
+            onChange={(e) => {
+              setRegelInvoer(e.target.value);
+              setGedaan(null);
+            }}
+            rows={4}
+            className="w-full rounded border border-gray-300 p-2 text-xs"
+            placeholder="Plak hier het regel-blok. Gewone tekst mag ook — wat hier staat, wordt de regel."
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">
+            De tekst — voor deze bevinding
+          </label>
+          <textarea
+            value={uitkomstTekst}
+            onChange={(e) => {
+              setUitkomstTekst(e.target.value);
+              setGedaan(null);
+            }}
+            rows={5}
+            className="w-full rounded border border-gray-300 p-2 font-mono text-xs"
+            placeholder={'```tekst\nstatus: afgekeurd\nbevinding: …\nadvies: …\n```'}
+          />
+        </div>
 
         {(() => {
-          const uitkomst = uitkomstTekst.trim() ? leesUitkomst(uitkomstTekst) : null;
-          if (uitkomstTekst.trim() && !uitkomst) {
+          const uitTekst = uitkomstTekst.trim() ? leesUitkomst(uitkomstTekst) : null;
+          const regel = regelInvoer.trim() ? leesRegel(regelInvoer) : null;
+          // Het regelveld wint: staat de regel in beide vakken, dan telt het vak dat
+          // ervoor bedoeld is.
+          const uitkomst: Uitkomst | null =
+            uitTekst || regel ? { ...(uitTekst ?? {}), ...(regel ? { regel } : {}) } : null;
+
+          if ((uitkomstTekst.trim() || regelInvoer.trim()) && !uitkomst) {
             return (
               <p className="mt-2 text-xs text-amber-800">
-                Hier kan ik geen uitkomst in vinden. Staan de regels er als{' '}
-                <code>sleutel: waarde</code> in?
+                Hier kan ik geen uitkomst in vinden. In het tekstvak horen regels als{' '}
+                <code>sleutel: waarde</code>; in het regelvak mag gewone tekst.
               </p>
             );
           }
