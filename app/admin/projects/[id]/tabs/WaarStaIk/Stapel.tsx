@@ -666,6 +666,12 @@ export default function Stapel({
         stappen.push(
           `Regel toegevoegd aan ${j.bestandsnaam}${j.nieuwBestand ? ' (nieuw bestand)' : ''}`
         );
+        // De opgeslagen huisregels zijn nu verouderd. Zonder dit weggooien zou een
+        // volgende ronde overleg vertrekken met een briefing waarin de regel van
+        // zojuist ontbreekt — en dan stelt de assistent hem doodleuk nog een keer
+        // voor. Juist bij het slijpen van een bevinding, waar je een paar rondes
+        // doet, is dat het verschil tussen bijleren en rondjes draaien.
+        setHuisregels(null);
       }
 
       for (const v of ctx.voorstellen) {
@@ -1091,9 +1097,15 @@ export default function Stapel({
           {positie + 1} van <strong className="text-gray-900">{stapel.length}</strong>
         </span>
         <div className="flex gap-2">
+          {/* Bij het wisselen van kaart moet de melding van de vorige weg: die gaat
+              over een andere bevinding en zou hier iets beweren dat niet is gebeurd. */}
           <button
             type="button"
-            onClick={() => setIndex((i) => Math.max(0, i - 1))}
+            onClick={() => {
+              setIndex((i) => Math.max(0, i - 1));
+              setGedaan(null);
+              setFout(null);
+            }}
             disabled={positie === 0}
             className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
           >
@@ -1101,7 +1113,11 @@ export default function Stapel({
           </button>
           <button
             type="button"
-            onClick={() => setIndex((i) => Math.min(stapel.length - 1, i + 1))}
+            onClick={() => {
+              setIndex((i) => Math.min(stapel.length - 1, i + 1));
+              setGedaan(null);
+              setFout(null);
+            }}
             disabled={positie >= stapel.length - 1}
             className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
           >
