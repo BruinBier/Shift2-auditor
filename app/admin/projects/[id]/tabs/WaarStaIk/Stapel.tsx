@@ -297,6 +297,14 @@ export default function Stapel({
                     {b.impact ? ` · ${b.impact}` : ''}
                   </p>
                   <p className="whitespace-pre-line text-gray-800">{b.description}</p>
+                  {/* Het advies hoort erbij: een terechte bevinding met een
+                      onbruikbaar advies is nog steeds niet goed. */}
+                  {b.advice && (
+                    <div className="mt-2 border-t border-gray-200 pt-2">
+                      <p className="mb-0.5 text-xs font-medium text-gray-500">Advies</p>
+                      <p className="whitespace-pre-line text-gray-700">{b.advice}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
