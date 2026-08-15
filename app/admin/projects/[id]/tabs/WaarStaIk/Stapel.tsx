@@ -70,7 +70,15 @@ function bespreekBlok(opties: {
     opties;
   const r: string[] = [];
 
-  r.push(`# Bezwaar tegen een auditoordeel — WCAG ${code} op ${sample?.title ?? 'een pagina'}`);
+  // De eerste regel wordt de naam van het gesprek: chatdiensten titelen een gesprek
+  // naar het eerste bericht. Vandaar de bevindingcode vooraan — dan vind je het
+  // gesprek later terug tussen twintig andere.
+  const codes = voorstellen.map((v) => v.findingCode).filter(Boolean);
+  r.push(
+    `# Bezwaar ${codes.length ? `${codes.join(' en ')} — ` : ''}WCAG ${code} op ${
+      sample?.title ?? 'een pagina'
+    }`
+  );
   r.push('');
   r.push(
     'Ik voer een WCAG 2.2-toegankelijkheidsonderzoek uit. Een geautomatiseerde auditor heeft'
@@ -158,6 +166,38 @@ function bespreekBlok(opties: {
   }
 
   return r.join('\n');
+}
+
+/**
+ * Waar je het overleg voert. Geen voorkeur van het systeem: de lijst staat hier
+ * zodat je hem kunt uitbreiden, en het blok werkt overal hetzelfde.
+ *
+ * Het blok gaat via het klembord, niet via de URL — 17 KB past niet in een
+ * adresbalk. De dienst opent dus leeg en jij plakt. De naam van het gesprek komt
+ * van de eerste regel van het blok, want daar titelen chatdiensten op.
+ */
+const DIENSTEN: { naam: string; url: string }[] = [
+  { naam: 'Claude', url: 'https://claude.ai/new' },
+  { naam: 'ChatGPT', url: 'https://chatgpt.com/' },
+  { naam: 'Gemini', url: 'https://gemini.google.com/app' },
+];
+
+const DIENST_SLEUTEL = 'shift2:overleg-dienst';
+
+function onthoudDienst(naam: string) {
+  try {
+    window.localStorage.setItem(DIENST_SLEUTEL, naam);
+  } catch {
+    // Opslag geweigerd; dan onthouden we het gewoon niet.
+  }
+}
+
+function laatsteDienst(): string | null {
+  try {
+    return window.localStorage.getItem(DIENST_SLEUTEL);
+  } catch {
+    return null;
+  }
 }
 
 export interface Uitkomst {
@@ -270,8 +310,16 @@ export default function Stapel({
    * chatvenster zonder toegang tot deze repository. Lukt dat ophalen niet, dan gaat
    * het blok alsnog mee — zonder regels is het minder waard, maar niet waardeloos.
    */
-  const bespreek = async (code: string, bouw: (h: Huisregels | null) => string) => {
+  const bespreek = async (
+    code: string,
+    bouw: (h: Huisregels | null) => string,
+    dienst?: { naam: string; url: string }
+  ) => {
     setBezig(true);
+    // Het tabblad moet nú open, in de klikafhandelaar zelf. Openen we het na het
+    // ophalen van de huisregels, dan is de klik voorbij en houdt de popupblokkering
+    // het tegen.
+    const venster = dienst ? window.open('', '_blank') : null;
     try {
       let huisregels: Huisregels | null = null;
       try {
@@ -292,6 +340,14 @@ export default function Stapel({
         // Dan maar zichtbaar, zodat je het zelf kunt selecteren.
         setBlok(tekst);
       }
+
+      if (venster) {
+        venster.location.href = dienst!.url;
+        onthoudDienst(dienst!.naam);
+      }
+    } catch (e) {
+      venster?.close();
+      throw e;
     } finally {
       setBezig(false);
     }
@@ -604,14 +660,32 @@ export default function Stapel({
         className="w-full rounded border border-gray-300 p-2 text-sm"
         placeholder="Je bezwaar in je eigen woorden"
       />
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-sm text-gray-700">Kopieer en open in:</span>
+        {DIENSTEN.map((d) => (
+          <button
+            key={d.naam}
+            type="button"
+            disabled={bezig}
+            onClick={() => bespreek(code, bouw, d)}
+            className={`rounded px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${
+              d.naam === (laatsteDienst() ?? 'Claude')
+                ? 'bg-blue-700 text-white hover:bg-blue-800'
+                : 'border border-blue-300 text-blue-900 hover:bg-blue-100'
+            }`}
+          >
+            {d.naam}
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           type="button"
           disabled={bezig}
           onClick={() => bespreek(code, bouw)}
-          className="rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+          className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
         >
-          {gekopieerd ? 'Gekopieerd — plak het in je AI' : 'Kopieer voor overleg'}
+          {gekopieerd ? 'Gekopieerd' : 'Alleen kopiëren'}
         </button>
         <button
           type="button"
@@ -626,9 +700,14 @@ export default function Stapel({
         </button>
       </div>
       <p className="mt-2 text-xs text-gray-600">
-        Je krijgt de zaak én de huisregels mee, zodat elke assistent ermee uit de voeten
-        kan. Er wordt niets opgeslagen; de taak blijft op de stapel staan tot jullie eruit
-        zijn.
+        Het nieuwe gesprek opent leeg — plak het blok er met Ctrl+V in. Het krijgt dan
+        vanzelf de naam{' '}
+        <strong>
+          Bezwaar{' '}
+          {ctx.voorstellen.map((v) => v.findingCode).filter(Boolean).join(' en ') ||
+            `WCAG ${code}`}
+        </strong>
+        . Je krijgt de zaak én de huisregels mee; er wordt niets opgeslagen.
       </p>
       {blok && (
         <textarea
