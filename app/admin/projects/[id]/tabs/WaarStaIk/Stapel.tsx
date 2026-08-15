@@ -78,11 +78,27 @@ export default function Stapel({
   const beantwoord = async (
     cel: Cel,
     status: 'voldoet' | 'afgekeurd' | 'opmerking' | 'niet_aanwezig' | 'niet_te_bepalen',
-    opties: { behoudReden?: boolean; bron?: string } = {}
+    opties: { behoudReden?: boolean; bron?: string; ookVoorstellen?: Voorstel[] } = {}
   ) => {
     setBezig(true);
     setFout(null);
     try {
+      // Wachtende voorstellen op deze cel gaan mee: op de oordeelkaart staat hun
+      // tekst en advies al, dus wie hier "Klopt" zegt heeft ze beoordeeld. Ze
+      // eerst afhandelen, zodat een mislukking niet leidt tot een bevestigd
+      // oordeel met een voorstel dat blijft hangen.
+      for (const v of opties.ookVoorstellen ?? []) {
+        const res = await fetch(`/api/projects/${projectId}/findings/${v.id}/beoordeling`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actie: 'akkoord', type: v.type }),
+        });
+        if (!res.ok) {
+          const f = await res.json().catch(() => ({}));
+          throw new Error(f.error || `Goedkeuren van ${v.findingCode ?? 'voorstel'} mislukte`);
+        }
+      }
+
       const res = await fetch(`/api/projects/${projectId}/criterion-checks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,12 +169,20 @@ export default function Stapel({
     };
 
     const vragen = stand.cellen.filter((c) => c.status === 'niet_te_bepalen' && past(c));
-    const voorstellen = stand.voorstellen.filter(past);
     // Oordelen die de agent heeft geveld maar die nog geen akkoord hebben. Zonder
     // deze stap komt een agent-oordeel ongezien in het rapport terecht.
     const oordelen = stand.cellen.filter(
       (c) =>
         c.status !== null && c.status !== 'niet_te_bepalen' && c.akkoord !== 'akkoord' && past(c)
+    );
+
+    // Hangt er een onbevestigd oordeel boven een voorstel, dan wordt dat voorstel
+    // op de oordeelkaart afgehandeld: daar staat de onderbouwing, de bevindingtekst
+    // en het advies al bij elkaar. Een losse voorstelkaart zou hetzelfde nog eens
+    // vragen.
+    const opOordeelkaart = new Set(oordelen.map((c) => `${c.sampleId}|${c.code}`));
+    const voorstellen = stand.voorstellen.filter(
+      (v) => past(v) && !opOordeelkaart.has(`${v.sampleId}|${v.code}`)
     );
 
     const alles: Taak[] = [
@@ -203,6 +227,15 @@ export default function Stapel({
 
   const positie = Math.min(index, Math.max(stapel.length - 1, 0));
   const huidig = stapel[positie];
+
+  // De voorstellen die op deze cel wachten. Die staan op de oordeelkaart en gaan
+  // mee met "Klopt" — een losse kaart zou hetzelfde nog eens vragen.
+  const wachtendeVoorstellen =
+    huidig?.soort === 'oordeel'
+      ? stand.voorstellen.filter(
+          (v) => v.sampleId === huidig.cel.sampleId && v.code === huidig.cel.code
+        )
+      : [];
 
   const balk = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white">
@@ -288,6 +321,31 @@ export default function Stapel({
             {huidig.cel.reden ?? '(geen onderbouwing gegeven)'}
           </p>
 
+          {wachtendeVoorstellen.length > 0 && (
+            <div className="mb-4 space-y-2 rounded border border-purple-200 bg-purple-50 p-3">
+              <p className="text-xs font-medium text-purple-900">
+                {wachtendeVoorstellen.length === 1
+                  ? 'Dit voorstel wacht op akkoord en wordt goedgekeurd als je "Klopt" kiest:'
+                  : `Deze ${wachtendeVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je "Klopt" kiest:`}
+              </p>
+              {wachtendeVoorstellen.map((v) => (
+                <div key={v.id} className="rounded bg-white p-3 text-sm">
+                  <p className="mb-1 text-xs text-gray-500">
+                    {v.findingCode} · {v.type}
+                    {v.impact ? ` · ${v.impact}` : ''}
+                  </p>
+                  <p className="whitespace-pre-line text-gray-800">{v.description}</p>
+                  {v.advice && (
+                    <div className="mt-2 border-t border-gray-200 pt-2">
+                      <p className="mb-0.5 text-xs font-medium text-gray-500">Advies</p>
+                      <p className="whitespace-pre-line text-gray-700">{v.advice}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {huidig.cel.bevindingen.length > 0 && (
             <div className="mb-4 space-y-2">
               {huidig.cel.bevindingen.map((b) => (
@@ -351,10 +409,18 @@ export default function Stapel({
               <button
                 type="button"
                 disabled={bezig}
-                onClick={() => beantwoord(huidig.cel, huidig.cel.status as any, { behoudReden: true, bron: huidig.cel.bron ?? 'workflow' })}
+                onClick={() =>
+                  beantwoord(huidig.cel, huidig.cel.status as any, {
+                    behoudReden: true,
+                    bron: huidig.cel.bron ?? 'workflow',
+                    ookVoorstellen: wachtendeVoorstellen,
+                  })
+                }
                 className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
               >
-                Klopt
+                {wachtendeVoorstellen.length > 0
+                  ? `Klopt — en keur ${wachtendeVoorstellen.length === 1 ? 'het voorstel' : 'de voorstellen'} goed`
+                  : 'Klopt'}
               </button>
               <button
                 type="button"

@@ -151,7 +151,8 @@ Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het sche
 
 4. \`curl -s "http://localhost:3000/api/projects/${projectId}/findings"\` — de BESTAANDE bevindingen. Splits die response in tweeën:
 
-   a) \`existingFindings\`: alles met status 'open', 'published' of 'resolved'. Geef per bevinding terug: findingCode, criterion (de code, bv. "1.3.1"), sampleItemIds (de id's uit occurrences[].sampleItem.id of occurrences[].sampleItemId), en de eerste ~150 tekens van description. Deze worden NIET aan de auditors getoond; ze dienen alleen om later te labelen wat nieuw is.
+   a) \`existingFindings\`: alles met status 'open', 'published', 'resolved' EN 'voorstel'. Geef per stuk terug: findingCode, criterion (de code, bv. "1.3.1"), sampleItemIds (de id's uit occurrences[].sampleItem.id of occurrences[].sampleItemId), en de eerste ~150 tekens van description. Deze worden NIET aan de auditors getoond; ze dienen alleen om later te labelen wat nieuw is.
+      Voorstellen horen hier nadrukkelijk bij: die wachten nog op akkoord, maar ze bestaan al. Laat je ze weg, dan stelt een tweede run dezelfde vondst nog een keer voor en krijgt de onderzoeker twee bijna gelijke voorstellen op zijn stapel.
 
    b) \`afwijzingen\`: alles met status 'afgewezen'. Geef per stuk terug: criterion (de code), reden (het veld \`afwijzingsreden\`) en de eerste ~120 tekens van description. Deze worden de auditors WEL getoond, zodat ze een eerder verworpen vondst niet opnieuw voorstellen. Sla er een over als \`afwijzingsreden\` leeg is; zonder reden valt er niets van te leren.
 
@@ -193,9 +194,10 @@ const htmlSamples = context.samples.filter(
 )
 const overgeslagen = context.samples.filter((s) => !htmlSamples.includes(s))
 
-// Index van bestaande bevindingen per sampleId → set van criteriumcodes,
-// zodat we straks 'nieuw' vs 'bestaat_al' kunnen labelen (verse audit — de
-// auditors zien dit niet).
+// Index van bestaande bevindingen per sampleId → set van criteriumcodes, zodat we
+// straks 'nieuw' vs 'bestaat_al' kunnen labelen (verse audit — de auditors zien
+// dit niet). Voorstellen tellen hier mee: die wachten nog op akkoord, maar ze
+// bestaan al, en zonder hen stelt een tweede run dezelfde vondst opnieuw voor.
 const bestaandeIndex = new Map() // sampleId -> Map(code -> findingCode)
 for (const f of context.existingFindings || []) {
   for (const sid of f.sampleItemIds || []) {
