@@ -8,7 +8,7 @@
  * over alle pagina's), een kolom (één pagina) of één cel.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Cel, Stand, Voorstel } from './gegevens';
 
@@ -35,9 +35,45 @@ const OMZETBAAR: { waarde: 'voldoet' | 'afgekeurd' | 'opmerking' | 'niet_aanwezi
 
 /** De huisregels die bij dit criterium horen, opgehaald zodat ze meekunnen. */
 interface Huisregels {
+  code: string;
   bestandsnaam: string;
   regels: string | null;
   schrijfregels: string | null;
+}
+
+/**
+ * Tekst naar het klembord, met een terugval.
+ *
+ * `navigator.clipboard` weigert zodra het document de focus kwijt is — en dat
+ * gebeurt precies als je een nieuw tabblad opent. Het oude recept (een tekstvak
+ * selecteren en execCommand) heeft die eis niet en vangt dat op.
+ *
+ * Geeft terug of het gelukt is, zodat de beller weet of hij het blok alsnog
+ * zichtbaar moet maken. Stilzwijgend mislukken is hier het ergste wat er kan
+ * gebeuren: je merkt het pas in het andere tabblad, als je niets kunt plakken.
+ */
+async function naarKlembord(tekst: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(tekst);
+    return true;
+  } catch {
+    // Door naar de terugval.
+  }
+  try {
+    const hulp = document.createElement('textarea');
+    hulp.value = tekst;
+    hulp.setAttribute('readonly', '');
+    hulp.style.position = 'fixed';
+    hulp.style.top = '0';
+    hulp.style.opacity = '0';
+    document.body.appendChild(hulp);
+    hulp.select();
+    const gelukt = document.execCommand('copy');
+    document.body.removeChild(hulp);
+    return gelukt;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -302,13 +338,20 @@ export default function Stapel({
   /** Wat er uit het overleg terugkomt, en wat ermee gebeurd is. */
   const [uitkomstTekst, setUitkomstTekst] = useState('');
   const [gedaan, setGedaan] = useState<string[] | null>(null);
+  /** Vooraf opgehaald, zodat de klik zelf niets meer hoeft af te wachten. */
+  const [huisregels, setHuisregels] = useState<Huisregels | null>(null);
 
   /**
-   * Bouwt het besprekingsblok en zet het op het klembord.
+   * Bouwt het besprekingsblok, zet het op het klembord en opent pas daarna de dienst.
    *
-   * De huisregels worden er eerst bij gehaald, zodat het blok ook werkt in een
-   * chatvenster zonder toegang tot deze repository. Lukt dat ophalen niet, dan gaat
-   * het blok alsnog mee — zonder regels is het minder waard, maar niet waardeloos.
+   * Die volgorde is het hele punt. Eerst openen leek logisch — dan is de klik nog
+   * vers en houdt de popupblokkering niets tegen — maar het nieuwe tabblad pakt de
+   * focus, en een document zonder focus mag niet naar het klembord schrijven. Het
+   * gesprek opende dan met een leeg klembord, en dat merk je pas als je plakt.
+   *
+   * De huisregels zijn al opgehaald toen het paneel openging, zodat hier niets meer
+   * te wachten valt: kopiëren en openen gebeuren ruim binnen de vijf seconden die
+   * een klik geldig blijft.
    */
   const bespreek = async (
     code: string,
@@ -316,38 +359,39 @@ export default function Stapel({
     dienst?: { naam: string; url: string }
   ) => {
     setBezig(true);
-    // Het tabblad moet nú open, in de klikafhandelaar zelf. Openen we het na het
-    // ophalen van de huisregels, dan is de klik voorbij en houdt de popupblokkering
-    // het tegen.
-    const venster = dienst ? window.open('', '_blank') : null;
     try {
-      let huisregels: Huisregels | null = null;
-      try {
-        const res = await fetch(`/api/wcag-regels?code=${encodeURIComponent(code)}`);
-        if (res.ok) huisregels = await res.json();
-      } catch {
-        // Netwerk weg; het blok gaat zonder regels mee.
+      let regels = huisregels?.code === code ? huisregels : null;
+      if (!regels) {
+        try {
+          const res = await fetch(`/api/wcag-regels?code=${encodeURIComponent(code)}`);
+          if (res.ok) {
+            regels = await res.json();
+            setHuisregels(regels);
+          }
+        } catch {
+          // Netwerk weg; het blok gaat zonder regels mee.
+        }
       }
 
-      const tekst = bouw(huisregels);
-      try {
-        await navigator.clipboard.writeText(tekst);
+      const tekst = bouw(regels);
+      const gelukt = await naarKlembord(tekst);
+
+      if (gelukt) {
         setGekopieerd(true);
         setBlok(null);
         setTimeout(() => setGekopieerd(false), 4000);
-      } catch {
-        // Klembord geweigerd (geen beveiligde context, of uitgezet in de browser).
-        // Dan maar zichtbaar, zodat je het zelf kunt selecteren.
+        if (dienst) {
+          window.open(dienst.url, '_blank');
+          onthoudDienst(dienst.naam);
+        }
+      } else {
+        // Niet de dienst openen: je zou daar met een leeg klembord aankomen. Het
+        // blok komt hier in beeld zodat je het zelf kunt selecteren.
         setBlok(tekst);
+        setFout(
+          'Kopiëren naar het klembord lukte niet. Selecteer het blok hieronder en kopieer het met Ctrl+C.'
+        );
       }
-
-      if (venster) {
-        venster.location.href = dienst!.url;
-        onthoudDienst(dienst!.naam);
-      }
-    } catch (e) {
-      venster?.close();
-      throw e;
     } finally {
       setBezig(false);
     }
@@ -840,6 +884,37 @@ export default function Stapel({
           (v) => v.sampleId === huidig.cel.sampleId && v.code === huidig.cel.code
         )
       : [];
+
+  const huidigeCode = huidig
+    ? huidig.soort === 'voorstel'
+      ? huidig.voorstel.code
+      : huidig.cel.code
+    : null;
+
+  /**
+   * De huisregels ophalen zodra het overlegpaneel opengaat.
+   *
+   * Deden we dit tijdens de klik, dan zat er een netwerkverzoek tussen de klik en
+   * het schrijven naar het klembord — en juist in dat gaatje gaat het mis met de
+   * focus en de popupblokkering. Nu is bij de klik alles al binnen.
+   */
+  useEffect(() => {
+    if (uitgang !== 'overleggen' || !huidigeCode) return;
+    if (huisregels?.code === huidigeCode) return;
+
+    let afgebroken = false;
+    fetch(`/api/wcag-regels?code=${encodeURIComponent(huidigeCode)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!afgebroken && j) setHuisregels(j);
+      })
+      .catch(() => {
+        // Zonder regels werkt het blok ook; dan valt bespreek() erop terug.
+      });
+    return () => {
+      afgebroken = true;
+    };
+  }, [uitgang, huidigeCode, huisregels]);
 
   const balk = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white">
