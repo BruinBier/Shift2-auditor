@@ -21,3 +21,20 @@ Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen
 - Video met VOLLEDIG ruimte voor audiodescriptie: kortere samenvatter-stijl die naar de 1.2.3-bevinding verwijst.
 - Video met HELEMAAL GEEN ruimte voor audiodescriptie: geen 1.2.5-bevinding nodig, het transcript onder 1.2.3 dekt het volledig.
 - Impact matig, responsibility redacteur, status open.
+
+## Alleen ingesloten media telt mee
+
+Media valt onder dit criterium wanneer de speler **op de pagina zelf is ingesloten**:
+een `<video>`, een `<audio>`, of een `<iframe>` naar YouTube of Vimeo binnen de
+beoordeelde pagina.
+
+Staat er alleen een **link** naar een video elders — bijvoorbeeld een tekstlink naar
+YouTube — dan is er op deze pagina geen media om te beoordelen. Zet het criterium dan op
+`niet_aanwezig` met als reden dat de video niet is ingesloten.
+
+Dat geldt ook als de video van de organisatie zelf is. De grens ligt bij het insluiten,
+niet bij het eigendom.
+
+Vastgelegd door Frits op 2026-08-15, naar aanleiding van heuvelrug.nl/archeologie: zes
+afleveringen van "Graven in het Groen" die uitsluitend als tekstlink naar YouTube zijn
+opgenomen.

@@ -21,3 +21,20 @@ Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen
 - Woordkeuze die vastligt: "beschrijft" niet "vertelt"; "is opgenomen" niet "wordt beschreven"; geen "namelijk" in de doelgroep-zin; "onder de video" niet "onder of naast de video".
 - Maximaal twee a drie voorbeelden met tijdstip. Geen lange opsomming.
 - Check eerst of de speler een transcript-knop heeft (zie 1.1.1). Is die er, dan is er een geldig alternatief.
+
+## Alleen ingesloten media telt mee
+
+Media valt onder dit criterium wanneer de speler **op de pagina zelf is ingesloten**:
+een `<video>`, een `<audio>`, of een `<iframe>` naar YouTube of Vimeo binnen de
+beoordeelde pagina.
+
+Staat er alleen een **link** naar een video elders — bijvoorbeeld een tekstlink naar
+YouTube — dan is er op deze pagina geen media om te beoordelen. Zet het criterium dan op
+`niet_aanwezig` met als reden dat de video niet is ingesloten.
+
+Dat geldt ook als de video van de organisatie zelf is. De grens ligt bij het insluiten,
+niet bij het eigendom.
+
+Vastgelegd door Frits op 2026-08-15, naar aanleiding van heuvelrug.nl/archeologie: zes
+afleveringen van "Graven in het Groen" die uitsluitend als tekstlink naar YouTube zijn
+opgenomen.
