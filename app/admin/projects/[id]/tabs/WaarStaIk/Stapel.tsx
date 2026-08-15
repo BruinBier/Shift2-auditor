@@ -283,6 +283,33 @@ function ontspring(regels: string[]): string[] {
 }
 
 /**
+ * Laat een alinea weer aaneenlopen.
+ *
+ * Een taalmodel breekt lopende tekst af op zo'n zeventig tekens. Die afbrekingen
+ * zitten in de tekst en blijven staan in het rapport, dat witruimte behoudt — dan
+ * loopt een bevinding rafelig af halverwege elke zin, op plekken die niets met de
+ * inhoud te maken hebben.
+ *
+ * Lege regels blijven alineagrenzen. Een opsommingsregel wordt niet aangeplakt, en
+ * een regel die eindigt op een dubbele punt houdt zijn afbreking: daar is de
+ * opmaak wel bedoeld.
+ */
+function laatDoorlopen(tekst: string): string {
+  return tekst
+    .split(/\n\s*\n/)
+    .map((alinea) => {
+      const regels = alinea.split('\n').map((r) => r.trim()).filter(Boolean);
+      return regels.reduce((samen, regel) => {
+        if (!samen) return regel;
+        const opsomming = /^([-*•]|\d+[.)])\s/.test(regel);
+        const naDubbelePunt = samen.endsWith(':');
+        return opsomming || naDubbelePunt ? `${samen}\n${regel}` : `${samen} ${regel}`;
+      }, '');
+    })
+    .join('\n\n');
+}
+
+/**
  * Leest het antwoordblok dat uit een overleg terugkomt.
  *
  * Vergevingsgezind met opzet: het komt uit een taalmodel, en een strikte lezer die
@@ -316,7 +343,9 @@ export function leesUitkomst(tekst: string): Uitkomst | null {
     const waarde = ontspring(regels).join('\n').trim();
     // De sjabloonregels uit het blok zelf, ongewijzigd teruggeplakt.
     if (!waarde || waarde.includes(' | ')) continue;
-    resultaat[k] = waarde;
+    // Alleen lopende tekst herstellen; de korte keuzewaarden hebben het niet nodig.
+    const lopend = k === 'bevinding' || k === 'advies' || k === 'regel';
+    resultaat[k] = lopend ? laatDoorlopen(waarde) : waarde;
   }
 
   return Object.keys(resultaat).length ? (resultaat as Uitkomst) : null;
@@ -694,6 +723,12 @@ export default function Stapel({
 
       setGedaan(stappen);
       setUitkomstTekst('');
+      // Paneel dicht: wat je hierna wilt is de nieuwe tekst lezen en beslissen, en
+      // dat staat op de kaart eronder. Bleef het paneel open, dan moest je eerst een
+      // knop "Terug" vinden voor je kon zien wat je zojuist had vastgelegd.
+      setUitgang(null);
+      setReden('');
+      setBlok(null);
       router.refresh();
     } catch (e: any) {
       setFout(`${e.message}${stappen.length ? ` — wel gelukt: ${stappen.join('; ')}` : ''}`);
@@ -888,17 +923,21 @@ export default function Stapel({
           );
         })()}
 
-        {gedaan && (
-          <div className="mt-3 rounded border border-green-300 bg-green-50 p-3">
-            <p className="mb-1 text-xs font-medium text-green-900">Verwerkt:</p>
-            <ul className="list-inside list-disc space-y-0.5 text-xs text-green-900">
-              {gedaan.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
+    </div>
+  );
+
+  /** Wat het laatste overleg heeft opgeleverd, op de kaart zelf. */
+  const verwerktMelding = gedaan && (
+    <div className="mb-3 rounded border border-green-300 bg-green-50 p-3">
+      <p className="mb-1 text-xs font-medium text-green-900">
+        Verwerkt — kijk hieronder na of het klopt en beslis dan:
+      </p>
+      <ul className="list-inside list-disc space-y-0.5 text-xs text-green-900">
+        {gedaan.map((s, i) => (
+          <li key={i}>{s}</li>
+        ))}
+      </ul>
     </div>
   );
 
@@ -1090,6 +1129,7 @@ export default function Stapel({
             </div>
           )}
 
+          {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
 
           {uitgang === 'corrigeren' ? (
@@ -1233,6 +1273,7 @@ export default function Stapel({
             </div>
           )}
 
+          {verwerktMelding}
           {fout && (
             <p className="mt-4 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>
           )}
@@ -1385,6 +1426,7 @@ export default function Stapel({
             {huidig.cel.reden ?? 'Dit criterium vergt een browsertest.'}
           </p>
 
+          {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
 
           <label className="mb-1 block text-sm font-medium text-gray-800">
