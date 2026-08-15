@@ -65,6 +65,15 @@ export interface Stand {
   voorstellen: Voorstel[];
   celVoor(sampleId: string, code: string): Cel | undefined;
   openVragenVoorSample(sampleId: string): Cel[];
+  /**
+   * Oordelen die nog geen akkoord van de onderzoeker hebben.
+   *
+   * De poort gold tot nu toe alleen voor bevindingen. Het oordeel zelf — dat een
+   * criterium op een pagina voldoet, is afgekeurd of niet aanwezig is — kwam
+   * rechtstreeks van de agent in de database zonder dat iemand ernaar keek.
+   * Zie de kolom `akkoord` op sample_criterion_checks.
+   */
+  teBeoordelenVoorSample(sampleId: string): Cel[];
   voorstellenVoorSample(sampleId: string): Voorstel[];
   werkVoorRij(code: string): number;
   werkVoorKolom(sampleId: string): number;
@@ -75,6 +84,7 @@ export interface Stand {
     samplesNagekeken: number;
     criteria: number;
     openVragen: number;
+    teBeoordelen: number;
     voorstellen: number;
     /** Combinaties die nog helemaal geen oordeel hebben. */
     onbeoordeeld: number;
@@ -175,15 +185,25 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
   const openVragenVoorSample = (sampleId: string) =>
     cellen.filter((c) => c.sampleId === sampleId && c.status === 'niet_te_bepalen');
 
+  // Beoordeeld maar nog niet bevestigd. Een openstaande vraag telt hier niet mee:
+  // die staat al als vraag op de stapel en heeft nog geen oordeel om te bevestigen.
+  const teBeoordelen = (c: Cel) =>
+    c.status !== null && c.status !== 'niet_te_bepalen' && c.akkoord !== 'akkoord';
+
+  const teBeoordelenVoorSample = (sampleId: string) =>
+    cellen.filter((c) => c.sampleId === sampleId && teBeoordelen(c));
+
   const voorstellenVoorSample = (sampleId: string) =>
     voorstellen.filter((v) => v.sampleId === sampleId);
 
   const werkVoorRij = (code: string) =>
-    cellen.filter((c) => c.code === code && c.status === 'niet_te_bepalen').length +
-    voorstellen.filter((v) => v.code === code).length;
+    cellen.filter((c) => c.code === code && (c.status === 'niet_te_bepalen' || teBeoordelen(c)))
+      .length + voorstellen.filter((v) => v.code === code).length;
 
   const werkVoorKolom = (sampleId: string) =>
-    openVragenVoorSample(sampleId).length + voorstellenVoorSample(sampleId).length;
+    openVragenVoorSample(sampleId).length +
+    teBeoordelenVoorSample(sampleId).length +
+    voorstellenVoorSample(sampleId).length;
 
   const isNagekeken = (sampleId: string) =>
     werkVoorKolom(sampleId) === 0 &&
@@ -216,6 +236,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     voorstellen,
     celVoor,
     openVragenVoorSample,
+    teBeoordelenVoorSample,
     voorstellenVoorSample,
     werkVoorRij,
     werkVoorKolom,
@@ -226,6 +247,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
       samplesNagekeken: samples.filter((s) => isNagekeken(s.id)).length,
       criteria: criteria.length,
       openVragen: cellen.filter((c) => c.status === 'niet_te_bepalen').length,
+      teBeoordelen: cellen.filter(teBeoordelen).length,
       voorstellen: voorstellen.length,
       onbeoordeeld: cellen.filter((c) => c.status === null).length,
     },

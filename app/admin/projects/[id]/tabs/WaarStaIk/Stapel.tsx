@@ -12,7 +12,26 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Cel, Stand, Voorstel } from './gegevens';
 
-type Taak = { soort: 'vraag'; cel: Cel } | { soort: 'voorstel'; voorstel: Voorstel };
+type Taak =
+  | { soort: 'vraag'; cel: Cel }
+  | { soort: 'oordeel'; cel: Cel }
+  | { soort: 'voorstel'; voorstel: Voorstel };
+
+const OORDEEL_KLEUR: Record<string, string> = {
+  voldoet: 'bg-green-100 text-green-800',
+  afgekeurd: 'bg-red-100 text-red-800',
+  opmerking: 'bg-amber-100 text-amber-800',
+  niet_aanwezig: 'bg-gray-100 text-gray-600',
+};
+
+/** De statussen waar de onderzoeker een oordeel naartoe kan bijstellen. */
+const OMZETBAAR: { waarde: 'voldoet' | 'afgekeurd' | 'opmerking' | 'niet_aanwezig' | 'niet_te_bepalen'; label: string }[] = [
+  { waarde: 'voldoet', label: 'Voldoet' },
+  { waarde: 'afgekeurd', label: 'Afgekeurd' },
+  { waarde: 'opmerking', label: 'Opmerking' },
+  { waarde: 'niet_aanwezig', label: 'Niet aanwezig' },
+  { waarde: 'niet_te_bepalen', label: 'Moet ik zelf kijken' },
+];
 
 const IMPACT_KLEUR: Record<string, string> = {
   klein: 'bg-gray-100 text-gray-700',
@@ -38,7 +57,7 @@ export default function Stapel({
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   /** Welke uitgang de onderzoeker heeft aangeklikt, zolang de reden nog ontbreekt. */
-  const [uitgang, setUitgang] = useState<'afwijzen' | 'doorzetten' | null>(null);
+  const [uitgang, setUitgang] = useState<'afwijzen' | 'doorzetten' | 'corrigeren' | null>(null);
   const [reden, setReden] = useState('');
 
   /**
@@ -49,7 +68,18 @@ export default function Stapel({
    * ging kijken, en daarna stond de vraag er nog. Hier landt jouw antwoord, met
    * bron 'handmatig' — jij hebt gekeken, niet de agent.
    */
-  const beantwoord = async (cel: Cel, status: 'voldoet' | 'niet_aanwezig') => {
+  /**
+   * Schrijft een oordeel weg met een akkoord erop.
+   *
+   * `behoudReden` is voor het bevestigen van een bestaand oordeel: dan blijft de
+   * onderbouwing van de auditor staan en zet jij er alleen je akkoord onder.
+   * Bij een correctie of een antwoord op een vraag komt jouw eigen tekst erin.
+   */
+  const beantwoord = async (
+    cel: Cel,
+    status: 'voldoet' | 'afgekeurd' | 'opmerking' | 'niet_aanwezig' | 'niet_te_bepalen',
+    opties: { behoudReden?: boolean; bron?: string } = {}
+  ) => {
     setBezig(true);
     setFout(null);
     try {
@@ -57,13 +87,16 @@ export default function Stapel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bron: 'handmatig',
+          bron: opties.bron ?? 'handmatig',
           checks: [
             {
               sampleItemId: cel.sampleId,
               criterionCode: cel.code,
               status,
-              reden: reden.trim() || null,
+              reden: opties.behoudReden
+                ? cel.reden ?? null
+                : reden.trim() || cel.reden || null,
+              akkoord: 'akkoord',
             },
           ],
         }),
@@ -112,24 +145,28 @@ export default function Stapel({
   const stapel: Taak[] = useMemo(() => {
     const [soort, a, b] = focus.split(':');
 
-    let vragen = stand.cellen.filter((c) => c.status === 'niet_te_bepalen');
-    let voorstellen = stand.voorstellen;
+    const past = (c: { sampleId: string | null; code: string }) => {
+      if (soort === 'rij') return c.code === a;
+      if (soort === 'kolom') return c.sampleId === a;
+      if (soort === 'cel') return c.sampleId === a && c.code === b;
+      return true;
+    };
 
-    if (soort === 'rij') {
-      vragen = vragen.filter((c) => c.code === a);
-      voorstellen = voorstellen.filter((v) => v.code === a);
-    } else if (soort === 'kolom') {
-      vragen = vragen.filter((c) => c.sampleId === a);
-      voorstellen = voorstellen.filter((v) => v.sampleId === a);
-    } else if (soort === 'cel') {
-      vragen = vragen.filter((c) => c.sampleId === a && c.code === b);
-      voorstellen = voorstellen.filter((v) => v.sampleId === a && v.code === b);
-    }
+    const vragen = stand.cellen.filter((c) => c.status === 'niet_te_bepalen' && past(c));
+    const voorstellen = stand.voorstellen.filter(past);
+    // Oordelen die de agent heeft geveld maar die nog geen akkoord hebben. Zonder
+    // deze stap komt een agent-oordeel ongezien in het rapport terecht.
+    const oordelen = stand.cellen.filter(
+      (c) =>
+        c.status !== null && c.status !== 'niet_te_bepalen' && c.akkoord !== 'akkoord' && past(c)
+    );
 
-    // Voorstellen eerst: die kosten weinig tijd en halen de stapel snel omlaag.
+    // Voorstellen eerst — die kosten weinig tijd. Dan de vragen, want daarvoor
+    // moet je de browser in. De oordelen achteraan: dat is leeswerk.
     return [
       ...voorstellen.map((voorstel) => ({ soort: 'voorstel' as const, voorstel })),
       ...vragen.map((cel) => ({ soort: 'vraag' as const, cel })),
+      ...oordelen.map((cel) => ({ soort: 'oordeel' as const, cel })),
     ];
   }, [stand, focus]);
 
@@ -205,7 +242,105 @@ export default function Stapel({
         </div>
       </div>
 
-      {huidig.soort === 'voorstel' ? (
+      {huidig.soort === 'oordeel' ? (
+        <div className="rounded-lg border border-gray-300 bg-white p-6">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
+              Oordeel van de agent
+            </span>
+            <span
+              className={`rounded px-2 py-0.5 font-medium ${
+                OORDEEL_KLEUR[huidig.cel.status ?? ''] ?? 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {huidig.cel.status}
+            </span>
+            {huidig.cel.bron && (
+              <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-600">
+                via {huidig.cel.bron}
+              </span>
+            )}
+          </div>
+
+          <p className="mb-1 text-sm text-gray-500">
+            {huidig.cel.code} — {critTitel(huidig.cel.code)} · {sampleTitel(huidig.cel.sampleId)}
+          </p>
+          <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
+            {huidig.cel.reden ?? '(geen onderbouwing gegeven)'}
+          </p>
+
+          {huidig.cel.bevindingen.length > 0 && (
+            <div className="mb-4 space-y-2">
+              {huidig.cel.bevindingen.map((b) => (
+                <div key={b.id} className="rounded bg-gray-50 p-3 text-sm">
+                  <p className="mb-1 text-xs text-gray-500">
+                    {b.findingCode} · {b.type}
+                    {b.impact ? ` · ${b.impact}` : ''}
+                  </p>
+                  <p className="whitespace-pre-line text-gray-800">{b.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
+
+          {uitgang === 'corrigeren' ? (
+            <div className="rounded border border-gray-300 p-3">
+              <p className="mb-2 text-sm font-medium text-gray-800">Wat moet het worden?</p>
+              <textarea
+                value={reden}
+                onChange={(e) => setReden(e.target.value)}
+                rows={2}
+                className="mb-2 w-full rounded border border-gray-300 p-2 text-sm"
+                placeholder="Toelichting (laat leeg om die van de agent te behouden)"
+              />
+              <div className="flex flex-wrap gap-2">
+                {OMZETBAAR.filter((o) => o.waarde !== huidig.cel.status).map((o) => (
+                  <button
+                    key={o.waarde}
+                    type="button"
+                    disabled={bezig}
+                    onClick={() => beantwoord(huidig.cel, o.waarde)}
+                    className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                  >
+                    {o.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUitgang(null);
+                    setReden('');
+                  }}
+                  className="rounded px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => beantwoord(huidig.cel, huidig.cel.status as any, { behoudReden: true, bron: huidig.cel.bron ?? 'workflow' })}
+                className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
+              >
+                Klopt
+              </button>
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => setUitgang('corrigeren')}
+                className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                Klopt niet
+              </button>
+            </div>
+          )}
+        </div>
+      ) : huidig.soort === 'voorstel' ? (
         <div className="rounded-lg border border-gray-300 bg-white p-6">
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded bg-purple-100 px-2 py-0.5 font-medium text-purple-800">

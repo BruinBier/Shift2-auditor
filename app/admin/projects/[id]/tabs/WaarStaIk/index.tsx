@@ -70,6 +70,10 @@ export default function WaarStaIk({
           <strong className="text-gray-900">{totalen.voorstellen}</strong> voorstellen wachten op
           akkoord
         </span>
+        <span>
+          <strong className="text-gray-900">{totalen.teBeoordelen}</strong> oordelen nog niet
+          bevestigd
+        </span>
         {totalen.onbeoordeeld > 0 && (
           <span className="text-gray-500">
             {totalen.onbeoordeeld} combinaties nog niet beoordeeld

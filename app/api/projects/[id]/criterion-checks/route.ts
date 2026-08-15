@@ -20,6 +20,8 @@ const GELDIGE_STATUS = new Set([
 
 const GELDIGE_BRON = new Set(['workflow', 'gesprek', 'handmatig']);
 
+const GELDIG_AKKOORD = new Set(['voorgesteld', 'akkoord', 'afgewezen']);
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -56,7 +58,11 @@ export async function GET(
  * en criterium, dan wordt het bijgewerkt — een volgende auditronde overschrijft
  * de vorige in plaats van een tweede rij aan te maken.
  *
- * Body: { bron?, checks: [{ sampleItemId, criterionCode, status, reden? }] }
+ * Body: { bron?, akkoord?, checks: [{ sampleItemId, criterionCode, status, reden?, akkoord? }] }
+ *
+ * `akkoord` is de poort op sampleniveau: een oordeel dat een agent heeft geveld,
+ * telt pas als de onderzoeker het heeft bevestigd. De workflow laat het leeg; het
+ * scherm zet het op 'akkoord' zodra jij het hebt nagelopen.
  */
 export async function POST(
   request: NextRequest,
@@ -112,6 +118,12 @@ export async function POST(
         continue;
       }
 
+      const akkoord = check.akkoord ?? body.akkoord ?? null;
+      if (akkoord && !GELDIG_AKKOORD.has(akkoord)) {
+        fouten.push(`ongeldig akkoord "${akkoord}" bij ${criterionCode}`);
+        continue;
+      }
+
       await prisma.sampleCriterionCheck.upsert({
         where: {
           sampleItemId_wcagCriterionId: { sampleItemId, wcagCriterionId },
@@ -122,11 +134,15 @@ export async function POST(
           status,
           reden: check.reden ?? null,
           bron: bron as any,
+          akkoord: akkoord as any,
         },
         update: {
           status,
           reden: check.reden ?? null,
           bron: bron as any,
+          // Alleen overschrijven als er iets is meegegeven; anders blijft een
+          // eerder gegeven akkoord staan.
+          ...(akkoord ? { akkoord: akkoord as any } : {}),
           checkedAt: new Date(),
         },
       });
