@@ -161,13 +161,32 @@ export default function Stapel({
         c.status !== null && c.status !== 'niet_te_bepalen' && c.akkoord !== 'akkoord' && past(c)
     );
 
-    // Voorstellen eerst — die kosten weinig tijd. Dan de vragen, want daarvoor
-    // moet je de browser in. De oordelen achteraan: dat is leeswerk.
-    return [
-      ...voorstellen.map((voorstel) => ({ soort: 'voorstel' as const, voorstel })),
-      ...vragen.map((cel) => ({ soort: 'vraag' as const, cel })),
+    const alles: Taak[] = [
       ...oordelen.map((cel) => ({ soort: 'oordeel' as const, cel })),
+      ...vragen.map((cel) => ({ soort: 'vraag' as const, cel })),
+      ...voorstellen.map((voorstel) => ({ soort: 'voorstel' as const, voorstel })),
     ];
+
+    // Op volgorde van succescriterium: 1.1.1, 1.2.1, 1.2.2, ... Zo loop je de
+    // WCAG-lijst af zoals je hem kent, in plaats van per soort taak te springen.
+    const codeVan = (t: Taak) => (t.soort === 'voorstel' ? t.voorstel.code : t.cel.code);
+    const sampleVan = (t: Taak) => (t.soort === 'voorstel' ? t.voorstel.sampleId : t.cel.sampleId);
+    const volgorde = new Map(stand.samples.map((s, i) => [s.id, i]));
+    // Binnen dezelfde cel eerst het oordeel of de vraag, dan wat eruit voortkomt.
+    const rang = { oordeel: 0, vraag: 0, voorstel: 1 } as const;
+
+    return alles.sort((a, b) => {
+      const ca = codeVan(a).split('.').map(Number);
+      const cb = codeVan(b).split('.').map(Number);
+      for (let i = 0; i < 3; i++) {
+        const verschil = (ca[i] ?? 0) - (cb[i] ?? 0);
+        if (verschil !== 0) return verschil;
+      }
+      const sa = volgorde.get(sampleVan(a) ?? '') ?? 999;
+      const sb = volgorde.get(sampleVan(b) ?? '') ?? 999;
+      if (sa !== sb) return sa - sb;
+      return rang[a.soort] - rang[b.soort];
+    });
   }, [stand, focus]);
 
   const sampleTitel = (id: string | null) =>
