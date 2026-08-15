@@ -15,6 +15,7 @@
  *   tsx scripts/audit-cli.ts set-assessment <projectId> --criterion=<id> --status=failed [--explanation=...]
  *   tsx scripts/audit-cli.ts get-html <url> [--full] [--text]
  *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...]
+ *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  */
 
 import * as fs from 'fs';
@@ -662,6 +663,226 @@ async function getScreenshot(url: string, flags: Flags) {
   }
 }
 
+/**
+ * De leesvolgorde van een pagina, en waar die afwijkt van de kijkvolgorde.
+ *
+ * Voor SC 1.3.2. Dat criterium is niet te beoordelen op opgehaalde HTML: de
+ * code-volgorde vertelt je de ene helft, de opmaak de andere. Een kaart met de
+ * afbeelding in de code na de titel kan hem op het scherm erboven zetten met
+ * `order`, `row-reverse`, `grid-area` of absolute positionering, en dat staat in
+ * externe stylesheets die je niet ophaalt.
+ *
+ * De Web Developer-extensie lost dit op door de opmaak uit te zetten en je zelf te
+ * laten kijken. Hier gaat het een stap verder: de browser weet van elk element waar
+ * het staat, dus het verschil is uit te rekenen in plaats van te bekijken.
+ *
+ * Twee elementen liggen op dezelfde regel als hun verticale bereik overlapt. Staat
+ * het volgende element in de code visueel bóven het vorige, of links ervan op
+ * dezelfde regel, dan is de volgorde omgedraaid en komt het in de lijst.
+ */
+async function getLeesvolgorde(url: string, flags: Flags) {
+  const zonderCss = flags['zonder-css'] === 'true';
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      const finalUrl = page.url();
+      const pageTitle = await page.title();
+
+      const data = await page.evaluate(() => {
+        const SELECTOR =
+          'h1,h2,h3,h4,h5,h6,p,li,a,button,img,input,select,textarea,summary,figcaption,td,th';
+        const items: {
+          tag: string;
+          tekst: string;
+          top: number;
+          bottom: number;
+          left: number;
+          keten: string;
+        }[] = [];
+
+        for (const el of Array.from(document.querySelectorAll(SELECTOR))) {
+          // Bij een link of span die over twee regels afbreekt, omvat het omhullende
+          // vak beide regels en begint het links onderaan. Dat leest als "staat links
+          // van zijn voorganger" terwijl het er gewoon achter loopt. Het eerste
+          // regelvak is waar het element werkelijk begint.
+          const vakken = el.getClientRects();
+          const rect = vakken.length ? vakken[0] : el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) continue;
+          const stijl = window.getComputedStyle(el);
+          if (stijl.visibility === 'hidden' || stijl.display === 'none') continue;
+          if (el.closest('[aria-hidden="true"]')) continue;
+
+          // Buiten het doek geparkeerd: de gebruikelijke manier om een skiplink of
+          // een schermlezerlabel te verbergen (top:-9999px, left:-999999px, of een
+          // clip van 1 bij 1). Zulke elementen hebben wel een positie, maar die zegt
+          // niets over de kijkvolgorde — meenemen levert verschillen van miljoenen
+          // pixels op en verstopt de echte omkeringen.
+          if (rect.top < -500 || rect.left < -500) continue;
+          if (rect.width <= 1 || rect.height <= 1) continue;
+          if (stijl.clipPath === 'inset(50%)' || stijl.clip === 'rect(0px, 0px, 0px, 0px)') continue;
+
+          const tag = el.tagName.toLowerCase();
+          let tekst = '';
+          if (tag === 'img') {
+            tekst = `[afbeelding: ${(el as HTMLImageElement).alt || 'leeg tekstalternatief'}]`;
+          } else if (['input', 'select', 'textarea'].includes(tag)) {
+            tekst = `[formulierveld ${(el as HTMLInputElement).type || tag}]`;
+          } else {
+            // Alleen eigen tekst, zodat een omhullend element niet alles herhaalt.
+            tekst = Array.from(el.childNodes)
+              .filter((n) => n.nodeType === 3)
+              .map((n) => n.textContent || '')
+              .join(' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
+          if (!tekst) continue;
+
+          // Voorouderketen, om te bepalen of twee elementen bij elkaar horen. Bewust
+          // hier uitgerekend en niet in een eigen functie: de bundler wikkelt benoemde
+          // functies in een helper die in de browser niet bestaat (__name is not defined).
+          const pad: string[] = [];
+          let n: Element | null = el;
+          while (n && n !== document.body) {
+            const ouder: Element | null = n.parentElement;
+            pad.unshift(ouder ? String(Array.prototype.indexOf.call(ouder.children, n)) : '0');
+            n = ouder;
+          }
+
+          items.push({
+            tag,
+            tekst: tekst.slice(0, 80),
+            top: Math.round(rect.top + window.scrollY),
+            bottom: Math.round(rect.bottom + window.scrollY),
+            left: Math.round(rect.left),
+            keten: pad.join('/'),
+          });
+        }
+        return items;
+      });
+
+      /**
+       * Op dezelfde regel als hun verticale bereik overlapt — maar alleen bij
+       * vergelijkbare hoogte. Een hero-afbeelding van 500 pixels overlapt met alles
+       * wat eroverheen ligt; die naast een knop van 40 pixels leggen en concluderen
+       * dat er iets links van staat, levert alleen ruis op. Dat is een omhulsel, geen
+       * buur.
+       */
+      const zelfdeRegel = (a: (typeof data)[0], b: (typeof data)[0]) => {
+        if (!(a.top < b.bottom - 4 && b.top < a.bottom - 4)) return false;
+        const ha = a.bottom - a.top;
+        const hb = b.bottom - b.top;
+        return Math.max(ha, hb) <= Math.min(ha, hb) * 3;
+      };
+
+      const afwijkingen: {
+        positie: number;
+        staatInCodeNa: string;
+        maarVisueelBoven: string;
+        verschil: string;
+      }[] = [];
+
+      /**
+       * Horen deze twee bij elkaar? Een pagina met kolommen levert anders eindeloos
+       * valse meldingen: kolom 1 staat in de code voor kolom 2 en visueel ernaast, dus
+       * begint kolom 2 "hoger". Dat is geen omgekeerde leesvolgorde maar de normale
+       * manier waarop kolommen werken — je leest ze na elkaar, en dat doet de code ook.
+       *
+       * Een echte omkering zit binnen een blok: de afbeelding boven de titel van
+       * dezelfde kaart. Daarom alleen vergelijken als de twee dicht bij elkaar in de
+       * boom staan.
+       */
+      const horenBijElkaar = (a: (typeof data)[0], b: (typeof data)[0]) => {
+        const pa = a.keten.split('/');
+        const pb = b.keten.split('/');
+        let gemeenschappelijk = 0;
+        while (
+          gemeenschappelijk < pa.length &&
+          gemeenschappelijk < pb.length &&
+          pa[gemeenschappelijk] === pb[gemeenschappelijk]
+        ) {
+          gemeenschappelijk++;
+        }
+        return pa.length - gemeenschappelijk <= 3 && pb.length - gemeenschappelijk <= 3;
+      };
+
+      for (let i = 0; i < data.length - 1; i++) {
+        const a = data[i];
+        const b = data[i + 1];
+        if (!horenBijElkaar(a, b)) continue;
+        // Staat het volgende element flink naar rechts en hoger, dan lees je geen
+        // omgekeerde volgorde maar een volgende kolom. Kolommen na elkaar doorlopen is
+        // juist goed, en dat doet de code ook. Een echte omkering staat recht boven zijn
+        // voorganger: de afbeelding boven de titel van dezelfde kaart.
+        const volgendeKolom = !zelfdeRegel(a, b) && b.left > a.left + 100;
+
+        const omgekeerd = zelfdeRegel(a, b)
+          ? b.left < a.left - 4
+          : b.top < a.top - 4 && !volgendeKolom;
+        if (!omgekeerd) continue;
+        afwijkingen.push({
+          positie: i + 1,
+          staatInCodeNa: `${a.tag}: ${a.tekst}`,
+          maarVisueelBoven: `${b.tag}: ${b.tekst}`,
+          verschil: zelfdeRegel(a, b)
+            ? `${a.left - b.left}px naar links op dezelfde regel`
+            : `${a.top - b.top}px hoger op de pagina`,
+        });
+      }
+
+      const dir = ensureOutputDir();
+      const basis = `${timestamp()}-${slugifyUrl(finalUrl)}-leesvolgorde`;
+
+      // De voorleesvolgorde als platte tekst: dit is wat hulpsoftware achter elkaar
+      // doorloopt, ongeacht hoe het op het scherm ligt.
+      const tekstBestand = path.join(dir, `${basis}.txt`);
+      fs.writeFileSync(
+        tekstBestand,
+        data.map((d, i) => `${String(i + 1).padStart(4)}. ${d.tag.padEnd(8)} ${d.tekst}`).join('\n'),
+        'utf8'
+      );
+
+      let schermafdruk: string | null = null;
+      if (zonderCss) {
+        // Wat de Web Developer-extensie "Disable All Styles" noemt.
+        await page.evaluate(() => {
+          document.querySelectorAll('style, link[rel="stylesheet"]').forEach((n) => n.remove());
+          document.querySelectorAll('[style]').forEach((n) => n.removeAttribute('style'));
+          for (const blad of Array.from(document.styleSheets)) {
+            try {
+              (blad as CSSStyleSheet).disabled = true;
+            } catch {
+              // Stylesheet van een ander domein; die is al met de link verwijderd.
+            }
+          }
+        });
+        schermafdruk = path.join(dir, `${basis}-zonder-css.png`);
+        await page.screenshot({ path: schermafdruk as `${string}.png`, fullPage: true });
+      }
+
+      print({
+        url: finalUrl,
+        title: pageTitle,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        elementen: data.length,
+        afwijkingen: afwijkingen.length,
+        omkeringen: afwijkingen.slice(0, 25),
+        voorleesvolgorde: tekstBestand,
+        schermafdrukZonderCss: schermafdruk,
+        let_op:
+          session.mode === 'cdp'
+            ? null
+            : 'Gedraaid zonder auditsessie. Voor een pagina achter een login of met een cookiekeuze: start eerst npm run chrome:debug.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -697,6 +918,8 @@ async function main() {
       return getHtml(requirePositional(positional, 0, 'url'), flags);
     case 'get-screenshot':
       return getScreenshot(requirePositional(positional, 0, 'url'), flags);
+    case 'get-leesvolgorde':
+      return getLeesvolgorde(requirePositional(positional, 0, 'url'), flags);
     case 'run-tests':
       return runTests(requirePositional(positional, 0, 'url'), flags);
     case 'test-samples':

@@ -43,6 +43,7 @@ npm run cli -- search-quick-findings <keyword>     # reuse finding templates
 # Pagina's bekijken — altijd via de CLI, nooit via een ingebouwde browser
 npm run cli -- get-html <url> [--text] [--full]
 npm run cli -- get-screenshot <url> [--full-page] [--selector=css]
+npm run cli -- get-leesvolgorde <url> [--zonder-css]   # voor 1.3.2: code-volgorde vs. kijkvolgorde
 
 # Write
 npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured
@@ -83,6 +84,14 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 `get-html` geeft een veld `gehydrateerd` terug. Staat dat op `false`, dan is er iets mis met de pagina zelf: trek dan geen conclusies over toetsenbord, menu's, schakelknoppen of zoeksuggesties.
 
 **Moet je klikken, typen of schakelen om iets te kunnen beoordelen?** Start dan `npm run chrome:debug`. Dat opent een Chrome met foutopsporing op poort 9222, waar de CLI op aansluit met behoud van cookies en sessies. Let op: wat een test daar aanzet (zoals een hoogcontrastmodus in `localStorage`) blijft staan en beïnvloedt de volgende meting — zet het na afloop terug.
+
+**Voor SC 1.3.2 is opgehaalde HTML niet genoeg.** De volgorde in de code is de halve
+vraag; of de opmaak die volgorde omkeert staat in externe stylesheets. `get-leesvolgorde`
+opent de pagina in een echte browser en rekent uit waar het volgende element in de code
+visueel bóven of links van zijn voorganger staat. Filtert zelf de bekende valse meldingen
+weg: elementen buiten het scherm, kolommen naast elkaar, en links die over twee regels
+afbreken. Een omkering is geen bevinding zolang het verplaatste element geen betekenis
+draagt — een afbeelding met een leeg tekstalternatief telt niet mee.
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
