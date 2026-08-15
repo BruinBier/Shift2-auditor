@@ -4,14 +4,42 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_4_3.md` als ze elkaar tegenspreken.
 
-## Niet uit HTML of screenshot te bepalen
+## Niet uit HTML of screenshot te bepalen — maar wel te meten
 
-Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen`
-(of `niet_aanwezig` als het aantoonbaar niet van toepassing is) en noteer de vraag in `reden`.
+Dit criterium is niet uit de opgehaalde code te halen: kleuren staan in externe
+opmaakbestanden, vaak achter variabelen, en een knop erft zijn achtergrond meestal van een
+ouder. Het is wél te meten op de opgemaakte pagina, en dat hoor je te doen voordat je er
+een vraag van maakt:
 
-**Vraag voor de onderzoeker:**
+```
+npm run cli -- get-contrast <url> --selector='button.contrast'
+npm run cli -- get-contrast <url> --selector='button.contrast' --klik="tekst:Contrast verhogen"
+```
 
-> Heeft de hoogcontrast-/toegankelijkheidsknop op [pagina] zelf voldoende contrast? En zo ja, voldoet de hoog-contrast-versie inhoudelijk? Blijven daarbij ook de logo's en afbeeldingen met tekst leesbaar in die weergave (let op het footer-logo)?
+Dat geeft tekstkleur, achtergrondkleur, lettergrootte, de verhouding en of die haalt wat
+nodig is. **Meet op het element dat de tekst zelf bevat**, niet op een omhulsel: een `<a>`
+met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet.
+
+Voor "blijven de logo's leesbaar in de hoogcontrastweergave" maak je twee uitsneden van
+hetzelfde element, met en zonder de knop aan:
+
+```
+npm run cli -- get-screenshot <url> --selector='<logo-selector>'
+npm run cli -- get-screenshot <url> --selector='<logo-selector>' --klik="tekst:Contrast verhogen"
+```
+
+**Noteer in de onderbouwing hóé je hebt gemeten**: welk element, welke kleuren als
+#RRGGBB, welke lettergrootte, welke verhouding, en in welke weergave. Zonder dat is het
+opnieuw een bewering.
+
+Blijft er iets over dat je niet kunt meten — of de weergave inhoudelijk deugt op de hele
+site, of een afbeelding met tekst nog leesbaar is naar het oordeel van een mens — zet dat
+dan als vraag in `reden` en het criterium op `niet_te_bepalen`.
+
+Aanleiding: heuvelrug.nl (2026-08-15). De vraag stond als `niet_te_bepalen` klaar voor de
+onderzoeker terwijl hij te meten was. De knop is wit op #007373, 5,68:1 bij 4,5:1 vereist;
+in de hoogcontrastweergave wit op zwart, 21:1. Die weergave ontkleurt en keert niet om, dus
+de logotekst houdt zijn helderheid en blijft leesbaar. Er is op die site geen footer-logo.
 
 ## Vraag ook: blijven logo's en afbeeldingen leesbaar IN de hoogcontrastweergave?
 
@@ -43,7 +71,7 @@ Bevinding B006 in BEV-03.
 
 ## Regels
 
-- Heeft de site een hoogcontrast-knop of toegankelijkheidsmenu met hoog-contrast-optie? Dan wordt de standaardversie niet meer inhoudelijk op contrast getoetst, mits die knop zelf voldoende contrast heeft. Dat laatste kan alleen de onderzoeker vaststellen.
+- Heeft de site een hoogcontrast-knop of toegankelijkheidsmenu met hoog-contrast-optie? Dan wordt de standaardversie niet meer inhoudelijk op contrast getoetst, mits die knop zelf voldoende contrast heeft. Meet dat met get-contrast; het hoeft niet meer aan de onderzoeker gevraagd te worden.
 - Bij bevestiging "knop heeft voldoende contrast": een opmerking op het homepage-sample (status resolved, impact en responsibility leeg), QuickFinding 0dd88736-4c57-421b-b45c-af8fd46cfc38. Daarna HTML-paginas niet meer inhoudelijk op 1.4.3 checken.
 - UITZONDERING: tekst IN een afbeelding (poster, infographic, banner) schakelt NIET mee met de hoogcontrast-knop. Die toets je WEL op 1.4.3, ook op paginas waar je de reguliere contrastcheck overslaat. Toets aan 4,5:1 (niet 3:1), want bij een afbeelding is de font-size niet uitleesbaar en kun je niet vaststellen of het als grote tekst telt.
 - Staat de informatie van de afbeelding VOLLEDIG als echte tekst op de pagina, dan is de afbeelding niet meer de enige drager en valt de tekst-in-afbeelding onder een 1.4.3-uitzondering. Is het alternatief incompleet, dan blijft de contrasteis gelden.
