@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 
 /**
@@ -48,4 +48,83 @@ export async function GET(request: NextRequest) {
     schrijfregels,
     scope,
   });
+}
+
+const KOP = '## Vastgelegd tijdens overleg';
+
+/**
+ * Voegt een regel toe die uit een overleg is gekomen.
+ *
+ * Dit is het sluitstuk van de lus. Zonder deze route komt een afspraak alleen in
+ * wcag-regels/ als iemand hem daar met een editor in zet — en dan leert het systeem
+ * alleen bij als er toevallig een ontwikkelaar meekijkt. De volgende auditronde
+ * maakt dan dezelfde fout, en die corrigeer je opnieuw met de hand.
+ *
+ * Alleen toevoegen, nooit overschrijven: bestaande regels zijn vakinhoud waar
+ * mensen op vertrouwen. De nieuwe regel komt onder een eigen kopje achteraan, met
+ * datum en aanleiding, zodat in git terug te zien is wanneer een regel ontstond en
+ * waarom.
+ *
+ * POST /api/wcag-regels  { code, regel, aanleiding? }
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const code: string = body.code ?? '';
+    const regel: string = (body.regel ?? '').trim();
+    const aanleiding: string = (body.aanleiding ?? '').trim();
+
+    if (!CODE.test(code)) {
+      return NextResponse.json({ error: 'Ongeldige criteriumcode' }, { status: 400 });
+    }
+    if (!regel) {
+      return NextResponse.json({ error: 'Geen regel meegegeven' }, { status: 400 });
+    }
+
+    const bestandsnaam = `Shift2_Regels_SC_${code.replace(/\./g, '_')}.md`;
+    const pad = path.join(MAP, bestandsnaam);
+    const bestaand = await lees(bestandsnaam);
+    const datum = new Date().toISOString().slice(0, 10);
+
+    const stukken: string[] = [];
+    if (bestaand === null) {
+      // Eerste regel voor dit criterium.
+      stukken.push(`# Shift2-beoordelingsregels SC ${code}`);
+      stukken.push('');
+      stukken.push(
+        'Aanvullingen op de checklist, vastgelegd tijdens het werk. Bij twijfel gaat de'
+      );
+      stukken.push('checklist voor, tenzij hieronder uitdrukkelijk anders staat.');
+      stukken.push('');
+      stukken.push(KOP);
+    } else {
+      stukken.push(bestaand.replace(/\s+$/, ''));
+      stukken.push('');
+      if (!bestaand.includes(KOP)) stukken.push(KOP);
+    }
+
+    stukken.push('');
+    stukken.push(`### ${datum}`);
+    stukken.push('');
+    stukken.push(regel);
+    if (aanleiding) {
+      stukken.push('');
+      stukken.push(`Aanleiding: ${aanleiding}`);
+    }
+    stukken.push('');
+
+    await writeFile(pad, stukken.join('\n'), 'utf8');
+
+    return NextResponse.json({
+      bestandsnaam,
+      nieuwBestand: bestaand === null,
+      datum,
+    });
+  } catch (error: any) {
+    console.error('Fout bij vastleggen regel:', error);
+    return NextResponse.json(
+      { error: 'Vastleggen mislukt', details: error?.message },
+      { status: 500 }
+    );
+  }
 }

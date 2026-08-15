@@ -87,6 +87,21 @@ function bespreekBlok(opties: {
     '3. Een regel van een paar zinnen die dit voor de volgende keer vastlegt, in de stijl van de huisregels hieronder.'
   );
   r.push('');
+  r.push('Leg me je redenering gewoon uit — daar wil ik op kunnen reageren. Zet de');
+  r.push('uitkomst daarna in dit blok, want dat lees ik machinaal terug in mijn');
+  r.push('auditsysteem. Laat weg wat niet verandert.');
+  r.push('');
+  r.push('```uitkomst');
+  r.push('bezwaar: terecht | onterecht');
+  r.push('status: voldoet | afgekeurd | opmerking | niet_aanwezig | niet_te_bepalen');
+  r.push('voorstel: behouden | herschrijven | afwijzen');
+  r.push('type: bevinding | opmerking');
+  r.push('impact: klein | matig | serieus | kritiek');
+  r.push('bevinding: de herschreven bevindingstekst (mag over meer regels)');
+  r.push('advies: het herschreven advies');
+  r.push('regel: de regel die dit vastlegt voor de volgende keer');
+  r.push('```');
+  r.push('');
   r.push('## De zaak');
   r.push('');
   r.push(`Criterium: ${code} — ${critTitel}`);
@@ -145,6 +160,68 @@ function bespreekBlok(opties: {
   return r.join('\n');
 }
 
+export interface Uitkomst {
+  bezwaar?: string;
+  status?: string;
+  voorstel?: string;
+  type?: string;
+  impact?: string;
+  bevinding?: string;
+  advies?: string;
+  regel?: string;
+}
+
+const UITKOMST_SLEUTELS = [
+  'bezwaar',
+  'status',
+  'voorstel',
+  'type',
+  'impact',
+  'bevinding',
+  'advies',
+  'regel',
+] as const;
+
+/**
+ * Leest het antwoordblok dat uit een overleg terugkomt.
+ *
+ * Vergevingsgezind met opzet: het komt uit een taalmodel, en een strikte lezer die
+ * struikelt over een ontbrekende regel maakt het overleg waardeloos. Onbekende
+ * sleutels worden genegeerd, een waarde loopt door tot de volgende bekende sleutel
+ * (zodat een bevindingstekst over meer regels mag), en de omheining eromheen mag
+ * ontbreken.
+ *
+ * Wat er niet in staat, verandert niet. Zo kun je ook alleen een regel terugsturen.
+ */
+export function leesUitkomst(tekst: string): Uitkomst | null {
+  const omheind = tekst.match(/```(?:uitkomst)?\s*\n([\s\S]*?)```/);
+  const body = omheind ? omheind[1] : tekst;
+
+  const uit: Record<string, string[]> = {};
+  let huidig: string | null = null;
+
+  for (const regel of body.split('\n')) {
+    const m = regel.match(/^\s*([a-z]+)\s*:\s*(.*)$/i);
+    const sleutel = m ? m[1].toLowerCase() : null;
+    if (sleutel && (UITKOMST_SLEUTELS as readonly string[]).includes(sleutel)) {
+      huidig = sleutel;
+      uit[huidig] = [m![2]];
+    } else if (huidig) {
+      uit[huidig].push(regel);
+    }
+  }
+
+  const resultaat: Record<string, string> = {};
+  for (const [k, regels] of Object.entries(uit)) {
+    const waarde = regels.join('\n').trim();
+    // De sjabloonregels uit het blok zelf, ongewijzigd teruggeplakt.
+    if (!waarde || waarde.includes(' | ')) continue;
+    resultaat[k] = waarde;
+  }
+
+  return Object.keys(resultaat).length ? (resultaat as Uitkomst) : null;
+}
+
 const IMPACT_KLEUR: Record<string, string> = {
   klein: 'bg-gray-100 text-gray-700',
   matig: 'bg-yellow-100 text-yellow-800',
@@ -182,6 +259,9 @@ export default function Stapel({
   /** Het besprekingsblok, zichtbaar als het klembord niet beschikbaar is. */
   const [blok, setBlok] = useState<string | null>(null);
   const [gekopieerd, setGekopieerd] = useState(false);
+  /** Wat er uit het overleg terugkomt, en wat ermee gebeurd is. */
+  const [uitkomstTekst, setUitkomstTekst] = useState('');
+  const [gedaan, setGedaan] = useState<string[] | null>(null);
 
   /**
    * Bouwt het besprekingsblok en zet het op het klembord.
@@ -371,10 +451,142 @@ export default function Stapel({
   }, [stand, focus]);
 
   /**
-   * Het overlegpaneel. Eén vorm voor de oordeelkaart en de voorstelkaart: waar je
-   * ook vastloopt, je legt hetzelfde blok voor.
+   * Verwerkt de uitkomst van een overleg.
+   *
+   * Drie bestemmingen, en de derde is de reden dat dit bestaat: de regel gaat naar
+   * wcag-regels/. Zonder die stap leert het systeem alleen bij als er toevallig
+   * iemand met een editor meekijkt, en corrigeer je volgende maand dezelfde fout
+   * opnieuw met de hand.
+   *
+   * Volgorde is niet willekeurig: eerst de regel (die staat los en is het meest
+   * waard), dan de tekst van het voorstel, dan pas het oordeel. Zo leidt een fout
+   * halverwege niet tot een bevestigd oordeel boven een tekst die niet is bijgewerkt.
    */
-  const overlegPaneel = (code: string, bouw: (h: Huisregels | null) => string) => (
+  const pasToe = async (
+    uitkomst: Uitkomst,
+    ctx: { code: string; cel?: Cel | null; voorstellen: Voorstel[]; aanleiding: string }
+  ) => {
+    setBezig(true);
+    setFout(null);
+    const stappen: string[] = [];
+    try {
+      if (uitkomst.regel) {
+        const res = await fetch('/api/wcag-regels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: ctx.code,
+            regel: uitkomst.regel,
+            aanleiding: ctx.aanleiding,
+          }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || 'Regel vastleggen mislukte');
+        stappen.push(
+          `Regel toegevoegd aan ${j.bestandsnaam}${j.nieuwBestand ? ' (nieuw bestand)' : ''}`
+        );
+      }
+
+      for (const v of ctx.voorstellen) {
+        if (uitkomst.voorstel === 'afwijzen') {
+          const res = await fetch(
+            `/api/projects/${projectId}/findings/${v.id}/beoordeling`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                actie: 'afwijzen',
+                reden: uitkomst.regel || reden.trim() || 'Afgewezen na overleg',
+              }),
+            }
+          );
+          if (!res.ok) throw new Error('Afwijzen mislukte');
+          stappen.push(`${v.findingCode ?? 'Voorstel'} afgewezen`);
+          continue;
+        }
+
+        const wijziging: Record<string, string> = {};
+        if (uitkomst.bevinding) wijziging.description = uitkomst.bevinding;
+        if (uitkomst.advies) wijziging.advice = uitkomst.advies;
+        if (uitkomst.type) wijziging.type = uitkomst.type;
+        if (uitkomst.impact && uitkomst.type !== 'opmerking')
+          wijziging.impact = uitkomst.impact;
+
+        if (Object.keys(wijziging).length) {
+          const res = await fetch(`/api/projects/${projectId}/findings/${v.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(wijziging),
+          });
+          if (!res.ok) throw new Error(`Bijwerken van ${v.findingCode} mislukte`);
+          stappen.push(
+            `${v.findingCode ?? 'Voorstel'} bijgewerkt (${Object.keys(wijziging).join(', ')})`
+          );
+        }
+
+        // De tekst is nu wat jullie hebben afgesproken, dus het voorstel is
+        // beoordeeld. Alleen doorlaten als er ook een oordeel is meegekomen —
+        // anders blijft het netjes wachten.
+        if (uitkomst.status && uitkomst.status !== 'niet_te_bepalen') {
+          const res = await fetch(
+            `/api/projects/${projectId}/findings/${v.id}/beoordeling`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                actie: 'akkoord',
+                type: uitkomst.type ?? v.type,
+              }),
+            }
+          );
+          if (!res.ok) throw new Error(`Akkoord op ${v.findingCode} mislukte`);
+          stappen.push(`${v.findingCode ?? 'Voorstel'} akkoord bevonden`);
+        }
+      }
+
+      if (uitkomst.status && ctx.cel) {
+        const res = await fetch(`/api/projects/${projectId}/criterion-checks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bron: 'gesprek',
+            checks: [
+              {
+                sampleItemId: ctx.cel.sampleId,
+                criterionCode: ctx.cel.code,
+                status: uitkomst.status,
+                reden: ctx.cel.reden ?? null,
+                akkoord: 'akkoord',
+              },
+            ],
+          }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || j.geschreven !== 1) {
+          throw new Error(j.fouten?.[0] || j.error || 'Oordeel opslaan mislukte');
+        }
+        stappen.push(`Oordeel op ${ctx.code} gezet op ${uitkomst.status}`);
+      }
+
+      setGedaan(stappen);
+      setUitkomstTekst('');
+      router.refresh();
+    } catch (e: any) {
+      setFout(`${e.message}${stappen.length ? ` — wel gelukt: ${stappen.join('; ')}` : ''}`);
+    } finally {
+      setBezig(false);
+    }
+  };
+
+  /**
+   * Het overlegpaneel. Eén vorm voor de oordeelkaart en de voorstelkaart: waar je
+   * ook vastloopt, je legt hetzelfde blok voor — en hier komt de uitkomst terug.
+   */
+  const overlegPaneel = (
+    code: string,
+    bouw: (h: Huisregels | null) => string,
+    ctx: { cel?: Cel | null; voorstellen: Voorstel[]; aanleiding: string }
+  ) => (
     <div className="mt-4 rounded border border-blue-300 bg-blue-50/40 p-3">
       <label className="mb-1 block text-sm font-medium text-gray-800">
         Wat klopt er niet aan?
@@ -427,6 +639,100 @@ export default function Stapel({
           className="mt-2 w-full rounded border border-gray-300 p-2 font-mono text-xs"
         />
       )}
+
+      {/* De terugweg. Zonder deze helft eindigt elk overleg in overtypen, en komt
+          de regel alleen in wcag-regels/ als iemand daar met een editor bij kan. */}
+      <div className="mt-4 border-t border-blue-200 pt-3">
+        <label className="mb-1 block text-sm font-medium text-gray-800">
+          En terug: plak hier de uitkomst
+        </label>
+        <p className="mb-2 text-xs text-gray-600">
+          Het <code className="rounded bg-white px-1">uitkomst</code>-blok uit het
+          antwoord. De rest van het gesprek mag je weglaten — plakken van alles werkt
+          ook, ik pak er het blok uit.
+        </p>
+        <textarea
+          value={uitkomstTekst}
+          onChange={(e) => {
+            setUitkomstTekst(e.target.value);
+            setGedaan(null);
+          }}
+          rows={5}
+          className="w-full rounded border border-gray-300 p-2 font-mono text-xs"
+          placeholder={'```uitkomst\nbezwaar: terecht\n…\n```'}
+        />
+
+        {(() => {
+          const uitkomst = uitkomstTekst.trim() ? leesUitkomst(uitkomstTekst) : null;
+          if (uitkomstTekst.trim() && !uitkomst) {
+            return (
+              <p className="mt-2 text-xs text-amber-800">
+                Hier kan ik geen uitkomst in vinden. Staan de regels er als{' '}
+                <code>sleutel: waarde</code> in?
+              </p>
+            );
+          }
+          if (!uitkomst) return null;
+          return (
+            <div className="mt-2">
+              <p className="mb-1 text-xs font-medium text-gray-700">Dit ga ik doen:</p>
+              <ul className="mb-2 list-inside list-disc space-y-0.5 text-xs text-gray-700">
+                {uitkomst.regel && (
+                  <li>
+                    De regel vastleggen in{' '}
+                    <code className="rounded bg-white px-1">
+                      Shift2_Regels_SC_{code.replace(/\./g, '_')}.md
+                    </code>
+                  </li>
+                )}
+                {uitkomst.voorstel === 'afwijzen' ? (
+                  ctx.voorstellen.map((v) => (
+                    <li key={v.id}>{v.findingCode} afwijzen</li>
+                  ))
+                ) : (
+                  <>
+                    {(uitkomst.bevinding || uitkomst.advies) &&
+                      ctx.voorstellen.map((v) => (
+                        <li key={v.id}>
+                          {v.findingCode} de nieuwe tekst geven
+                          {uitkomst.type ? ` als ${uitkomst.type}` : ''}
+                        </li>
+                      ))}
+                    {uitkomst.status &&
+                      ctx.voorstellen.map((v) => (
+                        <li key={`a-${v.id}`}>{v.findingCode} akkoord bevinden</li>
+                      ))}
+                  </>
+                )}
+                {uitkomst.status && ctx.cel && (
+                  <li>
+                    Het oordeel op <strong>{uitkomst.status}</strong> zetten en bevestigen
+                  </li>
+                )}
+              </ul>
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => pasToe(uitkomst, { code, ...ctx })}
+                className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-black disabled:opacity-40"
+              >
+                Toepassen
+              </button>
+            </div>
+          );
+        })()}
+
+        {gedaan && (
+          <div className="mt-3 rounded border border-green-300 bg-green-50 p-3">
+            <p className="mb-1 text-xs font-medium text-green-900">Verwerkt:</p>
+            <ul className="list-inside list-disc space-y-0.5 text-xs text-green-900">
+              {gedaan.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -625,17 +931,28 @@ export default function Stapel({
 
             </div>
           ) : uitgang === 'overleggen' ? (
-            overlegPaneel(huidig.cel.code, (huisregels) =>
-              bespreekBlok({
-                code: huidig.cel.code,
-                critTitel: critTitel(huidig.cel.code),
-                sample: sampleVoor(huidig.cel.sampleId),
-                projectId,
-                bezwaar: reden,
+            overlegPaneel(
+              huidig.cel.code,
+              (huisregels) =>
+                bespreekBlok({
+                  code: huidig.cel.code,
+                  critTitel: critTitel(huidig.cel.code),
+                  sample: sampleVoor(huidig.cel.sampleId),
+                  projectId,
+                  bezwaar: reden,
+                  cel: huidig.cel,
+                  voorstellen: wachtendeVoorstellen,
+                  huisregels,
+                }),
+              {
                 cel: huidig.cel,
                 voorstellen: wachtendeVoorstellen,
-                huisregels,
-              })
+                aanleiding: `${huidig.cel.code} op ${sampleTitel(huidig.cel.sampleId)}${
+                  wachtendeVoorstellen.length
+                    ? ` (${wachtendeVoorstellen.map((v) => v.findingCode).join(', ')})`
+                    : ''
+                }`,
+              }
             )
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -724,17 +1041,26 @@ export default function Stapel({
           )}
 
           {uitgang === 'overleggen' ? (
-            overlegPaneel(huidig.voorstel.code, (huisregels) =>
-              bespreekBlok({
-                code: huidig.voorstel.code,
-                critTitel: critTitel(huidig.voorstel.code),
-                sample: sampleVoor(huidig.voorstel.sampleId),
-                projectId,
-                bezwaar: reden,
+            overlegPaneel(
+              huidig.voorstel.code,
+              (huisregels) =>
+                bespreekBlok({
+                  code: huidig.voorstel.code,
+                  critTitel: critTitel(huidig.voorstel.code),
+                  sample: sampleVoor(huidig.voorstel.sampleId),
+                  projectId,
+                  bezwaar: reden,
+                  cel: stand.celVoor(huidig.voorstel.sampleId ?? '', huidig.voorstel.code),
+                  voorstellen: [huidig.voorstel],
+                  huisregels,
+                }),
+              {
                 cel: stand.celVoor(huidig.voorstel.sampleId ?? '', huidig.voorstel.code),
                 voorstellen: [huidig.voorstel],
-                huisregels,
-              })
+                aanleiding: `${huidig.voorstel.code} op ${sampleTitel(
+                  huidig.voorstel.sampleId
+                )} (${huidig.voorstel.findingCode})`,
+              }
             )
           ) : uitgang ? (
             <div className="mt-4 rounded border border-gray-300 p-3">
