@@ -67,3 +67,11 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 - Gebruik de term "tekstalternatief", niet "tekstbeschrijving". Formuleer alt als iets dat informatie OVERBRENGT, niet als iets dat de afbeelding "beschrijft".
 - Inline base64-afbeelding (src begint met data:image) zonder alt: dit is een plak-incident van een redacteur, geen template-issue. Verantwoordelijkheid redacteur.
 - Niet-getagde PDF onder 1.1.1: opmerking (status resolved, impact en responsibility leeg). Zonder tags kun je niet vaststellen wat er ontbreekt. De structuur-bevinding hoort onder 1.3.1.
+
+## Vastgelegd tijdens overleg
+
+### 2026-08-15
+
+1.1.1 EN LINKDOEL NIET DOOR ELKAAR HALEN. Bij een afbeelding in een link beoordeel je onder 1.1.1 uitsluitend of de informatie IN de afbeelding in tekst wordt overgebracht. Tekst die aan de link hangt (een title-attribuut, een aria-label of verborgen linktekst zoals "Ga naar de homepage") staat niet op de afbeelding en repareert een ontbrekend tekstalternatief niet. Of de link zijn doel duidelijk maakt is een aparte vraag onder 2.4.4/4.1.2 en krijgt een eigen bevinding. Houd het ook uit het advies: adviseer onder 1.1.1 alleen een alt die de informatie uit de afbeelding overbrengt, nooit een alt die er de bestemming van de link bij noemt. TESTMETHODE: beoordeel 1.1.1 nooit op de opgehaalde code alleen, ook niet als je afkeurt. Start een auditsessie en bekijk de gerenderde pagina en de afbeelding zelf. Uit de code lees je wel het lege alt-attribuut, maar niet welke tekst in de afbeelding staat en niet of die tekst elders op de gerenderde pagina voorkomt. Aanleiding: heuvelrug.nl (2026-08-15), logo met alt="" in een link met title="Ga naar de homepage".
+
+Aanleiding: 1.1.1 op Home (V010)
