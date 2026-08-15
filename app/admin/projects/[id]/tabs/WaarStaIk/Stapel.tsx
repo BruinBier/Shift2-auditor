@@ -259,6 +259,30 @@ const UITKOMST_SLEUTELS = [
 ] as const;
 
 /**
+ * Haalt de inspringing van vervolgregels weg.
+ *
+ * Een taalmodel laat een lange waarde vaak inspringen zodat je ziet dat hij bij de
+ * sleutel erboven hoort. Die spaties zouden anders letterlijk in de bevindingstekst
+ * belanden, en die wordt met behoud van witruimte weergegeven — dan staat de tekst
+ * scheef in het rapport.
+ *
+ * Alleen de gemeenschappelijke inspringing gaat eraf, zodat een opsomming die
+ * werkelijk dieper staat dat blijft.
+ */
+function ontspring(regels: string[]): string[] {
+  const [eerste, ...rest] = regels;
+  const gevuld = rest.filter((r) => r.trim());
+  if (!gevuld.length) return regels;
+
+  const kleinste = Math.min(
+    ...gevuld.map((r) => (r.match(/^[ \t]*/)?.[0].length ?? 0))
+  );
+  if (!kleinste) return regels;
+
+  return [eerste, ...rest.map((r) => (r.trim() ? r.slice(kleinste) : r))];
+}
+
+/**
  * Leest het antwoordblok dat uit een overleg terugkomt.
  *
  * Vergevingsgezind met opzet: het komt uit een taalmodel, en een strikte lezer die
@@ -289,7 +313,7 @@ export function leesUitkomst(tekst: string): Uitkomst | null {
 
   const resultaat: Record<string, string> = {};
   for (const [k, regels] of Object.entries(uit)) {
-    const waarde = regels.join('\n').trim();
+    const waarde = ontspring(regels).join('\n').trim();
     // De sjabloonregels uit het blok zelf, ongewijzigd teruggeplakt.
     if (!waarde || waarde.includes(' | ')) continue;
     resultaat[k] = waarde;
@@ -833,6 +857,25 @@ export default function Stapel({
                   </li>
                 )}
               </ul>
+              {/* De teksten zelf erbij. Je overschrijft een bevinding en legt een
+                  regel vast waar de volgende auditronde op afgaat; dat hoor je te
+                  lezen voor je klikt, niet erna. */}
+              {(
+                [
+                  ['Nieuwe bevindingstekst', uitkomst.bevinding],
+                  ['Nieuw advies', uitkomst.advies],
+                  ['Regel die wordt vastgelegd', uitkomst.regel],
+                ] as const
+              ).map(([kop, tekst]) =>
+                tekst ? (
+                  <div key={kop} className="mb-2">
+                    <p className="mb-0.5 text-xs font-medium text-gray-500">{kop}</p>
+                    <p className="max-h-40 overflow-y-auto whitespace-pre-line rounded border border-gray-200 bg-white p-2 text-xs leading-relaxed text-gray-800">
+                      {tekst}
+                    </p>
+                  </div>
+                ) : null
+              )}
               <button
                 type="button"
                 disabled={bezig}
