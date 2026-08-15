@@ -518,7 +518,26 @@ HTML/screenshot ophalen (dev server draait):
   npm run cli -- get-html ${sample.url ? sample.url : '<url>'} --text     (leesbare tekst)
   npm run cli -- get-html ${sample.url ? sample.url : '<url>'}            (ruwe HTML)
   npm run cli -- get-screenshot ${sample.url ? sample.url : '<url>'} --full-page
+  npm run cli -- get-leesvolgorde ${sample.url ? sample.url : '<url>'} --zonder-css
 Heeft de sample geen URL, beoordeel dan op basis van titel/type en zet twijfelgevallen op 'niet_te_bepalen'.
+
+DRAAI \`get-leesvolgorde --zonder-css\` ALS EERSTE, en bekijk de kale schermafdruk voordat
+je aan de criteria begint. Zonder opmaak valt in één blik te zien wat je in de HTML moet
+uitzoeken:
+
+  - een rij links die aan elkaar plakt is geen opsomming (1.3.1)
+  - scheidingstekens die als gewone tekst tussen links staan (1.3.1)
+  - de koppenhiërarchie, als kale h1/h2/h3 onder elkaar (1.3.1)
+  - een tabel die alleen visueel een tabel was (1.3.1)
+  - tekst die in een afbeelding blijkt te zitten, want die is dan niet leesbaar (1.1.1, 1.4.5)
+  - verborgen labels en instructies die opeens zichtbaar worden (3.3.2)
+
+Het commando meldt daarnaast waar de kijkvolgorde afwijkt van de codevolgorde, en schrijft
+de voorleesvolgorde weg als tekstbestand. Dat is je bewijs voor 1.3.2: dat criterium is
+niet te beoordelen op opgehaalde HTML, want of de opmaak de volgorde omkeert staat in
+externe stylesheets die je niet ophaalt. Een gemelde omkering is pas een bevinding als het
+verplaatste element betekenis draagt — een afbeelding met een leeg tekstalternatief telt
+niet mee.
 
 BEKIJK DE SCREENSHOT ECHT — de HTML alleen is niet genoeg.
 Een leeg tekstalternatief (alt="") betekent NIET dat een afbeelding decoratief is; dat kun je alleen zien door ernaar te kijken. Loop elke afbeelding met alt="" na op de screenshot en stel vast of er leesbare tekst in staat (merknaam, embleem, slogan, banner, poster, infographic). Staat die tekst er wel en staat hij niet elders als echte tekst op de pagina, dan is dat een 1.1.1-bevinding. Leid "decoratief" nooit af uit de bestandsnaam of uit het ontbreken van alt-tekst.
@@ -651,6 +670,12 @@ LET OP bij een niet-getagde PDF: weerleg een afkeuring van 1.3.2 (leesvolgorde).
 Haal zo nodig zelf de pagina op:
   npm run cli -- get-html ${sample.url || '<url>'} --text
   npm run cli -- get-screenshot ${sample.url || '<url>'} --full-page
+  npm run cli -- get-leesvolgorde ${sample.url || '<url>'} --zonder-css
+
+WEERLEG EEN OORDEEL OVER 1.3.2 DAT ALLEEN OP DE OPGEHAALDE HTML RUST. Of de opmaak de
+leesvolgorde omkeert staat in externe stylesheets die niet worden opgehaald; "er is geen
+CSS-positionering die de volgorde omkeert" is op die basis niet vast te stellen. Draai
+get-leesvolgorde en beoordeel op wat daar uit komt.
 
 TE CONTROLEREN:
 ${JSON.stringify(teControleren, null, 2)}

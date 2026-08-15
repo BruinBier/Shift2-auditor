@@ -47,6 +47,29 @@ niet is aangereikt — controleer dan waar die bewering vandaan komt.
 Andersom net zo belangrijk: staat er `homepageDetected: true`, dan hoort de footer bij je
 beoordeling en mag je hem niet overslaan.
 
+## Begin elk sample met de pagina zonder opmaak
+
+Draai vóór het eerste criterium:
+
+```
+npm run cli -- get-leesvolgorde <url> --zonder-css
+```
+
+Bekijk die kale schermafdruk voordat je aan de criteria begint. Zonder opmaak valt in één
+blik te zien wat je anders in de HTML moet uitzoeken:
+
+- een rij links die aan elkaar plakt is geen opsomming (1.3.1)
+- scheidingstekens die als gewone tekst tussen links staan (1.3.1)
+- de koppenhiërarchie, als kale h1/h2/h3 onder elkaar (1.3.1)
+- een tabel die alleen visueel een tabel was (1.3.1)
+- tekst die in een afbeelding blijkt te zitten, want die is dan niet leesbaar (1.1.1, 1.4.5)
+- verborgen labels en instructies die opeens zichtbaar worden (3.3.2)
+
+Aanleiding: heuvelrug.nl (2026-08-15). Twee bevindingen waren met code-inspectie gevonden —
+de aan elkaar geplakte sociale-media-links en de verticale streepjes tussen Openingstijden,
+Route en Gemeentegids — en beide sprongen eruit zodra de opmaak weg was. Dat had een half
+uur gescheeld.
+
 ## Verantwoord in de onderbouwing wat je hebt nagelopen
 
 Noem de gebieden afzonderlijk. Op het homepage-sample zijn dat er drie: header,
