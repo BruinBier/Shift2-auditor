@@ -41,6 +41,47 @@ export default function Stapel({
   const [uitgang, setUitgang] = useState<'afwijzen' | 'doorzetten' | null>(null);
   const [reden, setReden] = useState('');
 
+  /**
+   * Het antwoord op een browservraag vastleggen.
+   *
+   * De workflow zet criteria die niet uit HTML te bepalen zijn op
+   * 'niet_te_bepalen' met de vraag erbij. Tot nu toe was dat een leesscherm: je
+   * ging kijken, en daarna stond de vraag er nog. Hier landt jouw antwoord, met
+   * bron 'handmatig' — jij hebt gekeken, niet de agent.
+   */
+  const beantwoord = async (cel: Cel, status: 'voldoet' | 'niet_aanwezig') => {
+    setBezig(true);
+    setFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/criterion-checks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bron: 'handmatig',
+          checks: [
+            {
+              sampleItemId: cel.sampleId,
+              criterionCode: cel.code,
+              status,
+              reden: reden.trim() || null,
+            },
+          ],
+        }),
+      });
+      const uitkomst = await res.json().catch(() => ({}));
+      if (!res.ok || uitkomst.geschreven !== 1) {
+        throw new Error(uitkomst.fouten?.[0] || uitkomst.error || 'Opslaan mislukt');
+      }
+      setUitgang(null);
+      setReden('');
+      router.refresh();
+    } catch (e: any) {
+      setFout(e.message);
+    } finally {
+      setBezig(false);
+    }
+  };
+
   const beoordeel = async (findingId: string, actie: string, type?: string) => {
     setBezig(true);
     setFout(null);
@@ -324,8 +365,57 @@ export default function Stapel({
           <p className="mb-1 text-sm text-gray-500">
             {huidig.cel.code} — {critTitel(huidig.cel.code)} · {sampleTitel(huidig.cel.sampleId)}
           </p>
-          <p className="leading-relaxed text-gray-900">
+          <p className="mb-4 leading-relaxed text-gray-900">
             {huidig.cel.reden ?? 'Dit criterium vergt een browsertest.'}
+          </p>
+
+          {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Wat zag je? <span className="font-normal text-gray-500">(mag leeg)</span>
+          </label>
+          <p className="mb-2 text-xs text-gray-500">
+            Wordt bewaard bij het oordeel, zodat later terug te zien is waarop het berust.
+          </p>
+          <textarea
+            value={reden}
+            onChange={(e) => setReden(e.target.value)}
+            rows={2}
+            className="mb-3 w-full rounded border border-gray-300 p-2 text-sm"
+            placeholder="Bijvoorbeeld: met NVDA getest, de suggesties worden aangekondigd"
+          />
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={bezig}
+              onClick={() => beantwoord(huidig.cel, 'voldoet')}
+              className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
+            >
+              In orde
+            </button>
+            <button
+              type="button"
+              disabled={bezig}
+              onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
+              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+            >
+              Niet van toepassing
+            </button>
+            {/* Zag je wél iets, dan hoort daar een bevinding bij. Die schrijf je in
+                het bevindingenformulier; de vraag blijft tot zolang openstaan, want
+                een afkeuring zonder onderbouwing is precies wat we niet willen. */}
+            <a
+              href={`/admin/projects/${projectId}?tab=bevindingen`}
+              className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+            >
+              Ik zie iets — bevinding schrijven
+            </a>
+          </div>
+
+          <p className="mt-3 text-xs text-gray-500">
+            De vraag blijft openstaan tot je hem beantwoordt. Schrijf je een bevinding, kom dan
+            terug om hier vast te leggen wat je zag.
           </p>
         </div>
       )}
