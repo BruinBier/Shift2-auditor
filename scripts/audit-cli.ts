@@ -728,8 +728,16 @@ async function getLeesvolgorde(url: string, flags: Flags) {
             tekst = `[afbeelding: ${(el as HTMLImageElement).alt || 'leeg tekstalternatief'}]`;
           } else if (['input', 'select', 'textarea'].includes(tag)) {
             tekst = `[formulierveld ${(el as HTMLInputElement).type || tag}]`;
+          } else if (['a', 'button', 'summary'].includes(tag)) {
+            // Hele tekst, ook uit onderliggende elementen. Bij een link of knop zit de
+            // tekst vaak in een span, naast een icoon-span. Alleen de eigen tekstknopen
+            // lezen laat zo'n link als leeg gelden en dan valt hij weg — op heuvelrug.nl
+            // verdwenen daardoor de zes toptaken uit de meting. Dubbeltelling dreigt niet:
+            // span staat niet in de selectie, dus die tekst wordt nergens anders geteld.
+            tekst = (el.textContent || '').replace(/\s+/g, ' ').trim();
           } else {
-            // Alleen eigen tekst, zodat een omhullend element niet alles herhaalt.
+            // Alleen eigen tekst, zodat een omhullend element niet herhaalt wat de
+            // links en koppen erin al bijdragen.
             tekst = Array.from(el.childNodes)
               .filter((n) => n.nodeType === 3)
               .map((n) => n.textContent || '')
@@ -834,8 +842,14 @@ async function getLeesvolgorde(url: string, flags: Flags) {
       const dir = ensureOutputDir();
       const basis = `${timestamp()}-${slugifyUrl(finalUrl)}-leesvolgorde`;
 
-      // De voorleesvolgorde als platte tekst: dit is wat hulpsoftware achter elkaar
-      // doorloopt, ongeacht hoe het op het scherm ligt.
+      // De volgorde van de ZICHTBARE onderdelen als platte tekst.
+      //
+      // Bewust niet "voorleesvolgorde" genoemd. Wat hulpsoftware doorloopt is meer dan
+      // dit: skiplinks, verborgen koppen en schermlezerlabels staan buiten het scherm
+      // geparkeerd en vallen hier af, terwijl ze wel worden voorgelezen. Op heuvelrug.nl
+      // is de h1 'Home' zo'n geval. Voor het vergelijken van kijkvolgorde met codevolgorde
+      // moeten die er juist uit — ze hebben geen zinnige positie — maar dan mag het
+      // resultaat niet doen alsof het de volledige voorleesvolgorde is.
       const tekstBestand = path.join(dir, `${basis}.txt`);
       fs.writeFileSync(
         tekstBestand,
@@ -868,7 +882,7 @@ async function getLeesvolgorde(url: string, flags: Flags) {
         elementen: data.length,
         afwijkingen: afwijkingen.length,
         omkeringen: afwijkingen.slice(0, 25),
-        voorleesvolgorde: tekstBestand,
+        zichtbareVolgorde: tekstBestand,
         schermafdrukZonderCss: schermafdruk,
         let_op:
           session.mode === 'cdp'
