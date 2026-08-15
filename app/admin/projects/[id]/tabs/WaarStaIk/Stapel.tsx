@@ -169,7 +169,15 @@ export default function Stapel({
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   /** Welke uitgang de onderzoeker heeft aangeklikt, zolang de reden nog ontbreekt. */
-  const [uitgang, setUitgang] = useState<'afwijzen' | 'doorzetten' | 'corrigeren' | null>(null);
+  /**
+   * `overleggen` is geen soort afkeuring maar een derde uitkomst. Het zat eerst in
+   * het correctiepaneel, waardoor je eerst "klopt niet" moest zeggen en daarna in
+   * een paneel met de kop "Wat moet het worden?" moest toegeven dat je dat juist
+   * niet weet.
+   */
+  const [uitgang, setUitgang] = useState<
+    'afwijzen' | 'doorzetten' | 'corrigeren' | 'overleggen' | null
+  >(null);
   const [reden, setReden] = useState('');
   /** Het besprekingsblok, zichtbaar als het klembord niet beschikbaar is. */
   const [blok, setBlok] = useState<string | null>(null);
@@ -361,6 +369,66 @@ export default function Stapel({
       return rang[a.soort] - rang[b.soort];
     });
   }, [stand, focus]);
+
+  /**
+   * Het overlegpaneel. Eén vorm voor de oordeelkaart en de voorstelkaart: waar je
+   * ook vastloopt, je legt hetzelfde blok voor.
+   */
+  const overlegPaneel = (code: string, bouw: (h: Huisregels | null) => string) => (
+    <div className="mt-4 rounded border border-blue-300 bg-blue-50/40 p-3">
+      <label className="mb-1 block text-sm font-medium text-gray-800">
+        Wat klopt er niet aan?
+      </label>
+      <p className="mb-2 text-xs text-gray-600">
+        Bijvoorbeeld: de bevinding haalt twee dingen door elkaar, het advies deugt niet,
+        of dit is helemaal geen kwestie voor dit criterium. Mag ook leeg — dan licht je
+        het in het gesprek toe.
+      </p>
+      <textarea
+        value={reden}
+        onChange={(e) => setReden(e.target.value)}
+        rows={3}
+        autoFocus
+        className="w-full rounded border border-gray-300 p-2 text-sm"
+        placeholder="Je bezwaar in je eigen woorden"
+      />
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={bezig}
+          onClick={() => bespreek(code, bouw)}
+          className="rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+        >
+          {gekopieerd ? 'Gekopieerd — plak het in je AI' : 'Kopieer voor overleg'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setUitgang(null);
+            setReden('');
+            setBlok(null);
+          }}
+          className="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-white"
+        >
+          Terug
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-gray-600">
+        Je krijgt de zaak én de huisregels mee, zodat elke assistent ermee uit de voeten
+        kan. Er wordt niets opgeslagen; de taak blijft op de stapel staan tot jullie eruit
+        zijn.
+      </p>
+      {blok && (
+        <textarea
+          readOnly
+          onFocus={(e) => e.currentTarget.select()}
+          value={blok}
+          rows={10}
+          className="mt-2 w-full rounded border border-gray-300 p-2 font-mono text-xs"
+        />
+      )}
+    </div>
+  );
 
   const sampleVoor = (id: string | null) =>
     id ? stand.samples.find((s) => s.id === id) ?? null : null;
@@ -555,53 +623,20 @@ export default function Stapel({
                 </button>
               </div>
 
-              {/* Soms is niet de status verkeerd maar de tekst: een bevinding die
-                  twee dingen door elkaar haalt, een advies dat het ene punt
-                  repareert door het andere kapot te maken. Daar is geen knop voor
-                  te maken — daar moet je over praten. */}
-              <div className="mt-4 border-t border-gray-200 pt-3">
-                <p className="mb-2 text-sm text-gray-700">
-                  Of deugt niet de status maar <strong>de tekst</strong>? Zet je bezwaar
-                  hierboven en leg het voor aan een assistent naar keuze.
-                </p>
-                <button
-                  type="button"
-                  disabled={bezig}
-                  onClick={() =>
-                    bespreek(huidig.cel.code, (huisregels) =>
-                      bespreekBlok({
-                        code: huidig.cel.code,
-                        critTitel: critTitel(huidig.cel.code),
-                        sample: sampleVoor(huidig.cel.sampleId),
-                        projectId,
-                        bezwaar: reden,
-                        cel: huidig.cel,
-                        voorstellen: wachtendeVoorstellen,
-                        huisregels,
-                      })
-                    )
-                  }
-                  className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-100 disabled:opacity-40"
-                >
-                  {gekopieerd ? 'Gekopieerd — plak het in je AI' : 'Kopieer voor overleg'}
-                </button>
-                <p className="mt-2 text-xs text-gray-500">
-                  Je krijgt een blok met de zaak én de huisregels erbij, zodat elke
-                  assistent ermee uit de voeten kan. Er wordt niets opgeslagen; de taak
-                  blijft op de stapel staan tot jullie eruit zijn.
-                </p>
-                {blok && (
-                  <textarea
-                    readOnly
-                    autoFocus
-                    onFocus={(e) => e.currentTarget.select()}
-                    value={blok}
-                    rows={10}
-                    className="mt-2 w-full rounded border border-gray-300 p-2 font-mono text-xs"
-                  />
-                )}
-              </div>
             </div>
+          ) : uitgang === 'overleggen' ? (
+            overlegPaneel(huidig.cel.code, (huisregels) =>
+              bespreekBlok({
+                code: huidig.cel.code,
+                critTitel: critTitel(huidig.cel.code),
+                sample: sampleVoor(huidig.cel.sampleId),
+                projectId,
+                bezwaar: reden,
+                cel: huidig.cel,
+                voorstellen: wachtendeVoorstellen,
+                huisregels,
+              })
+            )
           ) : (
             <div className="flex flex-wrap gap-2">
               <button
@@ -627,6 +662,16 @@ export default function Stapel({
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >
                 Klopt niet
+              </button>
+              {/* Derde uitkomst, naast eens en oneens: je weet dat er iets niet
+                  deugt maar nog niet wat het moet worden. */}
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => setUitgang('overleggen')}
+                className="rounded border border-blue-300 px-4 py-2 text-sm text-blue-900 hover:bg-blue-50 disabled:opacity-40"
+              >
+                Overleggen
               </button>
             </div>
           )}
@@ -678,7 +723,20 @@ export default function Stapel({
             <p className="mt-4 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>
           )}
 
-          {uitgang ? (
+          {uitgang === 'overleggen' ? (
+            overlegPaneel(huidig.voorstel.code, (huisregels) =>
+              bespreekBlok({
+                code: huidig.voorstel.code,
+                critTitel: critTitel(huidig.voorstel.code),
+                sample: sampleVoor(huidig.voorstel.sampleId),
+                projectId,
+                bezwaar: reden,
+                cel: stand.celVoor(huidig.voorstel.sampleId ?? '', huidig.voorstel.code),
+                voorstellen: [huidig.voorstel],
+                huisregels,
+              })
+            )
+          ) : uitgang ? (
             <div className="mt-4 rounded border border-gray-300 p-3">
               <label className="mb-1 block text-sm font-medium text-gray-800">
                 {uitgang === 'afwijzen'
@@ -723,53 +781,6 @@ export default function Stapel({
                 </button>
               </div>
 
-              {uitgang === 'afwijzen' && (
-                <div className="mt-4 border-t border-gray-200 pt-3">
-                  <p className="mb-2 text-sm text-gray-700">
-                    Twijfel je of het helemaal onzin is, of alleen slecht opgeschreven?
-                    Bespreek het eerst.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={bezig}
-                    onClick={() =>
-                      bespreek(huidig.voorstel.code, (huisregels) =>
-                        bespreekBlok({
-                          code: huidig.voorstel.code,
-                          critTitel: critTitel(huidig.voorstel.code),
-                          sample: sampleVoor(huidig.voorstel.sampleId),
-                          projectId,
-                          bezwaar: reden,
-                          cel: stand.celVoor(
-                            huidig.voorstel.sampleId ?? '',
-                            huidig.voorstel.code
-                          ),
-                          voorstellen: [huidig.voorstel],
-                          huisregels,
-                        })
-                      )
-                    }
-                    className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-100 disabled:opacity-40"
-                  >
-                    {gekopieerd ? 'Gekopieerd — plak het in je AI' : 'Kopieer voor overleg'}
-                  </button>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Je krijgt een blok met de zaak én de huisregels erbij, zodat elke
-                    assistent ermee uit de voeten kan. Er wordt niets opgeslagen; het
-                    voorstel blijft staan tot jullie eruit zijn.
-                  </p>
-                  {blok && (
-                    <textarea
-                      readOnly
-                      autoFocus
-                      onFocus={(e) => e.currentTarget.select()}
-                      value={blok}
-                      rows={10}
-                      className="mt-2 w-full rounded border border-gray-300 p-2 font-mono text-xs"
-                    />
-                  )}
-                </div>
-              )}
             </div>
           ) : (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -809,6 +820,14 @@ export default function Stapel({
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >
                 Dit is techniek
+              </button>
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => setUitgang('overleggen')}
+                className="rounded border border-blue-300 px-4 py-2 text-sm text-blue-900 hover:bg-blue-50 disabled:opacity-40"
+              >
+                Overleggen
               </button>
 
               {/* Het moment waarop je merkt dat de tekst niet deugt, is juist dit
