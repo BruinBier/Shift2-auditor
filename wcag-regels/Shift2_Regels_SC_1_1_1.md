@@ -17,6 +17,11 @@ ga dan na of diezelfde tekst elders op de pagina als echte tekst staat:
 - **Niet elders als tekst** → bevinding onder 1.1.1. Wie de pagina laat voorlezen, krijgt
   die tekst anders niet mee.
 
+**Een logo valt hier buiten: die vergelijking maak je niet.** Is het een logo, dan is een
+leeg tekstalternatief altijd een afkeuring, ongeacht wat er elders op de pagina staat. Ga
+dus niet zoeken in de footer, de paginatitel of de lopende tekst — dat maakt voor het
+oordeel niets uit. Zie "Een logo krijgt altijd een tekstalternatief" onderaan dit bestand.
+
 Dit geldt óók als de afbeelding verder puur illustratief oogt, en óók als de tekst een
 merknaam of logo is. Een logo mag onder 1.4.5 zijn uitgezonderd (afbeelding van tekst),
 maar dat zegt niets over 1.1.1: de naam moet nog steeds voorleesbaar zijn. Beoordeel de
@@ -83,6 +88,8 @@ EEN LOGO KRIJGT ALTIJD EEN TEKSTALTERNATIEF. Is het een logo, dan doet het niet 
 Let op hoe deze regel zich tot de norm verhoudt: hij is STRENGER dan WCAG, niet losser. 1.1.1 kent een uitzondering voor pure decoratie, en wie een logo decoratief noemt omdat de naam elders op de pagina staat, beroept zich op die uitzondering. Bij een logo mag dat beroep hier niet gedaan worden. Er wordt dus een uitzondering geschrapt, niet een toegevoegd — deze regel kan nooit tot een onterechte goedkeuring leiden, hooguit tot een strengere afkeuring dan een andere auditor zou geven. Dat is een bewuste keuze van het bureau en verdedigbaar richting de opdrachtgever.
 
 Dit stelt de checklistpassage "PASS: herhaling van logo elders op pagina → decoratief, alleen als de organisatienaam al elders prominent zichtbaar is" BUITEN WERKING. Ga dus niet na of de naam ergens anders op de pagina staat: dat maakt voor het oordeel niets uit. Die afweging leverde alleen maar grensgevallen op — telt de footer mee, telt een nieuwskop mee, telt de paginatitel mee — en verschillende auditors kwamen tot verschillende uitkomsten. Nu is er niets af te wegen.
+
+Het tekstalternatief bevat ALLE tekst die op het logo staat. Niet alleen de organisatienaam: staat er ook een dorpsnaam, een woord als "gemeente", een slogan of een toevoeging onder het beeldmerk, dan hoort dat er allemaal in. Neem het over zoals het er staat, in de volgorde waarin je het leest. Wie alleen de naam overneemt laat informatie liggen die op het plaatje wél te zien is, en dat is precies wat 1.1.1 wil voorkomen.
 
 In het tekstalternatief staat de AFZENDER, niet de bestemming van de link. Dus "Logo gemeente Utrechtse Heuvelrug", niet "Logo gemeente X, link naar de Homepagina". Op een subsite hoort de afzender volledig benoemd, inclusief om welke site het gaat: "Logo gemeente X, Website Duurzaam X" (zie de subsite-regel hierboven). Dat is geen bestemming maar identiteit — welke site dit is, niet waar de link heen gaat.
 
