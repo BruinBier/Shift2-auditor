@@ -75,3 +75,15 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 1.1.1 EN LINKDOEL NIET DOOR ELKAAR HALEN. Bij een afbeelding in een link beoordeel je onder 1.1.1 uitsluitend of de informatie IN de afbeelding in tekst wordt overgebracht. Tekst die aan de link hangt (een title-attribuut, een aria-label of verborgen linktekst zoals "Ga naar de homepage") staat niet op de afbeelding en repareert een ontbrekend tekstalternatief niet. Of de link zijn doel duidelijk maakt is een aparte vraag onder 2.4.4/4.1.2 en krijgt een eigen bevinding. Houd het ook uit het advies: adviseer onder 1.1.1 alleen een alt die de informatie uit de afbeelding overbrengt, nooit een alt die er de bestemming van de link bij noemt. TESTMETHODE: beoordeel 1.1.1 nooit op de opgehaalde code alleen, ook niet als je afkeurt. Start een auditsessie en bekijk de gerenderde pagina en de afbeelding zelf. Uit de code lees je wel het lege alt-attribuut, maar niet welke tekst in de afbeelding staat en niet of die tekst elders op de gerenderde pagina voorkomt. Aanleiding: heuvelrug.nl (2026-08-15), logo met alt="" in een link met title="Ga naar de homepage".
 
 Aanleiding: 1.1.1 op Home (V010)
+
+### 2026-08-15
+
+EEN LOGO KRIJGT ALTIJD EEN TEKSTALTERNATIEF. Is het een logo, dan doet het niet ter zake wat voor logo: header, footer, subsite, sponsor, partner, keurmerk, of hetzelfde logo voor de tweede keer op dezelfde pagina. Een leeg tekstalternatief is bij een logo altijd een afkeuring. Een logo is de afzender — het vertelt van wie deze pagina is — en die informatie mag voor niemand wegvallen.
+
+Dit stelt de checklistpassage "PASS: herhaling van logo elders op pagina → decoratief, alleen als de organisatienaam al elders prominent zichtbaar is" BUITEN WERKING. Ga dus niet na of de naam ergens anders op de pagina staat: dat maakt voor het oordeel niets uit. Die afweging leverde alleen maar grensgevallen op — telt de footer mee, telt een nieuwskop mee, telt de paginatitel mee — en verschillende auditors kwamen tot verschillende uitkomsten. Nu is er niets af te wegen.
+
+In het tekstalternatief staat de AFZENDER, niet de bestemming van de link. Dus "Logo gemeente Utrechtse Heuvelrug", niet "Logo gemeente X, link naar de Homepagina". Op een subsite hoort de afzender volledig benoemd, inclusief om welke site het gaat: "Logo gemeente X, Website Duurzaam X" (zie de subsite-regel hierboven). Dat is geen bestemming maar identiteit — welke site dit is, niet waar de link heen gaat.
+
+TESTMETHODE: start een auditsessie en bekijk de gerenderde pagina. Uit de opgehaalde code alleen zie je niet of een afbeelding een logo is: een bestandsnaam met "logo" erin zegt niets, en een logo zonder dat woord in de naam mis je. Je moet de afbeelding gezien hebben om te weten wat erin staat en hoe het tekstalternatief moet luiden.
+
+Aanleiding: heuvelrug.nl (2026-08-15), logo met alt="" in de header. Besluit van Frits tijdens het doorlopen van 1.1.1 op Home.
