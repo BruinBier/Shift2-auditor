@@ -33,17 +33,28 @@ const OMZETBAAR: { waarde: 'voldoet' | 'afgekeurd' | 'opmerking' | 'niet_aanwezi
   { waarde: 'niet_te_bepalen', label: 'Moet ik zelf kijken' },
 ];
 
+/** De huisregels die bij dit criterium horen, opgehaald zodat ze meekunnen. */
+interface Huisregels {
+  bestandsnaam: string;
+  regels: string | null;
+  schrijfregels: string | null;
+}
+
 /**
- * Het blok dat je meeneemt naar Claude als een oordeel of een voorstel niet deugt.
+ * Het blok dat je meeneemt naar een AI als een oordeel of een voorstel niet deugt.
  *
  * "Klopt niet" bood alleen een andere status. Maar wat er mis is, is vaak niet de
  * status maar de tekst: een bevinding die twee dingen door elkaar haalt, een advies
  * dat het ene punt repareert door het andere kapot te maken. Daar is geen knop voor
  * te maken — daar moet je over praten.
  *
- * Wat zo'n gesprek oplevert hoort in wcag-regels/ te landen en niet in de chat: de
- * chat waait weg, de regel niet. Vandaar de verwijzing onderaan het blok. Een verse
- * chat die die bestanden leest, weet wat de vorige chat leerde.
+ * Het blok neemt de huisregels mee in plaats van ernaar te verwijzen. Een verwijzing
+ * naar `wcag-regels/…` helpt alleen een assistent die in deze repository kan lezen;
+ * plak je het in een gewoon chatvenster, dan is die verwijzing waardeloos. Zo werkt
+ * het overal, en is het onderzoek van niemands gereedschap afhankelijk.
+ *
+ * Wat het gesprek oplevert hoort terug in wcag-regels/ — de chat waait weg, de regel
+ * niet. Daarom vraagt het blok expliciet om een regel als uitkomst.
  */
 function bespreekBlok(opties: {
   code: string;
@@ -53,23 +64,44 @@ function bespreekBlok(opties: {
   bezwaar: string;
   cel?: Cel | null;
   voorstellen: Voorstel[];
+  huisregels: Huisregels | null;
 }): string {
-  const { code, critTitel, sample, projectId, bezwaar, cel, voorstellen } = opties;
+  const { code, critTitel, sample, projectId, bezwaar, cel, voorstellen, huisregels } =
+    opties;
   const r: string[] = [];
 
-  r.push(`## Klopt niet — ${code} op ${sample?.title ?? 'onbekende pagina'}`);
+  r.push(`# Bezwaar tegen een auditoordeel — WCAG ${code} op ${sample?.title ?? 'een pagina'}`);
+  r.push('');
+  r.push(
+    'Ik voer een WCAG 2.2-toegankelijkheidsonderzoek uit. Een geautomatiseerde auditor heeft'
+  );
+  r.push('hieronder een oordeel geveld dat volgens mij niet deugt. Denk met me mee.');
+  r.push('');
+  r.push('## Wat ik terug wil');
+  r.push('');
+  r.push('1. Klopt mijn bezwaar? Zeg het als ik ernaast zit — daar heb ik meer aan.');
+  r.push(
+    '2. Zo ja: een herschreven bevindingstekst en advies, of de conclusie dat het geen bevinding is.'
+  );
+  r.push(
+    '3. Een regel van een paar zinnen die dit voor de volgende keer vastlegt, in de stijl van de huisregels hieronder.'
+  );
+  r.push('');
+  r.push('## De zaak');
   r.push('');
   r.push(`Criterium: ${code} — ${critTitel}`);
   r.push(`Pagina: ${sample?.title ?? '?'}${sample?.url ? ` — ${sample.url}` : ''}`);
   r.push(`Project: ${projectId}`);
   r.push('');
   r.push('### Mijn bezwaar');
+  r.push('');
   r.push(bezwaar.trim() || '(nog niet ingevuld — ik licht het hieronder toe)');
 
   if (cel) {
     r.push('');
-    r.push('### Oordeel van de agent');
-    r.push(`${cel.status}${cel.bron ? ` (via ${cel.bron})` : ''}`);
+    r.push('### Het oordeel van de auditor');
+    r.push('');
+    r.push(`Status: ${cel.status}${cel.bron ? ` (via ${cel.bron})` : ''}`);
     r.push('');
     r.push(cel.reden ?? '(geen onderbouwing gegeven)');
   }
@@ -77,25 +109,38 @@ function bespreekBlok(opties: {
   for (const v of voorstellen) {
     r.push('');
     r.push(
-      `### ${v.findingCode ?? 'voorstel'} · ${v.type}${v.impact ? ` · ${v.impact}` : ''}`
+      `### ${v.findingCode ?? 'Voorstel'} · ${v.type}${v.impact ? ` · impact ${v.impact}` : ''}`
     );
+    r.push('');
     r.push(v.description || '(geen beschrijving)');
     if (v.advice) {
       r.push('');
-      r.push('Advies:');
+      r.push('**Advies:**');
       r.push(v.advice);
     }
   }
 
-  const regelbestand = `wcag-regels/Shift2_Regels_SC_${code.replace(/\./g, '_')}.md`;
+  // De huisregels gaan integraal mee. Zonder die context beoordeelt een assistent
+  // dit op algemene WCAG-kennis, en dan komt er iets uit dat hier niet past.
   r.push('');
-  r.push('---');
-  r.push(
-    `Lees eerst ${regelbestand} (als dat bestaat) en wcag-regels/Shift2_Schrijfregels.md.`
-  );
-  r.push(
-    'Wat we hier afspreken hoort in wcag-regels/ te landen — anders maakt de volgende auditronde dezelfde fout.'
-  );
+  r.push('## De huisregels van dit onderzoeksbureau');
+  r.push('');
+  if (huisregels?.regels) {
+    r.push(`Uit \`${huisregels.bestandsnaam}\`:`);
+    r.push('');
+    r.push(huisregels.regels.trim());
+  } else {
+    r.push(
+      `Voor ${code} bestaat nog geen regelbestand. Als we het eens worden, is dat het eerste.`
+    );
+  }
+
+  if (huisregels?.schrijfregels) {
+    r.push('');
+    r.push('## Schrijfregels voor bevindingen');
+    r.push('');
+    r.push(huisregels.schrijfregels.trim());
+  }
 
   return r.join('\n');
 }
@@ -130,16 +175,37 @@ export default function Stapel({
   const [blok, setBlok] = useState<string | null>(null);
   const [gekopieerd, setGekopieerd] = useState(false);
 
-  const bespreek = async (tekst: string) => {
+  /**
+   * Bouwt het besprekingsblok en zet het op het klembord.
+   *
+   * De huisregels worden er eerst bij gehaald, zodat het blok ook werkt in een
+   * chatvenster zonder toegang tot deze repository. Lukt dat ophalen niet, dan gaat
+   * het blok alsnog mee — zonder regels is het minder waard, maar niet waardeloos.
+   */
+  const bespreek = async (code: string, bouw: (h: Huisregels | null) => string) => {
+    setBezig(true);
     try {
-      await navigator.clipboard.writeText(tekst);
-      setGekopieerd(true);
-      setBlok(null);
-      setTimeout(() => setGekopieerd(false), 4000);
-    } catch {
-      // Klembord geweigerd (geen beveiligde context, of de gebruiker heeft het
-      // uitgezet). Dan maar zichtbaar, zodat je het zelf kunt selecteren.
-      setBlok(tekst);
+      let huisregels: Huisregels | null = null;
+      try {
+        const res = await fetch(`/api/wcag-regels?code=${encodeURIComponent(code)}`);
+        if (res.ok) huisregels = await res.json();
+      } catch {
+        // Netwerk weg; het blok gaat zonder regels mee.
+      }
+
+      const tekst = bouw(huisregels);
+      try {
+        await navigator.clipboard.writeText(tekst);
+        setGekopieerd(true);
+        setBlok(null);
+        setTimeout(() => setGekopieerd(false), 4000);
+      } catch {
+        // Klembord geweigerd (geen beveiligde context, of uitgezet in de browser).
+        // Dan maar zichtbaar, zodat je het zelf kunt selecteren.
+        setBlok(tekst);
+      }
+    } finally {
+      setBezig(false);
     }
   };
 
@@ -496,12 +562,13 @@ export default function Stapel({
               <div className="mt-4 border-t border-gray-200 pt-3">
                 <p className="mb-2 text-sm text-gray-700">
                   Of deugt niet de status maar <strong>de tekst</strong>? Zet je bezwaar
-                  hierboven en neem het gesprek mee.
+                  hierboven en leg het voor aan een assistent naar keuze.
                 </p>
                 <button
                   type="button"
+                  disabled={bezig}
                   onClick={() =>
-                    bespreek(
+                    bespreek(huidig.cel.code, (huisregels) =>
                       bespreekBlok({
                         code: huidig.cel.code,
                         critTitel: critTitel(huidig.cel.code),
@@ -510,16 +577,18 @@ export default function Stapel({
                         bezwaar: reden,
                         cel: huidig.cel,
                         voorstellen: wachtendeVoorstellen,
+                        huisregels,
                       })
                     )
                   }
-                  className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-100"
+                  className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-100 disabled:opacity-40"
                 >
-                  {gekopieerd ? 'Gekopieerd — plak het in Claude' : 'Bespreek met Claude'}
+                  {gekopieerd ? 'Gekopieerd — plak het in je AI' : 'Kopieer voor overleg'}
                 </button>
                 <p className="mt-2 text-xs text-gray-500">
-                  Er wordt niets opgeslagen. De taak blijft op de stapel staan tot jullie
-                  eruit zijn.
+                  Je krijgt een blok met de zaak én de huisregels erbij, zodat elke
+                  assistent ermee uit de voeten kan. Er wordt niets opgeslagen; de taak
+                  blijft op de stapel staan tot jullie eruit zijn.
                 </p>
                 {blok && (
                   <textarea
@@ -662,8 +731,9 @@ export default function Stapel({
                   </p>
                   <button
                     type="button"
+                    disabled={bezig}
                     onClick={() =>
-                      bespreek(
+                      bespreek(huidig.voorstel.code, (huisregels) =>
                         bespreekBlok({
                           code: huidig.voorstel.code,
                           critTitel: critTitel(huidig.voorstel.code),
@@ -675,16 +745,18 @@ export default function Stapel({
                             huidig.voorstel.code
                           ),
                           voorstellen: [huidig.voorstel],
+                          huisregels,
                         })
                       )
                     }
-                    className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-100"
+                    className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-100 disabled:opacity-40"
                   >
-                    {gekopieerd ? 'Gekopieerd — plak het in Claude' : 'Bespreek met Claude'}
+                    {gekopieerd ? 'Gekopieerd — plak het in je AI' : 'Kopieer voor overleg'}
                   </button>
                   <p className="mt-2 text-xs text-gray-500">
-                    Er wordt niets opgeslagen. Het voorstel blijft staan tot jullie eruit
-                    zijn.
+                    Je krijgt een blok met de zaak én de huisregels erbij, zodat elke
+                    assistent ermee uit de voeten kan. Er wordt niets opgeslagen; het
+                    voorstel blijft staan tot jullie eruit zijn.
                   </p>
                   {blok && (
                     <textarea
