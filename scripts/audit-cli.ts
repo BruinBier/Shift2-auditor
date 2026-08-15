@@ -15,7 +15,8 @@
  *   tsx scripts/audit-cli.ts set-assessment <projectId> --criterion=<id> --status=failed [--explanation=...]
  *   tsx scripts/audit-cli.ts get-html <url> [--full] [--text]
  *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...]
- *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
+ * tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
+ *   tsx scripts/audit-cli.ts get-contrast <url> --selector=... [--klik=...]
  */
 
 import * as fs from 'fs';
@@ -603,6 +604,10 @@ async function getScreenshot(url: string, flags: Flags) {
   const fullPage = flags['full-page'] === 'true';
   const selector = flags.selector && flags.selector !== 'true' ? flags.selector : null;
   const keepCookieBanner = flags['keep-cookie-banner'] === 'true';
+  // Klik iets aan voordat de opname wordt gemaakt: een hoogcontrastknop, een
+  // uitklapmenu, een tabblad. Zonder dit is alles wat pas na een handeling verschijnt
+  // niet te beoordelen, en dat is precies waar de moeilijke criteria zitten.
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
   const session = await getBrowser();
   try {
     const { page, cleanup } = await openPage(session, url);
@@ -635,6 +640,36 @@ async function getScreenshot(url: string, flags: Flags) {
         });
       }
 
+      let geklikt: string | null = null;
+      if (klik) {
+        // Op tekst zoeken mag ook: --klik="tekst:Contrast verhogen". Een klasse als
+        // AccessibilityBar-module-scss-module__-yiL0G__abButton verandert bij elke
+        // build van de site, de knoptekst niet.
+        if (klik.startsWith('tekst:')) {
+          const woorden = klik.slice(6);
+          const gevonden = await page.evaluate((zoek: string) => {
+            const kandidaten = Array.from(
+              document.querySelectorAll('button, a, [role="button"], summary, input[type="button"]')
+            );
+            const el = kandidaten.find((k) =>
+              (k.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase().includes(zoek.toLowerCase())
+            );
+            if (!el) return null;
+            (el as HTMLElement).click();
+            return (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+          }, woorden);
+          if (!gevonden) throw new Error(`Geen klikbaar element met de tekst "${woorden}"`);
+          geklikt = gevonden;
+        } else {
+          const handle = await page.$(klik);
+          if (!handle) throw new Error(`Selector niet gevonden om op te klikken: ${klik}`);
+          await handle.click();
+          geklikt = klik;
+        }
+        // De pagina moet de omschakeling kunnen doorvoeren.
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
       if (selector) {
         const handle = await page.$(selector);
         if (!handle) {
@@ -654,6 +689,7 @@ async function getScreenshot(url: string, flags: Flags) {
         bytes: stat.size,
         file,
         browser: session.mode,
+        geklikt,
       });
     } finally {
       await cleanup();
@@ -897,6 +933,151 @@ async function getLeesvolgorde(url: string, flags: Flags) {
   }
 }
 
+/**
+ * Meet het contrast van een element op de opgemaakte pagina.
+ *
+ * Voor 1.4.3 en 1.4.11, die allebei om gemeten kleuren vragen. Uit de code alleen
+ * zijn die niet te halen: kleuren staan in externe opmaakbestanden, vaak achter
+ * variabelen, en een knop erft zijn achtergrond meestal van een ouder.
+ *
+ * Meet op het element dat de tekst zelf bevat. Een <a> met een <span> erin heeft
+ * vaak een andere kleur dan de span die je ziet; die verwarring leverde eerder een
+ * niet-bestaande afkeuring van 1,25:1 op.
+ *
+ * `--klik` schakelt eerst iets aan, zodat ook een hoogcontrastweergave te meten is.
+ */
+async function getContrast(url: string, flags: Flags) {
+  const doel = requireFlag(flags, 'selector');
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase().includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      // De pagina levert alleen ruwe waarden; het rekenwerk gebeurt hieronder in Node.
+      // Een benoemde functie binnen page.evaluate wordt door de bundler in een helper
+      // gewikkeld die in de browser niet bestaat (__name is not defined).
+      const ruw = await page.evaluate((sel: string) => {
+        const zoekTekst = sel.startsWith('tekst:') ? sel.slice(6).toLowerCase() : null;
+        const el = zoekTekst
+          ? Array.from(document.querySelectorAll('*')).find(
+              (k) =>
+                k.children.length === 0 &&
+                (k.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase() === zoekTekst
+            )
+          : document.querySelector(sel);
+        if (!el) return null;
+
+        const stijl = window.getComputedStyle(el);
+        const achtergronden: string[] = [];
+        let achtergrondAfbeelding: string | null = null;
+        let n: Element | null = el;
+        while (n) {
+          const s = window.getComputedStyle(n);
+          if (!achtergrondAfbeelding && s.backgroundImage && s.backgroundImage !== 'none') {
+            achtergrondAfbeelding = s.backgroundImage.slice(0, 60);
+          }
+          achtergronden.push(s.backgroundColor);
+          n = n.parentElement;
+        }
+
+        return {
+          tekst: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60),
+          element: el.tagName.toLowerCase(),
+          kleur: stijl.color,
+          achtergronden,
+          fontSize: parseFloat(stijl.fontSize),
+          fontWeight: stijl.fontWeight,
+          achtergrondAfbeelding,
+        };
+      }, doel);
+
+      if (!ruw) throw new Error(`Element niet gevonden: ${doel}`);
+
+      const ontleed = (kleur: string): number[] | null => {
+        const m = kleur.match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const d = m[1].split(',').map((x) => parseFloat(x.trim()));
+        return [d[0], d[1], d[2], d.length > 3 ? d[3] : 1];
+      };
+      const helderheid = (rgb: number[]) => {
+        const k = rgb.slice(0, 3).map((v) => {
+          const x = v / 255;
+          return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
+      };
+      const hex = (rgb: number[]) =>
+        '#' + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+
+      const voor = ontleed(ruw.kleur);
+      if (!voor) throw new Error(`Tekstkleur niet te lezen: ${ruw.kleur}`);
+
+      // Eerste ondoorzichtige achtergrond in de voorouderketen. Een knop erft die
+      // meestal van een ouder, en een doorzichtige achtergrond zegt niets.
+      let achter = [255, 255, 255, 1];
+      for (const kandidaat of ruw.achtergronden) {
+        const c = ontleed(kandidaat);
+        if (c && c[3] > 0) {
+          achter = c;
+          break;
+        }
+      }
+
+      const l1 = helderheid(voor);
+      const l2 = helderheid(achter);
+      const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+      const vet = parseInt(ruw.fontWeight, 10) >= 700;
+      const groot = ruw.fontSize >= 24 || (vet && ruw.fontSize >= 18.66);
+      const eis = groot ? 3 : 4.5;
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        geklikt: klik,
+        tekst: ruw.tekst,
+        element: ruw.element,
+        tekstkleur: hex(voor),
+        achtergrondkleur: hex(achter),
+        fontSize: `${ruw.fontSize}px`,
+        fontWeight: ruw.fontWeight,
+        grote_tekst: groot,
+        contrast: `${Math.round(ratio * 100) / 100}:1`,
+        eis: `${eis}:1`,
+        voldoet: ratio >= eis,
+        let_op: ruw.achtergrondAfbeelding
+          ? 'Er ligt een achtergrondafbeelding achter dit element. De gemeten achtergrondkleur is dan niet wat je ziet; controleer op de schermafdruk.'
+          : null,
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -934,6 +1115,8 @@ async function main() {
       return getScreenshot(requirePositional(positional, 0, 'url'), flags);
     case 'get-leesvolgorde':
       return getLeesvolgorde(requirePositional(positional, 0, 'url'), flags);
+    case 'get-contrast':
+      return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'run-tests':
       return runTests(requirePositional(positional, 0, 'url'), flags);
     case 'test-samples':
