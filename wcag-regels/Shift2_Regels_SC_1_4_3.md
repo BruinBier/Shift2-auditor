@@ -12,9 +12,17 @@ ouder. Het is wél te meten op de opgemaakte pagina, en dat hoor je te doen voor
 een vraag van maakt:
 
 ```
-npm run cli -- get-contrast <url> --selector='button.contrast'
-npm run cli -- get-contrast <url> --selector='button.contrast' --klik="tekst:Contrast verhogen"
+npm run cli -- get-contrast <url>                                    (hele pagina)
+npm run cli -- get-contrast <url> --klik="tekst:Contrast verhogen"   (hele pagina, hoogcontrast)
+npm run cli -- get-contrast <url> --selector='button.contrast'       (één element)
 ```
+
+**Meet de hele pagina, niet alleen de knop.** Zonder `--selector` wordt elke tekst op de
+pagina gemeten en worden gelijke combinaties van kleur, achtergrond en lettergrootte
+samengevoegd — een pagina met tweehonderd links levert anders tweehonderd regels op die
+hetzelfde zeggen. Eén element meten toetst een vermoeden; een oordeel over de pagina is
+een uitspraak over alles wat erop staat. En meet de hoogcontrastweergave apart: dat die
+knop deugt zegt niets over de teksten die erna in beeld komen.
 
 Dat geeft tekstkleur, achtergrondkleur, lettergrootte, de verhouding en of die haalt wat
 nodig is. **Meet op het element dat de tekst zelf bevat**, niet op een omhulsel: een `<a>`

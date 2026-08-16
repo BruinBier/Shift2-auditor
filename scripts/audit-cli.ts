@@ -15,8 +15,8 @@
  *   tsx scripts/audit-cli.ts set-assessment <projectId> --criterion=<id> --status=failed [--explanation=...]
  *   tsx scripts/audit-cli.ts get-html <url> [--full] [--text]
  *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...]
- * tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
- *   tsx scripts/audit-cli.ts get-contrast <url> --selector=... [--klik=...]
+ *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
+ *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
  */
 
 import * as fs from 'fs';
@@ -947,6 +947,12 @@ async function getLeesvolgorde(url: string, flags: Flags) {
  * `--klik` schakelt eerst iets aan, zodat ook een hoogcontrastweergave te meten is.
  */
 async function getContrast(url: string, flags: Flags) {
+  // Zonder --selector wordt de hele pagina gemeten. Eén element tegelijk is genoeg om
+  // een vermoeden te toetsen, maar niet om te zeggen dat een pagina in orde is — en
+  // dat laatste is wat een oordeel beweert.
+  if (!flags.selector || flags.selector === 'true') {
+    return getContrastAlles(url, flags);
+  }
   const doel = requireFlag(flags, 'selector');
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
   const session = await getBrowser();
@@ -1069,6 +1075,190 @@ async function getContrast(url: string, flags: Flags) {
         let_op: ruw.achtergrondAfbeelding
           ? 'Er ligt een achtergrondafbeelding achter dit element. De gemeten achtergrondkleur is dan niet wat je ziet; controleer op de schermafdruk.'
           : null,
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+/**
+ * Het contrast van elke tekst op de pagina.
+ *
+ * Eén element meten toetst een vermoeden; dit toetst een oordeel. "De pagina voldoet"
+ * is een uitspraak over alles wat erop staat, en die is niet te doen door één knop te
+ * meten en de rest aan te nemen.
+ *
+ * Gelijke combinaties van kleur, achtergrond en lettergrootte worden samengevoegd: een
+ * pagina met tweehonderd links levert anders tweehonderd regels op die allemaal
+ * hetzelfde zeggen. Wat je wilt zien is hoeveel verschillende combinaties er zijn en
+ * welke daarvan tekortschieten.
+ */
+async function getContrastAlles(url: string, flags: Flags) {
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(document.querySelectorAll('button, a, [role="button"], summary')).find(
+                  (k) =>
+                    (k.textContent || '')
+                      .replace(/\s+/g, ' ')
+                      .trim()
+                      .toLowerCase()
+                      .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      const ruw = await page.evaluate(() => {
+        const uit: {
+          tekst: string;
+          tag: string;
+          kleur: string;
+          achtergronden: string[];
+          fontSize: number;
+          fontWeight: string;
+          afbeeldingErachter: boolean;
+        }[] = [];
+
+        for (const el of Array.from(document.querySelectorAll('*'))) {
+          // Alleen eigen tekst: anders meet je een container met de kleur van zijn
+          // omhulsel terwijl de tekst die je ziet in een kind zit.
+          const eigen = Array.from(el.childNodes)
+            .filter((n) => n.nodeType === 3)
+            .map((n) => n.textContent || '')
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (!eigen) continue;
+
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) continue;
+          if (rect.top < -500 || rect.left < -500) continue;
+          const stijl = window.getComputedStyle(el);
+          if (stijl.visibility === 'hidden' || stijl.display === 'none') continue;
+          if (parseFloat(stijl.opacity) === 0) continue;
+
+          const achtergronden: string[] = [];
+          let afbeeldingErachter = false;
+          let n: Element | null = el;
+          while (n) {
+            const s = window.getComputedStyle(n);
+            if (s.backgroundImage && s.backgroundImage !== 'none') afbeeldingErachter = true;
+            achtergronden.push(s.backgroundColor);
+            n = n.parentElement;
+          }
+
+          uit.push({
+            tekst: eigen.slice(0, 50),
+            tag: el.tagName.toLowerCase(),
+            kleur: stijl.color,
+            achtergronden,
+            fontSize: parseFloat(stijl.fontSize),
+            fontWeight: stijl.fontWeight,
+            afbeeldingErachter,
+          });
+        }
+        return uit;
+      });
+
+      const ontleed = (kleur: string): number[] | null => {
+        const m = kleur.match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const d = m[1].split(',').map((x) => parseFloat(x.trim()));
+        return [d[0], d[1], d[2], d.length > 3 ? d[3] : 1];
+      };
+      const helderheid = (rgb: number[]) => {
+        const k = rgb.slice(0, 3).map((v) => {
+          const x = v / 255;
+          return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
+      };
+      const hex = (rgb: number[]) =>
+        '#' + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+
+      const groepen = new Map<string, any>();
+      let overgeslagen = 0;
+
+      for (const r of ruw) {
+        const voor = ontleed(r.kleur);
+        if (!voor) {
+          overgeslagen++;
+          continue;
+        }
+        let achter = [255, 255, 255, 1];
+        for (const kandidaat of r.achtergronden) {
+          const c = ontleed(kandidaat);
+          if (c && c[3] > 0) {
+            achter = c;
+            break;
+          }
+        }
+        const ratio =
+          (Math.max(helderheid(voor), helderheid(achter)) + 0.05) /
+          (Math.min(helderheid(voor), helderheid(achter)) + 0.05);
+        const vet = parseInt(r.fontWeight, 10) >= 700;
+        const groot = r.fontSize >= 24 || (vet && r.fontSize >= 18.66);
+        const eis = groot ? 3 : 4.5;
+
+        const sleutel = `${hex(voor)}|${hex(achter)}|${r.fontSize}|${vet}`;
+        const bestaand = groepen.get(sleutel);
+        if (bestaand) {
+          bestaand.aantal++;
+          if (bestaand.voorbeelden.length < 3) bestaand.voorbeelden.push(r.tekst);
+          bestaand.afbeeldingErachter = bestaand.afbeeldingErachter || r.afbeeldingErachter;
+        } else {
+          groepen.set(sleutel, {
+            tekstkleur: hex(voor),
+            achtergrondkleur: hex(achter),
+            fontSize: `${r.fontSize}px`,
+            vet,
+            grote_tekst: groot,
+            contrast: Math.round(ratio * 100) / 100,
+            eis,
+            voldoet: ratio >= eis,
+            aantal: 1,
+            voorbeelden: [r.tekst],
+            afbeeldingErachter: r.afbeeldingErachter,
+          });
+        }
+      }
+
+      const alle = Array.from(groepen.values()).sort((a, b) => a.contrast - b.contrast);
+      const tekort = alle.filter((g) => !g.voldoet);
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        geklikt: klik,
+        gemeten_elementen: ruw.length,
+        overgeslagen,
+        combinaties: alle.length,
+        onvoldoende: tekort.length,
+        tekortschietend: tekort,
+        laagste_die_wel_voldoet: alle.find((g) => g.voldoet) ?? null,
+        let_op:
+          tekort.some((g) => g.afbeeldingErachter) || alle.some((g) => g.afbeeldingErachter)
+            ? 'Bij sommige combinaties ligt er een achtergrondafbeelding achter de tekst. De gemeten achtergrondkleur is dan niet wat je ziet; controleer die op de schermafdruk.'
+            : null,
       });
     } finally {
       await cleanup();
