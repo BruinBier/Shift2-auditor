@@ -151,6 +151,10 @@ async function getProject(projectId: string) {
       sampleType: s.sampleType,
       title: s.title,
       url: s.url,
+      // De beschrijving draagt wat er bijzonder is aan deze pagina en dat is soms
+      // beslissend: dat een stap van een formulier niet met een los adres te openen
+      // is, bijvoorbeeld. Zonder dit veld hier ziet geen enkele agent het.
+      description: s.description || null,
     })),
     findings: (Array.isArray(findings) ? findings : []).map((f: any) => ({
       id: f.id,

@@ -44,12 +44,18 @@ const CONTEXT_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['id', 'title', 'url', 'sampleType'],
+        // description staat er bewust in als VERPLICHT veld met null toegestaan. Een
+        // optioneel veld laat een agent graag weg, en juist daar staat wat er
+        // bijzonder is aan een pagina — dat een stap van een formulier alleen via een
+        // ingevulde vorige stap te bereiken is, bijvoorbeeld. Zo moet hij er actief
+        // null van maken in plaats van hem stilzwijgend te laten vallen.
+        required: ['id', 'title', 'url', 'sampleType', 'description'],
         properties: {
           id: { type: 'string' },
           title: { type: 'string' },
           url: { type: ['string', 'null'] },
           sampleType: { type: 'string' },
+          description: { type: ['string', 'null'] },
         },
       },
     },
@@ -126,7 +132,7 @@ Project-id: ${projectId}
 
 Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het schema:
 
-1. \`npm run cli -- get-project ${projectId}\` — noteer project.researchType (de naam van het onderzoekstype) en de volledige lijst sampleItems (id, title, url, sampleType). Neem ALLE sample-items op.
+1. \`npm run cli -- get-project ${projectId}\` — noteer project.researchType (de naam van het onderzoekstype) en de volledige lijst sampleItems (id, title, url, sampleType, description). Neem ALLE sample-items op, en neem de description letterlijk over — daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.
 
 2. Haal de SC-set van het onderzoekstype op met een GET naar de API. De research-type-route accepteert de NAAM:
    \`curl -s "http://localhost:3000/api/research-types/<researchTypeName-url-encoded>"\`
@@ -499,7 +505,10 @@ SAMPLE
   id:    ${sample.id}
   titel: ${sample.title}
   url:   ${sample.url || '(geen URL — mogelijk PDF/handmatig)'}
-  type:  ${sample.sampleType}
+  type:  ${sample.sampleType}${sample.description ? `
+
+WAT ER OVER DEZE PAGINA IS VASTGELEGD — lees dit voordat je begint:
+  ${sample.description}` : ''}
 
 WAT JE VAN DEZE PAGINA BEOORDEELT — ${homepageSample && sample.id === homepageSample.id ? 'HEADER, MAIN-CONTENT EN FOOTER' : 'ALLEEN DE MAIN-CONTENT'}
 ${
@@ -650,7 +659,9 @@ Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requi
       return { sampleId: sample.id, audit, verify: { sampleId: sample.id, oordelen: [] } }
     }
     return agent(
-      `Je bent een kritische WCAG-verifier. Een andere auditor beoordeelde sample "${sample.title}" (${sample.url || 'geen URL'}). Controleer UITSLUITEND de onderstaande afkeuringen en opmerkingen: klopt het oordeel, en is de beschrijving correct en niet overdreven? Probeer elk oordeel te weerleggen; bevestig alleen wat standhoudt.
+      `Je bent een kritische WCAG-verifier. Een andere auditor beoordeelde sample "${sample.title}" (${sample.url || 'geen URL'}).${sample.description ? `
+
+WAT ER OVER DEZE PAGINA IS VASTGELEGD: ${sample.description}` : ''} Controleer UITSLUITEND de onderstaande afkeuringen en opmerkingen: klopt het oordeel, en is de beschrijving correct en niet overdreven? Probeer elk oordeel te weerleggen; bevestig alleen wat standhoudt.
 ${
   homepageSample && sample.id === homepageSample.id
     ? `\nDit is het homepage-sample: header, main-content en footer horen hier allemaal beoordeeld te worden.\n`
