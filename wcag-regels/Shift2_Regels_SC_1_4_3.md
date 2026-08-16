@@ -29,8 +29,16 @@ npm run cli -- get-screenshot <url> --selector='<logo-selector>' --klik="tekst:C
 ```
 
 **Noteer in de onderbouwing hóé je hebt gemeten**: welk element, welke kleuren als
-#RRGGBB, welke lettergrootte, welke verhouding, en in welke weergave. Zonder dat is het
-opnieuw een bewering.
+#RRGGBB, welke lettergrootte, welke verhouding, in welke weergave, en **in welke browser**.
+Zonder dat is het opnieuw een bewering.
+
+Dat laatste is geen formaliteit. De CLI meldt in elk antwoord of hij in de auditsessie
+draaide of headless is teruggevallen, en dat verschil telt: een auditsessie houdt cookies,
+inloggegevens en localStorage vast, headless begint elke keer schoon. Voor een openbare
+pagina zonder login maakt het voor de kleuren niets uit, en heeft headless zelfs een
+voordeel — de hoogcontrastweergave blijft in localStorage staan, dus in een auditsessie
+vervuilt de ene meting de volgende. Achter een login of een cookiemuur is het omgekeerd en
+heb je de auditsessie juist nodig.
 
 Blijft er iets over dat je niet kunt meten — of de weergave inhoudelijk deugt op de hele
 site, of een afbeelding met tekst nog leesbaar is naar het oordeel van een mens — zet dat
