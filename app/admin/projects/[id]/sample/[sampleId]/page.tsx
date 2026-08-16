@@ -7,6 +7,7 @@ import FindingsList from './FindingsList';
 import NotesSection from './NotesSection';
 import TestResults from './TestResults';
 import BeheerMenu from '@/app/components/BeheerMenu';
+import CriterionChecks from './CriterionChecks';
 
 export default async function SampleItemPage({
   params,
@@ -63,6 +64,42 @@ export default async function SampleItemPage({
   });
 
   const failedCriterionIds = criterionAssessments.map(a => a.wcagCriterionId);
+
+  // Beoordeling per succescriterium voor dit steekproefitem. Hieruit blijkt of het item
+  // volledig is nagelopen: zonder deze registratie is een overgeslagen criterium onzichtbaar.
+  const rawChecks = await prisma.sampleCriterionCheck.findMany({
+    where: { sampleItemId: params.sampleId },
+    include: { wcagCriterion: { select: { code: true, titleNl: true } } },
+  });
+
+  const criterionChecks = rawChecks
+    .map((c) => ({
+      code: c.wcagCriterion.code,
+      titel: c.wcagCriterion.titleNl,
+      status: c.status as string,
+      reden: c.reden,
+      bron: c.bron as string,
+      akkoord: (c.akkoord as string) ?? null,
+      checkedAt: c.checkedAt.toISOString(),
+    }))
+    // 1.4.10 hoort ná 1.4.3, dus per deel numeriek sorteren.
+    .sort((a, b) => {
+      const pa = a.code.split('.').map(Number);
+      const pb = b.code.split('.').map(Number);
+      for (let i = 0; i < 3; i++) {
+        if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+      }
+      return 0;
+    });
+
+  // Hoeveel criteria hoort dit onderzoekstype te hebben? Daarmee is te zien of er iets ontbreekt.
+  const researchType = project.researchType
+    ? await prisma.researchType.findFirst({
+        where: { name: project.researchType },
+        include: { _count: { select: { criteria: true } } },
+      })
+    : null;
+  const totaalCriteria = researchType?._count.criteria ?? 0;
 
   // Get all project findings linked to afgekeurde criteria (includes both afgekeurd and opmerkingen)
   const allFindings = await prisma.finding.findMany({
@@ -305,6 +342,29 @@ export default async function SampleItemPage({
                         <p className="text-sm text-gray-500">Nog geen schermafbeelding beschikbaar</p>
                       )}
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Auditbewijs</label>
+                      {sampleItem.auditHtmlPath ? (
+                        <div className="text-sm">
+                          <a
+                            href={sampleItem.auditHtmlPath}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            Gerenderde DOM / outerHTML openen
+                          </a>
+                          {sampleItem.auditCapturedAt && (
+                            <p className="mt-1 text-gray-500">
+                              Vastgelegd op {new Date(sampleItem.auditCapturedAt).toLocaleString('nl-NL')}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Nog geen auditbewijs vastgelegd</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -316,6 +376,9 @@ export default async function SampleItemPage({
                   crawledAt={sampleItem.crawledAt}
                   url={sampleItem.url}
                 />
+
+                {/* Dekking: is dit steekproefitem op alle criteria nagelopen? */}
+                <CriterionChecks checks={criterionChecks} totaalCriteria={totaalCriteria} />
 
                 {/* Bevindingen section */}
                 <div className="bg-white rounded-lg border border-gray-200">

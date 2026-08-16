@@ -123,22 +123,102 @@ Dit is een generiek draaiboek, niet gebonden aan één specifiek project.
 
 ---
 
-## Stap 5 — Bevindingen verzamelen per pagina
+## Stap 5 — De audit draaien
 
-We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan structured/random door elkaar, dan formulieren, dan PDF's). Per pagina checkt Claude de WCAG-criteria die voor het researchtype van toepassing zijn; de specifieke criteria-lijst en de inputs per pagina-type worden in losse substappen vastgelegd.
+De volgorde is: **eerst de machine helemaal klaar, dan pas beoordelen.** Claude draait de
+workflow over de hele steekproef, schrijft de uitkomst weg, en pas daarna bekijken jullie samen
+wat eruit kwam. Niet pagina voor pagina in gesprek terwijl de audit loopt.
 
-### Stap 5a — Eerste pagina: de homepage
+Reden: zolang de audit loopt, zie je alleen wat er gevonden is. Wat overgeslagen is valt pas op
+als alles er staat en je het overzicht per criterium erbij pakt.
 
-**Input van gebruiker (Claude vraagt expliciet):**
-- Een **screenshot van de volledige homepage** (boven én onder de vouw, geen alleen-zichtbare-deel screenshot)
-- De **outerHTML** van de pagina (volledige DOM zoals na rendering — niet alleen de server-HTML)
+### Stap 5a — De workflow draaien
 
-**Waarom volledig (en niet alleen `<main>`):**
-- Op de homepage worden ook structuur-elementen beoordeeld die buiten `<main>` staan: header, hoofdnavigatie, **footer**, skip-links, landmarks
-- De footer is meestal op elke pagina identiek; door hem hier volledig te beoordelen hoeven we hem bij latere pagina's niet opnieuw te checken
-- Bij latere pagina's wordt in een aparte substap besproken welke inputs nodig zijn (vaak alleen `<main>`, zonder header en footer)
+**Actie van Claude:**
 
-**Te checken WCAG-criteria (deelonderzoek content, 30 SC's):**
+1. Controleer dat de audit-sessie-Chrome draait (`curl -s http://localhost:9222/json/version`).
+   Zo niet: vraag de gebruiker "Audit-sessie starten" aan te klikken in de tool.
+2. Start de workflow met het **pad**, niet met de naam:
+
+   ```
+   Workflow({ scriptPath: ".claude/workflows/audit-samples.js",
+              args: { projectId: "<id>" } })
+   ```
+
+   Met `{name: "audit-samples"}` draait een oude gecachete kopie; wijzigingen in de regels werken
+   dan niet door.
+3. Wacht tot de workflow klaar is. Bij twaalf samples duurt dat ongeveer twintig minuten.
+
+**Wat de workflow doet:** één auditor-agent per sample, allemaal tegelijk. Elke agent loopt álle
+criteria van het onderzoekstype af, leest daarbij de bestanden uit `wcag-regels/` en
+`wcag-checklists/`, en levert per criterium een status met onderbouwing. Daarna controleert een
+verifier de afkeuringen en wordt elk voorstel tegen de QuickFinding-bibliotheek gehouden.
+
+**Wat de workflow NIET doet:** wegschrijven. Het resultaat is een voorstel-rapport; de database
+blijft ongemoeid tot stap 5b.
+
+De bestaande bevindingen in het project gaan als referentie mee. Elke afkeuring krijgt daardoor
+het label `nieuw` of `bestaat_al`, zodat meteen zichtbaar is wat de vorige ronde miste.
+
+### Stap 5b — Registraties wegschrijven
+
+Schrijf per sample de beoordelingen weg naar de dekkingslijst met een PUT naar
+`/api/sample-items/<sampleId>/criterion-checks`, met `bron: "workflow"`.
+
+Dit gaat over de **dekkingslijst**, niet over bevindingen. Die laatste komen pas in stap 5d, na
+akkoord. Voor de dekkingslijst is de Prisma-route prima; voor bevindingen niet (zie
+`wcag-regels/Shift2_Schrijfregels.md`).
+
+### Stap 5c — Vergelijken met wat er al lag
+
+Had het project al bevindingen, leg die dan naast de verse audit:
+
+- **Bestaande bevinding niet teruggekomen als afkeuring?** Zoek uit waarom. Soms is het terecht
+  (de regels zijn aangescherpt), soms mist de audit iets, soms zit er een fout in de regel zelf.
+- **Nieuwe afkeuring die er nog niet was?** Die gaat in stap 5d naar de gebruiker.
+
+Meld de uitkomst voordat je verder gaat. Bij BEV-04 (2026-08-04) leverde deze vergelijking drie
+fouten van de audit op, en elk daarvan legde een leemte in de regels bloot.
+
+### Stap 5d — Bevindingen één voor één voorleggen
+
+Geef eerst een **kort overzicht** van wat er gevonden is: per sample de afkeuringen en
+opmerkingen, één regel elk. Daarna leg je ze **één voor één** voor, met de volledige tekst van
+description en advice.
+
+Per bevinding:
+
+- Controleer eerst de QuickFinding-bibliotheek; bij een treffer neem je die tekst als
+  uitgangspunt en vul je alleen de placeholders in
+- Controleer of er al een bevinding voor hetzelfde issue bestaat; zo ja, koppel het sample aan
+  de bestaande in plaats van een duplicaat te maken
+- Wacht op akkoord voordat je wegschrijft
+- Schrijf bevindingen via de API (`POST /api/projects/<id>/findings`), nooit rechtstreeks via
+  Prisma: de API draait de schrijfregel-linter
+
+Verandert er iets aan het oordeel, werk dan **ook de registratie in de dekkingslijst bij**, met
+`bron: "gesprek"` en de afweging erin. Zo is achteraf te verantwoorden waarom iets géén bevinding
+werd.
+
+### Wat de auditor zelf meet en wat naar de gebruiker gaat
+
+Deze criteria meet de auditor zelf in de audit-sessie-Chrome; ze horen niet standaard als vraag
+terug te komen:
+
+| SC | Hoe |
+|---|---|
+| 1.4.3 · 1.4.11 | Pixelmeting op de hoogcontrastknop, **één keer** op het homepage-sample |
+| 1.4.10 | Viewport op exact 320 CSS-pixels, `scrollWidth` vergelijken |
+| 2.1.2 | Tab versturen en `document.activeElement` uitlezen |
+| 2.5.3 · 2.5.8 | Zichtbare tekst tegen toegankelijke naam; `getBoundingClientRect` |
+| 1.2.3 · 1.2.5 | Audiospoor en transcript-knop uitlezen, open ondertiteling scannen |
+
+Wat wél altijd naar de gebruiker gaat: **contrast in PDF-documenten**. Dat meet de onderzoeker
+handmatig met de Colour Contrast Analyser.
+
+### De criteria van het onderzoekstype
+
+Voor een deelonderzoek content website (30 SC's):
 
 | SC | Naam |
 |---|---|
@@ -173,55 +253,55 @@ We doorlopen de steekproef in de volgorde uit Stap 4 (homepage eerst, dan struct
 | 3.3.2 | Labels of instructies |
 | 4.1.2 | Naam, rol en waarde |
 
-**Actie van Claude:**
-- Pas met de check beginnen wanneer beide inputs binnen zijn — niet zelf de pagina ophalen
-- Loop de criteria in deze tabel één voor één na voor de hele pagina, inclusief header, hoofdnavigatie, hoofdinhoud én footer
-- Per criterium beoordelen tegen de regels uit `wcag-checklists/Checklist_SC_X_X_X.md` en de memory-feedback (jargon, vorm, lengte, etc.)
-- **Hergebruik vóór zelf formuleren — vaste volgorde per geconstateerd issue:**
-  1. **QuickFindings (snelle bevindingen)** eerst raadplegen — dit is de centrale bibliotheek met hergebruikbare templates op `/admin/bevindingen`. Via CLI: `npm run cli -- search-quick-findings <keyword>` (per SC of trefwoord). Als er een passende QuickFinding is, gebruik `create-finding-from-quick` (memory-regel "Eerst QuickFinding-bibliotheek checken")
-  2. **Findings in andere Shift2-projecten** — als geen QuickFinding past, kijken hoe vergelijkbare issues elders zijn geformuleerd. Alle projecten zijn relevant, ongeacht researchType (ook PDF-only en formulier-onderzoeken). Doel: terugkerende gemeente-issues niet missen (cookiebanner, accessibility-overlays, vergelijkbare CMS-templates), schrijfstijl consistent houden, en bestaande formuleringen hergebruiken. Praktisch: `npm run cli -- list-projects` en per project `get-project <id>`
-  3. **Zelf formuleren** — alleen als hergebruik niet mogelijk is. Volg de schrijfregels uit de memory-feedback (Cardan-stijl, geen URL in description, geen em-dash, geen technisch jargon, kort en to-the-point, etc.)
-- **Concept-review vóór wegschrijven (verplicht):** Claude schrijft bevindingen **niet** direct weg naar de tool. Per bevinding eerst een concept tonen in chat met: SC, description, advice, impact, responsibility, status, gekoppelde sample-items. De gebruiker geeft akkoord of vraagt aanpassing (formulering, splitsen, samenvoegen, schrappen). Pas na akkoord uitvoeren via `create-finding` of `create-finding-from-quick`. Reviewmodus: **per bevinding** (één tegelijk), niet in batches per criterium of per pagina — fijnmazige controle weegt zwaarder dan snelheid
+Bij het onderzoekstype mét formulieren komen daar 3.3.1, 3.3.3 en 3.3.4 bij (33 SC's).
 
-**Resultaat:**
-- Homepage volledig nagelopen (inclusief footer — voor alle volgende pagina's hoeft de footer niet meer opnieuw)
-- Bevindingen aangemaakt en gekoppeld aan het Homepage-SampleItem
-- Klaar om door te gaan naar de tweede pagina
-
-### Stap 5b — Volgende pagina's (na de homepage)
-
-**Input van gebruiker (Claude vraagt per pagina expliciet):**
-- Een **screenshot van de pagina** (volledige pagina, inclusief alles wat zichtbaar wordt na scrollen)
-- De **outerHTML van het `<main>`-element** (dus zonder header, hoofdnavigatie en footer — die zijn al in stap 5a beoordeeld)
-
-**Te checken WCAG-criteria:**
-Dezelfde lijst als stap 5a, met de volgende uitzonderingen die op de homepage al zijn afgehandeld en niet meer per pagina worden gecheckt:
-- **1.4.3 Contrast (minimum)** — alleen checken bij PDF-pagina's; bij formulier-pagina's vragen of de hoogcontrast-knop op die pagina voldoende contrast heeft (zie [[feedback_1_4_3_contrast_switch_workflow]])
-- **1.4.11 Contrast van niet-tekstuele content** — idem als 1.4.3
-- **1.4.10 Reflow** — per pagina actief aan gebruiker vragen om 320px-check (zie [[feedback_1_4_10_reflow_ask_per_page]])
-- **2.1.2 Geen toetsenbordval** — per pagina actief aan gebruiker vragen om Tab-test (zie [[feedback_2_1_2_keyboard_trap_ask_per_page]])
-
-De footer wordt niet opnieuw beoordeeld — die is al volledig gechecked in stap 5a.
-
-**Actie van Claude:**
-- Pas met de check beginnen wanneer beide inputs binnen zijn — niet zelf de pagina ophalen
-- Loop dezelfde criteria-tabel als in stap 5a na, met de hierboven genoemde uitzonderingen
-- Volg de "Hergebruik vóór zelf formuleren"-volgorde uit stap 5a (QuickFindings → andere projecten → zelf formuleren)
-- Bij issues die al op de homepage zijn gevonden (bv. social-media-lijst in footer): geen nieuwe bevinding aanmaken — die is al gekoppeld aan het Homepage-sample-item. Pas alleen het bestaande sample-item-koppelingenlijstje uit als hetzelfde issue zich ook op deze pagina voordoet (zie [[feedback_merge_repeat_issues]])
-- **Concept-review per bevinding** blijft van kracht: niet direct wegschrijven
-
-**Resultaat:**
-- Pagina volledig nagelopen op de van toepassing zijnde SC's
-- Bevindingen aangemaakt of bestaande bevindingen uitgebreid met deze pagina
-- Klaar om door te gaan naar de volgende pagina
+**Resultaat van stap 5:**
+- Elk criterium op elk steekproefitem beoordeeld en vastgelegd in de dekkingslijst
+- Bevindingen aangemaakt na akkoord, met de afwegingen in `reden`
+- Klaar voor de dekkingscontrole in stap 6a
 
 ---
 
-## Stap 6 — Rapportage afronden (automatisch na laatste pagina)
 
-Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch** door met deze afrondende stappen. Niet stoppen na de bevindingen-fase en wachten op verzoek — dit is onderdeel van de standaardworkflow. De volgorde is strikt:
+## Stap 6 — Rapportage afronden (automatisch na de bevindingen)
 
-### Stap 6a — Assessment-statussen controleren
+Zodra de bevindingen uit stap 5d zijn weggeschreven, gaat Claude **automatisch** door met deze afrondende stappen. Niet stoppen en wachten op verzoek — dit is onderdeel van de standaardworkflow. De volgorde is strikt:
+
+### Stap 6a — Dekkingscontrole: is er nergens overgeslagen?
+
+**Waarom deze stap eerst.** Alle volgende stappen kijken naar wat er gevónden is: welke bevindingen er zijn, welke statussen daaruit volgen, wat er in de samenvatting moet. Geen van die stappen ziet wat er níet is gedaan. Staat 2.4.6 op vijftien van de twintig samples geregistreerd, dan komt er gewoon een status uit en valt niet op dat vijf pagina's zijn overgeslagen. Een gat in de dekking is per definitie onzichtbaar in de uitkomst; je moet er apart naar kijken.
+
+**Actie van Claude:**
+
+```bash
+npm run cli -- get-dekking <projectId>
+```
+
+Dat geeft drie soorten gaten, oplopend in ernst:
+
+| Wat | Betekenis | Wat te doen |
+|---|---|---|
+| `ontbrekend` | Geen registratie: er is niet naar gekeken | Alsnog beoordelen, of vastleggen waarom niet |
+| `zonderOnderbouwing` | Status `voldoet` met een leeg `reden`-veld | Alsnog onderbouwen, of opnieuw beoordelen |
+| `openVragen` | Status `niet_te_bepalen` | Aan de onderzoeker voorleggen |
+
+`ontbrekend` en `zonderOnderbouwing` moeten op nul staan voordat je verder gaat; `dekkingCompleet` in de uitvoer zegt of dat zo is. Open vragen blokkeren niet: die zijn bewust opengelaten.
+
+**Waarom een lege `reden` bij `voldoet` als gat telt.** Een afkeuring komt in het rapport en wordt gelezen, dus daar valt een fout op. Een goedkeuring levert geen tekst op: het criterium staat groen en er is niets om over te struikelen. `voldoet` is dus de status waar een fout onzichtbaar blijft, en zonder toelichting is niet te zien of het oordeel uit onderzoek komt of uit gemakzucht.
+
+**Leg de uitkomst aan de gebruiker voor**, ook als er niets ontbreekt. Bij twintig samples en 33 criteria zijn dat 660 registraties; het getal "660 van 660, geen gaten" is zelf het resultaat van deze stap. Bundel de open vragen per criterium, niet per sample: dezelfde vraag komt vaak op meerdere pagina's terug.
+
+**Controleer in dezelfde stap of bevindingen en dekkingslijst elkaar niet tegenspreken.** Dit is het moment waarop je alle bevindingen naast alle registraties hebt liggen; later in het proces heb je dat overzicht niet meer.
+
+Drie controles:
+
+1. **Elke open bevinding hoort een registratie `afgekeurd` te hebben** op elk sample waar hij aan hangt. Staat daar `voldoet` of `opmerking`, dan klopt er iets niet: of de bevinding is achterhaald, of de audit heeft hem gemist. Zoek uit welke van de twee.
+2. **Elke registratie `afgekeurd` hoort een bevinding te hebben.** Zo niet, dan is er een afkeuring vastgesteld die nooit is uitgeschreven.
+3. **Staan er twee bevindingen die hetzelfde zeggen?** Zelfde tekst op hetzelfde sample, of hetzelfde issue onder hetzelfde criterium op verschillende samples. Die horen samengevoegd (zie [[feedback_merge_repeat_issues]]). Meld wat je vindt en vraag of het weg mag; verwijder niets zelf.
+
+Bij BEV-03 (2026-08-04) leverde deze controle drie tegenstrijdigheden op: 1.4.3 stond project-breed op `passed` terwijl er twee open bevindingen onder hingen, en B011 en B015 stonden in de dekkingslijst als opmerking terwijl het bevindingen waren.
+
+### Stap 6b — Assessment-statussen controleren
 
 **Eerst** alle WCAG-criterium-assessments nalopen, vóór de management-samenvatting. Bij het wegschrijven van een open bevinding zet de tool het criterium automatisch op `failed`, maar dat is geen volledige controle:
 - Criteria zónder bevinding staan vaak op `not_present` of nog op niets — moeten naar `passed` als ze daadwerkelijk getoetst zijn
@@ -233,11 +313,15 @@ Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch
 - Maak een overzicht van alle 30 SC's (of het aantal van het researchtype) met huidige status en koppeling aan eventuele bevindingen
 - Markeer welke statussen mogelijk niet kloppen (bv. `not_present` waar wel iets is getoetst, `failed` zonder bevinding, lege status)
 - Leg het overzicht aan de gebruiker voor; vraag expliciet om de statussen handmatig bij te werken of, indien gewenst, op te geven welke wijzigingen Claude moet doen via `set-assessment`
-- Wacht op bevestiging dat alle statussen kloppen vóór door te gaan met stap 6b
+- Wacht op bevestiging dat alle statussen kloppen vóór door te gaan met stap 6c
 
-### Stap 6b — Onderzoeker-feedback schrijven (verschijnt op tabblad Conclusie)
+### Stap 6c — Onderzoeker-feedback schrijven (verschijnt op tabblad Conclusie)
 
 **Wat het is:** een uitgeschreven tekst die op het Conclusie-tabblad als "Feedback van onderzoeker" verschijnt. Dit is in de praktijk **de samenvatting voor de opdrachtgever**: wat ging goed en wat kan beter, in lekentaal. Komt in het veld `researcherFeedback` op het project (let op: niet `researcherFeedbackText` — dat veld is een ander oud veld).
+
+**Waarom pas hier en niet eerder.** De feedback beschrijft de uitkomst, dus die moet vaststaan. Schrijf je hem vóór de controles in 6a en 6b, dan baseer je hem op cijfers en statussen die nog gaan schuiven.
+
+Bij BEV-03 (2026-08-04) stond in de feedback dat de standaardweergave te weinig contrast had en dat de hoogcontrastknop dat ondervangt. Na de metingen bleek het omgekeerde: de knop was prima (11,99:1), en het probleem zat juist ín de hoogcontrastweergave, waar het footer-logo zwart wordt. Die alinea moest volledig herschreven worden.
 
 **Schrijfregels (zie [[feedback_management_summary_style]]):**
 - Leek-taal, geen SC-codes (niet "1.3.1", maar "structuur van de pagina")
@@ -249,6 +333,7 @@ Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch
 - Vergelijk de stijl met BEL-01 t/m BEL-04, GRJW-01, Heerlen-01 (allemaal status Gereed)
 
 **Actie van Claude:**
+- De duplicaat-check is al in stap 6a gedaan, samen met de dekkingscontrole. Kwam daar iets uit, dan moet dat opgelost zijn voordat je de feedback schrijft: de tekst hieronder beschrijft immers wat er gevonden is.
 - Eerste concept zelf schrijven op basis van de bevindingen
 - Concept aan gebruiker voorleggen voor akkoord en aanpassingen
 - Pas na akkoord opslaan via `PATCH /api/projects/<id>` met `{"researcherFeedback": "<p>...</p><p>...</p>"}`
@@ -256,11 +341,103 @@ Zodra de laatste pagina van de steekproef is gecheckt, gaat Claude **automatisch
 **Niet invullen:**
 - `managementSummary` blijft leeg (consistent met de meeste Gereed-projecten). Alleen URK-01 heeft dit veld gevuld met een procedurele tekst over de scope; dat is een uitzondering en bij een gewoon deelonderzoek content niet nodig.
 
-### Stap 6c — Project finaliseren
+### Stap 6d — De oplevering controleren
 
-Pas na akkoord op samenvatting en feedback:
+De tekst is nu klaar, maar het rapport gaat in **drie vormen** naar de opdrachtgever. Die moeten
+alle drie kloppen voordat de nulmeting dicht kan. Doe deze controle pas als de feedback definitief
+is, want alle drie de vormen worden uit dezelfde gegevens opgebouwd.
+
+| Vorm | Waar | Wat je controleert |
+|---|---|---|
+| **HTML** | `/report/<id>` | De vier tabbladen: klopt de tekst, staan de bevindingen er compleet in, kloppen de aantallen? |
+| **Word** | `/api/reports/<id>/docx` | Opent het bestand zonder foutmelding, staat de opmaak goed, zijn de koppen en tabellen intact? |
+| **Excel** | `/api/reports/<id>/xlsx` | Staan alle bevindingen en opmerkingen erin, met de juiste kolommen? |
+
+Beide downloads staan als knop op het tabblad Voltooien.
+
+**Actie van Claude:** open de HTML-versie en loop hem na. Meld wat je ziet: het aantal
+bevindingen en opmerkingen, of de conclusie-tekst er goed in staat, en of er iets ontbreekt of
+dubbel staat.
+
+**Wat de gebruiker doet:** het Word- en Excel-bestand downloaden en openen. Die controle kan
+Claude niet doen, want een gedownload bestand valt buiten wat er te lezen is. Meld dus expliciet
+dat die twee nog nagekeken moeten worden en wacht op bevestiging.
+
+Is er iets mis met een van de drie, dan wordt dat eerst opgelost. Pas als alle drie in orde zijn,
+gaat het project naar stap 6e.
+
+### Stap 6e — Project finaliseren
+
+Pas na akkoord op samenvatting, feedback én de oplevering uit 6d:
 - Vraag aan gebruiker of het project op status "Gereed" gezet moet worden
 - Bij ja: `PATCH /api/projects/<id>` met `{"status": "Gereed"}`
 - Toon eindlink naar het rapport: `/report/<id>`
+
+---
+
+## Stap 7 — Tussencheck en herinspectie
+
+Na de nulmeting pakt de opdrachtgever de bevindingen op. De onderzoeker controleert dat in de
+**tussencheck** en legt het eindresultaat vast in de **herinspectie**.
+
+### Hoe het in de tool zit
+
+Bij het afronden van de nulmeting ontstaat een **kindproject** (versie 1.1) dat scope,
+steekproef, assessments en alle bevindingen overneemt. Het bovenliggende project blijft bestaan
+als versie 1.0: dat is en blijft het nulmetingsrapport.
+
+Elk project heeft een fase (`checkPhase`): `nulmeting` → `tussencheck` → `herinspectie` →
+`afgerond`. Elke bevinding onthoudt in welke fase hij is ontdekt (`discoveredInPhase`), en
+heeft twee velden voor de tussencheck: `interimReviewed` (nagelopen) en `interimNotes`
+(wat de onderzoeker zag).
+
+### Wat je toetst
+
+**Alleen de succescriteria waar bevindingen op zaten.** Bij een herinspectie loop je niet de
+hele steekproef opnieuw af. Criteria zonder bevindingen houden hun status uit de nulmeting:
+stond 2.4.6 op "voldoet", dan blijft dat zo.
+
+### Per bevinding
+
+| Uitkomst | Wat je doet |
+|---|---|
+| Opgelost | status naar `resolved` |
+| Niet opgelost | laat op `open` staan; het criterium blijft afgekeurd |
+| Nieuw ontdekt | nieuwe bevinding met `discoveredInPhase: herinspectie` |
+
+**Let op: een opgeloste bevinding blijft een BEVINDING.** Maak de impact niet leeg om aan te
+geven dat iets is opgelost. Impact en type zijn aan elkaar gekoppeld (lege impact = opmerking),
+en dan verandert een serieuze afkeuring stilletjes in een opmerking. Bij Heerlen-01 gebeurde
+dat met tien bevindingen. De API beschermt hier inmiddels tegen, maar wijzig het type nooit met
+de hand bij een opgelost punt.
+
+### Per opmerking
+
+Opmerkingen blijven staan. Is er iets mee gedaan, vink dan `interimReviewed` aan en noteer in
+`interimNotes` wat je zag. Alleen afgevinkte opmerkingen verdwijnen uit het herinspectierapport;
+de rest blijft zichtbaar.
+
+### Hoe het rapport eruitziet
+
+Wat is opgelost, **verdwijnt uit het herinspectierapport**. Je laat opgeloste bevindingen dus
+niet staan met het label "opgelost" erbij. Het criterium gaat van "Voldoet niet" naar "Voldoet",
+en dát laat zien dat er gerepareerd is.
+
+Bij een volledig geslaagde herinspectie ziet de opdrachtgever:
+
+| Onderdeel | Inhoud |
+|---|---|
+| Scores | bijvoorbeeld 30 van 30 (100%) |
+| Bevindingen | leeg |
+| Opmerkingen | leeg, als ze in de tussencheck zijn afgevinkt |
+| **Feedback van onderzoeker** | hier vertel je wat er is opgelost |
+
+De feedback is de plek waar het verhaal staat. Het rapport beschrijft de situatie nu, de
+feedback beschrijft de weg ernaartoe. Benoem concreet wat er is verbeterd, in dezelfde stijl
+als stap 6c. Voorbeeld uit Heerlen-01 v1.1: "De bevindingen uit het eerdere onderzoek zijn
+opgelost. In de footer staan de sociale-media-links nu als opsomming, met een linktekst die
+duidelijk maakt dat het om de pagina van de gemeente gaat."
+
+Wie de details van vóór de reparatie wil zien, leest het nulmetingsrapport (versie 1.0).
 
 ---

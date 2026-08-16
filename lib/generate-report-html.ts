@@ -9,7 +9,7 @@ import {
   type ProjectWithRelations,
 } from '@/lib/report-calculations';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
-import { isOpmerking } from '@/lib/finding-classification';
+import { isOpmerking, hoortInRapport } from '@/lib/finding-classification';
 import { getReportData } from '@/lib/report-data';
 
 function escapeHtml(text: string | null | undefined): string {
@@ -88,11 +88,22 @@ function statusLabel(status: AssessmentStatus | string): { label: string; klass:
   }
 }
 
-function buildReportTitle(project: any, website: string): string {
+function buildReportTitle(
+  project: any,
+  website: string,
+  isHeronderzoek = false
+): string {
   // Gelijk aan de "Over dit onderzoek"-tab: onderzoekstype + domein.
   // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
   // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
-  const rt = String(project.researchType || 'Deelonderzoek').trim();
+  let rt = String(project.researchType || 'Deelonderzoek').trim();
+  // Nulmeting en heronderzoek delen hetzelfde onderzoekstype en kregen daardoor
+  // een identieke kop. Spreek bij een heronderzoek van heronderzoek.
+  if (isHeronderzoek) {
+    rt = rt
+      .replace(/\bdeelonderzoek\b/gi, 'heronderzoek')
+      .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
+  }
   return [rt, website].filter(Boolean).join(' ').trim();
 }
 
@@ -134,20 +145,30 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const website = scopeDomain || project.subject || '';
   const version = Number(project.version).toFixed(1);
   const datum = formatDateNl(project.reportDate);
-  const title = buildReportTitle(project, website);
+  const title = buildReportTitle(project, website, isHeronderzoek);
   // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
-  const introType = researchTypeData?.type || 'website';
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
   // De URL als echte link opnemen. Een kale URL in lopende tekst wordt bij de
   // PDF-export niet als link herkend, wat een toegankelijkheidsfout oplevert.
   const introLink = introUrl
     ? `<a href="${escapeHtml(introUrl)}">${escapeHtml(introUrl)}</a>`
     : '';
-  const intro = `Dit rapport beschrijft de resultaten van het ${
-    isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'
-  } naar de toegankelijkheid van de content op de ${escapeHtml(
-    introType
-  )} ${introLink}.`;
+  // In de introzin het hoogste niveau kort noemen ("AA"), niet de volledige
+  // reeks "A en AA" die elders in het rapport wordt gebruikt.
+  const introLevel = (researchTypeData?.level || project.level || 'AA')
+    .split(/\s+en\s+/i)
+    .pop()!
+    .trim();
+  const onderzoekLabel = `${
+    researchTypeData?.version || project.standard || 'WCAG 2.2'
+  } ${introLevel}-content${isHeronderzoek ? 'her' : ''}onderzoek`;
+  const introOpdrachtgever =
+    opdrachtgever && opdrachtgever !== 'n.v.t.'
+      ? `, uitgevoerd in opdracht van ${escapeHtml(opdrachtgever)}.`
+      : '.';
+  const intro = `Dit rapport beschrijft de resultaten van het ${escapeHtml(
+    onderzoekLabel
+  )} naar de digitale toegankelijkheid van ${introLink}${introOpdrachtgever}`;
 
   // Flat list of all criteria for "Resultaten per SC"
   const allCriteriaRows: Array<{
@@ -245,8 +266,11 @@ function renderSamenvatting(
   researchTypeData: any,
   nulmetingPeriode?: string | null
 ): string {
-  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting
-  const isHeronderzoek = project.checkPhase === 'herinspectie';
+  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting.
+  // Zelfde toets als in report-data.ts: na afronden staat checkPhase op
+  // 'afgerond', maar een kindproject blijft een heronderzoek.
+  const isHeronderzoek =
+    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
   const dateStartFormatted = project.dateStart
     ? formatDateNl(project.dateStart)
     : '[datum]';
@@ -276,6 +300,13 @@ function renderSamenvatting(
     if (isHeronderzoek) {
       summaryTemplate = summaryTemplate
         .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+        // De steekproef is bij het afronden overgenomen uit de nulmeting;
+        // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
+        // op het verkeerde been zetten.
+        .replace(
+          /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
+          "Voor dit heronderzoek zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld."
+        )
         .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
 
       if (nulmetingPeriode) {
@@ -354,29 +385,69 @@ function renderOverOnderzoek(project: any, researchTypeData?: any): string {
   const level = escapeHtml(
     researchTypeData?.level || project.level || 'A en AA'
   );
-  const researchType = escapeHtml(project.researchType || 'onderzoek');
+  // Bij een heronderzoek de aanduiding meebewegen met de kop. De verwijzingen
+  // naar het "deelonderzoek techniek" verderop blijven staan: dat is een ander
+  // onderzoek en heet ook bij een heronderzoek zo.
+  const isHeronderzoek =
+    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
+  const researchType = escapeHtml(
+    isHeronderzoek
+      ? String(project.researchType || 'onderzoek').replace(
+          /\bdeelonderzoek\b/gi,
+          'heronderzoek'
+        )
+      : project.researchType || 'onderzoek'
+  );
   const isContentOnderzoek = (project.researchType || '')
     .toLowerCase()
     .includes('content');
 
-  const afbakeningPanel = isContentOnderzoek
-    ? `<div class="panel"><div class="panel-title"><h3>Afbakening van het onderzoek</h3></div><div class="panel-body">
-    <p>Dit deelonderzoek heeft uitsluitend betrekking op de content van de website die door de organisatie via het beheersysteem kan worden ingevoerd of aangepast.</p>
-    <p>Bij dit onderzoek zijn 30 van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
-    <p>De overige 25 succescriteria hebben betrekking op de technische basis van de website en worden beoordeeld in het afzonderlijk deelonderzoek techniek.</p>
-    <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>
-    <h4>Succescriteria beoordeeld in het technisch deelonderzoek</h4>
-    <p>Onderstaande succescriteria zijn in dit contentonderzoek niet beoordeeld en vallen onder het afzonderlijke deelonderzoek techniek:</p>
+  // Het aantal beoordeelde criteria komt uit het onderzoekstype, niet uit een vast getal:
+  // een contentonderzoek telt 30 criteria, de variant met formulieren in contentpagina's 33.
+  const aantalBeoordeeld = researchTypeData?.criteria?.length || 30;
+  const aantalOverig = 55 - aantalBeoordeeld;
+
+  // 3.3.1, 3.3.3 en 3.3.7 horen inhoudelijk bij content, maar worden bij centraal beheerde
+  // formulieren in het technisch deelonderzoek getoetst. Zitten ze wél in het onderzoekstype,
+  // dan is die uitsluiting niet aan de orde en vervalt de tabel.
+  const UITGESLOTEN = [
+    { code: '3.3.1', naam: 'Foutidentificatie', niveau: 'A', reden: 'Formuliervalidatie wordt volledig door het systeem afgehandeld' },
+    { code: '3.3.3', naam: 'Foutsuggestie', niveau: 'AA', reden: 'Foutsuggesties worden door het systeem gegenereerd' },
+    { code: '3.3.7', naam: 'Overbodige invoer', niveau: 'A', reden: 'Het hergebruik van eerder ingevoerde gegevens binnen processen is technisch ingericht en wordt centraal beheerd' },
+  ];
+  const beoordeeldeCodes = new Set(
+    (researchTypeData?.criteria || [])
+      .map((c: any) => c.wcagCriterion?.code)
+      .filter(Boolean),
+  );
+  const toonUitsluiting = beoordeeldeCodes.size > 0
+    ? UITGESLOTEN.every((u) => !beoordeeldeCodes.has(u.code))
+    : true;
+
+  const uitsluitingHtml = toonUitsluiting
+    ? `
+    <h4>Uitgesloten succescriteria</h4>
+    <p>Onderstaande succescriteria hebben raakvlakken met content, maar zijn in dit onderzoek niet beoordeeld:</p>
     <table>
       <thead>
         <tr><th>SC</th><th>Naam</th><th>Niveau</th><th>Reden van uitsluiting</th></tr>
       </thead>
       <tbody>
-        <tr><th scope="row">3.3.1</th><td>Foutidentificatie</td><td>A</td><td>Formuliervalidatie wordt volledig door het systeem afgehandeld</td></tr>
-        <tr><th scope="row">3.3.3</th><td>Foutsuggestie</td><td>AA</td><td>Foutsuggesties worden door het systeem gegenereerd</td></tr>
-        <tr><th scope="row">3.3.7</th><td>Overbodige invoer</td><td>A</td><td>Het hergebruik van eerder ingevoerde gegevens binnen processen is binnen het platform technisch ingericht en wordt centraal beheerd.</td></tr>
+${UITGESLOTEN.map((u) => `        <tr><th scope="row">${u.code}</th><td>${u.naam}</td><td>${u.niveau}</td><td>${u.reden}</td></tr>`).join('\n')}
       </tbody>
-    </table>
+    </table>`
+    : '';
+
+  const tweedeAlinea = toonUitsluiting
+    ? `<p>De overige ${aantalOverig} succescriteria worden beoordeeld in het afzonderlijke deelonderzoek techniek. Daarvan gaan er ${aantalOverig - UITGESLOTEN.length} over de technische basis van de website. De overige ${UITGESLOTEN.length} zijn hieronder toegelicht.</p>`
+    : `<p>De overige ${aantalOverig} succescriteria worden beoordeeld in het afzonderlijke deelonderzoek techniek. Zij gaan over de technische basis van de website.</p>`;
+
+  const afbakeningPanel = isContentOnderzoek
+    ? `<div class="panel"><div class="panel-title"><h3>Afbakening van het onderzoek</h3></div><div class="panel-body">
+    <p>Dit ${isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
+    <p>Bij dit onderzoek zijn ${aantalBeoordeeld} van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
+    ${tweedeAlinea}
+    <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>${uitsluitingHtml}
   </div></div>`
     : '';
 
@@ -504,9 +575,13 @@ function renderBevindingenSectie(
         const findings = ((crit as any).findings || []).filter((f: any) => {
           // Bevinding of opmerking staat in het type-veld.
           // Status (open/resolved) wordt elders gebruikt voor het label.
-          // Bij een heronderzoek zijn punten met status 'resolved' opgelost
-          // en verdwijnen ze uit het rapport.
-          if (isHeronderzoek && f.status === 'resolved') return false;
+          //
+          // Bij een heronderzoek vervalt wat is opgelost. Filter daarvoor NIET op
+          // status alleen: een opmerking staat óók op 'resolved' zonder dat dat iets
+          // over opgelost zijn zegt. hoortInRapport() maakt dat onderscheid:
+          // opgeloste afkeuringen vallen weg, opmerkingen alleen als ze in de
+          // tussencheck zijn nagelopen en opgelost bevonden (interimReviewed).
+          if (isHeronderzoek && !hoortInRapport(f)) return false;
           return isOpmerkingen ? isOpmerking(f) : !isOpmerking(f);
         });
         if (findings.length === 0) continue;

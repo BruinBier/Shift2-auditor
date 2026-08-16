@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUserAgentsHtml } from '@/lib/browser-versions';
 
 export async function POST(
   request: NextRequest,
@@ -187,6 +188,8 @@ export async function POST(
             orderIndex: sampleItem.orderIndex,
             makeScreenshot: sampleItem.makeScreenshot,
             screenshotPath: sampleItem.screenshotPath,
+            auditHtmlPath: sampleItem.auditHtmlPath,
+            auditCapturedAt: sampleItem.auditCapturedAt,
             screenshotAlt: sampleItem.screenshotAlt,
             notes: sampleItem.notes,
             crawledAt: sampleItem.crawledAt,
@@ -290,6 +293,15 @@ export async function POST(
 
       console.log('[FINALIZE] Successfully copied all data to herinspectie project');
 
+      // De herinspectie wordt maanden later uitgevoerd, met nieuwere browsers.
+      // Kopieer de user agents van de nulmeting daarom niet klakkeloos mee,
+      // maar zet de versies die op dit moment geïnstalleerd staan. Valt terug
+      // op de oorspronkelijke waarde als detectie niets oplevert.
+      const detectedUserAgents = await getCurrentUserAgentsHtml();
+      if (detectedUserAgents) {
+        console.log('[FINALIZE] Detected current browser versions for herinspectie');
+      }
+
       // Copy project-level rich text fields and other properties
       console.log('[FINALIZE] Copying project-level properties (rich text fields, method info, etc.)');
       await prisma.project.update({
@@ -311,7 +323,7 @@ export async function POST(
           methodName: originalProject.methodName,
           techniquesNote: originalProject.techniquesNote,
           supportBaseline: originalProject.supportBaseline,
-          userAgents: originalProject.userAgents,
+          userAgents: detectedUserAgents ?? originalProject.userAgents,
           technologies: originalProject.technologies,
 
           // Other fields

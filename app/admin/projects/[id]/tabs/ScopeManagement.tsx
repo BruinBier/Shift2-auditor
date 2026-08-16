@@ -27,6 +27,19 @@ interface ScopePage {
   crawledAt?: Date | null;
 }
 
+/**
+ * Overige scope informatie: de wettelijke uitzonderingen voor de overheid.
+ * Deze tekst is bij elk content-deelonderzoek gelijk en wordt automatisch
+ * ingevuld zodra de scope-tab wordt geopend en het veld nog leeg is.
+ */
+const DEFAULT_SCOPE_INFO = `- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)
+- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).
+- Niet de live video's (wettelijke uitzondering voor de overheid)
+- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)
+- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)
+- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)
+- Niet de inhoud achter een inlog`;
+
 export default function ScopeManagement({ project }: { project: any }) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
@@ -37,16 +50,14 @@ export default function ScopeManagement({ project }: { project: any }) {
     description: '',
   });
 
-  // Default text for "WCAG 2.2 AA deelonderzoek content" research type
+  // Standaardtekst met de wettelijke uitzonderingen voor de overheid. Deze
+  // geldt voor elk content-deelonderzoek, dus ook voor varianten als
+  // "... content website" en "... content website met formulieren".
+  const isContentOnderzoek = /deelonderzoek content/i.test(project.researchType || '');
+
   const getDefaultScopeInfo = () => {
-    if (project.researchType === 'WCAG 2.2 AA deelonderzoek content' && !project.scopeInfo) {
-      return `- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)
-- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).
-- Niet de live video's (wettelijke uitzondering voor de overheid)
-- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)
-- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)
-- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)
-- Niet de inhoud achter een inlog`;
+    if (isContentOnderzoek && !project.scopeInfo) {
+      return DEFAULT_SCOPE_INFO;
     }
     return project.scopeInfo || '';
   };
@@ -85,20 +96,12 @@ export default function ScopeManagement({ project }: { project: any }) {
   // Auto-save default scope info if empty for specific research types
   useEffect(() => {
     const autoSaveDefaultScopeInfo = async () => {
-      if (project.researchType === 'WCAG 2.2 AA deelonderzoek content' && !project.scopeInfo) {
-        const defaultText = `- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)
-- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).
-- Niet de live video's (wettelijke uitzondering voor de overheid)
-- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)
-- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)
-- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)
-- Niet de inhoud achter een inlog`;
-
+      if (isContentOnderzoek && !project.scopeInfo) {
         try {
           const response = await fetch(`/api/projects/${project.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scopeInfo: defaultText }),
+            body: JSON.stringify({ scopeInfo: DEFAULT_SCOPE_INFO }),
           });
 
           if (response.ok) {

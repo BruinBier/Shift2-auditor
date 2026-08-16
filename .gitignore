@@ -42,10 +42,8 @@ temp-*.txt
 test-*.html
 nul
 
-# Werkmap van de audit-CLI en de workflows: opgehaalde HTML, screenshots,
-# tekstextracties en de QuickFinding-bibliotheek. Eén run op twee samples liet
-# hier al ruim 4 MB achter. Eerder stonden alleen /tmp/audit-cli/ en
-# /tmp/qf-bibliotheek.json genoemd, waardoor de rest wel in git-status opdook.
+# Werkmap voor alles wat tijdens een audit tijdelijk wordt weggeschreven:
+# opgehaalde pagina's, screenshots, PDF-uitsneden, meetscripts en tussenresultaten.
 /tmp/
 
 # Claude Code local settings (per developer)

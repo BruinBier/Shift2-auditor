@@ -158,8 +158,10 @@ button.sample-menu-item-delete[class]:focus,
   outline: none !important;
 }
 
-/* Only apply background to links with bg- classes, not text links */
-a[class*="bg-"]:hover:not([class*="menu"]):not(.new-project-button):not(.crawler-button):not(.beheer-menu-item):not(.sample-badge) {
+/* Only apply background to links with bg- classes, not text links.
+   Een lijstrij is geen knop: daar zou de paarse vulling de tekst onleesbaar
+   maken, dus die houdt zijn eigen lichte hover. */
+a[class*="bg-"]:hover:not([class*="menu"]):not(.new-project-button):not(.crawler-button):not(.beheer-menu-item):not(.sample-badge):not(.lijstrij) {
   background-color: #6b2d8f !important;
 }
 

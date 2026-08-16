@@ -18,7 +18,9 @@
     "backup": "tsx scripts/export-all-data.ts",
     "restore": "tsx scripts/import-all-data.ts",
     "cli": "tsx scripts/audit-cli.ts",
-    "chrome:debug": "tsx scripts/start-chrome-debug.ts"
+    "chrome:debug": "tsx scripts/start-chrome-debug.ts",
+    "test:audit-evidence": "tsx --test lib/audit-evidence.test.ts",
+    "test:browser-versions": "tsx --test lib/browser-versions.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

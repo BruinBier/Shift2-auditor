@@ -1,24 +1,50 @@
-# Shift2-beoordelingsregels SC 1.2.4
+# Shift2-regels SC 1.2.4 — Ondertiteling (live), niveau AA
 
-> Vastgelegde Shift2-voorkeuren voor dit succescriterium: wanneer iets een afkeuring is,
-> wanneer een opmerking, en wanneer juist geen bevinding.
-> Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_2_4.md` als ze elkaar tegenspreken.
+Live uitgezonden video met geluid moet live ondertiteld worden. Voor de onderzoeksmethode zie
+`Shift2_Werkwijze_Video.md`.
 
-Ondertitels voor doven en slechthorenden (live).
+## Bijna altijd niet aanwezig
 
-## Alleen ingesloten media telt mee
+Op de meeste gemeentesites staat geen live video. Zet 1.2.4 dan op `niet_aanwezig` — maar doe
+dat bewust, niet automatisch. Waar het wél voorkomt:
 
-Media valt onder dit criterium wanneer de speler **op de pagina zelf is ingesloten**:
-een `<video>`, een `<audio>`, of een `<iframe>` naar YouTube of Vimeo binnen de
-beoordeelde pagina.
+- **raadsvergaderingen** die live worden uitgezonden (vaak via een externe raadsinformatie-omgeving)
+- **livestreams** van evenementen, persconferenties of informatiebijeenkomsten
+- een **webcam** met geluid
 
-Staat er alleen een **link** naar een video elders — bijvoorbeeld een tekstlink naar
-YouTube — dan is er op deze pagina geen media om te beoordelen. Zet het criterium dan op
-`niet_aanwezig` met als reden dat de video niet is ingesloten.
+## Vaststellen of iets live is
 
-Dat geldt ook als de video van de organisatie zelf is. De grens ligt bij het insluiten,
-niet bij het eigendom.
+- Op YouTube: `isLive` of `isLiveContent` in `ytInitialPlayerResponse`, of het rode
+  "LIVE"-label in de speler.
+- Bij een `<video>`-element: `duration` is `Infinity` bij een echte livestream.
+- In de tekst op de pagina: "live", "rechtstreeks", "uitzending".
 
-Vastgelegd door Frits op 2026-08-15, naar aanleiding van heuvelrug.nl/archeologie: zes
-afleveringen van "Graven in het Groen" die uitsluitend als tekstlink naar YouTube zijn
-opgenomen.
+Let op het onderscheid: een raadsvergadering die je **terugkijkt** is vooraf opgenomen en valt
+onder 1.2.2, niet onder 1.2.4. Alleen de uitzending op het moment zelf telt hier.
+
+Staat de livestream op een **externe** omgeving waar je alleen naartoe linkt, dan valt die
+buiten een deelonderzoek content — net als een gelinkte YouTube-video. Zie
+`Shift2_Scope_Per_Sample.md`.
+
+## Beoordeling
+
+| Situatie | Status |
+|---|---|
+| Geen live video op de pagina | `niet_aanwezig` |
+| Livestream alleen gelinkt, niet ingesloten | `niet_aanwezig` (buiten de scope) |
+| Livestream ingesloten, mét live ondertiteling | `voldoet` |
+| Livestream ingesloten, zonder live ondertiteling | `afgekeurd` |
+| Er staat een livestream maar die is nu niet actief | `niet_te_bepalen` + vraag aan de onderzoeker |
+
+Dat laatste komt vaak voor: buiten vergadertijd is er niets te zien. Meld het dan, met de vraag
+of tijdens de uitzending live ondertiteling beschikbaar is (zie
+`feedback_onbeoordeelbaar_altijd_melden`). Nooit stilzwijgend op `voldoet` zetten.
+
+## Bij een afkeuring
+
+Drie zinnen volgens `Shift2_Schrijfregels.md`. Wie doof of slechthorend is, kan een
+raadsvergadering op het moment zelf niet volgen en moet wachten tot de opname met ondertiteling
+beschikbaar is. Impact `serieus`, verantwoordelijkheid `redacteur`.
+
+Live ondertiteling wordt meestal door de streamingleverancier geleverd; het advies gaat dus over
+die dienst inschakelen, niet over iets in het CMS.

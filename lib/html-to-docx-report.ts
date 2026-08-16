@@ -17,6 +17,7 @@ import {
   TableCell,
   TableRow,
   TextRun,
+  UnderlineType,
   WidthType,
 } from 'docx';
 
@@ -55,6 +56,8 @@ interface InlineStyle {
   bold?: boolean;
   italics?: boolean;
   href?: string;
+  /** Tekst binnen een link krijgt de Word-stijl 'Hyperlink' (blauw, onderstreept). */
+  link?: boolean;
 }
 
 function isElement(node: AnyNode): node is Element {
@@ -98,8 +101,13 @@ function inlineRuns(
 
     if (tag === 'a') {
       const href = $(child).attr('href');
-      const inner = inlineRuns($, child, { ...style, href: undefined });
-      if (href && /^https?:/i.test(href)) {
+      const isExternal = !!href && /^https?:/i.test(href);
+      const inner = inlineRuns($, child, {
+        ...style,
+        href: undefined,
+        link: isExternal || style.link,
+      });
+      if (isExternal) {
         runs.push(
           new ExternalHyperlink({
             link: href,
@@ -128,6 +136,7 @@ function runStyle(style: InlineStyle) {
   return {
     bold: style.bold || undefined,
     italics: style.italics || undefined,
+    style: style.link ? 'Hyperlink' : undefined,
   };
 }
 
@@ -488,6 +497,17 @@ export async function htmlReportToDocx(html: string): Promise<Buffer> {
       ],
     },
     styles: {
+      // Word herkent links aan de ingebouwde stijl 'Hyperlink'. Zonder die
+      // stijl werken ze wel, maar zien ze eruit als gewone tekst.
+      characterStyles: [
+        {
+          id: 'Hyperlink',
+          name: 'Hyperlink',
+          basedOn: 'DefaultParagraphFont',
+          quickFormat: false,
+          run: { color: '0563C1', underline: { type: UnderlineType.SINGLE } },
+        },
+      ],
       default: {
         document: {
           run: { font: 'Calibri', size: 22, color: '1A1A1A' },

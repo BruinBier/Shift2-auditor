@@ -201,6 +201,8 @@ export async function POST(
           orderIndex: sampleItem.orderIndex,
           makeScreenshot: sampleItem.makeScreenshot,
           screenshotPath: sampleItem.screenshotPath,
+          auditHtmlPath: sampleItem.auditHtmlPath,
+          auditCapturedAt: sampleItem.auditCapturedAt,
           screenshotAlt: sampleItem.screenshotAlt,
           notes: sampleItem.notes,
           crawledAt: sampleItem.crawledAt,

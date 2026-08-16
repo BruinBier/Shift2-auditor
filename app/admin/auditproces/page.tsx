@@ -212,9 +212,10 @@ export default function AuditprocesPage() {
                 <strong>Jij geeft akkoord</strong> of stuurt bij (andere sample, sla over, etc.).
               </li>
               <li>
-                <strong>Claude haalt HTML en screenshot op</strong> via de audit-CLI
-                (<code>get-html</code>, <code>get-screenshot</code>). Dat gebeurt via de actieve
-                Chrome-sessie zodat de pagina wordt opgehaald zoals jij die ziet.
+                <strong>Claude legt HTML en screenshot vast als auditbewijs</strong> via de
+                audit-CLI (<code>capture-sample-evidence</code>). De workflow haalt de gerenderde
+                DOM en een volledige screenshot zelf op, koppelt beide aan het steekproefitem en
+                gebruikt bij voorkeur de actieve Chrome-sessie.
               </li>
               <li>
                 <strong>Claude checkt systematisch alle succescriteria</strong> die bij het

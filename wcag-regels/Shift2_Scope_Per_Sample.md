@@ -141,3 +141,39 @@ toegankelijkheidsbalk valt buiten je beoordeling op een vervolgpagina.
 
 Twijfel je of een blok bij de main-content of bij de sitebrede template hoort? Kijk of het op
 de homepage ook voorkomt. Zo ja, dan is het template en sla je het over.
+
+## Templatecode van de formuliergenerator valt buiten het onderzoek
+
+Bij formulierstappen komt veel opmaak uit de formuliergenerator, niet uit wat de redacteur
+invult. Denk aan de voortgangsbalk, de sessie-waarschuwing, de knoppen en de tekenteller onder
+een invoerveld. Kan de redacteur er niets aan doen, dan hoort het **niet in het rapport**.
+
+Voorbeeld: de tekst "U hebt nog 200 tekens over." onder een invoerveld staat in een `div` die
+niet met `aria-describedby` aan het veld is gekoppeld. Dat is een echte tekortkoming, maar hij
+zit in de generator. Geen bevinding, geen opmerking. Vastgelegd door Frits op 2026-08-03 bij
+UTHEU-01 (contactformulier stap 2).
+
+Wat je wél beoordeelt op een formulierstap: de labels, de veldnamen, de koppen en de teksten
+die de redacteur zelf invult. De stapnaam bijvoorbeeld: die is redactioneel en kan wél een
+bevinding of opmerking opleveren (zie UTHEU-01 B027).
+
+Zie ook `Shift2_Regels_SC_4_1_2.md` voor hetzelfde principe bij de toegankelijkheidsbalk.
+
+## Video die alleen gelinkt is, valt buiten de scope
+
+Staat er op een pagina een **link** naar een video op YouTube of Vimeo, zonder ingesloten
+speler, dan valt die video **buiten de scope** van een deelonderzoek content. Ook als het het
+eigen kanaal van de organisatie is.
+
+Gevolg: beoordeel de video-criteria (1.2.1 tot en met 1.2.5) dan niet en zet ze op
+`niet_aanwezig`. Schrijf geen bevinding over ontbrekende of automatisch gegenereerde
+ondertiteling, en stel er ook geen vraag over aan de onderzoeker.
+
+Het verschil zit in de insluiting: een `<iframe>` met een speler ín de pagina hoort er wél
+bij, want die video wordt op de pagina zelf afgespeeld. Controleer dus of er een iframe of
+videospeler in de main-content staat voordat je concludeert dat er video aanwezig is.
+
+Aanleiding: UTHEU-01 (2026-08-03), pagina /archeologie met zes links naar de serie "Graven in
+het Groen" op YouTube. De auditor maakte er een 1.2.2-bevinding van over automatische
+ondertiteling en zette 1.2.3 en 1.2.5 op `niet_te_bepalen`; Frits gaf aan dat deze video's
+buiten de scope vallen.

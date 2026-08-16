@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createDefaultOpmerkingen } from '@/lib/default-opmerkingen';
+import { getCurrentUserAgentsHtml } from '@/lib/browser-versions';
 
 export async function GET() {
   try {
@@ -153,8 +154,15 @@ export async function POST(request: NextRequest) {
       return 'not_tested';
     };
 
-    // Get default user agents if not provided
+    // Get default user agents if not provided.
+    // De geïnstalleerde browserversies gaan voor op de opgeslagen standaard:
+    // die standaard veroudert stilletjes en beschrijft dan niet meer waarmee
+    // daadwerkelijk is getest. Valt terug op de settings-waarde als detectie
+    // niets oplevert (andere machine, browser niet gevonden).
     let userAgents = body.userAgents;
+    if (!userAgents) {
+      userAgents = await getCurrentUserAgentsHtml();
+    }
     if (!userAgents && body.researchType) {
       // Check if research type contains "formulieren" (case insensitive)
       const isFormulieren = body.researchType.toLowerCase().includes('formulieren');

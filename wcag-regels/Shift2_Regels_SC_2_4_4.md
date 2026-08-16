@@ -19,6 +19,12 @@ Pak de volledige `<a>` uit de HTML en loop deze volgorde af:
    Het icoon staat vrijwel altijd op `aria-hidden`, dus meestal blijft één tekstspan over.
 3. `title` telt alleen mee als er verder geen enkele naam is.
 
+Let op bij stap 3: een naam die **uitsluitend** uit `title` komt is ONVOLDOENDE en blijft een
+afkeuring. `title` verschijnt alleen bij aanwijzen met de muis, is op touchscreens vrijwel
+onbereikbaar en wordt wisselend door schermlezers ondersteund. Concludeer dus niet "er is een
+naam, dus geen bevinding" zodra je een `title` ziet. Zie `Shift2_Regels_SC_4_1_2.md` voor de
+volledige regel en de formulering.
+
 Let op een visueel verborgen span (`position:absolute;left:-9999px`, `sr-only`, `visually-hidden`).
 Die telt WEL mee als naam, ook al zie je op de screenshot alleen een icoon. Dat kun je alleen
 in de HTML zien.
@@ -70,11 +76,33 @@ Aanleiding: duurzaam.beverwijk.nl (2026-07-27), footerkolom "Blijf op de hoogte"
 facebook.com/gemeentebeverwijk en instagram.com/gemeentebeverwijk. De auditor gaf 2.4.4
 "voldoet" en miste dit; Frits wees erop.
 
+## Niet-getagde PDF: 2.4.4 WEL beoordelen
+
+Beoordeel 2.4.4 ook bij een niet-getagd document. Dit criterium gaat over de **tekst** van de
+link, en die staat er ook zonder tags. Kijk naar de pagina: zie je een link of een webadres in
+de lopende tekst, lees dan of die tekst duidelijk maakt waar hij heen leidt. Een "klik hier"
+of "lees meer" zonder context is ook in een PDF een afkeuring.
+
+Wat je hier NIET beoordeelt: dat de link niet klikbaar is. Dat webadressen als platte tekst in
+het document staan zonder werkende link, is een gevolg van de ontbrekende tagstructuur en
+wordt al onder 1.3.1 afgekeurd. Maak daar geen aparte 2.4.4-bevinding van.
+
+Geef dus een echt oordeel (voldoet of afkeuring op de linktekst); zet 2.4.4 niet op
+`niet_te_bepalen` met "geen tags" als reden.
+
+Vastgelegd door Frits op 2026-08-02 bij UTHEU-01. Eerst stond 2.4.4 in de vervallijst voor
+ongetagde PDF's; Frits corrigeerde dat: de linktekst is visueel te toetsen, alleen de
+klikbaarheid niet.
+
 ## Regels
 
 - Link in een eigen <p> of <li> krijgt GEEN programmatische context van een kop of alinea die erboven staat maar niet in hetzelfde element zit. "Lees meer..." in een eigen <p> is dus een AFKEURING, ook al oogt de kaart visueel als een geheel. Niet wegredeneren met "de kop staat er wel bij". QuickFinding d7494b0a-a187-4930-bef7-05083ff5705d.
 - Advies bij generieke linktekst: 1) maak de linktekst specifiek ("Lees meer over Fysieke overlegtafel"), OF 2) plaats de link in dezelfde alinea als de beschrijvende tekst. NOOIT adviseren om de hele kaart of container klikbaar te maken.
-- Telefoonnummer of e-mailadres als linktekst: GEEN bevinding, ongeacht het voorwoord ("Telefoon:", "Bel:", "Mail:") en ongeacht waar de href heen wijst (tel:, mailto:, whatsapp, sms:, leeg of kapot). Niet voorleggen als concept en ook niet als opmerking, gewoon overslaan. Een kapotte href is een functioneel issue, geen WCAG-issue.
+- **Telefoonnummer of e-mailadres als linktekst.** Een geformatteerd telefoonnummer als linktekst is geen bevinding onder 2.4.4 als de link **bedoeld is om te bellen**, ook niet bij een technisch ontbrekende of defecte `tel:`-koppeling. Echter, als de link verwijst naar een **volledig andere bestemming** (zoals een webpagina of een document), is er wél sprake van een bevinding onder 2.4.4, omdat de linktekst het daadwerkelijke doel onjuist voorspelt.
+  Hetzelfde geldt voor een e-mailadres als linktekst. Het voorwoord doet niet ter zake ("Telefoon:", "Bel:", "Mail:").
+  Let op waar het scharnier zit: bij de **bedoeling**, niet bij de techniek. Een `tel:`-link met een verkeerd nummer erin is nog steeds bedoeld om te bellen en dus geen 2.4.4-bevinding; dat is een functioneel issue. Een linktekst met een telefoonnummer die een webpagina opent, is dat wel: wie erop klikt verwacht te bellen en belandt ergens anders. Wie de linklijst van een schermlezer doorloopt of op een telefoon snel wil bellen, krijgt een compleet onverwachte uitkomst.
+  Bij zo'n afkeuring: impact matig, responsibility redacteur.
+  Voorbeeld: BEV-04 B004, open.beverwijk.nl, waar de linktekst "0251 256 256" een href naar `https://www.beverwijk.nl` heeft. Formulering vastgelegd door Frits op 2026-08-04, nadat de audit deze bevinding ten onrechte liet vallen met een beroep op de oude, te ruime regel ("ongeacht waar de href heen wijst").
 - X/Twitter-mismatch in de footer (X-logo zichtbaar, toegankelijke naam zegt nog "Twitter"): OPMERKING onder 2.4.4, status resolved, impact en responsibility leeg. Niet onder 2.5.3 (vereist zichtbare tekst) en niet onder 1.1.1. Een keer plaatsen, op het homepage-sample.
   WAAROM NIET ONDER 1.1.1: het glyph staat op `aria-hidden` en is dus geen niet-tekstuele content die beoordeeld wordt; de naam van de link komt uit de tekstspan ernaast. Er is onder 1.1.1 niets te beoordelen. Wat wringt is dat die naam een ander platform noemt dan het logo op het scherm — een kwestie van linkbenoeming, en dat is 2.4.4. Zou het logo een `<img>` met een eigen tekstalternatief zijn geweest, dan lag 1.1.1 wél voor de hand; controleer dus eerst hoe het icoon is opgebouwd.
   FORMULEER HET ALS UIT ELKAAR LOPEN, NIET ALS ACHTERSTALLIG ONDERHOUD. De href gaat meestal nog gewoon naar twitter.com, dus de naam klopt met de bestemming; het is het logo dat vooruit is gelopen op de naamgeving. Schrijf dat logo en naam niet meer samenvallen, niet dat "het platform inmiddels X heet" — dat laatste is geen toegankelijkheidsargument.

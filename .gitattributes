@@ -1,0 +1,6 @@
+# Workflow-scripts moeten LF houden, ook op Windows.
+#
+# Waarom: de Workflow-tool weigert een script met CRLF. De \r telt als stuurteken en zou
+# in de goedkeuringsdialoog onzichtbaar zijn, dus de tool blokkeert het. Zonder deze regel
+# zet git bij elke checkout op Windows weer CRLF terug en werkt de audit-workflow niet meer.
+.claude/workflows/*.js text eol=lf

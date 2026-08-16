@@ -17,6 +17,7 @@
  *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...]
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
+ *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
  */
 
 import * as fs from 'fs';
@@ -33,6 +34,7 @@ import {
   formatLintIssues,
   type FindingDraft,
 } from '../lib/finding-lint';
+import { getAuditEvidencePaths, isHomepageUrl } from '../lib/audit-evidence';
 
 const BASE_URL = process.env.AUDIT_CLI_BASE_URL || 'http://localhost:3000';
 
@@ -366,6 +368,50 @@ async function saveChecks(projectId: string, flags: Flags) {
   print(result);
 }
 
+/**
+ * Schrijft de beoordelingen van één sample weg (alle criteria van het onderzoekstype).
+ *
+ * Voedt zich uit een JSON-bestand met de vorm die de audit-samples-workflow teruggeeft:
+ *   { "assessments": [{ "code": "1.3.1", "status": "afgekeurd", "reden": "..." }] }
+ * of rechtstreeks een array van diezelfde objecten.
+ *
+ * De workflow zelf schrijft bewust niets naar de database; dit commando doet dat achteraf,
+ * zodat na een run vastligt dat het sample volledig is nagelopen.
+ */
+async function saveSampleChecks(sampleId: string, bestand: string, flags: Flags) {
+  const ruw = JSON.parse(fs.readFileSync(bestand, 'utf8'));
+  const lijst: any[] = Array.isArray(ruw)
+    ? ruw
+    : Array.isArray(ruw.assessments)
+    ? ruw.assessments
+    : Array.isArray(ruw.checks)
+    ? ruw.checks
+    : [];
+  if (!lijst.length) {
+    throw new Error(
+      `Geen beoordelingen gevonden in ${bestand}. Verwacht een array, of een object met "assessments" of "checks".`,
+    );
+  }
+
+  const bron = flags.bron || 'workflow';
+  const checks = lijst.map((a) => ({
+    criterionCode: a.code ?? a.criterionCode,
+    status: a.status,
+    reden: a.reden ?? a.toelichting ?? null,
+    bron,
+    // Een voorstel-bevinding is voorgelegd zodra hij bestaat; akkoord volgt later.
+    akkoord:
+      a.akkoord ??
+      (a.status === 'afgekeurd' || a.status === 'opmerking' ? 'voorgesteld' : undefined),
+  }));
+
+  const result = await api(`/api/sample-items/${sampleId}/criterion-checks`, {
+    method: 'PUT',
+    body: JSON.stringify({ checks }),
+  });
+  print(result);
+}
+
 function leesStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -378,6 +424,74 @@ function leesStdin(): Promise<string> {
 
 async function getChecks(projectId: string) {
   print(await api(`/api/projects/${projectId}/criterion-checks`));
+}
+
+/** Toont de dekking van één sample: hoeveel criteria beoordeeld, wat staat er nog open. */
+async function getSampleChecks(sampleId: string, flags: Flags) {
+  const result = await api(`/api/sample-items/${sampleId}/criterion-checks`);
+  if (flags.full === 'true') {
+    print(result);
+    return;
+  }
+  print({
+    sampleItemId: result.sampleItemId,
+    totaal: result.totaal,
+    telling: result.telling,
+    wachtOpAkkoord: result.wachtOpAkkoord,
+    openstaandeVragen: result.openstaandeVragen,
+  });
+}
+
+/**
+ * Dekkingscontrole over het hele project: is elk criterium op elk sample nagelopen?
+ *
+ * Zonder --full alleen de samenvatting en de gaten; de volledige lijst per sample is bij
+ * twintig samples en 33 criteria te lang om in één keer te lezen.
+ */
+async function getDekking(projectId: string, flags: Flags) {
+  const result = await api(`/api/projects/${projectId}/dekking`);
+  if (flags.full === 'true') {
+    print(result);
+    return;
+  }
+  print({
+    project: result.project,
+    samenvatting: result.samenvatting,
+    dekkingCompleet: result.dekkingCompleet,
+    // De gaten zelf, want daar gaat het om. Samples die compleet zijn hoeven niet in beeld.
+    onvolledigeSamples: (result.perSample || [])
+      .filter((s: any) => !s.volledig)
+      .map((s: any) => ({ titel: s.titel, beoordeeld: `${s.beoordeeld}/${s.verwacht}`, mist: s.ontbrekendeCodes })),
+    ontbrekend: result.ontbrekend,
+    zonderOnderbouwing: result.zonderOnderbouwing,
+    openVragen: result.openVragen,
+  });
+}
+
+/**
+ * Markeert één beoordeling als akkoord of afgewezen, nadat de onderzoeker erop heeft gereageerd.
+ */
+async function setCheckAkkoord(sampleId: string, code: string, flags: Flags) {
+  const akkoord = requireFlag(flags, 'akkoord');
+  const huidig = await api(`/api/sample-items/${sampleId}/criterion-checks`);
+  const check = (huidig.checks || []).find((c: any) => c.wcagCriterion?.code === code);
+  if (!check) throw new Error(`Geen beoordeling gevonden voor ${code} op dit steekproefitem`);
+
+  const result = await api(`/api/sample-items/${sampleId}/criterion-checks`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      checks: [
+        {
+          criterionCode: code,
+          status: check.status,
+          reden: check.reden,
+          bron: check.bron,
+          akkoord,
+        },
+      ],
+    }),
+  });
+  print(result);
 }
 
 async function setAssessment(projectId: string, flags: Flags) {
@@ -1422,6 +1536,82 @@ async function getReflow(url: string, flags: Flags) {
   }
 }
 
+async function captureSampleEvidence(projectId: string, sampleId: string, flags: Flags) {
+  const samples = await api(`/api/projects/${projectId}/sample-items`);
+  const sample = samples.find((item: any) => item.id === sampleId);
+  if (!sample) throw new Error(`Steekproefitem ${sampleId} bestaat niet in project ${projectId}`);
+  if (!sample.url) throw new Error('Dit steekproefitem heeft geen URL');
+  if (sample.sampleType === 'pdf') {
+    throw new Error('PDF-items gebruiken een aparte documentworkflow; browserbewijs is alleen voor webpagina\'s');
+  }
+
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, sample.url);
+    try {
+      const finalUrl = page.url();
+      const fullDocument = flags.full === 'true' || isHomepageUrl(finalUrl);
+      const html = await page.evaluate((useFull) => {
+        const target = useFull
+          ? document.documentElement
+          : document.querySelector('main') || document.documentElement;
+        return useFull ? '<!doctype html>\n' + target.outerHTML : target.outerHTML;
+      }, fullDocument);
+
+      const capturedAt = new Date();
+      const paths = getAuditEvidencePaths({
+        cwd: process.cwd(),
+        projectId,
+        sampleId,
+        timestamp: capturedAt.toISOString(),
+      });
+      fs.mkdirSync(paths.diskDir, { recursive: true });
+      fs.writeFileSync(paths.htmlDiskPath, html, 'utf8');
+
+      if (flags['keep-cookie-banner'] !== 'true') {
+        await page.addStyleTag({
+          content: `[class*="cookie" i][class*="modal" i], [class*="cookie" i][class*="banner" i],
+            [id*="cookie" i][role="dialog"], [aria-label*="cookie" i][role="dialog"] {
+              display: none !important; visibility: hidden !important;
+            }`,
+        });
+      }
+      await page.screenshot({ path: paths.screenshotDiskPath as `${string}.png`, fullPage: true });
+
+      const updated = await api(`/api/sample-items/${sampleId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          makeScreenshot: true,
+          screenshotPath: paths.screenshotPublicPath,
+          screenshotAlt: sample.title,
+          auditHtmlPath: paths.htmlPublicPath,
+          auditCapturedAt: capturedAt.toISOString(),
+        }),
+      });
+
+      print({
+        projectId,
+        sampleId,
+        title: sample.title,
+        requestedUrl: sample.url,
+        url: finalUrl,
+        scope: fullDocument ? 'document' : 'main',
+        htmlBytes: Buffer.byteLength(html, 'utf8'),
+        screenshotBytes: fs.statSync(paths.screenshotDiskPath).size,
+        htmlPath: updated.auditHtmlPath,
+        screenshotPath: updated.screenshotPath,
+        capturedAt: updated.auditCapturedAt,
+        browser: session.mode,
+        findingCreated: false,
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -1453,6 +1643,22 @@ async function main() {
       return saveChecks(requirePositional(positional, 0, 'projectId'), flags);
     case 'get-checks':
       return getChecks(requirePositional(positional, 0, 'projectId'));
+    case 'save-sample-checks':
+      return saveSampleChecks(
+        requirePositional(positional, 0, 'sampleId'),
+        requirePositional(positional, 1, 'bestand'),
+        flags,
+      );
+    case 'get-sample-checks':
+      return getSampleChecks(requirePositional(positional, 0, 'sampleId'), flags);
+    case 'get-dekking':
+      return getDekking(requirePositional(positional, 0, 'projectId'), flags);
+    case 'set-check-akkoord':
+      return setCheckAkkoord(
+        requirePositional(positional, 0, 'sampleId'),
+        requirePositional(positional, 1, 'criteriumCode'),
+        flags,
+      );
     case 'get-html':
       return getHtml(requirePositional(positional, 0, 'url'), flags);
     case 'get-screenshot':
@@ -1463,6 +1669,12 @@ async function main() {
       return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-reflow':
       return getReflow(requirePositional(positional, 0, 'url'), flags);
+    case 'capture-sample-evidence':
+      return captureSampleEvidence(
+        requirePositional(positional, 0, 'projectId'),
+        requirePositional(positional, 1, 'sampleId'),
+        flags,
+      );
     case 'run-tests':
       return runTests(requirePositional(positional, 0, 'url'), flags);
     case 'test-samples':
@@ -1484,8 +1696,13 @@ async function main() {
         `  get-checks <projectId>                           # de opgeslagen sampleoordelen\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
         `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner]\n` +
+        `  capture-sample-evidence <projectId> <sampleId> [--full] [--keep-cookie-banner]  # legt DOM + volledige screenshot vast; maakt geen bevinding\n` +
         `  run-tests <url> [--verbose] [--only-found] [--with-browser]  # crawler-tests; --with-browser voegt contrast-test toe\n` +
-        `  test-samples <projectId> [--with-browser=false]  # crawler op alle sample-items van project; opslag in DB\n`
+        `  test-samples <projectId> [--with-browser=false]  # crawler op alle sample-items van project; opslag in DB\n` +
+        `  save-sample-checks <sampleId> <bestand.json> [--bron=workflow|gesprek|handmatig]  # dekking per criterium wegschrijven\n` +
+        `  get-sample-checks <sampleId> [--full]            # hoeveel criteria beoordeeld, wat staat nog open\n` +
+        `  get-dekking <projectId> [--full]                 # dekkingscontrole: waar is niet gekeken, welke goedkeuring is niet onderbouwd\n` +
+        `  set-check-akkoord <sampleId> <code> --akkoord=akkoord|afgewezen|voorgesteld\n`
       );
       process.exit(1);
   }

@@ -37,12 +37,24 @@ export async function PATCH(
   try {
     const body = await request.json();
 
-    // Het oude criterium onthouden: verplaatst deze wijziging de bevinding naar
-    // een ander criterium, dan moeten beide opnieuw bepaald worden.
+    // Eén keer ophalen voor twee dingen. Het oude criterium is nodig omdat een
+    // wijziging de bevinding naar een ander criterium kan verplaatsen; dan moeten
+    // beide oordelen opnieuw bepaald worden. Type en status zijn nodig om te
+    // bepalen of een leeggemaakte impact het type mag veranderen.
     const voor = await prisma.finding.findUnique({
       where: { id: params.id },
-      select: { projectId: true, wcagCriterionId: true },
+      select: { projectId: true, wcagCriterionId: true, type: true, status: true },
     });
+    if (!voor) {
+      return NextResponse.json({ error: 'Finding not found' }, { status: 404 });
+    }
+
+    // Impact en type horen bij elkaar, MAAR een opgeloste afkeuring blijft een
+    // afkeuring. Bij een herinspectie wordt de impact soms leeggemaakt omdat het
+    // probleem weg is; zou het type dan meeveranderen, dan wordt een serieuze
+    // bevinding stil een opmerking en telt hij niet meer mee voor de conclusie.
+    const wordtOpgelost = (body.status ?? voor.status) === 'resolved';
+    const behoudType = wordtOpgelost && voor.type === 'bevinding';
 
     const finding = await prisma.finding.update({
       where: { id: params.id },
@@ -53,7 +65,7 @@ export async function PATCH(
         // impact en type horen bij elkaar; een expliciet type wint
         ...(body.impact !== undefined && {
           impact: body.impact,
-          type: typeVoorImpact(body.impact),
+          ...(behoudType ? {} : { type: typeVoorImpact(body.impact) }),
         }),
         ...(body.type !== undefined && { type: body.type }),
         ...(body.responsibility && { responsibility: body.responsibility }),

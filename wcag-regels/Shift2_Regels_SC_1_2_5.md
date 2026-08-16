@@ -4,14 +4,47 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_1_2_5.md` als ze elkaar tegenspreken.
 
-## Niet uit HTML of screenshot te bepalen
+## Meestal zelf te bepalen
 
-Dit criterium vereist een test in de browser. Zet het altijd op `niet_te_bepalen`
-(of `niet_aanwezig` als het aantoonbaar niet van toepassing is) en noteer de vraag in `reden`.
+De voorbeelden met tijdstip verzamel je zelf met een videoscan, net als bij 1.2.3. Zie
+`Shift2_Werkwijze_Video.md`.
 
-**Vraag voor de onderzoeker:**
+1.2.5 is strenger dan 1.2.3: hier telt **alleen audiodescriptie**, een transcript volstaat niet.
+En of er audiodescriptie is, stel je zelf vast: lees de `adaptiveFormats` uit
+`ytInitialPlayerResponse` en kijk of er meer dan één `audioTrack` is. Bij een andere speler: is
+er een knop of menu-optie "audiodescriptie"?
 
-> Is er in de videos op [pagina] ruimte in het audiospoor voor audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Graag per video, met tijdstip.
+Is er maar één audiospoor **en** staat er visuele informatie in beeld die niet hoorbaar is (zie
+1.2.3 voor hoe je dat laatste vaststelt via de open ondertiteling), dan is dat een **afkeuring**.
+Daar hoef je niets voor te vragen.
+
+### De ruimte-vraag bepaalt het ADVIES, niet of er een bevinding is
+
+Of er natuurlijke pauzes in het audiospoor zitten, kun je niet zien; daarvoor moet je luisteren.
+Maar dat antwoord verandert de bevinding niet, alleen de vorm van het advies:
+
+| Ruimte in het audiospoor | Gevolg |
+|---|---|
+| Volledig ruimte | Kortere samenvatter-stijl die naar de 1.2.3-bevinding verwijst |
+| Deels wel, deels niet | Vierdelig advies (zie de mengvorm-regel hieronder) |
+| Helemaal geen ruimte | Geen 1.2.5-bevinding nodig; het transcript onder 1.2.3 dekt het volledig |
+
+Alleen dat laatste geval laat de bevinding vervallen. Zet 1.2.5 dus niet op `niet_te_bepalen`
+omdat je de pauzes niet kunt horen: schrijf de bevinding, en stel de ruimte-vraag erbij zodat de
+onderzoeker het advies kan aanscherpen.
+
+> In de video 'X' op [pagina] is geen audiodescriptie-spoor aanwezig, terwijl er op 00:09 en
+> 00:43 tekst in beeld staat die niet wordt uitgesproken. Is er in het audiospoor ruimte voor
+> audiodescriptie (natuurlijke pauzes), of wordt er continu gesproken? Graag met tijdstip.
+
+Stel die vraag samen met een eventuele vraag bij 1.2.3: het gaat om dezelfde video en de
+onderzoeker hoeft hem dan maar één keer te bekijken.
+
+Vind je bij het scannen niets dat hoorbaar gemaakt moet worden, zet het dan **zelf** op
+`voldoet` en noteer in `reden` wat je hebt gescand (aantal frames, interval, wat er in beeld
+stond). Dezelfde regel als bij 1.2.3: niet voorleggen, wel het bewijs vastleggen, want een
+goedkeuring levert geen tekst in het rapport op waar een fout aan het licht komt. Let daarbij
+op dat de scan alleen tékst vindt en geen handelingen; zie `Shift2_Regels_SC_1_2_3.md`.
 
 ## Regels
 

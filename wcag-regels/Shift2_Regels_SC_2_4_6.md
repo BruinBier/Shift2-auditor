@@ -62,3 +62,4 @@ Let op: er zijn geen QuickFindings onder 2.4.6, dus je schrijft deze bevindingen
 ## Regels
 
 - Bestandsnaam als bijschrift in een vergrote galerij-weergave (SIMsite-patroon): eigen bevinding onder 2.4.6, klein en redacteur, los van de 1.1.1-bevinding over de ontbrekende tekstalternatieven. Spreek hier over "onderschrift", bij 1.1.1 over "tekstalternatief".
+- NIET-GETAGDE PDF: 2.4.6 WEL gewoon beoordelen. Dit criterium gaat over de inhoudelijke kwaliteit van de koptekst, en die staat er ook zonder tags. Kijk naar de pagina: staan er koppen boven de paragrafen, en dekt die tekst de lading van wat eronder staat? Geef een echt oordeel (voldoet of afkeuring); zet het niet op niet_te_bepalen met "geen tags" als reden. Dat de kop technisch niet als kop is vastgelegd, is een 1.3.1-kwestie, niet een 2.4.6-kwestie. Vastgelegd door Frits op 2026-08-02 bij UTHEU-01.

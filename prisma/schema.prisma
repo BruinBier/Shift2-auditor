@@ -117,6 +117,10 @@ model Project {
   clientProjectId         String?        @map("client_project_id")
   auditedByOrg            String         @default("Shift2") @map("audited_by_org")
   researcherName          String?        @map("researcher_name")
+  /// De sales die dit onderzoek binnenhaalde. Staat ook op de opdrachtgever,
+  /// maar kan per onderzoek afwijken; die waarde is de standaard bij het
+  /// aanmaken.
+  accountmanager          String?
   controllerName          String?        @map("controller_name")
   plannedTime             String?        @map("planned_time")
   dateStart               DateTime?      @map("date_start")
@@ -160,22 +164,29 @@ model Project {
   interimCheckLabel       String?        @map("interim_check_label")
 
   // Planning fields
-  // @db.Timestamp(6) volgt de kolommen zoals ze in de database staan; zonder die
-  // annotatie wil Prisma ze naar timestamp(3) omzetten.
-  planningSent            DateTime?      @map("planning_sent") @db.Timestamp(6)
-  planningApproved        DateTime?      @map("planning_approved") @db.Timestamp(6)
+  // De eerste twee stappen van het voorbereidingsproces gebeuren buiten de
+  // tool (mail in Outlook, gesprek in Teams) en worden daarom met de hand
+  // afgevinkt. De datum legt vast wanneer het gebeurde.
   invitationSent          DateTime?      @map("invitation_sent")
   scopeCallHeld           DateTime?      @map("scope_call_held")
-  scopeCallTranscript     String?        @map("scope_call_transcript")
-  accountmanager          String?
-  /// Een doorlopend onderzoek zonder vaste einddatum.
-  isOngoing               Boolean        @default(false) @map("is_ongoing")
+  /// Transcript van het scopegesprek; de bron voor de scope-afspraken.
+  scopeCallTranscript     String?        @map("scope_call_transcript") @db.Text
+  // @db.Timestamp(6) volgt de kolommen zoals ze in de database staan. Deze twee
+  // zijn met een kale TIMESTAMP aangemaakt, en dat is in PostgreSQL precisie 6;
+  // zonder de annotatie wil Prisma ze naar timestamp(3) omzetten. De intakevelden
+  // hierboven zijn wel als TIMESTAMP(3) aangemaakt en blijven daarom kaal.
+  planningSent            DateTime?      @map("planning_sent") @db.Timestamp(6)
+  planningApproved        DateTime?      @map("planning_approved") @db.Timestamp(6)
   scopeInScope            String?        @map("scope_in_scope") @db.Text
   scopeOutOfScope         String?        @map("scope_out_of_scope") @db.Text
   sampleClientPages       String?        @map("sample_client_pages") @db.Text
 
   // External project fields
   isExternalProject       Boolean        @default(false) @map("is_external_project")
+  /// Doorlopend werk zonder begin- en einddatum, zoals template-monitoring.
+  /// Krijgt een eigen sectie in de onderzoekenlijst, want het hoort niet
+  /// tussen de onderzoeken met een planning.
+  isOngoing               Boolean        @default(false) @map("is_ongoing")
   externalBureau          String?        @map("external_bureau")
 
   createdAt               DateTime       @default(now()) @map("created_at")
@@ -196,6 +207,27 @@ model Project {
   advices                 ProjectAdvice[]
 
   @@map("projects")
+}
+
+/// Verschuivingen van de planning, met de reden erbij. Zo is achteraf te
+/// verantwoorden waarom een herinspectie later heeft plaatsgevonden dan
+/// oorspronkelijk gepland. Elke verschuiving is een eigen regel, zodat ook
+/// een tweede of derde uitstel zichtbaar blijft.
+model ProjectPlanningChange {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  oldDateStart  DateTime? @map("old_date_start")
+  oldDateEnd    DateTime? @map("old_date_end")
+  newDateStart  DateTime? @map("new_date_start")
+  newDateEnd    DateTime? @map("new_date_end")
+  reason        String   @db.Text
+  authorName    String   @map("author_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_planning_changes")
 }
 
 model ProjectNote {
@@ -248,12 +280,10 @@ model SampleItem {
   makeScreenshot Boolean      @default(false) @map("make_screenshot")
   screenshotPath String?      @map("screenshot_path")
   screenshotAlt  String?      @map("screenshot_alt")
+  auditHtmlPath  String?      @map("audit_html_path")
+  auditCapturedAt DateTime?   @map("audit_captured_at")
   notes          String?      @db.Text
   crawledAt      DateTime?    @map("crawled_at")
-  /// Vastgelegde HTML van het moment van beoordelen, zodat een bevinding later
-  /// nog te controleren is tegen wat er toen stond.
-  auditHtmlPath   String?     @map("audit_html_path")
-  auditCapturedAt DateTime?   @map("audit_captured_at")
 
   project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   occurrences    FindingOccurrence[]
@@ -262,6 +292,59 @@ model SampleItem {
   criterionChecks SampleCriterionCheck[]
 
   @@map("sample_items")
+}
+
+/// Beoordeling van één succescriterium op één steekproefitem.
+///
+/// Waarom naast CriterionAssessment: dat model legt de status per PROJECT vast en zegt dus
+/// niets over de vraag of pagina 7 daadwerkelijk op 2.4.6 is nagelopen. Zonder deze tabel is
+/// een overgeslagen criterium onzichtbaar: geen bevinding kan "alles in orde" betekenen of
+/// "hier is niet naar gekeken".
+///
+/// De project-brede status in CriterionAssessment wordt hieruit afgeleid: staat er ergens een
+/// afkeuring, dan is het criterium afgekeurd. Alleen opmerkingen tellen als goedgekeurd.
+model SampleCriterionCheck {
+  id              String                @id @default(uuid())
+  sampleItemId    String                @map("sample_item_id")
+  wcagCriterionId String                @map("wcag_criterion_id")
+  status          SampleCheckStatus
+  /// Toelichting van de auditor: waarom deze status, of de vraag die nog beantwoord moet worden.
+  reden           String?               @db.Text
+  /// Waar het oordeel vandaan komt, zodat bij twijfel te herleiden is wie het vaststelde.
+  bron            SampleCheckBron       @default(workflow)
+  /// Alleen relevant bij een voorstel-bevinding: is die aan de onderzoeker voorgelegd en akkoord?
+  akkoord         SampleCheckAkkoord?
+  checkedAt       DateTime              @default(now()) @map("checked_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  sampleItem      SampleItem            @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
+  wcagCriterion   WCAGCriterion         @relation(fields: [wcagCriterionId], references: [id])
+
+  @@unique([sampleItemId, wcagCriterionId])
+  @@map("sample_criterion_checks")
+}
+
+/// Bewust een eigen enum naast AssessmentStatus: daar staat `not_tested` voor twee dingen die
+/// hier uit elkaar moeten blijven. `niet_te_bepalen` betekent "beoordeeld, maar er staat nog
+/// een vraag open" en blokkeert het afronden; `niet_aanwezig` is een afgerond oordeel.
+enum SampleCheckStatus {
+  voldoet
+  afgekeurd
+  opmerking
+  niet_aanwezig
+  niet_te_bepalen
+}
+
+enum SampleCheckBron {
+  workflow
+  gesprek
+  handmatig
+}
+
+enum SampleCheckAkkoord {
+  voorgesteld
+  akkoord
+  afgewezen
 }
 
 enum WCAGLevel {
@@ -358,31 +441,6 @@ enum FindingStatus {
   open
   published
   resolved
-  afgewezen
-}
-
-/// Het oordeel over één criterium op één sample. Dezelfde vijf waarden die de
-/// audit-samples-workflow gebruikt.
-enum SampleCheckStatus {
-  voldoet
-  afgekeurd
-  opmerking
-  niet_aanwezig
-  niet_te_bepalen
-}
-
-/// Waar het sampleoordeel vandaan komt. Maakt onderscheid tussen wat een agent
-/// voorstelde, wat uit een gesprek kwam en wat de onderzoeker zelf invoerde.
-enum SampleCheckBron {
-  workflow
-  gesprek
-  handmatig
-}
-
-/// De poort op sampleniveau: een voorgesteld oordeel telt nog niet mee.
-enum SampleCheckAkkoord {
-  voorgesteld
-  akkoord
   afgewezen
 }
 
@@ -504,36 +562,6 @@ model Waarneming {
   @@map("waarnemingen")
 }
 
-/// Het oordeel over één criterium op één sample, met de reden erbij.
-///
-/// Deze tabel bestond al in de database met 1290 rijen — waaronder de volledige
-/// matrix van UTHEU-01 (20 samples x 33 criteria) — maar ontbrak in dit schema.
-/// Hij is hier alsnog opgenomen in plaats van dat er een tweede tabel naast werd
-/// gezet. Zie docs/adr/0001-akkoord-als-poort.md.
-///
-/// Zonder deze oordelen is niet te onderscheiden of een criterium in orde is of
-/// nooit is bekeken, en kan `passed` op projectniveau niet onderbouwd worden.
-model SampleCriterionCheck {
-  id              String              @id @default(uuid())
-  sampleItemId    String              @map("sample_item_id")
-  wcagCriterionId String              @map("wcag_criterion_id")
-  status          SampleCheckStatus
-  /// Waarom dit oordeel. Bij `niet_te_bepalen` staat hier de vraag die de
-  /// onderzoeker in de browser moet beantwoorden.
-  reden           String?
-  bron            SampleCheckBron     @default(workflow)
-  /// Leeg bij de bestaande rijen: die dateren van vóór de poort.
-  akkoord         SampleCheckAkkoord?
-  checkedAt       DateTime            @default(now()) @map("checked_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
-
-  sampleItem    SampleItem    @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
-  wcagCriterion WCAGCriterion @relation(fields: [wcagCriterionId], references: [id])
-
-  @@unique([sampleItemId, wcagCriterionId])
-  @@map("sample_criterion_checks")
-}
-
 model FindingOccurrence {
   id            String      @id @default(uuid())
   findingId     String      @map("finding_id")
@@ -629,27 +657,6 @@ model TechnicalIssue {
   @@index([status])
   @@index([wcagCriterionId])
   @@map("technical_issues")
-}
-
-/// Een wijziging in de planning van een project, met de reden erbij.
-///
-/// Bestond al in de database maar ontbrak in dit schema; hier alsnog opgenomen
-/// zodat Prisma de tabel niet als overbodig ziet.
-model ProjectPlanningChange {
-  id           String    @id @default(uuid())
-  projectId    String    @map("project_id")
-  oldDateStart DateTime? @map("old_date_start")
-  oldDateEnd   DateTime? @map("old_date_end")
-  newDateStart DateTime? @map("new_date_start")
-  newDateEnd   DateTime? @map("new_date_end")
-  reason       String
-  authorName   String    @map("author_name")
-  createdAt    DateTime  @default(now()) @map("created_at")
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@map("project_planning_changes")
 }
 
 enum TechnicalIssueStatus {
