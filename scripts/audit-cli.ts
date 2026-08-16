@@ -1296,6 +1296,7 @@ async function getReflow(url: string, flags: Flags) {
       const meting = await page.evaluate((vp: number) => {
         const doc = document.documentElement;
         const teBreed: { tag: string; tekst: string; rechts: number; breedte: number }[] = [];
+        let ingeslotenAantal = 0;
 
         for (const el of Array.from(document.querySelectorAll('*'))) {
           const rect = el.getBoundingClientRect();
@@ -1305,6 +1306,30 @@ async function getReflow(url: string, flags: Flags) {
           // Buiten beeld geparkeerde elementen (skiplinks) tellen niet mee.
           if (rect.left < -500) continue;
           if (rect.right <= vp + 1) continue;
+
+          // Steekt het element buiten een voorouder die afknipt of zelf schuift, dan
+          // is dat geen reflow-probleem van de pagina. Twee gevallen, allebei goed:
+          // een brede tabel in een vak met overflow-x auto — de toegestane oplossing
+          // voor iets dat een tweedimensionale opmaak nodig heeft — en inhoud in een
+          // dichtgeklapt uitklapblok, dat nog wel afmetingen heeft maar niet in beeld
+          // staat. Zonder deze uitzondering meldde buitenspelen.nl 304 te brede
+          // elementen terwijl er op het scherm niets uitsteekt.
+          let ingesloten = false;
+          let o: Element | null = el.parentElement;
+          while (o) {
+            const os = window.getComputedStyle(o);
+            const orect = o.getBoundingClientRect();
+            const knipt = /auto|scroll|hidden|clip/.test(os.overflowX);
+            if (knipt && orect.right <= vp + 1) {
+              ingesloten = true;
+              break;
+            }
+            o = o.parentElement;
+          }
+          if (ingesloten) {
+            ingeslotenAantal++;
+            continue;
+          }
 
           teBreed.push({
             tag: el.tagName.toLowerCase(),
@@ -1320,6 +1345,7 @@ async function getReflow(url: string, flags: Flags) {
           horizontaalScrollen: doc.scrollWidth > doc.clientWidth + 1,
           teBreed: teBreed.slice(0, 40),
           aantalTeBreed: teBreed.length,
+          ingeslotenAantal,
         };
       }, breedte);
 
@@ -1347,6 +1373,7 @@ async function getReflow(url: string, flags: Flags) {
           ? `${meting.scrollWidth - meting.clientWidth}px`
           : null,
         elementen_te_breed: meting.aantalTeBreed,
+        in_een_schuivend_of_afgeknipt_vak: meting.ingeslotenAantal,
         breedste_elementen: opvallend,
         schermafdruk: bestand,
         oordeel: meting.horizontaalScrollen
