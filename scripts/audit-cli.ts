@@ -1268,6 +1268,99 @@ async function getContrastAlles(url: string, flags: Flags) {
   }
 }
 
+/**
+ * Reflow: past de pagina op een smal scherm zonder horizontaal scrollen?
+ *
+ * Voor SC 1.4.10. De eis is 320 CSS-pixels breed — dat komt overeen met 400% zoom op
+ * een scherm van 1280. Niet af te leiden uit de code of uit een schermafdruk op
+ * normale breedte: het hangt af van mediaqueries, minimumbreedtes en vaste
+ * pixelmaten die pas op die breedte in de knel komen.
+ *
+ * Levert naast het oordeel een schermafdruk op, zodat een mens kan bevestigen wat
+ * de meting zegt. Een getal als "overschrijdt met 47 pixels" is geen bewijs dat er
+ * iets stuk is; het beeld erbij wel.
+ */
+async function getReflow(url: string, flags: Flags) {
+  const breedte = parseInt(flags.breedte || '320', 10);
+  const hoogte = parseInt(flags.hoogte || '1024', 10);
+  const session = await getBrowser();
+  try {
+    const { page, cleanup } = await openPage(session, url);
+    try {
+      // Eerst de breedte zetten, dan opnieuw laden: mediaqueries en scripts die op
+      // de beginbreedte reageren moeten die smalle breedte zien, niet de brede.
+      await page.setViewport({ width: breedte, height: hoogte, deviceScaleFactor: 1 });
+      await page.reload({ waitUntil: 'networkidle2' }).catch(() => {});
+      await new Promise((r) => setTimeout(r, 1200));
+
+      const meting = await page.evaluate((vp: number) => {
+        const doc = document.documentElement;
+        const teBreed: { tag: string; tekst: string; rechts: number; breedte: number }[] = [];
+
+        for (const el of Array.from(document.querySelectorAll('*'))) {
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) continue;
+          const s = window.getComputedStyle(el);
+          if (s.visibility === 'hidden' || s.display === 'none') continue;
+          // Buiten beeld geparkeerde elementen (skiplinks) tellen niet mee.
+          if (rect.left < -500) continue;
+          if (rect.right <= vp + 1) continue;
+
+          teBreed.push({
+            tag: el.tagName.toLowerCase(),
+            tekst: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 45),
+            rechts: Math.round(rect.right),
+            breedte: Math.round(rect.width),
+          });
+        }
+
+        return {
+          scrollWidth: doc.scrollWidth,
+          clientWidth: doc.clientWidth,
+          horizontaalScrollen: doc.scrollWidth > doc.clientWidth + 1,
+          teBreed: teBreed.slice(0, 40),
+          aantalTeBreed: teBreed.length,
+        };
+      }, breedte);
+
+      const dir = ensureOutputDir();
+      const bestand = path.join(
+        dir,
+        `${timestamp()}-${slugifyUrl(page.url())}-reflow-${breedte}px.png`
+      );
+      await page.screenshot({ path: bestand as `${string}.png`, fullPage: true });
+
+      // De buitenste elementen eerst: die veroorzaken de overschrijding meestal, de
+      // rest wordt meegesleept.
+      const opvallend = meting.teBreed
+        .sort((a, b) => b.rechts - a.rechts)
+        .slice(0, 8);
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        breedte: `${breedte}px`,
+        paginabreedte: `${meting.scrollWidth}px`,
+        vensterbreedte: `${meting.clientWidth}px`,
+        horizontaal_scrollen: meting.horizontaalScrollen,
+        overschrijding: meting.horizontaalScrollen
+          ? `${meting.scrollWidth - meting.clientWidth}px`
+          : null,
+        elementen_te_breed: meting.aantalTeBreed,
+        breedste_elementen: opvallend,
+        schermafdruk: bestand,
+        oordeel: meting.horizontaalScrollen
+          ? 'Er is horizontaal gescroll nodig. Bekijk de schermafdruk en stel vast of er ook informatie of functionaliteit wegvalt.'
+          : 'Geen horizontaal gescroll. Bekijk de schermafdruk nog wel op weggevallen of overlappende inhoud.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -1307,6 +1400,8 @@ async function main() {
       return getLeesvolgorde(requirePositional(positional, 0, 'url'), flags);
     case 'get-contrast':
       return getContrast(requirePositional(positional, 0, 'url'), flags);
+    case 'get-reflow':
+      return getReflow(requirePositional(positional, 0, 'url'), flags);
     case 'run-tests':
       return runTests(requirePositional(positional, 0, 'url'), flags);
     case 'test-samples':
