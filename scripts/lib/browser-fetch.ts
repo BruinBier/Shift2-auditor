@@ -77,6 +77,46 @@ export async function getBrowser(): Promise<BrowserSession> {
 export interface OpenPageResult {
   page: Page;
   cleanup: () => Promise<void>;
+  /** Het adres dat gevraagd werd. */
+  gevraagdeUrl: string;
+  /** Het adres waar de browser werkelijk uitkwam. */
+  eindUrl: string;
+  /**
+   * Waar of de server ons naar een andere pagina heeft gestuurd.
+   *
+   * Dit is geen zeldzaamheid maar een valstrik. Een formulier met stappen geeft elke
+   * stap een eigen adres, maar laat je er alleen komen als de vorige stap is ingevuld;
+   * kom je binnen zonder sessie, dan sta je weer bij stap 1. De pagina die je
+   * terugkrijgt ziet er niet uit als een fout — het is een keurige, werkende pagina met
+   * de goede titel. Wie dan beschrijft wat hij ziet, beschrijft de verkeerde pagina en
+   * merkt daar niets van.
+   *
+   * Op heuvelrug.nl leiden zowel stap 2 als stap 3 van het contactformulier terug naar
+   * stap 1. Zonder dit veld zou een auditronde daar 33 oordelen over stap 1 wegschrijven
+   * onder de naam van stap 2.
+   */
+  omgeleid: boolean;
+}
+
+/**
+ * Vergelijkt twee adressen zonder te struikelen over onbeduidende verschillen:
+ * http tegenover https, wel of geen www, en een afsluitende schuine streep. Een
+ * ander pad telt wel — dat is een andere pagina.
+ */
+function zelfdePagina(a: string, b: string): boolean {
+  const kaal = (u: string) => {
+    try {
+      const x = new URL(u);
+      return (
+        x.host.replace(/^www\./, '').toLowerCase() +
+        x.pathname.replace(/\/+$/, '').toLowerCase() +
+        x.search
+      );
+    } catch {
+      return u;
+    }
+  };
+  return kaal(a) === kaal(b);
 }
 
 /**
@@ -95,8 +135,12 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs }).catch(() => {});
   }
   await new Promise((r) => setTimeout(r, 1000));
+  const eindUrl = page.url();
   return {
     page,
+    gevraagdeUrl: url,
+    eindUrl,
+    omgeleid: !zelfdePagina(url, eindUrl),
     cleanup: async () => {
       await page.close().catch(() => {});
     },

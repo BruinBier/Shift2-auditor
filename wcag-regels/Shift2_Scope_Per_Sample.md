@@ -30,6 +30,27 @@ gelden impliciet voor de hele website.
 - Kom je op een vervolgpagina toch iets in header of footer tegen: niet rapporteren. Hoort
   het bij de homepage, dan hoort het daar thuis.
 
+## Eerst vaststellen: sta je wel op de goede pagina?
+
+De CLI geeft bij elk commando een veld `omgeleid` terug. Staat dat op true, dan heeft de
+server je naar een ander adres gestuurd dan je vroeg. Beoordeel dan niets: zet alle criteria
+op `niet_te_bepalen` met het gevraagde en het werkelijke adres in de reden.
+
+Dit klinkt als een randgeval en is het niet. Een formulier met stappen geeft elke stap een
+eigen adres, maar laat je er alleen komen als de vorige stap is ingevuld. Kom je binnen
+zonder sessie, dan sta je weer bij stap 1 — en die pagina ziet er niet uit als een fout. Het
+is een keurige, werkende pagina met de goede titel. Er is geen enkel signaal behalve het
+adres, en daar kijkt niemand naar.
+
+Wil je zo'n stap tóch beoordelen, dan moet een mens het formulier invullen en de pagina
+vanuit die sessie vastleggen. Uit een los opgevraagd adres komt hij niet.
+
+Aanleiding: heuvelrug.nl (2026-08-16). Stap 2 en stap 3 van het contactformulier leiden
+allebei terug naar stap 1. De oordelen die er stonden waren goed — die kwamen uit een ronde
+waarin het formulier met de hand was doorlopen — maar een volgende workflow-ronde zou er 33
+oordelen over stap 1 overheen hebben geschreven onder de naam van stap 2, met een verse
+datum en `bron: workflow`, precies zoals bij elke andere pagina.
+
 ## Eerst vaststellen: is dit de homepage?
 
 Doe dit vóór het eerste criterium, niet onderweg. Je hoeft het niet te onthouden of te

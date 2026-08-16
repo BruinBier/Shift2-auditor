@@ -394,7 +394,7 @@ async function getHtml(url: string, flags: Flags) {
   const wantText = flags.text === 'true';
   const session = await getBrowser();
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       const pageTitle = await page.title();
       const finalUrl = page.url();
@@ -447,6 +447,11 @@ async function getHtml(url: string, flags: Flags) {
         bytes: Buffer.byteLength(content, 'utf8'),
         file,
         browser: session.mode,
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
+          : undefined,
         gehydrateerd,
         waarschuwing: gehydrateerd
           ? undefined
@@ -529,7 +534,7 @@ async function runTests(url: string, flags: Flags) {
   let finalUrl = url;
   let browserTestResults: any[] = [];
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       finalUrl = page.url();
       html = await page.evaluate(() => '<!doctype html>\n' + document.documentElement.outerHTML);
@@ -610,7 +615,7 @@ async function getScreenshot(url: string, flags: Flags) {
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
   const session = await getBrowser();
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       const pageTitle = await page.title();
       const finalUrl = page.url();
@@ -689,6 +694,11 @@ async function getScreenshot(url: string, flags: Flags) {
         bytes: stat.size,
         file,
         browser: session.mode,
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
+          : undefined,
         geklikt,
       });
     } finally {
@@ -720,7 +730,7 @@ async function getLeesvolgorde(url: string, flags: Flags) {
   const zonderCss = flags['zonder-css'] === 'true';
   const session = await getBrowser();
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       const finalUrl = page.url();
       const pageTitle = await page.title();
@@ -915,6 +925,11 @@ async function getLeesvolgorde(url: string, flags: Flags) {
         url: finalUrl,
         title: pageTitle,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
+          : undefined,
         elementen: data.length,
         afwijkingen: afwijkingen.length,
         omkeringen: afwijkingen.slice(0, 25),
@@ -957,7 +972,7 @@ async function getContrast(url: string, flags: Flags) {
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
   const session = await getBrowser();
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       if (klik) {
         const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
@@ -1061,6 +1076,11 @@ async function getContrast(url: string, flags: Flags) {
       print({
         url: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
+          : undefined,
         geklikt: klik,
         tekst: ruw.tekst,
         element: ruw.element,
@@ -1100,7 +1120,7 @@ async function getContrastAlles(url: string, flags: Flags) {
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
   const session = await getBrowser();
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       if (klik) {
         const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
@@ -1248,6 +1268,11 @@ async function getContrastAlles(url: string, flags: Flags) {
       print({
         url: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
+          : undefined,
         geklikt: klik,
         gemeten_elementen: ruw.length,
         overgeslagen,
@@ -1285,7 +1310,7 @@ async function getReflow(url: string, flags: Flags) {
   const hoogte = parseInt(flags.hoogte || '1024', 10);
   const session = await getBrowser();
   try {
-    const { page, cleanup } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
       // Eerst de breedte zetten, dan opnieuw laden: mediaqueries en scripts die op
       // de beginbreedte reageren moeten die smalle breedte zien, niet de brede.
@@ -1365,6 +1390,11 @@ async function getReflow(url: string, flags: Flags) {
       print({
         url: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
+          : undefined,
         breedte: `${breedte}px`,
         paginabreedte: `${meting.scrollWidth}px`,
         vensterbreedte: `${meting.clientWidth}px`,

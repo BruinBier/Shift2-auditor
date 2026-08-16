@@ -545,6 +545,18 @@ Gebruik de screenshot ook om te toetsen of wat je in de HTML ziet daadwerkelijk 
 
 TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
 ${scList}${bronnenSectie}${afwijzingenSectie}${interactieveSectie}
+CONTROLEER EERST HET VELD \`omgeleid\`. Staat dat op true, dan heeft de server je naar een
+andere pagina gestuurd dan je vroeg en beoordeel je dus niet het sample dat je denkt te
+beoordelen. Zet in dat geval ALLE criteria op 'niet_te_bepalen' met als reden dat de pagina
+niet bereikbaar was, met het gevraagde en het werkelijke adres erbij. Schrijf geen enkel
+oordeel op grond van wat je dan ziet.
+
+Dit is geen zeldzaam geval maar een valstrik. Een formulier met stappen geeft elke stap een
+eigen adres, maar laat je er alleen komen als de vorige stap is ingevuld; kom je binnen
+zonder sessie, dan sta je weer bij stap 1. Die pagina ziet er niet uit als een fout — het
+is een keurige, werkende pagina met de goede titel. Op heuvelrug.nl leiden zowel stap 2 als
+stap 3 van het contactformulier terug naar stap 1.
+
 \`get-html\` geeft een veld \`gehydrateerd\` terug. Normaal staat dat op true: de CLI haalt
 de pagina met een echte browser op, dus de JavaScript van de site draait.
 
