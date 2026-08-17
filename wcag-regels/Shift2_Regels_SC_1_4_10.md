@@ -42,7 +42,22 @@ Drie dingen die deze meting NIET dekt. Kun je die niet vaststellen, zet het crit
 - **Inhoud die verdwijnt** door `display: none` in een mediaquery. Dat geeft geen overloop,
   maar de gebruiker mist wel informatie. Vergelijk daarvoor met de brede weergave.
 - **Functionaliteit die stukgaat** op smal scherm: een uitklapmenu dat niet meer opengaat, een
-  schuifbalk die vastloopt. Dat vergt interactie, niet alleen meten.
+  schuifbalk die vastloopt. Dat vergt interactie, niet alleen meten — maar wél te doen:
+
+  ```
+  npm run cli -- get-screenshot <url> --breedte=320 --klik="tekst:MENU"
+  ```
+
+  Dit hoort BIJ 1.4.10 en niet bij 2.1.1. De eis is dat de inhoud past zonder verlies van
+  informatie én functionaliteit; gaat het menu op 320 pixels niet open, dan is dat verlies
+  van functionaliteit op die breedte. Of datzelfde menu ook met het toetsenbord te bedienen
+  is, is de aparte vraag van 2.1.1 — die geldt op elke breedte.
+
+  Klapt het hoofdmenu samen tot een knop, controleer dan of het uitklapmenu alle navigatie
+  van het brede scherm bevat. Aanleiding: 1.4.10 op heuvelrug.nl. Ik schreef eerst dat de
+  bedienbaarheid van dat menu "onder toetsenbordtoegankelijkheid valt, niet onder reflow" en
+  liet het daarbij; Frits haalde die zin eruit. Getoetst blijkt het menu te openen met alle
+  zeven items erin.
 - **Overlappende of afgeknipte tekst.** Daarvoor moet je de schermafdruk werkelijk bekijken.
 
 ### Wat geen bevinding is

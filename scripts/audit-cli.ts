@@ -14,7 +14,7 @@
  *   tsx scripts/audit-cli.ts create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]
  *   tsx scripts/audit-cli.ts set-assessment <projectId> --criterion=<id> --status=failed [--explanation=...]
  *   tsx scripts/audit-cli.ts get-html <url> [--full] [--text]
- *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...]
+ *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...] [--breedte=320] [--klik=...]
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
  *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
@@ -731,14 +731,29 @@ async function getScreenshot(url: string, flags: Flags) {
   // uitklapmenu, een tabblad. Zonder dit is alles wat pas na een handeling verschijnt
   // niet te beoordelen, en dat is precies waar de moeilijke criteria zitten.
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  // Een breedte meegeven, zodat een handeling op een smal scherm te toetsen is.
+  // 1.4.10 eist dat de inhoud past zonder verlies van informatie of functionaliteit;
+  // of een uitklapmenu op 320 pixels nog opengaat hoort dus bij dat criterium, en
+  // dat is alleen vast te stellen door op die breedte te klikken.
+  const breedte = flags.breedte ? parseInt(flags.breedte, 10) : null;
   const session = await getBrowser();
   try {
     const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
+      if (breedte) {
+        // Eerst de breedte, dan opnieuw laden: mediaqueries en scripts die op de
+        // beginbreedte reageren moeten de smalle versie zien.
+        await page.setViewport({ width: breedte, height: 1024, deviceScaleFactor: 1 });
+        await page.reload({ waitUntil: 'networkidle2' }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 1200));
+      }
       const pageTitle = await page.title();
       const finalUrl = page.url();
       const dir = ensureOutputDir();
-      const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.png`);
+      const file = path.join(
+        dir,
+        `${timestamp()}-${slugifyUrl(finalUrl)}${breedte ? `-${breedte}px` : ''}.png`
+      );
 
       if (!keepCookieBanner) {
         // Verberg cookie-modals, banners en andere gebruikelijke overlays via CSS
