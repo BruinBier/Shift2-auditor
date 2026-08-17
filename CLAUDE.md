@@ -44,6 +44,7 @@ npm run cli -- search-quick-findings <keyword>     # reuse finding templates
 npm run cli -- get-html <url> [--text] [--full]
 npm run cli -- get-screenshot <url> [--full-page] [--selector=css]
 npm run cli -- get-leesvolgorde <url> [--zonder-css]   # voor 1.3.2: code-volgorde vs. kijkvolgorde
+npm run cli -- get-pixelcontrast <url> --selector=css  # voor 1.4.11: randcontrast op de beeldpunten
 
 # Write
 npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured
@@ -92,6 +93,15 @@ visueel bóven of links van zijn voorganger staat. Filtert zelf de bekende valse
 weg: elementen buiten het scherm, kolommen naast elkaar, en links die over twee regels
 afbreken. Een omkering is geen bevinding zolang het verplaatste element geen betekenis
 draagt — een afbeelding met een leeg tekstalternatief telt niet mee.
+
+**Staat een element op een foto of een verloop, dan zeggen stijlwaarden niets.** `getComputedStyle`
+geeft daar `rgba(0,0,0,0)`, en rekenen met die waarden levert ten onrechte "voldoet" op.
+`get-pixelcontrast` maakt een opname, leest de werkelijke beeldpunten uit en geeft de slechtste
+verhouding per zijde plus een uitsnede op acht keer van elke zijde onder de 3:1. Randlijn én
+vulling tellen mee (een element mag zich door beide onderscheiden), en de hoekronding wordt
+overgeslagen — anders keurt elke afgeronde knop af op een hoek waar je langs het element heen
+kijkt. Controleer `dwarsdoorsnede_bovenrand`: staat daar niet eerst de achtergrond en dan de
+vulling, dan meet je iets anders dan de rand.
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 

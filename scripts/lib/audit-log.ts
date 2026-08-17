@@ -35,6 +35,7 @@ const CRITERIA_PER_COMMANDO: Record<string, string[]> = {
   'get-leesvolgorde': ['1.3.2'],
   'get-contrast': ['1.4.3', '1.4.11'],
   'get-reflow': ['1.4.10'],
+  'get-pixelcontrast': ['1.4.11'],
 };
 
 export interface LogRegel {

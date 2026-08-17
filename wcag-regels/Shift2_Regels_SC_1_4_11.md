@@ -34,6 +34,37 @@ hetzelfde icoon op een vaste donkerblauwe achtergrond `#003C49` en komt op 9,65:
 De volledige testvolgorde (eerst de knop in de normale weergave, daarna de pagina in de
 hoogcontrastweergave) staat in `Shift2_Regels_SC_1_4_3.md`.
 
+## Een verhouding, geen kwalificatie — en die meet je op de beeldpunten
+
+"Ruim boven 3:1" is geen onderbouwing. Er hoort een gemeten verhouding te staan, met de twee
+kleuren waartussen gemeten is, en bij een afkeuring een schermafdruk waarop het te zien is.
+Dit is dezelfde fout als bij 1.4.10, waar de vraag naar het uitklapmenu werd weggeschoven met
+"dat valt onder 2.1.1" in plaats van dat er op 320 pixels geklikt werd: een argument op de plek
+waar een meting hoort. Ook een kwalificatie in de plaats van een cijfer is die fout.
+
+Staat het element op een foto, een verloop of een halfdoorzichtige laag, dan gebruik je
+`npm run cli -- get-pixelcontrast <url> --selector=<css>`. Dat maakt een opname van het gebied,
+leest de werkelijke beeldpunten uit en geeft de slechtste verhouding per zijde, met een
+uitsnede op acht keer van elke zijde die onder de 3:1 blijft.
+
+Drie dingen die de meting zelf fout doen als je ze niet weet:
+
+| Valkuil | Wat er gebeurt | Hoe de meting het opvangt |
+|---|---|---|
+| Alleen de randlijn meten | Eén lichte plek in de foto laat een grijs lijntje van 1 beeldpunt wegvallen, terwijl de witte vulling het veld daar prima aanwijst | Randlijn én vulling worden gemeten; per plek geldt de beste van de twee |
+| De hoeken meemeten | Bij een afgeronde hoek kijkt een rechte omtrek langs het element heen: binnen én buiten wijzen naar de achtergrond, en er komt 1:1 uit op een element dat verder voldoet | De ronding wordt uit de opmaak gelezen en die strook overgeslagen |
+| Het omhulsel nemen in plaats van het element | Meet je alleen het `input`, dan grenst de rechterzijde aan de zoekknop en niet aan de achtergrond | De dwarsdoorsnede in de uitkomst laat zien waar de rand werkelijk ligt |
+
+Kijk altijd naar `dwarsdoorsnede_bovenrand` in de uitkomst. Zie je daar niet eerst de
+achtergrond en dan de vulling, dan meet je niet de rand maar iets ernaast, en is de uitkomst
+waardeloos — hoe geloofwaardig het getal er ook uitziet.
+
+Aanleiding (2026-08-17): de zoekbalk op de homepage van heuvelrug.nl staat op een foto. Gemeten
+per zijde: links 8,33:1, boven 1,48:1, onder 1,35:1, rechts 1,02:1. De drie zijden die
+tekortkomen zijn alle drie de **zoekknop** (`#007373`) tegen het blad; het witte veld zelf haalt
+overal ruim de eis. Zonder de uitsplitsing per zijde zou hier "1,02:1, valt af" hebben gestaan
+over een veld dat het gewoon goed doet.
+
 ## Alleen wat je NODIG hebt om iets te begrijpen of te bedienen
 
 1.4.11 geldt niet voor elk gekleurd element. De vraag is of het grafische onderdeel nodig is om

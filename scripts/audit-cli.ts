@@ -1886,6 +1886,366 @@ async function koppelLogboek(projectId: string, flags: Flags) {
   print({ logboekregels: regels.length, gekoppeld: teSchrijven.length, ...result });
 }
 
+/**
+ * Contrast op de werkelijke beeldpunten, langs de rand van een element.
+ *
+ * Voor de gevallen waar stijlwaarden niets opleveren: een wit zoekveld op een foto, een
+ * icoon op een verloop, een half doorzichtige laag. `getComputedStyle` geeft daar geen
+ * bruikbare achtergrondkleur — vaak `rgba(0,0,0,0)` — en rekenen met die waarden levert
+ * ten onrechte "voldoet" op. De 1.4.3-regel beschrijft dat al bij shift2.nl.
+ *
+ * Geen extra bibliotheek nodig. Puppeteer maakt een opname van het gebied, die gaat als
+ * data-URL terug de pagina in, en daar leest een canvas de beeldpunten uit. Een data-URL
+ * geldt niet als andere herkomst, dus dat mag — bij de foto zelf zou het canvas
+ * besmet raken en weigeren.
+ *
+ * Getoetst wordt het SLECHTSTE punt langs de rand, niet het gemiddelde: één lichte plek
+ * in een foto is genoeg om een witte begrenzing te laten wegvallen, en juist daar gaat
+ * het om.
+ */
+async function getPixelContrast(url: string, flags: Flags) {
+  const doel = requireFlag(flags, 'selector');
+  const marge = parseInt(flags.marge || '6', 10);
+  const breedte = flags.breedte ? parseInt(flags.breedte, 10) : null;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      if (breedte) {
+        await page.setViewport({ width: breedte, height: 1024, deviceScaleFactor: 1 });
+        await page.reload({ waitUntil: 'networkidle2' }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      const vak = await page.evaluate((sel: string) => {
+        const el = document.querySelector(sel);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const st = getComputedStyle(el);
+        const rondingen = [
+          st.borderTopLeftRadius,
+          st.borderTopRightRadius,
+          st.borderBottomLeftRadius,
+          st.borderBottomRightRadius,
+        ].map((v) => parseFloat(v) || 0);
+        return { x: r.left, y: r.top, w: r.width, h: r.height, ronding: Math.max(...rondingen) };
+      }, doel);
+      if (!vak) throw new Error(`Element niet gevonden: ${doel}`);
+      if (vak.w < 2 || vak.h < 2) throw new Error('Element is te klein om een rand te meten');
+
+      // Het gebied plus een marge, zodat er aan beide zijden van de rand beeld is.
+      const clip = {
+        x: Math.max(0, Math.floor(vak.x - marge)),
+        y: Math.max(0, Math.floor(vak.y - marge)),
+        width: Math.ceil(vak.w + marge * 2),
+        height: Math.ceil(vak.h + marge * 2),
+      };
+      const opname = (await page.screenshot({ clip, encoding: 'base64' })) as string;
+
+      // De browser leest alleen de beeldpunten uit; het rekenen gebeurt in Node.
+      //
+      // Dat is niet uit smaak. esbuild wikkelt elke benoemde functie in een `__name`-aanroep
+      // die binnen page.evaluate niet bestaat, dus hulpfuncties zijn hier onmogelijk. Deze
+      // lus staat daarom in losse indexrekening, zonder één functiedefinitie.
+      // De hoeken blijven buiten de meting.
+      //
+      // Bij een afgeronde hoek kijkt een rechte omtrek langs het element heen: binnen én
+      // buiten wijzen dan naar de achtergrond, en er komt 1:1 uit op een element dat verder
+      // prima contrasteert. De ronding staat in de opmaak, dus die overslaan is geen
+      // aanname maar rekenen met wat de pagina zelf opgeeft.
+      const hoek = Math.min(
+        Math.ceil(vak.ronding) + 2,
+        Math.floor(Math.min(vak.w, vak.h) * 0.3)
+      );
+
+      const banden = await page.evaluate(
+        async (base64: string, marge: number, hoek: number) => {
+          const beeld = new Image();
+          await new Promise<void>((klaar, mis) => {
+            beeld.onload = () => klaar();
+            beeld.onerror = () => mis(new Error('opname niet te laden'));
+            beeld.src = `data:image/png;base64,${base64}`;
+          });
+          const doek = document.createElement('canvas');
+          doek.width = beeld.width;
+          doek.height = beeld.height;
+          const ctx = doek.getContext('2d')!;
+          ctx.drawImage(beeld, 0, 0);
+          const d = ctx.getImageData(0, 0, doek.width, doek.height).data;
+          const b = doek.width;
+          const h = doek.height;
+          // Drie punten per plek, geen twee.
+          //
+          // Een besturingselement is te onderscheiden door zijn rand óf door zijn vulling.
+          // Meet je alleen de randpixel, dan keur je af op de ene plek waar de foto net zo
+          // licht is als dat grijs, terwijl het witte vlak erbinnen het veld daar prima
+          // aanwijst. Meet je alleen de vulling, dan mis je elementen die enkel een lijntje
+          // hebben. Dus alle drie, en per plek geldt de beste van de twee verhoudingen.
+          const randlijn = marge + 1;
+          const vulling = marge + 4;
+          const buitenrand = Math.max(0, marge - 3);
+          const paren: {
+            zijde: string;
+            rand: number[];
+            vul: number[];
+            buiten: number[];
+            /** Plaats in de opname, zodat de slechtste plek terug te vinden is. */
+            px: number;
+            py: number;
+          }[] = [];
+
+          // Elke twee beeldpunten; elke pixel is overdaad.
+          for (let x = marge + hoek; x < b - marge - hoek; x += 2) {
+            let r = (randlijn * b + x) * 4;
+            let v = (vulling * b + x) * 4;
+            let j = (buitenrand * b + x) * 4;
+            paren.push({
+              zijde: 'boven',
+              rand: [d[r], d[r + 1], d[r + 2]],
+              vul: [d[v], d[v + 1], d[v + 2]],
+              buiten: [d[j], d[j + 1], d[j + 2]],
+              px: x,
+              py: randlijn,
+            });
+            r = ((h - 1 - randlijn) * b + x) * 4;
+            v = ((h - 1 - vulling) * b + x) * 4;
+            j = ((h - 1 - buitenrand) * b + x) * 4;
+            paren.push({
+              zijde: 'onder',
+              rand: [d[r], d[r + 1], d[r + 2]],
+              vul: [d[v], d[v + 1], d[v + 2]],
+              buiten: [d[j], d[j + 1], d[j + 2]],
+              px: x,
+              py: h - 1 - randlijn,
+            });
+          }
+          for (let y = marge + hoek; y < h - marge - hoek; y += 2) {
+            let r = (y * b + randlijn) * 4;
+            let v = (y * b + vulling) * 4;
+            let j = (y * b + buitenrand) * 4;
+            paren.push({
+              zijde: 'links',
+              rand: [d[r], d[r + 1], d[r + 2]],
+              vul: [d[v], d[v + 1], d[v + 2]],
+              buiten: [d[j], d[j + 1], d[j + 2]],
+              px: randlijn,
+              py: y,
+            });
+            r = (y * b + (b - 1 - randlijn)) * 4;
+            v = (y * b + (b - 1 - vulling)) * 4;
+            j = (y * b + (b - 1 - buitenrand)) * 4;
+            paren.push({
+              zijde: 'rechts',
+              rand: [d[r], d[r + 1], d[r + 2]],
+              vul: [d[v], d[v + 1], d[v + 2]],
+              buiten: [d[j], d[j + 1], d[j + 2]],
+              px: b - 1 - randlijn,
+              py: y,
+            });
+          }
+          // Een dwarsdoorsnede door het midden van de bovenrand, van buiten naar binnen.
+          // Hiermee is te controleren of de gemeten punten werkelijk aan weerszijden van
+          // de rand liggen; zonder die controle meet je twee keer de achtergrond en komt
+          // er een verhouding van 1:1 uit die niets betekent.
+          const profiel: string[] = [];
+          const midden = Math.floor(b / 2);
+          for (let y = 0; y < Math.min(h, marge * 2 + 4); y++) {
+            const i = (y * b + midden) * 4;
+            profiel.push(
+              '#' +
+                [d[i], d[i + 1], d[i + 2]]
+                  .map((v) => v.toString(16).padStart(2, '0'))
+                  .join('')
+            );
+          }
+          return { paren, opnameBreedte: b, opnameHoogte: h, profiel, dpr: window.devicePixelRatio };
+        },
+        opname,
+        marge,
+        hoek
+      );
+
+      const helder = (rgb: number[]) => {
+        const k = rgb.map((v) => {
+          const x = v / 255;
+          return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
+      };
+
+      const tegen = (a: number[], b: number[]) => {
+        const l1 = helder(a);
+        const l2 = helder(b);
+        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+      };
+
+      let meting = {
+        verhouding: Infinity,
+        randVerhouding: 0,
+        vulVerhouding: 0,
+        rand: [0, 0, 0],
+        vul: [0, 0, 0],
+        buiten: [0, 0, 0],
+        zijde: '',
+        px: 0,
+        py: 0,
+      };
+      for (const p of banden.paren) {
+        const viaRand = tegen(p.rand, p.buiten);
+        const viaVulling = tegen(p.vul, p.buiten);
+        const beste = Math.max(viaRand, viaVulling);
+        if (beste < meting.verhouding) {
+          meting = {
+            verhouding: beste,
+            randVerhouding: viaRand,
+            vulVerhouding: viaVulling,
+            rand: p.rand,
+            vul: p.vul,
+            buiten: p.buiten,
+            zijde: p.zijde,
+            px: p.px,
+            py: p.py,
+          };
+        }
+      }
+      if (!banden.paren.length) throw new Error('Geen randpunten gevonden om te meten');
+
+      // Ook per zijde, want het totaal zegt niet welke begrenzing tekortkomt. Een veld dat
+      // aan drie zijden ruim voldoet en aan één zijde wegvalt tegen een foto is een ander
+      // gesprek dan een veld dat overal wegvalt.
+      const perZijde: Record<
+        string,
+        { verhouding: number; px: number; py: number; buiten: number[]; rand: number[]; vul: number[] }
+      > = {};
+      for (const p of banden.paren) {
+        const beste = Math.max(tegen(p.rand, p.buiten), tegen(p.vul, p.buiten));
+        const huidig = perZijde[p.zijde];
+        if (!huidig || beste < huidig.verhouding) {
+          perZijde[p.zijde] = {
+            verhouding: beste,
+            px: p.px,
+            py: p.py,
+            buiten: p.buiten,
+            rand: p.rand,
+            vul: p.vul,
+          };
+        }
+      }
+
+      const hex = (rgb: number[]) =>
+        '#' + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+      const verhouding = Math.round(meting.verhouding * 100) / 100;
+
+      const dir = ensureOutputDir();
+      const bestand = path.join(
+        dir,
+        `${timestamp()}-${slugifyUrl(page.url())}-pixelrand.png`
+      );
+      fs.writeFileSync(bestand, Buffer.from(opname, 'base64'));
+
+      // En een uitsnede rond elke zijde die tekortkomt.
+      //
+      // Een afkeuring op 1,03:1 is niet te controleren op een opname van 800 beeldpunten
+      // breed: daar is de plek waar het wegvalt één streepje. Uitgeklapt op acht keer is het
+      // te zien, en dat is wat de onderzoeker nodig heeft om te bevestigen dat het klopt.
+      // Per zijde, want een balk die aan één zijde wegvalt tegen een foto is een ander
+      // gesprek dan een balk die overal wegvalt — en dat moet allebei te zien zijn.
+      const uitsneden: Record<string, string> = {};
+      const zoom = 20;
+      try {
+        const vp = page.viewport();
+        await page.setViewport({
+          width: breedte || vp?.width || 1280,
+          height: vp?.height || 1024,
+          deviceScaleFactor: 8,
+        });
+        await new Promise((r) => setTimeout(r, 400));
+        for (const [zijde, punt] of Object.entries(perZijde)) {
+          if (punt.verhouding >= 3) continue;
+          const detailBestand = bestand.replace(/\.png$/, `-detail-${zijde}.png`);
+          const detail = (await page.screenshot({
+            clip: {
+              x: Math.max(0, clip.x + punt.px - zoom),
+              y: Math.max(0, clip.y + punt.py - zoom),
+              width: zoom * 2,
+              height: zoom * 2,
+            },
+            encoding: 'base64',
+          })) as string;
+          fs.writeFileSync(detailBestand, Buffer.from(detail, 'base64'));
+          uitsneden[zijde] = detailBestand;
+        }
+      } catch {
+        // Een mislukte uitsnede mag de meting niet ongeldig maken.
+      }
+
+      legVast({
+        commando: 'get-pixelcontrast',
+        argumenten: { selector: doel, ...(breedte ? { breedte: String(breedte) } : {}) },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        artefact: bestand,
+        criteria: ['1.4.11'],
+        uitkomst: {
+          slechtsteVerhouding: verhouding,
+          zijde: meting.zijde,
+          randlijn: hex(meting.rand),
+          vulling: hex(meting.vul),
+          buiten: hex(meting.buiten),
+          perZijde: Object.fromEntries(
+            Object.entries(perZijde).map(([z, v]) => [z, Math.round(v.verhouding * 100) / 100])
+          ),
+          voldoet: verhouding >= 3,
+        },
+      });
+
+      const rond = (v: number) => Math.round(v * 100) / 100;
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        selector: doel,
+        breedte: breedte ? `${breedte}px` : '(standaard)',
+        slechtste_punt: {
+          zijde: meting.zijde,
+          buiten_het_element: hex(meting.buiten),
+          randlijn: `${hex(meting.rand)} — ${rond(meting.randVerhouding)}:1`,
+          vulling: `${hex(meting.vul)} — ${rond(meting.vulVerhouding)}:1`,
+          beste_van_de_twee: `${verhouding}:1`,
+          onderscheidt_zich_door:
+            meting.vulVerhouding >= meting.randVerhouding ? 'de vulling' : 'de randlijn',
+          plek_op_de_pagina: `${clip.x + meting.px}, ${clip.y + meting.py}`,
+        },
+        slechtste_per_zijde: Object.fromEntries(
+          Object.entries(perZijde).map(([z, v]) => [
+            z,
+            `${rond(v.verhouding)}:1 — binnen ${hex(v.vul)} / rand ${hex(v.rand)} / buiten ${hex(v.buiten)}`,
+          ])
+        ),
+        eis: '3:1 (1.4.11)',
+        voldoet: verhouding >= 3,
+        uitlijning: {
+          vak: `${Math.round(vak.w)}x${Math.round(vak.h)}`,
+          opname: `${banden.opnameBreedte}x${banden.opnameHoogte}`,
+          hoekronding: `${vak.ronding}px — ${hoek}px per zijde overgeslagen`,
+          gemeten_punten: banden.paren.length,
+          beeldpuntverhouding: banden.dpr,
+          dwarsdoorsnede_bovenrand: banden.profiel,
+        },
+        schermafdruk: bestand,
+        uitsneden_per_zijde_onder_de_eis: uitsneden,
+        let_op:
+          'Getoetst is het slechtste punt langs de omtrek, niet het gemiddelde: één lichte plek in een foto laat een witte begrenzing wegvallen, en daar gaat het om. Een element mag zich onderscheiden door zijn randlijn of door zijn vulling, dus de beste van de twee telt. Leg de schermafdruk ernaast; wijkt de dwarsdoorsnede af van wat je ziet, dan meet je niet de rand maar iets ernaast.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -1945,6 +2305,8 @@ async function main() {
       return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-reflow':
       return getReflow(requirePositional(positional, 0, 'url'), flags);
+    case 'get-pixelcontrast':
+      return getPixelContrast(requirePositional(positional, 0, 'url'), flags);
     case 'capture-sample-evidence':
       return captureSampleEvidence(
         requirePositional(positional, 0, 'projectId'),
