@@ -2263,7 +2263,15 @@ async function getToetsenbordval(url: string, flags: Flags) {
             .slice(0, 4)
         : [];
 
-      const opname = await legOpnameVast(page, page.url(), 'toetsenbordval');
+      // Alleen beeld als er iets te zien is.
+      //
+      // De regel "elke meting laat een schermafdruk achter" is hier te breed toegepast: vier
+      // rondes leverden vier identieke paginaopnamen op waar niets aan af te lezen viel. Het
+      // bewijs bij dit criterium is de tabvolgorde, en die staat hieronder als bestand. Bij
+      // een val is beeld wél zinnig — dan wil je zien waar de focus blijft hangen.
+      const opname = val
+        ? await legOpnameVast(page, page.url(), 'toetsenbordval')
+        : null;
 
       let volgorde: string | null = null;
       try {

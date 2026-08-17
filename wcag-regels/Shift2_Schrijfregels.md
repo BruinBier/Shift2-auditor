@@ -93,6 +93,24 @@ communicatiemedewerkers.
 | whitespace | witruimte |
 | string | tekst |
 
+## Geen voorbehoud over criteria die niet in het onderzoek zitten
+
+Een onderbouwing eindigen met "hiermee is niet beoordeeld of X; dat valt onder SC Y" is alleen
+zinnig als SC Y in het onderzoekstype zit. Zit het er niet in, dan wijs je de lezer op werk dat
+niemand gaat doen en dat ook niemand hoeft te doen.
+
+Kijk dus eerst welke criteria dit onderzoek kent. Bij UTHEU-02 zijn dat er 33, en 2.4.7 zit er
+niet bij — een zin over de zichtbaarheid van de focus hoorde daar dus niet.
+
+Wat wél blijft staan: een voorbehoud over iets binnen hetzelfde criterium dat je niet hebt
+kunnen meten. Dat is geen verwijzing maar een gat in je eigen werk.
+
+Aanleiding (2026-08-17): bij 2.1.2 op de homepage stond "Hiermee is niet beoordeeld of de
+focus zichtbaar is; dat is 2.4.7." Frits: "dat hoeft ook niet, dat zit niet in het
+onderzoekstype."
+
+## Ook in het scherm zelf
+
 **Dit geldt net zo goed voor de teksten in het scherm zelf.** Daar sluipt een ander soort
 jargon in: de naam van een bestand of van een stuk machinerie, in plaats van wat het doet.
 

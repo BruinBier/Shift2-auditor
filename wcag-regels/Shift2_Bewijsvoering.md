@@ -21,6 +21,34 @@
 
 **Ook als de uitkomst schoon is.** Dat is juist het geval waarin het misgaat.
 
+### Wat het bewijs is, verschilt per criterium
+
+"Elke meting laat een schermafdruk achter" klinkt als een goede regel en is te grof. Bij een
+toetsenbordtest levert een paginaopname niets op: je ziet er niet aan of de focus ergens vast
+bleef zitten. Vier rondes leverden zo vier identieke plaatjes waar niets aan af te lezen viel,
+terwijl het werkelijke bewijs — de tabvolgorde — in een tekstbestand stond.
+
+Bepaal dus per succescriterium wat de vorm van het bewijs is, en leg dát vast:
+
+| SC | Waar het oordeel op rust | Bewijs |
+|---|---|---|
+| 1.1.1 | de tekst naast de afbeelding, en wat erop staat | het codefragment plus de afbeelding zelf |
+| 1.3.1 | structuur in de code tegenover wat je ziet | het codefragment plus de kale schermafdruk zonder opmaak |
+| 1.3.2 | code-volgorde tegenover kijkvolgorde | de omkeringen uit `get-leesvolgorde`, met schermafdruk |
+| 1.4.3 | gemeten kleuren | de verhouding, de twee kleuren als #RRGGBB, en de weergave waarin gemeten is |
+| 1.4.10 | de pagina op 320 pixels | de schermafdruk op die breedte, plus wat er nog werkt |
+| 1.4.11 | de beeldpunten langs een rand of van een tekening | de verhouding per zijde én de uitsnede, in rust en met de muis erop |
+| 2.1.2 | of de focus overal weer wegkomt | de **tabvolgorde**; een schermafdruk alleen als de focus ergens blijft hangen |
+| niet aanwezig | dat je goed gezocht hebt | de lijst met wat je hebt afgezocht |
+
+Staat een criterium hier niet bij, dan bepaal je de vorm zelf — en schrijf je hem hier op.
+De vraag om te stellen: **kan iemand hiermee vaststellen dat mijn uitkomst klopt?** Vijf keer
+dezelfde paginaopname beantwoordt die vraag niet.
+
+Aanleiding (2026-08-17): bij 2.1.2 op de homepage stonden vier identieke schermafdrukken op
+de kaart. Frits: "waarom krijg ik hier allemaal screenshots te zien, dat is niet relevant" —
+en "je moet met SC kijken en dat vastleggen."
+
 Drie keer misgegaan op één dag op heuvelrug.nl. Een controle op media gaf zes keurige
 nullen uit een kapotte reguliere expressie. Een leesvolgordemeting dekte 36 van de 54
 elementen, omdat links met hun tekst in een span wegvielen. En de vraag of het uitklapmenu
