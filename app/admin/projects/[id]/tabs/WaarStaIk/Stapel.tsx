@@ -704,9 +704,15 @@ export default function Stapel({
     const vragen = stand.cellen.filter((c) => c.status === 'niet_te_bepalen' && past(c));
     // Oordelen die de agent heeft geveld maar die nog geen akkoord hebben. Zonder
     // deze stap komt een agent-oordeel ongezien in het rapport terecht.
+    // Ook de bevestigde oordelen blijven staan.
+    //
+    // Ze verdwenen zodra je op Klopt klikte, en daarmee verdween je werk uit het beeld:
+    // terugkijken wat je hebt bevestigd kon alleen via de matrix of een adres. Een
+    // afgevinkte regel hoort te blijven staan, zoals op een boodschappenlijst. De
+    // stapel opent daarom wel op het eerste dat nog open is, anders scrol je eerst
+    // langs alles wat al klaar is.
     const oordelen = stand.cellen.filter(
-      (c) =>
-        c.status !== null && c.status !== 'niet_te_bepalen' && c.akkoord !== 'akkoord' && past(c)
+      (c) => c.status !== null && c.status !== 'niet_te_bepalen' && past(c)
     );
 
     // Hangt er een onbevestigd oordeel boven een voorstel, dan wordt dat voorstel
@@ -1307,6 +1313,26 @@ export default function Stapel({
   const positie = Math.min(index, Math.max(stapel.length - 1, 0));
   const huidig = stapel[positie];
 
+  /** Is deze taak al afgehandeld? Een voorstel is dat nooit; die staat er tot je kiest. */
+  const isAf = (t: Taak) => t.soort !== 'voorstel' && t.cel.akkoord === 'akkoord';
+  const aantalAf = stapel.filter(isAf).length;
+
+  /**
+   * Open de stapel op het eerste dat nog open staat.
+   *
+   * Nu de bevestigde oordelen blijven staan, zou je anders bij elke werklijst eerst
+   * langs alles moeten scrollen wat al klaar is — op Home zijn dat er veertien.
+   * Eén keer per werklijst, zodat je daarna zelf kunt terugbladeren zonder dat de
+   * stapel je terugduwt.
+   */
+  const [gepositioneerdVoor, setGepositioneerdVoor] = useState<string | null>(null);
+  useEffect(() => {
+    if (gepositioneerdVoor === focus || !stapel.length) return;
+    const eerste = stapel.findIndex((t) => !isAf(t));
+    setIndex(eerste >= 0 ? eerste : 0);
+    setGepositioneerdVoor(focus);
+  }, [focus, stapel, gepositioneerdVoor]);
+
   // De voorstellen die op deze cel wachten. Die staan op de oordeelkaart en gaan
   // mee met "Klopt" — een losse kaart zou hetzelfde nog eens vragen.
   const wachtendeVoorstellen =
@@ -1383,6 +1409,9 @@ export default function Stapel({
       <div className="flex items-center justify-between text-sm text-gray-600">
         <span>
           {positie + 1} van <strong className="text-gray-900">{stapel.length}</strong>
+          {aantalAf > 0 && (
+            <span className="text-gray-500"> · {aantalAf} bevestigd</span>
+          )}
         </span>
         <div className="flex gap-2">
           {/* Bij het wisselen van kaart moet de melding van de vorige weg: die gaat
