@@ -1346,19 +1346,19 @@ export default function Stapel({
                 bestaat. */}
             {!controle?.punten?.length ? (
               <p className="text-sm text-gray-500">
-                De onderbouwing is niet apart langs de bewijsvoeringsregels gelegd. Die
-                controle draait mee met de audit-workflow;{' '}
+                Er heeft niemand nagerekend of het verhaal hierboven klopt met wat er
+                werkelijk is gemeten. Dat doet een tweede agent, maar alleen als een pagina
+                in één ronde wordt nagelopen —{' '}
                 {cel.bron === 'gesprek'
-                  ? 'dit oordeel komt uit een gesprek.'
+                  ? 'dit oordeel is hier in het gesprek ontstaan.'
                   : cel.bron === 'handmatig'
                     ? 'dit oordeel is met de hand gezet.'
-                    : 'bij dit oordeel is die fase niet gedraaid.'}
+                    : 'bij dit oordeel is dat niet gebeurd.'}
               </p>
             ) : (
               <>
                 <p className="text-xs text-gray-500">
-                  De onderbouwing is door een tweede agent langs de bewijsvoeringsregels
-                  gelegd
+                  Een tweede agent heeft het verhaal hierboven naast de metingen gelegd
                   {controle.bevestigd === true && ' — het oordeel bleef staan'}
                   {controle.bevestigd === false && ' — het oordeel hield geen stand'}
                 </p>

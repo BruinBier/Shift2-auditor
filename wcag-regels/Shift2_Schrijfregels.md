@@ -93,6 +93,23 @@ communicatiemedewerkers.
 | whitespace | witruimte |
 | string | tekst |
 
+**Dit geldt net zo goed voor de teksten in het scherm zelf.** Daar sluipt een ander soort
+jargon in: de naam van een bestand of van een stuk machinerie, in plaats van wat het doet.
+
+| Niet | Wel |
+|---|---|
+| "langs de bewijsvoeringsregels gelegd" | "nagerekend of het verhaal klopt met wat er gemeten is" |
+| "draait mee met de audit-workflow" | "gebeurt als een pagina in één ronde wordt nagelopen" |
+| "de verantwoording is gekoppeld" | "hieronder staat waarop dit oordeel rust" |
+
+De vraag om te stellen: zou iemand die de code niet kent hieruit opmaken wat er is gebeurd
+en wat niet? Een bestandsnaam beantwoordt die vraag nooit.
+
+Aanleiding (2026-08-17): op de stapelkaart stond "De onderbouwing is niet apart langs de
+bewijsvoeringsregels gelegd. Die controle draait mee met de audit-workflow." Frits vroeg wat
+daarmee bedoeld werd — terecht, want er stonden twee interne namen in en geen enkel woord
+over wat er wél of niet was nagekeken.
+
 HTML-elementnamen (`strong`, `em`, `h1`, `ul`, `li`, `th`) mogen wel genoemd worden, maar
 inline in de lopende tekst, niet als los codeblok.
 
