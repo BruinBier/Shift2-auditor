@@ -43,6 +43,29 @@ export interface Bevinding {
   status: string;
 }
 
+/** Eén meting uit het logboek van de audit-CLI, zoals de kaart hem toont. */
+export interface Meting {
+  commando: string;
+  argumenten?: Record<string, string>;
+  url?: string | null;
+  tijd?: string;
+  browser?: string | null;
+  artefact?: string | null;
+  uitkomst?: Record<string, unknown>;
+}
+
+/** Eén punt uit Shift2_Bewijsvoering.md, en of de onderbouwing eraan voldoet. */
+export interface ControlePunt {
+  punt: string;
+  uitkomst: 'ja' | 'nee' | 'nvt';
+  toelichting?: string | null;
+}
+
+export interface Controle {
+  bevestigd?: boolean | null;
+  punten?: ControlePunt[];
+}
+
 export interface Cel {
   sampleId: string;
   code: string;
@@ -51,6 +74,14 @@ export interface Cel {
   reden?: string | null;
   bron?: string | null;
   akkoord?: string | null;
+  /**
+   * De metingen waarop dit oordeel rust, uit het logboek van de CLI. Leeg betekent
+   * dat er geen meting aan te pas kwam — bij een oordeel uit een gesprek hoort hier
+   * niets te staan, en dat is informatie.
+   */
+  verantwoording?: Meting[] | null;
+  /** Of de onderbouwing standhoudt, per punt uit de bewijsvoeringsregels. */
+  controle?: Controle | null;
   /** De akkoord bevonden bevindingen op deze combinatie. */
   bevindingen: Bevinding[];
 }
@@ -177,6 +208,14 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
         reden: check?.reden ?? null,
         bron: check?.bron ?? null,
         akkoord: check?.akkoord ?? null,
+        // Komen als JSON uit de database. Een array met metingen respectievelijk een
+        // object met punten; alles anders negeren we, zodat een oude of half
+        // geschreven waarde de kaart niet sloopt.
+        verantwoording: Array.isArray(check?.verantwoording) ? check.verantwoording : null,
+        controle:
+          check?.controle && typeof check.controle === 'object' && !Array.isArray(check.controle)
+            ? check.controle
+            : null,
         bevindingen: bevindingIndex.get(sleutel) ?? [],
       });
     }

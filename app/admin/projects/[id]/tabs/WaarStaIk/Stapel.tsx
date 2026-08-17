@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Cel, Stand, Voorstel } from './gegevens';
+import type { Cel, Meting, Stand, Voorstel } from './gegevens';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -445,6 +445,57 @@ export default function Stapel({
   const [gedaan, setGedaan] = useState<string[] | null>(null);
   /** Vooraf opgehaald, zodat de klik zelf niets meer hoeft af te wachten. */
   const [huisregels, setHuisregels] = useState<Huisregels | null>(null);
+  /** Per meting de uitkomst van een hermeting, om naast de oude te zetten. */
+  const [hermetingen, setHermetingen] = useState<
+    Record<string, { bezig: boolean; toen?: string; nu?: string; gelijk?: boolean; fout?: string }>
+  >({});
+
+  /**
+   * Een vastgelegde meting nog eens draaien.
+   *
+   * Vergelijkt op de samengevatte uitkomst uit het logboek, niet op het hele antwoord:
+   * een tijdstempel of een bestandsnaam verschilt altijd, en dan zou elke hermeting
+   * "afwijking" melden. Wat telt zijn de gemeten waarden — breedtes, kleuren, aantallen.
+   */
+  const meetOpnieuw = async (sleutel: string, m: Meting) => {
+    setHermetingen((h) => ({ ...h, [sleutel]: { bezig: true } }));
+    const samenvatting = (u: unknown) =>
+      u && typeof u === 'object'
+        ? Object.entries(u as Record<string, unknown>)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(', ')
+        : '(geen)';
+    try {
+      const res = await fetch('/api/meting/opnieuw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commando: m.commando, url: m.url, argumenten: m.argumenten ?? {} }),
+      });
+      const j = await res.json();
+      if (!res.ok || !j.ok) {
+        setHermetingen((h) => ({
+          ...h,
+          [sleutel]: { bezig: false, fout: j.error || 'De meting liep niet goed af' },
+        }));
+        return;
+      }
+      // De CLI schreef zojuist een nieuwe logboekregel; de uitkomst daarvan zit in het
+      // antwoord. Alleen de velden vergelijken die ook in het logboek stonden.
+      const nu: Record<string, unknown> = {};
+      for (const k of Object.keys(m.uitkomst ?? {})) {
+        const bron = j.uitkomst ?? {};
+        nu[k] = bron[k] ?? bron[k.replace(/([A-Z])/g, '_$1').toLowerCase()] ?? '?';
+      }
+      const toenTekst = samenvatting(m.uitkomst);
+      const nuTekst = samenvatting(nu);
+      setHermetingen((h) => ({
+        ...h,
+        [sleutel]: { bezig: false, toen: toenTekst, nu: nuTekst, gelijk: toenTekst === nuTekst },
+      }));
+    } catch (e: any) {
+      setHermetingen((h) => ({ ...h, [sleutel]: { bezig: false, fout: e.message } }));
+    }
+  };
 
   /**
    * Bouwt het besprekingsblok, zet het op het klembord en opent pas daarna de dienst.
@@ -1026,6 +1077,140 @@ export default function Stapel({
     </div>
   );
 
+  /**
+   * De twee blokken onder de onderbouwing: waarop het oordeel rust, en of dat
+   * standhoudt.
+   *
+   * Het commando staat er als leesbare regel, om te lezen en te kopiëren. "Nog eens
+   * meten" stuurt die tekst NIET naar de server — dat zou betekenen dat iets uit de
+   * database als code op deze machine kan draaien. De knop stuurt de commandonaam en
+   * de losse argumenten, en de route houdt die tegen een vaste lijst.
+   */
+  const bewijsBlokken = (cel: Cel) => {
+    const metingen = cel.verantwoording ?? [];
+    const controle = cel.controle;
+    const TEKEN: Record<string, string> = { ja: '✓', nee: '✗', nvt: '—' };
+
+    return (
+      <>
+        <div className="mb-4 border-t border-gray-200 pt-3">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+            Zo is het vastgesteld
+          </p>
+          {metingen.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Geen metingen vastgelegd. Dit oordeel is in overleg of met de hand tot stand
+              gekomen.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {metingen.map((m, i) => {
+                const regel = `npm run cli -- ${m.commando} ${m.url ?? ''}${Object.entries(
+                  m.argumenten ?? {}
+                )
+                  .map(([k, v]) => ` --${k}=${v}`)
+                  .join('')}`.trim();
+                const sleutel = `${m.commando}-${m.tijd ?? i}`;
+                const hermeting = hermetingen[sleutel];
+                return (
+                  <li key={sleutel} className="rounded border border-gray-200 bg-gray-50 p-2">
+                    <code className="block break-all font-mono text-xs text-gray-800">
+                      {regel}
+                    </code>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {m.tijd ? new Date(m.tijd).toLocaleString('nl-NL') : 'tijd onbekend'}
+                      {m.browser ? ` · ${m.browser}` : ''}
+                      {m.uitkomst
+                        ? ` · ${Object.entries(m.uitkomst)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(', ')}`
+                        : ''}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => naarKlembord(regel)}
+                        className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+                      >
+                        Kopieer
+                      </button>
+                      <button
+                        type="button"
+                        disabled={hermeting?.bezig}
+                        onClick={() => meetOpnieuw(sleutel, m)}
+                        className="rounded border border-blue-300 bg-blue-50 px-2 py-0.5 text-xs text-blue-900 hover:bg-blue-100 disabled:opacity-40"
+                      >
+                        {hermeting?.bezig ? 'Bezig…' : 'Nog eens meten'}
+                      </button>
+                      {m.artefact && (
+                        <span className="text-xs text-gray-400">
+                          {m.artefact.split(/[\\/]/).pop()}
+                        </span>
+                      )}
+                    </div>
+                    {hermeting && !hermeting.bezig && (
+                      <div className="mt-2 rounded border border-gray-200 bg-white p-2 text-xs">
+                        {hermeting.fout ? (
+                          <p className="text-red-800">{hermeting.fout}</p>
+                        ) : (
+                          <>
+                            <p className="text-gray-500">Toen: {hermeting.toen}</p>
+                            <p
+                              className={
+                                hermeting.gelijk ? 'text-green-800' : 'font-medium text-amber-800'
+                              }
+                            >
+                              Nu: {hermeting.nu} {hermeting.gelijk ? '— gelijk' : '— AFWIJKING'}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="mb-4 border-t border-gray-200 pt-3">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+            Nagekeken
+            {controle?.bevestigd === true && ' · bevestigd'}
+            {controle?.bevestigd === false && ' · niet bevestigd'}
+          </p>
+          {!controle?.punten?.length ? (
+            <p className="text-sm text-gray-500">Nog niet nagekeken.</p>
+          ) : (
+            <ul className="space-y-1">
+              {controle.punten.map((p, i) => (
+                <li key={i} className="text-sm">
+                  <span
+                    className={
+                      p.uitkomst === 'nee'
+                        ? 'font-medium text-red-700'
+                        : p.uitkomst === 'ja'
+                          ? 'text-green-700'
+                          : 'text-gray-400'
+                    }
+                  >
+                    {TEKEN[p.uitkomst] ?? '—'}
+                  </span>{' '}
+                  <span className={p.uitkomst === 'nee' ? 'text-gray-900' : 'text-gray-600'}>
+                    {p.punt}
+                  </span>
+                  {p.toelichting && (
+                    <span className="text-gray-600"> — {p.toelichting}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </>
+    );
+  };
+
   const sampleVoor = (id: string | null) =>
     id ? stand.samples.find((s) => s.id === id) ?? null : null;
   const sampleTitel = (id: string | null) =>
@@ -1223,6 +1408,8 @@ export default function Stapel({
               ))}
             </div>
           )}
+
+          {bewijsBlokken(huidig.cel)}
 
           {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
