@@ -1874,12 +1874,22 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     for (const code of r.criteria) {
       const sleutel = `${sample.id}|${code}`;
       if (!gerichtPerSampleCode.has(sleutel)) gerichtPerSampleCode.set(sleutel, new Map());
-      // Op commando plus argumenten, zodat dezelfde meting maar één keer op de kaart
-      // komt. Wie een meting herhaalt levert geen nieuw bewijs; alleen de laatste
+      // Op commando plus wát er gemeten is, zodat dezelfde meting maar één keer op de
+      // kaart komt. Wie een meting herhaalt levert geen nieuw bewijs; alleen de laatste
       // telt. Zonder dit vulde de kaart zich met zes identieke reflow-regels — mijn
       // eigen testklikken op "Nog eens meten" — en was niet meer te zien wat er
       // werkelijk was gedaan.
-      const vorm = `${r.commando}|${JSON.stringify(r.argumenten ?? {})}`;
+      //
+      // `klik` telt bewust NIET mee in de sleutel. Meet je hetzelfde element eerst in de
+      // standaardweergave en daarna in de hoogcontrastweergave, dan is dat tweede een
+      // correctie op het eerste en geen tweede bewijsstuk. Bleef de eerste staan, dan
+      // stonden er onder een hoogcontrastoordeel opnamen in gewone kleuren die nergens
+      // meer op sloegen.
+      //
+      // `breedte` telt wél mee: een reflow-meting op 320 en op 1280 zijn twee metingen,
+      // niet dezelfde meting overgedaan.
+      const { klik: _klik, ...watGemeten } = r.argumenten ?? {};
+      const vorm = `${r.commando}|${JSON.stringify(watGemeten)}`;
       const bestaand = gerichtPerSampleCode.get(sleutel)!.get(vorm);
       gerichtPerSampleCode
         .get(sleutel)!

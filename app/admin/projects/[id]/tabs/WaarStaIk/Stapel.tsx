@@ -1230,7 +1230,7 @@ export default function Stapel({
                                 }`}
                               >
                                 {!m.weergave
-                                  ? 'Weergave niet vastgelegd — deze meting is van vóór 17 augustus'
+                                  ? 'Weergave niet vastgelegd'
                                   : m.weergave === 'standaardweergave'
                                   ? 'Standaardweergave'
                                   : `Hoogcontrastweergave — ${m.weergave}`}
