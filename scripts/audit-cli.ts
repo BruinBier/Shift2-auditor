@@ -1200,10 +1200,33 @@ async function getContrast(url: string, flags: Flags) {
           n = n.parentElement;
         }
 
+        // De rand erbij, voor 1.4.11. Dat criterium gaat over niet-tekstuele content:
+        // de omranding van een invoerveld, een pictogram, de rand van een knop. Die
+        // hebben geen tekstkleur, dus zonder dit valt er niets te meten en bleef 1.4.11
+        // altijd een vraag voor de onderzoeker.
+        //
+        // De eerste zijde met een zichtbare rand telt. Een rand van 0 pixels of
+        // 'none' is geen rand, ook als er een kleur bij staat.
+        const zijden = ['Top', 'Right', 'Bottom', 'Left'] as const;
+        let randkleur: string | null = null;
+        let randbreedte: number | null = null;
+        for (const z of zijden) {
+          const stijlNaam = (stijl as any)[`border${z}Style`];
+          const breedte = parseFloat((stijl as any)[`border${z}Width`] || '0');
+          if (stijlNaam && stijlNaam !== 'none' && breedte > 0) {
+            randkleur = (stijl as any)[`border${z}Color`];
+            randbreedte = breedte;
+            break;
+          }
+        }
+
         return {
           tekst: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60),
           element: el.tagName.toLowerCase(),
           kleur: stijl.color,
+          randkleur,
+          randbreedte,
+          eigenAchtergrond: stijl.backgroundColor,
           achtergronden,
           fontSize: parseFloat(stijl.fontSize),
           fontWeight: stijl.fontWeight,
@@ -1250,6 +1273,38 @@ async function getContrast(url: string, flags: Flags) {
       const groot = ruw.fontSize >= 24 || (vet && ruw.fontSize >= 18.66);
       const eis = groot ? 3 : 4.5;
 
+      /**
+       * De rand tegen wat erachter ligt — dat is 1.4.11, en die eis is 3:1.
+       *
+       * De achtergrond van de rand is niet die van het element zelf maar die van zijn
+       * omgeving: een wit zoekveld met een grijze rand op een groene balk moet die rand
+       * tegen het groen halen, niet tegen het wit binnenin. Daarom de voorouderketen
+       * vanaf de OUDER, niet vanaf het element.
+       */
+      let rand: Record<string, unknown> | null = null;
+      const randVoor = ruw.randkleur ? ontleed(ruw.randkleur) : null;
+      if (randVoor && randVoor[3] > 0) {
+        let randAchter = [255, 255, 255, 1];
+        for (const kandidaat of ruw.achtergronden.slice(1)) {
+          const c = ontleed(kandidaat);
+          if (c && c[3] > 0) {
+            randAchter = c;
+            break;
+          }
+        }
+        const rl1 = helderheid(randVoor);
+        const rl2 = helderheid(randAchter);
+        const rratio = (Math.max(rl1, rl2) + 0.05) / (Math.min(rl1, rl2) + 0.05);
+        rand = {
+          randkleur: hex(randVoor),
+          randbreedte: `${ruw.randbreedte}px`,
+          erachter: hex(randAchter),
+          contrast: `${Math.round(rratio * 100) / 100}:1`,
+          eis: '3:1 (1.4.11)',
+          voldoet: rratio >= 3,
+        };
+      }
+
       legVast({
         commando: 'get-contrast',
         argumenten: { selector: doel, ...(klik ? { klik } : {}) },
@@ -1283,6 +1338,7 @@ async function getContrast(url: string, flags: Flags) {
         grote_tekst: groot,
         contrast: `${Math.round(ratio * 100) / 100}:1`,
         eis: `${eis}:1`,
+        rand,
         voldoet: ratio >= eis,
         let_op: ruw.achtergrondAfbeelding
           ? 'Er ligt een achtergrondafbeelding achter dit element. De gemeten achtergrondkleur is dan niet wat je ziet; controleer op de schermafdruk.'
