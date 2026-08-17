@@ -927,16 +927,33 @@ Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requi
       const zwaarste = lijst.some((v) => v.type === 'bevinding') ? 'afgekeurd' : 'opmerking'
       if (a.status === 'afgekeurd' || a.status === 'opmerking') a.status = zwaarste
     }
-    const teControleren = audit.assessments.filter(
+    // ALLE oordelen gaan langs de verifieerder, niet alleen de afkeuringen.
+    //
+    // Dit stond eerder omgekeerd: was er niets af te keuren, dan draaide de verifieerder
+    // helemaal niet. Daarmee werd precies overgeslagen waar een fout zich verstopt. Op
+    // het homepage-sample van heuvelrug.nl stonden negentien onbevestigde oordelen, en
+    // achttien daarvan zonder afkeuring: tien 'voldoet', vijf 'niet aanwezig', drie
+    // 'niet te bepalen'. Bij een afkeuring kan de onderzoeker tegenspreken, want die
+    // wijst naar iets. Bij een onterecht 'voldoet' wijst er niets.
+    //
+    // De verifieerder heeft daarmee twee taken die niet hetzelfde zijn. Een afkeuring
+    // probeert hij te WEERLEGGEN — is dit werkelijk een fout. Bij elk oordeel, ook een
+    // schoon, toetst hij de ONDERBOUWING: staat er wat er gedaan is, en klopt dat met
+    // het spoor van metingen. Dat tweede was de hele dag het probleem, niet het oordeel.
+    const teControleren = audit.assessments
+    const afTeKeuren = audit.assessments.filter(
       (a) => a.status === 'afgekeurd' || a.status === 'opmerking',
     )
-    if (!teControleren.length) {
-      return { sampleId: sample.id, audit, verify: { sampleId: sample.id, oordelen: [] } }
-    }
     return agent(
       `Je bent een kritische WCAG-verifier. Een andere auditor beoordeelde sample "${sample.title}" (${sample.url || 'geen URL'}).${sample.description ? `
 
-WAT ER OVER DEZE PAGINA IS VASTGELEGD: ${sample.description}` : ''} Controleer UITSLUITEND de onderstaande afkeuringen en opmerkingen: klopt het oordeel, en is de beschrijving correct en niet overdreven? Probeer elk oordeel te weerleggen; bevestig alleen wat standhoudt.
+WAT ER OVER DEZE PAGINA IS VASTGELEGD: ${sample.description}` : ''} Je hebt TWEE taken, en ze zijn niet hetzelfde.
+
+EEN — DE AFKEURINGEN EN OPMERKINGEN WEERLEGGEN. Klopt het oordeel, en is de beschrijving correct en niet overdreven? Probeer elk oordeel te weerleggen; bevestig in \`bevestigd\` alleen wat standhoudt. Dat gaat om deze codes: ${afTeKeuren.map((a) => a.code).join(', ') || '(geen op dit sample)'}.
+
+TWEE — BIJ ELK OORDEEL DE ONDERBOUWING TOETSEN, ook bij 'voldoet', 'niet aanwezig' en 'niet te bepalen'. Niet of het oordeel juist is, maar of de onderbouwing WAAR is: staat er wát er gedaan is, en klopt dat met de metingen die werkelijk zijn gedraaid? Dat is een andere vraag dan taak een, en juist daar zit het probleem. Bij een afkeuring kan de onderzoeker tegenspreken, want die wijst naar iets. Bij een onterecht 'voldoet' wijst er niets, en dan valt het niemand op.
+
+Zet die tweede uitkomst in \`bewijsvoering\`. Laat \`bevestigd\` op true staan als het oordeel klopt, ook als er bij de bewijsvoering een 'nee' staat: een terecht oordeel met een rammelende onderbouwing is geen onterecht oordeel, en die twee door elkaar halen maakt beide waardeloos.
 ${
   isPdfSample(sample)
     ? `\nDit is een PDF-DOCUMENT, geen webpagina. De main-content-regel geldt hier niet; het hele document hoort beoordeeld te worden.\n`
