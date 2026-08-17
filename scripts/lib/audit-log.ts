@@ -52,6 +52,17 @@ export interface LogRegel {
   criteria: string[];
   /** 'auditsessie' of 'headless'. Hoort bij de meting, zie Shift2_Bewijsvoering.md. */
   browser?: string | null;
+  /**
+   * In welke weergave er gemeten is: de standaardweergave of die na het aanzetten van
+   * een schakelaar, meestal hoogcontrast.
+   *
+   * Zonder dit veld staan onder een oordeel dat op de hoogcontrastweergave rust
+   * schermafdrukken in gewone kleuren, en is aan niets te zien dat die bij een andere
+   * weergave horen. Heeft een site een hoogcontrastknop die zelf voldoet, dan is juist
+   * die weergave de weergave die telt (Shift2_Regels_SC_1_4_3.md, stap 2), en dan is het
+   * verschil tussen de twee het hele punt.
+   */
+  weergave?: string | null;
   /** Pad naar wat het opleverde. Kan verouderen: tmp/ staat in .gitignore. */
   artefact?: string | null;
   /**

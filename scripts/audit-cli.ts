@@ -586,6 +586,10 @@ async function getHtml(url: string, flags: Flags) {
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         artefact: file,
         schermafdruk: beeldGelukt ? beeld : null,
+        // Dit commando schakelt niets aan; het haalt de pagina op zoals hij komt. Dat
+        // expliciet vastleggen scheelt de vraag waarom er onder een hoogcontrastoordeel
+        // een opname in gewone kleuren staat.
+        weergave: 'standaardweergave',
         uitkomst: { scope: useFull ? 'document' : 'main', bytes: content.length },
       });
 
@@ -865,6 +869,7 @@ async function getScreenshot(url: string, flags: Flags) {
         url: url,
         eindUrl: finalUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         artefact: file,
         schermafdruk: file,
         uitkomst: { bytes: stat.size },
@@ -1331,6 +1336,7 @@ async function getContrast(url: string, flags: Flags) {
         url: gevraagdeUrl,
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
         uitkomst: {
           tekstkleur: hex(voor),
@@ -1543,6 +1549,7 @@ async function getContrastAlles(url: string, flags: Flags) {
         url: gevraagdeUrl,
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
         uitkomst: {
           gemetenElementen: ruw.length,
@@ -1850,6 +1857,7 @@ async function koppelLogboek(projectId: string, flags: Flags) {
       url: r.url,
       tijd: r.tijd,
       browser: r.browser,
+      weergave: r.weergave ?? null,
       artefact: r.artefact,
       // Oudere regels hebben dit veld niet. Staat er alleen een artefact en is dat een
       // afbeelding, dan is dát het beeld — anders had de kaart voor alles wat vóór
@@ -2325,6 +2333,7 @@ async function getPixelContrast(url: string, flags: Flags) {
         url: gevraagdeUrl,
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         artefact: bestand,
         schermafdruk: bestand,
         criteria: ['1.4.11'],

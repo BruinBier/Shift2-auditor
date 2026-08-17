@@ -1216,19 +1216,41 @@ export default function Stapel({
                       return (
                         <div className="mt-2 space-y-1">
                           {beeld && (
-                            <a
-                              href={bron(beeld)}
-                              target="_blank"
-                              rel="noreferrer"
-                              title={bestandsnaam(beeld)}
-                              className="block"
-                            >
-                              <img
-                                src={bron(beeld)}
-                                alt={`Schermafdruk van de meting ${m.commando}`}
-                                className="max-h-64 rounded border border-gray-300 bg-white"
-                              />
-                            </a>
+                            <>
+                              {/* In welke weergave, boven het beeld. Een oordeel dat op de
+                                  hoogcontrastweergave rust met opnamen in gewone kleuren
+                                  eronder leest als een fout, en dat is het soms ook. */}
+                              <p
+                                className={`text-xs ${
+                                  !m.weergave
+                                    ? 'text-amber-800'
+                                    : m.weergave === 'standaardweergave'
+                                    ? 'text-gray-500'
+                                    : 'font-medium text-purple-800'
+                                }`}
+                              >
+                                {!m.weergave
+                                  ? 'Weergave niet vastgelegd — deze meting is van vóór 17 augustus'
+                                  : m.weergave === 'standaardweergave'
+                                  ? 'Standaardweergave'
+                                  : `Hoogcontrastweergave — ${m.weergave}`}
+                              </p>
+                              <a
+                                href={bron(beeld)}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={bestandsnaam(beeld)}
+                                className="block"
+                              >
+                                <img
+                                  src={bron(beeld)}
+                                  alt={`Schermafdruk van de meting ${m.commando}${
+                                    m.weergave ? `, ${m.weergave}` : ''
+                                  }`}
+                                  className="max-h-64 rounded border border-gray-300 bg-white"
+                                />
+                              </a>
+                            </>
                           )}
                           {bestand && (
                             <a
