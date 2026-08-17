@@ -48,6 +48,11 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
               reden: true,
               bron: true,
               akkoord: true,
+              // Waarop het oordeel rust en of dat standhoudt. Zonder deze twee toont
+              // de kaart alleen de tekst van de auditor, en is niet te zien of er
+              // iets gemeten is of dat iemand het heeft nagekeken.
+              verantwoording: true,
+              controle: true,
             },
           },
         },

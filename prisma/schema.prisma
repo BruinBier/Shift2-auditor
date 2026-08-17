@@ -314,6 +314,20 @@ model SampleCriterionCheck {
   bron            SampleCheckBron       @default(workflow)
   /// Alleen relevant bij een voorstel-bevinding: is die aan de onderzoeker voorgelegd en akkoord?
   akkoord         SampleCheckAkkoord?
+  /// De metingen waarop dit oordeel rust, uit het logboek van de audit-CLI.
+  ///
+  /// Bewust buiten `reden`: een akkoord vervalt zodra die tekst verandert, en dan zou
+  /// een nieuwe meting stilzwijgend de goedkeuring van de onderzoeker intrekken. Ook
+  /// bewust niet door een agent geschreven — dat maakt er weer een bewering van. De
+  /// CLI legt vast wat hij draait, de workflow koppelt dat aan het sample.
+  ///
+  /// Leeg betekent dat er geen meting aan te pas kwam. Dat is geen gebrek maar
+  /// informatie: bij een oordeel uit een gesprek hoort hier niets te staan.
+  verantwoording  Json?
+  /// De uitkomst van de verificatie: per punt uit Shift2_Bewijsvoering.md of de
+  /// onderbouwing eraan voldoet. Een verifieerder mag hier "nee" zeggen terwijl het
+  /// oordeel zelf klopt — een onterecht "voldoet" valt anders niemand op.
+  controle        Json?
   checkedAt       DateTime              @default(now()) @map("checked_at")
   updatedAt       DateTime              @updatedAt @map("updated_at")
 
