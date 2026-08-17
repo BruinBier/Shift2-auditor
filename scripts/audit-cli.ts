@@ -2015,6 +2015,725 @@ async function legOpnameVast(
 }
 
 /**
+ * Meet een pictogram tegen zijn achtergrond, op de werkelijke beeldpunten.
+ *
+ * Een omtrekmeting deugt hier niet. Een pictogramknop is meestal een doorzichtig linkvak om
+ * een svg heen: dat vak heeft geen rand en geen vulling, dus de omtrek meet achtergrond tegen
+ * achtergrond en levert 1:1 op elk van de vier zijden. Bij de eerste sweep over de homepage
+ * kwamen op die manier acht afkeuringen uit die geen van alle bestonden.
+ *
+ * Wat wél de vraag is: springt de tekening eruit tegen wat eromheen ligt. Dus wordt de
+ * achtergrond bepaald uit de rand van de uitsnede, en de tekening uit de beeldpunten daarbinnen
+ * die daar duidelijk van afwijken. De meest voorkomende afwijkende kleur is de tekening;
+ * losse extreme beeldpunten zijn kartelranden en tellen niet als kleur mee.
+ *
+ * Getoetst wordt tegen het ONGUNSTIGSTE stuk achtergrond, niet tegen het gemiddelde: een wit
+ * pictogram op een foto valt weg op de lichte plek, en juist daar gaat het om.
+ */
+async function meetPictogram(
+  page: any,
+  vak: { x: number; y: number; w: number; h: number },
+  marge: number
+) {
+  const clip = {
+    x: Math.max(0, Math.floor(vak.x - marge)),
+    y: Math.max(0, Math.floor(vak.y - marge)),
+    width: Math.ceil(vak.w + marge * 2),
+    height: Math.ceil(vak.h + marge * 2),
+  };
+  const opname = (await page.screenshot({ clip, encoding: 'base64' })) as string;
+
+  const ruw = await page.evaluate(
+    async (base64: string, marge: number) => {
+      const beeld = new Image();
+      await new Promise<void>((klaar, mis) => {
+        beeld.onload = () => klaar();
+        beeld.onerror = () => mis(new Error('opname niet te laden'));
+        beeld.src = `data:image/png;base64,${base64}`;
+      });
+      const doek = document.createElement('canvas');
+      doek.width = beeld.width;
+      doek.height = beeld.height;
+      const ctx = doek.getContext('2d')!;
+      ctx.drawImage(beeld, 0, 0);
+      const d = ctx.getImageData(0, 0, doek.width, doek.height).data;
+      const b = doek.width;
+      const h = doek.height;
+
+      // De rand van de uitsnede is de achtergrond: dat ligt buiten het element.
+      const achterlijst: number[][] = [];
+      for (let x = 0; x < b; x++) {
+        for (const y of [0, 1, h - 2, h - 1]) {
+          if (y < 0 || y >= h) continue;
+          const i = (y * b + x) * 4;
+          achterlijst.push([d[i], d[i + 1], d[i + 2]]);
+        }
+      }
+      for (let y = 0; y < h; y++) {
+        for (const x of [0, 1, b - 2, b - 1]) {
+          if (x < 0 || x >= b) continue;
+          const i = (y * b + x) * 4;
+          achterlijst.push([d[i], d[i + 1], d[i + 2]]);
+        }
+      }
+
+      // Alles binnen het element, dus binnen de marge.
+      const binnenlijst: number[][] = [];
+      for (let y = marge; y < h - marge; y++) {
+        for (let x = marge; x < b - marge; x++) {
+          const i = (y * b + x) * 4;
+          binnenlijst.push([d[i], d[i + 1], d[i + 2]]);
+        }
+      }
+      return { achterlijst, binnenlijst, breedte: b, hoogte: h };
+    },
+    opname,
+    marge
+  );
+
+  const sleutel = (c: number[]) => `${c[0]},${c[1]},${c[2]}`;
+  /** De meest voorkomende kleur uit een lijst. */
+  const vaakste = (lijst: number[][]) => {
+    const telling = new Map<string, number>();
+    for (const c of lijst) telling.set(sleutel(c), (telling.get(sleutel(c)) ?? 0) + 1);
+    let beste = '';
+    let n = 0;
+    for (const [k, v] of Array.from(telling.entries())) if (v > n) [beste, n] = [k, v];
+    return { kleur: beste ? beste.split(',').map(Number) : [0, 0, 0], aantal: n };
+  };
+  const afstand = (a: number[], b: number[]) =>
+    Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+
+  const achtergrond = vaakste(ruw.achterlijst);
+  // Alleen beeldpunten die duidelijk van de achtergrond afwijken zijn de tekening. De grens
+  // van 60 (opgeteld over de drie kanalen) laat kartelranden en lichte ruis buiten beschouwing
+  // zonder een echte tekening te missen.
+  const tekeningPunten = ruw.binnenlijst.filter((c: number[]) => afstand(c, achtergrond.kleur) > 60);
+  if (!tekeningPunten.length) {
+    return {
+      clip,
+      opname,
+      gevonden: false as const,
+      achtergrond: achtergrond.kleur,
+      dekking: 0,
+    };
+  }
+  const tekening = vaakste(tekeningPunten);
+
+  // Tegen het ongunstigste stuk achtergrond, niet tegen het gemiddelde.
+  let slechtste = Infinity;
+  let slechtsteAchter = achtergrond.kleur;
+  for (const a of ruw.achterlijst) {
+    const v = verhoudingTussen(tekening.kleur, a);
+    if (v < slechtste) {
+      slechtste = v;
+      slechtsteAchter = a;
+    }
+  }
+
+  return {
+    clip,
+    opname,
+    gevonden: true as const,
+    tekening: tekening.kleur,
+    achtergrond: achtergrond.kleur,
+    tegenVaakste: verhoudingTussen(tekening.kleur, achtergrond.kleur),
+    tegenOngunstigste: slechtste,
+    ongunstigsteAchtergrond: slechtsteAchter,
+    dekking: Math.round((tekeningPunten.length / Math.max(1, ruw.binnenlijst.length)) * 100),
+  };
+}
+
+/** Helderheid volgens WCAG, en de verhouding tussen twee kleuren. */
+function helderheidVanRgb(rgb: number[]) {
+  const k = rgb.map((v) => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
+}
+
+function verhoudingTussen(a: number[], b: number[]) {
+  const l1 = helderheidVanRgb(a);
+  const l2 = helderheidVanRgb(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function naarHex(rgb: number[]) {
+  return (
+    '#' + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
+  );
+}
+
+/**
+ * Zoekt zelf op wat er op een pagina onder 1.4.11 valt, en meet het.
+ *
+ * Bestaat omdat een oordeel over 1.4.11 anders rust op wat er toevallig gemeten is. Op de
+ * homepage van heuvelrug.nl stonden vier metingen onder dat criterium; niemand had ze
+ * gekozen en niemand had vastgesteld dat het de juiste vier waren. Eén element meten toetst
+ * een vermoeden, maar een oordeel beweert iets over alles wat op de pagina staat.
+ *
+ * Drie soorten worden opgezocht, precies de gevallen uit Shift2_Regels_SC_1_4_11.md:
+ *
+ * - `pictogram`: een bedieningselement zonder zichtbare tekst. Het pictogram is dan de enige
+ *   aanduiding van de functie en moet 3:1 halen.
+ * - `veldrand`: een invoerveld, keuzelijst of tekstvak. De rand is nodig om te zien waar je
+ *   moet typen.
+ * - `focus`: de focusindicator, nodig om bij toetsenbordbediening te zien waar je bent.
+ *
+ * Wat er NIET in zit is even belangrijk: een knop mét tekst is te herkennen aan die tekst,
+ * opsommingstekens dragen geen informatie, en decoratieve vlakken evenmin. Die worden
+ * overgeslagen met de reden erbij, zodat te zien is dat ze bekeken zijn en waarom ze
+ * afvallen — een lege lijst en een lijst die niets bevat zien er anders hetzelfde uit.
+ *
+ * Zichtbare tekst wordt in de browser bepaald, niet uit de HTML. Een knop met een
+ * `sr-only`-tekst erin heeft in de code tekst en op het scherm niet, en telt hier dus als
+ * pictogram. Dat verschil is in opgehaalde HTML niet te zien.
+ */
+async function getNietTeksten(url: string, flags: Flags) {
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const max = parseInt(flags.max || '40', 10);
+  const marge = parseInt(flags.marge || '6', 10);
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      // De inventarisatie. Geen benoemde functies binnen page.evaluate: esbuild wikkelt die
+      // in een __name-aanroep die in de browser niet bestaat.
+      const kandidaten = await page.evaluate(() => {
+        const gevonden: any[] = [];
+        let onzichtbaar = 0;
+        const overgeslagen: any[] = [];
+        const bedienbaar = Array.from(
+          document.querySelectorAll(
+            'a, button, summary, [role="button"], [role="link"], input, select, textarea'
+          )
+        );
+
+        for (let i = 0; i < bedienbaar.length; i++) {
+          const el = bedienbaar[i] as HTMLElement;
+          const r = el.getBoundingClientRect();
+          const st = getComputedStyle(el);
+
+          // Onzichtbaar, buiten beeld of te klein om te meten telt niet mee -- maar wordt wel
+          // geteld. Vallen elementen stil weg, dan tellen de aantallen in de uitkomst niet op
+          // en is niet te zien of er iets is overgeslagen.
+          if (st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity) === 0) {
+            onzichtbaar++;
+            continue;
+          }
+          if (r.width < 4 || r.height < 4) {
+            onzichtbaar++;
+            continue;
+          }
+          if (r.right < 0 || r.bottom < 0 || r.left > document.documentElement.scrollWidth) {
+            onzichtbaar++;
+            continue;
+          }
+
+          // Een pad naar het element, zodat de meting terug te vinden en te herhalen is.
+          let pad = el.tagName.toLowerCase();
+          if (el.id) pad += `#${el.id}`;
+          else if (el.className && typeof el.className === 'string') {
+            const eerste = el.className.trim().split(/\s+/)[0];
+            if (eerste) pad += `.${eerste}`;
+          }
+
+          const naam =
+            el.getAttribute('aria-label') ||
+            el.getAttribute('title') ||
+            (el as HTMLInputElement).placeholder ||
+            '';
+
+          const tag = el.tagName.toLowerCase();
+          const soortInvoer = (el.getAttribute('type') || '').toLowerCase();
+
+          // Invoervelden: de rand is nodig om te zien waar je moet typen.
+          if (
+            tag === 'select' ||
+            tag === 'textarea' ||
+            (tag === 'input' &&
+              !['hidden', 'submit', 'button', 'reset', 'image'].includes(soortInvoer))
+          ) {
+            gevonden.push({
+              soort: 'veldrand',
+              pad,
+              naam,
+              vak: { x: r.left, y: r.top, w: r.width, h: r.height },
+              ronding: Math.max(
+                parseFloat(st.borderTopLeftRadius) || 0,
+                parseFloat(st.borderTopRightRadius) || 0,
+                parseFloat(st.borderBottomLeftRadius) || 0,
+                parseFloat(st.borderBottomRightRadius) || 0
+              ),
+            });
+            continue;
+          }
+
+          // Zichtbare tekst bepalen. Niet via textContent: een sr-only-tekst staat wel in de
+          // code maar niet op het scherm, en juist dat onderscheid is hier de hele vraag.
+          let heeftZichtbareTekst = false;
+          const loper = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          let knoop: Node | null;
+          while ((knoop = loper.nextNode())) {
+            if (!(knoop.textContent || '').trim()) continue;
+            const ouder = knoop.parentElement;
+            if (!ouder) continue;
+            const os = getComputedStyle(ouder);
+            if (os.display === 'none' || os.visibility === 'hidden') continue;
+            const orect = ouder.getBoundingClientRect();
+            // Het klassieke wegstop-patroon: een vak van een beeldpunt, ver buiten beeld,
+            // of weggeknipt.
+            if (orect.width <= 1 || orect.height <= 1) continue;
+            if (orect.right < 0 || orect.bottom < 0) continue;
+            if (os.clipPath && os.clipPath !== 'none' && os.position === 'absolute') continue;
+            heeftZichtbareTekst = true;
+            break;
+          }
+
+          const heeftPictogram = !!el.querySelector('svg, img, i, [role="img"]');
+
+          if (heeftZichtbareTekst) {
+            overgeslagen.push({ pad, naam, reden: 'heeft zichtbare tekst; die wijst de functie aan' });
+            continue;
+          }
+          if (!heeftPictogram) {
+            overgeslagen.push({ pad, naam, reden: 'geen tekst en geen pictogram; niets om te meten' });
+            continue;
+          }
+          // Logo's en merknamen zijn uitgezonderd in 1.4.11.
+          //
+          // Kijk daarvoor ook in de afbeelding zélf: het logo van heuvelrug.nl zit in een
+          // link `a.active` met als titel "Ga naar de homepage" — daar staat nergens "logo"
+          // in, terwijl het bestand heuvelruglogo.jpg heet. Zonder die tweede blik werd het
+          // logo gemeten als was het een gewoon pictogram.
+          const afbeelding = el.querySelector('img, picture source');
+          const afbeeldingTekst = afbeelding
+            ? [
+                afbeelding.getAttribute('src') || '',
+                afbeelding.getAttribute('srcset') || '',
+                afbeelding.getAttribute('alt') || '',
+                (afbeelding as HTMLElement).className || '',
+              ].join(' ')
+            : '';
+          const isLogo = /logo|brand|merk|beeldmerk/i.test(pad + ' ' + naam + ' ' + afbeeldingTekst);
+          if (isLogo) {
+            overgeslagen.push({ pad, naam, reden: 'logo of merknaam; uitgezonderd in 1.4.11' });
+            continue;
+          }
+
+          gevonden.push({
+            soort: 'pictogram',
+            pad,
+            naam,
+            vak: { x: r.left, y: r.top, w: r.width, h: r.height },
+            ronding: Math.max(
+              parseFloat(st.borderTopLeftRadius) || 0,
+              parseFloat(st.borderTopRightRadius) || 0,
+              parseFloat(st.borderBottomLeftRadius) || 0,
+              parseFloat(st.borderBottomRightRadius) || 0
+            ),
+          });
+        }
+        return { gevonden, overgeslagen, onzichtbaar, bekeken: bedienbaar.length };
+      });
+
+      // Meten, één voor één. Bij meer kandidaten dan `max` wordt afgekapt, en dat staat
+      // in de uitkomst: een stille afkapping leest als "alles nagelopen".
+      const teMeten = kandidaten.gevonden.slice(0, max);
+      const uitkomsten: any[] = [];
+      for (const k of teMeten) {
+        try {
+          // Twee verschillende vragen, dus twee verschillende metingen.
+          //
+          // Bij een invoerveld gaat het om de begrenzing: waar houdt het veld op. Bij een
+          // pictogram om de tekening zelf — dat linkvak eromheen heeft vaak geen rand en geen
+          // vulling, en een omtrekmeting geeft daar achtergrond tegen achtergrond.
+          let slechtste: number;
+          let bijzonderheden: any;
+          let ruweOpname: string;
+
+          if (k.soort === 'pictogram') {
+            const p = await meetPictogram(page, k.vak, marge);
+            ruweOpname = p.opname;
+            if (!p.gevonden) {
+              uitkomsten.push({
+                soort: k.soort,
+                element: k.pad,
+                naam: k.naam || null,
+                fout:
+                  'Geen tekening gevonden die van de achtergrond afwijkt. Mogelijk laadt het pictogram niet, of staat het buiten het gemeten vak.',
+              });
+              continue;
+            }
+            slechtste = Math.round(p.tegenOngunstigste * 100) / 100;
+            bijzonderheden = {
+              tekening: naarHex(p.tekening),
+              achtergrond: naarHex(p.achtergrond),
+              tegen_de_gewone_achtergrond: `${Math.round(p.tegenVaakste * 100) / 100}:1`,
+              tegen_het_ongunstigste_punt: `${slechtste}:1 (${naarHex(p.ongunstigsteAchtergrond)})`,
+              dekking: `${p.dekking}% van het vak`,
+            };
+          } else {
+            const omtrek = await meetOmtrek(page, { ...k.vak, ronding: k.ronding }, marge);
+            ruweOpname = omtrek.opname;
+            slechtste = Math.round(omtrek.meting.verhouding * 100) / 100;
+            bijzonderheden = {
+              per_zijde: Object.fromEntries(
+                Object.entries(omtrek.perZijde).map(([z, v]: [string, any]) => [
+                  z,
+                  Math.round(v.verhouding * 100) / 100,
+                ])
+              ),
+            };
+          }
+
+          let uitsnede: string | null = null;
+          if (slechtste < 3) {
+            // Alleen bij een tekort een uitsnede: bij veertig elementen zou een opname per
+            // stuk de map vullen met beeld waar niemand naar kijkt.
+            try {
+              const dir = ensureOutputDir();
+              uitsnede = path.join(
+                dir,
+                `${timestamp()}-${slugifyUrl(page.url())}-${k.soort}-${uitkomsten.length}.png`
+              );
+              fs.writeFileSync(uitsnede, Buffer.from(ruweOpname, 'base64'));
+            } catch {
+              uitsnede = null;
+            }
+          }
+          uitkomsten.push({
+            soort: k.soort,
+            element: k.pad,
+            naam: k.naam || null,
+            slechtste: `${slechtste}:1`,
+            ...bijzonderheden,
+            voldoet: slechtste >= 3,
+            uitsnede,
+          });
+        } catch (err) {
+          uitkomsten.push({
+            soort: k.soort,
+            element: k.pad,
+            naam: k.naam || null,
+            fout: String(err).slice(0, 160),
+          });
+        }
+      }
+
+      const tekort = uitkomsten.filter((u) => u.voldoet === false);
+      const mislukt = uitkomsten.filter((u) => u.fout);
+
+      const opname = await legOpnameVast(page, page.url(), 'nietteksten');
+
+      legVast({
+        commando: 'get-nietteksten',
+        argumenten: { ...(klik ? { klik } : {}), ...(flags.max ? { max: String(max) } : {}) },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        schermafdruk: opname,
+        criteria: ['1.4.11'],
+        uitkomst: {
+          bedienbareElementenBekeken: kandidaten.bekeken,
+          nietZichtbaar: kandidaten.onzichtbaar,
+          onderDitCriterium: kandidaten.gevonden.length,
+          gemeten: uitkomsten.length,
+          onvoldoende: tekort.length,
+          nietGelukt: mislukt.length,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        omgeleid,
+        bedienbare_elementen_bekeken: kandidaten.bekeken,
+        niet_zichtbaar_of_te_klein: kandidaten.onzichtbaar,
+        valt_onder_1_4_11: kandidaten.gevonden.length,
+        gemeten: uitkomsten.length,
+        niet_gemeten: kandidaten.gevonden.length - uitkomsten.length,
+        onvoldoende: tekort.length,
+        metingen: uitkomsten,
+        overgeslagen_met_reden: kandidaten.overgeslagen,
+        schermafdruk: opname,
+        let_op:
+          'Dit zoekt bedieningselementen zonder zichtbare tekst en de randen van invoervelden. Focusindicatoren zitten er NIET in; die meet je met get-focus. Loop de overgeslagen lijst na: staat daar iets tussen dat wel betekenis draagt, dan meet je dat alsnog met get-pixelcontrast.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+/**
+ * Meet de omtrek van een element op de werkelijke beeldpunten.
+ *
+ * Losgemaakt uit get-pixelcontrast omdat de sweep over alle niet-tekstuele onderdelen
+ * (get-nietteksten) hetzelfde meetwerk per element nodig heeft. Één plek waar bepaald
+ * wordt wat een rand is, hoe diep het bandje gaat en welke hoeken buiten beschouwing
+ * blijven — anders drijven twee metingen van hetzelfde uit elkaar.
+ */
+async function meetOmtrek(
+  page: any,
+  vak: { x: number; y: number; w: number; h: number; ronding: number },
+  marge: number
+) {
+    // Het gebied plus een marge, zodat er aan beide zijden van de rand beeld is.
+    const clip = {
+      x: Math.max(0, Math.floor(vak.x - marge)),
+      y: Math.max(0, Math.floor(vak.y - marge)),
+      width: Math.ceil(vak.w + marge * 2),
+      height: Math.ceil(vak.h + marge * 2),
+    };
+    const opname = (await page.screenshot({ clip, encoding: 'base64' })) as string;
+
+    // De browser leest alleen de beeldpunten uit; het rekenen gebeurt in Node.
+    //
+    // Dat is niet uit smaak. esbuild wikkelt elke benoemde functie in een `__name`-aanroep
+    // die binnen page.evaluate niet bestaat, dus hulpfuncties zijn hier onmogelijk. Deze
+    // lus staat daarom in losse indexrekening, zonder één functiedefinitie.
+    // De hoeken blijven buiten de meting.
+    //
+    // Bij een afgeronde hoek kijkt een rechte omtrek langs het element heen: binnen én
+    // buiten wijzen dan naar de achtergrond, en er komt 1:1 uit op een element dat verder
+    // prima contrasteert. De ronding staat in de opmaak, dus die overslaan is geen
+    // aanname maar rekenen met wat de pagina zelf opgeeft.
+    const hoek = Math.min(
+      Math.ceil(vak.ronding) + 2,
+      Math.floor(Math.min(vak.w, vak.h) * 0.3)
+    );
+
+    const banden = await page.evaluate(
+      async (base64: string, marge: number, hoek: number) => {
+        const beeld = new Image();
+        await new Promise<void>((klaar, mis) => {
+          beeld.onload = () => klaar();
+          beeld.onerror = () => mis(new Error('opname niet te laden'));
+          beeld.src = `data:image/png;base64,${base64}`;
+        });
+        const doek = document.createElement('canvas');
+        doek.width = beeld.width;
+        doek.height = beeld.height;
+        const ctx = doek.getContext('2d')!;
+        ctx.drawImage(beeld, 0, 0);
+        const d = ctx.getImageData(0, 0, doek.width, doek.height).data;
+        const b = doek.width;
+        const h = doek.height;
+        // Een bandje aftasten, geen los punt.
+        //
+        // Een besturingselement is te onderscheiden door zijn randlijn óf door zijn
+        // vulling, dus beide moeten meetellen: keur je op de randpixel alleen, dan valt
+        // een element af op de ene plek waar de achtergrond net zo licht is als een grijs
+        // lijntje, terwijl het witte vlak erbinnen het veld daar prima aanwijst.
+        //
+        // En het moet een band zijn, geen twee vaste punten. Een rand van één beeldpunt
+        // ligt bij een element dat op een halve beeldpunt begint niet waar je hem
+        // verwacht, en dan mis je hem volledig. Dat gebeurde bij de onderrand van de
+        // zoekbalk in hoogcontrast: de meting las daar wit tegen lichtgrijs en meldde
+        // 1,86:1, terwijl op de uitsnede een zwarte lijn staat die het gewoon goed doet.
+        //
+        // Vandaar: de eerste vijf beeldpunten binnen de rand, en daarvan telt de beste.
+        const bandDiepte = 5;
+        const buitenrand = Math.max(0, marge - 3);
+        const paren: {
+          zijde: string;
+          band: number[][];
+          buiten: number[];
+          /** Plaats in de opname, zodat de slechtste plek terug te vinden is. */
+          px: number;
+          py: number;
+        }[] = [];
+
+        // Elke twee beeldpunten; elke pixel is overdaad.
+        for (let x = marge + hoek; x < b - marge - hoek; x += 2) {
+          const bovenBand: number[][] = [];
+          const onderBand: number[][] = [];
+          for (let k = 0; k < bandDiepte; k++) {
+            const bo = ((marge + k) * b + x) * 4;
+            bovenBand.push([d[bo], d[bo + 1], d[bo + 2]]);
+            const on = ((h - 1 - marge - k) * b + x) * 4;
+            onderBand.push([d[on], d[on + 1], d[on + 2]]);
+          }
+          let j = (buitenrand * b + x) * 4;
+          paren.push({
+            zijde: 'boven',
+            band: bovenBand,
+            buiten: [d[j], d[j + 1], d[j + 2]],
+            px: x,
+            py: marge,
+          });
+          j = ((h - 1 - buitenrand) * b + x) * 4;
+          paren.push({
+            zijde: 'onder',
+            band: onderBand,
+            buiten: [d[j], d[j + 1], d[j + 2]],
+            px: x,
+            py: h - 1 - marge,
+          });
+        }
+        for (let y = marge + hoek; y < h - marge - hoek; y += 2) {
+          const linksBand: number[][] = [];
+          const rechtsBand: number[][] = [];
+          for (let k = 0; k < bandDiepte; k++) {
+            const li = (y * b + marge + k) * 4;
+            linksBand.push([d[li], d[li + 1], d[li + 2]]);
+            const re = (y * b + (b - 1 - marge - k)) * 4;
+            rechtsBand.push([d[re], d[re + 1], d[re + 2]]);
+          }
+          let j = (y * b + buitenrand) * 4;
+          paren.push({
+            zijde: 'links',
+            band: linksBand,
+            buiten: [d[j], d[j + 1], d[j + 2]],
+            px: marge,
+            py: y,
+          });
+          j = (y * b + (b - 1 - buitenrand)) * 4;
+          paren.push({
+            zijde: 'rechts',
+            band: rechtsBand,
+            buiten: [d[j], d[j + 1], d[j + 2]],
+            px: b - 1 - marge,
+            py: y,
+          });
+        }
+        // Een dwarsdoorsnede door het midden van de bovenrand, van buiten naar binnen.
+        // Hiermee is te controleren of de gemeten punten werkelijk aan weerszijden van
+        // de rand liggen; zonder die controle meet je twee keer de achtergrond en komt
+        // er een verhouding van 1:1 uit die niets betekent.
+        const profiel: string[] = [];
+        const midden = Math.floor(b / 2);
+        for (let y = 0; y < Math.min(h, marge * 2 + 4); y++) {
+          const i = (y * b + midden) * 4;
+          profiel.push(
+            '#' +
+              [d[i], d[i + 1], d[i + 2]]
+                .map((v) => v.toString(16).padStart(2, '0'))
+                .join('')
+          );
+        }
+        return { paren, opnameBreedte: b, opnameHoogte: h, profiel, dpr: window.devicePixelRatio };
+      },
+      opname,
+      marge,
+      hoek
+    );
+
+    const helder = (rgb: number[]) => {
+      const k = rgb.map((v) => {
+        const x = v / 255;
+        return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
+    };
+
+    const tegen = (a: number[], b: number[]) => {
+      const l1 = helder(a);
+      const l2 = helder(b);
+      return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    };
+
+    /** De beste verhouding binnen het bandje, en op welke diepte die zat. */
+    const besteInBand = (band: number[][], buiten: number[]) => {
+      let beste = 0;
+      let diepte = 0;
+      for (let k = 0; k < band.length; k++) {
+        const v = tegen(band[k], buiten);
+        if (v > beste) {
+          beste = v;
+          diepte = k;
+        }
+      }
+      return { verhouding: beste, diepte, kleur: band[diepte] ?? [0, 0, 0] };
+    };
+
+    let meting = {
+      verhouding: Infinity,
+      diepte: 0,
+      binnen: [0, 0, 0],
+      buiten: [0, 0, 0],
+      zijde: '',
+      px: 0,
+      py: 0,
+    };
+    for (const p of banden.paren) {
+      const b = besteInBand(p.band, p.buiten);
+      if (b.verhouding < meting.verhouding) {
+        meting = {
+          verhouding: b.verhouding,
+          diepte: b.diepte,
+          binnen: b.kleur,
+          buiten: p.buiten,
+          zijde: p.zijde,
+          px: p.px,
+          py: p.py,
+        };
+      }
+    }
+    if (!banden.paren.length) throw new Error('Geen randpunten gevonden om te meten');
+
+    // Ook per zijde, want het totaal zegt niet welke begrenzing tekortkomt. Een veld dat
+    // aan drie zijden ruim voldoet en aan één zijde wegvalt tegen een foto is een ander
+    // gesprek dan een veld dat overal wegvalt.
+    const perZijde: Record<
+      string,
+      { verhouding: number; diepte: number; px: number; py: number; buiten: number[]; binnen: number[] }
+    > = {};
+    for (const p of banden.paren) {
+      const b = besteInBand(p.band, p.buiten);
+      const huidig = perZijde[p.zijde];
+      if (!huidig || b.verhouding < huidig.verhouding) {
+        perZijde[p.zijde] = {
+          verhouding: b.verhouding,
+          diepte: b.diepte,
+          px: p.px,
+          py: p.py,
+          buiten: p.buiten,
+          binnen: b.kleur,
+        };
+      }
+    }
+
+    const hex = (rgb: number[]) =>
+      '#' + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+    const verhouding = Math.round(meting.verhouding * 100) / 100;
+
+  return { clip, opname, banden, meting, perZijde, verhouding, hoek, hex, besteInBand, tegen };
+}
+
+/**
  * Contrast op de werkelijke beeldpunten, langs de rand van een element.
  *
  * Voor de gevallen waar stijlwaarden niets opleveren: een wit zoekveld op een foto, een
@@ -2097,225 +2816,8 @@ async function getPixelContrast(url: string, flags: Flags) {
       if (!vak) throw new Error(`Element niet gevonden: ${doel}`);
       if (vak.w < 2 || vak.h < 2) throw new Error('Element is te klein om een rand te meten');
 
-      // Het gebied plus een marge, zodat er aan beide zijden van de rand beeld is.
-      const clip = {
-        x: Math.max(0, Math.floor(vak.x - marge)),
-        y: Math.max(0, Math.floor(vak.y - marge)),
-        width: Math.ceil(vak.w + marge * 2),
-        height: Math.ceil(vak.h + marge * 2),
-      };
-      const opname = (await page.screenshot({ clip, encoding: 'base64' })) as string;
-
-      // De browser leest alleen de beeldpunten uit; het rekenen gebeurt in Node.
-      //
-      // Dat is niet uit smaak. esbuild wikkelt elke benoemde functie in een `__name`-aanroep
-      // die binnen page.evaluate niet bestaat, dus hulpfuncties zijn hier onmogelijk. Deze
-      // lus staat daarom in losse indexrekening, zonder één functiedefinitie.
-      // De hoeken blijven buiten de meting.
-      //
-      // Bij een afgeronde hoek kijkt een rechte omtrek langs het element heen: binnen én
-      // buiten wijzen dan naar de achtergrond, en er komt 1:1 uit op een element dat verder
-      // prima contrasteert. De ronding staat in de opmaak, dus die overslaan is geen
-      // aanname maar rekenen met wat de pagina zelf opgeeft.
-      const hoek = Math.min(
-        Math.ceil(vak.ronding) + 2,
-        Math.floor(Math.min(vak.w, vak.h) * 0.3)
-      );
-
-      const banden = await page.evaluate(
-        async (base64: string, marge: number, hoek: number) => {
-          const beeld = new Image();
-          await new Promise<void>((klaar, mis) => {
-            beeld.onload = () => klaar();
-            beeld.onerror = () => mis(new Error('opname niet te laden'));
-            beeld.src = `data:image/png;base64,${base64}`;
-          });
-          const doek = document.createElement('canvas');
-          doek.width = beeld.width;
-          doek.height = beeld.height;
-          const ctx = doek.getContext('2d')!;
-          ctx.drawImage(beeld, 0, 0);
-          const d = ctx.getImageData(0, 0, doek.width, doek.height).data;
-          const b = doek.width;
-          const h = doek.height;
-          // Een bandje aftasten, geen los punt.
-          //
-          // Een besturingselement is te onderscheiden door zijn randlijn óf door zijn
-          // vulling, dus beide moeten meetellen: keur je op de randpixel alleen, dan valt
-          // een element af op de ene plek waar de achtergrond net zo licht is als een grijs
-          // lijntje, terwijl het witte vlak erbinnen het veld daar prima aanwijst.
-          //
-          // En het moet een band zijn, geen twee vaste punten. Een rand van één beeldpunt
-          // ligt bij een element dat op een halve beeldpunt begint niet waar je hem
-          // verwacht, en dan mis je hem volledig. Dat gebeurde bij de onderrand van de
-          // zoekbalk in hoogcontrast: de meting las daar wit tegen lichtgrijs en meldde
-          // 1,86:1, terwijl op de uitsnede een zwarte lijn staat die het gewoon goed doet.
-          //
-          // Vandaar: de eerste vijf beeldpunten binnen de rand, en daarvan telt de beste.
-          const bandDiepte = 5;
-          const buitenrand = Math.max(0, marge - 3);
-          const paren: {
-            zijde: string;
-            band: number[][];
-            buiten: number[];
-            /** Plaats in de opname, zodat de slechtste plek terug te vinden is. */
-            px: number;
-            py: number;
-          }[] = [];
-
-          // Elke twee beeldpunten; elke pixel is overdaad.
-          for (let x = marge + hoek; x < b - marge - hoek; x += 2) {
-            const bovenBand: number[][] = [];
-            const onderBand: number[][] = [];
-            for (let k = 0; k < bandDiepte; k++) {
-              const bo = ((marge + k) * b + x) * 4;
-              bovenBand.push([d[bo], d[bo + 1], d[bo + 2]]);
-              const on = ((h - 1 - marge - k) * b + x) * 4;
-              onderBand.push([d[on], d[on + 1], d[on + 2]]);
-            }
-            let j = (buitenrand * b + x) * 4;
-            paren.push({
-              zijde: 'boven',
-              band: bovenBand,
-              buiten: [d[j], d[j + 1], d[j + 2]],
-              px: x,
-              py: marge,
-            });
-            j = ((h - 1 - buitenrand) * b + x) * 4;
-            paren.push({
-              zijde: 'onder',
-              band: onderBand,
-              buiten: [d[j], d[j + 1], d[j + 2]],
-              px: x,
-              py: h - 1 - marge,
-            });
-          }
-          for (let y = marge + hoek; y < h - marge - hoek; y += 2) {
-            const linksBand: number[][] = [];
-            const rechtsBand: number[][] = [];
-            for (let k = 0; k < bandDiepte; k++) {
-              const li = (y * b + marge + k) * 4;
-              linksBand.push([d[li], d[li + 1], d[li + 2]]);
-              const re = (y * b + (b - 1 - marge - k)) * 4;
-              rechtsBand.push([d[re], d[re + 1], d[re + 2]]);
-            }
-            let j = (y * b + buitenrand) * 4;
-            paren.push({
-              zijde: 'links',
-              band: linksBand,
-              buiten: [d[j], d[j + 1], d[j + 2]],
-              px: marge,
-              py: y,
-            });
-            j = (y * b + (b - 1 - buitenrand)) * 4;
-            paren.push({
-              zijde: 'rechts',
-              band: rechtsBand,
-              buiten: [d[j], d[j + 1], d[j + 2]],
-              px: b - 1 - marge,
-              py: y,
-            });
-          }
-          // Een dwarsdoorsnede door het midden van de bovenrand, van buiten naar binnen.
-          // Hiermee is te controleren of de gemeten punten werkelijk aan weerszijden van
-          // de rand liggen; zonder die controle meet je twee keer de achtergrond en komt
-          // er een verhouding van 1:1 uit die niets betekent.
-          const profiel: string[] = [];
-          const midden = Math.floor(b / 2);
-          for (let y = 0; y < Math.min(h, marge * 2 + 4); y++) {
-            const i = (y * b + midden) * 4;
-            profiel.push(
-              '#' +
-                [d[i], d[i + 1], d[i + 2]]
-                  .map((v) => v.toString(16).padStart(2, '0'))
-                  .join('')
-            );
-          }
-          return { paren, opnameBreedte: b, opnameHoogte: h, profiel, dpr: window.devicePixelRatio };
-        },
-        opname,
-        marge,
-        hoek
-      );
-
-      const helder = (rgb: number[]) => {
-        const k = rgb.map((v) => {
-          const x = v / 255;
-          return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
-        });
-        return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
-      };
-
-      const tegen = (a: number[], b: number[]) => {
-        const l1 = helder(a);
-        const l2 = helder(b);
-        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-      };
-
-      /** De beste verhouding binnen het bandje, en op welke diepte die zat. */
-      const besteInBand = (band: number[][], buiten: number[]) => {
-        let beste = 0;
-        let diepte = 0;
-        for (let k = 0; k < band.length; k++) {
-          const v = tegen(band[k], buiten);
-          if (v > beste) {
-            beste = v;
-            diepte = k;
-          }
-        }
-        return { verhouding: beste, diepte, kleur: band[diepte] ?? [0, 0, 0] };
-      };
-
-      let meting = {
-        verhouding: Infinity,
-        diepte: 0,
-        binnen: [0, 0, 0],
-        buiten: [0, 0, 0],
-        zijde: '',
-        px: 0,
-        py: 0,
-      };
-      for (const p of banden.paren) {
-        const b = besteInBand(p.band, p.buiten);
-        if (b.verhouding < meting.verhouding) {
-          meting = {
-            verhouding: b.verhouding,
-            diepte: b.diepte,
-            binnen: b.kleur,
-            buiten: p.buiten,
-            zijde: p.zijde,
-            px: p.px,
-            py: p.py,
-          };
-        }
-      }
-      if (!banden.paren.length) throw new Error('Geen randpunten gevonden om te meten');
-
-      // Ook per zijde, want het totaal zegt niet welke begrenzing tekortkomt. Een veld dat
-      // aan drie zijden ruim voldoet en aan één zijde wegvalt tegen een foto is een ander
-      // gesprek dan een veld dat overal wegvalt.
-      const perZijde: Record<
-        string,
-        { verhouding: number; diepte: number; px: number; py: number; buiten: number[]; binnen: number[] }
-      > = {};
-      for (const p of banden.paren) {
-        const b = besteInBand(p.band, p.buiten);
-        const huidig = perZijde[p.zijde];
-        if (!huidig || b.verhouding < huidig.verhouding) {
-          perZijde[p.zijde] = {
-            verhouding: b.verhouding,
-            diepte: b.diepte,
-            px: p.px,
-            py: p.py,
-            buiten: p.buiten,
-            binnen: b.kleur,
-          };
-        }
-      }
-
-      const hex = (rgb: number[]) =>
-        '#' + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
-      const verhouding = Math.round(meting.verhouding * 100) / 100;
+      const omtrek = await meetOmtrek(page, vak, marge);
+      const { clip, opname, banden, meting, perZijde, verhouding, hoek, hex } = omtrek;
 
       const dir = ensureOutputDir();
       const bestand = path.join(
@@ -2492,6 +2994,8 @@ async function main() {
       return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-reflow':
       return getReflow(requirePositional(positional, 0, 'url'), flags);
+    case 'get-nietteksten':
+      return getNietTeksten(requirePositional(positional, 0, 'url'), flags);
     case 'get-pixelcontrast':
       return getPixelContrast(requirePositional(positional, 0, 'url'), flags);
     case 'capture-sample-evidence':

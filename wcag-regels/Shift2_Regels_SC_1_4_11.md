@@ -34,6 +34,39 @@ hetzelfde icoon op een vaste donkerblauwe achtergrond `#003C49` en komt op 9,65:
 De volledige testvolgorde (eerst de knop in de normale weergave, daarna de pagina in de
 hoogcontrastweergave) staat in `Shift2_Regels_SC_1_4_3.md`.
 
+## Eerst opzoeken WAT eronder valt, dan pas meten
+
+Een oordeel over 1.4.11 is een uitspraak over alles wat op de pagina staat. Vier losse
+metingen zijn dat niet, ook niet als ze alle vier voldoen. Begin daarom met de inventarisatie:
+
+```
+npm run cli -- get-nietteksten <url> [--klik="tekst:Contrast verhogen"]
+```
+
+Die loopt alle bedienbare elementen af, bepaalt in de browser welke eronder vallen en meet
+die. Belangrijk is de lijst **overgeslagen met reden**: daar staat per element waarom het
+afvalt — zichtbare tekst, logo, niets te meten. Loop die na. Staat er iets tussen dat wel
+betekenis draagt, meet dat dan alsnog met `get-pixelcontrast`. En de aantallen tellen op:
+bekeken = onzichtbaar + overgeslagen + eronder. Doen ze dat niet, dan is er iets stil
+weggevallen.
+
+Zichtbare tekst wordt in de browser bepaald, niet uit de HTML. Een knop met een `sr-only`-tekst
+heeft in de code tekst en op het scherm niet, en telt dus als pictogram. Dat verschil is in
+opgehaalde HTML niet te zien.
+
+**Een pictogram meet je anders dan een veldrand.** Een pictogramknop is meestal een doorzichtig
+linkvak om een svg: dat vak heeft geen rand en geen vulling, dus een omtrekmeting geeft
+achtergrond tegen achtergrond en levert 1:1 op alle vier de zijden. Bij de eerste sweep over
+heuvelrug.nl leverde dat acht afkeuringen op die geen van alle bestonden. Voor een pictogram
+telt de tekening tegen wat eromheen ligt; voor een veldrand de begrenzing. `get-nietteksten`
+kiest zelf welke van de twee.
+
+Aanleiding (2026-08-17): Frits vroeg waarom er vijf bepaalde elementen onder 1.4.11 stonden.
+Antwoord: niemand had ze gekozen. Elke `get-contrast`-aanroep werd aan 1.4.3 én 1.4.11
+gehangen, ook als er alleen tekstkleuren waren gemeten. Op de homepage: 43 bedienbare elementen
+bekeken, 1 onzichtbaar, 35 overgeslagen met reden (30 met zichtbare tekst, 1 logo, 1 zonder
+pictogram), 7 eronder, waarvan 1 onder de eis.
+
 ## Een verhouding, geen kwalificatie — en die meet je op de beeldpunten
 
 "Ruim boven 3:1" is geen onderbouwing. Er hoort een gemeten verhouding te staan, met de twee

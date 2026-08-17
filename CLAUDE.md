@@ -44,6 +44,7 @@ npm run cli -- search-quick-findings <keyword>     # reuse finding templates
 npm run cli -- get-html <url> [--text] [--full]
 npm run cli -- get-screenshot <url> [--full-page] [--selector=css]
 npm run cli -- get-leesvolgorde <url> [--zonder-css]   # voor 1.3.2: code-volgorde vs. kijkvolgorde
+npm run cli -- get-nietteksten <url> [--klik=...]      # voor 1.4.11: zoekt zelf op wat eronder valt en meet het
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write
@@ -93,6 +94,14 @@ visueel bóven of links van zijn voorganger staat. Filtert zelf de bekende valse
 weg: elementen buiten het scherm, kolommen naast elkaar, en links die over twee regels
 afbreken. Een omkering is geen bevinding zolang het verplaatste element geen betekenis
 draagt — een afbeelding met een leeg tekstalternatief telt niet mee.
+
+**Voor 1.4.11 begin je met `get-nietteksten`, niet met losse metingen.** Een oordeel over dat
+criterium is een uitspraak over alles op de pagina; vier losse metingen zijn dat niet, ook niet
+als ze alle vier voldoen. Dit commando loopt alle bedienbare elementen af, bepaalt in de browser
+welke eronder vallen — een knop met alleen `sr-only`-tekst telt als pictogram, en dat zie je in
+opgehaalde HTML niet — en meet die. Lees de lijst `overgeslagen_met_reden` na, en controleer dat
+de aantallen optellen. Een pictogram wordt anders gemeten dan een veldrand: het doorzichtige
+linkvak om een svg heeft geen rand, dus daar telt de tekening tegen zijn achtergrond.
 
 **Staat een element op een foto of een verloop, dan zeggen stijlwaarden niets.** `getComputedStyle`
 geeft daar `rgba(0,0,0,0)`, en rekenen met die waarden levert ten onrechte "voldoet" op.
