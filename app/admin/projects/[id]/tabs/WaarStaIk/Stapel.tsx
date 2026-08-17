@@ -466,13 +466,22 @@ export default function Stapel({
      * van een JSONB-waarde niet. De opgeslagen meting komt er in een andere volgorde uit
      * dan hij erin ging, en zonder sorteren meldt de knop dan een afwijking terwijl er
      * niets is veranderd — bij elke klik.
+     *
+     * `alleenVergelijkbaar` laat de velden weg die vanzelf veranderen. De omvang van een
+     * opgehaalde pagina of een schermafdruk schuift bij elk nieuw nieuwsbericht en bij
+     * elke gewijzigde datum. Die meldden dan een afwijking die niets zegt over
+     * toegankelijkheid, en een knop die bij elke redactionele wijziging alarm slaat kijkt
+     * niemand meer na. Ze blijven wel zichtbaar op de kaart; ze bepalen alleen het
+     * oordeel niet.
      */
-    const samenvatting = (u: unknown) =>
+    const VLUCHTIG = new Set(['bytes']);
+    const samenvatting = (u: unknown, alleenVergelijkbaar = false) =>
       u && typeof u === 'object'
         ? Object.entries(u as Record<string, unknown>)
+            .filter(([k]) => !(alleenVergelijkbaar && VLUCHTIG.has(k)))
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([k, v]) => `${k}: ${v}`)
-            .join(', ')
+            .join(', ') || '(niets vergelijkbaars)'
         : '(geen)';
     try {
       const res = await fetch('/api/meting/opnieuw', {
@@ -492,11 +501,14 @@ export default function Stapel({
       // antwoord. Die weergave maakt waarden op — het logboek zegt paginabreedte 320,
       // de weergave "320px" — en dan meldt de knop bij elke klik een afwijking terwijl
       // er niets veranderd is. Zo'n knop is erger dan geen knop.
+      // Tonen doen we alles, vergelijken alleen de velden die iets betekenen.
       const toenTekst = samenvatting(m.uitkomst);
       const nuTekst = samenvatting(j.logregel?.uitkomst);
+      const gelijk =
+        samenvatting(m.uitkomst, true) === samenvatting(j.logregel?.uitkomst, true);
       setHermetingen((h) => ({
         ...h,
-        [sleutel]: { bezig: false, toen: toenTekst, nu: nuTekst, gelijk: toenTekst === nuTekst },
+        [sleutel]: { bezig: false, toen: toenTekst, nu: nuTekst, gelijk },
       }));
     } catch (e: any) {
       setHermetingen((h) => ({ ...h, [sleutel]: { bezig: false, fout: e.message } }));
