@@ -2538,6 +2538,52 @@ async function getNietTeksten(url: string, flags: Flags) {
 
       const opname = await legOpnameVast(page, page.url(), 'nietteksten');
 
+      // Het volledige overzicht als bestand erbij.
+      //
+      // In het logboek passen alleen tellingen, en daarmee bereikt de uitkomst per element
+      // de kaart niet: daar stond wel "gemeten: 7" maar nergens wat er per element uitkwam,
+      // en dus ook niet dat er in twee toestanden is gemeten. Dit bestand hangt als artefact
+      // aan de meting, net als de opgehaalde tekst bij get-html.
+      let overzicht: string | null = null;
+      try {
+        const dir = ensureOutputDir();
+        overzicht = path.join(
+          dir,
+          `${timestamp()}-${slugifyUrl(page.url())}-nietteksten.txt`
+        );
+        const regels = [
+          `Niet-tekstuele onderdelen op ${page.url()}`,
+          `Weergave: ${klik ? `na klikken op ${klik}` : 'standaardweergave'}`,
+          `Bekeken: ${kandidaten.bekeken} · niet zichtbaar: ${kandidaten.onzichtbaar} · overgeslagen: ${kandidaten.overgeslagen.length} · valt eronder: ${kandidaten.gevonden.length}`,
+          '',
+          'GEMETEN (rust / met de muis erop, eis 3:1)',
+          ...uitkomsten.map((u) =>
+            u.fout
+              ? `  ${u.soort} ${u.naam || u.element} — niet gelukt: ${u.fout}`
+              : `  ${u.voldoet ? 'ok    ' : 'TEKORT'} ${u.soort} ${u.naam || u.element} — rust ${
+                  u.rust?.verhouding ?? '?'
+                }, zweef ${
+                  typeof u.zweef === 'string' ? u.zweef : (u.zweef?.verhouding ?? '?')
+                }`
+          ),
+          '',
+          'OVERGESLAGEN, MET REDEN',
+          ...kandidaten.overgeslagen.map(
+            (o: any) => `  ${o.naam || o.pad} — ${o.reden}`
+          ),
+        ];
+        fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+      } catch {
+        overzicht = null;
+      }
+
+      const strengerOpZweven = uitkomsten.filter(
+        (u) => u.zweef && typeof u.zweef !== 'string' && u.zweef.verhouding !== u.rust?.verhouding
+      ).length;
+      const slechtsteElement = uitkomsten
+        .filter((u) => !u.fout)
+        .sort((a, b) => parseFloat(a.slechtste) - parseFloat(b.slechtste))[0];
+
       legVast({
         commando: 'get-nietteksten',
         argumenten: { ...(klik ? { klik } : {}), ...(flags.max ? { max: String(max) } : {}) },
@@ -2546,12 +2592,21 @@ async function getNietTeksten(url: string, flags: Flags) {
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
+        artefact: overzicht,
         criteria: ['1.4.11'],
         uitkomst: {
           bedienbareElementenBekeken: kandidaten.bekeken,
           nietZichtbaar: kandidaten.onzichtbaar,
           onderDitCriterium: kandidaten.gevonden.length,
           gemeten: uitkomsten.length,
+          // Zonder deze twee is op de kaart niet te zien dat er in twee toestanden is
+          // gemeten, en dat is nu net het punt van die tweede meting.
+          ookMetDeMuisErop: uitkomsten.filter((u) => u.zweef && typeof u.zweef !== 'string')
+            .length,
+          andersOpZweven: strengerOpZweven,
+          slechtste: slechtsteElement
+            ? `${slechtsteElement.naam || slechtsteElement.element} ${slechtsteElement.slechtste}`
+            : null,
           onvoldoende: tekort.length,
           nietGelukt: mislukt.length,
         },
