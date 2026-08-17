@@ -1123,10 +1123,13 @@ export default function Stapel({
           ) : (
             <ul className="space-y-2">
               {metingen.map((m, i) => {
+                // Een aan-uit-vlag schrijf je zonder waarde: --text, niet --text=true.
+                // Beide werken, maar de regel is er om over te typen en zo typt niemand
+                // het. Vlaggen met een echte waarde (--breedte=320) houden hun waarde.
                 const regel = `npm run cli -- ${m.commando} ${m.url ?? ''}${Object.entries(
                   m.argumenten ?? {}
                 )
-                  .map(([k, v]) => ` --${k}=${v}`)
+                  .map(([k, v]) => (v === 'true' ? ` --${k}` : ` --${k}=${v}`))
                   .join('')}`.trim();
                 const sleutel = `${m.commando}-${m.tijd ?? i}`;
                 const hermeting = hermetingen[sleutel];
@@ -1137,6 +1140,7 @@ export default function Stapel({
                     </code>
                     <p className="mt-1 text-xs text-gray-500">
                       {m.tijd ? new Date(m.tijd).toLocaleString('nl-NL') : 'tijd onbekend'}
+                      {m.keer && m.keer > 1 ? ` (${m.keer}e keer)` : ''}
                       {m.browser ? ` · ${m.browser}` : ''}
                       {m.uitkomst
                         ? ` · ${Object.entries(m.uitkomst)
@@ -1160,12 +1164,39 @@ export default function Stapel({
                       >
                         {hermeting?.bezig ? 'Bezig…' : 'Nog eens meten'}
                       </button>
-                      {m.artefact && (
-                        <span className="text-xs text-gray-400">
-                          {m.artefact.split(/[\\/]/).pop()}
-                        </span>
-                      )}
                     </div>
+                    {/* Het beeld erbij, niet alleen de bestandsnaam. Een meting die
+                        "nul elementen te breed" zegt is pas te vertrouwen als je ernaar
+                        kunt kijken — dat is de reden dat get-reflow een schermafdruk
+                        maakt. Klein weergegeven, klikken opent hem op ware grootte. */}
+                    {m.artefact &&
+                      (() => {
+                        const naam = m.artefact.split(/[\\/]/).pop()!;
+                        const bron = `/api/meting/artefact?pad=${encodeURIComponent(naam)}`;
+                        const isBeeld = /\.(png|jpe?g)$/i.test(naam);
+                        return (
+                          <div className="mt-2">
+                            {isBeeld ? (
+                              <a href={bron} target="_blank" rel="noreferrer" title={naam}>
+                                <img
+                                  src={bron}
+                                  alt={`Schermafdruk van de meting ${m.commando}`}
+                                  className="max-h-64 rounded border border-gray-300 bg-white"
+                                />
+                              </a>
+                            ) : (
+                              <a
+                                href={bron}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-blue-800 underline"
+                              >
+                                {naam}
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })()}
                     {hermeting && !hermeting.bezig && (
                       <div className="mt-2 rounded border border-gray-200 bg-white p-2 text-xs">
                         {hermeting.fout ? (

@@ -52,6 +52,8 @@ export interface Meting {
   browser?: string | null;
   artefact?: string | null;
   uitkomst?: Record<string, unknown>;
+  /** Hoe vaak deze meting is gedraaid. Alleen de laatste staat er; dit is het aantal. */
+  keer?: number;
 }
 
 /** Eén punt uit Shift2_Bewijsvoering.md, en of de onderbouwing eraan voldoet. */

@@ -1756,7 +1756,7 @@ async function koppelLogboek(projectId: string, flags: Flags) {
   const ALGEMEEN = new Set(['get-html', 'get-screenshot', 'get-leesvolgorde']);
   // Per sample: laatste algemene actie per commando, en alle gerichte metingen per code.
   const algemeenPerSample = new Map<string, Map<string, any>>();
-  const gerichtPerSampleCode = new Map<string, any[]>();
+  const gerichtPerSampleCode = new Map<string, Map<string, any>>();
 
   for (const r of regels) {
     const sample = sampleVanUrl.get(kaal(r.eindUrl || r.url || ''));
@@ -1777,15 +1777,26 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     }
     for (const code of r.criteria) {
       const sleutel = `${sample.id}|${code}`;
-      if (!gerichtPerSampleCode.has(sleutel)) gerichtPerSampleCode.set(sleutel, []);
-      gerichtPerSampleCode.get(sleutel)!.push(meting);
+      if (!gerichtPerSampleCode.has(sleutel)) gerichtPerSampleCode.set(sleutel, new Map());
+      // Op commando plus argumenten, zodat dezelfde meting maar één keer op de kaart
+      // komt. Wie een meting herhaalt levert geen nieuw bewijs; alleen de laatste
+      // telt. Zonder dit vulde de kaart zich met zes identieke reflow-regels — mijn
+      // eigen testklikken op "Nog eens meten" — en was niet meer te zien wat er
+      // werkelijk was gedaan.
+      const vorm = `${r.commando}|${JSON.stringify(r.argumenten ?? {})}`;
+      const bestaand = gerichtPerSampleCode.get(sleutel)!.get(vorm);
+      gerichtPerSampleCode
+        .get(sleutel)!
+        .set(vorm, { ...meting, keer: (bestaand?.keer ?? 0) + 1 });
     }
   }
 
   const teSchrijven = checks
     .map((c) => {
       const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
-      const gericht = gerichtPerSampleCode.get(`${c.sampleItemId}|${c.criterionCode}`) ?? [];
+      const gericht = Array.from(
+        gerichtPerSampleCode.get(`${c.sampleItemId}|${c.criterionCode}`)?.values() ?? []
+      );
       const verantwoording = [...algemeen, ...gericht];
       if (!verantwoording.length) return null;
       return {
