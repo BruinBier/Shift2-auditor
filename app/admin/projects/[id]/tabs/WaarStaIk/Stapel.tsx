@@ -41,6 +41,8 @@ interface Huisregels {
   schrijfregels: string | null;
   /** Welk deel van de pagina bij dit sample hoort. Bepaalt of de footer meetelt. */
   scope: string | null;
+  /** Waarop een oordeel mag rusten, en wat je meelevert als bewijs. */
+  bewijsvoering: string | null;
 }
 
 /**
@@ -211,6 +213,16 @@ function bespreekBlok(opties: {
     r.push('## Welk deel van de pagina hoort bij dit sample');
     r.push('');
     r.push(huisregels.scope.trim());
+  }
+
+  // Waarop een oordeel mag rusten. Zonder dit beoordeelt een assistent de bevinding
+  // wel, maar niet of de onderbouwing eronder draagt — en juist daar zat vandaag de
+  // helft van de problemen.
+  if (huisregels?.bewijsvoering) {
+    r.push('');
+    r.push('## Waarop een oordeel mag rusten');
+    r.push('');
+    r.push(huisregels.bewijsvoering.trim());
   }
 
   if (huisregels?.schrijfregels) {
