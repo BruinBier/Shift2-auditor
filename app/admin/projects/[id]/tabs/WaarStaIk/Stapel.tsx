@@ -1223,13 +1223,21 @@ export default function Stapel({
         </div>
 
         <div className="mb-4 border-t border-gray-200 pt-3">
+          {/* "Nagekeken" alleen was misleidend: op een oordeel dat de onderzoeker zelf
+              had bevestigd stond "nog niet nagekeken". Zijn akkoord ís nakijken — het
+              zwaarste zelfs. Wat hier ontbreekt is iets anders: of een tweede agent de
+              bewijsvoering heeft afgelopen. Dat staat er nu, en het akkoord ernaast. */}
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-            Nagekeken
+            Nagekeken door een tweede agent
             {controle?.bevestigd === true && ' · bevestigd'}
             {controle?.bevestigd === false && ' · niet bevestigd'}
           </p>
           {!controle?.punten?.length ? (
-            <p className="text-sm text-gray-500">Nog niet nagekeken.</p>
+            <p className="text-sm text-gray-500">
+              Niet door een tweede agent nagekeken.
+              {cel.akkoord === 'akkoord' && ' Jij hebt dit oordeel wel bevestigd.'}
+              {cel.akkoord === 'afgewezen' && ' Jij hebt dit oordeel afgewezen.'}
+            </p>
           ) : (
             <ul className="space-y-1">
               {controle.punten.map((p, i) => (
