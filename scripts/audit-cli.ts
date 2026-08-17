@@ -1296,6 +1296,15 @@ async function getContrast(url: string, flags: Flags) {
       const groot = ruw.fontSize >= 24 || (vet && ruw.fontSize >= 18.66);
       const eis = groot ? 3 : 4.5;
 
+      // Zonder tekst is er geen tekstcontrast.
+      //
+      // Dit commando rekende `color` tegen de achtergrond ook uit voor een element dat geen
+      // letter bevat — een pictogramomhulsel bijvoorbeeld — en meldde dan "contrast 21:1,
+      // voldoet aan 4,5:1". Dat getal meet niets: er staat geen tekst om te lezen. Op de
+      // kaart las het als bewijs, en het hing het oordeel bovendien aan 1.4.3 vast, een
+      // criterium waar dat element helemaal niet onder valt.
+      const heeftTekst = !!(ruw.tekst || '').trim();
+
       /**
        * De rand tegen wat erachter ligt — dat is 1.4.11, en die eis is 3:1.
        *
@@ -1346,18 +1355,22 @@ async function getContrast(url: string, flags: Flags) {
         // niet-tekstuele elementen is nagelopen terwijl er alleen teksten zijn gemeten.
         // Precies die verwarring leverde op de homepage vijf "bewijsstukken" op waar
         // niemand voor gekozen had.
-        criteria: rand ? ['1.4.3', '1.4.11'] : ['1.4.3'],
+        criteria: [...(heeftTekst ? ['1.4.3'] : []), ...(rand ? ['1.4.11'] : [])],
         uitkomst: {
-          tekstkleur: hex(voor),
-          achtergrondkleur: hex(achter),
-          contrast: Math.round(ratio * 100) / 100,
+          ...(heeftTekst
+            ? {
+                tekstkleur: hex(voor),
+                achtergrondkleur: hex(achter),
+                contrast: Math.round(ratio * 100) / 100,
+                eis,
+                voldoet: ratio >= eis,
+              }
+            : { tekst: 'dit element bevat geen tekst; niets te meten voor 1.4.3' }),
           // De randmeting hoort in het logboek, anders is aan de regel niet te zien
           // waarom hij wel of niet voor 1.4.11 meetelt.
           ...(rand
             ? { randkleur: rand.randkleur, randContrast: rand.contrast, randVoldoet: rand.voldoet }
             : { rand: 'geen zichtbare rand gevonden' }),
-          eis,
-          voldoet: ratio >= eis,
         },
       });
 
@@ -1373,15 +1386,22 @@ async function getContrast(url: string, flags: Flags) {
         geklikt: klik,
         tekst: ruw.tekst,
         element: ruw.element,
-        tekstkleur: hex(voor),
-        achtergrondkleur: hex(achter),
-        fontSize: `${ruw.fontSize}px`,
-        fontWeight: ruw.fontWeight,
-        grote_tekst: groot,
-        contrast: `${Math.round(ratio * 100) / 100}:1`,
-        eis: `${eis}:1`,
+        ...(heeftTekst
+          ? {
+              tekstkleur: hex(voor),
+              achtergrondkleur: hex(achter),
+              fontSize: `${ruw.fontSize}px`,
+              fontWeight: ruw.fontWeight,
+              grote_tekst: groot,
+              contrast: `${Math.round(ratio * 100) / 100}:1`,
+              eis: `${eis}:1`,
+            }
+          : {
+              tekstcontrast:
+                'Niet gemeten: dit element bevat geen tekst. Rekenen met de tekstkleur levert hier een getal op dat niets betekent.',
+            }),
         rand,
-        voldoet: ratio >= eis,
+        voldoet: heeftTekst ? ratio >= eis : rand ? rand.voldoet : null,
         let_op: ruw.achtergrondAfbeelding
           ? 'Er ligt een achtergrondafbeelding achter dit element. De gemeten achtergrondkleur is dan niet wat je ziet; controleer op de schermafdruk.'
           : null,
