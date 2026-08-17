@@ -29,6 +29,7 @@ import {
   slugifyUrl,
   timestamp,
 } from './lib/browser-fetch';
+import { legVast, leesLogboek } from './lib/audit-log';
 import {
   lintFinding,
   formatLintIssues,
@@ -555,6 +556,22 @@ async function getHtml(url: string, flags: Flags) {
       const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.${ext}`);
       fs.writeFileSync(file, content, 'utf8');
 
+      // Geen criteria: de pagina ophalen dient elk criterium, niet één in het
+      // bijzonder. Dat staat zo in het logboek en dat is de eerlijke weergave.
+      legVast({
+        commando: 'get-html',
+        // Alleen de vlaggen die werkelijk zijn meegegeven. `useFull` volgt uit de
+        // homepage-detectie en niet uit een vlag; die hier opnemen maakt de regel
+        // onbruikbaar om over te typen, want dan zet je iets aan wat de CLI zelf
+        // bepaalt. De uitkomst vermeldt de scope wél, want dat is een meetresultaat.
+        argumenten: { ...(wantFull ? { full: 'true' } : {}), ...(wantText ? { text: 'true' } : {}) },
+        url: url,
+        eindUrl: finalUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        artefact: file,
+        uitkomst: { scope: useFull ? 'document' : 'main', bytes: content.length },
+      });
+
       print({
         url: finalUrl,
         requestedUrl: url,
@@ -819,6 +836,21 @@ async function getScreenshot(url: string, flags: Flags) {
       }
 
       const stat = fs.statSync(file);
+      legVast({
+        commando: 'get-screenshot',
+        argumenten: {
+          ...(fullPage ? { 'full-page': 'true' } : {}),
+          ...(selector ? { selector } : {}),
+          ...(breedte ? { breedte: String(breedte) } : {}),
+          ...(klik ? { klik } : {}),
+        },
+        url: url,
+        eindUrl: finalUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        artefact: file,
+        uitkomst: { bytes: stat.size },
+      });
+
       print({
         url: finalUrl,
         requestedUrl: url,
@@ -1054,6 +1086,16 @@ async function getLeesvolgorde(url: string, flags: Flags) {
         await page.screenshot({ path: schermafdruk as `${string}.png`, fullPage: true });
       }
 
+      legVast({
+        commando: 'get-leesvolgorde',
+        argumenten: zonderCss ? { 'zonder-css': 'true' } : {},
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        artefact: schermafdruk ?? tekstBestand,
+        uitkomst: { elementen: data.length, afwijkingen: afwijkingen.length },
+      });
+
       print({
         url: finalUrl,
         title: pageTitle,
@@ -1205,6 +1247,21 @@ async function getContrast(url: string, flags: Flags) {
       const vet = parseInt(ruw.fontWeight, 10) >= 700;
       const groot = ruw.fontSize >= 24 || (vet && ruw.fontSize >= 18.66);
       const eis = groot ? 3 : 4.5;
+
+      legVast({
+        commando: 'get-contrast',
+        argumenten: { selector: doel, ...(klik ? { klik } : {}) },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        uitkomst: {
+          tekstkleur: hex(voor),
+          achtergrondkleur: hex(achter),
+          contrast: Math.round(ratio * 100) / 100,
+          eis,
+          voldoet: ratio >= eis,
+        },
+      });
 
       print({
         url: page.url(),
@@ -1398,6 +1455,19 @@ async function getContrastAlles(url: string, flags: Flags) {
       const alle = Array.from(groepen.values()).sort((a, b) => a.contrast - b.contrast);
       const tekort = alle.filter((g) => !g.voldoet);
 
+      legVast({
+        commando: 'get-contrast',
+        argumenten: klik ? { klik } : {},
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        uitkomst: {
+          gemetenElementen: ruw.length,
+          combinaties: alle.length,
+          onvoldoende: tekort.length,
+        },
+      });
+
       print({
         url: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
@@ -1519,6 +1589,21 @@ async function getReflow(url: string, flags: Flags) {
       const opvallend = meting.teBreed
         .sort((a, b) => b.rechts - a.rechts)
         .slice(0, 8);
+
+      legVast({
+        commando: 'get-reflow',
+        argumenten: { breedte: String(breedte) },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        artefact: bestand,
+        uitkomst: {
+          paginabreedte: meting.scrollWidth,
+          vensterbreedte: meting.clientWidth,
+          horizontaalScrollen: meting.horizontaalScrollen,
+          elementenTeBreed: meting.aantalTeBreed,
+        },
+      });
 
       print({
         url: page.url(),
