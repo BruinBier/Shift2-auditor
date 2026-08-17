@@ -459,9 +459,18 @@ export default function Stapel({
    */
   const meetOpnieuw = async (sleutel: string, m: Meting) => {
     setHermetingen((h) => ({ ...h, [sleutel]: { bezig: true } }));
+    /**
+     * De uitkomst als één regel, met de sleutels op alfabet.
+     *
+     * Dat sorteren is geen netheid maar noodzaak: PostgreSQL bewaart de sleutelvolgorde
+     * van een JSONB-waarde niet. De opgeslagen meting komt er in een andere volgorde uit
+     * dan hij erin ging, en zonder sorteren meldt de knop dan een afwijking terwijl er
+     * niets is veranderd — bij elke klik.
+     */
     const samenvatting = (u: unknown) =>
       u && typeof u === 'object'
         ? Object.entries(u as Record<string, unknown>)
+            .sort(([a], [b]) => a.localeCompare(b))
             .map(([k, v]) => `${k}: ${v}`)
             .join(', ')
         : '(geen)';
@@ -479,15 +488,12 @@ export default function Stapel({
         }));
         return;
       }
-      // De CLI schreef zojuist een nieuwe logboekregel; de uitkomst daarvan zit in het
-      // antwoord. Alleen de velden vergelijken die ook in het logboek stonden.
-      const nu: Record<string, unknown> = {};
-      for (const k of Object.keys(m.uitkomst ?? {})) {
-        const bron = j.uitkomst ?? {};
-        nu[k] = bron[k] ?? bron[k.replace(/([A-Z])/g, '_$1').toLowerCase()] ?? '?';
-      }
+      // Vergelijk de nieuwe LOGBOEKREGEL met de oude, niet met de weergave uit het
+      // antwoord. Die weergave maakt waarden op — het logboek zegt paginabreedte 320,
+      // de weergave "320px" — en dan meldt de knop bij elke klik een afwijking terwijl
+      // er niets veranderd is. Zo'n knop is erger dan geen knop.
       const toenTekst = samenvatting(m.uitkomst);
-      const nuTekst = samenvatting(nu);
+      const nuTekst = samenvatting(j.logregel?.uitkomst);
       setHermetingen((h) => ({
         ...h,
         [sleutel]: { bezig: false, toen: toenTekst, nu: nuTekst, gelijk: toenTekst === nuTekst },

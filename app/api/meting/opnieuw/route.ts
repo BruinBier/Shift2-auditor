@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
+import { leesLogboek } from '@/scripts/lib/audit-log';
 
 /**
  * Een vastgelegde meting nog eens draaien, en de uitkomst naast de oude zetten.
@@ -58,8 +59,8 @@ export async function POST(request: NextRequest) {
   const url: string = body.url ?? '';
   const argumenten: Record<string, string> = body.argumenten ?? {};
 
-  const regels = TOEGESTAAN[commando];
-  if (!regels) {
+  const toegestaan = TOEGESTAAN[commando];
+  if (!toegestaan) {
     return NextResponse.json(
       { ok: false, error: `Onbekend commando: ${commando}` },
       { status: 400 }
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
 
   const args = ['scripts/audit-cli.ts', commando, doel.toString()];
   for (const [naam, waarde] of Object.entries(argumenten)) {
-    if (!regels.vlaggen.includes(naam)) {
+    if (!toegestaan.vlaggen.includes(naam)) {
       return NextResponse.json(
         { ok: false, error: `Vlag --${naam} hoort niet bij ${commando}` },
         { status: 400 }
@@ -139,5 +140,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true, commando, url: doel.toString(), argumenten, uitkomst: antwoord });
+  // De nieuwe logboekregel erbij, en dát is wat de kaart vergelijkt.
+  //
+  // Niet het antwoord hierboven: dat is de weergave voor een mens, met opgemaakte
+  // waarden. Het logboek slaat paginabreedte op als 320, de weergave als "320px" — en
+  // dan meldt een vergelijking altijd een afwijking terwijl er niets veranderd is. Zo'n
+  // knop die bij elke klik "AFWIJKING" roept is erger dan geen knop.
+  //
+  // Log tegen log vergelijken is appels met appels: dezelfde velden, dezelfde soorten.
+  const logboek = leesLogboek();
+  const laatste = [...logboek].reverse().find((r) => r.commando === commando) ?? null;
+
+  return NextResponse.json({
+    ok: true,
+    commando,
+    url: doel.toString(),
+    argumenten,
+    logregel: laatste,
+    uitkomst: antwoord,
+  });
 }
