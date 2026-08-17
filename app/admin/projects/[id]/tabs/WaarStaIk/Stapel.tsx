@@ -1197,34 +1197,59 @@ export default function Stapel({
                         "nul elementen te breed" zegt is pas te vertrouwen als je ernaar
                         kunt kijken — dat is de reden dat get-reflow een schermafdruk
                         maakt. Klein weergegeven, klikken opent hem op ware grootte. */}
-                    {m.artefact &&
-                      (() => {
-                        const naam = m.artefact.split(/[\\/]/).pop()!;
-                        const bron = `/api/meting/artefact?pad=${encodeURIComponent(naam)}`;
-                        const isBeeld = /\.(png|jpe?g)$/i.test(naam);
-                        return (
-                          <div className="mt-2">
-                            {isBeeld ? (
-                              <a href={bron} target="_blank" rel="noreferrer" title={naam}>
-                                <img
-                                  src={bron}
-                                  alt={`Schermafdruk van de meting ${m.commando}`}
-                                  className="max-h-64 rounded border border-gray-300 bg-white"
-                                />
-                              </a>
-                            ) : (
-                              <a
-                                href={bron}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs text-blue-800 underline"
-                              >
-                                {naam}
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })()}
+                    {(() => {
+                      const bestandsnaam = (p: string) => p.split(/[\\/]/).pop()!;
+                      const bron = (p: string) =>
+                        `/api/meting/artefact?pad=${encodeURIComponent(bestandsnaam(p))}`;
+                      const isBeeld = (p: string) => /\.(png|jpe?g)$/i.test(p);
+
+                      // Het beeld en het bestand zijn twee dingen. Bij get-html is het
+                      // artefact de opgehaalde tekst en de schermafdruk het beeld ernaast;
+                      // bij get-reflow zijn ze hetzelfde bestand. Toonde de kaart alleen
+                      // het artefact, dan stond er bij een tekst-ophaling een .txt en
+                      // verder niets om naar te kijken.
+                      const beeld =
+                        m.schermafdruk ?? (m.artefact && isBeeld(m.artefact) ? m.artefact : null);
+                      const bestand = m.artefact && !isBeeld(m.artefact) ? m.artefact : null;
+                      if (!beeld && !bestand) return null;
+
+                      return (
+                        <div className="mt-2 space-y-1">
+                          {beeld && (
+                            <a
+                              href={bron(beeld)}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={bestandsnaam(beeld)}
+                              className="block"
+                            >
+                              <img
+                                src={bron(beeld)}
+                                alt={`Schermafdruk van de meting ${m.commando}`}
+                                className="max-h-64 rounded border border-gray-300 bg-white"
+                              />
+                            </a>
+                          )}
+                          {bestand && (
+                            <a
+                              href={bron(bestand)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block text-xs text-blue-800 underline"
+                            >
+                              {bestandsnaam(bestand)}
+                            </a>
+                          )}
+                          {!beeld && (
+                            <p className="text-xs text-gray-500">
+                              Bij deze meting is geen schermafdruk vastgelegd. Draai hem opnieuw
+                              met &ldquo;Nog eens meten&rdquo;; sinds 17 augustus laat elke meting
+                              er een achter.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {hermeting && !hermeting.bezig && (
                       <div className="mt-2 rounded border border-gray-200 bg-white p-2 text-xs">
                         {hermeting.fout ? (

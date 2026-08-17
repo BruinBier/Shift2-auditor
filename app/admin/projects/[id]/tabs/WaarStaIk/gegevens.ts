@@ -51,6 +51,8 @@ export interface Meting {
   tijd?: string;
   browser?: string | null;
   artefact?: string | null;
+  /** Het beeld waarop de meting rust. Bij get-html iets anders dan het artefact. */
+  schermafdruk?: string | null;
   uitkomst?: Record<string, unknown>;
   /** Hoe vaak deze meting is gedraaid. Alleen de laatste staat er; dit is het aantal. */
   keer?: number;

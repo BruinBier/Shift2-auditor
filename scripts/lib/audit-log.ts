@@ -54,6 +54,19 @@ export interface LogRegel {
   browser?: string | null;
   /** Pad naar wat het opleverde. Kan verouderen: tmp/ staat in .gitignore. */
   artefact?: string | null;
+  /**
+   * Het beeld waarop de meting rust. Elk commando dat een pagina opent vult dit.
+   *
+   * Een tekstbestand is geen bewijs dat iemand kan nakijken. `get-html --text` liet een
+   * .txt achter en `get-contrast` helemaal niets, dus op de kaart stond een oordeel met
+   * een bestandsnaam eronder en geen manier om te zien of het klopte. De browser staat op
+   * dat moment toch al open, dus een opname kost bijna niets en maakt het verschil tussen
+   * een bewering en bewijs.
+   *
+   * Staat los van `artefact`: bij get-html is dat de opgehaalde tekst en dit het beeld
+   * ernaast. Bij get-reflow zijn ze hetzelfde bestand.
+   */
+  schermafdruk?: string | null;
   /** Korte samenvatting van de uitkomst, zodat een hermeting te vergelijken is. */
   uitkomst?: Record<string, unknown>;
 }

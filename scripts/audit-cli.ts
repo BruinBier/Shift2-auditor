@@ -558,6 +558,20 @@ async function getHtml(url: string, flags: Flags) {
       const file = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}.${ext}`);
       fs.writeFileSync(file, content, 'utf8');
 
+      // En een opname van dezelfde pagina, in dezelfde toestand.
+      //
+      // Zonder dit levert het ophalen van een pagina alleen een tekstbestand op, en daar
+      // kan een onderzoeker geen oordeel op nakijken. De browser staat hier toch al open
+      // met deze pagina erin, dus dit is de goedkoopste manier om bewijs mee te leveren.
+      const beeld = path.join(dir, `${timestamp()}-${slugifyUrl(finalUrl)}-pagina.png`);
+      try {
+        await page.screenshot({ path: beeld as `${string}.png`, fullPage: true });
+      } catch {
+        // Een te lange pagina kan de opname laten mislukken; dat mag het ophalen niet
+        // ongeldig maken.
+      }
+      const beeldGelukt = fs.existsSync(beeld);
+
       // Geen criteria: de pagina ophalen dient elk criterium, niet één in het
       // bijzonder. Dat staat zo in het logboek en dat is de eerlijke weergave.
       legVast({
@@ -571,6 +585,7 @@ async function getHtml(url: string, flags: Flags) {
         eindUrl: finalUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         artefact: file,
+        schermafdruk: beeldGelukt ? beeld : null,
         uitkomst: { scope: useFull ? 'document' : 'main', bytes: content.length },
       });
 
@@ -583,6 +598,7 @@ async function getHtml(url: string, flags: Flags) {
         format: wantText ? 'text' : 'html',
         bytes: Buffer.byteLength(content, 'utf8'),
         file,
+        schermafdruk: beeldGelukt ? beeld : null,
         browser: session.mode,
         omgeleid,
         gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
@@ -850,6 +866,7 @@ async function getScreenshot(url: string, flags: Flags) {
         eindUrl: finalUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         artefact: file,
+        schermafdruk: file,
         uitkomst: { bytes: stat.size },
       });
 
@@ -1095,6 +1112,7 @@ async function getLeesvolgorde(url: string, flags: Flags) {
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         artefact: schermafdruk ?? tekstBestand,
+        schermafdruk: schermafdruk ?? null,
         uitkomst: { elementen: data.length, afwijkingen: afwijkingen.length },
       });
 
@@ -1305,12 +1323,15 @@ async function getContrast(url: string, flags: Flags) {
         };
       }
 
+      const opname = await legOpnameVast(page, page.url(), 'contrast', doel);
+
       legVast({
         commando: 'get-contrast',
         argumenten: { selector: doel, ...(klik ? { klik } : {}) },
         url: gevraagdeUrl,
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        schermafdruk: opname,
         uitkomst: {
           tekstkleur: hex(voor),
           achtergrondkleur: hex(achter),
@@ -1323,6 +1344,7 @@ async function getContrast(url: string, flags: Flags) {
       print({
         url: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        schermafdruk: opname,
         omgeleid,
         gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
         waarschuwing_omleiding: omgeleid
@@ -1513,12 +1535,15 @@ async function getContrastAlles(url: string, flags: Flags) {
       const alle = Array.from(groepen.values()).sort((a, b) => a.contrast - b.contrast);
       const tekort = alle.filter((g) => !g.voldoet);
 
+      const opname = await legOpnameVast(page, page.url(), 'contrast-pagina');
+
       legVast({
         commando: 'get-contrast',
         argumenten: klik ? { klik } : {},
         url: gevraagdeUrl,
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        schermafdruk: opname,
         uitkomst: {
           gemetenElementen: ruw.length,
           combinaties: alle.length,
@@ -1529,6 +1554,7 @@ async function getContrastAlles(url: string, flags: Flags) {
       print({
         url: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        schermafdruk: opname,
         omgeleid,
         gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
         waarschuwing_omleiding: omgeleid
@@ -1655,6 +1681,7 @@ async function getReflow(url: string, flags: Flags) {
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         artefact: bestand,
+        schermafdruk: bestand,
         uitkomst: {
           paginabreedte: meting.scrollWidth,
           vensterbreedte: meting.clientWidth,
@@ -1824,6 +1851,11 @@ async function koppelLogboek(projectId: string, flags: Flags) {
       tijd: r.tijd,
       browser: r.browser,
       artefact: r.artefact,
+      // Oudere regels hebben dit veld niet. Staat er alleen een artefact en is dat een
+      // afbeelding, dan is dát het beeld — anders had de kaart voor alles wat vóór
+      // vandaag gemeten is geen schermafdruk meer.
+      schermafdruk:
+        r.schermafdruk ?? (r.artefact && /\.(png|jpe?g)$/i.test(r.artefact) ? r.artefact : null),
       uitkomst: r.uitkomst,
     };
     if (!r.criteria.length && ALGEMEEN.has(r.commando)) {
@@ -1884,6 +1916,57 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     body: JSON.stringify({ bron: 'workflow', checks: teSchrijven }),
   });
   print({ logboekregels: regels.length, gekoppeld: teSchrijven.length, ...result });
+}
+
+/**
+ * Legt vast hoe de pagina erbij stond toen er gemeten werd.
+ *
+ * Elke meting die een pagina opent hoort een beeld achter te laten. Een oordeel met
+ * alleen een getal eronder is niet na te kijken, en een oordeel met alleen een
+ * tekstbestand eronder evenmin — dat was precies wat er misging: `get-html --text` liet
+ * een .txt achter en `get-contrast` helemaal niets.
+ *
+ * Met een selector wordt het element zelf genomen, met wat lucht eromheen. Zonder
+ * selector de hele pagina. Mislukt het, dan levert dit `null` en gaat de meting gewoon
+ * door; bewijs dat er niet is verzinnen we niet, maar een mislukte opname mag geen
+ * geldige meting weggooien.
+ */
+async function legOpnameVast(
+  page: any,
+  url: string,
+  achtervoegsel: string,
+  selector?: string | null
+): Promise<string | null> {
+  try {
+    const dir = ensureOutputDir();
+    const bestand = path.join(dir, `${timestamp()}-${slugifyUrl(url)}-${achtervoegsel}.png`);
+    // `tekst:`-selectors zijn geen CSS; die kan puppeteer niet opzoeken, dus dan de
+    // hele pagina.
+    const bruikbaar = selector && !selector.startsWith('tekst:') ? selector : null;
+    if (bruikbaar) {
+      const el = await page.$(bruikbaar);
+      if (el) {
+        const vak = await el.boundingBox();
+        if (vak && vak.width > 0 && vak.height > 0) {
+          const lucht = 24;
+          await page.screenshot({
+            path: bestand,
+            clip: {
+              x: Math.max(0, vak.x - lucht),
+              y: Math.max(0, vak.y - lucht),
+              width: vak.width + lucht * 2,
+              height: vak.height + lucht * 2,
+            },
+          });
+          return fs.existsSync(bestand) ? bestand : null;
+        }
+      }
+    }
+    await page.screenshot({ path: bestand, fullPage: true });
+    return fs.existsSync(bestand) ? bestand : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -2186,6 +2269,7 @@ async function getPixelContrast(url: string, flags: Flags) {
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         artefact: bestand,
+        schermafdruk: bestand,
         criteria: ['1.4.11'],
         uitkomst: {
           slechtsteVerhouding: verhouding,
