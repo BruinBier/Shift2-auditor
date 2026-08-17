@@ -17,6 +17,8 @@
  *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...] [--breedte=320] [--klik=...]
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
+ *   tsx scripts/audit-cli.ts koppel-logboek <projectId> [--drooglopen]
  *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
  */
 
@@ -1712,6 +1714,111 @@ async function captureSampleEvidence(projectId: string, sampleId: string, flags:
   }
 }
 
+/**
+ * Koppelt het logboek aan de sampleoordelen: waarop rust elk oordeel?
+ *
+ * Dit doet de CLI en niet een agent. Zou een agent het logboek overtypen in zijn
+ * antwoord, dan is het weer een bewering — hij kan een regel verzinnen of er een
+ * weglaten. Hier wordt gelezen wat er staat en weggeschreven wat erbij hoort.
+ *
+ * Per sample krijgt elk criterium: de algemene ophaalacties op die pagina (get-html,
+ * get-screenshot, de kale weergave) plus de metingen die voor dat criterium bestaan
+ * (get-reflow voor 1.4.10, get-contrast voor 1.4.3 en 1.4.11, get-leesvolgorde voor
+ * 1.3.2). De algemene acties staan bij elk criterium, want daar rust elk oordeel
+ * werkelijk op; alleen de laatste per soort, anders wordt de kaart onleesbaar.
+ *
+ * Oordelen zonder enige meting blijven leeg. Dat is informatie: er kwam geen
+ * gereedschap aan te pas.
+ */
+async function koppelLogboek(projectId: string, flags: Flags) {
+  const regels = leesLogboek();
+  if (!regels.length) {
+    print({ gekoppeld: 0, melding: 'Het logboek is leeg; niets te koppelen.' });
+    return;
+  }
+
+  const samples: any[] = await api(`/api/projects/${projectId}/sample-items`);
+  const checks: any[] = await api(`/api/projects/${projectId}/criterion-checks`);
+
+  // Adres naar sample. Vergelijken zonder afsluitende schuine streep en zonder www,
+  // net als bij het vaststellen van een omleiding.
+  const kaal = (u: string) => {
+    try {
+      const x = new URL(u);
+      return x.host.replace(/^www\./, '').toLowerCase() + x.pathname.replace(/\/+$/, '').toLowerCase();
+    } catch {
+      return u;
+    }
+  };
+  const sampleVanUrl = new Map<string, any>();
+  for (const s of samples) if (s.url) sampleVanUrl.set(kaal(s.url), s);
+
+  const ALGEMEEN = new Set(['get-html', 'get-screenshot', 'get-leesvolgorde']);
+  // Per sample: laatste algemene actie per commando, en alle gerichte metingen per code.
+  const algemeenPerSample = new Map<string, Map<string, any>>();
+  const gerichtPerSampleCode = new Map<string, any[]>();
+
+  for (const r of regels) {
+    const sample = sampleVanUrl.get(kaal(r.eindUrl || r.url || ''));
+    if (!sample) continue;
+    const meting = {
+      commando: r.commando,
+      argumenten: r.argumenten,
+      url: r.url,
+      tijd: r.tijd,
+      browser: r.browser,
+      artefact: r.artefact,
+      uitkomst: r.uitkomst,
+    };
+    if (!r.criteria.length && ALGEMEEN.has(r.commando)) {
+      if (!algemeenPerSample.has(sample.id)) algemeenPerSample.set(sample.id, new Map());
+      algemeenPerSample.get(sample.id)!.set(r.commando, meting);
+      continue;
+    }
+    for (const code of r.criteria) {
+      const sleutel = `${sample.id}|${code}`;
+      if (!gerichtPerSampleCode.has(sleutel)) gerichtPerSampleCode.set(sleutel, []);
+      gerichtPerSampleCode.get(sleutel)!.push(meting);
+    }
+  }
+
+  const teSchrijven = checks
+    .map((c) => {
+      const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
+      const gericht = gerichtPerSampleCode.get(`${c.sampleItemId}|${c.criterionCode}`) ?? [];
+      const verantwoording = [...algemeen, ...gericht];
+      if (!verantwoording.length) return null;
+      return {
+        sampleItemId: c.sampleItemId,
+        criterionCode: c.criterionCode,
+        status: c.status,
+        reden: c.reden,
+        // Het akkoord expliciet meesturen: de API laat een akkoord vervallen als de
+        // reden verandert, en die sturen we hier ongewijzigd mee. Zonder dit zou een
+        // koppelactie de goedkeuringen van de onderzoeker kunnen intrekken.
+        akkoord: c.akkoord,
+        verantwoording,
+      };
+    })
+    .filter(Boolean);
+
+  if (flags.drooglopen === 'true') {
+    print({
+      drooglopen: true,
+      logboekregels: regels.length,
+      zouSchrijven: teSchrijven.length,
+      voorbeeld: teSchrijven[0] ?? null,
+    });
+    return;
+  }
+
+  const result = await api(`/api/projects/${projectId}/criterion-checks`, {
+    method: 'POST',
+    body: JSON.stringify({ bron: 'workflow', checks: teSchrijven }),
+  });
+  print({ logboekregels: regels.length, gekoppeld: teSchrijven.length, ...result });
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -1741,6 +1848,8 @@ async function main() {
       return setAssessment(requirePositional(positional, 0, 'projectId'), flags);
     case 'save-checks':
       return saveChecks(requirePositional(positional, 0, 'projectId'), flags);
+    case 'koppel-logboek':
+      return koppelLogboek(requirePositional(positional, 0, 'projectId'), flags);
     case 'get-checks':
       return getChecks(requirePositional(positional, 0, 'projectId'));
     case 'save-sample-checks':

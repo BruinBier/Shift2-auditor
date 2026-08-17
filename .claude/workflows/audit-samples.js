@@ -489,13 +489,37 @@ const VERIFY_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['code', 'bevestigd', 'toelichting'],
+        required: ['code', 'bevestigd', 'toelichting', 'bewijsvoering'],
         properties: {
           code: { type: 'string' },
           bevestigd: { type: 'boolean' },
           toelichting: { type: 'string' },
           // Optionele correctie op status als de verifier het oneens is.
           gecorrigeerdeStatus: { type: 'string', enum: STATUS_ENUM },
+          /**
+           * De punten uit wcag-regels/Shift2_Bewijsvoering.md, elk met een uitkomst.
+           *
+           * Verplicht en minstens één, zodat er niet stilzwijgend nul punten worden
+           * nagelopen: een lege lijst is niet te onderscheiden van "alles in orde",
+           * en dat is precies het verschil dat dit hele veld moet vastleggen.
+           *
+           * Een 'nee' hier betekent niet dat het oordeel fout is, maar dat de
+           * onderbouwing het niet draagt. Dat mag naast een terecht oordeel staan.
+           */
+          bewijsvoering: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['punt', 'uitkomst'],
+              properties: {
+                punt: { type: 'string' },
+                uitkomst: { type: 'string', enum: ['ja', 'nee', 'nvt'] },
+                toelichting: { type: 'string' },
+              },
+            },
+          },
         },
       },
     },
@@ -926,6 +950,10 @@ TOETS TEGEN DE BRON, niet tegen je eigen WCAG-geheugen. Lees met je Read-tool vo
   2. \`wcag-checklists/Checklist_SC_<code>.md\` — de toetsingsinstructie
   3. \`wcag-checklists/Richtlijnen_Grensgevallen_SC_<code>.md\` — bestaat voor 1.1.1, 1.3.1, 2.4.4 en 2.4.6
 
+LOOP DE PUNTEN VAN DE BEWIJSVOERING AF EN GEEF ZE TERUG IN \`bewijsvoering\`. Lees de kopjes van \`wcag-regels/Shift2_Bewijsvoering.md\` — dat zijn de punten. Neem de kop letterlijk over als \`punt\` en geef per punt 'ja', 'nee' of 'nvt', met een toelichting zodra het 'nee' of 'nvt' is. Lees die koppen uit het bestand; typ ze niet uit je hoofd, want dan mis je een punt dat er later bij komt.
+
+Een 'nee' betekent NIET dat het oordeel fout is. Het betekent dat de onderbouwing het niet draagt. Zet \`bevestigd\` dus niet op false om die reden: dat veld gaat over het oordeel zelf. Een oordeel kan terecht zijn terwijl de onderbouwing rammelt, en juist dat moet zichtbaar worden.
+
 Lees \`wcag-regels/Shift2_Bewijsvoering.md\` en toets of de onderbouwing draagt wat het oordeel beweert. Rust een schone uitkomst op een uitgevoerde controle, of alleen op de afwezigheid van een melding? Staat er bij 'niet_aanwezig' waarnaar is gezocht? Wordt er een afwezigheid vastgesteld in materiaal waarin het niet kón staan — zoals CSS-positionering in opgehaalde HTML? Weerleg dat, ook als het oordeel zelf waarschijnlijk juist is: een onterecht 'voldoet' valt later niemand op.
 
 Lees daarnaast \`wcag-regels/Shift2_Schrijfregels.md\` en toets elke description en advice daaraan: geen URL aan het begin, geen gedachtestreepjes, geen HTML-codeblokken, geen vindplaats-lijst, hulpsoftware LEEST VOOR (laat niets zien), "tekstalternatief" niet "tekstbeschrijving", maximaal twee a drie voorbeelden, en bij een opmerking impact en responsibility leeg.
@@ -1035,6 +1063,11 @@ const rapport = clean.map((row) => {
       bestaandeBevindingCode: bestaandeCode || null,
       geverifieerd: v ? v.bevestigd : null,
       verificatie: v?.toelichting || null,
+      // De afgelopen punten uit de bewijsvoering. Gaat mee naar de database, zodat de
+      // onderzoeker op de kaart ziet wat er is nagekeken en wat niet standhield.
+      controle: v?.bewijsvoering?.length
+        ? { bevestigd: v.bevestigd, punten: v.bewijsvoering }
+        : null,
       voorstellen: a.voorstellen || [],
       bestaandeQuickFinding: qf?.bestaatAl ? { id: qf.quickFindingId, title: qf.quickFindingTitle } : null,
       quickFindingToelichting: qf?.toelichting || null,
@@ -1104,6 +1137,10 @@ if (!drooglopen) {
         criterionCode: a.code,
         status: a.status,
         reden: a.reden || null,
+        // De uitkomst van de verificatie hoort bij het oordeel te blijven. Tot nu toe
+        // werd die weggegooid zodra de workflow klaar was: de onderzoeker zag in de
+        // stapel nooit of iemand ernaar had gekeken.
+        controle: a.controle || undefined,
       }))
 
       return agent(
@@ -1118,6 +1155,14 @@ Controleer het antwoord: "geschreven" hoort ${oordelen.length} te zijn en "overg
 
 DE OORDELEN:
 ${JSON.stringify(oordelen, null, 1)}
+
+STAP 1B — koppel het logboek aan de oordelen.
+
+  npm run cli -- koppel-logboek ${projectId}
+
+Dit leest wat de CLI tijdens de audit heeft weggeschreven en zet per oordeel vast waarop het rust: welke metingen er zijn gedraaid, met welke argumenten en welke uitkomst. TYP DAT NIET ZELF OVER en verzin geen regels. Het commando leest het logboek en de onderzoeker kan het naast jouw antwoord leggen; een regel die jij toevoegt en die niet gedraaid is, valt daarmee door de mand.
+
+Meld in je antwoord het getal bij "gekoppeld". Is dat 0 terwijl je wel metingen hebt gedraaid, dan is er iets mis met de koppeling van adres naar sample; meld dat.
 
 STAP 2 — de afkeuringen als voorstel.
 ${
