@@ -10,21 +10,32 @@ Dit criterium is **niet** uit statische HTML of een screenshot te bepalen, maar 
 echte toetsenbordtest in de browser. Voer die zelf uit; zet 2.1.2 niet standaard op
 `niet_te_bepalen`.
 
-De test draait via de Chrome achter "Audit-sessie starten" (debugpoort 9222). Zie
-`tmp/tabtest-content.mjs` voor het werkende voorbeeld.
+```
+npm run cli -- get-toetsenbordval <url>                       (de main-content)
+npm run cli -- get-toetsenbordval <url> --scope=pagina         (ter controle: alles)
+npm run cli -- get-toetsenbordval <url> --typ-in=<css> --typ=<woord>
+npm run cli -- get-toetsenbordval <url> --achteruit=true       (Shift+Tab)
+```
 
-### Werkwijze
+Het commando zet een merkteken op elk focusbaar element, drukt Tab, leest na elke druk
+`document.activeElement` uit, en herkent een val doordat de focus het gebied niet verlaat
+terwijl een korte reeks elementen zich blijft herhalen. Het merkteken is nodig: zes sociale
+links zien er in een beschrijving identiek uit, en dan lijkt een normale doorloop op een
+cyclus van één element. Het inventariseert daarnaast de risicoconstructies (`iframe`, `embed`,
+`object`, mediaspelers met bedieningsknoppen, positieve `tabindex`, dialoogvensters) en drukt
+Escape zodra de focus in een dialoog belandt.
 
-1. **Inventariseer de risicoconstructies binnen de main-content.** Een toetsenbordval ontstaat
-   vrijwel altijd bij: `iframe`, `embed`, `object`, `video`/`audio` met controls, custom
-   widgets, modals, en elementen met een positieve `tabindex`. Zijn die er geen enkele, dan is
-   de kans op een val klein.
-2. **Tab door de main-content** en lees na elke Tab uit welk element focus heeft
-   (`document.activeElement`). Ga door tot de focus de main-content verlaat.
-3. **Herken een val:** hetzelfde element komt steeds terug zonder dat er iets anders
-   tussendoor komt. Verlaat de focus de main-content netjes, dan is er geen val.
-4. **Test bij een modal of widget ook Escape** en of de focus daarna terugkeert naar de
-   pagina.
+### Vier rondes, niet één
+
+| Ronde | Waarom |
+|---|---|
+| main-content vooruit | het eigenlijke onderzoeksgebied |
+| hele pagina vooruit | ter controle; een val in de header telt ook als hij buiten scope valt om te rapporteren |
+| met een widget open (`--typ-in`) | een suggestielijst onder een zoekveld bestaat pas ná typen. Zonder deze ronde test je een pagina waarop die lijst er niet eens is — en juist zo'n lijst is een klassieke val |
+| achteruit (`--achteruit=true`) | een val kan één kant op zitten: eruit met Tab lukt, met Shift+Tab niet |
+
+Kijk in het tabvolgorde-bestand of de volgorde klopt met wat je verwacht. Staat er iets in
+wat je niet had voorzien, dan meet je iets anders dan je denkt.
 
 ### Alleen de main-content
 
@@ -42,6 +53,13 @@ doorlopen waarna de focus de main netjes verliet. Geen iframes, geen positieve t
 mediaspelers. Ter controle 200 tabs over de hele pagina: 90 unieke elementen, cyclus loopt
 rond, geen val. Oordeel: voldoet. Frits vroeg of Claude dit criterium zelf kon oppakken; dat
 kan.
+
+Opnieuw gemeten op 2026-08-17, nu met het vaste commando. Main-content: 14 focusbare
+elementen, alle 14 bereikt, focus eruit na 23 tabs. Hele pagina: 40 van 40, eruit na 41 tabs.
+Met de zoeksuggesties open (getypt: "afval") kom je vanuit de lijst op "Meer resultaten", dan
+de zoekknop, en verder; eruit na 33 tabs. Achteruit met Shift+Tab eruit in 9. De openstaande
+vraag aan de onderzoeker ging precies over die suggestielijst en over de ReadSpeaker-balk;
+beide blijken in de main te vallen en zijn dus meegenomen.
 
 ## Regels
 

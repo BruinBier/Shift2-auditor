@@ -45,6 +45,7 @@ npm run cli -- get-html <url> [--text] [--full]
 npm run cli -- get-screenshot <url> [--full-page] [--selector=css]
 npm run cli -- get-leesvolgorde <url> [--zonder-css]   # voor 1.3.2: code-volgorde vs. kijkvolgorde
 npm run cli -- get-nietteksten <url> [--klik=...]      # voor 1.4.11: zoekt zelf op wat eronder valt en meet het
+npm run cli -- get-toetsenbordval <url> [--scope=pagina] [--typ-in=css --typ=woord] [--achteruit=true]  # 2.1.2
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write
@@ -105,6 +106,12 @@ linkvak om een svg heeft geen rand, dus daar telt de tekening tegen zijn achterg
 element wordt in ruststand én met de muis erop gemeten, want 1.4.11 geldt ook voor de
 toestanden van een element; het strengste van de twee telt. Focustoestanden zitten er nog niet
 in.
+
+**SC 2.1.2 is te meten, niet te vragen.** `get-toetsenbordval` drukt Tab, leest na elke druk
+uit welk element focus heeft, en herkent een val doordat de focus het gebied niet verlaat
+terwijl een korte reeks zich herhaalt. Draai vier rondes: main-content, hele pagina, met een
+widget open (`--typ-in`, want een suggestielijst bestaat pas ná typen), en achteruit
+(`--achteruit=true`, want een val kan één kant op zitten).
 
 **Staat een element op een foto of een verloop, dan zeggen stijlwaarden niets.** `getComputedStyle`
 geeft daar `rgba(0,0,0,0)`, en rekenen met die waarden levert ten onrechte "voldoet" op.

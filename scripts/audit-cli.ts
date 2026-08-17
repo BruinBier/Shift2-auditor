@@ -2052,6 +2052,304 @@ async function legOpnameVast(
 }
 
 /**
+ * Loopt de pagina af met de Tab-toets en kijkt of de focus ergens vast blijft zitten.
+ *
+ * SC 2.1.2 is niet uit opgehaalde HTML te bepalen — een val ontstaat door gedrag, niet door
+ * opmaak — maar wél met een echte toetsenbordtest. Zonder dit commando bleef het criterium
+ * staan op `niet_te_bepalen` met een vraag aan de onderzoeker, terwijl de browser het gewoon
+ * kan uitvoeren.
+ *
+ * Elk focusbaar element krijgt vooraf een merkteken. Dat is nodig om een val te herkennen:
+ * zes sociale links zien er in een beschrijving identiek uit, en dan lijkt een normale
+ * doorloop op een cyclus van één element.
+ *
+ * De maat voor "geen val" is dat de focus het gebied uit eigen beweging verlaat. Blijft hij
+ * binnen en herhaalt zich een korte reeks terwijl er meer focusbare elementen zijn, dan zit
+ * de focus vast en staan de betrokken elementen in de uitkomst.
+ */
+async function getToetsenbordval(url: string, flags: Flags) {
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const heelDePagina = flags.scope === 'pagina';
+  // Een val kan één kant op zitten: eruit met Tab lukt wel, met Shift+Tab niet. Het
+  // criterium vraagt dat je weg kunt komen, niet dat je vooruit weg kunt komen.
+  const achteruit = flags.achteruit === 'true';
+  const max = parseInt(flags.max || '200', 10);
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      // Eerst typen, als daarom gevraagd is.
+      //
+      // Een suggestielijst onder een zoekveld bestaat pas nadat er iets is ingetypt, en juist
+      // zo'n lijst is een klassieke val: de pijltjes gaan erin, en Tab komt er soms niet uit.
+      // Zonder deze stap test je een pagina waarop die lijst er niet eens is.
+      if (flags['typ-in']) {
+        const veld = requireFlag(flags, 'typ-in');
+        const tekst = flags.typ && flags.typ !== 'true' ? flags.typ : 'a';
+        await page.click(veld);
+        await page.type(veld, tekst, { delay: 90 });
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+
+      // Merktekens zetten en tegelijk de risicoconstructies inventariseren.
+      const voorbereiding = await page.evaluate((heel: boolean) => {
+        const gebied =
+          (!heel &&
+            (document.querySelector('main') ||
+              document.querySelector('#skip-links-content'))) ||
+          document.body;
+        (gebied as HTMLElement).setAttribute('data-shift2-gebied', 'ja');
+
+        const focusbaar = Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable="true"]'
+          )
+        ).filter((el) => {
+          const st = getComputedStyle(el);
+          if (st.display === 'none' || st.visibility === 'hidden') return false;
+          if ((el as HTMLInputElement).disabled) return false;
+          if (el.getAttribute('tabindex') === '-1') return false;
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        });
+
+        focusbaar.forEach((el, i) => el.setAttribute('data-shift2-tab', String(i)));
+
+        // De constructies waar een val vrijwel altijd vandaan komt.
+        const risico: { wat: string; waar: string }[] = [];
+        for (const el of Array.from(
+          gebied.querySelectorAll('iframe, embed, object, video[controls], audio[controls]')
+        )) {
+          risico.push({
+            wat: el.tagName.toLowerCase(),
+            waar: el.getAttribute('src') || el.getAttribute('title') || '(zonder bron)',
+          });
+        }
+        for (const el of Array.from(gebied.querySelectorAll('[tabindex]'))) {
+          const t = parseInt(el.getAttribute('tabindex') || '0', 10);
+          if (t > 0) {
+            risico.push({
+              wat: `positieve tabindex (${t})`,
+              waar: el.tagName.toLowerCase() + (el.id ? `#${el.id}` : ''),
+            });
+          }
+        }
+        for (const el of Array.from(
+          gebied.querySelectorAll('[role="dialog"], [aria-modal="true"]')
+        )) {
+          risico.push({
+            wat: 'dialoog of modaal venster',
+            waar: el.tagName.toLowerCase() + (el.id ? `#${el.id}` : ''),
+          });
+        }
+
+        const inGebied = focusbaar.filter((el) => gebied.contains(el)).length;
+        return { focusbaar: focusbaar.length, inGebied, risico };
+      }, heelDePagina);
+
+      if (!voorbereiding.inGebied) {
+        throw new Error(
+          heelDePagina
+            ? 'Geen focusbare elementen op deze pagina.'
+            : 'Geen focusbare elementen in de main-content. Draai met --scope=pagina om de hele pagina te testen.'
+        );
+      }
+
+      // Vanaf de bovenkant van het document tabben.
+      await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        document.body.focus();
+      });
+
+      const stappen: { merk: number | null; beschrijving: string; inGebied: boolean }[] = [];
+      let binnenGeweest = false;
+      let verliet = false;
+      let escapeGetest: { waar: string; hielp: boolean } | null = null;
+
+      for (let i = 0; i < max; i++) {
+        if (achteruit) {
+          await page.keyboard.down('Shift');
+          await page.keyboard.press('Tab');
+          await page.keyboard.up('Shift');
+        } else {
+          await page.keyboard.press('Tab');
+        }
+        const nu = await page.evaluate(() => {
+          const el = document.activeElement as HTMLElement | null;
+          if (!el || el === document.body) {
+            return { merk: null, beschrijving: '(buiten de pagina)', inGebied: false, inDialoog: false };
+          }
+          const gebied = document.querySelector('[data-shift2-gebied]');
+          const merkAttr = el.getAttribute('data-shift2-tab');
+          const naam =
+            el.getAttribute('aria-label') ||
+            el.getAttribute('title') ||
+            (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40) ||
+            (el as HTMLInputElement).placeholder ||
+            '';
+          return {
+            merk: merkAttr === null ? null : parseInt(merkAttr, 10),
+            beschrijving: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${
+              naam ? ` "${naam}"` : ''
+            }`,
+            inGebied: !!gebied && gebied.contains(el),
+            inDialoog: !!el.closest('[role="dialog"], [aria-modal="true"]'),
+          };
+        });
+
+        stappen.push({ merk: nu.merk, beschrijving: nu.beschrijving, inGebied: nu.inGebied });
+
+        // Bij een dialoog hoort Escape eruit te helpen; dat is de tweede vraag van dit
+        // criterium en niet dezelfde als of Tab je eruit krijgt.
+        if (nu.inDialoog && !escapeGetest) {
+          await page.keyboard.press('Escape');
+          await new Promise((r) => setTimeout(r, 400));
+          const eruit = await page.evaluate(
+            () =>
+              !(document.activeElement as HTMLElement | null)?.closest(
+                '[role="dialog"], [aria-modal="true"]'
+              )
+          );
+          escapeGetest = { waar: nu.beschrijving, hielp: eruit };
+        }
+
+        if (nu.inGebied) binnenGeweest = true;
+        else if (binnenGeweest) {
+          verliet = true;
+          break;
+        }
+      }
+
+      // Een val: de focus komt niet uit het gebied en de laatste stappen herhalen een korte
+      // reeks terwijl er meer focusbare elementen zijn.
+      const bezocht = new Set(stappen.filter((s) => s.inGebied).map((s) => s.merk));
+      const staart = stappen.slice(-12).map((s) => s.merk);
+      const staartUniek = new Set(staart);
+      const val =
+        !verliet &&
+        binnenGeweest &&
+        staartUniek.size < Math.min(4, voorbereiding.inGebied) &&
+        bezocht.size < voorbereiding.inGebied;
+
+      const vastAan = val
+        ? Array.from(staartUniek)
+            .map((m) => stappen.find((s) => s.merk === m)?.beschrijving ?? `merk ${m}`)
+            .slice(0, 4)
+        : [];
+
+      const opname = await legOpnameVast(page, page.url(), 'toetsenbordval');
+
+      let volgorde: string | null = null;
+      try {
+        const dir = ensureOutputDir();
+        volgorde = path.join(
+          dir,
+          `${timestamp()}-${slugifyUrl(page.url())}-tabvolgorde.txt`
+        );
+        fs.writeFileSync(
+          volgorde,
+          [
+            `Tab-volgorde op ${page.url()}`,
+            `Gebied: ${heelDePagina ? 'de hele pagina' : 'de main-content'}`,
+            `Focusbaar in het gebied: ${voorbereiding.inGebied} van ${voorbereiding.focusbaar} op de pagina`,
+            '',
+            ...stappen.map(
+              (s, i) => `${String(i + 1).padStart(3)} ${s.inGebied ? 'in ' : 'uit'} ${s.beschrijving}`
+            ),
+          ].join('\n'),
+          'utf8'
+        );
+      } catch {
+        volgorde = null;
+      }
+
+      legVast({
+        commando: 'get-toetsenbordval',
+        argumenten: {
+          ...(klik ? { klik } : {}),
+          ...(heelDePagina ? { scope: 'pagina' } : {}),
+          ...(flags.max ? { max: String(max) } : {}),
+          ...(flags['typ-in'] ? { 'typ-in': flags['typ-in'] } : {}),
+          ...(flags.typ ? { typ: flags.typ } : {}),
+          ...(achteruit ? { achteruit: 'true' } : {}),
+        },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        schermafdruk: opname,
+        artefact: volgorde,
+        criteria: ['2.1.2'],
+        uitkomst: {
+          gebied: heelDePagina ? 'hele pagina' : 'main-content',
+          focusbaarInGebied: voorbereiding.inGebied,
+          tabsGebruikt: stappen.length,
+          uniekBezocht: bezocht.size,
+          focusVerlietHetGebied: verliet,
+          risicoconstructies: voorbereiding.risico.length,
+          val,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        omgeleid,
+        gebied: heelDePagina ? 'de hele pagina' : 'de main-content',
+        getypt: flags['typ-in'] ? `"${flags.typ ?? 'a'}" in ${flags['typ-in']}` : null,
+        focusbare_elementen_in_het_gebied: voorbereiding.inGebied,
+        focusbaar_op_de_hele_pagina: voorbereiding.focusbaar,
+        risicoconstructies: voorbereiding.risico.length
+          ? voorbereiding.risico
+          : 'geen iframes, mediaspelers, positieve tabindex of dialoogvensters',
+        richting: achteruit ? 'achteruit (Shift+Tab)' : 'vooruit (Tab)',
+        tabs_gebruikt: stappen.length,
+        uniek_bezocht: bezocht.size,
+        focus_verliet_het_gebied: verliet,
+        escape_bij_een_dialoog: escapeGetest ?? 'geen dialoog tegengekomen',
+        toetsenbordval: val,
+        zit_vast_aan: val ? vastAan : undefined,
+        tabvolgorde: volgorde,
+        schermafdruk: opname,
+        let_op:
+          'Dit toetst of je met Tab overal weer wegkomt. Of de focus zichtbaar is valt onder 2.4.7 en wordt hier niet gemeten. Een val die alleen optreedt in een schermlezermodus vind je hier ook niet.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+/**
  * Meet een pictogram tegen zijn achtergrond, op de werkelijke beeldpunten.
  *
  * Een omtrekmeting deugt hier niet. Een pictogramknop is meestal een doorzichtig linkvak om
@@ -3216,6 +3514,8 @@ async function main() {
       return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-reflow':
       return getReflow(requirePositional(positional, 0, 'url'), flags);
+    case 'get-toetsenbordval':
+      return getToetsenbordval(requirePositional(positional, 0, 'url'), flags);
     case 'get-nietteksten':
       return getNietTeksten(requirePositional(positional, 0, 'url'), flags);
     case 'get-pixelcontrast':
