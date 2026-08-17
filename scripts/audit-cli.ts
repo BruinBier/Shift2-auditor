@@ -1927,6 +1927,11 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     // `breedte` telt wél mee: een reflow-meting op 320 en op 1280 zijn twee metingen,
     // niet dezelfde meting overgedaan.
     const { klik: _klik, ...watGemeten } = r.argumenten ?? {};
+    // Een vlag die de standaardwaarde meegeeft is dezelfde meting als die vlag weglaten.
+    // `--scope=pagina` was ooit nodig en is nu de standaard; zonder deze regel staan de
+    // oude en de nieuwe aanroep als twee metingen op de kaart terwijl ze hetzelfde doen.
+    if (watGemeten.scope === 'pagina') delete watGemeten.scope;
+    if (watGemeten.max === '200') delete watGemeten.max;
     const vorm = `${r.commando}|${JSON.stringify(watGemeten)}`;
 
     // Eerst per sample verzamelen, en pas daarna over de criteria verdelen — op basis
@@ -2069,7 +2074,13 @@ async function legOpnameVast(
  */
 async function getToetsenbordval(url: string, flags: Flags) {
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
-  const heelDePagina = flags.scope === 'pagina';
+  // De hele pagina is de norm, niet de main-content.
+  //
+  // Een val in de header of de footer is net zo goed een val: wie daar vast komt te zitten
+  // komt nooit bij de inhoud. Beperken tot de main hoort bij het rapporteren, niet bij het
+  // meten — en het liet "Terug naar boven" onderaan buiten beeld. Met --scope=main kan het
+  // nog steeds, maar dan omdat je het wilt.
+  const heelDePagina = flags.scope !== 'main';
   // Een val kan één kant op zitten: eruit met Tab lukt wel, met Shift+Tab niet. Het
   // criterium vraagt dat je weg kunt komen, niet dat je vooruit weg kunt komen.
   const achteruit = flags.achteruit === 'true';
@@ -2181,11 +2192,36 @@ async function getToetsenbordval(url: string, flags: Flags) {
         );
       }
 
-      // Vanaf de bovenkant van het document tabben.
-      await page.evaluate(() => {
-        (document.activeElement as HTMLElement | null)?.blur();
-        document.body.focus();
-      });
+      // Het startpunt expliciet zetten, in plaats van het te laten gebeuren.
+      //
+      // `blur()` haalt de focus weg maar verzet het startpunt voor Tab niet: de browser
+      // onthoudt waar je was en gaat daarvandaan verder. Daardoor begon de achteruit-ronde
+      // halverwege de header en de typ-ronde bij de suggestielijst, en werd telkens maar een
+      // stuk van de pagina afgelopen. Body focusbaar maken met tabindex="-1" zet het
+      // startpunt wél terug naar het begin van het document.
+      //
+      // Bij achteruit moet je juist onderaan beginnen, anders ben je met de eerste
+      // Shift+Tab het document al uit. En is er getypt, dan blijft de focus staan waar het
+      // typen hem liet: dat is het hele punt van die ronde — kom je uit die widget weg.
+      let beginpunt: string;
+      if (flags['typ-in']) {
+        beginpunt = `in ${flags['typ-in']}, waar het typen de focus liet`;
+      } else if (achteruit) {
+        beginpunt = 'onderaan het document';
+        await page.evaluate(() => {
+          const alle = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-shift2-tab]')
+          );
+          alle[alle.length - 1]?.focus();
+        });
+      } else {
+        beginpunt = 'bovenaan het document';
+        await page.evaluate(() => {
+          (document.activeElement as HTMLElement | null)?.blur();
+          document.body.setAttribute('tabindex', '-1');
+          document.body.focus();
+        });
+      }
 
       const stappen: { merk: number | null; beschrijving: string; inGebied: boolean }[] = [];
       let binnenGeweest = false;
@@ -2285,6 +2321,7 @@ async function getToetsenbordval(url: string, flags: Flags) {
           [
             `Tab-volgorde op ${page.url()}`,
             `Gebied: ${heelDePagina ? 'de hele pagina' : 'de main-content'}`,
+            `Begonnen: ${beginpunt}, richting ${achteruit ? 'achteruit (Shift+Tab)' : 'vooruit (Tab)'}`,
             `Focusbaar in het gebied: ${voorbereiding.inGebied} van ${voorbereiding.focusbaar} op de pagina`,
             '',
             ...stappen.map(
@@ -2301,7 +2338,7 @@ async function getToetsenbordval(url: string, flags: Flags) {
         commando: 'get-toetsenbordval',
         argumenten: {
           ...(klik ? { klik } : {}),
-          ...(heelDePagina ? { scope: 'pagina' } : {}),
+          ...(heelDePagina ? {} : { scope: 'main' }),
           ...(flags.max ? { max: String(max) } : {}),
           ...(flags['typ-in'] ? { 'typ-in': flags['typ-in'] } : {}),
           ...(flags.typ ? { typ: flags.typ } : {}),
@@ -2316,6 +2353,7 @@ async function getToetsenbordval(url: string, flags: Flags) {
         criteria: ['2.1.2'],
         uitkomst: {
           gebied: heelDePagina ? 'hele pagina' : 'main-content',
+          beginpunt,
           focusbaarInGebied: voorbereiding.inGebied,
           tabsGebruikt: stappen.length,
           uniekBezocht: bezocht.size,
@@ -2337,6 +2375,7 @@ async function getToetsenbordval(url: string, flags: Flags) {
         risicoconstructies: voorbereiding.risico.length
           ? voorbereiding.risico
           : 'geen iframes, mediaspelers, positieve tabindex of dialoogvensters',
+        beginpunt,
         richting: achteruit ? 'achteruit (Shift+Tab)' : 'vooruit (Tab)',
         tabs_gebruikt: stappen.length,
         uniek_bezocht: bezocht.size,

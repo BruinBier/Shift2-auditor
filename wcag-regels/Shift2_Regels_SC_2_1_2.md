@@ -25,17 +25,32 @@ cyclus van één element. Het inventariseert daarnaast de risicoconstructies (`i
 `object`, mediaspelers met bedieningsknoppen, positieve `tabindex`, dialoogvensters) en drukt
 Escape zodra de focus in een dialoog belandt.
 
-### Vier rondes, niet één
+### De hele pagina, van buiten naar buiten
+
+De handeling die nagebootst wordt, in de woorden van Frits: **ga in de adresbalk staan, tab
+door de pagina helemaal naar onderen, langs "Terug naar boven", en dan weer de adresbalk in.**
+Dat is de test — niet een stuk van de pagina.
+
+Daarom is de hele pagina de norm en niet de main-content. Een val in de header of de footer
+is net zo goed een val: wie daar vast komt te zitten bereikt de inhoud nooit. Beperken tot de
+main hoort bij het rapporteren, niet bij het meten. Met `--scope=main` kan het nog, maar dan
+omdat je het wilt.
 
 | Ronde | Waarom |
 |---|---|
-| main-content vooruit | het eigenlijke onderzoeksgebied |
-| hele pagina vooruit | ter controle; een val in de header telt ook als hij buiten scope valt om te rapporteren |
+| vooruit vanaf de bovenkant | de gewone doorloop; het laatste element hoort gevolgd te worden door een Tab die het document verlaat |
+| achteruit vanaf de onderkant (`--achteruit=true`) | een val kan één kant op zitten: eruit met Tab lukt, met Shift+Tab niet |
 | met een widget open (`--typ-in`) | een suggestielijst onder een zoekveld bestaat pas ná typen. Zonder deze ronde test je een pagina waarop die lijst er niet eens is — en juist zo'n lijst is een klassieke val |
-| achteruit (`--achteruit=true`) | een val kan één kant op zitten: eruit met Tab lukt, met Shift+Tab niet |
 
-Kijk in het tabvolgorde-bestand of de volgorde klopt met wat je verwacht. Staat er iets in
-wat je niet had voorzien, dan meet je iets anders dan je denkt.
+**Let op het startpunt.** `blur()` haalt de focus weg maar verzet het startpunt voor Tab niet:
+de browser onthoudt waar je was en gaat daarvandaan verder. Daardoor begon een ronde
+halverwege de header en werd maar een stuk van de pagina afgelopen, zonder dat daar iets van
+te zien was. Het commando zet het startpunt nu expliciet en schrijft het bovenaan het
+tabvolgorde-bestand; controleer dat het staat waar je het verwacht.
+
+Kijk in dat bestand ook of de volgorde klopt met wat je verwacht, en of de laatste regel
+`(buiten de pagina)` is. Staat er iets in wat je niet had voorzien, dan meet je iets anders
+dan je denkt.
 
 ### Alleen de main-content
 
@@ -54,12 +69,16 @@ mediaspelers. Ter controle 200 tabs over de hele pagina: 90 unieke elementen, cy
 rond, geen val. Oordeel: voldoet. Frits vroeg of Claude dit criterium zelf kon oppakken; dat
 kan.
 
-Opnieuw gemeten op 2026-08-17, nu met het vaste commando. Main-content: 14 focusbare
-elementen, alle 14 bereikt, focus eruit na 23 tabs. Hele pagina: 40 van 40, eruit na 41 tabs.
-Met de zoeksuggesties open (getypt: "afval") kom je vanuit de lijst op "Meer resultaten", dan
-de zoekknop, en verder; eruit na 33 tabs. Achteruit met Shift+Tab eruit in 9. De openstaande
-vraag aan de onderzoeker ging precies over die suggestielijst en over de ReadSpeaker-balk;
-beide blijken in de main te vallen en zijn dus meegenomen.
+Opnieuw gemeten op 2026-08-17, nu met het vaste commando. Vooruit vanaf de bovenkant: 40
+focusbare elementen, alle 40 bereikt, "Terug naar boven" als laatste en daarna het document
+uit. Achteruit vanaf de onderkant: in 39 stappen terug tot "Naar de inhoud gaan", ook daar
+het document uit. Met de zoeksuggesties open (getypt: "afval") kom je vanuit de lijst op
+"Meer resultaten", dan de zoekknop, en verder tot buiten het document. De openstaande vraag
+aan de onderzoeker ging precies over die suggestielijst en over de ReadSpeaker-balk; beide
+zijn meegenomen.
+
+De eerste opzet mat alleen de main-content en miste daardoor "Terug naar boven" onderaan.
+Frits: "de hele pagina moet telkens worden getoetst."
 
 ## Regels
 
