@@ -2530,26 +2530,9 @@ async function getNietTeksten(url: string, flags: Flags) {
           // "voldoet" viel er dan niets na te kijken, en juist een uitkomst van 21:1 of
           // 6,69:1 is er een die iemand moet kunnen wantrouwen. Een meting zonder beeld is
           // een bewering, of ze nu goed of slecht uitpakt.
-          let uitsnede: string | null = null;
-          const bewaar = (base64: string, achtervoegsel: string, bijschrift: string) => {
-            try {
-              const dir = ensureOutputDir();
-              const bestand = path.join(
-                dir,
-                `${timestamp()}-${slugifyUrl(page.url())}-${k.soort}-${uitkomsten.length}-${achtervoegsel}.png`
-              );
-              fs.writeFileSync(bestand, Buffer.from(base64, 'base64'));
-              beelden.push({ pad: bestand, bijschrift });
-              return bestand;
-            } catch {
-              return null;
-            }
-          };
-          const wat = k.naam || k.pad;
-          uitsnede = bewaar(rust.opname, 'rust', `${wat} — rust, ${rust.slechtste}:1`);
-          if (zweef) {
-            bewaar(zweef.opname, 'zweef', `${wat} — muis erop, ${zweef.slechtste}:1`);
-          }
+          // De opnamen worden hier nog niet weggeschreven; dat gebeurt na afloop, per
+          // groep. Zes sociale pictogrammen met dezelfde uitkomst leverden anders zes
+          // identieke paren op, en dan zoekt niemand meer wat er te zien valt.
           uitkomsten.push({
             soort: k.soort,
             element: k.pad,
@@ -2557,7 +2540,8 @@ async function getNietTeksten(url: string, flags: Flags) {
             slechtste: `${slechtste}:1`,
             ...bijzonderheden,
             voldoet: slechtste >= 3,
-            uitsnede,
+            _rust: rust.opname,
+            _zweef: zweef?.opname ?? null,
           });
         } catch (err) {
           uitkomsten.push({
@@ -2567,6 +2551,61 @@ async function getNietTeksten(url: string, flags: Flags) {
             fout: String(err).slice(0, 160),
           });
         }
+      }
+
+      // Eén voorbeeldpaar per groep, niet per element.
+      //
+      // Een pagina met zes sociale pictogrammen die alle zes hetzelfde doen, leverde twaalf
+      // opnamen op waarvan er tien niets toevoegden. Groeperen op wat er gemeten is én wat
+      // eruit kwam: verschilt er iets, dan is het een eigen groep en krijgt het een eigen
+      // voorbeeld. Het aantal gaat mee, zodat de zes niet wegvallen achter het ene beeld.
+      //
+      // Beide toestanden blijven staan waar ze verschillen. Alleen de zweefopname bewaren
+      // klinkt zuiniger, maar een grijs pictogram zegt op zichzelf niets — het gaat om het
+      // verschil met de ruststand ernaast.
+      const groepen = new Map<string, { voorbeeld: any; aantal: number }>();
+      for (const u of uitkomsten) {
+        if (u.fout) continue;
+        const sleutel = `${u.soort}|${u.element}|${u.slechtste}|${
+          typeof u.zweef === 'string' ? u.zweef : u.zweef?.verhouding
+        }|${u.rust?.verhouding}`;
+        const bestaand = groepen.get(sleutel);
+        if (bestaand) bestaand.aantal++;
+        else groepen.set(sleutel, { voorbeeld: u, aantal: 1 });
+      }
+      for (const { voorbeeld, aantal } of Array.from(groepen.values())) {
+        const wat = voorbeeld.naam || voorbeeld.element;
+        const erbij = aantal > 1 ? ` (${aantal} elementen, zelfde uitkomst)` : '';
+        const bewaar = (base64: string, achtervoegsel: string, bijschrift: string) => {
+          try {
+            const dir = ensureOutputDir();
+            const bestand = path.join(
+              dir,
+              `${timestamp()}-${slugifyUrl(page.url())}-${voorbeeld.soort}-${beelden.length}-${achtervoegsel}.png`
+            );
+            fs.writeFileSync(bestand, Buffer.from(base64, 'base64'));
+            beelden.push({ pad: bestand, bijschrift });
+          } catch {
+            /* een mislukte opname mag de meting niet ongeldig maken */
+          }
+        };
+        const zweefVerhouding =
+          typeof voorbeeld.zweef === 'string' ? null : voorbeeld.zweef?.verhouding;
+        const verschilt = zweefVerhouding && zweefVerhouding !== voorbeeld.rust?.verhouding;
+        bewaar(
+          voorbeeld._rust,
+          'rust',
+          `${wat} — ${verschilt ? 'rust' : 'rust en muis erop gelijk'}, ${voorbeeld.rust?.verhouding}${erbij}`
+        );
+        if (verschilt && voorbeeld._zweef) {
+          bewaar(voorbeeld._zweef, 'zweef', `${wat} — muis erop, ${zweefVerhouding}${erbij}`);
+        }
+        voorbeeld.aantalGelijk = aantal;
+      }
+      // De ruwe opnamen horen niet in de uitvoer; die zijn nu bestanden.
+      for (const u of uitkomsten) {
+        delete u._rust;
+        delete u._zweef;
       }
 
       const tekort = uitkomsten.filter((u) => u.voldoet === false);
