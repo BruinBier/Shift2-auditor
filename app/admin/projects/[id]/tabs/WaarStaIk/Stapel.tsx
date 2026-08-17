@@ -1334,18 +1334,36 @@ export default function Stapel({
           </p>
 
           <div className="mt-3">
-            <p className="text-xs text-gray-500">
-              Een tweede agent liep de bewijsvoering na
-              {controle?.bevestigd === true && ' — bevestigd'}
-              {controle?.bevestigd === false && ' — niet bevestigd'}
-            </p>
+            {/* Wat dit is, in plaats van een naam die niemand kan plaatsen.
+                "Een tweede agent liep de bewijsvoering na — nee, dat is niet gebeurd"
+                noemt eerst iets en ontkent het dan, en laat in het midden waar het over
+                gaat. Het gaat om de tweede fase van de audit-workflow: een aparte agent
+                legt de onderbouwing langs de checklist in Shift2_Bewijsvoering.md. Die
+                draait alleen mee als de workflow het oordeel maakt.
+
+                Weglaten kan niet: dan ziet "niet gecontroleerd" er hetzelfde uit als
+                "gecontroleerd en in orde", en dat is de fout waar dit hele tabblad voor
+                bestaat. */}
             {!controle?.punten?.length ? (
               <p className="text-sm text-gray-500">
-                Nee, dat is bij dit oordeel niet gebeurd.
+                De onderbouwing is niet apart langs de bewijsvoeringsregels gelegd. Die
+                controle draait mee met de audit-workflow;{' '}
+                {cel.bron === 'gesprek'
+                  ? 'dit oordeel komt uit een gesprek.'
+                  : cel.bron === 'handmatig'
+                    ? 'dit oordeel is met de hand gezet.'
+                    : 'bij dit oordeel is die fase niet gedraaid.'}
               </p>
             ) : (
-              <ul className="mt-1 space-y-1">
-                {controle.punten.map((p, i) => (
+              <>
+                <p className="text-xs text-gray-500">
+                  De onderbouwing is door een tweede agent langs de bewijsvoeringsregels
+                  gelegd
+                  {controle.bevestigd === true && ' — het oordeel bleef staan'}
+                  {controle.bevestigd === false && ' — het oordeel hield geen stand'}
+                </p>
+                <ul className="mt-1 space-y-1">
+                  {controle.punten.map((p, i) => (
                   <li key={i} className="text-sm">
                     <span
                       className={
@@ -1361,12 +1379,13 @@ export default function Stapel({
                     <span className={p.uitkomst === 'nee' ? 'text-gray-900' : 'text-gray-600'}>
                       {p.punt}
                     </span>
-                    {p.toelichting && (
-                      <span className="text-gray-600"> — {p.toelichting}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                      {p.toelichting && (
+                        <span className="text-gray-600"> — {p.toelichting}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </div>
         </div>

@@ -1952,6 +1952,11 @@ async function koppelLogboek(projectId: string, flags: Flags) {
         // reden verandert, en die sturen we hier ongewijzigd mee. Zonder dit zou een
         // koppelactie de goedkeuringen van de onderzoeker kunnen intrekken.
         akkoord: c.akkoord,
+        // En de bestaande bron. Dit commando hangt alleen het meetspoor aan een oordeel
+        // dat er al ligt; waar dat oordeel vandaan kwam verandert daar niet door. Zonder
+        // dit stempelde elke koppelactie alles als 'workflow', en stond er op de kaart
+        // dat de workflow iets niet had gedaan bij een oordeel uit een gesprek.
+        bron: c.bron ?? 'workflow',
         verantwoording,
       };
     })

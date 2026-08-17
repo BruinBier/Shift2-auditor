@@ -60,7 +60,13 @@ export async function GET(
  * en criterium, dan wordt het bijgewerkt — een volgende auditronde overschrijft
  * de vorige in plaats van een tweede rij aan te maken.
  *
- * Body: { bron?, akkoord?, checks: [{ sampleItemId, criterionCode, status, reden?, akkoord? }] }
+ * Body: { bron?, akkoord?, checks: [{ sampleItemId, criterionCode, status, reden?, akkoord?, bron? }] }
+ *
+ * `bron` mag ook per oordeel mee. Dat is nodig voor koppel-logboek: dat commando hangt
+ * alleen het meetspoor aan bestaande oordelen en hoort niet te bepalen waar die vandaan
+ * kwamen. Zonder dit stempelde elke koppelactie alles als 'workflow', ook een oordeel dat
+ * uit een gesprek kwam — en dan staat er op de kaart dat de workflow iets niet gedaan
+ * heeft wat de workflow nooit had moeten doen.
  *
  * `akkoord` is de poort op sampleniveau: een oordeel dat een agent heeft geveld,
  * telt pas als de onderzoeker het heeft bevestigd. De workflow laat het leeg; het
@@ -137,6 +143,13 @@ export async function POST(
       const verantwoording = check.verantwoording ?? undefined;
       const controle = check.controle ?? undefined;
 
+      // Per oordeel mag de bron mee; anders geldt die van de body.
+      const bronVanDitOordeel: string = check.bron ?? bron;
+      if (!GELDIGE_BRON.has(bronVanDitOordeel)) {
+        fouten.push(`ongeldige bron "${bronVanDitOordeel}" bij ${criterionCode}`);
+        continue;
+      }
+
       // Een akkoord hoort bij een oordeel, niet bij een combinatie van sample en
       // criterium. Schrijft een nieuwe auditronde een ander oordeel of een andere
       // onderbouwing weg, dan slaat het oude akkoord nergens meer op en vervalt
@@ -169,7 +182,7 @@ export async function POST(
           wcagCriterionId,
           status,
           reden: nieuweReden,
-          bron: bron as any,
+          bron: bronVanDitOordeel as any,
           akkoord: akkoord as any,
           ...(verantwoording !== undefined ? { verantwoording } : {}),
           ...(controle !== undefined ? { controle } : {}),
@@ -177,7 +190,7 @@ export async function POST(
         update: {
           status,
           reden: nieuweReden,
-          bron: bron as any,
+          bron: bronVanDitOordeel as any,
           akkoord: nieuwAkkoord as any,
           checkedAt: new Date(),
           ...(verantwoording !== undefined ? { verantwoording } : {}),
