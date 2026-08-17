@@ -1172,7 +1172,16 @@ export default function Stapel({
                       {m.browser ? ` · ${m.browser}` : ''}
                       {m.uitkomst
                         ? ` · ${Object.entries(m.uitkomst)
-                            .map(([k, v]) => `${k}: ${v}`)
+                            // Een geneste waarde als tekst geeft "[object Object]", en dat
+                            // is precies de plek waar de uitsplitsing per zijde staat — de
+                            // interessantste helft van een randmeting.
+                            .map(([k, v]) =>
+                              v !== null && typeof v === 'object'
+                                ? `${k}: ${Object.entries(v as Record<string, unknown>)
+                                    .map(([z, w]) => `${z} ${w}`)
+                                    .join(' / ')}`
+                                : `${k}: ${v}`
+                            )
                             .join(', ')}`
                         : ''}
                     </p>
@@ -1298,46 +1307,68 @@ export default function Stapel({
         </div>
 
         <div className="mb-4 border-t border-gray-200 pt-3">
-          {/* "Nagekeken" alleen was misleidend: op een oordeel dat de onderzoeker zelf
-              had bevestigd stond "nog niet nagekeken". Zijn akkoord ís nakijken — het
-              zwaarste zelfs. Wat hier ontbreekt is iets anders: of een tweede agent de
-              bewijsvoering heeft afgelopen. Dat staat er nu, en het akkoord ernaast. */}
+          {/* Twee nakijkers, en die worden apart genoemd.
+              Eerder stond hier één kop over de tweede agent, met "Niet door een tweede
+              agent nagekeken" als er niets was — en dat las als "er is niet naar gekeken",
+              ook op een oordeel dat de onderzoeker zelf had bevestigd. Zijn akkoord ís
+              nakijken, en het zwaarste: zonder dat telt een oordeel nergens mee. Dus staat
+              dat bovenaan, in eigen woorden, en de tweede agent eronder. */}
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-            Nagekeken door een tweede agent
-            {controle?.bevestigd === true && ' · bevestigd'}
-            {controle?.bevestigd === false && ' · niet bevestigd'}
+            Nagekeken
           </p>
-          {!controle?.punten?.length ? (
-            <p className="text-sm text-gray-500">
-              Niet door een tweede agent nagekeken.
-              {cel.akkoord === 'akkoord' && ' Jij hebt dit oordeel wel bevestigd.'}
-              {cel.akkoord === 'afgewezen' && ' Jij hebt dit oordeel afgewezen.'}
+
+          <p
+            className={`text-sm ${
+              cel.akkoord === 'akkoord'
+                ? 'font-medium text-green-800'
+                : cel.akkoord === 'afgewezen'
+                  ? 'font-medium text-red-800'
+                  : 'text-amber-800'
+            }`}
+          >
+            {cel.akkoord === 'akkoord'
+              ? '✓ Door jou nagekeken en akkoord bevonden.'
+              : cel.akkoord === 'afgewezen'
+                ? '✗ Door jou afgewezen.'
+                : 'Nog niet door jou nagekeken — dit wacht op je akkoord.'}
+          </p>
+
+          <div className="mt-3">
+            <p className="text-xs text-gray-500">
+              Een tweede agent liep de bewijsvoering na
+              {controle?.bevestigd === true && ' — bevestigd'}
+              {controle?.bevestigd === false && ' — niet bevestigd'}
             </p>
-          ) : (
-            <ul className="space-y-1">
-              {controle.punten.map((p, i) => (
-                <li key={i} className="text-sm">
-                  <span
-                    className={
-                      p.uitkomst === 'nee'
-                        ? 'font-medium text-red-700'
-                        : p.uitkomst === 'ja'
-                          ? 'text-green-700'
-                          : 'text-gray-400'
-                    }
-                  >
-                    {TEKEN[p.uitkomst] ?? '—'}
-                  </span>{' '}
-                  <span className={p.uitkomst === 'nee' ? 'text-gray-900' : 'text-gray-600'}>
-                    {p.punt}
-                  </span>
-                  {p.toelichting && (
-                    <span className="text-gray-600"> — {p.toelichting}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+            {!controle?.punten?.length ? (
+              <p className="text-sm text-gray-500">
+                Nee, dat is bij dit oordeel niet gebeurd.
+              </p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {controle.punten.map((p, i) => (
+                  <li key={i} className="text-sm">
+                    <span
+                      className={
+                        p.uitkomst === 'nee'
+                          ? 'font-medium text-red-700'
+                          : p.uitkomst === 'ja'
+                            ? 'text-green-700'
+                            : 'text-gray-400'
+                      }
+                    >
+                      {TEKEN[p.uitkomst] ?? '—'}
+                    </span>{' '}
+                    <span className={p.uitkomst === 'nee' ? 'text-gray-900' : 'text-gray-600'}>
+                      {p.punt}
+                    </span>
+                    {p.toelichting && (
+                      <span className="text-gray-600"> — {p.toelichting}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </>
     );
