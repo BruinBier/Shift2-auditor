@@ -1307,12 +1307,18 @@ export default function Stapel({
         </div>
 
         <div className="mb-4 border-t border-gray-200 pt-3">
-          {/* Twee nakijkers, en die worden apart genoemd.
-              Eerder stond hier één kop over de tweede agent, met "Niet door een tweede
-              agent nagekeken" als er niets was — en dat las als "er is niet naar gekeken",
-              ook op een oordeel dat de onderzoeker zelf had bevestigd. Zijn akkoord ís
-              nakijken, en het zwaarste: zonder dat telt een oordeel nergens mee. Dus staat
-              dat bovenaan, in eigen woorden, en de tweede agent eronder. */}
+          {/* De onderzoeker is de controle. Niet een van twee.
+              Hier stond eerst een kop over een tweede agent, met op elke kaart de melding
+              dat die er niet langs was geweest. Dat zette het verkeerd om: de agent meet en
+              Frits controleert, dat ís het proces, en zijn akkoord is de poort waar alles
+              doorheen moet (docs/adr/0001-akkoord-als-poort.md). Die tweede agent is een
+              hulpje voor een ronde over twintig paginas tegelijk, geen norm waar zijn
+              oordeel bij achterblijft.
+
+              Het argument om zijn afwezigheid te tonen — anders ziet niet-gecontroleerd
+              eruit als gecontroleerd — gaat over de METINGEN, en die staan er nu allemaal,
+              met beeld en met de weergave erbij. Dus alleen noemen als hij er werkelijk
+              langs is geweest. */}
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
             Nagekeken
           </p>
@@ -1333,37 +1339,15 @@ export default function Stapel({
                 : 'Nog niet door jou nagekeken — dit wacht op je akkoord.'}
           </p>
 
-          <div className="mt-3">
-            {/* Wat dit is, in plaats van een naam die niemand kan plaatsen.
-                "Een tweede agent liep de bewijsvoering na — nee, dat is niet gebeurd"
-                noemt eerst iets en ontkent het dan, en laat in het midden waar het over
-                gaat. Het gaat om de tweede fase van de audit-workflow: een aparte agent
-                legt de onderbouwing langs de checklist in Shift2_Bewijsvoering.md. Die
-                draait alleen mee als de workflow het oordeel maakt.
-
-                Weglaten kan niet: dan ziet "niet gecontroleerd" er hetzelfde uit als
-                "gecontroleerd en in orde", en dat is de fout waar dit hele tabblad voor
-                bestaat. */}
-            {!controle?.punten?.length ? (
-              <p className="text-sm text-gray-500">
-                Er heeft niemand nagerekend of het verhaal hierboven klopt met wat er
-                werkelijk is gemeten. Dat doet een tweede agent, maar alleen als een pagina
-                in één ronde wordt nagelopen —{' '}
-                {cel.bron === 'gesprek'
-                  ? 'dit oordeel is hier in het gesprek ontstaan.'
-                  : cel.bron === 'handmatig'
-                    ? 'dit oordeel is met de hand gezet.'
-                    : 'bij dit oordeel is dat niet gebeurd.'}
+          {!!controle?.punten?.length && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-500">
+                Een tweede agent heeft het verhaal hierboven naast de metingen gelegd
+                {controle.bevestigd === true && ' — het oordeel bleef staan'}
+                {controle.bevestigd === false && ' — het oordeel hield geen stand'}
               </p>
-            ) : (
-              <>
-                <p className="text-xs text-gray-500">
-                  Een tweede agent heeft het verhaal hierboven naast de metingen gelegd
-                  {controle.bevestigd === true && ' — het oordeel bleef staan'}
-                  {controle.bevestigd === false && ' — het oordeel hield geen stand'}
-                </p>
-                <ul className="mt-1 space-y-1">
-                  {controle.punten.map((p, i) => (
+              <ul className="mt-1 space-y-1">
+                {controle.punten.map((p, i) => (
                   <li key={i} className="text-sm">
                     <span
                       className={
@@ -1379,15 +1363,14 @@ export default function Stapel({
                     <span className={p.uitkomst === 'nee' ? 'text-gray-900' : 'text-gray-600'}>
                       {p.punt}
                     </span>
-                      {p.toelichting && (
-                        <span className="text-gray-600"> — {p.toelichting}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
+                    {p.toelichting && (
+                      <span className="text-gray-600"> — {p.toelichting}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </>
     );
