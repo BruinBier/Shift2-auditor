@@ -47,23 +47,40 @@ Staat het element op een foto, een verloop of een halfdoorzichtige laag, dan geb
 leest de werkelijke beeldpunten uit en geeft de slechtste verhouding per zijde, met een
 uitsnede op acht keer van elke zijde die onder de 3:1 blijft.
 
-Drie dingen die de meting zelf fout doen als je ze niet weet:
+**In wélke weergave je meet, is de eerste vraag — niet de laatste.** Heeft de site een
+hoogcontrastknop die zelf voldoet, dan wordt de standaardweergave niet meer inhoudelijk op
+contrast getoetst en gaat het om de weergave ná het aanzetten. Dat is stap 2 uit
+`Shift2_Regels_SC_1_4_3.md` en die geldt hier onverkort:
+
+```
+npm run cli -- get-pixelcontrast <url> --selector=<css> --klik="tekst:Contrast verhogen"
+```
+
+Doe dat headless, niet in de auditsessie: de hoogcontrastweergave blijft in `localStorage`
+staan en vervuilt anders elke volgende meting.
+
+Vier dingen die de meting zelf fout doen als je ze niet weet:
 
 | Valkuil | Wat er gebeurt | Hoe de meting het opvangt |
 |---|---|---|
-| Alleen de randlijn meten | Eén lichte plek in de foto laat een grijs lijntje van 1 beeldpunt wegvallen, terwijl de witte vulling het veld daar prima aanwijst | Randlijn én vulling worden gemeten; per plek geldt de beste van de twee |
+| De standaardweergave meten terwijl de site een geldige hoogcontrastknop heeft | Je beoordeelt een weergave die niet meetelt | `--klik`; de uitkomst vermeldt in `weergave` welke gemeten is |
+| Eén vast aftastpunt gebruiken | Een randlijn van één beeldpunt ligt bij een element dat op een halve beeldpunt begint niet waar je hem verwacht, en dan mis je hem volledig | Een bandje van vijf beeldpunten naar binnen; de beste daarvan telt, en `diepte` zegt waar hij zat |
+| Alleen de randlijn of alleen de vulling nemen | Een element mag zich door allebei onderscheiden; op de plek waar de achtergrond net zo licht is als een grijs lijntje wijst het witte vlak het veld nog prima aan | Zit in datzelfde bandje |
 | De hoeken meemeten | Bij een afgeronde hoek kijkt een rechte omtrek langs het element heen: binnen én buiten wijzen naar de achtergrond, en er komt 1:1 uit op een element dat verder voldoet | De ronding wordt uit de opmaak gelezen en die strook overgeslagen |
-| Het omhulsel nemen in plaats van het element | Meet je alleen het `input`, dan grenst de rechterzijde aan de zoekknop en niet aan de achtergrond | De dwarsdoorsnede in de uitkomst laat zien waar de rand werkelijk ligt |
 
-Kijk altijd naar `dwarsdoorsnede_bovenrand` in de uitkomst. Zie je daar niet eerst de
-achtergrond en dan de vulling, dan meet je niet de rand maar iets ernaast, en is de uitkomst
-waardeloos — hoe geloofwaardig het getal er ook uitziet.
+**Keur nooit af op het getal alleen — leg de uitsnede ernaast.** Bij de onderrand van deze
+zoekbalk meldde de meting 1,86:1, wit tegen lichtgrijs, terwijl op de uitsnede een zwarte lijn
+stond die het gewoon goed deed: het aftastpunt lag één beeldpunt naast de rand. Kijk ook naar
+`dwarsdoorsnede_bovenrand`; staat daar niet eerst de achtergrond en dan de vulling, dan meet je
+iets anders dan de rand, hoe geloofwaardig het getal er ook uitziet.
 
 Aanleiding (2026-08-17): de zoekbalk op de homepage van heuvelrug.nl staat op een foto. Gemeten
-per zijde: links 8,33:1, boven 1,48:1, onder 1,35:1, rechts 1,02:1. De drie zijden die
-tekortkomen zijn alle drie de **zoekknop** (`#007373`) tegen het blad; het witte veld zelf haalt
-overal ruim de eis. Zonder de uitsplitsing per zijde zou hier "1,02:1, valt af" hebben gestaan
-over een veld dat het gewoon goed doet.
+in de hoogcontrastweergave — de weergave die telt, want de knop van deze site voldoet met
+5,68:1: links 7,57:1, boven 2,56:1, onder 2,09:1, rechts 1,93:1. De drie zijden die tekortkomen
+zijn alle drie de **zoekknop**, die in die weergave zwart is en tegen een donker stuk foto
+staat; het witte veld zelf haalt de eis. De knop blijft aanwijsbaar: het witte vergrootglas erop
+en de grens met het witte veld ernaast halen allebei 21:1. Zonder de uitsplitsing per zijde zou
+hier "1,93:1, valt af" hebben gestaan over een balk die het grotendeels goed doet.
 
 ## Alleen wat je NODIG hebt om iets te begrijpen of te bedienen
 

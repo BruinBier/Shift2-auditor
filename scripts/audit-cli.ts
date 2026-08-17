@@ -1990,13 +1990,49 @@ async function getPixelContrast(url: string, flags: Flags) {
   const doel = requireFlag(flags, 'selector');
   const marge = parseInt(flags.marge || '6', 10);
   const breedte = flags.breedte ? parseInt(flags.breedte, 10) : null;
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
   const session = await getBrowser();
   try {
     const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
+      // Eerst de breedte, dan pas klikken: het instellen van de breedte laadt de pagina
+      // opnieuw, en dat zou een schakelaar die alleen in het geheugen van de pagina staat
+      // weer uitzetten.
       if (breedte) {
         await page.setViewport({ width: breedte, height: 1024, deviceScaleFactor: 1 });
         await page.reload({ waitUntil: 'networkidle2' }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      // Schakelen vóór het meten.
+      //
+      // Heeft de site een hoogcontrastknop die zelf voldoet, dan wordt de standaardweergave
+      // niet meer inhoudelijk op contrast getoetst en gaat het om de weergave ná het
+      // aanzetten. Zonder deze vlag meet dit commando altijd de verkeerde weergave.
+      // Zie de testvolgorde in Shift2_Regels_SC_1_4_3.md.
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
         await new Promise((r) => setTimeout(r, 1200));
       }
 
@@ -2057,20 +2093,25 @@ async function getPixelContrast(url: string, flags: Flags) {
           const d = ctx.getImageData(0, 0, doek.width, doek.height).data;
           const b = doek.width;
           const h = doek.height;
-          // Drie punten per plek, geen twee.
+          // Een bandje aftasten, geen los punt.
           //
-          // Een besturingselement is te onderscheiden door zijn rand óf door zijn vulling.
-          // Meet je alleen de randpixel, dan keur je af op de ene plek waar de foto net zo
-          // licht is als dat grijs, terwijl het witte vlak erbinnen het veld daar prima
-          // aanwijst. Meet je alleen de vulling, dan mis je elementen die enkel een lijntje
-          // hebben. Dus alle drie, en per plek geldt de beste van de twee verhoudingen.
-          const randlijn = marge + 1;
-          const vulling = marge + 4;
+          // Een besturingselement is te onderscheiden door zijn randlijn óf door zijn
+          // vulling, dus beide moeten meetellen: keur je op de randpixel alleen, dan valt
+          // een element af op de ene plek waar de achtergrond net zo licht is als een grijs
+          // lijntje, terwijl het witte vlak erbinnen het veld daar prima aanwijst.
+          //
+          // En het moet een band zijn, geen twee vaste punten. Een rand van één beeldpunt
+          // ligt bij een element dat op een halve beeldpunt begint niet waar je hem
+          // verwacht, en dan mis je hem volledig. Dat gebeurde bij de onderrand van de
+          // zoekbalk in hoogcontrast: de meting las daar wit tegen lichtgrijs en meldde
+          // 1,86:1, terwijl op de uitsnede een zwarte lijn staat die het gewoon goed doet.
+          //
+          // Vandaar: de eerste vijf beeldpunten binnen de rand, en daarvan telt de beste.
+          const bandDiepte = 5;
           const buitenrand = Math.max(0, marge - 3);
           const paren: {
             zijde: string;
-            rand: number[];
-            vul: number[];
+            band: number[][];
             buiten: number[];
             /** Plaats in de opname, zodat de slechtste plek terug te vinden is. */
             px: number;
@@ -2079,50 +2120,54 @@ async function getPixelContrast(url: string, flags: Flags) {
 
           // Elke twee beeldpunten; elke pixel is overdaad.
           for (let x = marge + hoek; x < b - marge - hoek; x += 2) {
-            let r = (randlijn * b + x) * 4;
-            let v = (vulling * b + x) * 4;
+            const bovenBand: number[][] = [];
+            const onderBand: number[][] = [];
+            for (let k = 0; k < bandDiepte; k++) {
+              const bo = ((marge + k) * b + x) * 4;
+              bovenBand.push([d[bo], d[bo + 1], d[bo + 2]]);
+              const on = ((h - 1 - marge - k) * b + x) * 4;
+              onderBand.push([d[on], d[on + 1], d[on + 2]]);
+            }
             let j = (buitenrand * b + x) * 4;
             paren.push({
               zijde: 'boven',
-              rand: [d[r], d[r + 1], d[r + 2]],
-              vul: [d[v], d[v + 1], d[v + 2]],
+              band: bovenBand,
               buiten: [d[j], d[j + 1], d[j + 2]],
               px: x,
-              py: randlijn,
+              py: marge,
             });
-            r = ((h - 1 - randlijn) * b + x) * 4;
-            v = ((h - 1 - vulling) * b + x) * 4;
             j = ((h - 1 - buitenrand) * b + x) * 4;
             paren.push({
               zijde: 'onder',
-              rand: [d[r], d[r + 1], d[r + 2]],
-              vul: [d[v], d[v + 1], d[v + 2]],
+              band: onderBand,
               buiten: [d[j], d[j + 1], d[j + 2]],
               px: x,
-              py: h - 1 - randlijn,
+              py: h - 1 - marge,
             });
           }
           for (let y = marge + hoek; y < h - marge - hoek; y += 2) {
-            let r = (y * b + randlijn) * 4;
-            let v = (y * b + vulling) * 4;
+            const linksBand: number[][] = [];
+            const rechtsBand: number[][] = [];
+            for (let k = 0; k < bandDiepte; k++) {
+              const li = (y * b + marge + k) * 4;
+              linksBand.push([d[li], d[li + 1], d[li + 2]]);
+              const re = (y * b + (b - 1 - marge - k)) * 4;
+              rechtsBand.push([d[re], d[re + 1], d[re + 2]]);
+            }
             let j = (y * b + buitenrand) * 4;
             paren.push({
               zijde: 'links',
-              rand: [d[r], d[r + 1], d[r + 2]],
-              vul: [d[v], d[v + 1], d[v + 2]],
+              band: linksBand,
               buiten: [d[j], d[j + 1], d[j + 2]],
-              px: randlijn,
+              px: marge,
               py: y,
             });
-            r = (y * b + (b - 1 - randlijn)) * 4;
-            v = (y * b + (b - 1 - vulling)) * 4;
             j = (y * b + (b - 1 - buitenrand)) * 4;
             paren.push({
               zijde: 'rechts',
-              rand: [d[r], d[r + 1], d[r + 2]],
-              vul: [d[v], d[v + 1], d[v + 2]],
+              band: rechtsBand,
               buiten: [d[j], d[j + 1], d[j + 2]],
-              px: b - 1 - randlijn,
+              px: b - 1 - marge,
               py: y,
             });
           }
@@ -2162,28 +2207,36 @@ async function getPixelContrast(url: string, flags: Flags) {
         return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
       };
 
+      /** De beste verhouding binnen het bandje, en op welke diepte die zat. */
+      const besteInBand = (band: number[][], buiten: number[]) => {
+        let beste = 0;
+        let diepte = 0;
+        for (let k = 0; k < band.length; k++) {
+          const v = tegen(band[k], buiten);
+          if (v > beste) {
+            beste = v;
+            diepte = k;
+          }
+        }
+        return { verhouding: beste, diepte, kleur: band[diepte] ?? [0, 0, 0] };
+      };
+
       let meting = {
         verhouding: Infinity,
-        randVerhouding: 0,
-        vulVerhouding: 0,
-        rand: [0, 0, 0],
-        vul: [0, 0, 0],
+        diepte: 0,
+        binnen: [0, 0, 0],
         buiten: [0, 0, 0],
         zijde: '',
         px: 0,
         py: 0,
       };
       for (const p of banden.paren) {
-        const viaRand = tegen(p.rand, p.buiten);
-        const viaVulling = tegen(p.vul, p.buiten);
-        const beste = Math.max(viaRand, viaVulling);
-        if (beste < meting.verhouding) {
+        const b = besteInBand(p.band, p.buiten);
+        if (b.verhouding < meting.verhouding) {
           meting = {
-            verhouding: beste,
-            randVerhouding: viaRand,
-            vulVerhouding: viaVulling,
-            rand: p.rand,
-            vul: p.vul,
+            verhouding: b.verhouding,
+            diepte: b.diepte,
+            binnen: b.kleur,
             buiten: p.buiten,
             zijde: p.zijde,
             px: p.px,
@@ -2198,19 +2251,19 @@ async function getPixelContrast(url: string, flags: Flags) {
       // gesprek dan een veld dat overal wegvalt.
       const perZijde: Record<
         string,
-        { verhouding: number; px: number; py: number; buiten: number[]; rand: number[]; vul: number[] }
+        { verhouding: number; diepte: number; px: number; py: number; buiten: number[]; binnen: number[] }
       > = {};
       for (const p of banden.paren) {
-        const beste = Math.max(tegen(p.rand, p.buiten), tegen(p.vul, p.buiten));
+        const b = besteInBand(p.band, p.buiten);
         const huidig = perZijde[p.zijde];
-        if (!huidig || beste < huidig.verhouding) {
+        if (!huidig || b.verhouding < huidig.verhouding) {
           perZijde[p.zijde] = {
-            verhouding: beste,
+            verhouding: b.verhouding,
+            diepte: b.diepte,
             px: p.px,
             py: p.py,
             buiten: p.buiten,
-            rand: p.rand,
-            vul: p.vul,
+            binnen: b.kleur,
           };
         }
       }
@@ -2264,7 +2317,11 @@ async function getPixelContrast(url: string, flags: Flags) {
 
       legVast({
         commando: 'get-pixelcontrast',
-        argumenten: { selector: doel, ...(breedte ? { breedte: String(breedte) } : {}) },
+        argumenten: {
+          selector: doel,
+          ...(breedte ? { breedte: String(breedte) } : {}),
+          ...(klik ? { klik } : {}),
+        },
         url: gevraagdeUrl,
         eindUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
@@ -2274,8 +2331,8 @@ async function getPixelContrast(url: string, flags: Flags) {
         uitkomst: {
           slechtsteVerhouding: verhouding,
           zijde: meting.zijde,
-          randlijn: hex(meting.rand),
-          vulling: hex(meting.vul),
+          binnen: hex(meting.binnen),
+          diepte: meting.diepte,
           buiten: hex(meting.buiten),
           perZijde: Object.fromEntries(
             Object.entries(perZijde).map(([z, v]) => [z, Math.round(v.verhouding * 100) / 100])
@@ -2291,20 +2348,20 @@ async function getPixelContrast(url: string, flags: Flags) {
         omgeleid,
         selector: doel,
         breedte: breedte ? `${breedte}px` : '(standaard)',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         slechtste_punt: {
           zijde: meting.zijde,
           buiten_het_element: hex(meting.buiten),
-          randlijn: `${hex(meting.rand)} — ${rond(meting.randVerhouding)}:1`,
-          vulling: `${hex(meting.vul)} — ${rond(meting.vulVerhouding)}:1`,
-          beste_van_de_twee: `${verhouding}:1`,
-          onderscheidt_zich_door:
-            meting.vulVerhouding >= meting.randVerhouding ? 'de vulling' : 'de randlijn',
+          binnen_het_element: `${hex(meting.binnen)} (${meting.diepte} beeldpunt${
+            meting.diepte === 1 ? '' : 'en'
+          } naar binnen)`,
+          contrast: `${verhouding}:1`,
           plek_op_de_pagina: `${clip.x + meting.px}, ${clip.y + meting.py}`,
         },
         slechtste_per_zijde: Object.fromEntries(
           Object.entries(perZijde).map(([z, v]) => [
             z,
-            `${rond(v.verhouding)}:1 — binnen ${hex(v.vul)} / rand ${hex(v.rand)} / buiten ${hex(v.buiten)}`,
+            `${rond(v.verhouding)}:1 — ${hex(v.binnen)} op ${v.diepte} naar binnen, tegen ${hex(v.buiten)}`,
           ])
         ),
         eis: '3:1 (1.4.11)',
@@ -2320,7 +2377,7 @@ async function getPixelContrast(url: string, flags: Flags) {
         schermafdruk: bestand,
         uitsneden_per_zijde_onder_de_eis: uitsneden,
         let_op:
-          'Getoetst is het slechtste punt langs de omtrek, niet het gemiddelde: één lichte plek in een foto laat een witte begrenzing wegvallen, en daar gaat het om. Een element mag zich onderscheiden door zijn randlijn of door zijn vulling, dus de beste van de twee telt. Leg de schermafdruk ernaast; wijkt de dwarsdoorsnede af van wat je ziet, dan meet je niet de rand maar iets ernaast.',
+          'Getoetst is het slechtste punt langs de omtrek, niet het gemiddelde: één lichte plek in de achtergrond laat een begrenzing wegvallen, en daar gaat het om. Per plek wordt een bandje van vijf beeldpunten naar binnen afgetast en telt de beste daarvan, want een element mag zich onderscheiden door zijn randlijn of door zijn vulling en een rand van één beeldpunt ligt zelden precies waar je hem verwacht. Leg altijd de uitsnede ernaast voordat je afkeurt.',
       });
     } finally {
       await cleanup();

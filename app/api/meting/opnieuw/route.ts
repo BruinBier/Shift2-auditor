@@ -22,7 +22,7 @@ import { leesLogboek } from '@/scripts/lib/audit-log';
 const TOEGESTAAN: Record<string, { vlaggen: string[] }> = {
   'get-reflow': { vlaggen: ['breedte', 'hoogte'] },
   'get-contrast': { vlaggen: ['selector', 'klik'] },
-  'get-pixelcontrast': { vlaggen: ['selector', 'breedte', 'marge'] },
+  'get-pixelcontrast': { vlaggen: ['selector', 'breedte', 'marge', 'klik'] },
   'get-leesvolgorde': { vlaggen: ['zonder-css'] },
   'get-screenshot': { vlaggen: ['full-page', 'selector', 'breedte', 'klik', 'keep-cookie-banner'] },
   'get-html': { vlaggen: ['text', 'full'] },
