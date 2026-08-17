@@ -1338,10 +1338,24 @@ async function getContrast(url: string, flags: Flags) {
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
+        // Alleen aan 1.4.11 hangen als er werkelijk een rand is gemeten.
+        //
+        // Dit commando meet in de eerste plaats tekst tegen achtergrond, en dat is 1.4.3.
+        // Hing elke aanroep ook aan 1.4.11, dan vulde het spoor onder dat criterium zich
+        // met metingen die er niets over zeggen — en dan lijkt het alsof er een reeks
+        // niet-tekstuele elementen is nagelopen terwijl er alleen teksten zijn gemeten.
+        // Precies die verwarring leverde op de homepage vijf "bewijsstukken" op waar
+        // niemand voor gekozen had.
+        criteria: rand ? ['1.4.3', '1.4.11'] : ['1.4.3'],
         uitkomst: {
           tekstkleur: hex(voor),
           achtergrondkleur: hex(achter),
           contrast: Math.round(ratio * 100) / 100,
+          // De randmeting hoort in het logboek, anders is aan de regel niet te zien
+          // waarom hij wel of niet voor 1.4.11 meetelt.
+          ...(rand
+            ? { randkleur: rand.randkleur, randContrast: rand.contrast, randVoldoet: rand.voldoet }
+            : { rand: 'geen zichtbare rand gevonden' }),
           eis,
           voldoet: ratio >= eis,
         },
@@ -1551,6 +1565,9 @@ async function getContrastAlles(url: string, flags: Flags) {
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
+        // De paginabrede variant meet uitsluitend teksten. Geen enkele rand, dus geen
+        // enkele uitspraak over 1.4.11.
+        criteria: ['1.4.3'],
         uitkomst: {
           gemetenElementen: ruw.length,
           combinaties: alle.length,
@@ -1846,7 +1863,8 @@ async function koppelLogboek(projectId: string, flags: Flags) {
   const ALGEMEEN = new Set(['get-html', 'get-screenshot', 'get-leesvolgorde']);
   // Per sample: laatste algemene actie per commando, en alle gerichte metingen per code.
   const algemeenPerSample = new Map<string, Map<string, any>>();
-  const gerichtPerSampleCode = new Map<string, Map<string, any>>();
+  /** Per sample: per meting de laatste run, met de criteria van díe run. */
+  const gerichtPerSample = new Map<string, Map<string, { meting: any; criteria: string[] }>>();
 
   for (const r of regels) {
     const sample = sampleVanUrl.get(kaal(r.eindUrl || r.url || ''));
@@ -1871,38 +1889,47 @@ async function koppelLogboek(projectId: string, flags: Flags) {
       algemeenPerSample.get(sample.id)!.set(r.commando, meting);
       continue;
     }
-    for (const code of r.criteria) {
-      const sleutel = `${sample.id}|${code}`;
-      if (!gerichtPerSampleCode.has(sleutel)) gerichtPerSampleCode.set(sleutel, new Map());
-      // Op commando plus wát er gemeten is, zodat dezelfde meting maar één keer op de
-      // kaart komt. Wie een meting herhaalt levert geen nieuw bewijs; alleen de laatste
-      // telt. Zonder dit vulde de kaart zich met zes identieke reflow-regels — mijn
-      // eigen testklikken op "Nog eens meten" — en was niet meer te zien wat er
-      // werkelijk was gedaan.
-      //
-      // `klik` telt bewust NIET mee in de sleutel. Meet je hetzelfde element eerst in de
-      // standaardweergave en daarna in de hoogcontrastweergave, dan is dat tweede een
-      // correctie op het eerste en geen tweede bewijsstuk. Bleef de eerste staan, dan
-      // stonden er onder een hoogcontrastoordeel opnamen in gewone kleuren die nergens
-      // meer op sloegen.
-      //
-      // `breedte` telt wél mee: een reflow-meting op 320 en op 1280 zijn twee metingen,
-      // niet dezelfde meting overgedaan.
-      const { klik: _klik, ...watGemeten } = r.argumenten ?? {};
-      const vorm = `${r.commando}|${JSON.stringify(watGemeten)}`;
-      const bestaand = gerichtPerSampleCode.get(sleutel)!.get(vorm);
-      gerichtPerSampleCode
-        .get(sleutel)!
-        .set(vorm, { ...meting, keer: (bestaand?.keer ?? 0) + 1 });
-    }
+    if (!r.criteria.length) continue;
+
+    // Op commando plus wát er gemeten is, zodat dezelfde meting maar één keer op de
+    // kaart komt. Wie een meting herhaalt levert geen nieuw bewijs; alleen de laatste
+    // telt. Zonder dit vulde de kaart zich met zes identieke reflow-regels — mijn
+    // eigen testklikken op "Nog eens meten" — en was niet meer te zien wat er
+    // werkelijk was gedaan.
+    //
+    // `klik` telt bewust NIET mee in de sleutel. Meet je hetzelfde element eerst in de
+    // standaardweergave en daarna in de hoogcontrastweergave, dan is dat tweede een
+    // correctie op het eerste en geen tweede bewijsstuk. Bleef de eerste staan, dan
+    // stonden er onder een hoogcontrastoordeel opnamen in gewone kleuren die nergens
+    // meer op sloegen.
+    //
+    // `breedte` telt wél mee: een reflow-meting op 320 en op 1280 zijn twee metingen,
+    // niet dezelfde meting overgedaan.
+    const { klik: _klik, ...watGemeten } = r.argumenten ?? {};
+    const vorm = `${r.commando}|${JSON.stringify(watGemeten)}`;
+
+    // Eerst per sample verzamelen, en pas daarna over de criteria verdelen — op basis
+    // van de criteria van de LAATSTE run.
+    //
+    // Anders blijft een oude regel eeuwig hangen onder een criterium waar hij niet meer
+    // bij hoort. `get-contrast` hing tot vandaag aan 1.4.3 én 1.4.11, ook als er geen
+    // rand te meten viel; een nieuwe run die alleen nog 1.4.3 opgeeft, verwijderde de
+    // oude regel onder 1.4.11 niet. Op de homepage stonden daardoor vijf tekstmetingen
+    // als bewijs onder een criterium dat over niet-tekstuele onderdelen gaat.
+    if (!gerichtPerSample.has(sample.id)) gerichtPerSample.set(sample.id, new Map());
+    const bestaand = gerichtPerSample.get(sample.id)!.get(vorm);
+    gerichtPerSample.get(sample.id)!.set(vorm, {
+      meting: { ...meting, keer: (bestaand?.meting.keer ?? 0) + 1 },
+      criteria: r.criteria,
+    });
   }
 
   const teSchrijven = checks
     .map((c) => {
       const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
-      const gericht = Array.from(
-        gerichtPerSampleCode.get(`${c.sampleItemId}|${c.criterionCode}`)?.values() ?? []
-      );
+      const gericht = Array.from(gerichtPerSample.get(c.sampleItemId)?.values() ?? [])
+        .filter((g) => g.criteria.includes(c.criterionCode))
+        .map((g) => g.meting);
       const verantwoording = [...algemeen, ...gericht];
       if (!verantwoording.length) return null;
       return {
