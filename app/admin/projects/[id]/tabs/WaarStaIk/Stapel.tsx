@@ -401,6 +401,28 @@ export function leesUitkomst(tekst: string): Uitkomst | null {
   return Object.keys(resultaat).length ? (resultaat as Uitkomst) : null;
 }
 
+/**
+ * Wat voor antwoord er bij een vraag past, per criterium.
+ *
+ * Hier stond één vast voorbeeld over een test met NVDA, en dat verscheen dus ook op een
+ * contrastvraag — waar een schermlezer niets te zoeken heeft. Een voorbeeld dat niet
+ * past stuurt de verkeerde kant op. Staat een criterium hier niet in, dan komt er een
+ * neutrale aanwijzing; dat is beter dan een misleidende.
+ */
+const VOORBEELD_PER_CRITERIUM: Record<string, string> = {
+  '1.4.3': 'Bijvoorbeeld: knop gemeten met de pipet, #ffffff op #007373 = 5,68:1',
+  '1.4.11': 'Bijvoorbeeld: rand van het zoekveld tegen de foto, slechtste punt 2,4:1',
+  '1.4.10': 'Bijvoorbeeld: op 320px geen horizontaal schuiven, menu klapt in en opent',
+  '1.4.4': 'Bijvoorbeeld: op 200% zoom blijft alles leesbaar, niets valt weg',
+  '2.1.1': 'Bijvoorbeeld: met Tab door het menu, alles bereikbaar, geen val',
+  '2.1.2': 'Bijvoorbeeld: met Tab uit de mediaspeler gekomen zonder de muis',
+  '2.4.3': 'Bijvoorbeeld: tabvolgorde loopt gelijk met de zichtbare volgorde',
+  '2.4.7': 'Bijvoorbeeld: focusrand zichtbaar op alle links en knoppen',
+  '2.5.3': 'Bijvoorbeeld: met NVDA voorgelezen, de naam bevat de zichtbare tekst',
+  '4.1.2': 'Bijvoorbeeld: met NVDA getest, de suggesties worden aangekondigd',
+  '4.1.3': 'Bijvoorbeeld: met NVDA getest, de melding wordt voorgelezen',
+};
+
 const IMPACT_KLEUR: Record<string, string> = {
   klein: 'bg-gray-100 text-gray-700',
   matig: 'bg-yellow-100 text-yellow-800',
@@ -1773,13 +1795,18 @@ export default function Stapel({
           </label>
           <p className="mb-2 text-xs text-gray-500">
             Wordt bewaard bij het oordeel, zodat later terug te zien is waarop het berust.
+            Schrijf op wat je hebt gedaan en wat je zag, met de waarden die je hebt gemeten.
           </p>
           <textarea
             value={reden}
             onChange={(e) => setReden(e.target.value)}
             rows={2}
             className="mb-3 w-full rounded border border-gray-300 p-2 text-sm"
-            placeholder="Bijvoorbeeld: met NVDA getest, de suggesties worden aangekondigd"
+            // Het voorbeeld hangt aan het criterium. Er stond vaste tekst over een test
+            // met NVDA, en die stond dus ook op een contrastvraag — waar een schermlezer
+            // niets te zoeken heeft. Een voorbeeld dat niet past, stuurt de verkeerde kant
+            // op; dan is geen voorbeeld beter.
+            placeholder={VOORBEELD_PER_CRITERIUM[huidig.cel.code] ?? 'Wat je hebt gedaan, en wat je zag'}
           />
 
           <div className="flex flex-wrap gap-2">
