@@ -1220,7 +1220,7 @@ export default function Stapel({
                       const beeld =
                         m.schermafdruk ?? (m.artefact && isBeeld(m.artefact) ? m.artefact : null);
                       const bestand = m.artefact && !isBeeld(m.artefact) ? m.artefact : null;
-                      if (!beeld && !bestand) return null;
+                      if (!beeld && !bestand && !m.schermafdrukken?.length) return null;
 
                       return (
                         <div className="mt-2 space-y-1">
@@ -1260,6 +1260,33 @@ export default function Stapel({
                                 />
                               </a>
                             </>
+                          )}
+                          {/* Meer dan één beeld bij één meting.
+                              Een sweep die veertig elementen afloopt en elk in twee
+                              toestanden bekijkt, heeft aan één opname niet genoeg: dat een
+                              pictogram op zweven verandert was daardoor wel gemeten maar
+                              nergens te zien, en dan is het weer een bewering. */}
+                          {!!m.schermafdrukken?.length && (
+                            <div className="flex flex-wrap gap-2">
+                              {m.schermafdrukken.map((b, j) => (
+                                <a
+                                  key={j}
+                                  href={bron(b.pad)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block max-w-[12rem]"
+                                >
+                                  <img
+                                    src={bron(b.pad)}
+                                    alt={b.bijschrift}
+                                    className="max-h-32 rounded border border-gray-300 bg-white"
+                                  />
+                                  <span className="mt-0.5 block text-xs text-gray-600">
+                                    {b.bijschrift}
+                                  </span>
+                                </a>
+                              ))}
+                            </div>
                           )}
                           {bestand && (
                             <a

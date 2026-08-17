@@ -53,6 +53,8 @@ export interface Meting {
   artefact?: string | null;
   /** Het beeld waarop de meting rust. Bij get-html iets anders dan het artefact. */
   schermafdruk?: string | null;
+  /** Extra beelden met bijschrift, bijvoorbeeld een element in rust en met de muis erop. */
+  schermafdrukken?: { pad: string; bijschrift: string }[] | null;
   /** In welke weergave gemeten is: standaard, of na het aanzetten van hoogcontrast. */
   weergave?: string | null;
   uitkomst?: Record<string, unknown>;

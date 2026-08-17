@@ -78,6 +78,15 @@ export interface LogRegel {
    * ernaast. Bij get-reflow zijn ze hetzelfde bestand.
    */
   schermafdruk?: string | null;
+  /**
+   * Extra beelden bij deze meting, met een bijschrift erbij.
+   *
+   * Eén opname is genoeg voor een meting van één ding, maar niet voor een meting die een
+   * hele pagina afloopt of die een element in twee toestanden bekijkt. "Zes elementen
+   * veranderen als de muis erop staat" is zonder beeld precies zo'n bewering als de
+   * kwalificaties die we eruit aan het halen zijn.
+   */
+  schermafdrukken?: { pad: string; bijschrift: string }[];
   /** Korte samenvatting van de uitkomst, zodat een hermeting te vergelijken is. */
   uitkomst?: Record<string, unknown>;
 }

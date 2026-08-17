@@ -1882,6 +1882,7 @@ async function koppelLogboek(projectId: string, flags: Flags) {
       // vandaag gemeten is geen schermafdruk meer.
       schermafdruk:
         r.schermafdruk ?? (r.artefact && /\.(png|jpe?g)$/i.test(r.artefact) ? r.artefact : null),
+      schermafdrukken: r.schermafdrukken ?? [],
       uitkomst: r.uitkomst,
     };
     if (!r.criteria.length && ALGEMEEN.has(r.commando)) {
@@ -2392,6 +2393,8 @@ async function getNietTeksten(url: string, flags: Flags) {
       // in de uitkomst: een stille afkapping leest als "alles nagelopen".
       const teMeten = kandidaten.gevonden.slice(0, max);
       const uitkomsten: any[] = [];
+      /** De uitsneden die bij deze sweep horen, met bijschrift. */
+      const beelden: { pad: string; bijschrift: string }[] = [];
       /**
        * Eén element meten in de toestand waarin het nu staat.
        *
@@ -2499,20 +2502,33 @@ async function getNietTeksten(url: string, flags: Flags) {
           const ruweOpname =
             zweef && zweef.slechtste < rust.slechtste ? zweef.opname : rust.opname;
 
+          // Elk gemeten element krijgt zijn opnamen, in beide toestanden, ongeacht de
+          // uitkomst.
+          //
+          // Hier stond eerst "alleen bij een tekort". Dat was een regel die ik zelf had
+          // bedacht om de map niet vol te laten lopen, en dat is de verkeerde afweging: bij
+          // "voldoet" viel er dan niets na te kijken, en juist een uitkomst van 21:1 of
+          // 6,69:1 is er een die iemand moet kunnen wantrouwen. Een meting zonder beeld is
+          // een bewering, of ze nu goed of slecht uitpakt.
           let uitsnede: string | null = null;
-          if (slechtste < 3) {
-            // Alleen bij een tekort een uitsnede: bij veertig elementen zou een opname per
-            // stuk de map vullen met beeld waar niemand naar kijkt.
+          const bewaar = (base64: string, achtervoegsel: string, bijschrift: string) => {
             try {
               const dir = ensureOutputDir();
-              uitsnede = path.join(
+              const bestand = path.join(
                 dir,
-                `${timestamp()}-${slugifyUrl(page.url())}-${k.soort}-${uitkomsten.length}.png`
+                `${timestamp()}-${slugifyUrl(page.url())}-${k.soort}-${uitkomsten.length}-${achtervoegsel}.png`
               );
-              fs.writeFileSync(uitsnede, Buffer.from(ruweOpname, 'base64'));
+              fs.writeFileSync(bestand, Buffer.from(base64, 'base64'));
+              beelden.push({ pad: bestand, bijschrift });
+              return bestand;
             } catch {
-              uitsnede = null;
+              return null;
             }
+          };
+          const wat = k.naam || k.pad;
+          uitsnede = bewaar(rust.opname, 'rust', `${wat} — rust, ${rust.slechtste}:1`);
+          if (zweef) {
+            bewaar(zweef.opname, 'zweef', `${wat} — muis erop, ${zweef.slechtste}:1`);
           }
           uitkomsten.push({
             soort: k.soort,
@@ -2592,6 +2608,7 @@ async function getNietTeksten(url: string, flags: Flags) {
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
+        schermafdrukken: beelden,
         artefact: overzicht,
         criteria: ['1.4.11'],
         uitkomst: {
