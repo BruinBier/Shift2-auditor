@@ -1929,7 +1929,18 @@ async function koppelLogboek(projectId: string, flags: Flags) {
       const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
       const gericht = Array.from(gerichtPerSample.get(c.sampleItemId)?.values() ?? [])
         .filter((g) => g.criteria.includes(c.criterionCode))
-        .map((g) => g.meting);
+        .map((g) => g.meting)
+        // Op reikwijdte, niet op tijd.
+        //
+        // Een meting die de hele pagina afloopt zegt wát er onder dit criterium valt; de
+        // metingen van losse elementen zijn de uitwerking daarvan. Op tijd gesorteerd
+        // belandde `get-nietteksten` onderaan omdat hij toevallig het laatst gedraaid was,
+        // en las de kaart van detail naar overzicht. Elementmetingen houden onderling wel
+        // hun volgorde: sort in JavaScript is stabiel.
+        .sort((a, b) => {
+          const breed = (m: any) => (m.argumenten?.selector ? 1 : 0);
+          return breed(a) - breed(b);
+        });
       const verantwoording = [...algemeen, ...gericht];
       if (!verantwoording.length) return null;
       return {
