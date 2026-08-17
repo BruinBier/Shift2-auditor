@@ -101,7 +101,10 @@ als ze alle vier voldoen. Dit commando loopt alle bedienbare elementen af, bepaa
 welke eronder vallen — een knop met alleen `sr-only`-tekst telt als pictogram, en dat zie je in
 opgehaalde HTML niet — en meet die. Lees de lijst `overgeslagen_met_reden` na, en controleer dat
 de aantallen optellen. Een pictogram wordt anders gemeten dan een veldrand: het doorzichtige
-linkvak om een svg heeft geen rand, dus daar telt de tekening tegen zijn achtergrond.
+linkvak om een svg heeft geen rand, dus daar telt de tekening tegen zijn achtergrond. Elk
+element wordt in ruststand én met de muis erop gemeten, want 1.4.11 geldt ook voor de
+toestanden van een element; het strengste van de twee telt. Focustoestanden zitten er nog niet
+in.
 
 **Staat een element op een foto of een verloop, dan zeggen stijlwaarden niets.** `getComputedStyle`
 geeft daar `rgba(0,0,0,0)`, en rekenen met die waarden levert ten onrechte "voldoet" op.

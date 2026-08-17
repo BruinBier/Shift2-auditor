@@ -54,6 +54,21 @@ Zichtbare tekst wordt in de browser bepaald, niet uit de HTML. Een knop met een 
 heeft in de code tekst en op het scherm niet, en telt dus als pictogram. Dat verschil is in
 opgehaalde HTML niet te zien.
 
+**Meet ook de toestanden, niet alleen de ruststand.** 1.4.11 geldt voor de weergaven die een
+element aanneemt. Wisselt een knop op zweven van kleur, dan is dat een tweede weergave die de
+eis net zo goed moet halen — en die zie je in de ruststand niet. `get-nietteksten` zet de muis
+op elk element en meet opnieuw; het strengste van de twee bepaalt het oordeel. Op de homepage
+gaan de sociale pictogrammen van 21:1 naar 6,69:1 op zweven: een echte verandering, maar ruim
+boven de eis.
+
+Valkuil bij die tweede meting: de muis op een element zetten scrollt het in beeld. Vanaf dat
+moment lopen venstercoördinaten en paginacoördinaten uiteen, en fotografeer je een leeg stuk
+achtergrond dat keurig 1:1 oplevert. Vijf pictogrammen kelderden zo van 21:1 naar 1:1 zonder
+dat er iets aan de hand was. Zie je een verhouding van precies 1:1, wantrouw dan eerst de
+meting.
+
+Focustoestanden zitten er nog **niet** in. Dat is een gat, en de uitvoer zegt dat ook.
+
 **Een pictogram meet je anders dan een veldrand.** Een pictogramknop is meestal een doorzichtig
 linkvak om een svg: dat vak heeft geen rand en geen vulling, dus een omtrekmeting geeft
 achtergrond tegen achtergrond en levert 1:1 op alle vier de zijden. Bij de eerste sweep over

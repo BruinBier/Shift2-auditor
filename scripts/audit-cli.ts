@@ -2245,6 +2245,10 @@ async function getNietTeksten(url: string, flags: Flags) {
       const kandidaten = await page.evaluate(() => {
         const gevonden: any[] = [];
         let onzichtbaar = 0;
+        // Een merkteken per kandidaat, zodat hetzelfde element straks is aan te wijzen om
+        // eroverheen te zweven. Een pad als `a.SocialLink…` komt zes keer voor op deze
+        // pagina; daarmee zou de muis zes keer over dezelfde link gaan.
+        let teller = 0;
         const overgeslagen: any[] = [];
         const bedienbaar = Array.from(
           document.querySelectorAll(
@@ -2297,11 +2301,13 @@ async function getNietTeksten(url: string, flags: Flags) {
             (tag === 'input' &&
               !['hidden', 'submit', 'button', 'reset', 'image'].includes(soortInvoer))
           ) {
+            el.setAttribute('data-shift2-nt', String(teller));
             gevonden.push({
               soort: 'veldrand',
               pad,
+              merk: teller++,
               naam,
-              vak: { x: r.left, y: r.top, w: r.width, h: r.height },
+              vak: { x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height },
               ronding: Math.max(
                 parseFloat(st.borderTopLeftRadius) || 0,
                 parseFloat(st.borderTopRightRadius) || 0,
@@ -2364,11 +2370,13 @@ async function getNietTeksten(url: string, flags: Flags) {
             continue;
           }
 
+          el.setAttribute('data-shift2-nt', String(teller));
           gevonden.push({
             soort: 'pictogram',
             pad,
+            merk: teller++,
             naam,
-            vak: { x: r.left, y: r.top, w: r.width, h: r.height },
+            vak: { x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height },
             ronding: Math.max(
               parseFloat(st.borderTopLeftRadius) || 0,
               parseFloat(st.borderTopRightRadius) || 0,
@@ -2384,51 +2392,112 @@ async function getNietTeksten(url: string, flags: Flags) {
       // in de uitkomst: een stille afkapping leest als "alles nagelopen".
       const teMeten = kandidaten.gevonden.slice(0, max);
       const uitkomsten: any[] = [];
-      for (const k of teMeten) {
-        try {
-          // Twee verschillende vragen, dus twee verschillende metingen.
-          //
-          // Bij een invoerveld gaat het om de begrenzing: waar houdt het veld op. Bij een
-          // pictogram om de tekening zelf — dat linkvak eromheen heeft vaak geen rand en geen
-          // vulling, en een omtrekmeting geeft daar achtergrond tegen achtergrond.
-          let slechtste: number;
-          let bijzonderheden: any;
-          let ruweOpname: string;
-
-          if (k.soort === 'pictogram') {
-            const p = await meetPictogram(page, k.vak, marge);
-            ruweOpname = p.opname;
-            if (!p.gevonden) {
-              uitkomsten.push({
-                soort: k.soort,
-                element: k.pad,
-                naam: k.naam || null,
-                fout:
-                  'Geen tekening gevonden die van de achtergrond afwijkt. Mogelijk laadt het pictogram niet, of staat het buiten het gemeten vak.',
-              });
-              continue;
-            }
-            slechtste = Math.round(p.tegenOngunstigste * 100) / 100;
-            bijzonderheden = {
+      /**
+       * Eén element meten in de toestand waarin het nu staat.
+       *
+       * Twee verschillende vragen, dus twee verschillende metingen. Bij een invoerveld gaat
+       * het om de begrenzing: waar houdt het veld op. Bij een pictogram om de tekening zelf
+       * — dat linkvak eromheen heeft vaak geen rand en geen vulling, en een omtrekmeting
+       * geeft daar achtergrond tegen achtergrond.
+       */
+      const meetKandidaat = async (
+        k: any,
+        vak: { x: number; y: number; w: number; h: number }
+      ) => {
+        if (k.soort === 'pictogram') {
+          const p = await meetPictogram(page, vak, marge);
+          if (!p.gevonden) return null;
+          return {
+            slechtste: Math.round(p.tegenOngunstigste * 100) / 100,
+            opname: p.opname,
+            bijzonderheden: {
               tekening: naarHex(p.tekening),
               achtergrond: naarHex(p.achtergrond),
               tegen_de_gewone_achtergrond: `${Math.round(p.tegenVaakste * 100) / 100}:1`,
-              tegen_het_ongunstigste_punt: `${slechtste}:1 (${naarHex(p.ongunstigsteAchtergrond)})`,
+              tegen_het_ongunstigste_punt: `${
+                Math.round(p.tegenOngunstigste * 100) / 100
+              }:1 (${naarHex(p.ongunstigsteAchtergrond)})`,
               dekking: `${p.dekking}% van het vak`,
-            };
-          } else {
-            const omtrek = await meetOmtrek(page, { ...k.vak, ronding: k.ronding }, marge);
-            ruweOpname = omtrek.opname;
-            slechtste = Math.round(omtrek.meting.verhouding * 100) / 100;
-            bijzonderheden = {
-              per_zijde: Object.fromEntries(
-                Object.entries(omtrek.perZijde).map(([z, v]: [string, any]) => [
-                  z,
-                  Math.round(v.verhouding * 100) / 100,
-                ])
-              ),
-            };
+            },
+          };
+        }
+        const omtrek = await meetOmtrek(page, { ...vak, ronding: k.ronding }, marge);
+        return {
+          slechtste: Math.round(omtrek.meting.verhouding * 100) / 100,
+          opname: omtrek.opname,
+          bijzonderheden: {
+            per_zijde: Object.fromEntries(
+              Object.entries(omtrek.perZijde).map(([z, v]: [string, any]) => [
+                z,
+                Math.round(v.verhouding * 100) / 100,
+              ])
+            ),
+          },
+        };
+      };
+
+      for (const k of teMeten) {
+        try {
+          const rust = await meetKandidaat(k, k.vak);
+          if (!rust) {
+            uitkomsten.push({
+              soort: k.soort,
+              element: k.pad,
+              naam: k.naam || null,
+              fout:
+                'Geen tekening gevonden die van de achtergrond afwijkt. Mogelijk laadt het pictogram niet, of staat het buiten het gemeten vak.',
+            });
+            continue;
           }
+
+          // En dezelfde meting terwijl de muis erop staat.
+          //
+          // 1.4.11 gaat ook over de toestanden van een element. Een knop die op zweven van
+          // kleur wisselt heeft dan een tweede weergave die de eis net zo goed moet halen,
+          // en die wordt in de ruststand niet gezien. De muis gaat na afloop weer weg,
+          // anders staat het volgende element te meten terwijl dit nog oplicht.
+          let zweef: Awaited<ReturnType<typeof meetKandidaat>> = null;
+          let zweefVak: { x: number; y: number; w: number; h: number } | null = null;
+          try {
+            await page.hover(`[data-shift2-nt="${k.merk}"]`);
+            await new Promise((r) => setTimeout(r, 300));
+            // Het vak opnieuw uitlezen: zweven kan een element laten groeien of verschuiven.
+            zweefVak = await page.evaluate((merk: number) => {
+              const el = document.querySelector(`[data-shift2-nt="${merk}"]`);
+              if (!el) return null;
+              const r = el.getBoundingClientRect();
+              // Bij de opname zijn de coordinaten paginabreed, bij getBoundingClientRect
+              // gelden ze binnen het venster. page.hover scrollt het element in beeld, dus
+              // vanaf dat moment lopen die twee uiteen -- en fotografeer je een leeg stuk
+              // achtergrond dat toevallig 1:1 oplevert.
+              return {
+                x: r.left + window.scrollX,
+                y: r.top + window.scrollY,
+                w: r.width,
+                h: r.height,
+              };
+            }, k.merk);
+            if (zweefVak && zweefVak.w >= 4 && zweefVak.h >= 4) {
+              zweef = await meetKandidaat(k, zweefVak);
+            }
+          } catch {
+            // Niet kunnen zweven mag de ruststandmeting niet ongeldig maken.
+          } finally {
+            await page.mouse.move(0, 0).catch(() => {});
+            await new Promise((r) => setTimeout(r, 150));
+          }
+
+          // Het strengste van de twee toestanden bepaalt het oordeel: allebei moeten ze de
+          // eis halen, dus de slechtste telt.
+          const slechtste = zweef ? Math.min(rust.slechtste, zweef.slechtste) : rust.slechtste;
+          const bijzonderheden = {
+            rust: { verhouding: `${rust.slechtste}:1`, ...rust.bijzonderheden },
+            zweef: zweef
+              ? { verhouding: `${zweef.slechtste}:1`, ...zweef.bijzonderheden }
+              : 'niet gemeten',
+          };
+          const ruweOpname =
+            zweef && zweef.slechtste < rust.slechtste ? zweef.opname : rust.opname;
 
           let uitsnede: string | null = null;
           if (slechtste < 3) {
@@ -2503,7 +2572,7 @@ async function getNietTeksten(url: string, flags: Flags) {
         overgeslagen_met_reden: kandidaten.overgeslagen,
         schermafdruk: opname,
         let_op:
-          'Dit zoekt bedieningselementen zonder zichtbare tekst en de randen van invoervelden. Focusindicatoren zitten er NIET in; die meet je met get-focus. Loop de overgeslagen lijst na: staat daar iets tussen dat wel betekenis draagt, dan meet je dat alsnog met get-pixelcontrast.',
+          'Dit zoekt bedieningselementen zonder zichtbare tekst en de randen van invoervelden, en meet ze in ruststand en met de muis erop -- 1.4.11 geldt ook voor de toestanden van een element. Het strengste van de twee bepaalt het oordeel. Focusindicatoren zitten er NOG NIET in. Loop de overgeslagen lijst na: staat daar iets tussen dat wel betekenis draagt, dan meet je dat alsnog met get-pixelcontrast.',
       });
     } finally {
       await cleanup();
@@ -2827,7 +2896,13 @@ async function getPixelContrast(url: string, flags: Flags) {
           st.borderBottomLeftRadius,
           st.borderBottomRightRadius,
         ].map((v) => parseFloat(v) || 0);
-        return { x: r.left, y: r.top, w: r.width, h: r.height, ronding: Math.max(...rondingen) };
+        return {
+          x: r.left + window.scrollX,
+          y: r.top + window.scrollY,
+          w: r.width,
+          h: r.height,
+          ronding: Math.max(...rondingen),
+        };
       }, doel);
       if (!vak) throw new Error(`Element niet gevonden: ${doel}`);
       if (vak.w < 2 || vak.h < 2) throw new Error('Element is te klein om een rand te meten');
