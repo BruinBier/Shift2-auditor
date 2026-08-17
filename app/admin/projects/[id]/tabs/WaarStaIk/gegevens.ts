@@ -43,6 +43,20 @@ export interface Bevinding {
   status: string;
 }
 
+/**
+ * Hoe een oordeel in de database is beland — niet waarop het rust.
+ *
+ * De ruwe waarden zijn `workflow`, `gesprek` en `handmatig`. Kaal weergegeven als "via
+ * gesprek", pal naast het oordeel, leest dat als de grond ervan: alsof er iets besloten is
+ * door erover te praten, terwijl er browsermetingen onder staan. Waar het oordeel op rust
+ * staat in de verantwoording; dit veld zegt alleen langs welke weg het is vastgelegd.
+ */
+export const HERKOMST: Record<string, string> = {
+  workflow: 'vastgelegd door de workflow',
+  gesprek: 'vastgelegd in een gesprek',
+  handmatig: 'met de hand ingevoerd',
+};
+
 /** Eén meting uit het logboek van de audit-CLI, zoals de kaart hem toont. */
 export interface Meting {
   commando: string;

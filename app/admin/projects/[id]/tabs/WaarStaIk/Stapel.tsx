@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { HERKOMST } from './gegevens';
 import type { Cel, Meting, Stand, Voorstel } from './gegevens';
 
 type Taak =
@@ -171,7 +172,7 @@ function bespreekBlok(opties: {
     r.push('');
     r.push('### Het oordeel van de auditor');
     r.push('');
-    r.push(`Status: ${cel.status}${cel.bron ? ` (via ${cel.bron})` : ''}`);
+    r.push(`Status: ${cel.status}${cel.bron ? ` — ${HERKOMST[cel.bron] ?? cel.bron}` : ''}`);
     r.push('');
     r.push(cel.reden ?? '(geen onderbouwing gegeven)');
   }
@@ -1565,7 +1566,7 @@ export default function Stapel({
             </span>
             {huidig.cel.bron && (
               <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-600">
-                via {huidig.cel.bron}
+                {HERKOMST[huidig.cel.bron] ?? huidig.cel.bron}
               </span>
             )}
           </div>
@@ -1911,7 +1912,7 @@ export default function Stapel({
             </span>
             {huidig.cel.bron && (
               <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-600">
-                via {huidig.cel.bron}
+                {HERKOMST[huidig.cel.bron] ?? huidig.cel.bron}
               </span>
             )}
           </div>

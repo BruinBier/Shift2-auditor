@@ -767,6 +767,28 @@ HTML/screenshot ophalen (dev server draait):
   npm run cli -- get-leesvolgorde ${sample.url ? sample.url : '<url>'} --zonder-css
 Heeft de sample geen URL, beoordeel dan op basis van titel/type en zet twijfelgevallen op 'niet_te_bepalen'.
 
+VERPLICHTE METINGEN. Deze criteria zijn te meten en mogen NOOIT op 'niet_te_bepalen' met een
+vraag aan de onderzoeker. Draai de commando's; de uitkomst is je onderbouwing. Ze schrijven
+zichzelf in het logboek, dus wat je niet hebt gedraaid staat er ook niet in.
+
+  1.4.10 — npm run cli -- get-reflow ${sample.url ? sample.url : '<url>'} --breedte=320
+  1.4.11 — npm run cli -- get-nietteksten ${sample.url ? sample.url : '<url>'}
+  2.1.2  — npm run cli -- get-toetsenbordval ${sample.url ? sample.url : '<url>'}
+           npm run cli -- get-toetsenbordval ${sample.url ? sample.url : '<url>'} --achteruit=true
+
+Bij 2.1.2 gaat het om de hele pagina, van buiten het document naar buiten het document: in de
+adresbalk beginnen, doortabben tot het laatste element onderaan, en dan hoort de volgende Tab
+het document weer te verlaten. Beide richtingen, want een val kan één kant op zitten. Staat er
+een widget op de pagina die pas na typen bestaat — een zoekveld met suggesties — draai dan ook
+\`--typ-in=<css> --typ=<woord>\`, want anders test je een pagina waarop die lijst er niet is.
+
+Bij 1.4.11 loopt \`get-nietteksten\` zelf op wat eronder valt en meet elk element in ruststand
+én met de muis erop. Lees de lijst \`overgeslagen_met_reden\` na: staat daar iets tussen dat wel
+betekenis draagt, meet dat dan alsnog met \`get-pixelcontrast --selector=<css>\`.
+
+Heeft de site een hoogcontrastknop die zelf voldoet, dan is DIE weergave de weergave die telt
+voor 1.4.3 en 1.4.11 — meet met \`--klik\`. Zie Shift2_Regels_SC_1_4_3.md, stap 2.
+
 DRAAI \`get-leesvolgorde --zonder-css\` ALS EERSTE, en bekijk de kale schermafdruk voordat
 je aan de criteria begint. Zonder opmaak valt in één blik te zien wat je in de HTML moet
 uitzoeken:

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import {
   CEL_KLEUR,
+  HERKOMST,
   OORDEEL_LABEL,
   STATUS_LABEL,
   type Cel,
@@ -160,7 +161,7 @@ export default function Matrix({
               <p className="text-sm text-gray-500">
                 {sampleTitel(gekozen.sampleId)} ·{' '}
                 {gekozen.status ? STATUS_LABEL[gekozen.status] : 'Nog niet beoordeeld'}
-                {gekozen.bron && ` · via ${gekozen.bron}`}
+                {gekozen.bron && ` · ${HERKOMST[gekozen.bron] ?? gekozen.bron}`}
               </p>
             </div>
             <button
