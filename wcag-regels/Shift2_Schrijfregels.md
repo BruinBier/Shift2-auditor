@@ -54,6 +54,19 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   de sociale media", niet "de links naar de sociale media van de gemeente". De bevinding staat
   al in het rapport van die organisatie. Wél noemen waar het inhoudelijk uitmaakt, zoals bij
   2.4.4 waar het probleem juist is dat de linktekst de organisatie niet noemt.
+- **Geen slotzin met een oordeel.** "Dit is verwarrend", "dit maakt de structuur
+  onlogisch", "dit is niet gebruiksvriendelijk": die zinnen voegen na de concrete
+  uitwerking niets toe. De derde zin heeft het gevolg al benoemd; wat erachteraan komt is
+  een mening over dat gevolg.
+- **Zet de plaats in de eerste zin, niet in het advies.** Komt uit het advies pas naar
+  voren waar het probleem zit ("de titel van het uitklapblok is al een kop"), dan mist de
+  bevinding zijn eerste zin. Het advies wordt er bovendien langer van dan nodig.
+- **Let ook op dubbeling binnen één zinsdeel.** "Een tweede, identieke kop met dezelfde
+  tekst" zegt het twee keer. Idem "een lege sectie zonder inhoud" en "elke afzonderlijke
+  link apart".
+
+Aanleiding (2026-08-18): drie schrijfchecks op rij (sociale-media-links, PDF zonder tags,
+dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 
 ## Toon en formulering
 
