@@ -51,6 +51,28 @@ Deze twee kunnen tegelijk gelden en zijn verschillende bevindingen:
 
 Vind je een niet-beschrijvende kop die óók verkeerd genest is, maak dan beide bevindingen.
 
+#### Het advies hoort bij het criterium waar het over gaat
+
+Maak je beide bevindingen, zet de hernoeming dan NIET ook in het advies van de
+1.3.1-bevinding. Die gaat over het niveau; het hernoemen is de 2.4.6. Anders krijgt de
+redacteur dezelfde instructie twee keer, uit twee bevindingen.
+
+#### De eerste stap van een formulier heet vaak net zo als het formulier
+
+Bij een formulier met stappen draagt elke stap een eigen kop. Kijk naar de reeks als
+geheel: heten stap 2 en 3 "Uw gegevens" en "Controleren" en stap 1 net zo als het
+formulier, dan is die eerste de enige die niet zegt wat je er doet. Dat is een
+2.4.6-bevinding, ook al is de tekst op zichzelf niet nietszeggend.
+
+Beoordeel dit dus niet op stap 1 alleen. Dat gaat mis, want de vervolgstappen zijn niet
+los op te halen: die leiden terug naar stap 1 als er geen sessie is (zie
+`Shift2_Bewijsvoering.md`). Vraag de onderzoeker wat er op de volgende stappen staat.
+
+Aanleiding (2026-08-18): op het contactformulier van heuvelrug.nl noemde ik de kop
+"overbodig in plaats van nietszeggend" en adviseerde geen 2.4.6-bevinding. Frits wist dat
+stap 2 en 3 wél beschrijvende namen hebben; daarmee was de 2.4.6 juist goed te
+verdedigen. De 1.3.1 over het kopniveau bleef daarnaast staan.
+
 Aanleiding: duurzaam.beverwijk.nl/tweedehands (2026-07-28). De kop "TIP!" stond als h3 onder
 "Online" terwijl de tekst over kleding ging. De auditor zag dit wel bij 1.3.1 maar zette
 2.4.6 op "voldoet", omdat hij daar alleen de h2's langsliep. Frits wees erop. Bevindingen
