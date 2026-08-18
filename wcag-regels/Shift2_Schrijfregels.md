@@ -71,6 +71,17 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   onlogisch", "dit is niet gebruiksvriendelijk": die zinnen voegen na de concrete
   uitwerking niets toe. De derde zin heeft het gevolg al benoemd; wat erachteraan komt is
   een mening over dat gevolg.
+- **Geen slotzin in het advies die het gevolg van je eigen instructie herhaalt.** "Voorzie
+  de afbeelding van een tekstalternatief waarin de zichtbare naam terugkomt. Daarmee komt de
+  zichtbare naam ook in de naam die software gebruikt." De tweede zin zegt wat de eerste al
+  opdraagt. Andere vormen die vandaag langskwamen: "zodat de koppenstructuur opeenvolgend
+  blijft" na "maak de tussenkoppen niveau 4", en "en krijgt daarmee wel inhoud onder zich"
+  na "haal de tweede kop weg".
+
+  Een toelichting mag wel als hij iets toevoegt wat niet uit de instructie volgt, zoals
+  "haal de staptitel zelf niet weg: die benoemt op elke stap welke stap u invult".
+
+  Vastgelegd door Frits op 2026-08-18.
 - **Zet de plaats in de eerste zin, niet in het advies.** Komt uit het advies pas naar
   voren waar het probleem zit ("de titel van het uitklapblok is al een kop"), dan mist de
   bevinding zijn eerste zin. Het advies wordt er bovendien langer van dan nodig.
