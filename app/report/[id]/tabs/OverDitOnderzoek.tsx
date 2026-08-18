@@ -1380,6 +1380,17 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                       );
                     })()}
 
+                    {/* De reden per URL, in plaats van een vaste regel onder elke URL.
+                    
+                        Hier stond "(Andere URI-basis en/of stijlkenmerken)" hard achter elke buiten-scope-URL.
+                        Dat klopte voor de externe domeinen, maar niet voor paginas op de site zelf: die kregen
+                        een reden die aantoonbaar onjuist was. De PDF-generator deed het al goed en gebruikte
+                        het note-veld.
+                    
+                        Volgorde: staat er een reden in note, dan die. Anders alleen "Andere URI-basis" wanneer
+                        het domein werkelijk verschilt van de in-scope basis. Staat de URL op hetzelfde domein
+                        en is er geen reden ingevuld, dan zeggen we dat -- een lege plek is beter dan een
+                        verzonnen reden. */}
                     {/* Buiten scope */}
                     <div className="mb-4 pt-5">
                       <h4 className="text-base font-semibold text-gray-900 mb-3">Buiten scope</h4>
@@ -1399,7 +1410,22 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                 </svg>
                               </a>
-                              {' (Andere URI-basis en/of stijlkenmerken)'}
+                              {(() => {
+                                if (scopeUrl.note) return ` (${scopeUrl.note})`;
+                                const basis = project.scopeUrls.find(
+                                  (u: any) => u.inScope === true && !u.parentUrlId
+                                );
+                                try {
+                                  const eigen = new URL(scopeUrl.url).host.replace(/^www./, '');
+                                  const hoofd = basis
+                                    ? new URL(basis.url).host.replace(/^www./, '')
+                                    : null;
+                                  if (hoofd && eigen !== hoofd) return ' (Andere URI-basis)';
+                                } catch {
+                                  // Geen geldig adres; dan valt er niets te vergelijken.
+                                }
+                                return ' (reden niet vastgelegd)';
+                              })()}
                             </div>
                           ))
                       ) : (
@@ -1809,7 +1835,33 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                           </svg>
                         </a>
                         <div className="text-sm font-medium text-gray-500 mt-1">
-                          andere URI-basis
+                          {/* De reden per URL, niet een vaste regel onder elke URL.
+
+                              Hier stond "andere URI-basis" hard onder elke buiten-scope-URL. Dat
+                              klopte voor de externe domeinen, maar niet voor paginas op de site
+                              zelf: die kregen een reden die aantoonbaar onjuist was. Twee zulke
+                              regels stonden in dit rapport.
+
+                              Volgorde: een ingevulde reden in note gaat voor. Anders alleen
+                              "andere URI-basis" wanneer het domein werkelijk verschilt van de
+                              in-scope basis. Staat de URL op hetzelfde domein zonder reden, dan
+                              zeggen we dat -- een lege plek is beter dan een verzonnen reden. */}
+                          {(() => {
+                            if (scopeUrl.note) return scopeUrl.note;
+                            const basis = project.scopeUrls.find(
+                              (u: any) => u.inScope === true && !u.parentUrlId
+                            );
+                            try {
+                              const eigen = new URL(scopeUrl.url).host.replace(/^www./, '');
+                              const hoofd = basis
+                                ? new URL(basis.url).host.replace(/^www./, '')
+                                : null;
+                              if (hoofd && eigen !== hoofd) return 'andere URI-basis';
+                            } catch {
+                              // Geen geldig adres; dan valt er niets te vergelijken.
+                            }
+                            return 'reden niet vastgelegd';
+                          })()}
                         </div>
                       </li>
                     ))}
