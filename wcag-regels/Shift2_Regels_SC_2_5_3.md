@@ -75,7 +75,28 @@ suggereren dat álle zichtbare tekst in de naam moet. Dat is niet de bedoeling; 
 verduidelijkend voorbeeld gevraagd.
 
 Praktische lijn: keur een logo niet af onder 2.5.3 omdat de slogan ontbreekt in het
-tekstalternatief. Ontbreekt de organisatienaam zelf, dan is dat wél een 1.1.1-kwestie.
+tekstalternatief.
+
+## Organisatienaam in het logo, niet in de toegankelijke naam: 1.1.1 EN 2.5.3
+
+Staat de organisatienaam zichtbaar in het logo en komt hij niet terug in de toegankelijke
+naam van de link, dan zijn dat **twee bevindingen**, geen keuze tussen twee criteria:
+
+| Criterium | Wat er misgaat | Voor wie |
+|---|---|---|
+| 1.1.1 | de afbeelding heeft geen tekstalternatief | wie blind is en een schermlezer gebruikt, krijgt geen naam voor het logo |
+| 2.5.3 | de zichtbare naam komt niet voor in de toegankelijke naam | wie spraakbediening gebruikt, leest de naam op het scherm, spreekt hem uit, en er gebeurt niets |
+
+Dat één aanpassing allebei oplost, maakt het niet één bevinding. De gebruikersgroep en het
+mechanisme verschillen, en in het rapport staan ze onder verschillende criteria.
+
+Let op het onderscheid met de slogan hierboven: een ontbrekende **slogan** is geen
+2.5.3-afkeuring, een ontbrekende **organisatienaam** wel.
+
+Vastgesteld door Frits op 2026-08-18. Aanleiding: het logo op de homepage van heuvelrug.nl
+toont "GEMEENTE UTRECHTSE HEUVELRUG" met een leeg tekstalternatief; de toegankelijke naam van
+de link is "Ga naar de homepage", uit het title-attribuut. Ik adviseerde het bij 1.1.1 te
+laten omdat de reparatie dezelfde is; Frits: "ik denk wel het zijn 2 verschillende dingen."
 
 ## Regels
 
