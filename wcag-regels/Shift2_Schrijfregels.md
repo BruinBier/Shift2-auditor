@@ -167,6 +167,7 @@ redacteur die twee bevindingen naast elkaar legt moet niet hoeven raden of "acco
 | kolom in de footer | **footerkolom**, met het nummer erbij ("de tweede footerkolom") | footer sectie, footerblok |
 | kolom naast de hoofdtekst | **zijbalk** | sidebar, marge |
 | de rij met sociale-media-pictogrammen | **sociale-media-rij**, de links erin **sociale-media-links** | social media buttons, socials |
+| een herbruikbare bevindingstekst in de bibliotheek | **snelle bevinding** | sjabloon, template, QuickFinding |
 
 Let op het verschil tussen **uitklapblok** en **uitklapmenu**. Het eerste zit in de
 inhoud en klapt tekst open, het tweede zit in de navigatie. Ze vallen vaak onder
