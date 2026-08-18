@@ -77,6 +77,17 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
 - **Let ook op dubbeling binnen één zinsdeel.** "Een tweede, identieke kop met dezelfde
   tekst" zegt het twee keer. Idem "een lege sectie zonder inhoud" en "elke afzonderlijke
   link apart".
+- **Geen aantallen die alleen de omvang aangeven.** "met 59 rijen en 29", "op 14 van de 20
+  pagina's", "twaalf keer op deze pagina": zulke getallen onderbouwen hooguit hoe erg het
+  is, en dat hoort in de onderbouwing van het oordeel. Ze verouderen bovendien meteen --
+  volgende maand staan er andere rijen in die tabel -- terwijl de redacteur er niets mee
+  kan: hij moet de koprij markeren, of dat er nu tien of honderd rijen onder staan.
+
+  Getallen die het onderdeel zelf beschrijven blijven wel staan: "zes foto's in een tabel",
+  "een tabel van twee rijen en drie kolommen", "de kop staat twee keer". Die vertellen wat
+  er is, niet hoe vaak het misgaat.
+
+  Vastgelegd door Frits op 2026-08-18.
 
 Aanleiding (2026-08-18): drie schrijfchecks op rij (sociale-media-links, PDF zonder tags,
 dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
