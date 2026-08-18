@@ -40,6 +40,19 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   homepage"). De gekoppelde sample-items tonen de rest al.
 - **Geen andere criteria erin mengen.** Een verwant probleem dat onder een ander
   succescriterium valt, krijgt een eigen bevinding.
+
+  Dit gaat over de BEVINDING, niet over het advies. Het advies mag wel vertellen hoe je het
+  goed opbouwt, ook als dat een ander criterium raakt: de redacteur gaat het onderdeel
+  opnieuw maken en moet niet in een volgende fout lopen. Adviseer je bijvoorbeeld om foto's
+  uit een tabel te halen en als reeks te plaatsen, noem dan waar een onderschrift voor is --
+  anders komt hetzelfde onderschrift terug dat het tekstalternatief woordelijk herhaalt.
+
+  Wat je niet doet is er een tweede bevinding van maken. Constateren dat die herhaling er nu
+  al staat hoort in een eigen 1.1.1-bevinding.
+
+  Aanleiding (2026-08-18): bij de fototabel op de Japanse-duizendknooppagina hield ik het
+  onderschrift bewust buiten het advies. Frits: "vermeld je niet dat bij het naast elkaar
+  plaatsen van de afbeeldingen dat onderschrift bedoeld is..."
 - **Niet dezelfde zaak twee keer uitleggen** in andere woorden. Het komt er bijna altijd
   zo in: eerst vanuit de software, dan vanuit de gebruiker. "Hulpsoftware kondigt geen
   lijst aan en noemt het aantal items niet, zodat wie de pagina laat voorlezen niet hoort
