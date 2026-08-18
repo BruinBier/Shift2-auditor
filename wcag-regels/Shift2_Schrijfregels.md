@@ -16,9 +16,9 @@ Kort en to-the-point. Bij eenvoudige issues drie zinnen:
 
 1. **Locatie + wat er staat** — "Op de pagina staat ..." / "In de footer staat ..."
 2. **Het kernprobleem** — "De afbeelding heeft geen tekstalternatief."
-3. **Effect op de gebruiker** — noem de groep waar het criterium voor bestaat, zie
-   "Noem de groep waar het criterium voor bestaat" hieronder. Bij 1.1.1: "Iemand die blind
-   is krijgt niet mee dat ..."
+3. **Effect op de gebruiker** — noem de beperking en het hulpmiddel samen: "Wie blind is
+   en een schermlezer gebruikt, hoort ..." Zie "Noem de beperking en het hulpmiddel samen"
+   hieronder.
 
 Bij een complexer issue: noem het **kernprobleem voor de gebruiker eerst**, en pas daarna
 de concrete oorzaken. Niet eerst een reeks technische observaties opsommen en het effect
@@ -64,15 +64,18 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
 - **Hulpsoftware leest voor, laat niets zien.** Schermlezers zijn auditief. Schrijf
   "hulpsoftware leest de linktekst voor" en "gebruikers horen alleen ...", nooit
   "hulpsoftware laat zien" of "gebruikers zien alleen".
-- **Noem de groep waar het criterium voor bestaat.** Bij 1.1.1 zijn dat mensen die blind
-  zijn: schrijf "Iemand die blind is krijgt niet mee dat ...". Schrijf niet "wie de pagina
-  beluistert" — dat is vaag, en op een site met een voorleesknop voor iedereen wijst het
-  zelfs naar de verkeerde groep. Heuvelrug.nl heeft zo'n knop ("Lees voor"), en die is er
-  voor mensen die moeite hebben met lezen, niet voor wie de afbeelding niet kan zien.
-  Vastgelegd door Frits op 2026-08-18.
-- **Voorkeursvorm waar de doelgroep breder is dan een enkele beperking:** "Wie de website
-  met een schermlezer gebruikt, hoort ..." Let op enkelvoud in de vervolgzin ("denkt", niet
-  "denken ze"). Dit is een voorkeur, geen harde regel; volg de context van de zin.
+- **Noem de beperking en het hulpmiddel samen.** Niet "wie een schermlezer gebruikt" en
+  niet "iemand die blind is", maar allebei: **"Wie blind is en een schermlezer gebruikt,
+  ..."** Het hulpmiddel alleen laat in het midden om wie het gaat, en de beperking alleen
+  laat in het midden hoe iemand het document dan wel benadert. Samen is het concreet.
+- **Schrijf nooit "wie de pagina beluistert".** Dat is vaag, en op een site met een
+  voorleesknop voor alle bezoekers wijst het naar de verkeerde groep. Heuvelrug.nl heeft
+  zo'n knop ("Lees voor"), en die is er voor mensen die moeite hebben met lezen, niet voor
+  wie de afbeelding niet kan zien.
+- Let op enkelvoud in de vervolgzin ("denkt", niet "denken ze").
+
+  Vastgelegd door Frits op 2026-08-18, bij een bevinding over een leeg tekstalternatief en
+  bij een ongetagde PDF.
 - **Maximaal twee à drie voorbeelden**, met "zoals" of "bijvoorbeeld". Geen lange
   parenthetische opsommingen.
 - **Voeg gelijksoortige voorbeelden samen.** Verschillen twee bullets alleen in een naam,

@@ -112,10 +112,11 @@ Aanleiding: heuvelrug.nl (2026-08-15), logo met alt="" in de header. Besluit van
 Bij een logo staat niet alleen vast dát het een afkeuring is, maar ook wát er wegvalt en
 voor wie. Schrijf allebei op, en schrijf ze zo:
 
-- **Voor wie: mensen die blind zijn.** Niet "wie de pagina beluistert". Dat is vaag, en op
-  een site met een voorleesknop voor alle bezoekers wijst het naar de verkeerde groep —
-  heuvelrug.nl heeft zo'n knop ("Lees voor"), bedoeld voor mensen die moeite hebben met
-  lezen. Zie de algemene regel in `Shift2_Schrijfregels.md`.
+- **Voor wie: wie blind is en een schermlezer gebruikt.** Noem allebei, niet een van de
+  twee. En nooit "wie de pagina beluistert": dat is vaag, en op een site met een
+  voorleesknop voor alle bezoekers wijst het naar de verkeerde groep. Heuvelrug.nl heeft
+  zo'n knop ("Lees voor"), bedoeld voor mensen die moeite hebben met lezen. Zie de
+  algemene regel in `Shift2_Schrijfregels.md`.
 - **Wat er wegvalt: de afzender.** Bij een gewone afbeelding met tekst is dat "de tekst op
   de afbeelding"; bij een logo is het van wie iets is. Schrijf dus "welke organisatie deze
   pagina uitgeeft" of "welke groep de gemeente adviseert", niet "de tekst in het logo".
@@ -125,8 +126,8 @@ voor wie. Schrijf allebei op, en schrijf ze zo:
 Voorbeeld (UTHEU-02, lokale inclusie):
 
 > In de zijbalk staat het logo van adviesgroep Samen Zonder Heuvels. Het tekstalternatief is
-> leeg (alt=""), waardoor de naam van de adviesgroep niet wordt voorgelezen. Iemand die blind
-> is krijgt daardoor niet mee welke groep de gemeente adviseert.
+> leeg (alt=""), waardoor de naam van de adviesgroep niet wordt voorgelezen. Wie blind is en
+> een schermlezer gebruikt krijgt daardoor niet mee welke groep de gemeente adviseert.
 
 ### 2026-08-15
 
