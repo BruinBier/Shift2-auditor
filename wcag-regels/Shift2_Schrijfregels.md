@@ -117,6 +117,15 @@ dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 ## Toon en formulering
 
 - **Direct en stellig.** Vermijd "mogelijk", "misschien", "het wordt aanbevolen".
+- **Knip een lange zin met een puntkomma in twee of drie korte.** Een zin als "krijgt de
+  tekst voorgelezen met de uitspraak van de taal die in zijn schermlezer is ingesteld;
+  staat die niet op Nederlands, dan is de tekst niet te volgen" leest stroef. Drie korte
+  zinnen lezen vloeiender en zijn makkelijker te vertalen naar een instructie: "Een
+  schermlezer valt daardoor terug op zijn eigen taalinstelling. Staat die op Engels, dan
+  krijgt wie blind is de Nederlandse tekst met Engelse uitspraak te horen."
+
+  Noem het hulpmiddel daarbij één keer. Staat "schermlezer" al in de vorige zin, dan
+  volstaat "wie blind is"; de hele formulering nog een keer maakt de zin onnodig zwaar.
 - **Bij contrast: "voldoende contrast hebben", niet "afsteken tegen".** Schrijf "zodat de
   witte tekst voldoende contrast heeft", niet "zodat de tekst er voldoende van afsteekt".
   Afsteken is beeldspraak vanuit het zien; contrast is de eis waar het om gaat.
