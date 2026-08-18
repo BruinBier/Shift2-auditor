@@ -106,6 +106,28 @@ TESTMETHODE: start een auditsessie en bekijk de gerenderde pagina. Uit de opgeha
 
 Aanleiding: heuvelrug.nl (2026-08-15), logo met alt="" in de header. Besluit van Frits tijdens het doorlopen van 1.1.1 op Home.
 
+
+#### Hoe je de bevinding dan opschrijft (2026-08-18)
+
+Bij een logo staat niet alleen vast dát het een afkeuring is, maar ook wát er wegvalt en
+voor wie. Schrijf allebei op, en schrijf ze zo:
+
+- **Voor wie: mensen die blind zijn.** Niet "wie de pagina beluistert". Dat is vaag, en op
+  een site met een voorleesknop voor alle bezoekers wijst het naar de verkeerde groep —
+  heuvelrug.nl heeft zo'n knop ("Lees voor"), bedoeld voor mensen die moeite hebben met
+  lezen. Zie de algemene regel in `Shift2_Schrijfregels.md`.
+- **Wat er wegvalt: de afzender.** Bij een gewone afbeelding met tekst is dat "de tekst op
+  de afbeelding"; bij een logo is het van wie iets is. Schrijf dus "welke organisatie deze
+  pagina uitgeeft" of "welke groep de gemeente adviseert", niet "de tekst in het logo".
+- **Citeer de tekst op het logo niet.** Dat staat al bij de regels hierboven en volgt uit
+  het vorige punt: het gaat om de afzender, niet om de letterlijke inhoud van het beeldmerk.
+
+Voorbeeld (UTHEU-02, lokale inclusie):
+
+> In de zijbalk staat het logo van adviesgroep Samen Zonder Heuvels. Het tekstalternatief is
+> leeg (alt=""), waardoor de naam van de adviesgroep niet wordt voorgelezen. Iemand die blind
+> is krijgt daardoor niet mee welke groep de gemeente adviseert.
+
 ### 2026-08-15
 
 Twee regels over wat een leeg tekstalternatief goedpraat, en wat niet.
