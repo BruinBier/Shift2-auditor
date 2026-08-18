@@ -88,6 +88,17 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   er is, niet hoe vaak het misgaat.
 
   Vastgelegd door Frits op 2026-08-18.
+- **Citeer de werkelijke waarde, omschrijf hem niet.** "De titel bevat de bestandsnaam,
+  inclusief de aanduiding 'concept' en een maandaanduiding" laat de lezer raden. Zet er
+  gewoon neer wat er staat: "Microsoft Word - Beleidsvisie Horeca &amp;
+  Terrassen_concept_mei 2024_na college". Dan is de bevinding na te kijken en spreekt hij
+  voor zich. Dit geldt voor elke waarde die je aantreft: een documenttitel, een linktekst,
+  een tekstalternatief, de tekst van een kop.
+
+  Is de waarde te lang, citeer dan het begin en schrijf "zoals ...". Bij een LOGO citeer je
+  de tekst juist niet; zie `Shift2_Regels_SC_1_1_1.md`.
+
+  Vastgelegd door Frits op 2026-08-18.
 
 Aanleiding (2026-08-18): drie schrijfchecks op rij (sociale-media-links, PDF zonder tags,
 dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
