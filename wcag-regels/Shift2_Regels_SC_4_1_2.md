@@ -54,9 +54,20 @@ De vraag is dus of die naam zijn werk doet: zegt hij waar de link heen gaat?
 | Logo-link naar de eigen homepage, `title="Ga naar de homepage"` | **voldoet** — de naam zegt waar de link heen gaat |
 | Logo-link op een SUBSITE (duurzaam., open., mijn.) met dezelfde title | **afkeuring** — de gebruiker denkt naar de hoofdsite te gaan |
 | Een title die de bestemming niet dekt, of een lege of nietszeggende title | **afkeuring** |
+| Een naam die alleen het linktype noemt, zoals "(externe link)" of "PDF" | **afkeuring** — dat is geen naam voor de link maar een aanduiding erbij |
 
 Schrijf een afkeuring dan niet als "deze link heeft geen naam", want dat is aanvechtbaar
 zodra iemand op de `title` wijst. Benoem dat de naam de bestemming niet dekt.
+
+Let op waar zo'n naam vandaan komt. Een afbeelding-link met `alt=""` lijkt naamloos, maar
+staat er een span met `aria-label="(externe link)"` naast het plaatje binnen dezelfde `<a>`,
+dan is dát de naam. Schrijf dan niet "de link heeft geen naam" maar benoem welke naam er
+wél is en waarom die niets zegt.
+
+Voorbeeld (heuvelrug.nl/werken-bij-de-gemeente, 2026-08-18): een foto van drie collega's
+linkt naar een video op YouTube. De foto heeft `alt=""`, en het externe-link-icoontje
+ernaast draagt `aria-label="(externe link)"`. De toegankelijke naam van de link is daarmee
+"(externe link)".
 
 **Wat hier los van staat:** een logo met een leeg tekstalternatief blijft een 1.1.1-afkeuring,
 en staat de organisatienaam zichtbaar in het logo dan ook een 2.5.3-afkeuring. Die twee eisen
