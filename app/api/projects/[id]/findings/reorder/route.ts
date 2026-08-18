@@ -44,16 +44,20 @@ export async function POST(
       );
     }
 
+    // Horen deze bevindingen wel bij dit project? Zonder deze controle kon een verzoek de
+    // volgorde van een ander onderzoek omgooien. Buiten de transactie, zodat een verkeerd
+    // verzoek een 400 oplevert en niet een serverfout.
+    const eigen = await prisma.finding.count({
+      where: { id: { in: findingIds }, projectId: params.id },
+    });
+    if (eigen !== findingIds.length) {
+      return NextResponse.json(
+        { error: 'Een of meer bevindingen horen niet bij dit project' },
+        { status: 400 }
+      );
+    }
+
     const aantal = await prisma.$transaction(async (tx) => {
-      // Horen deze bevindingen wel bij dit project? Zonder deze controle kon een
-      // verzoek de volgorde van een ander onderzoek omgooien.
-      const eigen = await tx.finding.findMany({
-        where: { id: { in: findingIds }, projectId: params.id },
-        select: { id: true },
-      });
-      if (eigen.length !== findingIds.length) {
-        throw new Error('Een of meer bevindingen horen niet bij dit project');
-      }
 
       for (let index = 0; index < findingIds.length; index++) {
         const findingId = findingIds[index];
