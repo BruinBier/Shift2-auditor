@@ -162,26 +162,15 @@ export default function Conclusion({ project }: { project: any }) {
       // Convert Markdown to HTML
       const html = await marked.parse(tempContent);
 
-      // Determine the settings key based on research type
-      // Check if research type contains "formulieren" (case insensitive)
-      const isFormulieren = project.researchType?.toLowerCase().includes('formulieren') ?? false;
-      const settingsKey = isFormulieren
-        ? 'default_user_agents_formulieren'
-        : 'default_user_agents';
-
-      // Save as default setting
-      const settingsResponse = await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: settingsKey,
-          value: html,
-        }),
-      });
-
-      if (!settingsResponse.ok) {
-        throw new Error('Failed to save default setting');
-      }
+      // Alleen dit project bijwerken, niet de globale standaard.
+      //
+      // Hier werd bij elke opslag ook default_user_agents overschreven. Daardoor sleepte
+      // een aanpassing in een project zich door naar alle volgende projecten, en niemand
+      // zag dat gebeuren. Zo ontstonden drie lijsten die uit elkaar liepen: in het rapport
+      // stond Chrome 148 terwijl er met 151 werd getest.
+      //
+      // De lijst voor een nieuw project komt uit lib/browser-versions.ts, dat de
+      // geïnstalleerde browsers uitleest. Zie /api/user-agents.
 
       // Update current project
       const projectResponse = await fetch(`/api/projects/${project.id}`, {
@@ -192,11 +181,12 @@ export default function Conclusion({ project }: { project: any }) {
 
       if (projectResponse.ok) {
         setUserAgents(html);
-        setDefaultUserAgents(html);
         router.refresh();
         closeEditModal();
-        const researchTypeMsg = isFormulieren ? ' formulieren projecten' : ' projecten';
-        alert(`Opgeslagen als standaard en toegepast op dit project. Nieuwe${researchTypeMsg} met onderzoekstype "${project.researchType}" zullen deze waarde gebruiken.`);
+        alert(
+          'Opgeslagen bij dit onderzoek. Een nieuw onderzoek krijgt de browserversies die op ' +
+            'dat moment op deze machine staan; deze aanpassing werkt daar niet in door.'
+        );
       } else {
         const errorData = await projectResponse.json();
         console.error('Server error:', errorData);
@@ -271,10 +261,12 @@ export default function Conclusion({ project }: { project: any }) {
   useEffect(() => {
     const fetchDefaultUserAgents = async () => {
       try {
-        const response = await fetch('/api/settings?key=default_user_agents');
+        // Niet de opgeslagen standaard, maar wat er op deze machine staat. Die opgeslagen
+        // kopie veroudert stil en beschrijft dan niet meer waarmee is getest.
+        const response = await fetch('/api/user-agents');
         if (response.ok) {
           const data = await response.json();
-          setDefaultUserAgents(data.value);
+          if (data.html) setDefaultUserAgents(data.html);
         }
       } catch (error) {
         console.error('Error fetching default user agents:', error);
