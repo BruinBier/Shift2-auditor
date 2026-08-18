@@ -168,6 +168,16 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
   // Convert dates to strings
   const projectData = {
     ...project,
+    // Het sjabloon van het onderzoekstype meegeven, zodat het beheerscherm dezelfde
+    // samenvatting toont als het rapport. Zonder dit bouwde de conclusietab zijn eigen
+    // tekst op en liepen de twee uiteen.
+    researchTypeData: researchType
+      ? {
+          summaryTemplate: researchType.summaryTemplate,
+          version: researchType.version,
+          level: researchType.level,
+        }
+      : null,
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
     researchStartedOn: project.researchStartedOn?.toISOString() || null,

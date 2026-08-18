@@ -303,10 +303,38 @@ export default function Conclusion({ project }: { project: any }) {
         ? project.scopeUrls.filter((url: any) => url.inScope).length
         : totalPages;
 
-      // Generate summary HTML
+      // Het sjabloon van het onderzoekstype gaat voor.
+      //
+      // Het rapport bouwt deze samenvatting op uit researchTypeData.summaryTemplate; dit
+      // scherm deed het zelf, met een eigen if/else. Daardoor stond er in het beheerscherm
+      // een andere tekst dan in het rapport: "1 formulier met in het totaal 20 processtappen"
+      // tegenover "20 gepubliceerde webpagina's met verschillende contenttypen".
+      //
+      // De oorzaak zat in de herkenning hieronder: die keek of de naam van het onderzoekstype
+      // het woord "formulieren" bevat, en "content website MET formulieren" is een
+      // contentonderzoek waar formulieren in de steekproef zitten, geen formulierenonderzoek.
+      // Met het sjabloon als bron kan dat verschil niet meer ontstaan.
+      const sjabloon = (project as any).researchTypeData?.summaryTemplate as string | undefined;
+
       let summaryHtml = '';
 
-      if (isFormulieren) {
+      if (sjabloon) {
+        summaryHtml = sjabloon
+          .replace(/{dateStart}/g, dateStartFormatted)
+          .replace(/{dateEnd}/g, dateEndFormatted)
+          .replace(/{totalPages}/g, String(totalPages))
+          .replace(/{uniqueForms}/g, String(uniqueForms))
+          .replace(/{totalCriteria}/g, String(totalCriteria))
+          .replace(/{passedCriteria}/g, String(passedCriteria))
+          .replace(/{percentage}/g, String(percentage))
+          .replace(/{failedCriteria}/g, String(failedCriteria))
+          .replace(/{compliesFully}/g, percentage === 100 ? 'volledig' : 'niet volledig')
+          .replace(/{formsSingularPlural}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
+          .replace(/{pagesSingularPlural}/g, totalPages === 1 ? 'processtap' : 'processtappen')
+          .replace(/{criteriaFailedSingularPlural}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria')
+          .replace(/{standard}/g, (project as any).researchTypeData?.version || 'WCAG 2.2')
+          .replace(/{level}/g, (project as any).researchTypeData?.level || 'A en AA');
+      } else if (isFormulieren) {
         summaryHtml = `<p>Dit onderzoek is door Shift2 uitgevoerd tussen ${dateStartFormatted} en ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld uit ${uniqueForms} ${uniqueForms === 1 ? 'formulier' : 'formulieren'} met in het totaal ${totalPages} ${totalPages === 1 ? 'processtap' : 'processtappen'}.</p><p>De onderzochte formuliercontent voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA.</p><p>In dit deelonderzoek zijn ${totalCriteria} ${totalCriteria === 1 ? 'succescriterium' : 'succescriteria'} beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} ${totalCriteria === 1 ? 'succescriterium' : 'succescriteria'} (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.</p>`;
       } else {
         summaryHtml = `<p>Het onderzoek vond plaats in de periode van ${dateStartFormatted} tot en met ${dateEndFormatted}. Voor dit deelonderzoek is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p><p>De onderzochte content voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA.</p><p>In dit deelonderzoek zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.</p>`;
