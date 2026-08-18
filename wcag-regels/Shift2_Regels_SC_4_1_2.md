@@ -35,30 +35,49 @@ Let op een visueel verborgen span (`sr-only`, `visually-hidden`). Die telt WEL m
 ook al zie je op de screenshot alleen het logo. Beoordeel dit uit de HTML, niet uit de
 screenshot.
 
-Bevat de link alleen een `<img>` met `alt=""` en verder geen tekst of `aria-label`, dan is
-dat een **afkeuring** (matig, ontwikkelaar). Een `alt` die alleen een bestandsnaam bevat
-("logo.png") telt niet als bruikbare naam.
+Bevat de link alleen een `<img>` met `alt=""` en verder geen tekst, `aria-label` of `title`,
+dan is dat een **afkeuring** (matig, ontwikkelaar). Een `alt` die alleen een bestandsnaam
+bevat ("logo.png") telt niet als bruikbare naam. Is er wél een `title`, lees dan eerst de
+paragraaf hieronder: dan hangt het oordeel ervan af of die naam de bestemming dekt.
 
-### Een naam die alleen uit `title` komt is ONVOLDOENDE
+### Een naam die alleen uit `title` komt: beoordeel of die naam zijn werk doet
 
 Komt de toegankelijke naam uitsluitend uit een `title` op de link (dus: leeg `alt`, geen
-tekst, geen `aria-label`), dan is dat nog steeds een **afkeuring**. Formeel berekent de
-browser er een naam uit, maar daar mag je niet op afgaan:
+tekst, geen `aria-label`), dan is dat **niet automatisch een afkeuring**. 4.1.2 vraagt of het
+element een naam, een rol en zo nodig een waarde heeft. Die naam is er, en de browser rekent
+hem ook zo uit; dat is in de toegankelijkheidsboom na te lezen.
 
-- `title` verschijnt alleen bij aanwijzen met de muis, niet bij toetsenbordfocus
-- op touchscreens is hij vrijwel onbereikbaar
-- schermlezers ondersteunen hem wisselend en zetten hem soms standaard uit
+De vraag is dus of die naam zijn werk doet: zegt hij waar de link heen gaat?
 
-Concludeer dus NIET "de link heeft een naam, dus geen bevinding" zodra je een `title` ziet.
-Schrijf de bevinding ook niet als "deze link heeft geen naam", want dan is hij aanvechtbaar
-zodra iemand op de `title` wijst. Benoem in plaats daarvan dat de naam alleen uit het
-title-attribuut komt en waarom dat een deel van de gebruikers niet bereikt.
+| Situatie | Oordeel |
+|---|---|
+| Logo-link naar de eigen homepage, `title="Ga naar de homepage"` | **voldoet** — de naam zegt waar de link heen gaat |
+| Logo-link op een SUBSITE (duurzaam., open., mijn.) met dezelfde title | **afkeuring** — de gebruiker denkt naar de hoofdsite te gaan |
+| Een title die de bestemming niet dekt, of een lege of nietszeggende title | **afkeuring** |
 
-Aanleiding: heuvelrug.nl (2026-08-02). De logo-link had `title="Ga naar de homepage"` met
-`alt=""` op de afbeelding. Claude concludeerde eerst dat de bevinding verviel omdat er
-formeel een naam was; Frits wees erop dat `title` onvoldoende betrouwbaar is.
+Schrijf een afkeuring dan niet als "deze link heeft geen naam", want dat is aanvechtbaar
+zodra iemand op de `title` wijst. Benoem dat de naam de bestemming niet dekt.
+
+**Wat hier los van staat:** een logo met een leeg tekstalternatief blijft een 1.1.1-afkeuring,
+en staat de organisatienaam zichtbaar in het logo dan ook een 2.5.3-afkeuring. Die twee eisen
+allebei dezelfde reparatie, dus er gaat geen verbetering verloren als 4.1.2 hier voldoet.
+
+Geschiedenis van deze regel, want hij is een keer gedraaid:
+
+- 2026-08-02, heuvelrug.nl. De logo-link had `title="Ga naar de homepage"` met `alt=""`.
+  Claude concludeerde dat de bevinding verviel omdat er formeel een naam was; Frits stelde
+  toen vast dat `title` onvoldoende betrouwbaar is (niet bij toetsenbordfocus, vrijwel
+  onbereikbaar op touch, wisselend ondersteund) en dat het een afkeuring bleef.
+- 2026-08-18, zelfde link. Frits: "naam rol en waarde heeft het toch? titel atribuut; ga naar
+  de homepage" en "in dit geval is het geen issue, want de link gaat naar de homepage van
+  utrechtse heuvelrug". Daarmee is de categorische regel vervangen door de beoordeling
+  hierboven: kijk of de naam de bestemming dekt.
 
 ### Vaste formulering (UTHEU-01, 2026-08-03)
+
+Gebruik deze tekst alleen wanneer de link werkelijk geen bruikbare naam heeft, of wanneer de
+naam de bestemming niet dekt (zie de paragraaf hierboven). Bij een logo-link naar de eigen
+homepage met `title="Ga naar de homepage"` is 4.1.2 voldaan en schrijf je deze bevinding niet.
 
 Description:
 
