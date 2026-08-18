@@ -160,6 +160,18 @@ of boodschap door die de afbeelding overbrengt, niet hoe de afbeelding eruitziet
 - Geen toolnamen in het advies: niet Canva, Word of InDesign. Spreek over "het
   brondocument". Adobe Acrobat mag wél genoemd worden bij concrete tag-stappen (het
   Tags-paneel, "Wijzig tagtype").
+- **Standaardadvies bij een document zonder tagstructuur.** Vastgesteld door Frits op
+  2026-08-18:
+
+  > Maak het document opnieuw toegankelijk vanuit het brondocument. Gebruik daar echte
+  > kopstijlen voor de hoofdstuk- en paragraafkoppen, echte opsommings- en tabelfuncties,
+  > en exporteer vervolgens met de optie waarbij de tagstructuur behouden blijft.
+
+  Houd het op dit niveau. Ga niet uitzoeken in welk programma het bestand is gemaakt, en
+  noem geen specifieke koppen of lijsten uit het document: de redacteur werkt in zijn
+  eigen bronbestand en weet zelf welke koppen dat zijn. Een advies dat de knoppen van een
+  bepaald programma beschrijft is onbruikbaar zodra het volgende document ergens anders
+  vandaan komt.
 
 ## Fout of opmerking
 
