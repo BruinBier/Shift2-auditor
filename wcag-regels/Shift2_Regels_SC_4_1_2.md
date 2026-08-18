@@ -63,7 +63,7 @@ formeel een naam was; Frits wees erop dat `title` onvoldoende betrouwbaar is.
 Description:
 
 > Boven aan de pagina staat het logo, dat als link naar de homepage werkt. Omdat de afbeelding
-> een lege alt-tekst heeft, heeft de link geen 'toegankelijke naam'. Wie de website met een
+> een lege alt-tekst heeft, heeft de link geen 'toegankelijke naam'. Wie blind is en een
 > schermlezer gebruikt, hoort niet waar deze link naartoe gaat. In de code is alleen bij de
 > link zelf aangegeven dat die naar de homepage gaat.
 
@@ -90,6 +90,9 @@ Let op de details die Frits hierin heeft aangescherpt:
   oorzaak.
 - Gevolg formuleren vanuit de gebruiker ("hoort niet waar deze link naartoe gaat"), niet als
   "hulpsoftware kan de link niet identificeren".
+- De derde zin is op 2026-08-18 bijgewerkt van "Wie de website met een schermlezer gebruikt"
+  naar "Wie blind is en een schermlezer gebruikt", volgens de algemene regel in
+  `Shift2_Schrijfregels.md`. De overige details van deze formulering zijn ongewijzigd.
 
 ## 4.1.2 naast 1.1.1 — losse bevindingen, geen onderlinge verwijzing
 
