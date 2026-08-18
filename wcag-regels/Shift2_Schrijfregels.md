@@ -90,7 +90,7 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   Vastgelegd door Frits op 2026-08-18.
 - **Citeer de werkelijke waarde, omschrijf hem niet.** "De titel bevat de bestandsnaam,
   inclusief de aanduiding 'concept' en een maandaanduiding" laat de lezer raden. Zet er
-  gewoon neer wat er staat: "Microsoft Word - Beleidsvisie Horeca &amp;
+  gewoon neer wat er staat: "Microsoft Word - Beleidsvisie Horeca &
   Terrassen_concept_mei 2024_na college". Dan is de bevinding na te kijken en spreekt hij
   voor zich. Dit geldt voor elke waarde die je aantreft: een documenttitel, een linktekst,
   een tekstalternatief, de tekst van een kop.
