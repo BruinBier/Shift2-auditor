@@ -117,6 +117,34 @@ communicatiemedewerkers.
 | whitespace | witruimte |
 | string | tekst |
 
+### Namen voor onderdelen van de pagina
+
+Vaste woorden, zodat niet elke ronde een ander woord kiest voor hetzelfde onderdeel. Een
+redacteur die twee bevindingen naast elkaar legt moet niet hoeven raden of "accordeon" en
+"uitklapper" hetzelfde zijn.
+
+| Onderdeel | Zo noemen we het | Niet |
+|---|---|---|
+| `details` met `summary`, klapt tekst open | **uitklapblok** | accordeon, uitklapper, inklapbaar blok, details-element |
+| uitklappende navigatie in de header | **uitklapmenu** | dropdown, submenu |
+| `li` binnen een lijst | **lijst item** | list-item, listitem |
+| `ul` | **ongeordende lijst** | bullet list, unordered list |
+| kolom in de footer | **footerkolom**, met het nummer erbij ("de tweede footerkolom") | footer sectie, footerblok |
+| kolom naast de hoofdtekst | **zijbalk** | sidebar, marge |
+| de rij met sociale-media-pictogrammen | **sociale-media-rij**, de links erin **sociale-media-links** | social media buttons, socials |
+
+Let op het verschil tussen **uitklapblok** en **uitklapmenu**. Het eerste zit in de
+inhoud en klapt tekst open, het tweede zit in de navigatie. Ze vallen vaak onder
+verschillende criteria en op vervolgpagina's valt het menu buiten de scope, het
+uitklapblok niet.
+
+Waar de redacteur iets moet aanpassen: **"in het CMS in de broncode"**. Niet "in de HTML"
+of "in de code" zonder meer, want dan is niet duidelijk of hij daarbij kan.
+
+Aanleiding (2026-08-18): Frits corrigeerde "list-item" naar "lijst item" en "voeg in de
+broncode" naar "voeg in het CMS in de broncode", en vroeg of zulke woorden ergens worden
+onthouden voor volgende bevindingen.
+
 ## Geen voorbehoud over criteria die niet in het onderzoek zitten
 
 Een onderbouwing eindigen met "hiermee is niet beoordeeld of X; dat valt onder SC Y" is alleen
