@@ -37,6 +37,7 @@ const CRITERIA_PER_COMMANDO: Record<string, string[]> = {
   'get-reflow': ['1.4.10'],
   'get-pixelcontrast': ['1.4.11'],
   'get-toetsenbordval': ['2.1.2'],
+  'get-sneltoetsen': ['2.1.4'],
 };
 
 export interface LogRegel {

@@ -2057,6 +2057,135 @@ async function legOpnameVast(
 }
 
 /**
+ * Drukt losse toetsen in en kijkt of er iets gebeurt.
+ *
+ * SC 2.1.4 gaat over sneltoetsen die uit één teken bestaan: een letter, een cijfer of een
+ * leesteken zonder Ctrl of Alt. Wie met spraak invoert of een motorische beperking heeft,
+ * activeert die per ongeluk. Uit de HTML is dat niet te zien -- een attribuut als
+ * `data-rsshortcut="play"` zegt dát er een sneltoets is, niet wélke -- maar in een browser
+ * is het gewoon te meten: druk de toets in en kijk of de pagina verandert.
+ *
+ * De focus gaat eerst naar de body. Staat de focus in een invoerveld, dan typ je gewoon
+ * letters en meet je niets.
+ *
+ * Na elke toets wordt de pagina vergeleken met de toestand ervoor: aantal elementen,
+ * lengte van de tekst, welk element focus heeft, of er geluid speelt, en of er een
+ * dialoogvenster bij is gekomen. Verandert er iets, dan deed die toets iets.
+ *
+ * Met `--in=<css>` wordt eerst een element binnen die selector gefocust. Dat beantwoordt de
+ * tweede vraag van 2.1.4: werkt de sneltoets overal, of alleen wanneer dat onderdeel focus
+ * heeft? Alleen-bij-focus is namelijk toegestaan.
+ */
+async function getSneltoetsen(url: string, flags: Flags) {
+  const toetsen = (flags.toetsen && flags.toetsen !== 'true' ? flags.toetsen : 'abcdefghijklmnopqrstuvwxyz0123456789').split('');
+  const binnen = flags.in && flags.in !== 'true' ? flags.in : null;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      const meetPunt = async () =>
+        page.evaluate(() => {
+          const el = document.activeElement as HTMLElement | null;
+          const media = Array.from(document.querySelectorAll('audio, video')) as HTMLMediaElement[];
+          return {
+            elementen: document.querySelectorAll('*').length,
+            tekst: (document.body.innerText || '').length,
+            focus: el ? el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') : '(geen)',
+            media: media.length,
+            speelt: media.some((m) => !m.paused),
+            dialogen: document.querySelectorAll('[role="dialog"], [aria-modal="true"]').length,
+            adres: location.href,
+          };
+        });
+
+      const naarBeginpunt = async () => {
+        if (binnen) {
+          await page.evaluate((sel: string) => {
+            const el = document.querySelector(sel) as HTMLElement | null;
+            el?.focus();
+          }, binnen);
+        } else {
+          await page.evaluate(() => {
+            (document.activeElement as HTMLElement | null)?.blur();
+            document.body.setAttribute('tabindex', '-1');
+            document.body.focus();
+          });
+        }
+      };
+
+      await naarBeginpunt();
+      const startAdres = page.url();
+      const reageerde: { toets: string; verschil: string[] }[] = [];
+
+      for (const toets of toetsen) {
+        const voor = await meetPunt();
+        await page.keyboard.press(toets as any);
+        await new Promise((r) => setTimeout(r, 350));
+        const na = await meetPunt();
+
+        const verschil: string[] = [];
+        if (na.adres !== voor.adres) verschil.push(`ging naar ${na.adres}`);
+        if (na.elementen !== voor.elementen) verschil.push(`${na.elementen - voor.elementen} elementen erbij`);
+        if (Math.abs(na.tekst - voor.tekst) > 2) verschil.push(`tekst ${na.tekst - voor.tekst} tekens langer`);
+        if (na.focus !== voor.focus) verschil.push(`focus naar ${na.focus}`);
+        if (na.speelt && !voor.speelt) verschil.push('geluid begon te spelen');
+        if (na.media !== voor.media) verschil.push(`${na.media - voor.media} mediaspelers erbij`);
+        if (na.dialogen !== voor.dialogen) verschil.push(`${na.dialogen - voor.dialogen} dialoogvensters erbij`);
+
+        if (verschil.length) reageerde.push({ toets, verschil });
+
+        // Terug naar de uitgangstoestand, anders meet de volgende toets iets anders.
+        if (na.adres !== startAdres) {
+          await page.goto(startAdres, { waitUntil: 'networkidle2' });
+        } else if (verschil.length) {
+          await page.keyboard.press('Escape');
+          await new Promise((r) => setTimeout(r, 250));
+        }
+        await naarBeginpunt();
+      }
+
+      const opname = await legOpnameVast(page, page.url(), 'sneltoetsen');
+
+      legVast({
+        commando: 'get-sneltoetsen',
+        argumenten: {
+          ...(flags.toetsen ? { toetsen: toetsen.join('') } : {}),
+          ...(binnen ? { in: binnen } : {}),
+        },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: 'standaardweergave',
+        schermafdruk: opname,
+        criteria: ['2.1.4'],
+        uitkomst: {
+          getest: toetsen.length,
+          focusOp: binnen ?? 'de pagina zelf',
+          reagerendeToetsen: reageerde.length,
+          toetsen: reageerde.map((r) => r.toets).join('') || null,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        focus_op: binnen ?? 'de pagina zelf (body)',
+        toetsen_getest: toetsen.length,
+        toetsen_die_iets_deden: reageerde.length ? reageerde : 'geen',
+        let_op:
+          'Een toets die iets doet is pas een 2.1.4-afkeuring als hij niet uit te zetten of te herdefinieren is en ook werkt wanneer het onderdeel geen focus heeft. Draai daarom ook met --in=<css> op het onderdeel zelf: reageert de toets daar wel en op de pagina niet, dan is dat toegestaan.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+
+/**
  * Loopt de pagina af met de Tab-toets en kijkt of de focus ergens vast blijft zitten.
  *
  * SC 2.1.2 is niet uit opgehaalde HTML te bepalen — een val ontstaat door gedrag, niet door
@@ -3561,6 +3690,8 @@ async function main() {
       return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-reflow':
       return getReflow(requirePositional(positional, 0, 'url'), flags);
+    case 'get-sneltoetsen':
+      return getSneltoetsen(requirePositional(positional, 0, 'url'), flags);
     case 'get-toetsenbordval':
       return getToetsenbordval(requirePositional(positional, 0, 'url'), flags);
     case 'get-nietteksten':
