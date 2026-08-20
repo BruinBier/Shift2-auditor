@@ -120,6 +120,14 @@ export const METINGEN: Meetopdracht[] = [
     duurt: 'ongeveer 20 seconden',
   },
   {
+    commando: 'get-consistentie',
+    criteria: ['3.2.4'],
+    toegestaneVlaggen: ['max', 'scope'],
+    vanafDeKaart: true,
+    wat: 'Legt de paginas van de steekproef naast elkaar en zoekt onderdelen die op de ene pagina anders heten dan op de andere. Dit criterium gaat over een set paginas; aan een pagina is consistentie niet te zien.',
+    duurt: 'enkele minuten, afhankelijk van het aantal paginas',
+  },
+  {
     commando: 'get-labelinnaam',
     criteria: ['2.5.3'],
     toegestaneVlaggen: ['scope', 'klik'],

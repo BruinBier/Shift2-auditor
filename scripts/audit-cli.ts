@@ -23,6 +23,7 @@
  *   tsx scripts/audit-cli.ts get-videosporen <url|video-url> [--max=5] [--klik=...]
  *   tsx scripts/audit-cli.ts get-links <url> [--scope=pagina|main] [--klik=...]
  *   tsx scripts/audit-cli.ts get-labelinnaam <url> [--scope=pagina|main] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-consistentie <projectId|url> [--max=12]
  *   tsx scripts/audit-cli.ts koppel-logboek <projectId> [--drooglopen]
  *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
  */
@@ -7429,6 +7430,460 @@ async function getLabelInNaam(url: string, flags: Flags) {
   }
 }
 
+/**
+ * De onderdelen op een pagina, met hun toegankelijke naam en een sleutel om ze op
+ * verschillende pagina's terug te vinden.
+ *
+ * Gebruikt door `get-consistentie`, dat pagina's naast elkaar legt. De sleutel is het punt:
+ * om te kunnen zeggen dat "hetzelfde onderdeel" op twee pagina's anders heet, moet je eerst
+ * kunnen bepalen dat het hetzelfde onderdeel ís.
+ *
+ *   - een link herken je aan zijn bestemming. Twee links naar /contact zijn hetzelfde
+ *     onderdeel, hoe ze ook heten. Dat is de sterkste sleutel die er is.
+ *   - een knop heeft geen bestemming. Daar is het zijn `id`, en anders zijn klassenaam uit
+ *     het sjabloon. Dat is zwakker: het is code-identiteit en geen functie-identiteit, en zo
+ *     wordt het ook gemeld.
+ */
+async function leesOnderdelen(page: any, alleenMain: boolean): Promise<any> {
+  return page.evaluate((mainOnly: boolean) => {
+    const main = mainOnly ? document.querySelector('main') : null;
+    const geenMain = mainOnly && !main;
+    const wortel = (main || document.body) as HTMLElement;
+
+    const uit: any[] = [];
+    let zonderBestemming = 0;
+    for (const el of Array.from(
+      wortel.querySelectorAll('a[href], button, [role="button"], input[type="submit"], summary')
+    )) {
+      const s = getComputedStyle(el);
+      if (s.display === 'none' || s.visibility === 'hidden') continue;
+      if (el.getAttribute('aria-hidden') === 'true') continue;
+
+      // De toegankelijke naam, in de volgorde uit Shift2_Regels_SC_2_4_4.md.
+      let naam = '';
+      let bron = 'geen';
+      const verwijzing = el.getAttribute('aria-labelledby');
+      if (verwijzing) {
+        const stukken: string[] = [];
+        for (const id of verwijzing.split(/\s+/)) {
+          const doel = document.getElementById(id);
+          if (doel) stukken.push((doel.textContent || '').replace(/\s+/g, ' ').trim());
+        }
+        const samen = stukken.join(' ').trim();
+        if (samen) {
+          naam = samen;
+          bron = 'aria-labelledby';
+        }
+      }
+      if (!naam) {
+        const l = (el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+        if (l) {
+          naam = l;
+          bron = 'aria-label';
+        }
+      }
+      if (!naam) {
+        let tekst = '';
+        let alt = '';
+        const stapel: Node[] = Array.from(el.childNodes);
+        let bekeken = 0;
+        while (stapel.length && bekeken < 3000) {
+          const knoop = stapel.pop()!;
+          bekeken++;
+          if (knoop.nodeType === 3) {
+            tekst += ' ' + (knoop.textContent || '');
+            continue;
+          }
+          if (knoop.nodeType !== 1) continue;
+          const kind = knoop as Element;
+          if (kind.getAttribute('aria-hidden') === 'true') continue;
+          if (kind.tagName === 'IMG') {
+            alt += ' ' + (kind.getAttribute('alt') || '');
+            continue;
+          }
+          stapel.push(...Array.from(kind.childNodes));
+        }
+        const samen = `${tekst} ${alt}`.replace(/\s+/g, ' ').trim();
+        if (samen) {
+          naam = samen;
+          bron = tekst.trim() ? 'tekst in het element' : 'tekstalternatief van de afbeelding';
+        }
+      }
+      if (!naam) {
+        const t = (el.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+        if (t) {
+          naam = t;
+          bron = 'title';
+        }
+      }
+
+      // De sleutel waarop dit onderdeel op een andere pagina terug te vinden is.
+      // In welk deel van de pagina het staat.
+      //
+      // Twee links naar dezelfde bestemming zijn niet vanzelf hetzelfde onderdeel: het logo
+      // in de header en "Home" in het kruimelpad gaan allebei naar de startpagina, maar het
+      // zijn twee onderdelen met elk een eigen naam. Zonder dit onderscheid meldt elke
+      // gemeentesite hier een inconsistentie die er niet is. Het deel van de pagina is het
+      // beste houvast dat de code biedt; een sluitende definitie van "component" bestaat
+      // niet, en dat is punt 5 van W3C-issue #5225.
+      let gebied = 'elders';
+      let o: Element | null = el;
+      while (o) {
+        const t = o.tagName.toLowerCase();
+        const rol = o.getAttribute('role') || '';
+        if (t === 'header' || rol === 'banner') {
+          gebied = 'header';
+          break;
+        }
+        if (t === 'footer' || rol === 'contentinfo') {
+          gebied = 'footer';
+          break;
+        }
+        if (t === 'nav' || rol === 'navigation') {
+          gebied = 'navigatie';
+          break;
+        }
+        if (t === 'main' || rol === 'main') {
+          gebied = 'main';
+          break;
+        }
+        if (t === 'aside') {
+          gebied = 'zijbalk';
+          break;
+        }
+        o = o.parentElement;
+      }
+
+      let sleutel: string | null = null;
+      let soort = 'knop';
+      if (el.tagName === 'A') {
+        soort = 'link';
+        const rauw = (el.getAttribute('href') || '').trim();
+        // Een link zonder bestemming heeft niets om op te koppelen: twee kapotte
+        // belknoppen in de footer zijn geen "hetzelfde onderdeel dat anders heet". Ze
+        // vallen buiten de vergelijking en worden apart geteld, zodat ze niet
+        // stilzwijgend verdwijnen.
+        if (!rauw || rauw === '#' || rauw === '/#' || /^javascript:/i.test(rauw)) {
+          zonderBestemming++;
+          continue;
+        }
+        if (rauw.startsWith('#')) {
+          // Een sprong binnen de pagina: het doel verschilt per pagina, de functie niet.
+          sleutel = `sprong:${rauw}|${gebied}`;
+        } else {
+          try {
+            const u = new URL((el as HTMLAnchorElement).href);
+            // Mailto en tel hebben geen herkomst; hun bestemming is het adres zelf. Een
+            // deel-via-mail-link zonder adres (mailto:?subject=...) heeft helemaal geen
+            // bestemming: die links heten per pagina anders omdat de paginanaam erin
+            // staat, en dat is geen inconsistentie maar de bedoeling.
+            if (u.protocol === 'mailto:' || u.protocol === 'tel:') {
+              const adres = u.pathname.trim();
+              if (!adres) {
+                zonderBestemming++;
+                continue;
+              }
+              sleutel = `${u.protocol}${adres}|${gebied}`;
+            } else {
+              // Een kaal pad wordt "/" en niet de lege tekenreeks; anders vallen de
+              // startpagina en alles wat daarheen wijst in dezelfde emmer.
+              const pad = u.pathname.replace(/\/+$/, '') || '/';
+              sleutel =
+                u.origin === location.origin
+                  ? `pad:${pad}${u.search}${u.hash}|${gebied}`
+                  : `extern:${u.origin}${pad}|${gebied}`;
+            }
+          } catch {
+            sleutel = `adres:${rauw}|${gebied}`;
+          }
+        }
+      } else {
+        const id = el.getAttribute('id');
+        const klasse = (el.getAttribute('class') || '').split(/\s+/).filter(Boolean)[0] || '';
+        // Sjabloonklassen krijgen vaak een gegenereerd stuk mee dat per bouw verschilt;
+        // alleen het leesbare deel gebruiken.
+        const kaal = klasse.replace(/[-_][A-Za-z0-9]{6,}.*$/, '');
+        sleutel = id ? `id:${id}|${gebied}` : kaal ? `klasse:${kaal}|${gebied}` : null;
+      }
+      if (!sleutel) continue;
+
+      uit.push({
+        soort,
+        sleutel,
+        naam,
+        bron,
+        href: el.getAttribute('href') || null,
+      });
+    }
+    // Een sleutel die op deze pagina meer dan één element aanwijst, wijst geen onderdeel
+    // aan. Twintig uitklapkoppen delen dezelfde sjabloonklasse; die als "één onderdeel met
+    // twintig namen" rapporteren levert een lijst op waar niemand iets aan heeft. Alleen
+    // sleutels die hier precies één element aanwijzen blijven staan.
+    const geteld = new Map<string, number>();
+    for (const o of uit) geteld.set(o.sleutel, (geteld.get(o.sleutel) ?? 0) + 1);
+    const eenduidig = uit.filter((o) => geteld.get(o.sleutel) === 1);
+    const meervoudig = uit.length - eenduidig.length;
+
+    return {
+      onderdelen: eenduidig,
+      nietEenduidigOpDezePagina: meervoudig,
+      geenMain,
+      zonderBestemming,
+      titel: document.title,
+    };
+  }, alleenMain);
+}
+
+/**
+ * Legt de pagina's van een onderzoek naast elkaar en zoekt onderdelen die op de ene pagina
+ * anders heten dan op de andere. De meting voor SC 3.2.4.
+ *
+ * Dit is de eerste meting die meer dan één pagina bekijkt, en dat is geen toeval: 3.2.4 gaat
+ * over een sét webpagina's. Consistentie is aan één pagina niet te zien. Een oordeel per
+ * pagina is hier dus geen kleine onnauwkeurigheid maar een categoriefout -- en toch stond het
+ * op alle twintig kaarten van UTHEU-02, negen keer zelfs met een vergelijking bínnen één
+ * pagina, wat `Shift2_Regels_SC_3_2_4.md` uitdrukkelijk uitsluit.
+ *
+ * Geef een projectnummer mee, of het adres van een sample; in dat laatste geval wordt het
+ * onderzoek opgezocht waar die pagina bij hoort. Zo werkt de knop op de kaart ook: die stuurt
+ * het adres van het sample mee.
+ *
+ * WAT HET NIET BESLIST: of twee namen echt van elkaar verschillen in de zin van dit
+ * criterium. "Zoeken" en "Zoek" zijn twee tekenreeksen; of dat een inconsistentie is, is punt
+ * 1 van W3C-issue #5225 en blijft een oordeel. Het commando zet ze naast elkaar met de
+ * pagina's erbij.
+ */
+async function getConsistentie(doel: string, flags: Flags) {
+  const max = Math.max(2, parseInt(flags.max || '12', 10));
+  const alleenMain = flags.scope === 'main';
+
+  // Het onderzoek en zijn pagina's ophalen. Een adres mag ook: dan zoeken we op welk
+  // onderzoek deze pagina in de steekproef heeft.
+  const isProjectId = /^[0-9a-f-]{30,}$/i.test(doel);
+  let projectId = doel;
+  let samples: any[] = [];
+  if (isProjectId) {
+    samples = await api(`/api/projects/${projectId}/sample-items`);
+  } else {
+    const projecten: any[] = await api('/api/projects');
+    const kaal = (u: string) => {
+      try {
+        const x = new URL(u);
+        return x.host.replace(/^www\./, '').toLowerCase() + x.pathname.replace(/\/+$/, '');
+      } catch {
+        return u;
+      }
+    };
+    for (const p of projecten) {
+      const lijst: any[] = await api(`/api/projects/${p.id}/sample-items`);
+      if (lijst.some((s) => s.url && kaal(s.url) === kaal(doel))) {
+        projectId = p.id;
+        samples = lijst;
+        break;
+      }
+    }
+    if (!samples.length) {
+      throw new Error(
+        `Geen onderzoek gevonden waarin ${doel} als sample staat. Geef anders het projectnummer mee.`
+      );
+    }
+  }
+
+  const bruikbaar = samples.filter((s) => s.url && s.sampleType !== 'pdf');
+  const teDoen = bruikbaar.slice(0, max);
+  const overgeslagen = bruikbaar.length - teDoen.length;
+  if (teDoen.length < 2) {
+    throw new Error(
+      'Voor 3.2.4 zijn minstens twee pagina\'s nodig; consistentie is aan één pagina niet te zien.'
+    );
+  }
+
+  const session = await getBrowser();
+  const perPagina: any[] = [];
+  const mislukt: any[] = [];
+  try {
+    for (const sample of teDoen) {
+      const { page, cleanup, eindUrl, omgeleid } = await openPage(session, sample.url);
+      try {
+        const gevonden = await leesOnderdelen(page, alleenMain);
+        perPagina.push({
+          sample: sample.title,
+          url: sample.url,
+          omgeleid,
+          eindUrl,
+          onderdelen: gevonden.onderdelen,
+          nietEenduidig: gevonden.nietEenduidigOpDezePagina ?? 0,
+          zonderBestemming: gevonden.zonderBestemming ?? 0,
+        });
+      } catch (e: any) {
+        mislukt.push({ sample: sample.title, url: sample.url, fout: e?.message || 'niet gelukt' });
+      } finally {
+        await cleanup();
+      }
+    }
+  } finally {
+    await session.dispose();
+  }
+
+  // Per sleutel de namen die op de verschillende pagina's gevonden zijn.
+  const perSleutel = new Map<string, Map<string, string[]>>();
+  for (const p of perPagina) {
+    for (const o of p.onderdelen) {
+      if (!perSleutel.has(o.sleutel)) perSleutel.set(o.sleutel, new Map());
+      const namen = perSleutel.get(o.sleutel)!;
+      // Hoofdletters tellen niet mee: een schermlezer leest "Zoeken" en "zoeken" hetzelfde.
+      const kaal = o.naam.toLowerCase();
+      if (!namen.has(kaal)) namen.set(kaal, []);
+      if (!namen.get(kaal)!.includes(p.sample)) namen.get(kaal)!.push(p.sample);
+    }
+  }
+
+  // Op hoeveel VERSCHILLENDE pagina's een onderdeel voorkomt. Twee keer op dezelfde pagina
+  // is niet "op meerdere pagina's"; zonder dit onderscheid telde de paginering van een
+  // nieuwsoverzicht mee als iets wat over de site heen vergeleken kan worden.
+  const paginasVan = (namen: Map<string, string[]>) =>
+    new Set(Array.from(namen.values()).flat());
+  const opMeerderePaginas = Array.from(perSleutel.entries()).filter(
+    ([, namen]) => paginasVan(namen).size > 1
+  );
+
+  /**
+   * Twee namen op verschillende pagina's, of twee namen op dezelfde pagina?
+   *
+   * Dat is hier het hele onderscheid. 3.2.4 gaat over een set pagina's: hetzelfde onderdeel
+   * dat op pagina A anders heet dan op pagina B. Twee links naast elkaar in dezelfde footer
+   * die allebei naar WhatsApp gaan en anders heten, is iets binnen één pagina -- en
+   * `Shift2_Regels_SC_3_2_4.md` sluit dat uitdrukkelijk uit.
+   *
+   * Aan de namen alleen is dat niet te zien: allebei leveren ze twee namen over vier
+   * pagina's op. Het verschil zit in de vraag of dezelfde pagina meer dan één naam draagt.
+   */
+  const alleVerschillen = opMeerderePaginas
+    .filter(([, namen]) => namen.size > 1)
+    .map(([sleutel, namen]) => {
+      const perPaginaAantal = new Map<string, number>();
+      for (const paginas of Array.from(namen.values())) {
+        for (const pagina of paginas) {
+          perPaginaAantal.set(pagina, (perPaginaAantal.get(pagina) ?? 0) + 1);
+        }
+      }
+      const binnenEenPagina = Array.from(perPaginaAantal.values()).some((n) => n > 1);
+      return {
+        onderdeel: sleutel,
+        binnenEenPagina,
+        namen: Array.from(namen.entries()).map(([naam, paginas]) => ({
+          naam,
+          paginas: paginas.slice(0, 6),
+          aantal: paginas.length,
+        })),
+      };
+    });
+  const verschillend = alleVerschillen.filter((v) => !v.binnenEenPagina);
+  const binnenEenPagina = alleVerschillen.filter((v) => v.binnenEenPagina);
+
+  // Onderdelen die niet overal staan. Dat is 3.2.3 (consistente navigatie) en geen 3.2.4;
+  // wel melden, want anders lijkt het alsof er niets aan de hand is.
+  const nietOveral = opMeerderePaginas
+    .map(([sleutel, namen]) => ({
+      onderdeel: sleutel,
+      opPaginas: paginasVan(namen).size,
+    }))
+    .filter((x) => x.opPaginas > 1 && x.opPaginas < perPagina.length)
+    .slice(0, 20);
+
+  const dir = ensureOutputDir();
+  const stempel = timestamp();
+  let overzicht: string | null = path.join(dir, `${stempel}-consistentie.txt`);
+  try {
+    const regels = [
+      `CONSISTENTE IDENTIFICATIE OVER DE SAMPLES — onderzoek ${projectId}`,
+      `Gemeten: ${new Date().toLocaleString('nl-NL')} · ${
+        session.mode === 'cdp' ? 'auditsessie' : 'headless'
+      }`,
+      `Pagina's vergeleken: ${perPagina.length} van de ${bruikbaar.length}${
+        overgeslagen ? ` (${overgeslagen} niet bekeken door --max=${max})` : ''
+      }`,
+      `Gebied: ${alleenMain ? 'main-content' : 'hele pagina'}`,
+      '',
+      'ONDERDELEN DIE ANDERS HETEN OP EEN ANDERE PAGINA',
+      ...(verschillend.length
+        ? verschillend.flatMap((v) => [
+            `  ${v.onderdeel}`,
+            ...v.namen.map((n) => `      "${n.naam}" op ${n.paginas.join(', ')}`),
+          ])
+        : ['  geen']),
+      '',
+      'STAAT NIET OP ELKE PAGINA (dat is 3.2.3, niet 3.2.4)',
+      ...(nietOveral.length
+        ? nietOveral.map((x) => `  ${x.onderdeel} — op ${x.opPaginas} van de ${perPagina.length}`)
+        : ['  geen']),
+      '',
+      "PAGINA'S",
+      ...perPagina.map(
+        (p) => `  ${p.sample}: ${p.onderdelen.length} onderdelen${p.omgeleid ? ' (OMGELEID)' : ''}`
+      ),
+      ...mislukt.map((m) => `  ${m.sample}: niet gelukt — ${m.fout}`),
+    ];
+    fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+  } catch {
+    overzicht = null;
+  }
+
+  const stapZin = `${perPagina.length} pagina's van de steekproef naast elkaar gelegd en per onderdeel de toegankelijke naam vergeleken. Links zijn gekoppeld op hun bestemming, knoppen op hun id of sjabloonklasse. ${
+    verschillend.length
+      ? `${verschillend.length} ${
+          verschillend.length === 1 ? 'onderdeel heet' : 'onderdelen heten'
+        } op de ene pagina anders dan op de andere: ${verschillend
+          .slice(0, 4)
+          .map((v) => `${v.onderdeel} (${v.namen.map((n) => `"${n.naam}"`).join(' / ')})`)
+          .join('; ')}.`
+      : 'Elk onderdeel dat op meer dan één pagina voorkomt, heet daar overal hetzelfde.'
+  }${overgeslagen ? ` ${overgeslagen} pagina's zijn niet bekeken door de grens van --max=${max}.` : ''}`;
+
+  const beslist = overgeslagen === 0 && mislukt.length === 0;
+
+  legVast({
+    commando: 'get-consistentie',
+    stap: stapZin,
+    argumenten: { ...(flags.max ? { max: String(max) } : {}), ...(flags.scope ? { scope: flags.scope } : {}) },
+    url: teDoen[0]?.url ?? null,
+    browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+    weergave: 'standaardweergave',
+    artefact: overzicht,
+    criteria: ['3.2.4'],
+    uitkomst: {
+      paginas: perPagina.length,
+      vanDeSteekproef: bruikbaar.length,
+      onderdelenOpMeerderePaginas: opMeerderePaginas.length,
+      andersBenoemd: verschillend.length,
+      nietOveralAanwezig: nietOveral.length,
+      beslist,
+    },
+  });
+
+  print({
+    onderzoek: projectId,
+    paginas_vergeleken: perPagina.map((p) => p.sample),
+    paginas_niet_bekeken: overgeslagen || undefined,
+    niet_gelukt: mislukt.length ? mislukt : undefined,
+    gebied: alleenMain ? 'main-content' : 'hele pagina',
+    // Wat buiten de vergelijking viel, en waarom. Stil weglaten leest als "er was niets".
+    niet_te_koppelen: {
+      meer_dan_een_element_met_dezelfde_sleutel: perPagina.reduce((n: number, p: any) => n + (p.nietEenduidig || 0), 0),
+      links_zonder_bestemming: perPagina.reduce((n: number, p: any) => n + (p.zonderBestemming || 0), 0),
+    },
+    onderdelen_op_meerdere_paginas: opMeerderePaginas.length,
+    anders_benoemd: verschillend,
+    anders_benoemd_binnen_een_pagina: binnenEenPagina,
+    staat_niet_op_elke_pagina: nietOveral,
+    overzicht,
+    beslist,
+    let_op: verschillend.length
+      ? 'Deze onderdelen heten niet overal hetzelfde. Weeg zelf of het een inconsistentie is in de zin van 3.2.4: "Zoeken" en "Zoek" zijn twee tekenreeksen, maar of dat verschil telt is punt 1 van W3C-issue #5225. Knoppen zijn gekoppeld op hun id of klasse, dus controleer of het werkelijk hetzelfde onderdeel is.'
+      : 'Geen onderdeel dat op de ene pagina anders heet dan op de andere. Let op wat hier NIET in zit: onderdelen die maar op één pagina voorkomen zijn niet te vergelijken, en of iets overal aanwezig is valt onder 3.2.3.',
+  });
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -7508,6 +7963,8 @@ async function main() {
       return getLinks(requirePositional(positional, 0, 'url'), flags);
     case 'get-labelinnaam':
       return getLabelInNaam(requirePositional(positional, 0, 'url'), flags);
+    case 'get-consistentie':
+      return getConsistentie(requirePositional(positional, 0, 'projectId of url'), flags);
     case 'capture-sample-evidence':
       return captureSampleEvidence(
         requirePositional(positional, 0, 'projectId'),

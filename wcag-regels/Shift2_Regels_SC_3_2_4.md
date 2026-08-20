@@ -26,6 +26,40 @@ Praktische lijn zolang dat zo is: beoordeel 3.2.4 **over de samples heen**, op o
 op meerdere pagina's terugkomen en dezelfde functie hebben. Twijfel je of iets binnen dit
 criterium valt, meld het dan als open vraag in plaats van het stil te laten vallen.
 
+## Zo meet je het
+
+```
+npm run cli -- get-consistentie <projectId>
+```
+
+Dat legt de pagina's van de steekproef naast elkaar en vergelijkt per onderdeel de
+toegankelijke naam. Links worden gekoppeld op hun bestemming — de sterkste sleutel die er is —
+knoppen op hun id of sjabloonklasse, en beide alleen binnen hetzelfde deel van de pagina
+(header, navigatie, main, footer). Dat laatste is nodig omdat het logo en "Home" in het
+kruimelpad allebei naar de startpagina gaan zonder hetzelfde onderdeel te zijn.
+
+Het commando scheidt twee dingen die er in de uitkomst hetzelfde uitzien:
+
+- **anders benoemd tussen pagina's** — dat is 3.2.4
+- **anders benoemd binnen één pagina** — dat valt er volgens de regel hierboven buiten, en
+  staat apart in de uitvoer
+
+Wat er niet in kan: of "Zoeken" en "Zoek" werkelijk van elkaar verschillen in de zin van dit
+criterium. Dat is punt 1 hierboven en blijft een oordeel. Het commando zet ze naast elkaar met
+de pagina's erbij.
+
+Aanleiding: UTHEU-02 (2026-08-20). Alle twintig kaarten stonden op een oordeel zonder één
+vergelijking eronder, negen ervan met een redenering bínnen één pagina. De eerste meting over
+achttien pagina's leverde vier onderdelen op die niet overal hetzelfde heten, waaronder het
+logo in de header.
+
+## Waar het oordeel thuishoort
+
+Op het homepage-sample, net als de andere sitebrede onderdelen (zie `Shift2_Scope_Per_Sample.md`).
+Op de overige samples komt 3.2.4 op `niet_aanwezig` met als reden dat het sitebreed is
+beoordeeld. Een oordeel per pagina is bij dit criterium geen onnauwkeurigheid maar een
+categoriefout: aan één pagina is consistentie niet te zien.
+
 ## Regels
 
 - NIET-GETAGDE PDF: zet 3.2.4 op niet_te_bepalen. Zonder tags zijn er geen programmatisch
