@@ -22,6 +22,7 @@
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
  *   tsx scripts/audit-cli.ts get-videosporen <url|video-url> [--max=5] [--klik=...]
  *   tsx scripts/audit-cli.ts get-links <url> [--scope=pagina|main] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-labelinnaam <url> [--scope=pagina|main] [--klik=...]
  *   tsx scripts/audit-cli.ts koppel-logboek <projectId> [--drooglopen]
  *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
  */
@@ -6960,6 +6961,412 @@ async function getLinks(url: string, flags: Flags) {
   }
 }
 
+/**
+ * Vergelijkt per bedieningselement de zichtbare tekst met de toegankelijke naam. De meting
+ * voor SC 2.5.3.
+ *
+ * De kern van dit criterium is één vergelijking: wat er op de knop staat, moet vóórkomen in
+ * de naam die hulpsoftware voorleest. Wie met spraak bedient zegt "klik zoeken"; staat er in
+ * de code `aria-label="Vind informatie op deze site"`, dan gebeurt er niets.
+ *
+ * `Shift2_Regels_SC_2_5_3.md` schrijft deze meting al voor en verwees naar een los script in
+ * `tmp/`. Die map wordt opgeruimd, en daarmee verdween het gereedschap; op de kaart stond
+ * daardoor twintig keer een oordeel zonder vergelijking eronder. Vandaar dit commando.
+ *
+ * De twee gevallen die de vergelijking NIET dekt, worden apart geteld en genoemd, want die
+ * horen volgens de regels naar de onderzoeker te gaan in plaats van stilzwijgend als
+ * "voldoet" te eindigen:
+ *
+ *   - een zichtbaar label dat in een afbeelding staat; die tekst is niet uit te lezen
+ *   - een samengestelde `aria-labelledby` (meerdere verwijzingen, of een verwijzing naar een
+ *     element dat zelf een `aria-label` heeft)
+ *
+ * Elementen zonder zichtbare tekst -- alleen een pictogram -- vallen buiten 2.5.3. Dat is
+ * een kwestie van 4.1.2 en wordt hier alleen geteld.
+ */
+async function getLabelInNaam(url: string, flags: Flags) {
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const isHome = isHomepageUrl(url);
+  const heelDePagina = flags.scope ? flags.scope === 'pagina' : isHome;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      // Wachten tot de bediening compleet is.
+      //
+      // Widgets van derden komen later binnen dan de pagina zelf: de voorleesbalk van
+      // ReadSpeaker stond er pas na een seconde of drie. Wie meteen leest, meet een pagina
+      // zonder die knoppen en meldt "geen mismatches" over een deel van het scherm. Tellen
+      // tot het aantal twee keer achter elkaar gelijk is.
+      let vorigAantal = -1;
+      for (let poging = 0; poging < 10; poging++) {
+        const nu = await page
+          .evaluate(
+            () =>
+              document.querySelectorAll(
+                'button, a[href], [role="button"], [role="link"], input, select, textarea, summary'
+              ).length
+          )
+          .catch(() => vorigAantal);
+        if (nu === vorigAantal) break;
+        vorigAantal = nu;
+        await new Promise((r) => setTimeout(r, 700));
+      }
+
+      const gevonden = await page.evaluate((allesTelt: boolean) => {
+        const main = allesTelt ? null : document.querySelector('main');
+        const geenMain = !allesTelt && !main;
+        const wortel = (main || document.body) as HTMLElement;
+
+        const KIEZER =
+          'button, a[href], [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], input, select, textarea, summary';
+
+        const elementen: any[] = [];
+        for (const el of Array.from(wortel.querySelectorAll(KIEZER))) {
+          const soort = (el.getAttribute('type') || '').toLowerCase();
+          if (el.tagName === 'INPUT' && (soort === 'hidden' || soort === 'image')) continue;
+          const rect = el.getBoundingClientRect();
+          const s = getComputedStyle(el);
+          if (s.display === 'none' || s.visibility === 'hidden') continue;
+          if (el.getAttribute('aria-hidden') === 'true') continue;
+
+          // De zichtbare tekst: wat een ziende gebruiker leest. Alles wat voor het oog
+          // verborgen is valt eruit, en alles wat voor hulpsoftware verborgen is ook.
+          let zichtbaar = '';
+          let labelInAfbeelding = false;
+          const stapel: Node[] = Array.from(el.childNodes);
+          let bekeken = 0;
+          while (stapel.length && bekeken < 3000) {
+            const knoop = stapel.pop()!;
+            bekeken++;
+            if (knoop.nodeType === 3) {
+              // Meet wat de tekst werkelijk in beeld inneemt. Tekst kan onzichtbaar zijn
+              // zonder dat er een span omheen zit: de zoekknop van heuvelrug.nl heeft
+              // `font-size: 0` en het woord "Zoeken" rendert op nul bij nul. Dat als
+              // zichtbaar label tellen zou 2.5.3 van toepassing verklaren op een knop die
+              // alleen een pictogram toont -- en bij een afwijkende aria-label zou daar
+              // een afkeuring uit komen die er niet is.
+              if (!(knoop.textContent || '').trim()) continue;
+              const bereik = document.createRange();
+              bereik.selectNodeContents(knoop);
+              const tr = bereik.getBoundingClientRect();
+              if (tr.width <= 0 || tr.height <= 0) continue;
+              zichtbaar += ' ' + (knoop.textContent || '');
+              continue;
+            }
+            if (knoop.nodeType !== 1) continue;
+            const kind = knoop as Element;
+            if (kind.getAttribute('aria-hidden') === 'true') continue;
+            const ks = getComputedStyle(kind);
+            if (ks.display === 'none' || ks.visibility === 'hidden') continue;
+            const krect = kind.getBoundingClientRect();
+            const klasse = kind.getAttribute('class') || '';
+            // Visueel verborgen tekst leest een schermlezer wel voor, maar een ziende
+            // gebruiker ziet hem niet. Voor 2.5.3 telt hij dus niet als zichtbaar label.
+            const weggestopt =
+              /sr-only|visually-hidden|visuallyhidden|screen-?reader|hidden-visually/i.test(klasse) ||
+              krect.width <= 1 ||
+              krect.height <= 1 ||
+              krect.right < 0 ||
+              krect.left < -999 ||
+              /inset\(50%\)|rect\(0(px)?, ?0(px)?, ?0(px)?, ?0(px)?\)/.test(ks.clipPath + ks.clip);
+            if (weggestopt) continue;
+            if (kind.tagName === 'IMG') {
+              // Staat de knoptekst in een plaatje, dan is die tekst niet uit te lezen.
+              if ((kind.getAttribute('alt') || '').trim()) labelInAfbeelding = true;
+              continue;
+            }
+            if (kind.tagName.toLowerCase() === 'svg') continue;
+            stapel.push(...Array.from(kind.childNodes));
+          }
+          zichtbaar = zichtbaar.replace(/\s+/g, ' ').trim();
+
+          // Bij een formulierveld is het zichtbare label het gekoppelde <label>.
+          let labelTekst = '';
+          if (/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) {
+            const id = el.getAttribute('id');
+            const bij = id ? document.querySelector(`label[for="${CSS.escape(id)}"]`) : null;
+            const om = el.closest('label');
+            const bron = bij || om;
+            if (bron) labelTekst = (bron.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!zichtbaar) zichtbaar = labelTekst;
+          }
+
+          // De toegankelijke naam, in de volgorde uit de regels.
+          let naam = '';
+          let naamBron = 'geen';
+          let samengesteldeVerwijzing = false;
+          const verwijzing = el.getAttribute('aria-labelledby');
+          if (verwijzing) {
+            const ids = verwijzing.split(/\s+/).filter(Boolean);
+            const stukken: string[] = [];
+            for (const id of ids) {
+              const doel = document.getElementById(id);
+              if (!doel) continue;
+              if (doel.getAttribute('aria-label')) samengesteldeVerwijzing = true;
+              stukken.push((doel.textContent || '').replace(/\s+/g, ' ').trim());
+            }
+            if (ids.length > 1) samengesteldeVerwijzing = true;
+            const samen = stukken.join(' ').trim();
+            if (samen) {
+              naam = samen;
+              naamBron = 'aria-labelledby';
+            }
+          }
+          if (!naam) {
+            const l = (el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+            if (l) {
+              naam = l;
+              naamBron = 'aria-label';
+            }
+          }
+          if (!naam && labelTekst) {
+            naam = labelTekst;
+            naamBron = 'gekoppeld label';
+          }
+          if (!naam) {
+            let inhoud = '';
+            const s2: Node[] = Array.from(el.childNodes);
+            let b2 = 0;
+            while (s2.length && b2 < 3000) {
+              const k = s2.pop()!;
+              b2++;
+              if (k.nodeType === 3) {
+                inhoud += ' ' + (k.textContent || '');
+                continue;
+              }
+              if (k.nodeType !== 1) continue;
+              const kind = k as Element;
+              if (kind.getAttribute('aria-hidden') === 'true') continue;
+              if (kind.tagName === 'IMG') {
+                inhoud += ' ' + (kind.getAttribute('alt') || '');
+                continue;
+              }
+              s2.push(...Array.from(kind.childNodes));
+            }
+            const samen = inhoud.replace(/\s+/g, ' ').trim();
+            if (samen) {
+              naam = samen;
+              naamBron = 'inhoud van het element';
+            }
+          }
+          if (!naam) {
+            const t = (el.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+            if (t) {
+              naam = t;
+              naamBron = 'title';
+            }
+          }
+          if (!naam && el.tagName === 'INPUT') {
+            const p = (el.getAttribute('placeholder') || '').replace(/\s+/g, ' ').trim();
+            if (p) {
+              naam = p;
+              naamBron = 'placeholder';
+            }
+          }
+
+          elementen.push({
+            element:
+              el.tagName.toLowerCase() +
+              (soort ? `[type=${soort}]` : '') +
+              (el.getAttribute('id') ? `#${el.getAttribute('id')}` : ''),
+            zichtbaar,
+            naam,
+            naamBron,
+            labelInAfbeelding,
+            samengesteldeVerwijzing,
+            inBeeld: rect.width > 0 && rect.height > 0,
+          });
+        }
+        return { elementen, geenMain };
+      }, heelDePagina);
+
+      // Normaliseren zoals de regels voorschrijven: hoofdletters, dubbele spaties, harde
+      // spaties en aanhalingstekens. Het rekenwerk in Node, zodat het hier na te lezen is.
+      const kaal = (t: string) =>
+        (t || '')
+          .replace(/ /g, ' ')
+          .replace(/[’‘'"“”]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+
+      const alles = gevonden.elementen;
+      const metZichtbareTekst = alles.filter((e: any) => e.zichtbaar);
+      const zonderZichtbareTekst = alles.length - metZichtbareTekst.length;
+      const beoordeeld = metZichtbareTekst.map((e: any) => ({
+        ...e,
+        past: kaal(e.naam).includes(kaal(e.zichtbaar)),
+        // Voor spraakbesturing helpt het als de zichtbare tekst vooraan staat. Geen eis
+        // van 2.5.3, dus alleen ter informatie.
+        vooraan: kaal(e.naam).startsWith(kaal(e.zichtbaar)),
+      }));
+      const mismatches = beoordeeld.filter((e: any) => !e.past && !e.samengesteldeVerwijzing);
+      const nietTeVergelijken = beoordeeld.filter(
+        (e: any) => e.samengesteldeVerwijzing || e.labelInAfbeelding
+      );
+
+      const opname = await legOpnameVast(page, page.url(), 'labelinnaam');
+      const dir = ensureOutputDir();
+      const stempel = timestamp();
+      const naamBestand = slugifyUrl(page.url());
+      let overzicht: string | null = path.join(dir, `${stempel}-${naamBestand}-labelinnaam.txt`);
+      try {
+        const regels = [
+          `LABEL IN NAAM — ${page.url()}`,
+          `Gemeten: ${new Date().toLocaleString('nl-NL')} · ${
+            session.mode === 'cdp' ? 'auditsessie' : 'headless'
+          }`,
+          `Gebied: ${
+            gevonden.geenMain ? 'hele pagina (er is geen main)' : heelDePagina ? 'hele pagina' : 'main-content'
+          }`,
+          `Bedieningselementen: ${alles.length} · met zichtbare tekst: ${metZichtbareTekst.length} · alleen een pictogram: ${zonderZichtbareTekst}`,
+          '',
+          'MISMATCHES (zichtbare tekst komt niet voor in de naam)',
+          ...(mismatches.length
+            ? mismatches.map(
+                (e: any) => `  ${e.element}: ziet "${e.zichtbaar}" — heet "${e.naam}" [${e.naamBron}]`
+              )
+            : ['  geen']),
+          '',
+          'NIET TE VERGELIJKEN — hoort naar de onderzoeker',
+          ...(nietTeVergelijken.length
+            ? nietTeVergelijken.map(
+                (e: any) =>
+                  `  ${e.element}: ${
+                    e.labelInAfbeelding ? 'label staat in een afbeelding' : 'samengestelde aria-labelledby'
+                  } — ziet "${e.zichtbaar}", heet "${e.naam}"`
+              )
+            : ['  geen']),
+          '',
+          'ALLE ELEMENTEN MET ZICHTBARE TEKST (ziet → heet [bron])',
+          ...beoordeeld.map(
+            (e: any) =>
+              `  ${e.past ? 'ok    ' : 'MIS   '} "${e.zichtbaar}" → "${e.naam}" [${e.naamBron}]${
+                e.past && !e.vooraan ? ' (niet vooraan)' : ''
+              }`
+          ),
+        ];
+        fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+      } catch {
+        overzicht = null;
+      }
+
+      const stapZin = (() => {
+        const waar = gevonden.geenMain
+          ? 'de hele pagina (er is geen main)'
+          : heelDePagina
+          ? 'de hele pagina'
+          : 'de main-content';
+        const staart = mismatches.length
+          ? `${mismatches.length} keer komt de zichtbare tekst niet voor in de naam: ${mismatches
+              .slice(0, 5)
+              .map((e: any) => `"${e.zichtbaar}" heet "${e.naam}"`)
+              .join('; ')}.`
+          : 'Bij alle vergeleken elementen komt de zichtbare tekst voor in de naam.';
+        const rest = nietTeVergelijken.length
+          ? ` ${nietTeVergelijken.length} ${
+              nietTeVergelijken.length === 1 ? 'element is' : 'elementen zijn'
+            } niet automatisch te vergelijken (label in een afbeelding of een samengestelde aria-labelledby); die horen met de hand nagekeken te worden.`
+          : '';
+        return `In ${waar} ${alles.length} bedieningselementen bekeken; ${metZichtbareTekst.length} hebben zichtbare tekst en ${zonderZichtbareTekst} tonen alleen een pictogram en vallen buiten dit criterium. Per element de zichtbare tekst vergeleken met de toegankelijke naam. ${staart}${rest}`;
+      })();
+
+      const beslist = nietTeVergelijken.length === 0;
+
+      legVast({
+        commando: 'get-labelinnaam',
+        stap: stapZin,
+        argumenten: { ...(klik ? { klik } : {}), ...(flags.scope ? { scope: flags.scope } : {}) },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        schermafdruk: opname,
+        artefact: overzicht,
+        criteria: ['2.5.3'],
+        uitkomst: {
+          bedieningselementen: alles.length,
+          metZichtbareTekst: metZichtbareTekst.length,
+          alleenEenPictogram: zonderZichtbareTekst,
+          mismatches: mismatches.length,
+          nietTeVergelijken: nietTeVergelijken.length,
+          beslist,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gebied: gevonden.geenMain
+          ? 'hele pagina (er is geen main)'
+          : heelDePagina
+          ? 'hele pagina'
+          : 'main-content',
+        bedieningselementen: alles.length,
+        met_zichtbare_tekst: metZichtbareTekst.length,
+        alleen_een_pictogram: zonderZichtbareTekst,
+        mismatches: mismatches.map((e: any) => ({
+          element: e.element,
+          ziet: e.zichtbaar,
+          heet: e.naam,
+          naam_uit: e.naamBron,
+        })),
+        niet_te_vergelijken: nietTeVergelijken.map((e: any) => ({
+          element: e.element,
+          reden: e.labelInAfbeelding
+            ? 'label staat in een afbeelding'
+            : 'samengestelde aria-labelledby',
+          ziet: e.zichtbaar,
+          heet: e.naam,
+        })),
+        zichtbare_tekst_niet_vooraan: beoordeeld
+          .filter((e: any) => e.past && !e.vooraan)
+          .map((e: any) => ({ ziet: e.zichtbaar, heet: e.naam })),
+        schermafdruk: opname,
+        overzicht,
+        beslist,
+        let_op: mismatches.length
+          ? 'Een mismatch is een afkeuring: wie met spraak bedient kan het element niet activeren met wat hij ziet staan. Leg de zichtbare tekst en de naam naast elkaar voordat je schrijft.'
+          : nietTeVergelijken.length
+          ? 'Geen mismatch in wat te vergelijken viel, maar er staan elementen tussen die deze meting niet dekt. Kijk die met de hand na in de toegankelijkheidsboom; laat 2.5.3 niet stilzwijgend op voldoet staan.'
+          : 'Bij elk element met zichtbare tekst komt die tekst voor in de naam. Elementen met alleen een pictogram vallen buiten 2.5.3; die horen bij 4.1.2. Staat de zichtbare tekst niet vooraan in de naam, dan is dat geen afkeuring maar wel lastiger voor spraakbesturing.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -7037,6 +7444,8 @@ async function main() {
       return getVideosporen(requirePositional(positional, 0, 'url'), flags);
     case 'get-links':
       return getLinks(requirePositional(positional, 0, 'url'), flags);
+    case 'get-labelinnaam':
+      return getLabelInNaam(requirePositional(positional, 0, 'url'), flags);
     case 'capture-sample-evidence':
       return captureSampleEvidence(
         requirePositional(positional, 0, 'projectId'),

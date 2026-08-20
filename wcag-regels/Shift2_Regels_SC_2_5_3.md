@@ -10,8 +10,17 @@ De kern van 2.5.3 is een vergelijking: de **zichtbare tekst** van een element mo
 zijn **toegankelijke naam**. Beide zijn uit de gerenderde pagina te lezen, dus meet dit zelf.
 Vul geen "voldoet" in zonder vergeleken te hebben.
 
-De test draait via de Chrome achter "Audit-sessie starten" (debugpoort 9222). Zie
-`tmp/labelinname.mjs` voor het werkende voorbeeld.
+```
+npm run cli -- get-labelinnaam <url>
+```
+
+Dat commando doet de werkwijze hieronder: het bepaalt per bedieningselement de zichtbare
+tekst en de toegankelijke naam, vergelijkt ze genormaliseerd, en zet de mismatches én de
+gevallen die het niet kan vergelijken in het overzicht.
+
+Hier stond eerder een verwijzing naar `tmp/labelinname.mjs`. Die map wordt opgeruimd, dus dat
+gereedschap was verdwenen en op twintig kaarten stond een oordeel zonder vergelijking eronder.
+Een meting die je wilt kunnen herhalen, hoort niet in tmp.
 
 ### Werkwijze
 

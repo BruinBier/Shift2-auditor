@@ -120,6 +120,14 @@ export const METINGEN: Meetopdracht[] = [
     duurt: 'ongeveer 20 seconden',
   },
   {
+    commando: 'get-labelinnaam',
+    criteria: ['2.5.3'],
+    toegestaneVlaggen: ['scope', 'klik'],
+    vanafDeKaart: true,
+    wat: 'Vergelijkt per bedieningselement de zichtbare tekst met de toegankelijke naam -- de kern van dit criterium.',
+    duurt: 'ongeveer 20 seconden',
+  },
+  {
     commando: 'get-links',
     criteria: ['2.4.4'],
     toegestaneVlaggen: ['scope', 'klik'],

@@ -52,6 +52,7 @@ npm run cli -- get-flitsen <url> [--seconden=10] [--klik=...]  # 2.3.1: telt de 
 npm run cli -- get-flitsen <video-url>                         # een YouTube- of Vimeo-adres: meet de video op zijn eigen pagina, met de speler aan
 npm run cli -- get-videosporen <url|video-url> [--max=5] [--klik=...]  # 1.2.3/1.2.5: ondertitel- en audiosporen per video, plus drie beeldjes voor open ondertiteling
 npm run cli -- get-links <url> [--scope=pagina|main] [--klik=...]  # 2.4.4: rekent per link de toegankelijke naam uit
+npm run cli -- get-labelinnaam <url> [--scope=pagina|main] [--klik=...]  # 2.5.3: zichtbare tekst tegen de toegankelijke naam
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write

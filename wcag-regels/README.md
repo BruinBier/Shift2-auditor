@@ -88,7 +88,8 @@ Sommige criteria zijn niet uit de HTML of een screenshot alleen te bepalen. Ze z
 | 2.2.2 | Acht seconden naar de pagina kijken en drie opnamen vergelijken; het venster dat telt begint drie seconden na het laden. |
 | 2.3.1 | De beeldjes meelezen die de browser tekent en de helderheidssprongen tellen. Een video meet je niet op de pagina maar op zijn eigen adres: `get-flitsen https://www.youtube.com/watch?v=<nummer>`. Voor een videobestand blijft PEAT de autoriteit. |
 | 2.4.4 | `get-links <url>` rekent per link de toegankelijke naam uit zoals een schermlezer die opbouwt. Een naam die alleen uit `title` komt is onvoldoende; een kop bóven de link geeft geen context. |
-| 2.5.3 · 2.5.8 | Zichtbare tekst tegen de toegankelijke naam; `getBoundingClientRect` voor de afmeting. |
+| 2.5.3 | `get-labelinnaam <url>` vergelijkt per bedieningselement de zichtbare tekst met de toegankelijke naam. Tekst die op nul bij nul rendert (font-size 0) telt niet als zichtbaar label. |
+| 2.5.8 | `getBoundingClientRect` voor de afmeting van het doelgebied. |
 | 1.2.3 · 1.2.5 | `get-videosporen <url>` leest per video de sporen uit. Bij YouTube uit de spelergegevens (inclusief of ondertiteling automatisch gegenereerd is), bij een eigen speler uit zijn bediening in de shadow DOM ("Zet ondertitels uit" = ze staan aan) plus de uitgeschreven tekst. Drie beeldjes voor de open ondertiteling. Of tekst-in-beeld ook gesproken wordt, blijft handwerk; zie `Shift2_Werkwijze_Video.md`. |
 
 Deze metingen zijn ook zonder agent te starten: op de kaart in "Waar sta ik" staat onder "Zo
