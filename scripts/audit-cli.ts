@@ -7060,6 +7060,7 @@ async function getLabelInNaam(url: string, flags: Flags) {
           // verborgen is valt eruit, en alles wat voor hulpsoftware verborgen is ook.
           let zichtbaar = '';
           let labelInAfbeelding = false;
+          let afbeelding: any = null;
           const stapel: Node[] = Array.from(el.childNodes);
           let bekeken = 0;
           while (stapel.length && bekeken < 3000) {
@@ -7098,8 +7099,23 @@ async function getLabelInNaam(url: string, flags: Flags) {
               /inset\(50%\)|rect\(0(px)?, ?0(px)?, ?0(px)?, ?0(px)?\)/.test(ks.clipPath + ks.clip);
             if (weggestopt) continue;
             if (kind.tagName === 'IMG') {
-              // Staat de knoptekst in een plaatje, dan is die tekst niet uit te lezen.
-              if ((kind.getAttribute('alt') || '').trim()) labelInAfbeelding = true;
+              // Staat de knoptekst in een plaatje, dan is die tekst niet uit te lezen en
+              // moet een mens ernaar kijken.
+              //
+              // Een leeg `alt` betekent NIET dat er geen tekst in staat. Het logo van
+              // heuvelrug.nl heeft `alt=""` en toont "GEMEENTE UTRECHTSE HEUVELRUG"; de
+              // link eromheen heet "Ga naar de homepage". Wie hier op het alt afgaat, ziet
+              // het beeldmerk van elke gemeentesite over het hoofd. Daarom de afmeting: een
+              // woordmerk is breed, een pictogram niet.
+              const ir = kind.getBoundingClientRect();
+              if ((kind.getAttribute('alt') || '').trim() || ir.width >= 60) {
+                labelInAfbeelding = true;
+                afbeelding = {
+                  alt: kind.getAttribute('alt') || '',
+                  bron: (kind.getAttribute('src') || '').slice(0, 120),
+                  maat: `${Math.round(ir.width)}x${Math.round(ir.height)}`,
+                };
+              }
               continue;
             }
             if (kind.tagName.toLowerCase() === 'svg') continue;
@@ -7200,6 +7216,7 @@ async function getLabelInNaam(url: string, flags: Flags) {
             naam,
             naamBron,
             labelInAfbeelding,
+            afbeelding,
             samengesteldeVerwijzing,
             inBeeld: rect.width > 0 && rect.height > 0,
           });
@@ -7228,9 +7245,16 @@ async function getLabelInNaam(url: string, flags: Flags) {
         vooraan: kaal(e.naam).startsWith(kaal(e.zichtbaar)),
       }));
       const mismatches = beoordeeld.filter((e: any) => !e.past && !e.samengesteldeVerwijzing);
-      const nietTeVergelijken = beoordeeld.filter(
-        (e: any) => e.samengesteldeVerwijzing || e.labelInAfbeelding
-      );
+      // Ook de elementen zonder zichtbare tekst maar mét een afbeelding die tekst kan
+      // bevatten. Die vallen buiten de vergelijking en horen juist daarom genoemd te
+      // worden: het logo van heuvelrug.nl toont de organisatienaam en heet "Ga naar de
+      // homepage".
+      const nietTeVergelijken = [
+        ...beoordeeld.filter((e: any) => e.samengesteldeVerwijzing || e.labelInAfbeelding),
+        ...alles
+          .filter((e: any) => !e.zichtbaar && e.labelInAfbeelding)
+          .map((e: any) => ({ ...e, past: false })),
+      ];
 
       const opname = await legOpnameVast(page, page.url(), 'labelinnaam');
       const dir = ensureOutputDir();
