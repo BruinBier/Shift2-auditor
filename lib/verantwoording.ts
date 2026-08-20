@@ -94,7 +94,11 @@ export function vormVanMeting(commando: string, argumenten: Record<string, strin
   // `--scope=pagina` was ooit nodig en is nu de standaard; zonder deze regel staan de
   // oude en de nieuwe aanroep als twee metingen op de kaart terwijl ze hetzelfde doen.
   if (watGemeten.scope === 'pagina') delete watGemeten.scope;
-  if (watGemeten.max === '200') delete watGemeten.max;
+  // `max` is een dekkingsgrens en geen meetinstelling: hetzelfde onderzoek met max=4 is een
+  // mindere versie van datzelfde onderzoek met max=20, niet een tweede bewijsstuk. Telde hij
+  // mee, dan stonden er drie get-consistentie-regels op één kaart met de oudste bovenaan.
+  // Hoeveel er werkelijk bekeken is, staat in de uitkomst van de meting zelf.
+  delete watGemeten.max;
   return `${commando}|${JSON.stringify(watGemeten)}`;
 }
 
