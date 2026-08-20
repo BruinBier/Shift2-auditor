@@ -4,6 +4,26 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_2_4_4.md` als ze elkaar tegenspreken.
 
+## Eerst meten
+
+```
+npm run cli -- get-links <url>
+```
+
+Dat rekent per link de toegankelijke naam uit in de volgorde hieronder, en meldt de gevallen
+die deze regels beschrijven: geen naam, een naam die alleen uit `title` komt, een generieke
+tekst zonder context in hetzelfde element, alleen de platformnaam bij een sociale-media-link,
+een naam die een ander platform noemt dan de bestemming, en een telefoonnummer of e-mailadres
+dat naar iets anders wijst. De volledige lijst staat in het overzichtsbestand.
+
+Het commando oordeelt niet. "Meer over paspoorten" is een naam die jij moet wegen; de
+mechanische gevallen hoeven niet meer met de hand uit de HTML gehaald te worden.
+
+Aanleiding: op heuvelrug.nl (2026-08-20) heeft de logolink alleen `title="Ga naar de homepage"`
+en een afbeelding met leeg `alt`. De auditronde schreef "in orde: het linkdoel is duidelijk
+ondanks het lege tekstalternatief" en gaf 2.4.4 `voldoet` — in strijd met stap 3 hieronder, en
+zonder dat er iets was nagemeten.
+
 ## Altijd actief checken: sociale-media-links in de footer
 
 Loop bij 2.4.4 op de homepage de sociale-media-links in de footer na. Je beoordeelt de

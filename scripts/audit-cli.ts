@@ -21,6 +21,7 @@
  *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
  *   tsx scripts/audit-cli.ts get-videosporen <url|video-url> [--max=5] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-links <url> [--scope=pagina|main] [--klik=...]
  *   tsx scripts/audit-cli.ts koppel-logboek <projectId> [--drooglopen]
  *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
  */
@@ -6465,6 +6466,440 @@ async function getVideosporen(url: string, flags: Flags) {
   }
 }
 
+/**
+ * Loopt alle links af en bepaalt per link zijn toegankelijke naam. De meting voor SC 2.4.4.
+ *
+ * Dit criterium gaat over wat een schermlezer voorleest, niet over wat je op het scherm
+ * ziet. Dat verschil is precies waar het misgaat: het icoon in een sociale-media-link staat
+ * op `aria-hidden` en telt niet mee, een `sr-only`-span die je nergens ziet telt wél mee, en
+ * een `title` die alleen bij aanwijzen met de muis verschijnt telt níet als voldoende naam.
+ * Uit een schermafdruk is daar niets van af te leiden, en uit een blik in de HTML te weinig:
+ * je moet de naam uitrekenen zoals de browser dat doet.
+ *
+ * De volgorde komt uit `wcag-regels/Shift2_Regels_SC_2_4_4.md`:
+ *
+ *   1. `aria-labelledby` -- de tekst van de elementen waarnaar verwezen wordt
+ *   2. `aria-label`
+ *   3. de tekst binnen de link, waarbij alles met `aria-hidden="true"` wegvalt, plus het
+ *      tekstalternatief van een afbeelding erin
+ *   4. `title` -- en een naam die HIER vandaan komt is onvoldoende en blijft een afkeuring
+ *
+ * Aanleiding: op heuvelrug.nl heeft de logolink alleen `title="Ga naar de homepage"` en een
+ * afbeelding met een leeg tekstalternatief. De auditronde noteerde "in orde: het linkdoel is
+ * duidelijk ondanks het lege tekstalternatief" en gaf 2.4.4 `voldoet` -- in strijd met de
+ * eigen regel, en zonder dat er iets was nagemeten.
+ *
+ * WAT DIT NIET DOET: oordelen over de vraag of een naam duidelijk genoeg is. "Meer over
+ * paspoorten" is een naam die een mens moet wegen. Wat hier uit komt zijn de mechanische
+ * gevallen -- geen naam, alleen een title, een generieke tekst zonder context in hetzelfde
+ * element, een telefoonnummer dat naar een webpagina wijst -- plus de volledige lijst, zodat
+ * de rest te wegen valt.
+ */
+async function getLinks(url: string, flags: Flags) {
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  // Zelfde afbakening als de rest van het onderzoek: op de homepage telt de hele pagina,
+  // elders alleen de main-content. Zie Shift2_Scope_Per_Sample.md.
+  const isHome = isHomepageUrl(url);
+  const heelDePagina = flags.scope ? flags.scope === 'pagina' : isHome;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      const gevonden = await page.evaluate((allesTelt: boolean) => {
+        const main = allesTelt ? null : document.querySelector('main');
+        const geenMain = !allesTelt && !main;
+        const wortel = (main || document.body) as HTMLElement;
+
+        const links: any[] = [];
+        for (const a of Array.from(wortel.querySelectorAll('a'))) {
+          const rect = a.getBoundingClientRect();
+          const stijl = getComputedStyle(a);
+          // Onzichtbaar is niet hetzelfde als afwezig: een skiplink staat buiten beeld maar
+          // wordt wel voorgelezen en telt dus mee. Alleen wat echt niet bestaat voor
+          // hulpsoftware valt af.
+          if (stijl.display === 'none' || stijl.visibility === 'hidden') continue;
+          if (a.getAttribute('aria-hidden') === 'true') continue;
+
+          // De toegankelijke naam, in de volgorde van de regels.
+          let naam = '';
+          let bron = 'geen';
+
+          const verwijzing = a.getAttribute('aria-labelledby');
+          if (verwijzing) {
+            const stukken: string[] = [];
+            for (const id of verwijzing.split(/\s+/)) {
+              const doel = document.getElementById(id);
+              if (doel) stukken.push((doel.textContent || '').replace(/\s+/g, ' ').trim());
+            }
+            const samen = stukken.join(' ').trim();
+            if (samen) {
+              naam = samen;
+              bron = 'aria-labelledby';
+            }
+          }
+
+          if (!naam) {
+            const label = (a.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+            if (label) {
+              naam = label;
+              bron = 'aria-label';
+            }
+          }
+
+          if (!naam) {
+            // De tekst binnen de link, met alles wat verborgen is voor hulpsoftware eruit,
+            // en met het tekstalternatief van een afbeelding erin. Geen benoemde
+            // hulpfunctie hierbinnen: esbuild hangt daar __name aan.
+            let tekst = '';
+            let alt = '';
+            const stapel: Node[] = Array.from(a.childNodes);
+            let bekeken = 0;
+            while (stapel.length && bekeken < 3000) {
+              const knoop = stapel.pop()!;
+              bekeken++;
+              if (knoop.nodeType === 3) {
+                tekst += ' ' + (knoop.textContent || '');
+                continue;
+              }
+              if (knoop.nodeType !== 1) continue;
+              const el = knoop as Element;
+              if (el.getAttribute('aria-hidden') === 'true') continue;
+              if (el.hasAttribute('hidden')) continue;
+              const es = getComputedStyle(el);
+              if (es.display === 'none' || es.visibility === 'hidden') continue;
+              if (el.tagName === 'IMG') {
+                alt += ' ' + (el.getAttribute('alt') || '');
+                continue;
+              }
+              if (el.tagName === 'SVG' || el.tagName === 'svg') {
+                const t = el.querySelector('title');
+                if (t) alt += ' ' + (t.textContent || '');
+                continue;
+              }
+              stapel.push(...Array.from(el.childNodes));
+            }
+            const samen = `${tekst} ${alt}`.replace(/\s+/g, ' ').trim();
+            if (samen) {
+              naam = samen;
+              bron = tekst.trim() ? 'tekst in de link' : 'tekstalternatief van de afbeelding';
+            }
+          }
+
+          if (!naam) {
+            const title = (a.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+            if (title) {
+              naam = title;
+              bron = 'title';
+            }
+          }
+
+          // De context: de tekst van het element waarin de link staat, zonder de link zelf.
+          // De regels zijn hier streng -- een kop erboven die niet in hetzelfde element zit
+          // geeft GEEN context -- dus alleen de eigen houder telt.
+          let houder: Element | null = a.parentElement;
+          while (houder && !/^(P|LI|TD|TH|DD|DT|FIGCAPTION|H1|H2|H3|H4|H5|H6)$/.test(houder.tagName)) {
+            houder = houder.parentElement;
+          }
+          const houderTekst = houder
+            ? (houder.textContent || '').replace(/\s+/g, ' ').trim()
+            : '';
+          const naamInHouder = houderTekst.replace(naam, '').trim();
+
+          links.push({
+            naam,
+            bron,
+            href: (a.getAttribute('href') || '').slice(0, 200),
+            doel: a.getAttribute('target') || null,
+            zichtbaar: rect.width > 0 && rect.height > 0,
+            houder: houder ? houder.tagName.toLowerCase() : null,
+            // Alleen wat er nog meer in dezelfde houder staat. Is dat leeg, dan staat de
+            // link daar in zijn eentje en is er geen context in hetzelfde element.
+            contextInHouder: naamInHouder.slice(0, 160),
+            plek: Math.round(rect.top + window.scrollY),
+          });
+        }
+        return { links, geenMain, aantalOpDePagina: document.querySelectorAll('a').length };
+      }, heelDePagina);
+
+      // De schifting gebeurt in Node, niet in de pagina: hier is hij te lezen en te
+      // veranderen zonder dat er een browser aan te pas komt.
+      const GENERIEK =
+        /^(lees meer|meer|meer info(rmatie)?|meer lezen|lees verder|verder|klik hier|hier|klik|bekijk|bekijk hier|download|link|deze pagina|read more|click here|more)\.?$/i;
+      const TELEFOON = /^[\d\s().+/-]{8,}$/;
+      const EMAIL = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i;
+      const WEBADRES = /^(https?:\/\/|www\.)/i;
+      const PLATFORM = /facebook|instagram|linkedin|youtube|twitter|x\.com|mastodon|tiktok|whatsapp/i;
+
+      const links = gevonden.links.map((l: any) => {
+        const naam = (l.naam || '').trim();
+        const href = l.href || '';
+        const platformInHref = (href.match(PLATFORM) || [])[0]?.toLowerCase() ?? null;
+        const platformNaam = /^(facebook|instagram|linkedin|youtube|twitter|x|mastodon|tiktok)$/i.test(
+          naam
+        );
+        return {
+          ...l,
+          // Geen naam: hulpsoftware kondigt de link aan zonder te kunnen zeggen waarheen.
+          // Ook een afkeuring onder 4.1.2; dat zijn twee aparte bevindingen.
+          geenNaam: !naam,
+          // Een naam die alleen uit title komt is onvoldoende: die verschijnt alleen bij
+          // aanwijzen met de muis, is op een touchscreen vrijwel onbereikbaar en wordt
+          // wisselend voorgelezen.
+          naamAlleenUitTitle: !!naam && l.bron === 'title',
+          // Generiek, en de vraag is dan of er context in HETZELFDE element staat.
+          generiek: GENERIEK.test(naam),
+          zonderContextInHetzelfdeElement: GENERIEK.test(naam) && !l.contextInHouder,
+          // Alleen de platformnaam bij een link naar een organisatiepagina.
+          socialeMediaZonderOrganisatie: platformNaam && !!platformInHref,
+          // Naam noemt een ander platform dan de bestemming.
+          platformKlopptNietMetBestemming:
+            !!platformInHref &&
+            PLATFORM.test(naam) &&
+            !naam.toLowerCase().includes(platformInHref.replace('.com', '')),
+          // Een telefoonnummer of e-mailadres als tekst hoort te bellen of te mailen. Wijst
+          // het naar een échte andere bestemming, dan voorspelt de tekst het verkeerde doel.
+          //
+          // Een leeg adres, een `#` of een `javascript:`-koppeling telt daar NIET onder. Het
+          // scharnier zit bij de bedoeling en niet bij de techniek: zo'n link is nog steeds
+          // bedoeld om te bellen en de koppeling is stuk, en dat is een functioneel probleem
+          // (Shift2_Regels_SC_2_4_4.md). Zonder deze uitzondering leverde heuvelrug.nl twee
+          // afkeuringen op voor twee telefoonnummers met href="/#".
+          belofteKloptNiet:
+            !/^(#|\/#|javascript:|)$/i.test(href.trim()) &&
+            ((TELEFOON.test(naam) && !/^tel:/i.test(href)) ||
+              (EMAIL.test(naam) && !/^mailto:/i.test(href))),
+          // Wel melden, apart: een belknop die nergens heen gaat is iets om na te lopen,
+          // alleen niet onder dit criterium.
+          belofteZonderWerkendeKoppeling:
+            /^(#|\/#|javascript:|)$/i.test(href.trim()) && (TELEFOON.test(naam) || EMAIL.test(naam)),
+          naamIsEenWebadres: WEBADRES.test(naam),
+        };
+      });
+
+      // Dezelfde naam naar verschillende bestemmingen: dan zegt de naam niet waar je
+      // uitkomt. Een signaal, geen automatische afkeuring -- twee keer "Aanvragen" onder
+      // twee koppen kan in orde zijn.
+      const perNaam = new Map<string, Set<string>>();
+      for (const l of links) {
+        if (!l.naam) continue;
+        const sleutel = l.naam.toLowerCase();
+        if (!perNaam.has(sleutel)) perNaam.set(sleutel, new Set());
+        perNaam.get(sleutel)!.add(l.href);
+      }
+      const dubbelzinnig = Array.from(perNaam.entries())
+        .filter(([, hrefs]) => hrefs.size > 1)
+        .map(([naam, hrefs]) => ({ naam, bestemmingen: Array.from(hrefs).slice(0, 6) }))
+        .slice(0, 15);
+
+      const telling = {
+        links: links.length,
+        zonderNaam: links.filter((l: any) => l.geenNaam).length,
+        naamAlleenUitTitle: links.filter((l: any) => l.naamAlleenUitTitle).length,
+        generiek: links.filter((l: any) => l.generiek).length,
+        generiekZonderContext: links.filter((l: any) => l.zonderContextInHetzelfdeElement).length,
+        socialeMediaZonderOrganisatie: links.filter((l: any) => l.socialeMediaZonderOrganisatie)
+          .length,
+        platformKlopptNiet: links.filter((l: any) => l.platformKlopptNietMetBestemming).length,
+        belofteKloptNiet: links.filter((l: any) => l.belofteKloptNiet).length,
+        naamIsEenWebadres: links.filter((l: any) => l.naamIsEenWebadres).length,
+        belknopZonderWerkendeKoppeling: links.filter((l: any) => l.belofteZonderWerkendeKoppeling)
+          .length,
+        dezelfdeNaamAndereBestemming: dubbelzinnig.length,
+      };
+      const opvallend = links.filter(
+        (l: any) =>
+          l.geenNaam ||
+          l.naamAlleenUitTitle ||
+          l.zonderContextInHetzelfdeElement ||
+          l.socialeMediaZonderOrganisatie ||
+          l.platformKlopptNietMetBestemming ||
+          l.belofteKloptNiet ||
+          l.naamIsEenWebadres
+      );
+
+      const opname = await legOpnameVast(page, page.url(), 'links');
+
+      const dir = ensureOutputDir();
+      const stempel = timestamp();
+      const naamBestand = slugifyUrl(page.url());
+      let overzicht: string | null = path.join(dir, `${stempel}-${naamBestand}-links.txt`);
+      try {
+        const regels = [
+          `LINKS EN HUN TOEGANKELIJKE NAAM — ${page.url()}`,
+          `Gemeten: ${new Date().toLocaleString('nl-NL')} · ${
+            session.mode === 'cdp' ? 'auditsessie' : 'headless'
+          }`,
+          `Gebied: ${
+            gevonden.geenMain
+              ? 'hele pagina (er is geen main)'
+              : heelDePagina
+              ? 'hele pagina'
+              : 'main-content'
+          } · ${links.length} van de ${gevonden.aantalOpDePagina} links op de pagina`,
+          '',
+          'OPVALLEND',
+          ...(opvallend.length
+            ? opvallend.map(
+                (l: any) =>
+                  `  ${
+                    l.geenNaam
+                      ? 'GEEN NAAM  '
+                      : l.naamAlleenUitTitle
+                      ? 'ALLEEN TITLE'
+                      : l.belofteKloptNiet
+                      ? 'BELOFTE    '
+                      : l.socialeMediaZonderOrganisatie
+                      ? 'PLATFORM   '
+                      : l.platformKlopptNietMetBestemming
+                      ? 'MISMATCH   '
+                      : l.naamIsEenWebadres
+                      ? 'WEBADRES   '
+                      : 'GENERIEK   '
+                  } "${l.naam}" [${l.bron}] → ${l.href}${
+                    l.contextInHouder ? ` · context: "${l.contextInHouder}"` : ' · geen context in hetzelfde element'
+                  }`
+              )
+            : ['  niets']),
+          '',
+          'DEZELFDE NAAM, ANDERE BESTEMMING',
+          ...(dubbelzinnig.length
+            ? dubbelzinnig.map((d) => `  "${d.naam}" → ${d.bestemmingen.join(' | ')}`)
+            : ['  geen']),
+          '',
+          'ALLE LINKS (naam [bron] → href)',
+          ...links.map(
+            (l: any) => `  "${l.naam}" [${l.bron}] → ${l.href}`
+          ),
+        ];
+        fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+      } catch {
+        overzicht = null;
+      }
+
+      const stapZin = (() => {
+        const waar = gevonden.geenMain
+          ? 'de hele pagina (er is geen main)'
+          : heelDePagina
+          ? 'de hele pagina'
+          : 'de main-content';
+        const delen: string[] = [];
+        if (telling.zonderNaam) delen.push(`${telling.zonderNaam} zonder enige naam`);
+        if (telling.naamAlleenUitTitle)
+          delen.push(`${telling.naamAlleenUitTitle} met een naam die alleen uit title komt`);
+        if (telling.generiekZonderContext)
+          delen.push(
+            `${telling.generiekZonderContext} met een generieke tekst zonder context in hetzelfde element`
+          );
+        if (telling.socialeMediaZonderOrganisatie)
+          delen.push(
+            `${telling.socialeMediaZonderOrganisatie} sociale-media-link${
+              telling.socialeMediaZonderOrganisatie === 1 ? '' : 's'
+            } met alleen de platformnaam`
+          );
+        if (telling.belofteKloptNiet)
+          delen.push(
+            `${telling.belofteKloptNiet} waarvan de tekst een ander doel belooft dan de bestemming`
+          );
+        if (telling.naamIsEenWebadres)
+          delen.push(`${telling.naamIsEenWebadres} met een webadres als naam`);
+        return `Alle ${links.length} links in ${waar} afgelopen en per link de toegankelijke naam uitgerekend zoals een schermlezer die opbouwt: aria-labelledby, dan aria-label, dan de tekst zonder wat op aria-hidden staat, dan title. ${
+          delen.length
+            ? `Opvallend: ${delen.join('; ')}.`
+            : 'Elke link heeft een naam die niet uit title alleen komt, en geen generieke tekst staat zonder context in hetzelfde element.'
+        }${
+          telling.dezelfdeNaamAndereBestemming
+            ? ` ${telling.dezelfdeNaamAndereBestemming} namen komen meer dan eens voor met een andere bestemming.`
+            : ''
+        }`;
+      })();
+
+      legVast({
+        commando: 'get-links',
+        stap: stapZin,
+        argumenten: {
+          ...(klik ? { klik } : {}),
+          ...(flags.scope ? { scope: flags.scope } : {}),
+        },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        schermafdruk: opname,
+        artefact: overzicht,
+        criteria: ['2.4.4'],
+        uitkomst: telling,
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gebied: gevonden.geenMain
+          ? 'hele pagina (er is geen main)'
+          : heelDePagina
+          ? 'hele pagina'
+          : 'main-content',
+        links_beoordeeld: links.length,
+        links_op_de_hele_pagina: gevonden.aantalOpDePagina,
+        telling,
+        opvallend: opvallend.slice(0, 40).map((l: any) => ({
+          naam: l.naam,
+          bron: l.bron,
+          href: l.href,
+          context_in_hetzelfde_element: l.contextInHouder || null,
+          waarom: [
+            l.geenNaam ? 'geen naam' : null,
+            l.naamAlleenUitTitle ? 'naam komt alleen uit title' : null,
+            l.zonderContextInHetzelfdeElement ? 'generieke tekst zonder context' : null,
+            l.socialeMediaZonderOrganisatie ? 'alleen de platformnaam' : null,
+            l.platformKlopptNietMetBestemming ? 'naam noemt een ander platform' : null,
+            l.belofteKloptNiet ? 'tekst belooft een ander doel dan de bestemming' : null,
+            l.naamIsEenWebadres ? 'webadres als naam' : null,
+          ].filter(Boolean),
+        })),
+        dezelfde_naam_andere_bestemming: dubbelzinnig,
+        schermafdruk: opname,
+        overzicht,
+        belknoppen_zonder_werkende_koppeling: links
+          .filter((l: any) => l.belofteZonderWerkendeKoppeling)
+          .map((l: any) => ({ naam: l.naam, href: l.href })),
+        let_op:
+          'Uitgerekend, niet geoordeeld. Geen naam en een naam die alleen uit title komt zijn afkeuringen volgens Shift2_Regels_SC_2_4_4.md; een link zonder enige naam is bovendien een aparte bevinding onder 4.1.2. Bij een generieke tekst beslist de context IN HETZELFDE ELEMENT: een kop erboven telt niet. De rest van de lijst staat in het overzicht, want een naam als "Meer over paspoorten" moet een mens wegen.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -6540,6 +6975,8 @@ async function main() {
       return getFlitsen(requirePositional(positional, 0, 'url'), flags);
     case 'get-videosporen':
       return getVideosporen(requirePositional(positional, 0, 'url'), flags);
+    case 'get-links':
+      return getLinks(requirePositional(positional, 0, 'url'), flags);
     case 'capture-sample-evidence':
       return captureSampleEvidence(
         requirePositional(positional, 0, 'projectId'),

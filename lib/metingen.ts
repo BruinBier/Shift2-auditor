@@ -120,6 +120,14 @@ export const METINGEN: Meetopdracht[] = [
     duurt: 'ongeveer 20 seconden',
   },
   {
+    commando: 'get-links',
+    criteria: ['2.4.4'],
+    toegestaneVlaggen: ['scope', 'klik'],
+    vanafDeKaart: true,
+    wat: 'Rekent per link de toegankelijke naam uit zoals een schermlezer die opbouwt, en meldt de links zonder naam, met alleen een title, of met een generieke tekst zonder context.',
+    duurt: 'ongeveer 20 seconden',
+  },
+  {
     commando: 'get-toetsenbordval',
     criteria: ['2.1.2'],
     toegestaneVlaggen: ['scope', 'klik', 'typ-in', 'typ', 'achteruit', 'max'],

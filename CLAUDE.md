@@ -51,6 +51,7 @@ npm run cli -- get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]  # 2.2
 npm run cli -- get-flitsen <url> [--seconden=10] [--klik=...]  # 2.3.1: telt de helderheidssprongen in de beeldjes die de browser tekent
 npm run cli -- get-flitsen <video-url>                         # een YouTube- of Vimeo-adres: meet de video op zijn eigen pagina, met de speler aan
 npm run cli -- get-videosporen <url|video-url> [--max=5] [--klik=...]  # 1.2.3/1.2.5: ondertitel- en audiosporen per video, plus drie beeldjes voor open ondertiteling
+npm run cli -- get-links <url> [--scope=pagina|main] [--klik=...]  # 2.4.4: rekent per link de toegankelijke naam uit
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write
@@ -220,6 +221,23 @@ rand van één beeldpunt ligt zelden precies waar je hem verwacht — en de hoek
 overgeslagen, anders keurt elke afgeronde knop af op een hoek waar je langs het element heen
 kijkt. Heeft de site een hoogcontrastknop die voldoet, meet dan mét `--klik`: die weergave is
 de weergave die telt. Keur nooit af op het getal alleen; leg de uitsnede ernaast.
+
+**SC 2.4.4 gaat over wat er wordt voorgelezen, niet over wat je ziet.** `get-links` rekent per
+link de toegankelijke naam uit in de volgorde uit `Shift2_Regels_SC_2_4_4.md`:
+`aria-labelledby`, `aria-label`, de tekst binnen de link zonder wat op `aria-hidden` staat
+(plus het tekstalternatief van een afbeelding erin), en pas dan `title`. Dat verschil is
+precies waar het misgaat: het icoon in een sociale-media-link telt niet mee, een `sr-only`-span
+die je nergens ziet telt wél mee, en een naam die alleen uit `title` komt is onvoldoende en
+blijft een afkeuring. Op heuvelrug.nl heeft de logolink alleen `title="Ga naar de homepage"` en
+een leeg `alt`; de auditronde noteerde "in orde" en gaf 2.4.4 `voldoet`.
+
+Het commando keurt niets af. Het meldt de mechanische gevallen — geen naam, alleen een title,
+een generieke tekst zonder context in hetzelfde element, alleen de platformnaam, een tekst die
+een ander doel belooft dan de bestemming — en zet de volledige lijst in het overzicht, want een
+naam als "Meer over paspoorten" moet een mens wegen. Let op twee dingen die de regels
+uitdrukkelijk uitsluiten: een kop bóven de link geeft geen context (alleen hetzelfde element
+telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel probleem en geen
+2.4.4-bevinding — die staan apart onder `belknoppen_zonder_werkende_koppeling`.
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
