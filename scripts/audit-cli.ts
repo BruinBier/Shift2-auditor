@@ -6056,14 +6056,19 @@ async function getVideosporen(url: string, flags: Flags) {
         });
       }
 
-      const uniek = Array.from(
+      const alleUnieke = Array.from(
         new Map(
           adressen
             .map((a) => videoSpeeladres(a))
             .filter((v): v is NonNullable<typeof v> => !!v)
             .map((v) => [v.nummer, v])
         ).values()
-      ).slice(0, max);
+      );
+      const uniek = alleUnieke.slice(0, max);
+      // Wat de begrenzing heeft afgekapt, hoort zichtbaar te zijn. Vijf van de zes video's
+      // niet bekeken en toch "beslist" melden, is dezelfde fout als een schone uitkomst die
+      // niet van niet-gekeken-hebben te onderscheiden is.
+      const nietBekeken = alleUnieke.length - uniek.length;
 
       const dir = ensureOutputDir();
       const stempel = timestamp();
@@ -6268,9 +6273,32 @@ async function getVideosporen(url: string, flags: Flags) {
       ).length;
       const nietAfTeLezen = videos.filter((v) => !v.leesbaar || v.audiodescriptiespoor === 'niet af te lezen').length;
       const zonderBeeldjes = videos.filter((v) => v.leesbaar && !v.beeldjesGelukt).length;
-      // Een pagina zonder video is iets anders dan een pagina waar we niets van konden
-      // lezen. Beide tellen mee: de video's van een platform én de eigen spelers.
-      const beslist = (videos.length > 0 || eigenSpelers.length > 0) && nietAfTeLezen === 0;
+
+      // Een opname van de pagina zelf, als er geen beeldjes uit een video kwamen.
+      //
+      // Elke meting hoort een beeld achter te laten -- dat staat op de kaart zelf als eis.
+      // Bij "geen video gevonden" is dat juist het bewijsstuk dat telt: hier is gekeken, en
+      // dit stond er. Zonder opname staat er een oordeel met alleen een tekstbestand eronder.
+      let paginaOpname: string | null = null;
+      if (!beelden.length) {
+        try {
+          const pad = path.join(dir, `${stempel}-videosporen-pagina.jpg`);
+          await page.screenshot({ path: pad as `${string}.jpg`, type: 'jpeg', quality: 70 });
+          if (fs.existsSync(pad)) paginaOpname = pad;
+        } catch {
+          // Een mislukte opname mag de meting niet ongeldig maken.
+        }
+      }
+      // Geen video gevonden is een uitkomst, geen tekort.
+      //
+      // Staat er niets, dan is er niets te lezen en zijn 1.2.3 en 1.2.5 niet van toepassing;
+      // dat is beslist. Onbeslist is het alleen als er aanwijzingen zijn dat er wél een
+      // video staat die we niet konden lezen: een adres dat we vonden maar niet konden
+      // uitlezen, of een speler waarvan de sporen niet af te lezen waren. Zou "geen video"
+      // hier onbeslist heten, dan zou elke pagina zonder video een openstaande vraag
+      // opleveren -- twintig per onderzoek, allemaal zonder antwoord.
+      const gevondenMaarNietGelezen = adressen.length > 0 && videos.length === 0;
+      const beslist = nietAfTeLezen === 0 && !gevondenMaarNietGelezen && nietBekeken === 0;
 
       const stapZin = (() => {
         if (!videos.length) {
@@ -6381,7 +6409,7 @@ async function getVideosporen(url: string, flags: Flags) {
         eindUrl: page.url(),
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         weergave: 'de video zelf, op zijn eigen pagina',
-        schermafdruk: beelden[0]?.pad ?? null,
+        schermafdruk: beelden[0]?.pad ?? paginaOpname,
         schermafdrukken: beelden,
         artefact: overzicht,
         criteria: ['1.2.3', '1.2.5'],
@@ -6401,16 +6429,30 @@ async function getVideosporen(url: string, flags: Flags) {
         omgeleid,
         gevonden_adressen: adressen.length,
         beoordeelde_videos: videos.length,
+        niet_bekeken_door_de_grens: nietBekeken || undefined,
         videos,
         eigen_spelers: eigenSpelers.length ? eigenSpelers : undefined,
         kleine_videovakjes_overgeslagen: kleineSpelers || undefined,
         tekstalternatief_op_de_pagina: paginaTekstalternatief ?? undefined,
+        schermafdruk: beelden[0]?.pad ?? paginaOpname,
         overzicht,
         beslist,
         let_op: !videos.length && !eigenSpelers.length
-          ? 'Geen video gevonden. Staat er wel een video maar achter een toestemmingsscherm, dan zit het adres niet in de code: bekijk de pagina in de audit-sessie (npm run chrome:debug).'
+          ? 'Geen video op deze pagina. Dan is er niets uit te lezen en zijn 1.2.3 en 1.2.5 niet van toepassing. Kijk de opname na: staat er wel een video maar achter een toestemmingsscherm, dan zit het adres niet in de code en is dit geen "geen video" -- bekijk de pagina dan in de audit-sessie (npm run chrome:debug).'
           : !beslist
-          ? `Onbeslist: van ${nietAfTeLezen} ${nietAfTeLezen === 1 ? 'video' : "video's"} waren de sporen niet uit te lezen. Zonder die gegevens is "geen audiodescriptie" een gok. Meet opnieuw in de audit-sessie, of beoordeel met de hand.`
+          ? `Onbeslist. ${
+              nietAfTeLezen
+                ? `Van ${nietAfTeLezen} ${nietAfTeLezen === 1 ? 'video' : "video's"} waren de sporen niet uit te lezen; zonder die gegevens is "geen audiodescriptie" een gok. `
+                : ''
+            }${
+              nietBekeken
+                ? `${nietBekeken} ${nietBekeken === 1 ? 'video is' : "video's zijn"} niet bekeken door de grens van --max=${max}; verhoog die of beoordeel ze apart. `
+                : ''
+            }${
+              gevondenMaarNietGelezen
+                ? 'Er staan video-adressen op de pagina die niet uit te lezen waren. '
+                : ''
+            }Meet opnieuw in de audit-sessie, of beoordeel met de hand.`
           : `Uitgelezen, niet geoordeeld. Voor 1.2.5 is audiodescriptie nodig; voor 1.2.3 mag dat ook een tekstalternatief zijn dat beschrijft wat er te zien is. LET OP: audiodescriptie wordt in Nederland meestal als LOSSE video gepubliceerd en niet als tweede audiospoor, dus "geen apart audiospoor" is geen afkeuring — zoek ook naar een variant met "audiodescriptie" in de titel${
               paginaTekstalternatief?.length ? ' — er staan kandidaten op de pagina, loop die na' : ''
             }. Bekijk de beeldjes op open ondertiteling: die staat in geen enkele gegevensbron en is de klassieke bron van onterechte bevindingen. Automatisch gegenereerde ondertiteling telt niet als ondertiteling.`,
