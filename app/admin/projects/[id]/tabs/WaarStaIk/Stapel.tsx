@@ -1214,9 +1214,13 @@ export default function Stapel({
     return (
       <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-3">
         <p className="mb-2 text-xs font-medium text-blue-900">
+          {/* "Dit kun je hier ook laten meten" las als een tweede manier om hetzelfde te
+              doen, naast de knop "Nog eens meten" die er al bij een bestaande meting staat.
+              Die twee doen iets anders: de een herhaalt een meting, de ander voegt er een
+              toe die er nog niet is. De kop hoort dat te zeggen. */}
           {(cel.verantwoording ?? []).length === 0
             ? 'Dit criterium is te meten. Er staat nog geen meting onder dit oordeel:'
-            : 'Dit kun je hier ook laten meten:'}
+            : 'Nog niet gemeten voor dit criterium:'}
         </p>
         <div className="space-y-2">
           {teDoen.map((opdracht) => {
