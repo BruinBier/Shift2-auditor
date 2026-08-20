@@ -6631,9 +6631,32 @@ async function getLinks(url: string, flags: Flags) {
             : '';
           const naamInHouder = houderTekst.replace(naam, '').trim();
 
+          // Waar de link werkelijk heen gaat, uitgerekend door de browser. Nodig om de
+          // logolink naar de eigen homepage te herkennen; die is een uitzondering.
+          let naarEigenHomepage = false;
+          try {
+            const doelAdres = new URL((a as HTMLAnchorElement).href);
+            naarEigenHomepage =
+              doelAdres.origin === location.origin &&
+              (doelAdres.pathname === '/' || doelAdres.pathname === '') &&
+              !doelAdres.search;
+          } catch {
+            // Geen bruikbaar adres (mailto:, tel:, javascript:); dan is het geen logolink.
+          }
+
           links.push({
             naam,
             bron,
+            naarEigenHomepage,
+            // Een subsite herken je aan een andere hostnaam dan de hoofdsite: duurzaam.,
+            // open., mijn. Daar zegt "Ga naar de homepage" het verkeerde.
+            //
+            // Grens van deze herkenning: een hoofdsite die zelf op een subdomein staat
+            // zonder www (gemeente.amsterdam.nl) telt hier ten onrechte als subsite. Dat
+            // valt alleen op bij een logolink met alleen een title, en de melding vraagt om
+            // een oordeel in plaats van er een te geven -- maar weet dat het kan gebeuren.
+            opEenSubsite: /^(?!www\.)[a-z0-9-]+\.[a-z0-9-]+\.[a-z.]+$/i.test(location.hostname),
+            bevatAlleenEenAfbeelding: !a.textContent?.trim() && !!a.querySelector('img, svg'),
             href: (a.getAttribute('href') || '').slice(0, 200),
             doel: a.getAttribute('target') || null,
             zichtbaar: rect.width > 0 && rect.height > 0,
@@ -6668,10 +6691,27 @@ async function getLinks(url: string, flags: Flags) {
           // Geen naam: hulpsoftware kondigt de link aan zonder te kunnen zeggen waarheen.
           // Ook een afkeuring onder 4.1.2; dat zijn twee aparte bevindingen.
           geenNaam: !naam,
-          // Een naam die alleen uit title komt is onvoldoende: die verschijnt alleen bij
-          // aanwijzen met de muis, is op een touchscreen vrijwel onbereikbaar en wordt
-          // wisselend voorgelezen.
+          // Een naam die alleen uit title komt is niet automatisch fout en niet automatisch
+          // goed. De vraag is of hij zijn werk doet: zegt hij waar de link heen gaat?
+          //
+          // De logolink naar de eigen homepage is de bekende uitzondering: naam, rol en
+          // waarde zijn er, en "Ga naar de homepage" dekt de bestemming. Op een SUBSITE
+          // dekt diezelfde title de bestemming juist niet -- de bezoeker denkt naar de
+          // hoofdsite te gaan. Die regel is op 18 augustus 2026 vastgelegd in
+          // Shift2_Regels_SC_4_1_2.md; dit commando keurde het logo van elke gemeentesite
+          // af zolang het die uitzondering niet kende.
           naamAlleenUitTitle: !!naam && l.bron === 'title',
+          logolinkNaarDeEigenHomepage:
+            !!naam &&
+            l.bron === 'title' &&
+            l.naarEigenHomepage &&
+            l.bevatAlleenEenAfbeelding &&
+            !l.opEenSubsite,
+          titelNaamOpEenSubsite:
+            !!naam && l.bron === 'title' && l.naarEigenHomepage && l.opEenSubsite,
+          // Een naam die alleen het linktype noemt is geen naam voor de link.
+          naamNoemtAlleenHetLinktype:
+            !!naam && /^\(?(externe link|nieuw venster|pdf|link|document|download)\)?\.?$/i.test(naam),
           // Generiek, en de vraag is dan of er context in HETZELFDE element staat.
           generiek: GENERIEK.test(naam),
           zonderContextInHetzelfdeElement: GENERIEK.test(naam) && !l.contextInHouder,
@@ -6721,6 +6761,10 @@ async function getLinks(url: string, flags: Flags) {
         links: links.length,
         zonderNaam: links.filter((l: any) => l.geenNaam).length,
         naamAlleenUitTitle: links.filter((l: any) => l.naamAlleenUitTitle).length,
+        waarvanDeLogolinkNaarDeHomepage: links.filter((l: any) => l.logolinkNaarDeEigenHomepage)
+          .length,
+        titelNaamOpEenSubsite: links.filter((l: any) => l.titelNaamOpEenSubsite).length,
+        naamNoemtAlleenHetLinktype: links.filter((l: any) => l.naamNoemtAlleenHetLinktype).length,
         generiek: links.filter((l: any) => l.generiek).length,
         generiekZonderContext: links.filter((l: any) => l.zonderContextInHetzelfdeElement).length,
         socialeMediaZonderOrganisatie: links.filter((l: any) => l.socialeMediaZonderOrganisatie)
@@ -6735,7 +6779,8 @@ async function getLinks(url: string, flags: Flags) {
       const opvallend = links.filter(
         (l: any) =>
           l.geenNaam ||
-          l.naamAlleenUitTitle ||
+          (l.naamAlleenUitTitle && !l.logolinkNaarDeEigenHomepage) ||
+          l.naamNoemtAlleenHetLinktype ||
           l.zonderContextInHetzelfdeElement ||
           l.socialeMediaZonderOrganisatie ||
           l.platformKlopptNietMetBestemming ||
@@ -6810,8 +6855,18 @@ async function getLinks(url: string, flags: Flags) {
           : 'de main-content';
         const delen: string[] = [];
         if (telling.zonderNaam) delen.push(`${telling.zonderNaam} zonder enige naam`);
-        if (telling.naamAlleenUitTitle)
-          delen.push(`${telling.naamAlleenUitTitle} met een naam die alleen uit title komt`);
+        const titelZonderUitzondering =
+          telling.naamAlleenUitTitle - telling.waarvanDeLogolinkNaarDeHomepage;
+        if (titelZonderUitzondering > 0)
+          delen.push(
+            `${titelZonderUitzondering} met een naam die alleen uit title komt (dekt die de bestemming?)`
+          );
+        if (telling.titelNaamOpEenSubsite)
+          delen.push(
+            `${telling.titelNaamOpEenSubsite} logolink op een subsite met een title die de hoofdsite belooft`
+          );
+        if (telling.naamNoemtAlleenHetLinktype)
+          delen.push(`${telling.naamNoemtAlleenHetLinktype} die alleen het linktype noemt`);
         if (telling.generiekZonderContext)
           delen.push(
             `${telling.generiekZonderContext} met een generieke tekst zonder context in hetzelfde element`
@@ -6875,7 +6930,12 @@ async function getLinks(url: string, flags: Flags) {
           context_in_hetzelfde_element: l.contextInHouder || null,
           waarom: [
             l.geenNaam ? 'geen naam' : null,
-            l.naamAlleenUitTitle ? 'naam komt alleen uit title' : null,
+            l.titelNaamOpEenSubsite
+              ? 'title zegt homepage, maar dit is een subsite'
+              : l.naamAlleenUitTitle
+              ? 'naam komt alleen uit title -- dekt hij de bestemming?'
+              : null,
+            l.naamNoemtAlleenHetLinktype ? 'noemt alleen het linktype' : null,
             l.zonderContextInHetzelfdeElement ? 'generieke tekst zonder context' : null,
             l.socialeMediaZonderOrganisatie ? 'alleen de platformnaam' : null,
             l.platformKlopptNietMetBestemming ? 'naam noemt een ander platform' : null,
@@ -6890,7 +6950,7 @@ async function getLinks(url: string, flags: Flags) {
           .filter((l: any) => l.belofteZonderWerkendeKoppeling)
           .map((l: any) => ({ naam: l.naam, href: l.href })),
         let_op:
-          'Uitgerekend, niet geoordeeld. Geen naam en een naam die alleen uit title komt zijn afkeuringen volgens Shift2_Regels_SC_2_4_4.md; een link zonder enige naam is bovendien een aparte bevinding onder 4.1.2. Bij een generieke tekst beslist de context IN HETZELFDE ELEMENT: een kop erboven telt niet. De rest van de lijst staat in het overzicht, want een naam als "Meer over paspoorten" moet een mens wegen.',
+          'Uitgerekend, niet geoordeeld. Een link zonder enige naam is een afkeuring, en bovendien een aparte bevinding onder 4.1.2. Een naam die alleen uit title komt is dat NIET automatisch: de vraag is of hij de bestemming dekt. De logolink naar de eigen homepage met "Ga naar de homepage" voldoet en staat daarom apart geteld; dezelfde link op een subsite is wel een afkeuring. Bij een generieke tekst beslist de context IN HETZELFDE ELEMENT: een kop erboven telt niet. De rest van de lijst staat in het overzicht, want een naam als "Meer over paspoorten" moet een mens wegen.',
       });
     } finally {
       await cleanup();

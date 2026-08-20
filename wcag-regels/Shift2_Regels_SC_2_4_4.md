@@ -19,10 +19,14 @@ dat naar iets anders wijst. De volledige lijst staat in het overzichtsbestand.
 Het commando oordeelt niet. "Meer over paspoorten" is een naam die jij moet wegen; de
 mechanische gevallen hoeven niet meer met de hand uit de HTML gehaald te worden.
 
-Aanleiding: op heuvelrug.nl (2026-08-20) heeft de logolink alleen `title="Ga naar de homepage"`
-en een afbeelding met leeg `alt`. De auditronde schreef "in orde: het linkdoel is duidelijk
-ondanks het lege tekstalternatief" en gaf 2.4.4 `voldoet` — in strijd met stap 3 hieronder, en
-zonder dat er iets was nagemeten.
+De uitkomst `naamAlleenUitTitle` is géén afkeuring op zichzelf; het commando zet de logolink
+naar de eigen homepage apart als bekende uitzondering. Zie de tabel bij stap 3.
+
+Aanleiding: op heuvelrug.nl (2026-08-20) stonden twintig oordelen over 2.4.4 zonder een enkele
+meting eronder. Bij het nalezen keurde Claude de logolink ten onrechte af met een beroep op de
+oude formulering in stap 3 hieronder — die op 18 augustus al was vervangen, maar alleen in het
+bestand van 4.1.2. Dat is meteen de reden dat de regel nu op één plek staat en dat het
+commando de uitzondering zelf kent.
 
 ## Altijd actief checken: sociale-media-links in de footer
 
@@ -39,11 +43,23 @@ Pak de volledige `<a>` uit de HTML en loop deze volgorde af:
    Het icoon staat vrijwel altijd op `aria-hidden`, dus meestal blijft één tekstspan over.
 3. `title` telt alleen mee als er verder geen enkele naam is.
 
-Let op bij stap 3: een naam die **uitsluitend** uit `title` komt is ONVOLDOENDE en blijft een
-afkeuring. `title` verschijnt alleen bij aanwijzen met de muis, is op touchscreens vrijwel
-onbereikbaar en wordt wisselend door schermlezers ondersteund. Concludeer dus niet "er is een
-naam, dus geen bevinding" zodra je een `title` ziet. Zie `Shift2_Regels_SC_4_1_2.md` voor de
-volledige regel en de formulering.
+Let op bij stap 3: een naam die **uitsluitend** uit `title` komt is niet automatisch goed én
+niet automatisch fout. De vraag is of die naam zijn werk doet — zegt hij waar de link heen
+gaat?
+
+| Situatie | Oordeel |
+|---|---|
+| Logolink naar de eigen homepage, `title="Ga naar de homepage"` | **voldoet** — de naam zegt waar de link heen gaat |
+| Dezelfde logolink op een SUBSITE (duurzaam., open., mijn.) | **afkeuring** — de bezoeker denkt naar de hoofdsite te gaan |
+| Een title die de bestemming niet dekt, of leeg of nietszeggend is | **afkeuring** |
+| Een naam die alleen het linktype noemt, zoals "(externe link)" of "PDF" | **afkeuring** — dat is geen naam voor de link |
+
+Hier stond tot 20 augustus 2026 de categorische regel dat een naam uit alleen `title`
+onvoldoende is en een afkeuring blijft. Die is op 18 augustus vervangen door de beoordeling
+hierboven; `Shift2_Regels_SC_4_1_2.md` had de nieuwe versie al, dit bestand niet. Twee
+bestanden die uit elkaar lopen leveren precies één ding op: wie hier stopt met lezen, keurt
+het logo van elke gemeentesite af. Zie `Shift2_Regels_SC_4_1_2.md` voor de volledige regel,
+de geschiedenis en de formulering.
 
 Let op een visueel verborgen span (`position:absolute;left:-9999px`, `sr-only`, `visually-hidden`).
 Die telt WEL mee als naam, ook al zie je op de screenshot alleen een icoon. Dat kun je alleen
