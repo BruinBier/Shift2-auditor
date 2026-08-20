@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Cel, Meting, Stand, Voorstel } from './gegevens';
+import { meetbaarVanafDeKaart, leesbareAanroep } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -472,6 +473,54 @@ export default function Stapel({
   const [hermetingen, setHermetingen] = useState<
     Record<string, { bezig: boolean; toen?: string; nu?: string; gelijk?: boolean; fout?: string }>
   >({});
+  /** Per criterium en commando: een meting die nu vanaf de kaart draait. */
+  const [nieuweMetingen, setNieuweMetingen] = useState<
+    Record<string, { bezig: boolean; fout?: string; stap?: string; nieuwOordeel?: boolean }>
+  >({});
+
+  /**
+   * Een meting starten die er nog niet was, voor deze pagina en dit criterium.
+   *
+   * Hiermee is de onderzoeker niet meer afhankelijk van een agent om iets te laten
+   * nameten. Dat is het verschil tussen een tool voor onze eigen sites — waar een agent de
+   * hele ronde heeft gedraaid — en een tool waarmee je een willekeurige site kunt
+   * onderzoeken: daar staan de kaarten leeg, en dan moet je zelf kunnen meten.
+   *
+   * De uitkomst komt onder het oordeel te staan; het oordeel zelf verandert er niet van.
+   * Meten is bewijs verzamelen, geen uitspraak doen — en een akkoord dat de onderzoeker al
+   * gegeven heeft, hoort niet te vervallen omdat er bewijs bij komt.
+   */
+  const startMeting = async (cel: Cel, commando: string) => {
+    const sleutel = `${cel.sampleId}|${cel.code}|${commando}`;
+    setNieuweMetingen((n) => ({ ...n, [sleutel]: { bezig: true } }));
+    try {
+      const res = await fetch('/api/meting/uitvoeren', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sampleItemId: cel.sampleId,
+          criterionCode: cel.code,
+          commando,
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok || !j.ok) {
+        setNieuweMetingen((n) => ({
+          ...n,
+          [sleutel]: { bezig: false, fout: j.error || 'De meting liep niet goed af' },
+        }));
+        return;
+      }
+      setNieuweMetingen((n) => ({
+        ...n,
+        [sleutel]: { bezig: false, stap: j.stap ?? '', nieuwOordeel: !!j.nieuwOordeel },
+      }));
+      // De meting staat nu in de database; de kaart eronder komt uit een servercomponent.
+      router.refresh();
+    } catch (e: any) {
+      setNieuweMetingen((n) => ({ ...n, [sleutel]: { bezig: false, fout: e.message } }));
+    }
+  };
 
   /**
    * Een vastgelegde meting nog eens draaien.
@@ -1133,21 +1182,118 @@ export default function Stapel({
    * database als code op deze machine kan draaien. De knop stuurt de commandonaam en
    * de losse argumenten, en de route houdt die tegen een vaste lijst.
    */
-  const bewijsBlokken = (cel: Cel) => {
-    const metingen = cel.verantwoording ?? [];
-    const controle = cel.controle;
-    const TEKEN: Record<string, string> = { ja: '✓', nee: '✗', nvt: '—' };
+  /**
+   * Wat je voor dit criterium op deze pagina alsnog kunt laten meten.
+   *
+   * Staat er onder een oordeel niets, dan is er twee dingen aan de hand die er hetzelfde
+   * uitzien: er viel niets te meten, of niemand heeft gemeten. Dit blok maakt het verschil
+   * zichtbaar én oplosbaar — het noemt de meting die bij dit criterium hoort en start hem
+   * op één klik. Voor een site die nooit door een agent is nagelopen is dit de enige weg
+   * naar bewijs.
+   *
+   * Alleen wat er nog niet staat. Een meting die er al is, heeft haar eigen knop ("Nog
+   * eens meten") en hoort niet twee keer aangeboden te worden.
+   */
+  const meetAanbod = (cel: Cel) => {
+    const gedaan = new Set((cel.verantwoording ?? []).map((m) => m.commando));
+    const teDoen = meetbaarVanafDeKaart(cel.code).filter((m) => !gedaan.has(m.commando));
+    if (!teDoen.length) return null;
+
+    const sample = sampleVoor(cel.sampleId);
+    // Zonder adres valt er niets te openen. Dat is geen fout maar een eigenschap van het
+    // sample; zeggen wat er aan de hand is scheelt een knop die niets doet.
+    if (!sample?.url) {
+      return (
+        <p className="mt-3 rounded border border-gray-200 bg-gray-50 p-2 text-xs text-gray-600">
+          Dit criterium is te meten ({teDoen.map((m) => m.commando).join(', ')}), maar deze
+          pagina heeft geen adres om te openen.
+        </p>
+      );
+    }
 
     return (
-      <>
+      <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-3">
+        <p className="mb-2 text-xs font-medium text-blue-900">
+          {(cel.verantwoording ?? []).length === 0
+            ? 'Dit criterium is te meten. Er staat nog geen meting onder dit oordeel:'
+            : 'Dit kun je hier ook laten meten:'}
+        </p>
+        <div className="space-y-2">
+          {teDoen.map((opdracht) => {
+            const sleutel = `${cel.sampleId}|${cel.code}|${opdracht.commando}`;
+            const loopt = nieuweMetingen[sleutel];
+            return (
+              <div key={opdracht.commando} className="rounded border border-blue-200 bg-white p-2">
+                <p className="text-sm text-gray-900">{opdracht.wat}</p>
+                <code className="mt-1 block break-all font-mono text-xs text-gray-700">
+                  {leesbareAanroep(opdracht.commando, sample.url!, opdracht.vlaggen ?? {})}
+                </code>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={loopt?.bezig}
+                    onClick={() => startMeting(cel, opdracht.commando)}
+                    className="rounded bg-blue-700 px-3 py-1 text-xs font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+                  >
+                    {loopt?.bezig ? 'Bezig met meten…' : 'Meet dit nu'}
+                  </button>
+                  <span className="text-xs text-gray-600">
+                    {loopt?.bezig
+                      ? `Dit duurt ${opdracht.duurt ?? 'even'}; het scherm wacht erop.`
+                      : opdracht.duurt
+                      ? `Duurt ${opdracht.duurt}.`
+                      : ''}
+                  </span>
+                </div>
+                {loopt?.fout && (
+                  <p className="mt-1.5 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                    {loopt.fout}
+                  </p>
+                )}
+                {loopt && !loopt.bezig && !loopt.fout && (
+                  <div className="mt-1.5 rounded bg-green-50 px-2 py-1 text-xs text-green-900">
+                    <p className="font-medium">Gemeten. De uitkomst staat nu hierboven.</p>
+                    {loopt.stap && <p className="mt-0.5">{loopt.stap}</p>}
+                    {loopt.nieuwOordeel && (
+                      <p className="mt-0.5">
+                        Er stond nog geen oordeel op deze combinatie. Die staat nu op &ldquo;niet
+                        te bepalen&rdquo;, met de meting eronder — het oordeel is aan jou.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * Het blok "Zo is het vastgesteld": waarop dit oordeel rust, en wat je hier alsnog kunt
+   * laten meten.
+   *
+   * Losgemaakt van het controleblok omdat de kaart "Jij moet kijken" het óók nodig heeft.
+   * Juist daar: dat is de kaart waarop staat dat het criterium niet vast te stellen was, en
+   * dan is de meting die dat wél kan het eerste wat je wilt zien. Het controleblok hoort er
+   * niet bij — er is nog geen oordeel om na te kijken.
+   */
+  const metingenBlok = (cel: Cel) => {
+    const metingen = cel.verantwoording ?? [];
+
+    return (
         <div className="mb-4 border-t border-gray-200 pt-3">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
             Zo is het vastgesteld
           </p>
           {metingen.length === 0 ? (
             <p className="text-sm text-gray-500">
-              Geen metingen vastgelegd. Dit oordeel is in overleg of met de hand tot stand
-              gekomen.
+              {/* Op een vraagkaart is er nog geen oordeel, dus de zin erover klopt daar niet:
+                  daar staat juist dát het niet vast te stellen was. */}
+              {cel.status === 'niet_te_bepalen'
+                ? 'Er is nog niet gemeten op deze pagina.'
+                : 'Geen metingen vastgelegd. Dit oordeel is in overleg of met de hand tot stand gekomen.'}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -1164,6 +1310,15 @@ export default function Stapel({
                 const hermeting = hermetingen[sleutel];
                 return (
                   <li key={sleutel} className="rounded border border-gray-200 bg-gray-50 p-2">
+                    {/* De handeling bovenaan, de aanroep eronder. Wie zijn naam onder dit
+                        onderzoek zet, moet kunnen zien of er gedaan is wat hij zelf gedaan
+                        zou hebben; "bytes: 206393, scope: document" beantwoordt dat niet.
+                        De zin komt uit de meting zelf (veld `stap`), niet van een agent.
+                        Metingen van vóór dat veld hebben hem niet en tonen alleen de
+                        aanroep, zoals voorheen. */}
+                    {m.stap && (
+                      <p className="mb-1.5 text-sm text-gray-900">{m.stap}</p>
+                    )}
                     <code className="block break-all font-mono text-xs text-gray-800">
                       {regel}
                     </code>
@@ -1332,7 +1487,19 @@ export default function Stapel({
               })}
             </ul>
           )}
+          {meetAanbod(cel)}
         </div>
+    );
+  };
+
+  /** De onderbouwing plus de controle erop. Samen, op de oordeelkaart. */
+  const bewijsBlokken = (cel: Cel) => {
+    const controle = cel.controle;
+    const TEKEN: Record<string, string> = { ja: '✓', nee: '✗', nvt: '—' };
+
+    return (
+      <>
+        {metingenBlok(cel)}
 
         <div className="mb-4 border-t border-gray-200 pt-3">
           {/* De onderzoeker is de controle. Niet een van twee.
@@ -1923,6 +2090,12 @@ export default function Stapel({
           <p className="mb-4 leading-relaxed text-gray-900">
             {huidig.cel.reden ?? 'Dit criterium vergt een browsertest.'}
           </p>
+
+          {/* Wat er al gemeten is, en wat je hier alsnog kunt laten meten.
+              Op déze kaart staat dat een criterium niet vast te stellen was. Kan het wel
+              gemeten worden, dan is dat het eerste wat je wilt zien — anders staat er een
+              vraag aan jou waar een knop het antwoord had kunnen geven. */}
+          {metingenBlok(huidig.cel)}
 
           {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}

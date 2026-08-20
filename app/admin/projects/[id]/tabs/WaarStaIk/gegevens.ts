@@ -57,24 +57,14 @@ export const HERKOMST: Record<string, string> = {
   handmatig: 'met de hand ingevoerd',
 };
 
-/** Eén meting uit het logboek van de audit-CLI, zoals de kaart hem toont. */
-export interface Meting {
-  commando: string;
-  argumenten?: Record<string, string>;
-  url?: string | null;
-  tijd?: string;
-  browser?: string | null;
-  artefact?: string | null;
-  /** Het beeld waarop de meting rust. Bij get-html iets anders dan het artefact. */
-  schermafdruk?: string | null;
-  /** Extra beelden met bijschrift, bijvoorbeeld een element in rust en met de muis erop. */
-  schermafdrukken?: { pad: string; bijschrift: string }[] | null;
-  /** In welke weergave gemeten is: standaard, of na het aanzetten van hoogcontrast. */
-  weergave?: string | null;
-  uitkomst?: Record<string, unknown>;
-  /** Hoe vaak deze meting is gedraaid. Alleen de laatste staat er; dit is het aantal. */
-  keer?: number;
-}
+/**
+ * Eén meting uit het logboek van de audit-CLI, zoals de kaart hem toont.
+ *
+ * De vorm staat in `lib/verantwoording.ts`, want twee wegen schrijven hem: `koppel-logboek`
+ * en de meetknop op de kaart. Wat de een wegschrijft moet de ander kunnen lezen.
+ */
+import type { Meting } from '@/lib/verantwoording';
+export type { Meting };
 
 /** Eén punt uit Shift2_Bewijsvoering.md, en of de onderbouwing eraan voldoet. */
 export interface ControlePunt {
