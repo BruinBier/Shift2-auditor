@@ -7725,9 +7725,19 @@ async function getConsistentie(doel: string, flags: Flags) {
     await session.dispose();
   }
 
+  // Een omgeleide pagina is de pagina niet.
+  //
+  // Stap 2 en stap 3 van het contactformulier op heuvelrug.nl sturen je terug naar stap 1
+  // als je ze rechtstreeks opvraagt. Reken je die mee, dan staat dezelfde pagina drie keer
+  // in de vergelijking onder drie namen, en dan lijkt "het logo heet op drie pagina's
+  // anders" iets over drie pagina's te zeggen terwijl het er één is. Ze gaan er dus uit,
+  // en ze worden genoemd: twee samples niet onderzocht is iets om te weten, geen detail.
+  const omgeleid = perPagina.filter((p) => p.omgeleid);
+  const bruikbarePaginas = perPagina.filter((p) => !p.omgeleid);
+
   // Per sleutel de namen die op de verschillende pagina's gevonden zijn.
   const perSleutel = new Map<string, Map<string, string[]>>();
-  for (const p of perPagina) {
+  for (const p of bruikbarePaginas) {
     for (const o of p.onderdelen) {
       if (!perSleutel.has(o.sleutel)) perSleutel.set(o.sleutel, new Map());
       const namen = perSleutel.get(o.sleutel)!;
@@ -7788,7 +7798,7 @@ async function getConsistentie(doel: string, flags: Flags) {
       onderdeel: sleutel,
       opPaginas: paginasVan(namen).size,
     }))
-    .filter((x) => x.opPaginas > 1 && x.opPaginas < perPagina.length)
+    .filter((x) => x.opPaginas > 1 && x.opPaginas < bruikbarePaginas.length)
     .slice(0, 20);
 
   const dir = ensureOutputDir();
@@ -7829,7 +7839,15 @@ async function getConsistentie(doel: string, flags: Flags) {
     overzicht = null;
   }
 
-  const stapZin = `${perPagina.length} pagina's van de steekproef naast elkaar gelegd en per onderdeel de toegankelijke naam vergeleken. Links zijn gekoppeld op hun bestemming, knoppen op hun id of sjabloonklasse. ${
+  const omgeleidTekst = omgeleid.length
+    ? ` ${omgeleid.length} ${
+        omgeleid.length === 1 ? 'sample is' : 'samples zijn'
+      } niet meegenomen omdat de server doorstuurde naar een andere pagina: ${omgeleid
+        .map((p: any) => p.sample)
+        .join(', ')}.`
+    : '';
+
+  const stapZin = `${bruikbarePaginas.length} pagina's van de steekproef naast elkaar gelegd en per onderdeel de toegankelijke naam vergeleken. Links zijn gekoppeld op hun bestemming, knoppen op hun id of sjabloonklasse. ${
     verschillend.length
       ? `${verschillend.length} ${
           verschillend.length === 1 ? 'onderdeel heet' : 'onderdelen heten'
@@ -7838,9 +7856,11 @@ async function getConsistentie(doel: string, flags: Flags) {
           .map((v) => `${v.onderdeel} (${v.namen.map((n) => `"${n.naam}"`).join(' / ')})`)
           .join('; ')}.`
       : 'Elk onderdeel dat op meer dan één pagina voorkomt, heet daar overal hetzelfde.'
-  }${overgeslagen ? ` ${overgeslagen} pagina's zijn niet bekeken door de grens van --max=${max}.` : ''}`;
+  }${overgeslagen ? ` ${overgeslagen} pagina's zijn niet bekeken door de grens van --max=${max}.` : ''}${omgeleidTekst}`;
 
-  const beslist = overgeslagen === 0 && mislukt.length === 0;
+  // Een omgeleid sample is niet onderzocht. Dat maakt de vergelijking van de rest niet
+  // ongeldig, maar wel onvolledig, en dat hoort de kaart te zeggen.
+  const beslist = overgeslagen === 0 && mislukt.length === 0 && omgeleid.length === 0;
 
   legVast({
     commando: 'get-consistentie',
@@ -7852,7 +7872,8 @@ async function getConsistentie(doel: string, flags: Flags) {
     artefact: overzicht,
     criteria: ['3.2.4'],
     uitkomst: {
-      paginas: perPagina.length,
+      paginas: bruikbarePaginas.length,
+      omgeleid: omgeleid.length,
       vanDeSteekproef: bruikbaar.length,
       onderdelenOpMeerderePaginas: opMeerderePaginas.length,
       andersBenoemd: verschillend.length,
@@ -7863,7 +7884,10 @@ async function getConsistentie(doel: string, flags: Flags) {
 
   print({
     onderzoek: projectId,
-    paginas_vergeleken: perPagina.map((p) => p.sample),
+    paginas_vergeleken: bruikbarePaginas.map((p: any) => p.sample),
+    omgeleid_niet_meegenomen: omgeleid.length
+      ? omgeleid.map((p: any) => ({ sample: p.sample, gevraagd: p.url, uitgekomen_op: p.eindUrl }))
+      : undefined,
     paginas_niet_bekeken: overgeslagen || undefined,
     niet_gelukt: mislukt.length ? mislukt : undefined,
     gebied: alleenMain ? 'main-content' : 'hele pagina',
