@@ -69,6 +69,32 @@ Aanleiding: heuvelrug.nl (2026-08-02). 41 elementen met een zichtbaar label, nul
 duurzaam.beverwijk.nl 32 elementen, ook nul. De auditor had "voldoet" ingevuld zonder te
 vergelijken; de uitkomst klopte, de onderbouwing ontbrak. Frits vroeg hoe dit getest wordt.
 
+## Een logo met een leeg tekstalternatief: ook hier een afkeuring
+
+Toont het logo de organisatienaam en heeft de afbeelding `alt=""`, dan is dat een afkeuring
+onder **1.1.1 én onder 2.5.3** — twee aparte bevindingen op hetzelfde defect.
+
+De redenering, en let op dat het scharnier bij de lege alt zit:
+
+- de zichtbare tekst van die link is het woordmerk: de organisatienaam
+- met een leeg `alt` komt die tekst nergens in de toegankelijke naam terecht; die komt dan uit
+  de `title` van de link, en die zegt iets anders ("Ga naar de homepage")
+- **krijgt het logo wél een tekstalternatief** — de reparatie uit 1.1.1 — dan wordt dát de naam
+  van de link, want de inhoud gaat vóór de `title`. De naam wordt "Logo gemeente X" en de
+  zichtbare tekst staat er dan gewoon in. 2.5.3 is daarmee vanzelf hersteld.
+
+Eén reparatie dus, twee bevindingen. Vastgelegd door Frits op 2026-08-20 bij heuvelrug.nl, waar
+het logo "GEMEENTE UTRECHTSE HEUVELRUG" toont, `alt=""` heeft, en de link eromheen "Ga naar de
+homepage" heet. 1.1.1 stond daar al op afgekeurd; 2.5.3 stond op voldoet zonder het logo te
+noemen.
+
+Let op het verschil met 4.1.2: daar gaat het erom of de naam de bestemming dekt, en dat doet
+"Ga naar de homepage" wél (zie `Shift2_Regels_SC_4_1_2.md`). Drie criteria, drie vragen, en ze
+kunnen verschillend uitvallen op dezelfde link.
+
+W3C-issue [#5171](https://github.com/w3c/wcag/issues/5171) blijft van belang voor één ding: de
+**slogan** hoeft niet in de naam. Zie de paragraaf hieronder.
+
 ## Logo met een slogan eronder: niet alles hoeft in de naam
 
 Bevat een logo naast de organisatienaam ook een slogan of payoff ("Samen sterker", "voor de

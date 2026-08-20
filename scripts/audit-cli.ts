@@ -7061,6 +7061,8 @@ async function getLabelInNaam(url: string, flags: Flags) {
           let zichtbaar = '';
           let labelInAfbeelding = false;
           let afbeelding: any = null;
+          let isLogo = false;
+          let logoZonderAlt = false;
           const stapel: Node[] = Array.from(el.childNodes);
           let bekeken = 0;
           while (stapel.length && bekeken < 3000) {
@@ -7115,6 +7117,31 @@ async function getLabelInNaam(url: string, flags: Flags) {
                   bron: (kind.getAttribute('src') || '').slice(0, 120),
                   maat: `${Math.round(ir.width)}x${Math.round(ir.height)}`,
                 };
+                // Een logo dat de organisatienaam toont met een LEEG tekstalternatief is
+                // een afkeuring, ook hier: de zichtbare tekst is het woordmerk, en met een
+                // leeg alt komt die nergens in de naam terecht -- die komt dan uit de title
+                // van de link en zegt iets anders. Krijgt het logo wel een alt, dan wordt
+                // dat de naam en is 2.5.3 vanzelf hersteld; dan is het hier alleen nog een
+                // geval om naar te kijken, want wat er in het plaatje staat is niet te
+                // lezen. Vastgelegd door Frits op 2026-08-20; zie Shift2_Regels_SC_2_5_3.md.
+                let naarDeEigenHomepage = false;
+                try {
+                  const a = el.closest('a') as HTMLAnchorElement | null;
+                  if (a) {
+                    const u = new URL(a.href);
+                    naarDeEigenHomepage =
+                      u.origin === location.origin && (u.pathname === '/' || u.pathname === '');
+                  }
+                } catch {
+                  // Geen bruikbaar adres; dan is het geen logolink.
+                }
+                const noemtZichLogo = /logo/i.test(
+                  `${kind.getAttribute('src') || ''} ${kind.getAttribute('class') || ''} ${
+                    kind.getAttribute('alt') || ''
+                  }`
+                );
+                if (naarDeEigenHomepage || noemtZichLogo) isLogo = true;
+                if (isLogo && !(kind.getAttribute('alt') || '').trim()) logoZonderAlt = true;
               }
               continue;
             }
@@ -7216,6 +7243,8 @@ async function getLabelInNaam(url: string, flags: Flags) {
             naam,
             naamBron,
             labelInAfbeelding,
+            isLogo,
+            logoZonderAlt,
             afbeelding,
             samengesteldeVerwijzing,
             inBeeld: rect.width > 0 && rect.height > 0,
@@ -7244,15 +7273,22 @@ async function getLabelInNaam(url: string, flags: Flags) {
         // van 2.5.3, dus alleen ter informatie.
         vooraan: kaal(e.naam).startsWith(kaal(e.zichtbaar)),
       }));
-      const mismatches = beoordeeld.filter((e: any) => !e.past && !e.samengesteldeVerwijzing);
+      // Een logo met een leeg tekstalternatief telt als mismatch: de zichtbare tekst is
+      // het woordmerk en die staat nergens in de naam. Zie Shift2_Regels_SC_2_5_3.md.
+      const mismatches = [
+        ...beoordeeld.filter((e: any) => !e.past && !e.samengesteldeVerwijzing),
+        ...alles.filter((e: any) => !e.zichtbaar && e.logoZonderAlt),
+      ];
       // Ook de elementen zonder zichtbare tekst maar mét een afbeelding die tekst kan
       // bevatten. Die vallen buiten de vergelijking en horen juist daarom genoemd te
       // worden: het logo van heuvelrug.nl toont de organisatienaam en heet "Ga naar de
       // homepage".
       const nietTeVergelijken = [
-        ...beoordeeld.filter((e: any) => e.samengesteldeVerwijzing || e.labelInAfbeelding),
+        ...beoordeeld.filter(
+          (e: any) => e.samengesteldeVerwijzing || (e.labelInAfbeelding && !e.logoZonderAlt)
+        ),
         ...alles
-          .filter((e: any) => !e.zichtbaar && e.labelInAfbeelding)
+          .filter((e: any) => !e.zichtbaar && e.labelInAfbeelding && !e.logoZonderAlt)
           .map((e: any) => ({ ...e, past: false })),
       ];
 
@@ -7341,6 +7377,7 @@ async function getLabelInNaam(url: string, flags: Flags) {
           alleenEenPictogram: zonderZichtbareTekst,
           mismatches: mismatches.length,
           nietTeVergelijken: nietTeVergelijken.length,
+          logoZonderTekstalternatief: alles.filter((e: any) => e.logoZonderAlt).length,
           beslist,
         },
       });
@@ -7359,9 +7396,10 @@ async function getLabelInNaam(url: string, flags: Flags) {
         alleen_een_pictogram: zonderZichtbareTekst,
         mismatches: mismatches.map((e: any) => ({
           element: e.element,
-          ziet: e.zichtbaar,
+          ziet: e.logoZonderAlt ? 'het woordmerk in het logo (afbeelding met leeg alt)' : e.zichtbaar,
           heet: e.naam,
           naam_uit: e.naamBron,
+          ...(e.logoZonderAlt ? { afbeelding: e.afbeelding, ook_onder: '1.1.1' } : {}),
         })),
         niet_te_vergelijken: nietTeVergelijken.map((e: any) => ({
           element: e.element,
