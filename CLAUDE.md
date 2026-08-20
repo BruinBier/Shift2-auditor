@@ -42,10 +42,15 @@ npm run cli -- search-quick-findings <keyword>     # reuse finding templates
 
 # Pagina's bekijken — altijd via de CLI, nooit via een ingebouwde browser
 npm run cli -- get-html <url> [--text] [--full]
-npm run cli -- get-screenshot <url> [--full-page] [--selector=css]
+npm run cli -- get-screenshot <url> [--full-page] [--selector=css] [--voor=1.1.1]  # --voor is verplicht bij --selector: een opname van één element hoort bij één criterium
 npm run cli -- get-leesvolgorde <url> [--zonder-css]   # voor 1.3.2: code-volgorde vs. kijkvolgorde
 npm run cli -- get-nietteksten <url> [--klik=...]      # voor 1.4.11: zoekt zelf op wat eronder valt en meet het
 npm run cli -- get-toetsenbordval <url> [--scope=pagina] [--typ-in=css --typ=woord] [--achteruit=true]  # 2.1.2
+npm run cli -- get-videos <url> [--scope=main] [--doorloop=2]  # voor 2.1.4: leest de insluitcode van elke video; --doorloop loopt formulierstappen door
+npm run cli -- get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]  # 2.2.2: kijkt of er iets uit zichzelf beweegt of bijwerkt
+npm run cli -- get-flitsen <url> [--seconden=10] [--klik=...]  # 2.3.1: telt de helderheidssprongen in de beeldjes die de browser tekent
+npm run cli -- get-flitsen <video-url>                         # een YouTube- of Vimeo-adres: meet de video op zijn eigen pagina, met de speler aan
+npm run cli -- get-videosporen <url|video-url> [--max=5] [--klik=...]  # 1.2.3/1.2.5: ondertitel- en audiosporen per video, plus drie beeldjes voor open ondertiteling
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write
@@ -77,6 +82,27 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - Een opmerking (`type=opmerking`, geen impact) keurt een criterium **niet** af.
 - Linking uses `SampleItem + FindingOccurrence` (the manual/UI path), not `ScopeUrl + FindingUrl` (crawler path).
 - Override base URL if needed: `AUDIT_CLI_BASE_URL=http://localhost:3001 npm run cli -- ...`
+
+### Een meting toevoegen: registreer hem in `lib/metingen.ts`
+
+Welke meting bij welk succescriterium hoort staat op één plek: `lib/metingen.ts`. Drie
+plekken lezen die lijst — het logboek van de CLI (welke criteria een meting dient), de kaart
+in "Waar sta ik" (welke meting de onderzoeker daar kan starten) en de route die de meting
+uitvoert (wat er mag draaien en met welke vlaggen). Die laatste is een veiligheidsgrens: wat
+er niet in staat, draait niet.
+
+Bouw je een nieuw meetcommando, voeg het dan daar toe, met de vlaggen die het kent en met
+`vanafDeKaart: true` als het zonder keuze vooraf te draaien is. Zet dat op `false` zodra er
+eerst iets aangewezen moet worden — `get-pixelcontrast` moet weten wélk element het meet, en
+een knop die dat zelf verzint meet het verkeerde. Zonder registratie werkt het commando wel
+op de opdrachtregel, maar verschijnt het nergens in het scherm.
+
+**De onderzoeker kan metingen zelf starten.** Op elke kaart in "Waar sta ik" staat onder "Zo
+is het vastgesteld" wat er voor dat criterium te meten valt, met een knop "Meet dit nu". Ook
+op de kaarten "Jij moet kijken" — juist daar, want dat is de kaart waarop staat dat iets niet
+vast te stellen was. De uitkomst komt onder het oordeel te staan; het oordeel zelf verandert
+er niet van, en een akkoord vervalt er niet door. Meten is bewijs verzamelen, geen uitspraak
+doen.
 
 ### Welke browser gebruik je waarvoor
 
@@ -112,6 +138,78 @@ uit welk element focus heeft, en herkent een val doordat de focus het gebied nie
 terwijl een korte reeks zich herhaalt. Draai vier rondes: main-content, hele pagina, met een
 widget open (`--typ-in`, want een suggestielijst bestaat pas ná typen), en achteruit
 (`--achteruit=true`, want een val kan één kant op zitten).
+
+**SC 2.2.2 vraagt om tijd, niet om code.** Of er iets uit zichzelf beweegt is uit opgehaalde
+HTML niet te zien: "er is geen carrousel" en "ik heb niet gekeken of er een carrousel is"
+leveren dezelfde zin op. `get-beweging` laat de pagina acht seconden staan en vergelijkt drie
+opnamen — bij binnenkomst, na drie seconden en vijf seconden daarna. Het venster dat telt
+begint pas ná die drie seconden, want daarvóór laden luie afbeeldingen en widgets nog in.
+Vier zintuigen tegelijk: de beeldpunten (ziet ook een canvas en een kader van een ander
+domein), de bijwerkingen in de code, de verplaatsingen van elementen, en wat de pagina zelf
+opgeeft aan CSS-animaties en spelende media. Alleen bijwerkingen die iets aan de weergave
+veranderen tellen mee — een attribuut dat omklapt is geen beweging. Van elk veranderd gebied
+komt er een uitsnede vóór en ná; keur nooit af op het getal alleen. Beweegt er niets, dan is
+2.2.2 `niet_aanwezig` en niet `voldoet`.
+
+**SC 2.3.1 is niet met `get-beweging` te beantwoorden.** Die maakt drie opnamen met seconden
+ertussen; een flits van drie per seconde zit dáártussen. `get-flitsen` leest daarom de beeldjes
+mee die de browser tekent en telt per blok de tegengestelde helderheidssprongen (10% van de
+schaal, donkerste onder 0,80), plus de aparte toets op verzadigd rood. De gebiedsgrens is een
+kwart van een gezichtsveld van tien graden — ongeveer 2,8% van het beeld, niet "een kwart van
+het scherm", want een klein flitsend vlakje zakt ook. Komen er geen beeldjes, dan heeft de
+pagina niet opnieuw getekend en kan er niets geflitst hebben: dat is `voldoet`, niet
+`niet_aanwezig`. Dit is een zeef en geen keuring: het beeld wordt verkleind en samengeperst,
+en alleen wat in beeld staat wordt opgenomen. Laat een videobestand door PEAT halen voor een
+echt oordeel.
+
+**Een video op de pagina meet je niet op de pagina.** Hij zit in een kader van een ander
+domein, staat achter een toestemmingsscherm of toont een stilstaand voorblad; de tekenopnemer
+krijgt dan niets te zien en de uitkomst wordt ten onrechte "er gebeurt niets". Geef daarom het
+videoadres zelf mee — `get-flitsen https://www.youtube.com/watch?v=<nummer>` — dan opent het
+commando de video op zijn eigen pagina en zet de speler gedempt aan. Eerst het insluitadres;
+weigert YouTube dat (Fout 153, "fout bij configuratie van videospeler"), dan de watchpagina.
+Op een gewone pagina somt `get-flitsen` de gevonden video's op mét de regel om ze apart te
+meten.
+
+Staat er een toestemmingsvenster voor ("Voordat je verdergaat naar YouTube"), dan meldt het
+commando dat en klikt het niet weg: toestemming geven is een keuze van de onderzoeker. Wil je
+eromheen, geef dan `--klik="tekst:Alles afwijzen"` mee of accepteer eenmalig in de
+audit-sessie-Chrome. Zonder dat blijft de uitkomst `beslist: false` — een speler die niet
+gespeeld heeft is niet gemeten.
+
+**Voor 1.2.3 en 1.2.5 lees je de sporen van de speler, niet de pagina.** `get-videosporen`
+opent elke video op zijn eigen pagina en leest uit `ytInitialPlayerResponse` welke
+ondertitelsporen er zijn — inclusief of ze automatisch gegenereerd zijn (`kind: "asr"`, en
+dat telt niet als ondertiteling) — en welke audiosporen. Een video met audiodescriptie heeft
+daar een tweede audiospoor met "descriptive" of "beschrijvend" in de naam; staat dat er niet,
+dan is er geen audiodescriptiespoor. Zijn de formaten niet af te lezen, dan is dat
+`niet af te lezen` en geen "geen": een gok is geen meting.
+
+**Niet elke speler is YouTube of Vimeo.** Bij een eigen speler (Blue Billywig, JW Player,
+Bitmovin) staan de sporen nergens in de code: de speler tekent zijn ondertiteling zelf, geeft
+geen `<track>`-elementen door en verstopt zijn hele bediening in **shadow DOM**. Een gewone
+`querySelector` komt daar niet, en dan lijkt een pagina met een volledig toegankelijke speler
+een pagina zonder knoppen. `get-videosporen` loopt daarom alle afgeschermde wortels en alle
+ingesloten kaders af, en leest de knopnamen: *"Zet ondertitels uit"* betekent dat ondertiteling
+aanstaat, *"Zet uitgeschreven tekst aan"* dat er een transcript is. Dat is een afleiding uit
+een tekst en geen meting van de ondertiteling zelf; zo staat het er ook bij. De uitgeschreven
+tekst wordt meegenomen met zijn lengte, want een kopje "Transcript" boven drie regels is geen
+tekstalternatief.
+
+**Een pagina die slaapt, meet je niet.** Versnellers als WP Rocket stellen álle scripts uit tot
+de bezoeker iets doet. Zonder muisbeweging staat er dan geen speler, geen menu en geen widget —
+en dat ziet er precies zo uit als "die zijn er niet". `openPage` telt daarom hoeveel scripts
+staan te wachten en maakt de pagina wakker als dat er zijn. Op de webinarpagina van Blue
+Billywig stonden er vijftien te wachten; na één muisbeweging laadden er 36 scripts en stond de
+video er gewoon. Zie ook `gehydrateerd` bij `get-html`.
+
+Daarnaast legt het drie beeldjes vast, verspreid over de duur, uitgesneden op de speler.
+Dat is het enige middel om **open** ondertiteling te zien: die zit in het beeld gebrand en
+staat in geen enkele gegevensbron. Op "Graven in het Groen, afl. 3" geeft YouTube alleen een
+automatisch spoor op, terwijl er ingebrande ondertiteling in beeld staat — precies de valkuil
+uit `Shift2_Werkwijze_Video.md`. Doorspoelen kan niet: `currentTime` en de eigen `seekTo` van
+de speler blijven op `seeking` hangen, dus elk beeldje krijgt een eigen laadbeurt met
+`&t=<seconden>s`.
 
 **Staat een element op een foto of een verloop, dan zeggen stijlwaarden niets.** `getComputedStyle`
 geeft daar `rgba(0,0,0,0)`, en rekenen met die waarden levert ten onrechte "voldoet" op.

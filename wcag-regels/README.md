@@ -85,8 +85,16 @@ Sommige criteria zijn niet uit de HTML of een screenshot alleen te bepalen. Ze z
 | 1.4.3 · 1.4.11 | Pixelmeting op de hoogcontrastknop. Eén keer, op het homepage-sample: de knop staat in de header en is op elke pagina dezelfde. |
 | 1.4.10 | Viewport op exact 320 CSS-pixels, `scrollWidth` vergelijken. |
 | 2.1.2 | Tab versturen en `document.activeElement` uitlezen. |
+| 2.2.2 | Acht seconden naar de pagina kijken en drie opnamen vergelijken; het venster dat telt begint drie seconden na het laden. |
+| 2.3.1 | De beeldjes meelezen die de browser tekent en de helderheidssprongen tellen. Een video meet je niet op de pagina maar op zijn eigen adres: `get-flitsen https://www.youtube.com/watch?v=<nummer>`. Voor een videobestand blijft PEAT de autoriteit. |
 | 2.5.3 · 2.5.8 | Zichtbare tekst tegen de toegankelijke naam; `getBoundingClientRect` voor de afmeting. |
-| 1.2.3 · 1.2.5 | Audiospoor en transcript-knop uitlezen, en via de open ondertiteling nagaan of tekst-in-beeld ook gesproken wordt. Zie `Shift2_Werkwijze_Video.md`. |
+| 1.2.3 · 1.2.5 | `get-videosporen <url>` leest per video de sporen uit. Bij YouTube uit de spelergegevens (inclusief of ondertiteling automatisch gegenereerd is), bij een eigen speler uit zijn bediening in de shadow DOM ("Zet ondertitels uit" = ze staan aan) plus de uitgeschreven tekst. Drie beeldjes voor de open ondertiteling. Of tekst-in-beeld ook gesproken wordt, blijft handwerk; zie `Shift2_Werkwijze_Video.md`. |
+
+Deze metingen zijn ook zonder agent te starten: op de kaart in "Waar sta ik" staat onder "Zo
+is het vastgesteld" wat er voor dat criterium te meten valt, met de knop **Meet dit nu**. Ook
+op een kaart "Jij moet kijken" — staat daar een vraag die een meting kan beantwoorden, druk
+dan eerst op de knop. De uitkomst komt onder het oordeel te staan; het oordeel zelf verandert
+er niet van.
 
 Lukt de meting niet, dan pas `niet_te_bepalen` met de concrete vraag **en** de reden waarom het
 niet lukte. `INTERACTIEVE_SC` in de workflow is leeg: geen enkel criterium gaat nog automatisch
@@ -134,6 +142,8 @@ meet Frits handmatig.
 | 1.4.10 | `Shift2_Regels_SC_1_4_10.md` | ja |
 | 1.4.11 | `Shift2_Regels_SC_1_4_11.md` | ja |
 | 2.1.2 | `Shift2_Regels_SC_2_1_2.md` | ja |
+| 2.1.4 | `Shift2_Regels_SC_2_1_4.md` | ja |
+| 2.2.2 | `Shift2_Regels_SC_2_2_2.md` | ja |
 | 2.4.4 | `Shift2_Regels_SC_2_4_4.md` | |
 | 2.4.6 | `Shift2_Regels_SC_2_4_6.md` | |
 | 4.1.2 | `Shift2_Regels_SC_4_1_2.md` | |

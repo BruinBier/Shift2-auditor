@@ -120,6 +120,62 @@ function zelfdePagina(a: string, b: string): boolean {
 }
 
 /**
+ * Wekt een pagina die zijn scripts uitstelt tot de bezoeker iets doet.
+ *
+ * Versnellers als WP Rocket voeren geen enkel script uit tot er een muisbeweging, een
+ * toetsaanslag of een scroll komt. Voor een bezoeker is dat onzichtbaar. Voor een meting
+ * is het fataal: er staat dan geen videospeler, geen uitklapmenu en geen widget op de
+ * pagina, en dat ziet er precies zo uit als "die zijn er niet".
+ *
+ * Aangetroffen op de webinarpagina van Blue Billywig: vijftien scripts stonden te wachten,
+ * de HTML bevatte geen enkele speler, en `gehydrateerd` stond op false. Na één muisbeweging
+ * laadden er 36 scripts en stond de video er gewoon.
+ *
+ * Alleen doen als er werkelijk iets te wekken valt, anders kost elke meting extra tijd. En
+ * terugscrollen naar boven, zodat de volgende meting op een pagina in ruststand begint.
+ */
+export async function maakWakker(page: Page): Promise<boolean> {
+  const tel = () =>
+    page.evaluate(
+      () =>
+        document.querySelectorAll(
+          'script[type="rocketlazyloadscript"], script[data-rocket-src], script[type="text/lazyload"], script[type="text/rocketlazyloadscript"]'
+        ).length
+    );
+  let wachtend = 0;
+  try {
+    wachtend = await tel();
+  } catch {
+    return false;
+  }
+  if (!wachtend) return false;
+
+  process.stderr.write(
+    `[browser] ${wachtend} scripts staan te wachten op een handeling van de bezoeker; pagina wakker maken\n`
+  );
+  try {
+    await page.mouse.move(200, 300);
+    await page.mouse.move(420, 520);
+    await page.evaluate(() => {
+      window.scrollTo(0, 400);
+      for (const soort of ['mousemove', 'keydown', 'touchstart', 'wheel', 'scroll']) {
+        window.dispatchEvent(new Event(soort, { bubbles: true }));
+        document.dispatchEvent(new Event(soort, { bubbles: true }));
+      }
+    });
+    for (let poging = 0; poging < 14; poging++) {
+      await new Promise((r) => setTimeout(r, 500));
+      if (!(await tel())) break;
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await new Promise((r) => setTimeout(r, 800));
+  } catch {
+    // Wakker maken mag een meting niet laten mislukken; wat er staat, staat er.
+  }
+  return true;
+}
+
+/**
  * Open een verse tab op `url`, wacht tot het netwerk rustig is + 1s buffer
  * voor late JS-rendering. Geeft een cleanup-functie terug die alleen de tab
  * sluit (niet de hele browser).
@@ -135,6 +191,7 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs }).catch(() => {});
   }
   await new Promise((r) => setTimeout(r, 1000));
+  await maakWakker(page);
   const eindUrl = page.url();
   return {
     page,

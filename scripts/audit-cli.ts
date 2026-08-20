@@ -18,6 +18,9 @@
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
+ *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-videosporen <url|video-url> [--max=5] [--klik=...]
  *   tsx scripts/audit-cli.ts koppel-logboek <projectId> [--drooglopen]
  *   tsx scripts/audit-cli.ts capture-sample-evidence <projectId> <sampleId>
  */
@@ -38,6 +41,7 @@ import {
   type FindingDraft,
 } from '../lib/finding-lint';
 import { getAuditEvidencePaths, isHomepageUrl } from '../lib/audit-evidence';
+import { metingUitLogregel, vormVanMeting, opLeesvolgorde } from '../lib/verantwoording';
 
 const BASE_URL = process.env.AUDIT_CLI_BASE_URL || 'http://localhost:3000';
 
@@ -576,6 +580,9 @@ async function getHtml(url: string, flags: Flags) {
       // bijzonder. Dat staat zo in het logboek en dat is de eerlijke weergave.
       legVast({
         commando: 'get-html',
+        stap: `De pagina opgehaald in een echte browser, zodat de JavaScript van de site heeft gedraaid: ${
+          useFull ? 'de hele pagina inclusief header en footer, want dit is de homepage' : 'alleen de main-content, want dit is geen homepage'
+        }. Dit is de pagina waarop alle oordelen hieronder rusten.`,
         // Alleen de vlaggen die werkelijk zijn meegegeven. `useFull` volgt uit de
         // homepage-detectie en niet uit een vlag; die hier opnemen maakt de regel
         // onbruikbaar om over te typen, want dan zet je iets aan wat de CLI zelf
@@ -860,11 +867,19 @@ async function getScreenshot(url: string, flags: Flags) {
       const stat = fs.statSync(file);
       legVast({
         commando: 'get-screenshot',
+        // Een opname van de hele pagina is algemeen bewijs en komt onder elk criterium.
+        // Een opname van één element is dat niet: die hoort bij het criterium waarvoor je
+        // hem maakt, en zonder --voor is niet vast te stellen welk dat was. Zonder deze
+        // vlag stond een uitsnede van het logo als bewijs onder 2.1.4.
+        ...(flags.voor && flags.voor !== 'true'
+          ? { criteria: flags.voor.split(',').map((c) => c.trim()).filter(Boolean) }
+          : {}),
         argumenten: {
           ...(fullPage ? { 'full-page': 'true' } : {}),
           ...(selector ? { selector } : {}),
           ...(breedte ? { breedte: String(breedte) } : {}),
           ...(klik ? { klik } : {}),
+          ...(flags.voor && flags.voor !== 'true' ? { voor: flags.voor } : {}),
         },
         url: url,
         eindUrl: finalUrl,
@@ -1112,6 +1127,10 @@ async function getLeesvolgorde(url: string, flags: Flags) {
 
       legVast({
         commando: 'get-leesvolgorde',
+        // Dit commando schakelt niets aan; het meet de pagina zoals hij komt. Zonder dit
+        // veld zet de kaart er "weergave niet vastgelegd" bij, in oranje — een waarschuwing
+        // voor een twijfel die hier niet bestaat.
+        weergave: 'standaardweergave',
         argumenten: zonderCss ? { 'zonder-css': 'true' } : {},
         url: gevraagdeUrl,
         eindUrl,
@@ -1720,6 +1739,10 @@ async function getReflow(url: string, flags: Flags) {
 
       legVast({
         commando: 'get-reflow',
+        // Dit commando schakelt niets aan; het meet de pagina zoals hij komt. Zonder dit
+        // veld zet de kaart er "weergave niet vastgelegd" bij, in oranje — een waarschuwing
+        // voor een twijfel die hier niet bestaat.
+        weergave: 'standaardweergave',
         argumenten: { breedte: String(breedte) },
         url: gevraagdeUrl,
         eindUrl,
@@ -1889,50 +1912,26 @@ async function koppelLogboek(projectId: string, flags: Flags) {
   for (const r of regels) {
     const sample = sampleVanUrl.get(kaal(r.eindUrl || r.url || ''));
     if (!sample) continue;
-    const meting = {
-      commando: r.commando,
-      argumenten: r.argumenten,
-      url: r.url,
-      tijd: r.tijd,
-      browser: r.browser,
-      weergave: r.weergave ?? null,
-      artefact: r.artefact,
-      // Oudere regels hebben dit veld niet. Staat er alleen een artefact en is dat een
-      // afbeelding, dan is dát het beeld — anders had de kaart voor alles wat vóór
-      // vandaag gemeten is geen schermafdruk meer.
-      schermafdruk:
-        r.schermafdruk ?? (r.artefact && /\.(png|jpe?g)$/i.test(r.artefact) ? r.artefact : null),
-      schermafdrukken: r.schermafdrukken ?? [],
-      uitkomst: r.uitkomst,
-    };
-    if (!r.criteria.length && ALGEMEEN.has(r.commando)) {
+    // Dezelfde vertaling als de meetknop op de kaart gebruikt, uit lib/verantwoording.ts.
+    // Zou elk van de twee zelf bepalen welke velden meegaan, dan ziet dezelfde meting er
+    // anders uit al naar gelang wie hem startte.
+    const meting = metingUitLogregel(r);
+    // Een schermafdruk van de hele pagina is algemeen bewijs: daar rust elk oordeel op.
+    // Een schermafdruk met --selector is dat niet -- dat is een foto van één element,
+    // genomen voor één criterium. Die onder alle criteria hangen levert onzin op: onder
+    // 2.1.4 (sneltoetsen) stond een uitsnede van het logo.
+    const gerichteOpname = r.commando === 'get-screenshot' && !!r.argumenten?.selector;
+    if (!r.criteria.length && ALGEMEEN.has(r.commando) && !gerichteOpname) {
       if (!algemeenPerSample.has(sample.id)) algemeenPerSample.set(sample.id, new Map());
       algemeenPerSample.get(sample.id)!.set(r.commando, meting);
       continue;
     }
     if (!r.criteria.length) continue;
 
-    // Op commando plus wát er gemeten is, zodat dezelfde meting maar één keer op de
-    // kaart komt. Wie een meting herhaalt levert geen nieuw bewijs; alleen de laatste
-    // telt. Zonder dit vulde de kaart zich met zes identieke reflow-regels — mijn
-    // eigen testklikken op "Nog eens meten" — en was niet meer te zien wat er
-    // werkelijk was gedaan.
-    //
-    // `klik` telt bewust NIET mee in de sleutel. Meet je hetzelfde element eerst in de
-    // standaardweergave en daarna in de hoogcontrastweergave, dan is dat tweede een
-    // correctie op het eerste en geen tweede bewijsstuk. Bleef de eerste staan, dan
-    // stonden er onder een hoogcontrastoordeel opnamen in gewone kleuren die nergens
-    // meer op sloegen.
-    //
-    // `breedte` telt wél mee: een reflow-meting op 320 en op 1280 zijn twee metingen,
-    // niet dezelfde meting overgedaan.
-    const { klik: _klik, ...watGemeten } = r.argumenten ?? {};
-    // Een vlag die de standaardwaarde meegeeft is dezelfde meting als die vlag weglaten.
-    // `--scope=pagina` was ooit nodig en is nu de standaard; zonder deze regel staan de
-    // oude en de nieuwe aanroep als twee metingen op de kaart terwijl ze hetzelfde doen.
-    if (watGemeten.scope === 'pagina') delete watGemeten.scope;
-    if (watGemeten.max === '200') delete watGemeten.max;
-    const vorm = `${r.commando}|${JSON.stringify(watGemeten)}`;
+    // Waaraan je ziet of twee metingen dezelfde meting zijn, staat in lib/verantwoording.ts:
+    // ook de meetknop op de kaart moet weten wanneer hij een regel vervangt in plaats van
+    // toevoegt.
+    const vorm = vormVanMeting(r.commando, r.argumenten ?? {});
 
     // Eerst per sample verzamelen, en pas daarna over de criteria verdelen — op basis
     // van de criteria van de LAATSTE run.
@@ -1955,19 +1954,9 @@ async function koppelLogboek(projectId: string, flags: Flags) {
       const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
       const gericht = Array.from(gerichtPerSample.get(c.sampleItemId)?.values() ?? [])
         .filter((g) => g.criteria.includes(c.criterionCode))
-        .map((g) => g.meting)
-        // Op reikwijdte, niet op tijd.
-        //
-        // Een meting die de hele pagina afloopt zegt wát er onder dit criterium valt; de
-        // metingen van losse elementen zijn de uitwerking daarvan. Op tijd gesorteerd
-        // belandde `get-nietteksten` onderaan omdat hij toevallig het laatst gedraaid was,
-        // en las de kaart van detail naar overzicht. Elementmetingen houden onderling wel
-        // hun volgorde: sort in JavaScript is stabiel.
-        .sort((a, b) => {
-          const breed = (m: any) => (m.argumenten?.selector ? 1 : 0);
-          return breed(a) - breed(b);
-        });
-      const verantwoording = [...algemeen, ...gericht];
+        .map((g) => g.meting);
+      // Van overzicht naar detail, volgens dezelfde regel als de meetknop op de kaart.
+      const verantwoording = opLeesvolgorde([...algemeen, ...gericht]);
       if (!verantwoording.length) return null;
       return {
         sampleItemId: c.sampleItemId,
@@ -2053,6 +2042,337 @@ async function legOpnameVast(
     return fs.existsSync(bestand) ? bestand : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Loopt de ingesloten videospelers op een pagina af en leest per speler de parameter die de
+ * sneltoetsen van één teken uitzet.
+ *
+ * Dit is de hoofdmeting voor SC 2.1.4. Een sneltoets van één teken zit op een gemeentesite
+ * vrijwel nooit in de eigen JavaScript maar komt mee met een ingesloten speler: bij YouTube
+ * pauzeert `k`, dempt `m`, springen `j` en `l` tien seconden. Die werken zodra de focus ergens
+ * ín de speler staat -- ook op de volumeknop -- en dus gaat de uitweg "alleen actief bij focus"
+ * niet op.
+ *
+ * Dat is te lezen, niet te meten: `disablekb=1` bij YouTube en `keyboard=0` bij Vimeo zetten de
+ * sneltoetsen uit. Toetsen indrukken (`get-sneltoetsen`) is daarnaast de uitzondering, alleen
+ * met een concrete aanleiding. Zie `wcag-regels/Shift2_Regels_SC_2_1_4.md`.
+ *
+ * De titel komt uit de video zelf en niet uit het `title`-attribuut van het iframe: veel CMS'en
+ * zetten daar "YouTube video player" neer en dan heten alle video's op de site hetzelfde. Voor
+ * YouTube wordt daarvoor de watchpagina geopend, dezelfde bron als bij 1.2.2. Voor Vimeo is nog
+ * niet vastgelegd waar de titel vandaan komt; die blijft dus leeg, met de reden erbij.
+ *
+ * Ook plaatshouders tellen: staat de video achter een cookiescherm, dan is er geen iframe maar
+ * wel een `data-src` of `data-video-id` met het adres erin. Zonder die controle levert een
+ * pagina met een video ten onrechte "geen speler" op.
+ */
+async function getVideos(url: string, flags: Flags) {
+  const alleenMain = flags.scope === 'main';
+  // Een latere formulierstap bestaat niet als los adres: wie stap 2 rechtstreeks opvraagt,
+  // komt terug op stap 1. Met --doorloop=<n> worden n stappen doorlopen -- velden gevuld met
+  // herkenbaar testmateriaal, dan op "volgende" -- zodat de meting op de echte stap landt.
+  // De verzendknop wordt nooit aangeraakt; zie de weigering hieronder.
+  const doorloop = parseInt(flags.doorloop && flags.doorloop !== 'true' ? flags.doorloop : '0', 10);
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      const doorlopen: any[] = [];
+      for (let stap = 0; stap < doorloop; stap++) {
+        const gedaan = await page.evaluate(() => {
+          // Geen benoemde hulpfuncties hierbinnen: esbuild hangt daar __name aan, en dat
+          // bestaat niet in de browser waar deze functie draait.
+          const ingevuld: string[] = [];
+          for (const el of Array.from(document.querySelectorAll('input, textarea, select'))) {
+            const e = el as HTMLInputElement;
+            if (e.type === 'hidden' || e.disabled) continue;
+            if (!(e.offsetWidth || e.offsetHeight || e.getClientRects().length)) continue;
+            const soort = (e.type || e.tagName).toLowerCase();
+            if (soort === 'radio' || soort === 'checkbox') {
+              if (!e.checked) e.click();
+            } else if (e.tagName.toLowerCase() === 'select') {
+              const s = el as unknown as HTMLSelectElement;
+              if (s.options.length > 1) s.selectedIndex = 1;
+            } else if (soort === 'email') {
+              e.value = 'toegankelijkheidsonderzoek@example.org';
+            } else if (soort === 'tel') {
+              e.value = '0612345678';
+            } else if (soort === 'date') {
+              e.value = '2026-01-01';
+            } else if (soort === 'number') {
+              e.value = '1';
+            } else {
+              // Kijk naar het label: een zin in een veld voor voorletters wordt afgekeurd, en
+              // dan blijft het formulier op dezelfde stap staan zonder dat dat opvalt.
+              const bij = e.id ? document.querySelector('label[for="' + e.id + '"]') : null;
+              const wat = ((bij ? bij.textContent : '') + ' ' + (e.getAttribute('placeholder') || '')).toLowerCase();
+              if (/voorletter|initial/.test(wat)) e.value = 'A.';
+              else if (/postcode/.test(wat)) e.value = '1234AB';
+              else if (/huisnummer|nummer/.test(wat)) e.value = '1';
+              else if (/achternaam|naam/.test(wat)) e.value = 'Toegankelijkheidstest';
+              else if (/plaats|woonplaats|straat/.test(wat)) e.value = 'Teststraat';
+              else if (e.tagName.toLowerCase() === 'textarea')
+                e.value = 'Testinvoer voor een toegankelijkheidsonderzoek. Niet verzenden.';
+              else e.value = 'Testinvoer';
+            }
+            e.dispatchEvent(new Event('input', { bubbles: true }));
+            e.dispatchEvent(new Event('change', { bubbles: true }));
+            ingevuld.push(`${e.name || e.id || soort}`);
+          }
+          const teksten = Array.from(document.querySelectorAll('button, input[type="submit"]'))
+            .filter((b) => {
+              const e = b as HTMLElement;
+              return !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
+            })
+            .map((b) => ((b as HTMLInputElement).value || b.textContent || '').replace(/\s+/g, ' ').trim());
+          return {
+            ingevuld,
+            knoppen: teksten,
+            // "Controleren" is bij de SIMform-generator de knop naar het overzicht. Die hoort
+            // erbij; verzenden gebeurt pas op het overzicht zelf en wordt hieronder geweigerd.
+            volgendeTekst: teksten.find((t) => /volgende|verder|doorgaan|controleren/i.test(t)) || null,
+          };
+        });
+
+        if (!gedaan.volgendeTekst) {
+          doorlopen.push({
+            stap: stap + 1,
+            gestopt: 'geen volgende-knop gevonden',
+            veldenIngevuld: gedaan.ingevuld.length,
+            knoppen: gedaan.knoppen,
+          });
+          break;
+        }
+        // Harde weigering: een knop die verstuurt wordt niet ingedrukt, ook niet als hij
+        // toevallig "volgende" in zijn tekst heeft.
+        if (/verzend|verstuur|bevestig|afrond|indienen/i.test(gedaan.volgendeTekst)) {
+          doorlopen.push({ stap: stap + 1, gestopt: `weigert te klikken op "${gedaan.volgendeTekst}"` });
+          break;
+        }
+
+        const voorAdres = page.url();
+        await page.evaluate(() => {
+          const doel = Array.from(document.querySelectorAll('button, input[type="submit"]'))
+            .filter((b) => {
+              const e = b as HTMLElement;
+              return !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
+            })
+            .find((b) =>
+              /volgende|verder|doorgaan|controleren/i.test(
+                ((b as HTMLInputElement).value || b.textContent || '').replace(/\s+/g, ' ').trim()
+              )
+            );
+          (doel as HTMLElement | undefined)?.click();
+        });
+        await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 1500));
+        doorlopen.push({
+          stap: stap + 1,
+          geklikt: gedaan.volgendeTekst,
+          veldenIngevuld: gedaan.ingevuld.length,
+          velden: gedaan.ingevuld,
+          van: voorAdres,
+          naar: page.url(),
+          titel: await page.title(),
+        });
+      }
+
+      const gevonden = await page.evaluate((mainOnly: boolean) => {
+        // Niet elke pagina heeft een <main>: de formulierstappen van de generator bijvoorbeeld
+        // niet. Val dan terug op de hele pagina en meld dat, in plaats van niets te meten --
+        // een lege uitkomst is hier niet te onderscheiden van "geen video".
+        const main = mainOnly ? document.querySelector('main') : null;
+        const geenMain = mainOnly && !main;
+        const wortel = (main || document.body) as HTMLElement;
+        // Geen hulpfunctie met een naam hierbinnen: esbuild hangt daar __name aan, en dat
+        // bestaat niet in de browser waar deze functie wordt uitgevoerd.
+        const spelers = Array.from(wortel.querySelectorAll('iframe'))
+          .map((f) => f.getAttribute('src') || '')
+          .filter((s) => /youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com/i.test(s));
+        // Een video achter een cookiescherm heeft geen iframe maar wel het adres in een attribuut.
+        const plaatshouders: string[] = [];
+        for (const el of Array.from(wortel.querySelectorAll('[data-src], [data-url], [data-video-id], [data-youtube-id]'))) {
+          const waarde =
+            el.getAttribute('data-src') ||
+            el.getAttribute('data-url') ||
+            el.getAttribute('data-video-id') ||
+            el.getAttribute('data-youtube-id') ||
+            '';
+          if (/youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com/i.test(waarde) || /^[\w-]{11}$/.test(waarde)) {
+            plaatshouders.push(waarde);
+          }
+        }
+        // Een geblokkeerd videovak: er staat een video, maar het adres staat nergens in de
+        // HTML. Op valkenswaard.nl is dat een div met "videoContainer ... blocked" en een
+        // toestemmingsscherm erin; het iframe wordt pas na toestemming ingevoegd. Zonder deze
+        // herkenning levert zo'n pagina "0 video's" op terwijl er een video staat.
+        const kandidaten = Array.from(
+          wortel.querySelectorAll(
+            '[class*="ideoContainer"], [class*="video-container"], [class*="video-embed"], [class*="ideoEmbed"]'
+          )
+        );
+        const geblokkeerd = kandidaten
+          .filter((el) => {
+            const klasse = el.getAttribute('class') || '';
+            return (
+              /blocked|geblokkeerd/i.test(klasse) ||
+              !!el.querySelector('[class*="onsent"], [class*="ookie"]') ||
+              /video van een extern/i.test(el.textContent || '')
+            );
+          })
+          // De consent-div zit vaak zelf ook in de lijst; alleen de buitenste telt.
+          .filter((el, _i, lijst) => !lijst.some((a) => a !== el && a.contains(el)))
+          .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120));
+
+        return {
+          spelers,
+          plaatshouders,
+          geblokkeerd,
+          geenMain,
+          eigenVideos: wortel.querySelectorAll('video').length,
+          iframesTotaal: wortel.querySelectorAll('iframe').length,
+        };
+      }, alleenMain);
+
+      const videoNummer = (src: string) => {
+        const embed = src.match(/(?:embed|v|video)\/([\w-]{6,})/);
+        if (embed) return embed[1];
+        const query = src.match(/[?&]v=([\w-]{6,})/);
+        if (query) return query[1];
+        const kort = src.match(/youtu\.be\/([\w-]{6,})/);
+        return kort ? kort[1] : null;
+      };
+
+      /** De titel zoals hij in de video zelf staat, uit ytInitialPlayerResponse op de watchpagina. */
+      const youtubeTitel = async (id: string): Promise<string | null> => {
+        try {
+          const tab = await session.browser.newPage();
+          try {
+            await tab.goto(`https://www.youtube.com/watch?v=${id}`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            return await tab.evaluate(() => {
+              const w = window as any;
+              const uit = w.ytInitialPlayerResponse?.videoDetails?.title;
+              if (uit) return uit as string;
+              const m = document.documentElement.innerHTML.match(/"videoDetails":\{[^}]*?"title":"(.*?)"/);
+              return m ? m[1].replace(/\\u0026/g, '&').replace(/\\"/g, '"') : null;
+            });
+          } finally {
+            await tab.close();
+          }
+        } catch {
+          return null;
+        }
+      };
+
+      const adressen = [...gevonden.spelers, ...gevonden.plaatshouders];
+      const videos: any[] = [];
+      for (const src of adressen) {
+        const youtube = /youtube\.com|youtube-nocookie\.com|youtu\.be/i.test(src) || /^[\w-]{11}$/.test(src);
+        const parameter = youtube ? 'disablekb=1' : 'keyboard=0';
+        const uitgezet = src.includes(parameter);
+        const id = videoNummer(src) || (/^[\w-]{11}$/.test(src) ? src : null);
+        videos.push({
+          platform: youtube ? 'YouTube' : 'Vimeo',
+          titel: youtube && id ? await youtubeTitel(id) : null,
+          titelbron: youtube ? 'watchpagina' : 'nog niet vastgelegd voor Vimeo -- noem de video bij het nummer',
+          videoNummer: id,
+          adres: src,
+          parameter,
+          parameterAanwezig: uitgezet,
+          oordeel: uitgezet ? 'in orde' : 'sneltoetsen van een teken staan aan -> afkeuring',
+          plaatshouder: gevonden.plaatshouders.includes(src),
+        });
+      }
+
+      const opname = await legOpnameVast(page, page.url(), 'videos');
+      const afkeuringen = videos.filter((v) => !v.parameterAanwezig).length;
+      const geblokkeerd = gevonden.geblokkeerd.length;
+      // Een geblokkeerd vak maakt de uitkomst onbeslist: er staat een video, maar het adres is
+      // niet te lezen. Dan is "0 video's" onwaar en hoort het criterium op niet_te_bepalen.
+      const beslist = geblokkeerd === 0;
+
+      // De stap in de woorden van de auditor, opgebouwd uit wat er werkelijk geteld is.
+      const stapZin = (() => {
+        const geklikt = doorlopen.filter((d) => d.geklikt).length;
+        const heen = geklikt
+          ? `${geklikt === 1 ? 'Eén formulierstap' : `${geklikt} formulierstappen`} doorlopen om op deze pagina te komen; de velden zijn met testmateriaal gevuld en er is niet verzonden. `
+          : '';
+        const waar = gevonden.geenMain
+          ? 'de hele pagina (er is geen main)'
+          : alleenMain
+          ? 'de main-content'
+          : 'de hele pagina';
+        if (geblokkeerd) {
+          return `${heen}Gekeken of er video's op ${waar} staan: ${geblokkeerd} videovak achter een toestemmingsscherm. Het adres staat niet in de code, dus niet vast te stellen of de sneltoetsen uitstaan.`;
+        }
+        if (!videos.length) {
+          return `${heen}Gekeken of er video's op ${waar} staan: geen ingesloten YouTube- of Vimeo-speler en geen geblokkeerd videovak. Er is dus geen insluitcode om te lezen.`;
+        }
+        const per = videos
+          .map(
+            (v, i) =>
+              `video ${i + 1} (${v.platform}${v.titel ? `, "${v.titel}"` : ''}): ${v.parameter} ${v.parameterAanwezig ? 'aanwezig' : 'ontbreekt'}`
+          )
+          .join('; ');
+        const staanAan = afkeuringen === 1 ? 'Bij 1 video staan de sneltoetsen van een teken aan.' : `Bij ${afkeuringen} video's staan de sneltoetsen van een teken aan.`;
+        return `${heen}Gekeken of er video's op ${waar} staan: ${videos.length === 1 ? '1 video' : `${videos.length} video's`} gevonden. Per video de insluitcode gelezen — ${per}. ${afkeuringen ? staanAan : 'Bij alle video\'s staan de sneltoetsen uit.'}`;
+      })();
+
+      legVast({
+        commando: 'get-videos',
+        stap: stapZin,
+        argumenten: { ...(alleenMain ? { scope: 'main' } : {}), ...(doorloop ? { doorloop: String(doorloop) } : {}) },
+        url: gevraagdeUrl,
+        // Na een doorloop is de gemeten pagina een andere dan de geopende; het logboek moet
+        // laten zien waar de meting werkelijk landde.
+        eindUrl: doorloop ? page.url() : eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: 'standaardweergave',
+        schermafdruk: opname,
+        criteria: ['2.1.4'],
+        uitkomst: {
+          ...(doorloop ? { doorlopenStappen: doorlopen.length } : {}),
+          gebied: gevonden.geenMain ? 'hele pagina (geen <main>)' : alleenMain ? 'main-content' : 'hele pagina',
+          videos: videos.length,
+          inOrde: videos.length - afkeuringen,
+          afkeuringen,
+          geblokkeerdeVideoplaatsen: geblokkeerd,
+          eigenVideoElementen: gevonden.eigenVideos,
+          beslist,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gebied: gevonden.geenMain
+          ? 'hele pagina (er is geen <main> op deze pagina)'
+          : alleenMain
+          ? 'main-content'
+          : 'hele pagina',
+        gemeten_op: page.url(),
+        doorlopen: doorloop ? doorlopen : undefined,
+        aantal_videos: videos.length,
+        videos: videos.length ? videos : 'geen leesbare YouTube- of Vimeo-speler',
+        geblokkeerde_videoplaatsen: geblokkeerd,
+        geblokkeerd_gevonden: geblokkeerd ? gevonden.geblokkeerd : undefined,
+        eigen_video_elementen: gevonden.eigenVideos,
+        iframes_totaal: gevonden.iframesTotaal,
+        beslist,
+        let_op: !beslist
+          ? `Er ${geblokkeerd === 1 ? 'staat 1 videovak' : `staan ${geblokkeerd} videovakken`} achter een toestemmingsscherm. Het adres staat dan niet in de HTML, dus dit is GEEN "0 video's": accepteer de cookies eenmalig in de audit-sessie-Chrome (npm run chrome:debug) en meet opnieuw. Lukt dat niet, dan is 2.1.4 hier niet_te_bepalen.`
+          : session.mode === 'cdp'
+          ? 'Gemeten in de audit-sessie. Geen geblokkeerde videovakken, dus dit aantal is het aantal.'
+          : 'Gedraaid ZONDER auditsessie. Er zijn geen geblokkeerde videovakken gevonden, maar een site kan een video ook op een andere manier achterhouden. Meet bij twijfel opnieuw met npm run chrome:debug.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
   }
 }
 
@@ -3631,6 +3951,2478 @@ async function getPixelContrast(url: string, flags: Flags) {
   }
 }
 
+/**
+ * Vergelijkt twee opnamen van dezelfde pagina en zegt hoeveel er veranderd is en wáár.
+ *
+ * Dit is het enige zintuig dat niets hoeft te weten van de techniek erachter. Een
+ * carrousel die met JavaScript schuift, een CSS-animatie, een canvas dat zichzelf
+ * tekent, een filmpje in een kader van een ander domein -- die vier zijn van binnenuit
+ * de pagina niet allemaal te zien (in een kader van een ander domein kun je niet
+ * kijken), op het beeld alle vier.
+ *
+ * Het rekenen gebeurt op een verkleinde versie. Dat is niet om tijd te winnen maar om
+ * ruis weg te halen: op ware grootte verschillen twee opnamen van dezelfde stilstaande
+ * pagina al op duizenden beeldpunten door de randafwerking van letters. De uitkomst
+ * wordt in vakjes geteld en niet in beeldpunten, om dezelfde reden: één afwijkend
+ * beeldpunt is geen beweging, een blok van twaalf bij twaalf wel.
+ *
+ * De hulpfuncties staan bewust niet binnen `page.evaluate`: esbuild wikkelt elke
+ * benoemde functie in een `__name`-aanroep die in de pagina niet bestaat. Zie de
+ * uitleg bij `meetOmtrek`.
+ */
+async function vergelijkOpnamen(page: any, voor: string, na: string, drempel = 24) {
+  return page.evaluate(
+    async (voorB64: string, naB64: string, grens: number) => {
+      const a = new Image();
+      await new Promise<void>((klaar, mis) => {
+        a.onload = () => klaar();
+        a.onerror = () => mis(new Error('eerste opname niet te laden'));
+        a.src = `data:image/png;base64,${voorB64}`;
+      });
+      const b = new Image();
+      await new Promise<void>((klaar, mis) => {
+        b.onload = () => klaar();
+        b.onerror = () => mis(new Error('tweede opname niet te laden'));
+        b.src = `data:image/png;base64,${naB64}`;
+      });
+
+      // Werd de pagina langer of korter, dan vergelijken we het stuk dat beide opnamen
+      // hebben. Het hoogteverschil zelf gaat mee naar buiten: dat is een verandering,
+      // en meestal een die tijdens het laden nog binnenkwam.
+      const volBreedte = Math.min(a.width, b.width);
+      const volHoogte = Math.min(a.height, b.height);
+      const schaal = Math.min(1, 700 / volBreedte);
+      const w = Math.max(1, Math.round(volBreedte * schaal));
+      const h = Math.max(1, Math.round(volHoogte * schaal));
+
+      const doekA = document.createElement('canvas');
+      doekA.width = w;
+      doekA.height = h;
+      const ctxA = doekA.getContext('2d', { willReadFrequently: true })!;
+      ctxA.drawImage(a, 0, 0, volBreedte, volHoogte, 0, 0, w, h);
+      const doekB = document.createElement('canvas');
+      doekB.width = w;
+      doekB.height = h;
+      const ctxB = doekB.getContext('2d', { willReadFrequently: true })!;
+      ctxB.drawImage(b, 0, 0, volBreedte, volHoogte, 0, 0, w, h);
+
+      const da = ctxA.getImageData(0, 0, w, h).data;
+      const db = ctxB.getImageData(0, 0, w, h).data;
+
+      const cel = 12;
+      const kolommen = Math.ceil(w / cel);
+      const rijen = Math.ceil(h / cel);
+      const telling = new Int32Array(kolommen * rijen);
+      let veranderdeBeeldpunten = 0;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
+          if (
+            Math.abs(da[i] - db[i]) > grens ||
+            Math.abs(da[i + 1] - db[i + 1]) > grens ||
+            Math.abs(da[i + 2] - db[i + 2]) > grens
+          ) {
+            veranderdeBeeldpunten++;
+            telling[Math.floor(y / cel) * kolommen + Math.floor(x / cel)]++;
+          }
+        }
+      }
+
+      const raak = new Uint8Array(kolommen * rijen);
+      let raakAantal = 0;
+      for (let i = 0; i < telling.length; i++) {
+        if (telling[i] >= 6) {
+          raak[i] = 1;
+          raakAantal++;
+        }
+      }
+
+      // Aangrenzende vakjes worden één gebied. Anders levert één schuivende carrousel
+      // een lijst van tachtig losse vakjes op en is er niets aan te zien.
+      const gezien = new Uint8Array(kolommen * rijen);
+      const gebieden: { x: number; y: number; w: number; h: number; vakjes: number }[] = [];
+      for (let i = 0; i < raak.length; i++) {
+        if (!raak[i] || gezien[i]) continue;
+        const stapel = [i];
+        gezien[i] = 1;
+        let minK = kolommen;
+        let maxK = -1;
+        let minR = rijen;
+        let maxR = -1;
+        let aantal = 0;
+        while (stapel.length) {
+          const p = stapel.pop()!;
+          const k = p % kolommen;
+          const r = Math.floor(p / kolommen);
+          aantal++;
+          if (k < minK) minK = k;
+          if (k > maxK) maxK = k;
+          if (r < minR) minR = r;
+          if (r > maxR) maxR = r;
+          for (let dk = -1; dk <= 1; dk++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              const nk = k + dk;
+              const nr = r + dr;
+              if (nk < 0 || nr < 0 || nk >= kolommen || nr >= rijen) continue;
+              const q = nr * kolommen + nk;
+              if (raak[q] && !gezien[q]) {
+                gezien[q] = 1;
+                stapel.push(q);
+              }
+            }
+          }
+        }
+        gebieden.push({
+          x: Math.round((minK * cel) / schaal),
+          y: Math.round((minR * cel) / schaal),
+          w: Math.round(((maxK - minK + 1) * cel) / schaal),
+          h: Math.round(((maxR - minR + 1) * cel) / schaal),
+          vakjes: aantal,
+        });
+      }
+      gebieden.sort((p, q) => q.vakjes - p.vakjes);
+
+      return {
+        hoogteVerschil: b.height - a.height,
+        vergelekenTot: volHoogte,
+        veranderdeBeeldpunten,
+        veranderdeVakjes: raakAantal,
+        totaalVakjes: kolommen * rijen,
+        percentage: Math.round((raakAantal / (kolommen * rijen)) * 1000) / 10,
+        gebieden: gebieden.slice(0, 8),
+      };
+    },
+    voor,
+    na,
+    drempel
+  );
+}
+
+/**
+ * Snijdt één gebied uit een opname, zodat het veranderde stuk op ware grootte te zien is.
+ *
+ * Een percentage veranderde vakjes is geen bewijs; twee uitsnedes van dezelfde plek,
+ * vóór en na, zijn dat wel. Wie ernaar kijkt ziet meteen of de carrousel is
+ * doorgeschoven of dat er alleen een lui geladen foto is ingevallen.
+ */
+async function snijUit(
+  page: any,
+  b64: string,
+  vak: { x: number; y: number; w: number; h: number },
+  maxBreedte = 900
+): Promise<string | null> {
+  try {
+    return await page.evaluate(
+      async (bron: string, v: { x: number; y: number; w: number; h: number }, max: number) => {
+        const beeld = new Image();
+        await new Promise<void>((klaar, mis) => {
+          beeld.onload = () => klaar();
+          beeld.onerror = () => mis(new Error('opname niet te laden'));
+          beeld.src = `data:image/png;base64,${bron}`;
+        });
+        const lucht = 16;
+        const x = Math.max(0, v.x - lucht);
+        const y = Math.max(0, v.y - lucht);
+        const w = Math.min(beeld.width - x, v.w + lucht * 2);
+        const h = Math.min(beeld.height - y, v.h + lucht * 2);
+        if (w < 2 || h < 2) return null;
+        const schaal = Math.min(1, max / w);
+        const doek = document.createElement('canvas');
+        doek.width = Math.round(w * schaal);
+        doek.height = Math.round(h * schaal);
+        const ctx = doek.getContext('2d')!;
+        ctx.drawImage(beeld, x, y, w, h, 0, 0, doek.width, doek.height);
+        return doek.toDataURL('image/png').split(',')[1];
+      },
+      b64,
+      vak,
+      maxBreedte
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Kijkt of er op de pagina iets uit zichzelf beweegt, knippert, schuift of zich bijwerkt.
+ *
+ * Dit is de hoofdmeting voor SC 2.2.2. Dat criterium stelt een eis aan bewegende,
+ * knipperende of automatisch bijwerkende informatie die langer dan vijf seconden duurt:
+ * die moet te pauzeren, te stoppen of te verbergen zijn. Beweegt er niets uit zichzelf,
+ * dan is de eis leeg en staat het criterium op `niet_aanwezig`.
+ *
+ * Uit opgehaalde HTML is dat niet te zien, en dat is precies het gevaar: "er is geen
+ * carrousel" en "ik heb niet gekeken of er een carrousel is" leveren dezelfde zin op.
+ * Een slider die om de vier seconden doorschuift, een teller die zichzelf bijwerkt, een
+ * CSS-animatie die eeuwig doorloopt, een filmpje in een kader van YouTube -- niets
+ * daarvan staat als zodanig in de code. Wat er wél is: tijd laten verstrijken en kijken
+ * of er iets verandert.
+ *
+ * Vier zintuigen, want geen enkele ziet alles:
+ *
+ * | Zintuig | Ziet | Ziet niet |
+ * |---|---|---|
+ * | beeldvergelijking | alles wat zichtbaar verandert, ook in een kader van een ander domein en op een canvas | verandering buiten de opname |
+ * | bijwerkingen in de code | tekst en elementen die veranderen, ook als het beeld nauwelijks verschilt | een canvas, een video, een ander domein |
+ * | verplaatsingen | elementen die opschuiven of van maat veranderen | verandering zonder verplaatsing (kleur, tekst) |
+ * | opgaaf van de pagina zelf | CSS-animaties, `<marquee>`, spelende media | wat met JavaScript wordt getekend |
+ *
+ * De tijdlijn volgt de grens van vijf seconden uit het criterium zelf:
+ *
+ *   binnenkomst ---- 3 s bezinken ---- venster van 5 s ---- einde
+ *
+ * De eerste drie seconden tellen apart, want daarin komt van alles binnen dat niets met
+ * beweging te maken heeft: luie afbeeldingen, lettertypen die inschuiven, en het scrollen
+ * dat de paginabrede opname zelf veroorzaakt. Het venster dáárna is het venster dat telt.
+ * Verandert er in vijf seconden die drie seconden na het laden beginnen nog steeds iets,
+ * dan duurt het langer dan vijf seconden en is de eis van 2.2.2 niet leeg.
+ *
+ * Wat dit commando NIET doet: oordelen. Het stelt vast dát er iets beweegt en waar; of
+ * dat uit zichzelf begon, of het naast andere inhoud staat, en of de pauzeermogelijkheid
+ * deugt, blijft werk van de auditor. Zie `wcag-regels/Shift2_Regels_SC_2_2_2.md`.
+ */
+async function getBeweging(url: string, flags: Flags) {
+  // Vijf seconden is geen instelling maar de grens uit het criterium; korter mag niet.
+  const venster = Math.max(5, parseInt(flags.seconden || '5', 10));
+  const bezinken = Math.max(0, parseInt(flags.vanaf || '3', 10));
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      // Klikken vóór het meten, bijvoorbeeld om een cookiemelding weg te halen die de
+      // halve pagina afdekt. Wat eronder zit is dan pas te zien.
+      if (klik) {
+        const woorden = klik.startsWith('tekst:') ? klik.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          klik
+        );
+        if (!gelukt) throw new Error(`Niets om op te klikken: ${klik}`);
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      // Wat de pagina zelf opgeeft: animaties, media, en de knoppen waarmee je iets zou
+      // kunnen stoppen. Meteen ook elk zichtbaar element merken, zodat een verplaatsing
+      // straks aan een element te koppelen is en niet aan een plek in de lijst -- die
+      // lijst verschuift zodra er ergens iets bijkomt.
+      const opgaaf = await page.evaluate(() => {
+        const w = window as any;
+        let nr = 0;
+        for (const el of Array.from(document.querySelectorAll('body *'))) {
+          const r = el.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) continue;
+          const s = getComputedStyle(el);
+          if (s.visibility === 'hidden' || s.display === 'none' || parseFloat(s.opacity) === 0)
+            continue;
+          nr++;
+          el.setAttribute('data-beweging-nr', String(nr));
+        }
+
+        const animaties: any[] = [];
+        for (const el of Array.from(document.querySelectorAll('[data-beweging-nr]'))) {
+          const s = getComputedStyle(el);
+          if (!s.animationName || s.animationName === 'none') continue;
+          const duren = s.animationDuration.split(',').map((d) => parseFloat(d) || 0);
+          const herhalingen = s.animationIterationCount.split(',');
+          let langste = 0;
+          let eeuwig = false;
+          for (let i = 0; i < duren.length; i++) {
+            const keer = (herhalingen[i] || herhalingen[0] || '1').trim();
+            if (keer === 'infinite') eeuwig = true;
+            else langste = Math.max(langste, duren[i] * (parseFloat(keer) || 1));
+          }
+          animaties.push({
+            element: el.tagName.toLowerCase() + (el.id ? `#${el.id}` : ''),
+            klasse: (el.getAttribute('class') || '').slice(0, 60) || null,
+            nr: el.getAttribute('data-beweging-nr'),
+            naam: s.animationName,
+            duur: s.animationDuration,
+            herhaling: s.animationIterationCount,
+            draait: s.animationPlayState === 'running',
+            langerDan5s: eeuwig || langste > 5,
+          });
+        }
+
+        const media = Array.from(document.querySelectorAll('video, audio')).map((m) => {
+          const v = m as HTMLMediaElement;
+          return {
+            element: m.tagName.toLowerCase(),
+            bron: (v.currentSrc || v.getAttribute('src') || '').slice(0, 120) || null,
+            autoplayAttribuut: v.hasAttribute('autoplay'),
+            speeltNu: !v.paused && !v.ended,
+            gedempt: v.muted || v.volume === 0,
+            herhaalt: v.loop,
+            bedieningZichtbaar: v.hasAttribute('controls'),
+            duurSeconden: Number.isFinite(v.duration) ? Math.round(v.duration) : null,
+            tijd: Math.round(v.currentTime * 100) / 100,
+          };
+        });
+
+        // In een kader van een ander domein is niet te kijken; wat er wel van te lezen
+        // valt is het adres, en daar staat vaak `autoplay=1` in.
+        const kaders = Array.from(document.querySelectorAll('iframe'))
+          .map((f) => f.getAttribute('src') || f.getAttribute('data-src') || '')
+          .filter((s) => /autoplay=1|autoplay=true|auto_play=1/i.test(s))
+          .map((s) => s.slice(0, 160));
+
+        const ouderwets = Array.from(document.querySelectorAll('marquee, blink')).length;
+
+        // Waarmee zou je het kunnen stoppen? Alleen kandidaten; of de knop werkt en of
+        // hij bij de bewegende inhoud hoort, stelt de auditor vast.
+        const knoppen = Array.from(
+          document.querySelectorAll('button, a[href], [role="button"], input[type="button"]')
+        )
+          .map((k) => {
+            const naam = (
+              k.getAttribute('aria-label') ||
+              k.textContent ||
+              k.getAttribute('title') ||
+              ''
+            )
+              .replace(/\s+/g, ' ')
+              .trim();
+            return { naam: naam.slice(0, 60), element: k.tagName.toLowerCase() };
+          })
+          .filter((k) =>
+            /paus|stop|speel|afspel|play|animat|beweg|carrousel|carousel|slide|diavoorstelling/i.test(
+              k.naam
+            )
+          )
+          .slice(0, 12);
+
+        // `prefers-reduced-motion` is geen pauzeermogelijkheid in de zin van 2.2.2, maar
+        // het zegt wel of de makers aan beweging gedacht hebben. Als feit meegeven, niet
+        // als oordeel. Stylesheets van een ander domein zijn niet te lezen; hoeveel dat
+        // er zijn hoort erbij, anders leest "niet gevonden" als "er is niets".
+        let verminderdeBeweging = false;
+        let onleesbareStylesheets = 0;
+        for (const blad of Array.from(document.styleSheets)) {
+          try {
+            for (const regel of Array.from((blad as CSSStyleSheet).cssRules)) {
+              if (
+                regel instanceof CSSMediaRule &&
+                /prefers-reduced-motion/i.test(regel.conditionText)
+              ) {
+                verminderdeBeweging = true;
+                break;
+              }
+            }
+          } catch {
+            onleesbareStylesheets++;
+          }
+        }
+
+        // Vanaf nu bijhouden wat er in de pagina verandert. De merktekens staan er al op,
+        // dus die veroorzaken zelf geen meldingen meer.
+        w.__bewegingStart = performance.now();
+        w.__bewegingMutaties = [];
+        const kijker = new MutationObserver((meldingen) => {
+          const log = w.__bewegingMutaties as any[];
+          for (const m of meldingen) {
+            if (log.length >= 400) return;
+            if (m.type === 'attributes' && m.attributeName === 'data-beweging-nr') continue;
+            const doel = (m.target.nodeType === 3 ? m.target.parentElement : m.target) as Element;
+            if (!doel || !doel.tagName) continue;
+            let drager: Element | null = doel;
+            while (drager && !drager.getAttribute('data-beweging-nr')) drager = drager.parentElement;
+
+            // Niet elke bijwerking is beweging.
+            //
+            // 2.2.2 gaat over informatie die beweegt, knippert of zichzelf bijwerkt --
+            // iets dat een bezoeker merkt. Een attribuut dat omklapt zonder dat er iets
+            // anders komt te staan is dat niet. Op heuvelrug.nl wisselden `name` en `type`
+            // van het zoekveld zes keer in het venster, terwijl er van de 3658 vakjes op
+            // het beeld geen enkele veranderde; zonder deze schifting leverde dat een
+            // afkeuring op van iets wat niemand kan zien.
+            //
+            // Tekst en elementen die veranderen tellen wél, ook als ze alleen voor een
+            // schermlezer bestaan: een gebied dat zichzelf bijwerkt is bijwerkende
+            // informatie, ook als het beeld er niet van verandert. Vandaar de toets op de
+            // opmaak (`display`, `visibility`) en niet op de afmeting.
+            // Een raamwerk dat opnieuw tekent is geen bijwerking.
+            //
+            // React zet bij een hertekening dezelfde knopen opnieuw neer: tien
+            // childList-meldingen op één milliseconde, allemaal op het kruimelpad, met
+            // exact dezelfde tekst erin en nul veranderde beeldpunten. Dat is geen inhoud
+            // die zichzelf bijwerkt, dat is hetzelfde nog eens. Vergelijken wat eruit ging
+            // met wat erin kwam scheidt de twee, ongeacht waardoor de hertekening kwam.
+            //
+            // De naam van de knoop en zijn `src` gaan mee in de vergelijking: een
+            // carrousel die een foto verwisselt zet ook "hetzelfde soort knoop" neer, maar
+            // met een ander adres, en dat is wél een bijwerking.
+            let zelfdeInhoud = false;
+            if (m.type === 'childList') {
+              let erbij = '';
+              for (const n of Array.from(m.addedNodes)) {
+                const e = n as Element;
+                erbij += `${n.nodeName}${e.getAttribute ? e.getAttribute('src') || '' : ''}:${
+                  (n.textContent || '').replace(/\s+/g, ' ').trim()
+                }|`;
+              }
+              let eraf = '';
+              for (const n of Array.from(m.removedNodes)) {
+                const e = n as Element;
+                eraf += `${n.nodeName}${e.getAttribute ? e.getAttribute('src') || '' : ''}:${
+                  (n.textContent || '').replace(/\s+/g, ' ').trim()
+                }|`;
+              }
+              zelfdeInhoud = erbij === eraf;
+            }
+            if (m.type === 'characterData') {
+              zelfdeInhoud =
+                (m.oldValue || '').replace(/\s+/g, ' ').trim() ===
+                (m.target.textContent || '').replace(/\s+/g, ' ').trim();
+            }
+            if (m.type === 'attributes' && m.attributeName) {
+              zelfdeInhoud = m.oldValue === doel.getAttribute(m.attributeName);
+            }
+
+            const stijl = doel.isConnected ? getComputedStyle(doel) : null;
+            const zichtbaar = !!stijl && stijl.display !== 'none' && stijl.visibility !== 'hidden';
+            const beeldbepalend =
+              m.type !== 'attributes' ||
+              [
+                'class',
+                'style',
+                'src',
+                'srcset',
+                'poster',
+                'hidden',
+                'aria-hidden',
+                'open',
+                'value',
+                'transform',
+                'd',
+                'points',
+                'width',
+                'height',
+                'fill',
+                'stroke-dashoffset',
+                'stroke-dasharray',
+                'offset-distance',
+              ].includes(m.attributeName || '');
+            log.push({
+              tijd: Math.round(performance.now() - w.__bewegingStart),
+              soort: m.type,
+              attribuut: m.attributeName || null,
+              element: doel.tagName.toLowerCase(),
+              klasse: (doel.getAttribute('class') || '').slice(0, 40) || null,
+              nr: drager ? drager.getAttribute('data-beweging-nr') : null,
+              tekst: (doel.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60),
+              telt: zichtbaar && beeldbepalend && !zelfdeInhoud,
+              // Waarom iets niet meetelt hoort erbij te staan. "10 bijwerkingen, waarvan 0
+              // meetellend" zonder reden is niet na te kijken, en dan gelooft de volgende
+              // lezer het getal of de meting niet.
+              waarom: !zichtbaar
+                ? 'element is niet zichtbaar'
+                : !beeldbepalend
+                ? 'attribuut zonder gevolg voor de weergave'
+                : zelfdeInhoud
+                ? 'zelfde inhoud opnieuw neergezet'
+                : null,
+            });
+          }
+        });
+        kijker.observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          characterData: true,
+          // De oude waarde erbij, anders is niet te zien of er iets veranderde of dat
+          // dezelfde waarde opnieuw is gezet.
+          attributeOldValue: true,
+          characterDataOldValue: true,
+        });
+        w.__bewegingKijker = kijker;
+
+        return {
+          gemarkeerd: nr,
+          animaties: animaties.slice(0, 40),
+          animatiesTotaal: animaties.length,
+          media,
+          kadersMetAutoplay: kaders,
+          ouderwets,
+          knoppen,
+          verminderdeBeweging,
+          onleesbareStylesheets,
+        };
+      });
+
+      // De plaats en de maat van elk gemerkt element. Drie keer gemeten, zodat een
+      // verplaatsing kort na het laden te onderscheiden is van een verplaatsing daarna.
+      // Eerst naar boven scrollen: bij een element dat aan het scherm vastzit hangt de
+      // plek op de pagina af van hoe ver er gescrold is, en een opname van de hele pagina
+      // scrolt. Zonder dit meldt elke plakkende koptekst een verplaatsing.
+      const meetPlekken = async (): Promise<Record<string, number[]>> =>
+        page.evaluate(() => {
+          window.scrollTo(0, 0);
+          const uit: Record<string, number[]> = {};
+          for (const el of Array.from(document.querySelectorAll('[data-beweging-nr]'))) {
+            const nr = el.getAttribute('data-beweging-nr')!;
+            const r = el.getBoundingClientRect();
+            if (r.width * r.height < 64) continue;
+            const s = getComputedStyle(el);
+            if (s.position === 'fixed' || s.position === 'sticky') continue;
+            uit[nr] = [
+              Math.round(r.left + window.scrollX),
+              Math.round(r.top + window.scrollY),
+              Math.round(r.width),
+              Math.round(r.height),
+            ];
+          }
+          return uit;
+        });
+
+      // Een opname van de hele pagina, en anders van wat er in beeld staat. Mislukt ook
+      // dat, dan gaat de meting door zonder beeldvergelijking -- met de reden erbij.
+      const opnemen = async (): Promise<string | null> => {
+        try {
+          return (await page.screenshot({ fullPage: true, encoding: 'base64' })) as string;
+        } catch {
+          try {
+            return (await page.screenshot({ encoding: 'base64' })) as string;
+          } catch {
+            return null;
+          }
+        }
+      };
+
+      // De klok van de pagina zelf, op het moment dat de opname klaar is.
+      //
+      // De bijwerkingen worden bijgehouden vanaf het merken, maar het beeld wordt pas
+      // vergeleken vanaf de tweede opname -- en een opname van een lange pagina duurt
+      // ruim een seconde. Knip je de bijwerkingen op de bedoelde drie seconden en het
+      // beeld op de opname, dan meten de twee zintuigen niet hetzelfde stuk tijd. Op
+      // heuvelrug.nl vielen de knoppen van ReadSpeaker daardoor in het venster dat telt,
+      // terwijl ze in werkelijkheid nog bij het inladen hoorden: nul veranderde vakjes op
+      // het beeld, en toch "beweegt".
+      const paginaKlok = async (): Promise<number> =>
+        page.evaluate(() => performance.now() - (window as any).__bewegingStart);
+
+      // De volgorde is hier het meetinstrument.
+      //
+      // Een opname van de hele pagina laat de browser scrollen en het venster van maat
+      // veranderen, en een raamwerk als React tekent daarop opnieuw. Meet je de plekken en
+      // de klok ná de opname, dan valt dat opnieuw tekenen ín het venster dat telt: op
+      // heuvelrug.nl/archeologie leverde dat tien "bijwerkingen" op precies de milliseconde
+      // van de derde opname, met nul veranderde beeldpunten. Dus: het venster opent ná de
+      // tweede opname en sluit vóór de derde. Wat de opname zelf losmaakt, valt erbuiten.
+      const plekken1 = await meetPlekken();
+      const beeld1 = await opnemen();
+      const klok1 = Date.now();
+
+      await new Promise((r) => setTimeout(r, bezinken * 1000));
+      const beeld2 = await opnemen();
+      const plekken2 = await meetPlekken();
+      const grensBegin = await paginaKlok();
+      const klok2 = Date.now();
+
+      await new Promise((r) => setTimeout(r, venster * 1000));
+      const plekken3 = await meetPlekken();
+      const grensEinde = await paginaKlok();
+      const beeld3 = await opnemen();
+      const klok3 = Date.now();
+
+      const naloop = await page.evaluate(() => {
+        const w = window as any;
+        if (w.__bewegingKijker) w.__bewegingKijker.disconnect();
+        const media = Array.from(document.querySelectorAll('video, audio')).map((m) => {
+          const v = m as HTMLMediaElement;
+          return {
+            element: m.tagName.toLowerCase(),
+            speeltNu: !v.paused && !v.ended,
+            tijd: Math.round(v.currentTime * 100) / 100,
+          };
+        });
+        return { mutaties: (w.__bewegingMutaties || []) as any[], media };
+      });
+
+      // Speelt er werkelijk iets? Dat is niet aan `paused` alleen af te lezen. Loopt de
+      // speeltijd door tussen begin en eind, dan speelt hij.
+      const media = opgaaf.media.map((m: any, i: number) => {
+        const later = naloop.media[i];
+        const gelopen = later ? Math.round((later.tijd - m.tijd) * 100) / 100 : 0;
+        return {
+          ...m,
+          tijdAanHetEind: later ? later.tijd : null,
+          speeltNogSteeds: later ? later.speeltNu : false,
+          gelopenSeconden: gelopen,
+          speeltUitZichzelf: gelopen > 0.5 && m.autoplayAttribuut,
+        };
+      });
+
+      const verplaatst = (a: Record<string, number[]>, b: Record<string, number[]>) => {
+        const uit: { nr: string; van: number[]; naar: number[] }[] = [];
+        for (const nr of Object.keys(a)) {
+          const p = a[nr];
+          const q = b[nr];
+          if (!q) continue;
+          if (
+            Math.abs(p[0] - q[0]) > 1 ||
+            Math.abs(p[1] - q[1]) > 1 ||
+            Math.abs(p[2] - q[2]) > 2 ||
+            Math.abs(p[3] - q[3]) > 2
+          ) {
+            uit.push({ nr, van: p, naar: q });
+          }
+        }
+        return uit;
+      };
+      const verplaatstVroeg = verplaatst(plekken1, plekken2);
+      const verplaatstLaat = verplaatst(plekken2, plekken3);
+
+      // De namen van de elementen die verplaatsten, en alleen die. Alle namen ophalen zou
+      // bij elke meting duizenden regels heen en weer sturen.
+      const nrs = Array.from(
+        new Set([...verplaatstVroeg, ...verplaatstLaat].map((v) => v.nr))
+      ).slice(0, 40);
+      const namen: Record<string, string> = nrs.length
+        ? await page.evaluate((lijst: string[]) => {
+            const uit: Record<string, string> = {};
+            for (const nr of lijst) {
+              const el = document.querySelector(`[data-beweging-nr="${nr}"]`);
+              if (!el) continue;
+              const klassen = (el.getAttribute('class') || '').trim();
+              uit[nr] =
+                el.tagName.toLowerCase() +
+                (el.id ? `#${el.id}` : '') +
+                (klassen ? `.${klassen.split(/\s+/).slice(0, 2).join('.')}` : '') +
+                ` "${(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40)}"`;
+            }
+            return uit;
+          }, nrs)
+        : {};
+      const metNaam = (v: { nr: string; van: number[]; naar: number[] }) => ({
+        element: namen[v.nr] || `element ${v.nr}`,
+        van: `${v.van[0]},${v.van[1]} ${v.van[2]}x${v.van[3]}`,
+        naar: `${v.naar[0]},${v.naar[1]} ${v.naar[2]}x${v.naar[3]}`,
+      });
+
+      const mutatiesVroeg = naloop.mutaties.filter((m: any) => m.tijd < grensBegin);
+      const mutatiesLaat = naloop.mutaties.filter(
+        (m: any) => m.tijd >= grensBegin && m.tijd <= grensEinde
+      );
+      // Alleen de bijwerkingen die iets aan de weergave veranderen tellen mee in het
+      // oordeel. De rest blijft wel staan in het overzicht: wat weggelaten is hoort
+      // zichtbaar te zijn, anders is niet na te gaan waarom het niet meetelde.
+      const mutatiesLaatTellend = mutatiesLaat.filter((m: any) => m.telt);
+
+      let verschilVroeg: any = null;
+      let verschilLaat: any = null;
+      let beeldFout: string | null = null;
+      if (beeld1 && beeld2 && beeld3) {
+        try {
+          verschilVroeg = await vergelijkOpnamen(page, beeld1, beeld2);
+          verschilLaat = await vergelijkOpnamen(page, beeld2, beeld3);
+        } catch (e: any) {
+          beeldFout = e?.message || 'beeldvergelijking niet gelukt';
+        }
+      } else {
+        beeldFout = 'opname niet gelukt';
+      }
+
+      // Bewijs om naar te kijken: van elk veranderd gebied de plek vóór en ná.
+      const dir = ensureOutputDir();
+      const stempel = timestamp();
+      const naam = slugifyUrl(page.url());
+      const beelden: { pad: string; bijschrift: string }[] = [];
+      if (verschilLaat && beeld2 && beeld3) {
+        let n = 0;
+        for (const gebied of verschilLaat.gebieden.slice(0, 3)) {
+          n++;
+          const voor = await snijUit(page, beeld2, gebied);
+          const na = await snijUit(page, beeld3, gebied);
+          const paren: [string | null, string, string][] = [
+            [voor, 'voor', 'bij het begin van het venster'],
+            [na, 'na', `${venster} seconden later`],
+          ];
+          for (const [b64, kant, wanneer] of paren) {
+            if (!b64) continue;
+            const pad = path.join(
+              dir,
+              `${stempel}-${naam}-beweging-gebied${n}-${kant}.png`
+            );
+            fs.writeFileSync(pad, Buffer.from(b64, 'base64'));
+            beelden.push({
+              pad,
+              bijschrift: `Gebied ${n} (${gebied.w}x${gebied.h} op ${gebied.x},${gebied.y}) — ${wanneer}`,
+            });
+          }
+        }
+      }
+
+      const hoofdBeeld = path.join(dir, `${stempel}-${naam}-beweging.png`);
+      if (beeld3) fs.writeFileSync(hoofdBeeld, Buffer.from(beeld3, 'base64'));
+
+      const draaiendeAnimaties = opgaaf.animaties.filter((a: any) => a.draait && a.langerDan5s);
+      const spelendeMedia = media.filter((m: any) => m.speeltNogSteeds || m.speeltUitZichzelf);
+      const beweegtInVenster =
+        (verschilLaat ? verschilLaat.veranderdeVakjes > 0 : false) ||
+        mutatiesLaatTellend.length > 0 ||
+        verplaatstLaat.length > 0 ||
+        spelendeMedia.length > 0 ||
+        draaiendeAnimaties.length > 0 ||
+        opgaaf.ouderwets > 0;
+
+      // Onbeslist, niet "nee". Een speler met `autoplay` die op pauze staat kan door het
+      // beleid van de browser zijn tegengehouden -- Chrome laat geluid niet uit zichzelf
+      // beginnen. Op het scherm van een bezoeker die de site vaker bezoekt kan hij wel
+      // aangaan. Dat als "er beweegt niets" wegschrijven is precies de fout die dit
+      // commando moet voorkomen.
+      const geblokkeerdeAutoplay = media.filter(
+        (m: any) => m.autoplayAttribuut && !m.speeltNogSteeds && m.gelopenSeconden <= 0.5
+      );
+      const beslist = geblokkeerdeAutoplay.length === 0 && !beeldFout;
+
+      const secondenTussen = Math.round((klok3 - klok2) / 100) / 10;
+      const stapZin = (() => {
+        const waar = klik ? `Na klikken op ${klik} de pagina` : 'De pagina';
+        const hoe = `${waar} ${Math.round((klok3 - klok1) / 1000)} seconden in een echte browser laten staan en drie keer opgenomen: bij binnenkomst, na ${bezinken} seconden en ${secondenTussen} seconden daarna.`;
+        if (beeldFout) {
+          return `${hoe} De beeldvergelijking lukte niet (${beeldFout}); alleen gelezen wat de pagina zelf opgeeft: ${opgaaf.animatiesTotaal} CSS-animaties en ${media.length} mediaspelers.`;
+        }
+        const eerst = `In de eerste ${bezinken} seconden na het laden veranderde er ${
+          verschilVroeg && verschilVroeg.veranderdeVakjes
+            ? `nog wel iets (${verschilVroeg.veranderdeVakjes} vakjes) — dat is de pagina die inlaadt en telt niet mee`
+            : 'niets'
+        }.`;
+        // Wat niet meetelde hoort in de zin, niet alleen in het bestand. Anders leest
+        // "geen bijwerking" als "er gebeurde niets" terwijl er wel iets gebeurde dat
+        // alleen niet zichtbaar was.
+        const genegeerd =
+          mutatiesLaat.length - mutatiesLaatTellend.length > 0
+            ? mutatiesLaat.length - mutatiesLaatTellend.length === 1
+              ? ' Daarnaast was er 1 bijwerking in de code die niets aan de weergave verandert (een attribuut dat omklapt); die telt niet mee.'
+              : ` Daarnaast waren er ${
+                  mutatiesLaat.length - mutatiesLaatTellend.length
+                } bijwerkingen in de code die niets aan de weergave veranderen (attributen die omklappen); die tellen niet mee.`
+            : '';
+        const deel = beweegtInVenster
+          ? `In het venster van ${secondenTussen} seconden veranderde er wél iets: ${verschilLaat.veranderdeVakjes} van de ${verschilLaat.totaalVakjes} vakjes op het beeld, ${verplaatstLaat.length} elementen verplaatsten, ${mutatiesLaatTellend.length} bijwerkingen in de weergave${
+              draaiendeAnimaties.length
+                ? `, ${draaiendeAnimaties.length} CSS-animaties die langer dan 5 seconden doorlopen`
+                : ''
+            }${
+              spelendeMedia.length
+                ? `, ${spelendeMedia.length} mediaspeler die uit zichzelf speelt`
+                : ''
+            }. Het duurt dus langer dan vijf seconden.`
+          : `In het venster van ${secondenTussen} seconden veranderde er niets: geen van de ${verschilLaat.totaalVakjes} vakjes op het beeld verschilde, geen enkel element verplaatste, geen bijwerking in de weergave, en geen video of audio die uit zichzelf speelt.${
+              opgaaf.animatiesTotaal
+                ? ` Er staan ${opgaaf.animatiesTotaal} CSS-animaties in de opmaak, alle korter dan vijf seconden of stilstaand.`
+                : ' Er staan geen CSS-animaties op de pagina.'
+            }`;
+        return `${hoe} ${eerst} ${deel}${genegeerd}`;
+      })();
+
+      // Het overzicht als tekstbestand erbij: de losse getallen zijn later niet meer na te
+      // lopen, en een schermafdruk laat niet zien wat er níet gevonden is.
+      let overzicht: string | null = path.join(dir, `${stempel}-${naam}-beweging.txt`);
+      try {
+        const regels = [
+          `BEWEGING OP DE PAGINA — ${page.url()}`,
+          `Gemeten: ${new Date().toLocaleString('nl-NL')} · ${
+            session.mode === 'cdp' ? 'auditsessie' : 'headless'
+          }`,
+          `Weergave: ${klik ? `na klikken op ${klik}` : 'standaardweergave'}`,
+          `Tijdlijn: binnenkomst → ${bezinken}s bezinken → venster van ${secondenTussen}s`,
+          `Het venster loopt van ${Math.round(grensBegin) / 1000}s tot ${
+            Math.round(grensEinde) / 1000
+          }s na binnenkomst; beeld en bijwerkingen worden op dezelfde twee momenten geknipt.`,
+          '',
+          'BEELDVERGELIJKING (vakjes van 12x12 op een verkleinde opname)',
+          ...(beeldFout
+            ? [`  niet gelukt: ${beeldFout}`]
+            : [
+                `  eerste ${bezinken}s: ${verschilVroeg.veranderdeVakjes}/${verschilVroeg.totaalVakjes} vakjes (${verschilVroeg.percentage}%), hoogteverschil ${verschilVroeg.hoogteVerschil}px`,
+                `  venster:      ${verschilLaat.veranderdeVakjes}/${verschilLaat.totaalVakjes} vakjes (${verschilLaat.percentage}%), hoogteverschil ${verschilLaat.hoogteVerschil}px`,
+                ...verschilLaat.gebieden.map(
+                  (g: any, i: number) =>
+                    `  gebied ${i + 1}: ${g.w}x${g.h} op ${g.x},${g.y} (${g.vakjes} vakjes)`
+                ),
+              ]),
+          '',
+          `VERPLAATSINGEN (van ${opgaaf.gemarkeerd} gemerkte elementen)`,
+          `  eerste ${bezinken}s: ${verplaatstVroeg.length}`,
+          `  venster:      ${verplaatstLaat.length}`,
+          ...verplaatstLaat.slice(0, 15).map((v: any) => {
+            const m = metNaam(v);
+            return `    ${m.element} — ${m.van} → ${m.naar}`;
+          }),
+          '',
+          'BIJWERKINGEN IN DE CODE (telt = verandert iets aan de weergave)',
+          `  eerste ${bezinken}s: ${mutatiesVroeg.length}`,
+          `  venster:      ${mutatiesLaat.length}, waarvan meetellend: ${mutatiesLaatTellend.length}`,
+          ...mutatiesLaat
+            .slice(0, 20)
+            .map(
+              (m: any) =>
+                `    ${m.telt ? 'telt ' : 'niet '} ${m.tijd}ms ${m.soort}${
+                  m.attribuut ? ` (${m.attribuut})` : ''
+                } ${m.element}${m.klasse ? `.${m.klasse}` : ''} "${m.tekst}"${
+                  m.waarom ? ` — ${m.waarom}` : ''
+                }`
+            ),
+          '',
+          'WAT DE PAGINA ZELF OPGEEFT',
+          `  CSS-animaties: ${opgaaf.animatiesTotaal} (draaiend en langer dan 5s: ${draaiendeAnimaties.length})`,
+          ...opgaaf.animaties
+            .slice(0, 15)
+            .map(
+              (a: any) =>
+                `    ${a.element}${a.klasse ? `.${a.klasse}` : ''} — ${a.naam} ${a.duur} x${
+                  a.herhaling
+                } ${a.draait ? 'draait' : 'staat stil'}`
+            ),
+          `  marquee/blink: ${opgaaf.ouderwets}`,
+          `  mediaspelers: ${media.length}`,
+          ...media.map(
+            (m: any) =>
+              `    ${m.element} autoplay=${m.autoplayAttribuut} gedempt=${m.gedempt} speelde ${m.gelopenSeconden}s door, bediening=${m.bedieningZichtbaar}`
+          ),
+          `  kaders met autoplay in het adres: ${opgaaf.kadersMetAutoplay.length}`,
+          ...opgaaf.kadersMetAutoplay.map((k: string) => `    ${k}`),
+          `  prefers-reduced-motion in de opmaak: ${opgaaf.verminderdeBeweging} (onleesbare stylesheets: ${opgaaf.onleesbareStylesheets})`,
+          '',
+          'MOGELIJKE PAUZEERKNOPPEN (kandidaten, niet nagelopen)',
+          ...(opgaaf.knoppen.length
+            ? opgaaf.knoppen.map((k: any) => `  ${k.element} "${k.naam}"`)
+            : ['  geen']),
+        ];
+        fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+      } catch {
+        overzicht = null;
+      }
+
+      legVast({
+        commando: 'get-beweging',
+        stap: stapZin,
+        argumenten: {
+          ...(klik ? { klik } : {}),
+          ...(flags.seconden ? { seconden: String(venster) } : {}),
+          ...(flags.vanaf ? { vanaf: String(bezinken) } : {}),
+        },
+        url: gevraagdeUrl,
+        eindUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        schermafdruk: fs.existsSync(hoofdBeeld) ? hoofdBeeld : null,
+        schermafdrukken: beelden,
+        artefact: overzicht,
+        criteria: ['2.2.2'],
+        uitkomst: {
+          venster: `${secondenTussen}s vanaf ${bezinken}s na laden`,
+          beeldVeranderdeVakjes: verschilLaat ? verschilLaat.veranderdeVakjes : null,
+          verplaatsteElementen: verplaatstLaat.length,
+          bijwerkingenInDeWeergave: mutatiesLaatTellend.length,
+          bijwerkingenZonderZichtbaarGevolg: mutatiesLaat.length - mutatiesLaatTellend.length,
+          draaiendeAnimatiesLangerDan5s: draaiendeAnimaties.length,
+          mediaDieUitZichzelfSpeelt: spelendeMedia.length,
+          beweegt: beweegtInVenster,
+          beslist,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        waarschuwing_omleiding: omgeleid
+          ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde.`
+          : undefined,
+        tijdlijn: `binnenkomst → ${bezinken}s bezinken → venster van ${secondenTussen}s`,
+        beweegt: beweegtInVenster,
+        beslist,
+        in_het_venster: {
+          beeld_veranderde_vakjes: verschilLaat ? verschilLaat.veranderdeVakjes : null,
+          beeld_totaal_vakjes: verschilLaat ? verschilLaat.totaalVakjes : null,
+          veranderde_gebieden: verschilLaat ? verschilLaat.gebieden : null,
+          verplaatste_elementen: verplaatstLaat.slice(0, 15).map(metNaam),
+          bijwerkingen_in_de_weergave: mutatiesLaatTellend.length,
+          bijwerkingen_zonder_zichtbaar_gevolg: mutatiesLaat.length - mutatiesLaatTellend.length,
+          bijwerkingen: mutatiesLaat.slice(0, 15),
+        },
+        in_de_eerste_seconden: {
+          beeld_veranderde_vakjes: verschilVroeg ? verschilVroeg.veranderdeVakjes : null,
+          verplaatste_elementen: verplaatstVroeg.length,
+          bijwerkingen_in_de_code: mutatiesVroeg.length,
+          let_op:
+            'Dit venster telt NIET mee voor 2.2.2. Een pagina die inlaadt, luie afbeeldingen en het scrollen dat de opname zelf veroorzaakt zitten hier in.',
+        },
+        css_animaties: opgaaf.animaties,
+        css_animaties_totaal: opgaaf.animatiesTotaal,
+        marquee_of_blink: opgaaf.ouderwets,
+        mediaspelers: media,
+        kaders_met_autoplay_in_het_adres: opgaaf.kadersMetAutoplay,
+        prefers_reduced_motion_in_de_opmaak: opgaaf.verminderdeBeweging,
+        onleesbare_stylesheets: opgaaf.onleesbareStylesheets,
+        mogelijke_pauzeerknoppen: opgaaf.knoppen,
+        schermafdruk: fs.existsSync(hoofdBeeld) ? hoofdBeeld : null,
+        uitsnedes: beelden,
+        overzicht,
+        beeldvergelijking_mislukt: beeldFout || undefined,
+        let_op: !beslist
+          ? `Onbeslist. ${
+              geblokkeerdeAutoplay.length
+                ? `Er ${
+                    geblokkeerdeAutoplay.length === 1
+                      ? 'staat 1 speler'
+                      : `staan ${geblokkeerdeAutoplay.length} spelers`
+                  } met een autoplay-attribuut die niet heeft gespeeld. Chrome houdt geluid uit zichzelf tegen, dus dit is GEEN "speelt niet": bekijk de pagina in de audit-sessie (npm run chrome:debug) en meet opnieuw. `
+                : ''
+            }${
+              beeldFout ? `De beeldvergelijking lukte niet: ${beeldFout}. ` : ''
+            }Zet 2.2.2 niet op niet_aanwezig zolang dit openstaat.`
+          : beweegtInVenster
+          ? 'Er verandert iets dat langer dan vijf seconden doorgaat. Kijk de uitsnedes na: begon het uit zichzelf, staat het naast andere inhoud, en is er iets om het te pauzeren, te stoppen of te verbergen? Ontbreekt dat laatste, dan is het een afkeuring van 2.2.2.'
+          : 'Er beweegt niets in het venster dat telt. Zonder automatisch bewegende, knipperende of bijwerkende inhoud is de eis van 2.2.2 leeg en hoort het criterium op niet_aanwezig, niet op voldoet. Kijk de opname na voordat je dat vastlegt.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+/**
+ * Zoekt flitsende inhoud op een pagina. De meting voor SC 2.3.1.
+ *
+ * Dit criterium bestaat om aanvallen te voorkomen bij mensen met fotosensitieve
+ * epilepsie. De grens: niet meer dan drie flitsen per seconde, tenzij de flits klein
+ * genoeg of zwak genoeg is. Een flits is een paar tegengestelde helderheidssprongen van
+ * minstens 10% van de schaal, waarbij het donkerste beeld onder 0,80 blijft. Voor
+ * verzadigd rood geldt een aparte, strengere toets.
+ *
+ * WAAROM DIT NIET MET `get-beweging` KAN. Die meting maakt drie opnamen met seconden
+ * ertussen. Een flits van drie per seconde zit dáártussen: staat een knipperend element
+ * in beide opnamen toevallig aan, dan meet die nul verschil en zou er "er beweegt niets"
+ * onder 2.3.1 komen te staan bij een pagina die stroboscopeert. Daarom een eigen meting,
+ * met beeldjes op de snelheid waarmee de browser tekent.
+ *
+ * Twee eigenschappen van de tekenopnemer maken hem geschikt:
+ *
+ *   1. Hij stuurt alleen een beeldje als de pagina opnieuw tekent. Komen er in tien
+ *      seconden geen beeldjes, dan is er niets veranderd, en dan KAN er niets geflitst
+ *      hebben. Dat is een sterker bewijs dan opnamen vergelijken.
+ *   2. Komen er wél beeldjes, dan is per beeldje de helderheid uit te rekenen en zijn de
+ *      tegengestelde sprongen te tellen -- de toets zelf.
+ *
+ * DIT IS EEN ZEEF, GEEN KEURING. Het beeld wordt verkleind en met JPEG samengeperst, de
+ * pagina wordt in blokken van gelijke maat bekeken, en de snelheid van de beeldjes is
+ * niet gegarandeerd. Daarom meldt het commando de gehaalde snelheid en weigert het een
+ * uitspraak zodra die te laag is om drie flitsen per seconde te kunnen zien. Voor een
+ * videobestand blijft PEAT (Trace Center) de autoriteit: dat leest het bestand beeldje
+ * voor beeldje. Wij kijken naar wat het scherm doet.
+ *
+ * Alleen wat in beeld staat wordt opgenomen. Wat onder de vouw flitst, ziet dit niet.
+ */
+/**
+ * Het adres waarop een video zelf te bekijken is, met de speler aan.
+ *
+ * Een video die op een pagina staat is daar niet te meten: hij zit in een kader van een
+ * ander domein, staat achter een toestemmingsscherm, of toont een stilstaand voorblad. De
+ * tekenopnemer krijgt dan niets te zien en de uitkomst is "er gebeurt niets" — precies de
+ * valse gerustheid die dit gereedschap moet voorkomen.
+ *
+ * De uitweg is de video op zijn eigen pagina openen. Het insluitadres, niet de watchpagina:
+ * daar is de speler het hele document, dus het `video`-element is gewoon te bereiken en aan
+ * te zetten. Gedempt, want geluid hoort niet bij deze meting en een browser laat een
+ * gedempte video wél uit zichzelf beginnen.
+ */
+function videoSpeeladres(
+  adres: string
+): { platform: string; nummer: string; speeladres: string; paginaadres: string } | null {
+  const youtube =
+    adres.match(
+      /(?:youtube\.com|youtube-nocookie\.com)\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)([\w-]{6,})/i
+    ) || adres.match(/youtu\.be\/([\w-]{6,})/i);
+  if (youtube) {
+    return {
+      platform: 'YouTube',
+      nummer: youtube[1],
+      speeladres: `https://www.youtube.com/embed/${youtube[1]}?autoplay=1&mute=1&playsinline=1&rel=0`,
+      paginaadres: `https://www.youtube.com/watch?v=${youtube[1]}`,
+    };
+  }
+  const vimeo = adres.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d{6,})/i);
+  if (vimeo) {
+    return {
+      platform: 'Vimeo',
+      nummer: vimeo[1],
+      speeladres: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=1`,
+      paginaadres: `https://vimeo.com/${vimeo[1]}`,
+    };
+  }
+  // Een kaal videonummer van elf tekens, zoals het in een data-attribuut van een
+  // plaatshouder staat.
+  if (/^[\w-]{11}$/.test(adres)) {
+    return {
+      platform: 'YouTube',
+      nummer: adres,
+      speeladres: `https://www.youtube.com/embed/${adres}?autoplay=1&mute=1&playsinline=1&rel=0`,
+      paginaadres: `https://www.youtube.com/watch?v=${adres}`,
+    };
+  }
+  return null;
+}
+
+async function getFlitsen(url: string, flags: Flags) {
+  const seconden = Math.max(3, parseInt(flags.seconden || '10', 10));
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  // Blokken van gelijke maat over het beeld. Zestien bij twaalf is fijn genoeg om een
+  // flitsend vlak te vinden en grof genoeg om ruis van de JPEG-compressie uit te middelen.
+  const KOL = 16;
+  const RIJ = 12;
+  const BREED = 160;
+  const HOOG = 120;
+  /**
+   * Hoe groot een flitsend gebied moet zijn om mee te tellen.
+   *
+   * WCAG rekent met een kwart van een gezichtsveld van tien graden: op een scherm van
+   * 1024 bij 768 is dat 21.824 beeldpunten, oftewel 2,8% van het beeld. Als aandeel van
+   * het venster gerekend, want een venster is niet altijd 1024 breed. "Een kwart van het
+   * scherm", zoals het vaak wordt naverteld, is veel te ruim: een klein flitsend vlakje
+   * zakt ook.
+   */
+  const GEBIEDSGRENS = 21824 / (1024 * 768);
+
+  // Is het gevraagde adres een video, dan gaat de meting naar de video zelf.
+  const video = videoSpeeladres(url);
+
+  const session = await getBrowser();
+  try {
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(
+      session,
+      video ? video.speeladres : url
+    );
+    try {
+      // Klikken: een toestemmingsvenster weghalen, of juist een video starten. Zonder dat
+      // laatste neem je een stilstaand voorblad op en meet je niets.
+      const klikOp = async (wat: string) => {
+        const woorden = wat.startsWith('tekst:') ? wat.slice(6) : null;
+        const gelukt = await page.evaluate(
+          (zoek: string | null, sel: string) => {
+            const el = zoek
+              ? Array.from(
+                  document.querySelectorAll('button, a, [role="button"], summary')
+                ).find((k) =>
+                  (k.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase()
+                    .includes(zoek.toLowerCase())
+                )
+              : document.querySelector(sel);
+            if (!el) return false;
+            (el as HTMLElement).click();
+            return true;
+          },
+          woorden,
+          wat
+        );
+        if (gelukt) await new Promise((r) => setTimeout(r, 1500));
+        return gelukt;
+      };
+
+      // Bij een video wordt er verderop geklikt: dan staan we nog op het insluitadres en
+      // verschijnt het toestemmingsvenster pas op de videopagina zelf.
+      if (klik && !videoSpeeladres(url)) {
+        if (!(await klikOp(klik))) throw new Error(`Niets om op te klikken: ${klik}`);
+      }
+
+      // De speler aanzetten. Zonder dit staat er een stilstaand voorblad en meet je niets.
+      //
+      // Eerst netjes vragen aan het video-element zelf; lukt dat niet, dan een klik midden
+      // in beeld, waar bij YouTube de grote afspeelknop zit. Daarna nagaan of de speeltijd
+      // werkelijk oploopt: `paused === false` is niet genoeg, een speler kan aanstaan en
+      // toch stilliggen op een bufferend beeld.
+      /**
+       * Zet de speler aan en kijkt of de speeltijd werkelijk oploopt.
+       *
+       * `paused === false` is niet genoeg: een speler kan aanstaan en toch stilliggen op
+       * een foutmelding. En er wordt niet gewacht op de belofte van `play()` — die lost
+       * pas op als het afspelen begint, en begint het niet, dan lost hij nooit op. Daar
+       * liep de meting op vast met "Runtime.callFunctionOn timed out".
+       */
+      const zetAan = async () =>
+        page.evaluate(async () => {
+          const v = document.querySelector('video') as HTMLVideoElement | null;
+          if (!v) return { speler: false, speelt: false, gelopen: 0, duur: null as number | null };
+          v.muted = true;
+          try {
+            const belofte = v.play();
+            if (belofte && belofte.catch) belofte.catch(() => {});
+          } catch {
+            // Het beleid van de browser hield het tegen; dan proberen we het met een klik.
+          }
+          const begin = v.currentTime;
+          await new Promise((r) => setTimeout(r, 1500));
+          return {
+            speler: true,
+            speelt: !v.paused && !v.ended,
+            gelopen: Math.round((v.currentTime - begin) * 100) / 100,
+            duur: Number.isFinite(v.duration) ? Math.round(v.duration) : null,
+          };
+        });
+
+      let videoStand: any = null;
+      let videoAdres: string | null = null;
+      if (video) {
+        // Eerst het insluitadres, dan de videopagina zelf.
+        //
+        // YouTube weigert een insluiting in een kale browser geregeld met "Fout 153 --
+        // fout bij configuratie van videospeler": de eigenaar staat insluiten niet toe, of
+        // de speler mist de herkomst die hij verwacht. Dan is de pagina van de video zelf
+        // de plek waar hij wél speelt. Daar kan een toestemmingsscherm voor staan; dat
+        // wordt gemeld, niet weggeklikt -- akkoord geven namens de onderzoeker is niet aan
+        // dit gereedschap.
+        for (const adres of [video.speeladres, video.paginaadres]) {
+          if (page.url() !== adres) {
+            await page.goto(adres, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+            await new Promise((r) => setTimeout(r, 1500));
+          }
+          videoAdres = adres;
+          // Nu pas klikken: hier staat het toestemmingsvenster dat de speler tegenhoudt.
+          // Mislukken mag — op het insluitadres staat het er meestal niet.
+          if (klik) await klikOp(klik);
+          videoStand = await zetAan();
+          if (!videoStand.speelt || videoStand.gelopen <= 0) {
+            // Midden in beeld, waar bij YouTube de grote afspeelknop zit.
+            const vak = await page.viewport();
+            await page.mouse
+              .click(Math.round((vak?.width ?? 1366) / 2), Math.round((vak?.height ?? 900) / 2))
+              .catch(() => {});
+            await new Promise((r) => setTimeout(r, 2000));
+            videoStand = await zetAan();
+          }
+          if (videoStand.speelt && videoStand.gelopen > 0) break;
+        }
+      }
+
+      // Een toestemmingsscherm is geen video. Wie daar meet, meet een dialoogvenster.
+      //
+      // Op het adres is dat niet te zien: YouTube blijft op /watch staan en legt er een
+      // venster overheen ("Voordat je verdergaat naar YouTube"). Vandaar de tekst, niet de
+      // URL.
+      //
+      // Het wordt gemeld en niet weggeklikt. Toestemming geven voor cookies is een keuze
+      // van de onderzoeker, niet van een meetgereedschap — en in de audit-sessie zou die
+      // keuze in zijn eigen browser blijven staan. Wil hij eromheen, dan kan dat met
+      // --klik="tekst:Alles afwijzen".
+      const toestemmingsscherm: string | null = await page.evaluate(() => {
+        if (/consent\./i.test(location.hostname)) return 'een toestemmingspagina';
+        const tekst = (document.body.innerText || '').slice(0, 4000);
+        return /voordat je verdergaat|before you continue|alles accepteren|accept all|alles afwijzen|reject all/i.test(
+          tekst
+        )
+          ? 'een toestemmingsvenster over de inhoud'
+          : null;
+      });
+
+      // Wat er te zien valt dat zou kunnen flitsen. Niet om te oordelen, maar om te weten
+      // of de opname ergens over gaat: een speler die op pauze staat tekent niet opnieuw,
+      // en dan is "geen beeldjes" geen bewijs maar een gemiste meting.
+      const media = await page.evaluate(() => {
+        const spelers = Array.from(document.querySelectorAll('video, audio')).map((m) => {
+          const v = m as HTMLMediaElement;
+          return {
+            element: m.tagName.toLowerCase(),
+            speelt: !v.paused && !v.ended,
+            inBeeld: (() => {
+              const r = m.getBoundingClientRect();
+              return r.width > 0 && r.height > 0 && r.top < window.innerHeight && r.bottom > 0;
+            })(),
+          };
+        });
+        const kaders = Array.from(document.querySelectorAll('iframe'))
+          .filter((f) => /youtube|vimeo|dailymotion|player/i.test(f.getAttribute('src') || ''))
+          .map((f) => (f.getAttribute('src') || '').slice(0, 160));
+        // Ook de plaatshouders: staat de video achter een toestemmingsscherm, dan is er geen
+        // kader maar wel het adres in een attribuut. Zonder deze levert zo'n pagina "geen
+        // video" op terwijl er een video staat die we niet gemeten hebben.
+        const plaatshouders: string[] = [];
+        for (const el of Array.from(
+          document.querySelectorAll('[data-src], [data-url], [data-video-id], [data-youtube-id]')
+        )) {
+          const waarde =
+            el.getAttribute('data-src') ||
+            el.getAttribute('data-url') ||
+            el.getAttribute('data-video-id') ||
+            el.getAttribute('data-youtube-id') ||
+            '';
+          if (/youtube|vimeo/i.test(waarde) || /^[\w-]{11}$/.test(waarde)) {
+            plaatshouders.push(waarde.slice(0, 160));
+          }
+        }
+        const doeken = Array.from(document.querySelectorAll('canvas')).length;
+        return { spelers, kaders, plaatshouders, doeken };
+      });
+
+      // De tekenopnemer van de browser. Elk beeldje moet bevestigd worden, anders stuurt
+      // hij het volgende niet; dat bevestigen doen we meteen, zodat we zo dicht mogelijk
+      // bij de echte tekensnelheid blijven.
+      const cdp = await ((page as any).createCDPSession
+        ? (page as any).createCDPSession()
+        : page.target().createCDPSession());
+      const beeldjes: { tijd: number; data: string }[] = [];
+      cdp.on('Page.screencastFrame', async (f: any) => {
+        beeldjes.push({ tijd: f.metadata?.timestamp ?? 0, data: f.data });
+        try {
+          await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId });
+        } catch {
+          // De opname is gestopt; dan hoeft er niets meer bevestigd te worden.
+        }
+      });
+      await cdp.send('Page.enable').catch(() => {});
+      await cdp.send('Page.startScreencast', {
+        format: 'jpeg',
+        quality: 70,
+        maxWidth: 640,
+        maxHeight: 400,
+        everyNthFrame: 1,
+      });
+      await new Promise((r) => setTimeout(r, seconden * 1000));
+      await cdp.send('Page.stopScreencast').catch(() => {});
+
+      // De tijdstempels komen in seconden sinds het begin van de tijdrekening; omrekenen
+      // naar seconden sinds het eerste beeldje leest een stuk prettiger.
+      const begin = beeldjes.length ? beeldjes[0].tijd : 0;
+      const tijden = beeldjes.map((b) => Math.round((b.tijd - begin) * 1000) / 1000);
+      const duur = tijden.length > 1 ? tijden[tijden.length - 1] - tijden[0] : 0;
+      const perSeconde = duur > 0 ? Math.round((beeldjes.length / duur) * 10) / 10 : 0;
+
+      // Hoe hard de opname loopt zegt op zichzelf niets. Het gaat erom of hij hard genoeg
+      // loopt voor wát er op de pagina gebeurt.
+      //
+      // De tekenopnemer stuurt een beeldje zodra de pagina opnieuw tekent. Voor iets dat
+      // met JavaScript of CSS knippert betekent dat: elke wisseling levert een beeldje op,
+      // en dan is een lage snelheid geen tekort maar de wisselsnelheid zelf. Een
+      // testpagina die acht keer per seconde omklapt leverde 8,4 beeldjes per seconde op:
+      // elke wisseling, geen enkele gemist.
+      //
+      // Anders ligt het bij een bron die dóórtekent -- een film, een canvas, een kader van
+      // een ander domein. Die tekent tot zestig keer per seconde en dat halen wij niet.
+      // Een snelle strobo kan dan bij toeval elke keer in dezelfde stand bemonsterd worden
+      // en onzichtbaar blijven. Daar ligt de eis dus hoger, en haalt de opname dat niet,
+      // dan is de uitkomst onbeslist en is PEAT de volgende stap.
+      // De video's op deze pagina, met het commando om ze apart te meten.
+      //
+      // Een video in een kader van een ander domein is hier niet te meten: je kunt er niet
+      // in kijken, hij staat achter een toestemmingsscherm, of hij toont een stilstaand
+      // voorblad. Doorverwijzen naar de video zelf is dan het enige eerlijke antwoord —
+      // en dat antwoord hoort een uitvoerbare regel te zijn, geen opmerking dat het niet kon.
+      const videosOpDePagina = Array.from(
+        new Map(
+          [...media.kaders, ...media.plaatshouders]
+            .map((a: string) => videoSpeeladres(a))
+            .filter((v): v is NonNullable<typeof v> => !!v)
+            .map((v) => [v.nummer, v])
+        ).values()
+      ).map((v) => ({
+        platform: v.platform,
+        nummer: v.nummer,
+        meet: `npm run cli -- get-flitsen ${
+          v.platform === 'YouTube'
+            ? `https://www.youtube.com/watch?v=${v.nummer}`
+            : `https://vimeo.com/${v.nummer}`
+        }`,
+      }));
+
+      const stilleSpelers = media.spelers.filter((s: any) => s.inBeeld && !s.speelt).length;
+      const doorlopendeBron =
+        media.spelers.some((s: any) => s.inBeeld && s.speelt) ||
+        media.doeken > 0 ||
+        media.kaders.length > 0;
+      const genoegSnel = doorlopendeBron
+        ? perSeconde >= 20
+        : beeldjes.length <= 2 || perSeconde >= 4;
+
+      const dir = ensureOutputDir();
+      const stempel = timestamp();
+      const naam = slugifyUrl(page.url());
+
+      // Per beeldje, per blok: de gemiddelde relatieve helderheid en het aandeel
+      // verzadigd rood. In stukjes, anders staat er een halve minuut aan beeldjes in één
+      // aanroep.
+      const metingen: { lum: number[]; rood: number[] }[] = [];
+      for (let i = 0; i < beeldjes.length; i += 25) {
+        const stuk = beeldjes.slice(i, i + 25).map((b) => b.data);
+        const uit = await page.evaluate(
+          async (batch: string[], kol: number, rij: number, bw: number, bh: number) => {
+            // Een opzoektabel voor het lineair maken van de kleurwaarden. Anders staat er
+            // een machtsverheffing per beeldpunt per beeldje, en dat zijn er miljoenen.
+            const lin: number[] = [];
+            for (let i = 0; i < 256; i++) {
+              const c = i / 255;
+              lin.push(c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+            }
+            const doek = document.createElement('canvas');
+            doek.width = bw;
+            doek.height = bh;
+            const ctx = doek.getContext('2d', { willReadFrequently: true })!;
+            const uit: { lum: number[]; rood: number[] }[] = [];
+            for (const b64 of batch) {
+              const beeld = new Image();
+              await new Promise<void>((klaar, mis) => {
+                beeld.onload = () => klaar();
+                beeld.onerror = () => mis(new Error('beeldje niet te laden'));
+                beeld.src = `data:image/jpeg;base64,${b64}`;
+              });
+              ctx.drawImage(beeld, 0, 0, bw, bh);
+              const d = ctx.getImageData(0, 0, bw, bh).data;
+              const lum = new Array(kol * rij).fill(0);
+              const rood = new Array(kol * rij).fill(0);
+              const aantal = new Array(kol * rij).fill(0);
+              for (let y = 0; y < bh; y++) {
+                const r0 = Math.min(rij - 1, Math.floor((y * rij) / bh));
+                for (let x = 0; x < bw; x++) {
+                  const k0 = Math.min(kol - 1, Math.floor((x * kol) / bw));
+                  const i = (y * bw + x) * 4;
+                  const vak = r0 * kol + k0;
+                  lum[vak] += 0.2126 * lin[d[i]] + 0.7152 * lin[d[i + 1]] + 0.0722 * lin[d[i + 2]];
+                  // Verzadigd rood volgens WCAG: het rode aandeel is minstens 0,8. De eis
+                  // dat rood ook echt fel is, staat er zelf bij: zonder die grens telt een
+                  // vrijwel zwarte roodtint mee, en die flitst niet.
+                  const som = d[i] + d[i + 1] + d[i + 2];
+                  if (som > 0 && d[i] >= 128 && d[i] / som >= 0.8) rood[vak]++;
+                  aantal[vak]++;
+                }
+              }
+              for (let v = 0; v < lum.length; v++) {
+                lum[v] /= aantal[v] || 1;
+                rood[v] /= aantal[v] || 1;
+              }
+              uit.push({ lum, rood });
+            }
+            return uit;
+          },
+          stuk,
+          KOL,
+          RIJ,
+          BREED,
+          HOOG
+        );
+        metingen.push(...uit);
+      }
+
+      /**
+       * De sprongen in één blok, met hun tijdstip.
+       *
+       * Eerst de toppen en dalen bepalen, met een dode zone zodat de ruis van de
+       * JPEG-compressie geen top wordt. Daarna telt elke sprong tussen twee opeenvolgende
+       * uitersten mee als hij minstens 0,10 groot is en het donkerste beeld eromheen
+       * onder 0,80 blijft -- de algemene flitsdrempel uit WCAG.
+       *
+       * Twee tegengestelde sprongen vormen samen één flits (aan én weer uit). Daarom
+       * wordt er straks door twee gedeeld en niet per sprong geteld: anders telt een
+       * strobo van vijf per seconde er tien.
+       */
+      const sprongenVan = (reeks: number[], roodReeks: number[]) => {
+        const RUIS = 0.02;
+        const ext: { i: number; v: number }[] = [];
+        // Nog geen richting, stijgend, of dalend. Die drie toestanden moeten uit elkaar
+        // gehouden worden: laat je "nog geen richting" openstaan voor beide kanten, dan
+        // volgt de lus alleen de laatste waarde en wordt er nooit een top vastgelegd. Op
+        // een pagina die tussen zwart en wit knippert leverde dat nul sprongen op.
+        let richting: 0 | 1 | -1 = 0;
+        let kandidaat = reeks[0] ?? 0;
+        let kandidaatI = 0;
+        for (let i = 1; i < reeks.length; i++) {
+          const v = reeks[i];
+          if (richting === 0) {
+            if (v > kandidaat + RUIS) {
+              richting = 1;
+              kandidaat = v;
+              kandidaatI = i;
+            } else if (v < kandidaat - RUIS) {
+              richting = -1;
+              kandidaat = v;
+              kandidaatI = i;
+            }
+          } else if (richting === 1) {
+            if (v > kandidaat) {
+              kandidaat = v;
+              kandidaatI = i;
+            } else if (v <= kandidaat - RUIS) {
+              ext.push({ i: kandidaatI, v: kandidaat });
+              richting = -1;
+              kandidaat = v;
+              kandidaatI = i;
+            }
+          } else {
+            if (v < kandidaat) {
+              kandidaat = v;
+              kandidaatI = i;
+            } else if (v >= kandidaat + RUIS) {
+              ext.push({ i: kandidaatI, v: kandidaat });
+              richting = 1;
+              kandidaat = v;
+              kandidaatI = i;
+            }
+          }
+        }
+        ext.push({ i: kandidaatI, v: kandidaat });
+
+        const sprongen: { tijd: number; hoogte: number; rood: boolean }[] = [];
+        for (let j = 1; j < ext.length; j++) {
+          const a = ext[j - 1];
+          const b = ext[j];
+          const hoogte = Math.abs(b.v - a.v);
+          const donkerste = Math.min(a.v, b.v);
+          if (hoogte >= 0.1 && donkerste < 0.8) {
+            sprongen.push({
+              tijd: tijden[b.i] ?? 0,
+              hoogte: Math.round(hoogte * 1000) / 1000,
+              // Rood telt mee als het aan één van beide kanten van de sprong in het blok
+              // aanwezig is. De rode toets is strenger dan de gewone; hem alleen toepassen
+              // als het hele blok rood is, zou hem nooit laten aanslaan.
+              rood: (roodReeks[a.i] ?? 0) >= 0.2 || (roodReeks[b.i] ?? 0) >= 0.2,
+            });
+          }
+        }
+        return sprongen;
+      };
+
+      const perBlok: { blok: number; sprongen: { tijd: number; hoogte: number; rood: boolean }[] }[] = [];
+      for (let b = 0; b < KOL * RIJ; b++) {
+        const reeks = metingen.map((m) => m.lum[b]);
+        const roodReeks = metingen.map((m) => m.rood[b]);
+        const sprongen = sprongenVan(reeks, roodReeks);
+        if (sprongen.length) perBlok.push({ blok: b, sprongen });
+      }
+
+      /**
+       * De drukste seconde: per blok, per venster van één seconde, hoeveel flitsen.
+       *
+       * Het venster schuift mee met elke sprong, zodat een reeks die niet netjes op een
+       * hele seconde begint niet over twee vensters wordt uitgesmeerd.
+       */
+      let ergsteMoment = 0;
+      let ergsteAantal = 0;
+      let ergsteRood = 0;
+      const blokkenBoven: Set<number> = new Set();
+      const blokkenBovenRood: Set<number> = new Set();
+      for (const { blok, sprongen } of perBlok) {
+        for (const s of sprongen) {
+          const raam = sprongen.filter((t) => t.tijd >= s.tijd && t.tijd < s.tijd + 1);
+          const flitsen = Math.floor(raam.length / 2);
+          const roodFlitsen = Math.floor(raam.filter((t) => t.rood).length / 2);
+          if (flitsen > 3) blokkenBoven.add(blok);
+          if (roodFlitsen > 3) blokkenBovenRood.add(blok);
+          if (flitsen > ergsteAantal) {
+            ergsteAantal = flitsen;
+            ergsteMoment = s.tijd;
+          }
+          if (roodFlitsen > ergsteRood) ergsteRood = roodFlitsen;
+        }
+      }
+
+      const aandeel = blokkenBoven.size / (KOL * RIJ);
+      const aandeelRood = blokkenBovenRood.size / (KOL * RIJ);
+      const teGroot = aandeel > GEBIEDSGRENS;
+      const teGrootRood = aandeelRood > GEBIEDSGRENS;
+      const verdacht = blokkenBoven.size > 0 || blokkenBovenRood.size > 0;
+
+      // Bewijs om naar te kijken: de beeldjes rond het ergste moment. Een getal als "9
+      // flitsen per seconde" is niet na te kijken; acht beeldjes op een rij wel.
+      const beelden: { pad: string; bijschrift: string }[] = [];
+      if (verdacht && beeldjes.length) {
+        const rond = beeldjes
+          .map((b, i) => ({ b, t: tijden[i] }))
+          .filter((x) => x.t >= ergsteMoment - 0.5 && x.t <= ergsteMoment + 0.5)
+          .slice(0, 8);
+        let n = 0;
+        for (const x of rond) {
+          n++;
+          const pad = path.join(dir, `${stempel}-${naam}-flits-${n}.jpg`);
+          fs.writeFileSync(pad, Buffer.from(x.b.data, 'base64'));
+          beelden.push({ pad, bijschrift: `Beeldje ${n} — ${x.t.toFixed(2)} s` });
+        }
+      }
+
+      const hoofdBeeld = path.join(dir, `${stempel}-${naam}-flitsen.jpg`);
+      if (beeldjes.length) {
+        fs.writeFileSync(hoofdBeeld, Buffer.from(beeldjes[beeldjes.length - 1].data, 'base64'));
+      }
+
+      // Een speler die stilstaat maakt de meting waardeloos: die tekent niet, dus er komen
+      // geen beeldjes, en dan lijkt een pagina met een flitsende film brandschoon.
+      // Een video die niet gespeeld heeft is niet gemeten. Dat als "niets gezien"
+      // wegschrijven is precies de valse gerustheid die dit commando moet voorkomen.
+      const videoGespeeld = !video || (!!videoStand?.speelt && videoStand.gelopen > 0);
+      const beslist =
+        genoegSnel && stilleSpelers === 0 && videoGespeeld && !(video && toestemmingsscherm);
+
+      const stapZin = (() => {
+        const waar = video
+          ? `De video zelf geopend op zijn insluitadres (${video.platform} ${video.nummer}) en gedempt afgespeeld, want in een kader op de pagina is hij niet te meten. `
+          : klik
+          ? `Na klikken op ${klik} `
+          : '';
+        if (video && !videoGespeeld) {
+          return `${waar}De speler kwam niet op gang${
+            toestemmingsscherm ? ' (er verscheen een toestemmingsscherm)' : ''
+          }; er is dus niets gemeten.`;
+        }
+        // Eén beeldje is de tekening bij binnenkomst; die telt niet als verandering. Pas
+        // vanaf het derde beeldje is er een reeks om iets over te zeggen.
+        if (beeldjes.length <= 2) {
+          return `${waar}${seconden} seconden lang de tekenopnemer van de browser meegelezen: de pagina heeft in die tijd ${
+            beeldjes.length === 0
+              ? 'geen enkele keer getekend'
+              : `${beeldjes.length === 1 ? 'één keer getekend' : 'twee keer getekend'} — de tekening bij binnenkomst — en daarna niet meer`
+          }. Wat niet opnieuw getekend wordt, kan niet flitsen.${
+            stilleSpelers ? ` Let op: er ${stilleSpelers === 1 ? 'staat 1 speler' : `staan ${stilleSpelers} spelers`} stil in beeld; die is niet meegemeten.` : ''
+          }`;
+        }
+        const hoe = `${waar}${seconden} seconden opgenomen met de tekenopnemer van de browser: ${beeldjes.length} beeldjes, ${perSeconde} per seconde. Per blok van het beeld de helderheid gevolgd en de tegengestelde sprongen geteld (10% van de schaal, donkerste onder 0,80).`;
+        if (!genoegSnel) {
+          return `${hoe} Er staat een bron op de pagina die doorlopend tekent (film, canvas of een kader van een ander domein) en daarvoor is deze snelheid te laag: een snelle flits kan dan tussen de beeldjes door vallen. Hieruit volgt geen uitspraak over 2.3.1.`;
+        }
+        if (!verdacht) {
+          return `${hoe} Geen enkel blok kwam boven drie flitsen per seconde; de zwaarste seconde telde er ${ergsteAantal}.`;
+        }
+        return `${hoe} De drukste seconde begon op ${ergsteMoment.toFixed(
+          2
+        )} s en telde ${ergsteAantal} flitsen. ${blokkenBoven.size} van de ${KOL * RIJ} blokken kwam boven drie per seconde, samen ${(aandeel * 100).toFixed(1)}% van het beeld — ${
+          teGroot ? 'boven' : 'onder'
+        } de gebiedsgrens van ${(GEBIEDSGRENS * 100).toFixed(1)}%.${
+          blokkenBovenRood.size ? ` Bij ${blokkenBovenRood.size} blokken ging het om verzadigd rood.` : ''
+        }`;
+      })();
+
+      let overzicht: string | null = path.join(dir, `${stempel}-${naam}-flitsen.txt`);
+      try {
+        const regels = [
+          `FLITSEN OP DE PAGINA — ${page.url()}`,
+          `Gemeten: ${new Date().toLocaleString('nl-NL')} · ${
+            session.mode === 'cdp' ? 'auditsessie' : 'headless'
+          }`,
+          `Weergave: ${klik ? `na klikken op ${klik}` : 'standaardweergave'}`,
+          `Opname: ${seconden}s · ${beeldjes.length} beeldjes · ${perSeconde} per seconde · alleen wat in beeld stond`,
+          `Blokken: ${KOL} x ${RIJ} · gebiedsgrens ${(GEBIEDSGRENS * 100).toFixed(1)}% van het beeld`,
+          '',
+          'UITKOMST',
+          `  blokken boven 3 flitsen per seconde: ${blokkenBoven.size} (${(aandeel * 100).toFixed(1)}% van het beeld)`,
+          `  waarvan verzadigd rood:              ${blokkenBovenRood.size} (${(aandeelRood * 100).toFixed(1)}%)`,
+          `  drukste seconde:                     ${ergsteAantal} flitsen vanaf ${ergsteMoment.toFixed(2)}s`,
+          `  boven de gebiedsgrens:               ${teGroot ? 'JA' : 'nee'}${teGrootRood ? ' (rood: JA)' : ''}`,
+          `  bruikbare snelheid:                  ${genoegSnel ? 'ja' : 'NEE — te weinig beeldjes per seconde'}`,
+          '',
+          'WAT ER OP DE PAGINA STAAT DAT KAN FLITSEN',
+          `  mediaspelers: ${media.spelers.length} (in beeld en stilstaand: ${stilleSpelers})`,
+          `  videokaders van een ander domein: ${media.kaders.length}`,
+          ...media.kaders.map((k: string) => `    ${k}`),
+          `  canvas-elementen: ${media.doeken}`,
+          '',
+          'BLOKKEN MET SPRONGEN (blok, aantal sprongen, grootste sprong)',
+          ...perBlok
+            .slice(0, 20)
+            .map(
+              (b) =>
+                `  blok ${b.blok} (kolom ${b.blok % KOL}, rij ${Math.floor(b.blok / KOL)}): ${
+                  b.sprongen.length
+                } sprongen, grootste ${Math.max(...b.sprongen.map((s) => s.hoogte)).toFixed(3)}`
+            ),
+          '',
+          'LET OP',
+          '  Dit is een zeef, geen keuring. Het beeld is verkleind en samengeperst, en er',
+          '  wordt in blokken gerekend. Voor een videobestand is PEAT (Trace Center) de',
+          '  autoriteit; die leest het bestand beeldje voor beeldje.',
+        ];
+        fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+      } catch {
+        overzicht = null;
+      }
+
+      legVast({
+        commando: 'get-flitsen',
+        stap: stapZin,
+        argumenten: {
+          ...(klik ? { klik } : {}),
+          ...(flags.seconden ? { seconden: String(seconden) } : {}),
+        },
+        // Het adres zoals het gevraagd werd, en waar de meting landde. Bij een video zijn
+        // dat er twee: je vraagt om de watchpagina en er wordt op het insluitadres gemeten.
+        url,
+        eindUrl: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: video
+          ? 'de video zelf, gedempt afgespeeld'
+          : klik
+          ? `na klikken op ${klik}`
+          : 'standaardweergave',
+        schermafdruk: fs.existsSync(hoofdBeeld) ? hoofdBeeld : null,
+        schermafdrukken: beelden,
+        artefact: overzicht,
+        criteria: ['2.3.1'],
+        uitkomst: {
+          beeldjes: beeldjes.length,
+          beeldjesPerSeconde: perSeconde,
+          blokkenBovenDeGrens: blokkenBoven.size,
+          aandeelVanHetBeeld: `${(aandeel * 100).toFixed(1)}%`,
+          maxFlitsenPerSeconde: ergsteAantal,
+          verzadigdRood: blokkenBovenRood.size,
+          bovenDeGebiedsgrens: teGroot || teGrootRood,
+          beslist,
+        },
+      });
+
+      print({
+        url: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        omgeleid,
+        gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
+        opname: `${seconden}s · ${beeldjes.length} beeldjes · ${perSeconde} per seconde`,
+        gebied: 'alleen wat in beeld stond; wat onder de vouw flitst is niet opgenomen',
+        beeldjes: beeldjes.length,
+        beeldjes_per_seconde: perSeconde,
+        snelheid_bruikbaar: genoegSnel,
+        blokken_boven_3_per_seconde: blokkenBoven.size,
+        aandeel_van_het_beeld: `${(aandeel * 100).toFixed(1)}%`,
+        gebiedsgrens: `${(GEBIEDSGRENS * 100).toFixed(1)}% van het beeld (een kwart van een gezichtsveld van 10 graden)`,
+        boven_de_gebiedsgrens: teGroot,
+        drukste_seconde: ergsteAantal,
+        drukste_moment: `${ergsteMoment.toFixed(2)}s`,
+        verzadigd_rood_blokken: blokkenBovenRood.size,
+        verzadigd_rood_boven_de_grens: teGrootRood,
+        gemeten_op: video ? `de video zelf (${video.platform} ${video.nummer})` : 'de pagina',
+        video_speelde: video ? videoStand : undefined,
+        toestemmingsscherm: toestemmingsscherm ?? undefined,
+        mediaspelers: media.spelers.length,
+        spelers_die_stilstaan: stilleSpelers,
+        videokaders_van_een_ander_domein: media.kaders,
+        // Wat hier niet te meten viel, met de regel die het wél meet.
+        videos_apart_meten: videosOpDePagina.length ? videosOpDePagina : undefined,
+        canvas_elementen: media.doeken,
+        blokken_met_sprongen: perBlok.length,
+        schermafdruk: fs.existsSync(hoofdBeeld) ? hoofdBeeld : null,
+        beeldjes_rond_het_ergste_moment: beelden,
+        overzicht,
+        beslist,
+        let_op: !beslist
+          ? `Onbeslist. ${
+              video && !videoGespeeld
+                ? `De speler kwam niet op gang${
+                    toestemmingsscherm
+                      ? ', er verscheen een toestemmingsscherm. Accepteer die eenmalig in de audit-sessie (npm run chrome:debug) en meet opnieuw'
+                      : ''
+                  }. Er is dus niets van de video gezien. `
+                : ''
+            }${
+              !genoegSnel
+                ? `Er kwamen ${perSeconde} beeldjes per seconde binnen, en er is een bron die doorlopend tekent. Een snelle flits kan dan tussen de beeldjes door vallen. Gaat het om een videobestand, laat dat dan door PEAT halen. `
+                : ''
+            }${
+              videosOpDePagina.length
+                ? `Er ${
+                    videosOpDePagina.length === 1 ? 'staat 1 video' : `staan ${videosOpDePagina.length} video's`
+                  } op deze pagina die hier niet te meten ${
+                    videosOpDePagina.length === 1 ? 'is' : 'zijn'
+                  }: in een kader van een ander domein kun je niet kijken. Meet ze apart — ${videosOpDePagina
+                    .map((v) => v.meet)
+                    .join(' ; ')}. `
+                : ''
+            }${
+              stilleSpelers
+                ? `Er ${stilleSpelers === 1 ? 'staat 1 speler' : `staan ${stilleSpelers} spelers`} stil in beeld. Een speler die niet speelt tekent niet opnieuw, dus die is NIET gemeten: start hem met --klik en meet opnieuw. `
+                : ''
+            }Schrijf 2.3.1 niet op voldoet zolang dit openstaat.`
+          : beeldjes.length <= 2
+          ? 'De pagina heeft in dit venster niet opnieuw getekend. Wat niet getekend wordt kan niet flitsen, dus 2.3.1 voldoet — dat is de uitkomst voor een statische pagina, niet niet_aanwezig (het criterium eist dat er niets flitst, en daar houdt deze pagina zich aan).'
+          : verdacht
+          ? 'Er zit iets dat boven drie flitsen per seconde uitkomt. Leg de beeldjes rond het ergste moment naast elkaar voordat je iets afkeurt, en kijk of het gebied groot genoeg is. Gaat het om een videobestand, laat dat dan door PEAT halen: dit is een zeef, geen keuring.'
+          : 'Geen enkel blok kwam boven drie flitsen per seconde. Dit is een zeef: het beeld is verkleind en samengeperst, en alleen wat in beeld stond is opgenomen. Staat er een film op de pagina, laat die dan door PEAT halen voor een echte keuring.',
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
+/**
+ * De adressen van de video's op een pagina.
+ *
+ * Eén plek, want drie commando's hebben ze nodig: get-flitsen om te melden wat het hier
+ * niet kan meten, get-videosporen om ze langs te gaan, en straks wat er nog bij komt.
+ * Ook de plaatshouders tellen mee: staat een video achter een toestemmingsscherm, dan is
+ * er geen kader maar staat het adres in een attribuut. Zonder die levert zo'n pagina
+ * "geen video" op terwijl er een video staat die niemand gemeten heeft.
+ */
+async function videoAdressenOpPagina(page: any): Promise<string[]> {
+  return page.evaluate(() => {
+    const uit: string[] = [];
+    for (const f of Array.from(document.querySelectorAll('iframe'))) {
+      const src = f.getAttribute('src') || '';
+      if (/youtube|youtu\.be|vimeo/i.test(src)) uit.push(src.slice(0, 200));
+    }
+    for (const el of Array.from(
+      document.querySelectorAll('[data-src], [data-url], [data-video-id], [data-youtube-id]')
+    )) {
+      const waarde =
+        el.getAttribute('data-src') ||
+        el.getAttribute('data-url') ||
+        el.getAttribute('data-video-id') ||
+        el.getAttribute('data-youtube-id') ||
+        '';
+      if (/youtube|youtu\.be|vimeo/i.test(waarde) || /^[\w-]{11}$/.test(waarde)) {
+        uit.push(waarde.slice(0, 200));
+      }
+    }
+    // Ook gewone links naar een video. Op heuvelrug.nl/archeologie staan zes video's niet
+    // ingesloten maar als link; voor de pagina zelf tellen die niet mee, maar wie de
+    // video's beoordeelt moet weten dat ze bestaan.
+    for (const a of Array.from(document.querySelectorAll('a[href]'))) {
+      const href = a.getAttribute('href') || '';
+      if (/youtube\.com\/watch|youtu\.be\/|vimeo\.com\/\d/i.test(href)) uit.push(href.slice(0, 200));
+    }
+    return uit;
+  });
+}
+
+/**
+ * Leest de spelers op een pagina uit zoals een onderzoeker dat zou doen: kijken wat de
+ * speler zelf aanbiedt.
+ *
+ * Nodig omdat lang niet elke video een YouTube- of Vimeo-video is. Een eigen speler --
+ * Blue Billywig, JW Player, Bitmovin -- staat niet op een adres dat je kunt herkennen, en
+ * biedt zijn sporen ook niet aan als `<track>`-elementen. De ondertiteling wordt door de
+ * speler zelf getekend, precies zoals YouTube dat doet.
+ *
+ * Twee dingen maken het toch leesbaar:
+ *
+ *   1. **Shadow DOM openen.** De hele bediening van zo'n speler zit in een afgeschermde
+ *      wortel. `document.querySelector` komt daar niet, en dan lijkt een pagina met een
+ *      volledig toegankelijke speler een pagina zonder knoppen. Op de webinarpagina van
+ *      Blue Billywig zaten in twee wortels: "Zet ondertitels uit", "Zet uitgeschreven
+ *      tekst aan", en de uitgeschreven tekst zelf.
+ *   2. **De knopnamen lezen.** Die zeggen wat er is én hoe het erbij staat: "Zet
+ *      ondertitels uit" betekent dat ze aanstaan. Dat is een afleiding uit een tekst, geen
+ *      meting van de ondertiteling zelf, en zo wordt het ook gemeld.
+ *
+ * Wat hier NIET uit komt: of de ondertiteling deugt, of het transcript volledig is, en of
+ * tekst-in-beeld ook wordt uitgesproken. Dat blijft werk van de onderzoeker.
+ */
+async function leesSpelersOpPagina(page: any): Promise<any[]> {
+  const uit: any[] = [];
+
+  // Eerst langs de pagina scrollen en wachten tot er een speler staat.
+  //
+  // Een eigen speler wordt door een script neergezet, en vaak pas op het moment dat hij in
+  // beeld komt. Direct na het laden is er dus niets te vinden, ook niet op een pagina waar
+  // een video staat. Een bezoeker scrolt vanzelf; deze lus doet hetzelfde.
+  const tel = () =>
+    page.evaluate(() => {
+      let aantal = document.querySelectorAll('video').length;
+      const stapel: Element[] = Array.from(document.querySelectorAll('*'));
+      let bekeken = 0;
+      while (stapel.length && bekeken < 40000) {
+        const el = stapel.pop()!;
+        bekeken++;
+        if (el.shadowRoot) {
+          aantal += el.shadowRoot.querySelectorAll('video').length;
+          stapel.push(...Array.from(el.shadowRoot.querySelectorAll('*')));
+        }
+      }
+      return aantal;
+    });
+  for (let poging = 0; poging < 8; poging++) {
+    if (await tel().catch(() => 0)) break;
+    await page
+      .evaluate((stap: number) => window.scrollTo(0, stap * 500), poging)
+      .catch(() => {});
+    await new Promise((r) => setTimeout(r, 900));
+  }
+  await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+  await new Promise((r) => setTimeout(r, 500));
+
+  // En dan wachten tot de speler zijn bediening heeft opgebouwd.
+  //
+  // Het video-element staat er eerder dan de knoppen eromheen. Lees je te vroeg, dan komt
+  // er "geen ondertitelknop gevonden" uit bij een speler die er wel een heeft — en dat is
+  // precies het soort onterechte bevinding dat deze meting moet voorkomen. De uitkomst
+  // wisselde er per run door.
+  for (let poging = 0; poging < 10; poging++) {
+    const klaar = await page
+      .evaluate(() => {
+        const namen: string[] = [];
+        const wortels: (Document | ShadowRoot)[] = [document];
+        const stapel: Element[] = Array.from(document.querySelectorAll('*'));
+        let bekeken = 0;
+        while (stapel.length && bekeken < 40000) {
+          const el = stapel.pop()!;
+          bekeken++;
+          if (el.shadowRoot) {
+            wortels.push(el.shadowRoot);
+            stapel.push(...Array.from(el.shadowRoot.querySelectorAll('*')));
+          }
+        }
+        for (const w of wortels) {
+          for (const b of Array.from(w.querySelectorAll('button, [role="button"]'))) {
+            namen.push((b.getAttribute('aria-label') || b.textContent || '').trim());
+          }
+        }
+        return namen.some((n) => /ondertitel|subtitle|uitgeschreven|transcript|afspelen|\bplay\b/i.test(n));
+      })
+      .catch(() => false);
+    if (klaar) break;
+    await new Promise((r) => setTimeout(r, 700));
+  }
+
+  for (const kader of page.frames()) {
+    const gevonden = await kader
+      .evaluate(() => {
+        // Alles aflopen, inclusief afgeschermde wortels. Geen benoemde hulpfunctie: esbuild
+        // hangt daar __name aan, en dat bestaat niet in de browser.
+        const wortels: (Document | ShadowRoot)[] = [document];
+        const stapel: Element[] = Array.from(document.querySelectorAll('*'));
+        let bekeken = 0;
+        while (stapel.length && bekeken < 40000) {
+          const el = stapel.pop()!;
+          bekeken++;
+          if (el.shadowRoot) {
+            wortels.push(el.shadowRoot);
+            stapel.push(...Array.from(el.shadowRoot.querySelectorAll('*')));
+          }
+        }
+
+        const spelers: any[] = [];
+        // Eén regel per speler, niet per video-element.
+        //
+        // Een speler bestaat vaak uit meerdere video-elementen (de film, een reclame, een
+        // voorbeeldbeeld) in verschillende afgeschermde wortels, en zijn knoppen zitten in
+        // wéér een andere wortel dan de video. Per video-element rapporteren levert dan
+        // twee regels op waarvan er één zegt "geen ondertitelknop gevonden" -- terwijl die
+        // knop er wel is, één laag verderop. Vandaar: alles wat binnen dezelfde buitenste
+        // gastheer zit, is één speler.
+        const perGastheer = new Map<any, any>();
+        for (const wortel of wortels) {
+          for (const v of Array.from(wortel.querySelectorAll('video'))) {
+            const el = v as HTMLVideoElement;
+            const rect = el.getBoundingClientRect();
+            let gastheer: any = null;
+            let r: any = el.getRootNode();
+            while (r && r.host) {
+              gastheer = r.host;
+              r = gastheer.getRootNode();
+            }
+            const gebied: any = gastheer ?? document.body;
+            // Alle knoppen binnen die speler, ook in geneste wortels.
+            const knopWortels: (Element | ShadowRoot)[] = [gebied];
+            const knopStapel: Element[] = Array.from(gebied.querySelectorAll('*'));
+            let knopBekeken = 0;
+            while (knopStapel.length && knopBekeken < 20000) {
+              const k = knopStapel.pop()!;
+              knopBekeken++;
+              if (k.shadowRoot) {
+                knopWortels.push(k.shadowRoot);
+                knopStapel.push(...Array.from(k.shadowRoot.querySelectorAll('*')));
+              }
+            }
+            const knoppen = Array.from(
+              new Set(
+                knopWortels.flatMap((w) =>
+                  Array.from(w.querySelectorAll('button, [role="button"], [role="menuitem"]')).map(
+                    (b) =>
+                      (b.getAttribute('aria-label') || b.textContent || '')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                  )
+                )
+              )
+            )
+              .filter((t) => t && t.length < 60)
+              .slice(0, 30);
+            // Staan de knoppen niet binnen deze speler, dan staan ze elders op de pagina:
+            // sommige spelers zetten hun bediening in een aparte laag buiten de gastheer.
+            // Dan is dat de bron, mét vermelding — anders meldt de meting "geen
+            // ondertitelknop" terwijl die er wel is, één laag verderop.
+            let knoppenBron = 'de speler zelf';
+            let knoppenVanDeSpeler = knoppen;
+            if (!knoppen.length) {
+              const alles: string[] = [];
+              for (const w of wortels) {
+                for (const b of Array.from(
+                  w.querySelectorAll('button, [role="button"], [role="menuitem"]')
+                )) {
+                  const naam = (b.getAttribute('aria-label') || b.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                  if (naam && naam.length < 60) alles.push(naam);
+                }
+              }
+              knoppenVanDeSpeler = Array.from(new Set(alles)).slice(0, 30);
+              knoppenBron = 'elders op de pagina';
+            }
+
+            const bestaand = perGastheer.get(gebied);
+            // De grootste video van deze speler is de film; de rest is bijwerk.
+            if (bestaand && bestaand.oppervlak >= rect.width * rect.height) continue;
+            perGastheer.set(gebied, {
+              oppervlak: rect.width * rect.height,
+              duurSeconden: Number.isFinite(el.duration) ? Math.round(el.duration) : null,
+              speeltNu: !el.paused && !el.ended,
+              inSchaduw: wortel !== document,
+              maat: `${Math.round(rect.width)}x${Math.round(rect.height)}`,
+              // De sporen die de speler wél aan de browser doorgeeft. Bij een speler die
+              // zijn ondertiteling zelf tekent, is dit leeg -- en dat betekent dus niet
+              // "geen ondertiteling".
+              tekstsporen: Array.from(el.textTracks).map((t) => ({
+                soort: t.kind,
+                taal: t.language,
+                naam: t.label,
+                stand: t.mode,
+              })),
+              trackElementen: Array.from(el.querySelectorAll('track')).map((t) => ({
+                soort: t.getAttribute('kind'),
+                taal: t.getAttribute('srclang'),
+                naam: t.getAttribute('label'),
+              })),
+              knoppen: knoppenVanDeSpeler,
+              knoppenBron,
+            });
+          }
+        }
+        for (const speler of Array.from(perGastheer.values())) spelers.push(speler);
+
+        // De uitgeschreven tekst, waar hij ook staat. Voor 1.2.3 is dat het alternatief
+        // waar het om draait, dus de lengte telt: een kopje "Transcript" boven drie regels
+        // is geen tekstalternatief.
+        let transcript: any = null;
+        for (const wortel of wortels) {
+          for (const el of Array.from(wortel.querySelectorAll('*'))) {
+            const tekst = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            // Beginnen mét het opschrift, niet het woord ergens tegenkomen. Anders wordt
+            // een ondertitelregel waarin iemand "transcript" zegt aangezien voor een
+            // transcript -- dat gebeurde op de webinarpagina, waar de spreker het woord
+            // letterlijk uitspreekt. En lang genoeg om een tekstalternatief te kunnen zijn:
+            // een kopje boven drie regels is dat niet.
+            if (tekst.length < 400) continue;
+            if (!/^(uitgeschreven tekst|transcript|tekstversie|leesversie)/i.test(tekst)) continue;
+            // De kleinste houder die eraan voldoet, anders is het de hele pagina.
+            if (transcript && transcript.tekens <= tekst.length) continue;
+            transcript = {
+              tekens: tekst.length,
+              begin: tekst.slice(0, 200),
+              inSchaduw: wortel !== document,
+            };
+          }
+        }
+
+        // De duur zoals de speler hem zelf toont ("00:00 / 34:19"). Het video-element geeft
+        // die pas na het laden van de gegevens, en soms helemaal niet.
+        let duurVolgensDeSpeler: string | null = null;
+        for (const wortel of wortels) {
+          const tekst = (wortel === document ? document.body : (wortel as ShadowRoot))
+            .textContent || '';
+          const m = tekst.match(/(\d{1,2}:\d{2}(?::\d{2})?)\s*\/\s*(\d{1,2}:\d{2}(?::\d{2})?)/);
+          if (m) {
+            duurVolgensDeSpeler = m[2];
+            break;
+          }
+        }
+        return { spelers, transcript, duurVolgensDeSpeler };
+      })
+      .catch(() => null);
+
+    if (!gevonden || !gevonden.spelers.length) continue;
+    for (const s of gevonden.spelers) {
+      // Wat de knoppen zeggen over ondertiteling en transcript. Een afleiding uit een
+      // tekst: "Zet ondertitels uit" betekent dat ze aanstaan, "Zet ondertitels aan" dat
+      // ze uitstaan. Zo staat het er ook bij, want dit is geen meting van de ondertiteling.
+      const namen: string[] = s.knoppen ?? [];
+      const ondertitelknop = namen.find((n) => /ondertitel|subtitle|closed caption|\bcc\b/i.test(n));
+      const transcriptknop = namen.find((n) => /uitgeschreven|transcript|tekstversie/i.test(n));
+      const audiodescriptieknop = namen.find((n) =>
+        /audiodescriptie|audio description|gesproken beschrijving/i.test(n)
+      );
+      uit.push({
+        ...s,
+        // Een videovakje kleiner dan ongeveer 260 bij 150 is geen film maar een voorbeeldbeeldje
+        // naast de speler. Meetellen levert een tweede "speler zonder ondertitelknop" op,
+        // en dat leest als een tekort dat er niet is. Wel tellen hoeveel er zo zijn
+        // overgeslagen: wat weggelaten is hoort zichtbaar te blijven.
+        teKlein: s.oppervlak < 40000,
+        waar: kader === page.mainFrame() ? 'de pagina zelf' : kader.url().slice(0, 120),
+        ondertitelknop: ondertitelknop ?? null,
+        ondertitelingStaatAanVolgensDeKnop: ondertitelknop
+          ? /uit(zetten)?$|uit\b/i.test(ondertitelknop)
+            ? true
+            : /aan(zetten)?$|aan\b/i.test(ondertitelknop)
+            ? false
+            : null
+          : null,
+        transcriptknop: transcriptknop ?? null,
+        audiodescriptieknop: audiodescriptieknop ?? null,
+        transcript: gevonden.transcript,
+        duurVolgensDeSpeler: gevonden.duurVolgensDeSpeler ?? null,
+      });
+    }
+  }
+  return uit;
+}
+
+/**
+ * Leest per video uit welke sporen erbij zitten: ondertiteling, audiosporen, transcript.
+ *
+ * Dit is de meting voor SC 1.2.3 (audiodescriptie óf een tekstalternatief) en SC 1.2.5
+ * (audiodescriptie). Beide vragen of er náást beeld en geluid nog iets is voor wie het
+ * beeld niet ziet -- en dat is uit te lezen, niet te schatten.
+ *
+ * Waar het vandaan komt: `ytInitialPlayerResponse`, de gegevens die de YouTube-speler zelf
+ * gebruikt. Daar staat per video welke ondertitelsporen er zijn en of ze automatisch
+ * gegenereerd zijn (`kind: "asr"`), en welke audiosporen er zijn. Een video met
+ * audiodescriptie heeft daar een tweede audiospoor met een naam als "descriptive" of
+ * "beschrijvend". Staat dat er niet, dan is er geen audiodescriptiespoor.
+ *
+ * DE VIDEO WORDT OP ZIJN EIGEN PAGINA GELEZEN, niet op de pagina van de gemeente. In een
+ * kader van een ander domein kun je niet kijken, en achter een toestemmingsscherm al
+ * helemaal niet. Geef dus een videoadres mee, of een pagina-adres -- dan worden de video's
+ * die erop staan één voor één langsgegaan.
+ *
+ * WAT DIT NIET ZIET, en dat is de valkuil uit `Shift2_Werkwijze_Video.md`: **open**
+ * ondertiteling zit in het beeld gebrand en staat in geen enkele gegevensbron. Alleen op de
+ * speler afgaan levert dan onterechte bevindingen op. Daarom worden er drie beeldjes uit de
+ * lopende video vastgelegd, verspreid over de duur: daarop is te zien of er tekst in beeld
+ * staat. Speelt de video niet (toestemmingsscherm), dan komen die beeldjes er niet en zegt
+ * het commando dat.
+ *
+ * En het beslist niets. Of een tekstalternatief volledig is, of de audiodescriptie deugt,
+ * en of tekst-in-beeld ook wordt uitgesproken -- dat blijft werk van de onderzoeker.
+ */
+async function getVideosporen(url: string, flags: Flags) {
+  const max = Math.max(1, parseInt(flags.max || '5', 10));
+  const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  const session = await getBrowser();
+  try {
+    const eersteAdres = videoSpeeladres(url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    try {
+      // Eén video, of een pagina waar video's op staan.
+      let adressen: string[] = [];
+      let paginaTekstalternatief: any = null;
+      let eigenSpelers: any[] = [];
+      let kleineSpelers = 0;
+      if (eersteAdres) {
+        adressen = [url];
+      } else {
+        adressen = await videoAdressenOpPagina(page);
+        // Spelers die geen YouTube of Vimeo zijn. Die staan op geen herkenbaar adres en
+        // verstoppen hun bediening in shadow DOM; zonder deze stap levert een pagina met
+        // een volledig toegankelijke speler "geen video gevonden" op.
+        const alleSpelers = await leesSpelersOpPagina(page);
+        eigenSpelers = alleSpelers.filter((sp: any) => !sp.teKlein);
+        kleineSpelers = alleSpelers.length - eigenSpelers.length;
+        // Wat er op de pagina zelf staat dat een tekstalternatief kán zijn. Voor 1.2.3 mag
+        // dat namelijk: een uitgeschreven tekst die ook beschrijft wat er te zien is,
+        // telt. Alleen kandidaten -- of de tekst volledig is, leest de onderzoeker na.
+        paginaTekstalternatief = await page.evaluate(() => {
+          const treffers: { soort: string; tekst: string; adres?: string }[] = [];
+          for (const el of Array.from(document.querySelectorAll('a[href], summary, h2, h3, button'))) {
+            const tekst = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!tekst || tekst.length > 120) continue;
+            if (/transcript|tekstversie|uitgeschreven|tekstalternatief|leesversie/i.test(tekst)) {
+              treffers.push({
+                soort: el.tagName.toLowerCase(),
+                tekst,
+                adres: el.getAttribute('href') || undefined,
+              });
+            }
+          }
+          return treffers.slice(0, 10);
+        });
+      }
+
+      const uniek = Array.from(
+        new Map(
+          adressen
+            .map((a) => videoSpeeladres(a))
+            .filter((v): v is NonNullable<typeof v> => !!v)
+            .map((v) => [v.nummer, v])
+        ).values()
+      ).slice(0, max);
+
+      const dir = ensureOutputDir();
+      const stempel = timestamp();
+      const beelden: { pad: string; bijschrift: string }[] = [];
+      const videos: any[] = [];
+
+      for (const v of uniek) {
+        if (v.platform !== 'YouTube') {
+          // Voor Vimeo is nog niet vastgelegd waar de sporen vandaan komen. Dat als "geen
+          // ondertiteling" wegschrijven zou een bevinding verzinnen; dus met de reden erbij.
+          videos.push({
+            platform: v.platform,
+            nummer: v.nummer,
+            adres: v.paginaadres,
+            leesbaar: false,
+            reden:
+              'Voor Vimeo is nog niet vastgelegd hoe de sporen uit te lezen zijn. Beoordeel deze video met de hand.',
+          });
+          continue;
+        }
+
+        await page.goto(v.paginaadres, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 1200));
+        if (klik) {
+          await page
+            .evaluate((zoek: string) => {
+              const woorden = zoek.startsWith('tekst:') ? zoek.slice(6).toLowerCase() : null;
+              const el = woorden
+                ? Array.from(document.querySelectorAll('button, a, [role="button"]')).find((k) =>
+                    (k.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase().includes(woorden)
+                  )
+                : document.querySelector(zoek);
+              if (el) (el as HTMLElement).click();
+            }, klik)
+            .catch(() => {});
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+
+        const gegevens = await page.evaluate(() => {
+          const w = window as any;
+          const pr = w.ytInitialPlayerResponse;
+          const toestemming = /voordat je verdergaat|before you continue|alles accepteren/i.test(
+            (document.body.innerText || '').slice(0, 3000)
+          );
+          if (!pr) return { leesbaar: false, toestemming };
+          const sporen = pr.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+          const formaten = pr.streamingData?.adaptiveFormats || [];
+          const audio: Record<string, any> = {};
+          for (const f of formaten) if (f.audioTrack) audio[f.audioTrack.id] = f.audioTrack;
+          return {
+            leesbaar: true,
+            toestemming,
+            titel: pr.videoDetails?.title ?? null,
+            duurSeconden: pr.videoDetails?.lengthSeconds ? Number(pr.videoDetails.lengthSeconds) : null,
+            live: !!pr.videoDetails?.isLiveContent,
+            ondertiteling: sporen.map((c: any) => ({
+              taal: c.languageCode,
+              naam: c.name?.simpleText || c.name?.runs?.[0]?.text || null,
+              // 'asr' = automatic speech recognition: door de machine gemaakt.
+              automatisch: c.kind === 'asr',
+            })),
+            audiosporen: Object.values(audio).map((a: any) => ({
+              naam: a.displayName,
+              standaard: !!a.audioIsDefault,
+            })),
+            // Zonder formaten is er niets over de audiosporen te zeggen. Dan is "geen
+            // audiodescriptie" een gok en geen meting.
+            audioAfleesbaar: formaten.length > 0,
+            transcriptKnop: /transcript/i.test((document.body.innerText || '').slice(0, 6000)),
+          };
+        });
+
+        // Drie beeldjes uit de lopende video: het enige middel om open ondertiteling te
+        // zien, want die staat in geen enkele gegevensbron.
+        //
+        // Elk beeldje vraagt een eigen laadbeurt met `&t=<seconden>s` in het adres. Dat is
+        // omslachtiger dan even doorspoelen, maar doorspoelen werkt hier niet: zowel
+        // `currentTime` als de eigen `seekTo` van de speler blijft eeuwig op `seeking`
+        // staan met readyState 1 -- de beelden voor die plek worden nooit opgehaald. Via
+        // het adres laadt de speler wél op de goede plek, met readyState 4.
+        const opnamen: string[] = [];
+        let speelt = false;
+        if (gegevens.leesbaar && gegevens.duurSeconden) {
+          for (const deel of [0.25, 0.5, 0.75]) {
+            const seconde = Math.max(1, Math.floor(gegevens.duurSeconden * deel));
+            await page
+              .goto(`${v.paginaadres}&t=${seconde}s`, { waitUntil: 'networkidle2', timeout: 30000 })
+              .catch(() => {});
+            await new Promise((r) => setTimeout(r, 1200));
+            if (klik) {
+              await page
+                .evaluate((zoek: string) => {
+                  const woorden = zoek.startsWith('tekst:') ? zoek.slice(6).toLowerCase() : null;
+                  const el = woorden
+                    ? Array.from(document.querySelectorAll('button, a, [role="button"]')).find((k) =>
+                        (k.textContent || '')
+                          .replace(/\s+/g, ' ')
+                          .trim()
+                          .toLowerCase()
+                          .includes(woorden)
+                      )
+                    : document.querySelector(zoek);
+                  if (el) (el as HTMLElement).click();
+                }, klik)
+                .catch(() => {});
+              await new Promise((r) => setTimeout(r, 1200));
+            }
+            const vak = await page.evaluate(async () => {
+              const el = document.querySelector('video') as HTMLVideoElement | null;
+              if (!el) return null;
+              el.muted = true;
+              try {
+                const belofte = el.play();
+                if (belofte && belofte.catch) belofte.catch(() => {});
+              } catch {
+                // Het beleid van de browser hield het tegen; blijkt hieronder.
+              }
+              // readyState 3 betekent: er is beeld om te tonen. Zonder deze wachtlus staat
+              // er een laadtekentje op een zwart vlak, en daar is geen ondertiteling op te
+              // zien -- terwijl dat de hele reden is dat deze beeldjes gemaakt worden.
+              for (let poging = 0; poging < 25; poging++) {
+                await new Promise((r) => setTimeout(r, 400));
+                if (el.readyState >= 3 && !el.seeking) break;
+              }
+              if (el.readyState < 3) return null;
+              await new Promise((r) => setTimeout(r, 400));
+              const r = el.getBoundingClientRect();
+              return { x: r.x, y: r.y, w: r.width, h: r.height, tijd: Math.round(el.currentTime) };
+            });
+            if (!vak || vak.w < 10 || vak.h < 10) continue;
+            speelt = true;
+            const pad = path.join(dir, `${stempel}-${v.nummer}-beeld-${Math.round(deel * 100)}.jpg`);
+            try {
+              // Alleen de speler, niet de halve YouTube-pagina eromheen: het gaat om wat er
+              // in het beeld van de film staat.
+              await page.screenshot({
+                path: pad as `${string}.jpg`,
+                type: 'jpeg',
+                quality: 80,
+                clip: {
+                  x: Math.max(0, Math.floor(vak.x)),
+                  y: Math.max(0, Math.floor(vak.y)),
+                  width: Math.floor(vak.w),
+                  height: Math.floor(vak.h),
+                },
+              });
+              opnamen.push(pad);
+              beelden.push({
+                pad,
+                bijschrift: `${v.nummer} op ${vak.tijd}s (${Math.round(
+                  deel * 100
+                )}%) — kijk of er tekst in beeld staat`,
+              });
+            } catch {
+              // Een mislukte opname mag de meting niet ongeldig maken.
+            }
+          }
+        }
+
+        const ondertiteling = gegevens.ondertiteling ?? [];
+        const audiosporen = gegevens.audiosporen ?? [];
+        const beschrijvend = audiosporen.filter((a: any) =>
+          /descript|beschrijv|audiodescriptie/i.test(a.naam || '')
+        );
+        videos.push({
+          platform: v.platform,
+          nummer: v.nummer,
+          adres: v.paginaadres,
+          leesbaar: gegevens.leesbaar,
+          toestemmingsscherm: gegevens.toestemming || undefined,
+          titel: gegevens.titel ?? null,
+          duurSeconden: gegevens.duurSeconden ?? null,
+          live: gegevens.live ?? null,
+          ondertitelsporen: ondertiteling,
+          alleenAutomatischeOndertiteling:
+            ondertiteling.length > 0 && ondertiteling.every((o: any) => o.automatisch),
+          geenOndertiteling: ondertiteling.length === 0,
+          audiosporen,
+          audioAfleesbaar: gegevens.audioAfleesbaar ?? false,
+          // "Geen apart spoor" is niet hetzelfde als "geen audiodescriptie".
+          //
+          // In Nederland wordt audiodescriptie vrijwel altijd als LOSSE VIDEO gepubliceerd
+          // en niet als tweede audiospoor: op YouTube heten die "... met audiodescriptie".
+          // Een steekproef over de video's van KRO-NCRV, Bartiméus en LuckyTV met
+          // audiodescriptie in de titel gaf bij alle zes één audiospoor. Zou hier "geen"
+          // staan, dan leest dat als een afkeuring terwijl de beschreven versie er wel is,
+          // ergens anders. Het meerspoorsysteem bestaat wél (de video's van MrBeast hebben
+          // er twintig), dus deze meting slaat aan als er iets te vinden is.
+          audiodescriptiespoor: !gegevens.audioAfleesbaar
+            ? 'niet af te lezen'
+            : beschrijvend.length
+            ? beschrijvend.map((a: any) => a.naam).join(', ')
+            : 'geen apart audiospoor in deze speler',
+          transcriptGenoemdOpYoutube: gegevens.transcriptKnop ?? false,
+          beeldjes: opnamen,
+          beeldjesGelukt: speelt,
+        });
+      }
+
+      const zonderAudiodescriptie = videos.filter(
+        (v) => v.leesbaar && v.audiodescriptiespoor === 'geen apart audiospoor in deze speler'
+      ).length;
+      const nietAfTeLezen = videos.filter((v) => !v.leesbaar || v.audiodescriptiespoor === 'niet af te lezen').length;
+      const zonderBeeldjes = videos.filter((v) => v.leesbaar && !v.beeldjesGelukt).length;
+      // Een pagina zonder video is iets anders dan een pagina waar we niets van konden
+      // lezen. Beide tellen mee: de video's van een platform én de eigen spelers.
+      const beslist = (videos.length > 0 || eigenSpelers.length > 0) && nietAfTeLezen === 0;
+
+      const stapZin = (() => {
+        if (!videos.length) {
+          if (eigenSpelers.length) {
+            // Een eigen speler levert geen sporen op die de browser doorgeeft; wat hij
+            // aanbiedt staat in zijn eigen bediening. Dat is de zin die de kaart nodig heeft.
+            const per = eigenSpelers
+              .map((s) => {
+                const duur = s.duurVolgensDeSpeler ?? (s.duurSeconden ? `${s.duurSeconden}s` : '?');
+                const ot = s.ondertitelknop
+                  ? `ondertiteling ${
+                      s.ondertitelingStaatAanVolgensDeKnop === true
+                        ? 'staat aan'
+                        : s.ondertitelingStaatAanVolgensDeKnop === false
+                        ? 'staat uit'
+                        : 'aanwezig'
+                    } (knop: "${s.ondertitelknop}")`
+                  : 'geen ondertitelknop gevonden';
+                const tr = s.transcript
+                  ? `uitgeschreven tekst aanwezig (${s.transcript.tekens} tekens)`
+                  : s.transcriptknop
+                  ? `knop "${s.transcriptknop}", tekst niet uitgelezen`
+                  : 'geen uitgeschreven tekst gevonden';
+                return `speler van ${duur}: ${ot}, ${tr}, ${
+                  s.audiodescriptieknop
+                    ? `audiodescriptieknop "${s.audiodescriptieknop}"`
+                    : 'geen audiodescriptieknop'
+                }`;
+              })
+              .join('; ');
+            return `Geen video van YouTube of Vimeo op deze pagina, maar wel ${
+              eigenSpelers.length === 1 ? 'een eigen speler' : `${eigenSpelers.length} eigen spelers`
+            }. Die geeft zijn sporen niet aan de browser door, dus is zijn eigen bediening uitgelezen — ${per}.`;
+          }
+          return `Gekeken welke video's er te beoordelen zijn: geen enkele gevonden op ${
+            eersteAdres ? 'dit adres' : 'deze pagina'
+          }, dus er zijn geen sporen om uit te lezen.`;
+        }
+        const per = videos
+          .map((v) => {
+            if (!v.leesbaar) return `${v.nummer}: niet uit te lezen (${v.reden ?? 'geen spelergegevens'})`;
+            const ot = v.geenOndertiteling
+              ? 'geen ondertiteling'
+              : v.alleenAutomatischeOndertiteling
+              ? `alleen automatische ondertiteling (${v.ondertitelsporen.map((o: any) => o.taal).join(', ')})`
+              : `ondertiteling ${v.ondertitelsporen.map((o: any) => o.taal).join(', ')}`;
+            return `"${v.titel ?? v.nummer}" (${v.duurSeconden ?? '?'}s): ${ot}, audiodescriptiespoor ${v.audiodescriptiespoor}`;
+          })
+          .join('; ');
+        return `De ${
+          videos.length === 1 ? 'video' : `${videos.length} video's`
+        } op hun eigen pagina geopend en de sporen van de speler uitgelezen — ${per}.${
+          zonderBeeldjes
+            ? ` Van ${zonderBeeldjes} ${zonderBeeldjes === 1 ? 'video' : "video's"} kwamen geen beeldjes: de speler kwam niet op gang, dus open ondertiteling is niet nagekeken.`
+            : ' Van elke video zijn drie beeldjes vastgelegd om open ondertiteling te kunnen zien.'
+        }`;
+      })();
+
+      let overzicht: string | null = path.join(dir, `${stempel}-videosporen.txt`);
+      try {
+        const regels = [
+          `VIDEOSPOREN — ${gevraagdeUrl}`,
+          `Gemeten: ${new Date().toLocaleString('nl-NL')} · ${
+            session.mode === 'cdp' ? 'auditsessie' : 'headless'
+          }`,
+          `Gevonden video's: ${uniek.length}${adressen.length > uniek.length ? ` (uit ${adressen.length} adressen)` : ''}`,
+          '',
+          ...videos.flatMap((v) => [
+            `VIDEO ${v.nummer} — ${v.titel ?? '(titel niet gelezen)'}`,
+            `  adres:            ${v.adres}`,
+            `  duur:             ${v.duurSeconden ?? '?'} s${v.live ? ' (live)' : ''}`,
+            `  ondertiteling:    ${
+              v.leesbaar
+                ? v.ondertitelsporen.length
+                  ? v.ondertitelsporen
+                      .map((o: any) => `${o.taal}${o.automatisch ? ' (automatisch)' : ''}`)
+                      .join(', ')
+                  : 'geen'
+                : 'niet uit te lezen'
+            }`,
+            `  audiosporen:      ${
+              v.leesbaar ? (v.audiosporen.length ? v.audiosporen.map((a: any) => a.naam).join(', ') : 'één spoor') : '?'
+            }`,
+            `  audiodescriptie:  ${v.audiodescriptiespoor ?? '?'}`,
+            `  transcript op YouTube genoemd: ${v.transcriptGenoemdOpYoutube ? 'ja' : 'nee'}`,
+            `  beeldjes:         ${v.beeldjes?.length ?? 0}${v.beeldjesGelukt ? '' : ' (speler kwam niet op gang)'}`,
+            '',
+          ]),
+          'TEKSTALTERNATIEF OP DE PAGINA (kandidaten, niet nagelopen)',
+          ...(paginaTekstalternatief?.length
+            ? paginaTekstalternatief.map((t: any) => `  ${t.soort} "${t.tekst}"${t.adres ? ` → ${t.adres}` : ''}`)
+            : ['  geen']),
+          '',
+          'LET OP',
+          '  Open ondertiteling zit in het beeld gebrand en staat in geen enkele gegevensbron.',
+          '  Bekijk de beeldjes; zie Shift2_Werkwijze_Video.md en scripts/video-scan.mjs.',
+        ];
+        fs.writeFileSync(overzicht, regels.join('\n'), 'utf8');
+      } catch {
+        overzicht = null;
+      }
+
+      legVast({
+        commando: 'get-videosporen',
+        stap: stapZin,
+        argumenten: { ...(klik ? { klik } : {}), ...(flags.max ? { max: String(max) } : {}) },
+        url,
+        eindUrl: page.url(),
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        weergave: 'de video zelf, op zijn eigen pagina',
+        schermafdruk: beelden[0]?.pad ?? null,
+        schermafdrukken: beelden,
+        artefact: overzicht,
+        criteria: ['1.2.3', '1.2.5'],
+        uitkomst: {
+          videos: videos.length,
+          eigenSpelers: eigenSpelers.length,
+          zonderAudiodescriptiespoor: zonderAudiodescriptie,
+          nietAfTeLezen,
+          zonderBeeldjes,
+          beslist,
+        },
+      });
+
+      print({
+        url: gevraagdeUrl,
+        browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
+        omgeleid,
+        gevonden_adressen: adressen.length,
+        beoordeelde_videos: videos.length,
+        videos,
+        eigen_spelers: eigenSpelers.length ? eigenSpelers : undefined,
+        kleine_videovakjes_overgeslagen: kleineSpelers || undefined,
+        tekstalternatief_op_de_pagina: paginaTekstalternatief ?? undefined,
+        overzicht,
+        beslist,
+        let_op: !videos.length && !eigenSpelers.length
+          ? 'Geen video gevonden. Staat er wel een video maar achter een toestemmingsscherm, dan zit het adres niet in de code: bekijk de pagina in de audit-sessie (npm run chrome:debug).'
+          : !beslist
+          ? `Onbeslist: van ${nietAfTeLezen} ${nietAfTeLezen === 1 ? 'video' : "video's"} waren de sporen niet uit te lezen. Zonder die gegevens is "geen audiodescriptie" een gok. Meet opnieuw in de audit-sessie, of beoordeel met de hand.`
+          : `Uitgelezen, niet geoordeeld. Voor 1.2.5 is audiodescriptie nodig; voor 1.2.3 mag dat ook een tekstalternatief zijn dat beschrijft wat er te zien is. LET OP: audiodescriptie wordt in Nederland meestal als LOSSE video gepubliceerd en niet als tweede audiospoor, dus "geen apart audiospoor" is geen afkeuring — zoek ook naar een variant met "audiodescriptie" in de titel${
+              paginaTekstalternatief?.length ? ' — er staan kandidaten op de pagina, loop die na' : ''
+            }. Bekijk de beeldjes op open ondertiteling: die staat in geen enkele gegevensbron en is de klassieke bron van onterechte bevindingen. Automatisch gegenereerde ondertiteling telt niet als ondertiteling.`,
+      });
+    } finally {
+      await cleanup();
+    }
+  } finally {
+    await session.dispose();
+  }
+}
+
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
@@ -3690,6 +6482,8 @@ async function main() {
       return getContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-reflow':
       return getReflow(requirePositional(positional, 0, 'url'), flags);
+    case 'get-videos':
+      return getVideos(requirePositional(positional, 0, 'url'), flags);
     case 'get-sneltoetsen':
       return getSneltoetsen(requirePositional(positional, 0, 'url'), flags);
     case 'get-toetsenbordval':
@@ -3698,6 +6492,12 @@ async function main() {
       return getNietTeksten(requirePositional(positional, 0, 'url'), flags);
     case 'get-pixelcontrast':
       return getPixelContrast(requirePositional(positional, 0, 'url'), flags);
+    case 'get-beweging':
+      return getBeweging(requirePositional(positional, 0, 'url'), flags);
+    case 'get-flitsen':
+      return getFlitsen(requirePositional(positional, 0, 'url'), flags);
+    case 'get-videosporen':
+      return getVideosporen(requirePositional(positional, 0, 'url'), flags);
     case 'capture-sample-evidence':
       return captureSampleEvidence(
         requirePositional(positional, 0, 'projectId'),
@@ -3725,6 +6525,7 @@ async function main() {
         `  get-checks <projectId>                           # de opgeslagen sampleoordelen\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
         `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner]\n` +
+        `  get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]   # 2.2.2: kijkt of er iets uit zichzelf beweegt of bijwerkt\n` +
         `  capture-sample-evidence <projectId> <sampleId> [--full] [--keep-cookie-banner]  # legt DOM + volledige screenshot vast; maakt geen bevinding\n` +
         `  run-tests <url> [--verbose] [--only-found] [--with-browser]  # crawler-tests; --with-browser voegt contrast-test toe\n` +
         `  test-samples <projectId> [--with-browser=false]  # crawler op alle sample-items van project; opslag in DB\n` +

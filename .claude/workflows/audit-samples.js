@@ -322,8 +322,8 @@ const INTERACTIEVE_SC = {}
  */
 const REGELS_TERUGVAL = [
   '1.1.1', '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.5',
-  '1.4.1', '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.4.4', '2.4.6', '2.5.3', '2.5.8',
-  '3.2.4', '4.1.2',
+  '1.4.1', '1.4.3', '1.4.5', '1.4.10', '1.4.11', '2.1.2', '2.1.4', '2.4.4', '2.4.6', '2.5.3',
+  '2.5.8', '3.2.4', '3.3.2', '4.1.2',
 ]
 const SC_MET_REGELBESTAND = Array.isArray(context.regelbestanden) && context.regelbestanden.length
   ? context.regelbestanden
@@ -775,12 +775,32 @@ zichzelf in het logboek, dus wat je niet hebt gedraaid staat er ook niet in.
   1.4.11 — npm run cli -- get-nietteksten ${sample.url ? sample.url : '<url>'}
   2.1.2  — npm run cli -- get-toetsenbordval ${sample.url ? sample.url : '<url>'}
            npm run cli -- get-toetsenbordval ${sample.url ? sample.url : '<url>'} --achteruit=true
+  2.2.2  — npm run cli -- get-beweging ${sample.url ? sample.url : '<url>'}
+  2.3.1  — npm run cli -- get-flitsen ${sample.url ? sample.url : '<url>'}
+
+Staat er een video op de pagina, dan komt daar bij:
+  1.2.3 · 1.2.5 — npm run cli -- get-videosporen ${sample.url ? sample.url : '<url>'}
+  2.3.1 per video — npm run cli -- get-flitsen https://www.youtube.com/watch?v=<nummer>
 
 Bij 2.1.2 gaat het om de hele pagina, van buiten het document naar buiten het document: in de
 adresbalk beginnen, doortabben tot het laatste element onderaan, en dan hoort de volgende Tab
 het document weer te verlaten. Beide richtingen, want een val kan één kant op zitten. Staat er
 een widget op de pagina die pas na typen bestaat — een zoekveld met suggesties — draai dan ook
 \`--typ-in=<css> --typ=<woord>\`, want anders test je een pagina waarop die lijst er niet is.
+
+Bij 2.2.2 kijkt \`get-beweging\` acht seconden naar de pagina en vergelijkt drie opnamen. Het
+venster dat telt begint drie seconden na het laden, want daarvóór laadt de pagina zelf nog in.
+Beweegt er niets, dan is de eis van 2.2.2 leeg en is het oordeel 'niet_aanwezig' — niet
+'voldoet'. Beweegt er wel iets, kijk dan naar de uitsnedes vóór en ná, en beantwoord de drie
+vragen die het commando niet beantwoordt: begon het uit zichzelf, staat het naast andere
+inhoud, en is er iets om het te pauzeren? Dek een cookiemelding eerst af met \`--klik\`.
+
+Bij 2.3.1 leest \`get-flitsen\` de beeldjes mee die de browser tekent en telt de
+helderheidssprongen. Komen er geen beeldjes, dan heeft de pagina niet opnieuw getekend en kan
+er niets geflitst hebben: dan is 2.3.1 'voldoet' — NIET 'niet_aanwezig', want het criterium
+eist dat er niets flitst en daar houdt een statische pagina zich aan. Staat er een film op de
+pagina, start die dan met \`--klik\`: een speler die stilstaat tekent niet en wordt dus niet
+gemeten. Zegt het commando 'beslist: false', neem het oordeel dan niet over.
 
 Bij 1.4.11 loopt \`get-nietteksten\` zelf op wat eronder valt en meet elk element in ruststand
 én met de muis erop. Lees de lijst \`overgeslagen_met_reden\` na: staat daar iets tussen dat wel

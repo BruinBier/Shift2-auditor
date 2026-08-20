@@ -21,24 +21,14 @@ import { OUTPUT_DIR, ensureOutputDir } from './browser-fetch';
 const LOGBOEK = path.join(OUTPUT_DIR, 'logboek.jsonl');
 
 /**
- * Welk succescriterium een commando dient.
+ * Welk succescriterium een commando dient — uit `lib/metingen.ts`.
  *
- * Deze koppeling hoort in de code en niet in wat een agent opgeeft: `get-reflow`
- * bestáát voor 1.4.10, `get-leesvolgorde` voor 1.3.2. Zo kan de toewijzing niet
- * verzonnen of verkeerd opgegeven worden.
- *
- * Commando's die hier niet in staan — `get-html`, `get-screenshot` — dienen elk
- * criterium en krijgen er dus geen. Dat is geen tekort maar een eerlijke weergave:
- * je haalt de pagina één keer op en gebruikt hem voor alles.
+ * Die tabel stond hier, en in de route die een meting overdoet, en zou nu ook op de kaart
+ * nodig zijn die een meting aanbiedt. Drie kopieën van dezelfde lijst drijven uit elkaar:
+ * een commando dat je hier aan een criterium hangt, verschijnt dan niet op de kaart. Eén
+ * bron dus; dit is een lezer ervan.
  */
-const CRITERIA_PER_COMMANDO: Record<string, string[]> = {
-  'get-leesvolgorde': ['1.3.2'],
-  'get-contrast': ['1.4.3', '1.4.11'],
-  'get-reflow': ['1.4.10'],
-  'get-pixelcontrast': ['1.4.11'],
-  'get-toetsenbordval': ['2.1.2'],
-  'get-sneltoetsen': ['2.1.4'],
-};
+import { CRITERIA_PER_COMMANDO } from '../../lib/metingen';
 
 export interface LogRegel {
   /** Wanneer het commando draaide, in ISO-vorm. */
@@ -52,6 +42,20 @@ export interface LogRegel {
   eindUrl?: string | null;
   /** De criteria die dit commando dient, uit de tabel hierboven. */
   criteria: string[];
+  /**
+   * De handeling in de woorden van de auditor: wat er gekeken is en wat eruit kwam.
+   *
+   * De kaart "Zo is het vastgesteld" toonde tot nu toe alleen de aanroep en de ruwe
+   * uitkomst -- `get-html ... bytes: 206393, scope: document`. Dat is geen stap uit
+   * iemands werkwijze maar een gereedschapsaanroep, en de onderzoeker die zijn naam
+   * onder het onderzoek zet kan er niet aan zien of gedaan is wat hij zelf gedaan zou
+   * hebben.
+   *
+   * Deze zin wordt geschreven door de code die de meting déed, uit de getallen die de
+   * meting opleverde -- niet door een agent achteraf. Een agent kan een stap verzinnen
+   * of weglaten; dit veld kan dat niet. Zelfde reden als bij `koppel-logboek`.
+   */
+  stap?: string | null;
   /** 'auditsessie' of 'headless'. Hoort bij de meting, zie Shift2_Bewijsvoering.md. */
   browser?: string | null;
   /**
