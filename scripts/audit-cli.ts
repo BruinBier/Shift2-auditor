@@ -7607,11 +7607,49 @@ async function leesOnderdelen(page: any, alleenMain: boolean): Promise<any> {
       }
       if (!sleutel) continue;
 
+      // Het icoon van dit onderdeel, als vingerafdruk.
+      //
+      // 3.2.4 gaat niet alleen over de naam. Een icoon staat vrijwel altijd op
+      // `aria-hidden` en valt dus buiten de toegankelijke naam, terwijl juist mensen die op
+      // herkenbare beelden varen erdoor in de war raken als het per pagina verschilt. Dat
+      // is punt 4 van W3C-issue #5225.
+      //
+      // Vergeleken wordt waaraan het icoon te herkennen is: de bestandsnaam, de vorm van de
+      // svg, of de klasse van een icoonlettertype. Niet het beeld zelf; twee verschillende
+      // bestanden kunnen hetzelfde vergrootglas tonen. Het is dus een signaal en geen bewijs.
+      let icoon: string | null = null;
+      const plaatje = el.querySelector('img');
+      const tekening = el.querySelector('svg');
+      if (plaatje) {
+        const bron2 = (plaatje.getAttribute('src') || '').split('?')[0];
+        icoon = `afbeelding:${bron2.split('/').pop()}`;
+      } else if (tekening) {
+        const gebruik = tekening.querySelector('use');
+        const lijn = tekening.querySelector('path');
+        icoon = `svg:${
+          gebruik
+            ? gebruik.getAttribute('href') || gebruik.getAttribute('xlink:href') || ''
+            : lijn
+            ? (lijn.getAttribute('d') || '').slice(0, 40)
+            : tekening.getAttribute('class') || ''
+        }`;
+      } else {
+        for (const k of Array.from(el.querySelectorAll('span, i'))) {
+          const kl = k.getAttribute('class') || '';
+          const m = kl.match(/(?:^|\s)(fa[a-z]?-[a-z0-9-]+|icon-[a-z0-9-]+|material-icons[a-z-]*)/i);
+          if (m) {
+            icoon = `klasse:${m[1]}`;
+            break;
+          }
+        }
+      }
+
       uit.push({
         soort,
         sleutel,
         naam,
         bron,
+        icoon,
         href: el.getAttribute('href') || null,
       });
     }
@@ -7791,6 +7829,29 @@ async function getConsistentie(doel: string, flags: Flags) {
   const verschillend = alleVerschillen.filter((v) => !v.binnenEenPagina);
   const binnenEenPagina = alleVerschillen.filter((v) => v.binnenEenPagina);
 
+  // Hetzelfde voor de iconen. Een onderdeel dat overal hetzelfde heet maar niet overal
+  // hetzelfde beeld draagt, is voor wie op beelden vaart net zo verwarrend.
+  const perSleutelIcoon = new Map<string, Map<string, string[]>>();
+  for (const p of bruikbarePaginas) {
+    for (const o of p.onderdelen) {
+      if (!o.icoon) continue;
+      if (!perSleutelIcoon.has(o.sleutel)) perSleutelIcoon.set(o.sleutel, new Map());
+      const iconen = perSleutelIcoon.get(o.sleutel)!;
+      if (!iconen.has(o.icoon)) iconen.set(o.icoon, []);
+      if (!iconen.get(o.icoon)!.includes(p.sample)) iconen.get(o.icoon)!.push(p.sample);
+    }
+  }
+  const anderIcoon = Array.from(perSleutelIcoon.entries())
+    .filter(([, iconen]) => iconen.size > 1 && paginasVan(iconen).size > 1)
+    .map(([sleutel, iconen]) => ({
+      onderdeel: sleutel,
+      iconen: Array.from(iconen.entries()).map(([icoon, paginas]) => ({
+        icoon,
+        paginas: paginas.slice(0, 6),
+        aantal: paginas.length,
+      })),
+    }));
+
   // Onderdelen die niet overal staan. Dat is 3.2.3 (consistente navigatie) en geen 3.2.4;
   // wel melden, want anders lijkt het alsof er niets aan de hand is.
   const nietOveral = opMeerderePaginas
@@ -7827,6 +7888,42 @@ async function getConsistentie(doel: string, flags: Flags) {
       ...(nietOveral.length
         ? nietOveral.map((x) => `  ${x.onderdeel} — op ${x.opPaginas} van de ${perPagina.length}`)
         : ['  geen']),
+      '',
+      'ANDER ICOON BIJ HETZELFDE ONDERDEEL',
+      ...(anderIcoon.length
+        ? anderIcoon.flatMap((v) => [
+            `  ${v.onderdeel}`,
+            ...v.iconen.map((i: any) => `      ${i.icoon} op ${i.paginas.join(', ')}`),
+          ])
+        : ['  geen']),
+      '',
+      // De matrix uit stap 4 van de werkwijze: onderdelen in de rijen, pagina's in de
+      // kolommen. De losse lijsten hierboven laten zien wát er verschilt; hier zie je in
+      // één blik waar een onderdeel staat, waar het ontbreekt, en of een afwijking op één
+      // pagina zit of op de helft.
+      'MATRIX — welk onderdeel heet waar hoe',
+      `  kolommen: ${bruikbarePaginas
+        .map((p: any, i: number) => `P${i + 1}=${p.sample}`)
+        .join(' · ')}`,
+      '  in de rij: het nummer van de naamvariant, een punt als het onderdeel er niet staat',
+      '',
+      ...Array.from(perSleutel.entries())
+        .filter(([, namen]) => paginasVan(namen).size > 1)
+        .flatMap(([sleutel, namen]) => {
+          const varianten = Array.from(namen.keys());
+          const rij = bruikbarePaginas
+            .map((p: any) => {
+              const plek = varianten.findIndex((v) => namen.get(v)!.includes(p.sample));
+              return plek < 0 ? '.' : String(plek + 1);
+            })
+            .join('');
+          return [
+            `  ${rij}  ${sleutel}`,
+            ...(varianten.length > 1
+              ? varianten.map((v, i) => `        ${i + 1} = "${v}"`)
+              : []),
+          ];
+        }),
       '',
       "PAGINA'S",
       ...perPagina.map(
@@ -7877,6 +7974,7 @@ async function getConsistentie(doel: string, flags: Flags) {
       vanDeSteekproef: bruikbaar.length,
       onderdelenOpMeerderePaginas: opMeerderePaginas.length,
       andersBenoemd: verschillend.length,
+      anderIcoon: anderIcoon.length,
       nietOveralAanwezig: nietOveral.length,
       beslist,
     },
@@ -7899,6 +7997,7 @@ async function getConsistentie(doel: string, flags: Flags) {
     onderdelen_op_meerdere_paginas: opMeerderePaginas.length,
     anders_benoemd: verschillend,
     anders_benoemd_binnen_een_pagina: binnenEenPagina,
+    ander_icoon_bij_hetzelfde_onderdeel: anderIcoon,
     staat_niet_op_elke_pagina: nietOveral,
     overzicht,
     beslist,

@@ -38,6 +38,18 @@ knoppen op hun id of sjabloonklasse, en beide alleen binnen hetzelfde deel van d
 (header, navigatie, main, footer). Dat laatste is nodig omdat het logo en "Home" in het
 kruimelpad allebei naar de startpagina gaan zonder hetzelfde onderdeel te zijn.
 
+Naast de naam wordt ook het **icoon** vergeleken. Een icoon staat vrijwel altijd op
+`aria-hidden` en valt dus buiten de toegankelijke naam, terwijl juist wie op herkenbare
+beelden vaart in de war raakt als het per pagina verschilt; dat is punt 4 hierboven.
+Vergeleken wordt waaraan het icoon te herkennen is: de bestandsnaam, de vorm van de svg of de
+klasse van een icoonlettertype. Twee verschillende bestanden kunnen hetzelfde vergrootglas
+tonen, dus dit is een signaal en geen bewijs.
+
+Het overzichtsbestand bevat een **matrix**: onderdelen in de rijen, pagina's in de kolommen,
+per vakje het nummer van de naamvariant en een punt waar het onderdeel ontbreekt. Daarin zie
+je in één blik of een afwijking op één pagina zit of op de helft, en waar iets helemaal niet
+staat.
+
 Het commando scheidt twee dingen die er in de uitkomst hetzelfde uitzien:
 
 - **anders benoemd tussen pagina's** — dat is 3.2.4
