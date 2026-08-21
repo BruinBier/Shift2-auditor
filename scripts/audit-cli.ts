@@ -7727,6 +7727,17 @@ async function getConsistentie(doel: string, flags: Flags) {
     }
   }
 
+  // Welke criteria dit onderzoek kent. Nodig om te weten of 3.2.3 gemeld mag worden: wat
+  // niet in de opdracht zit, hoort er ook niet als vondst uit te komen.
+  let kentDrieTweeDrie = false;
+  try {
+    const oordelen: any[] = await api(`/api/projects/${projectId}/criterion-checks`);
+    kentDrieTweeDrie = oordelen.some((o) => o.criterionCode === '3.2.3');
+  } catch {
+    // Lukt het opvragen niet, dan melden we het wel: liever te veel dan stilzwijgend niets.
+    kentDrieTweeDrie = true;
+  }
+
   const bruikbaar = samples.filter((s) => s.url && s.sampleType !== 'pdf');
   const teDoen = bruikbaar.slice(0, max);
   const overgeslagen = bruikbaar.length - teDoen.length;
@@ -7852,8 +7863,13 @@ async function getConsistentie(doel: string, flags: Flags) {
       })),
     }));
 
-  // Onderdelen die niet overal staan. Dat is 3.2.3 (consistente navigatie) en geen 3.2.4;
-  // wel melden, want anders lijkt het alsof er niets aan de hand is.
+  // Onderdelen die niet overal staan. Dat is 3.2.3 (consistente navigatie) en geen 3.2.4.
+  //
+  // Of dat gemeld moet worden hangt af van het onderzoek: 3.2.3 zit niet in elk
+  // onderzoekstype. Staat het er niet in, dan is dit geen bevinding maar werk dat niet
+  // gevraagd is, en dan hoort het er ook niet als vondst te staan. Zie
+  // Shift2_Scope_Per_Sample.md: buiten de scope rapporteren is net zo goed een fout als
+  // binnen de scope iets missen.
   const nietOveral = opMeerderePaginas
     .map(([sleutel, namen]) => ({
       onderdeel: sleutel,
@@ -7884,7 +7900,9 @@ async function getConsistentie(doel: string, flags: Flags) {
           ])
         : ['  geen']),
       '',
-      'STAAT NIET OP ELKE PAGINA (dat is 3.2.3, niet 3.2.4)',
+      kentDrieTweeDrie
+        ? 'STAAT NIET OP ELKE PAGINA (dat is 3.2.3, niet 3.2.4)'
+        : 'STAAT NIET OP ELKE PAGINA (3.2.3; zit niet in dit onderzoek, dus alleen ter kennisgeving)',
       ...(nietOveral.length
         ? nietOveral.map((x) => `  ${x.onderdeel} — op ${x.opPaginas} van de ${perPagina.length}`)
         : ['  geen']),
@@ -7975,7 +7993,7 @@ async function getConsistentie(doel: string, flags: Flags) {
       onderdelenOpMeerderePaginas: opMeerderePaginas.length,
       andersBenoemd: verschillend.length,
       anderIcoon: anderIcoon.length,
-      nietOveralAanwezig: nietOveral.length,
+      nietOveralAanwezig: kentDrieTweeDrie ? nietOveral.length : undefined,
       beslist,
     },
   });
@@ -7998,7 +8016,10 @@ async function getConsistentie(doel: string, flags: Flags) {
     anders_benoemd: verschillend,
     anders_benoemd_binnen_een_pagina: binnenEenPagina,
     ander_icoon_bij_hetzelfde_onderdeel: anderIcoon,
-    staat_niet_op_elke_pagina: nietOveral,
+    staat_niet_op_elke_pagina: kentDrieTweeDrie ? nietOveral : undefined,
+    buiten_dit_onderzoek: kentDrieTweeDrie
+      ? undefined
+      : `${nietOveral.length} onderdelen staan niet op elke pagina. Dat is 3.2.3 en dat criterium zit niet in dit onderzoek; het staat alleen in het overzichtsbestand.`,
     overzicht,
     beslist,
     let_op: verschillend.length
