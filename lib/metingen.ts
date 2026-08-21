@@ -185,6 +185,26 @@ export const METINGEN: Meetopdracht[] = [
   },
 ];
 
+/**
+ * Criteria waarvan het oordeel over de héle steekproef gaat, niet over één pagina.
+ *
+ * 3.2.4 vraagt of hetzelfde onderdeel op verschillende pagina's hetzelfde heet. Aan één
+ * pagina is dat niet te zien; een oordeel per pagina is daar geen onnauwkeurigheid maar een
+ * categoriefout. Zulke criteria worden op het homepage-sample vastgelegd, net als de
+ * bevindingen over header en footer, en op de andere samples staan ze op `niet_aanwezig`
+ * met een verwijzing daarheen.
+ *
+ * De kaart heeft deze lijst nodig om te kunnen zeggen wat de knop doet. Zonder dit staat er
+ * "3.2.4 · Home" boven en leest "In orde" als een uitspraak over de homepage, terwijl je een
+ * conclusie over zestien pagina's bevestigt.
+ */
+export const SITEBREED_BEOORDEELD = ['3.2.4'];
+
+/** Wordt dit criterium over de hele steekproef beoordeeld? */
+export function isSitebreed(code: string): boolean {
+  return SITEBREED_BEOORDEELD.includes(code);
+}
+
 /** De meting bij een commando, of niets als het commando niet bestaat. */
 export function meetopdracht(commando: string): Meetopdracht | undefined {
   return METINGEN.find((m) => m.commando === commando);

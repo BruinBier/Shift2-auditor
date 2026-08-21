@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Cel, Meting, Stand, Voorstel } from './gegevens';
-import { meetbaarVanafDeKaart, leesbareAanroep } from '@/lib/metingen';
+import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -1575,6 +1575,45 @@ export default function Stapel({
     );
   };
 
+  /**
+   * De kop van een kaart, en bij een sitebreed criterium wat dat betekent.
+   *
+   * Staat er "3.2.4 · Home" boven, dan leest de knop "In orde" als een uitspraak over de
+   * homepage. Maar 3.2.4 gaat over een set pagina's: je bevestigt een conclusie die over
+   * zestien pagina's is getrokken, en die hier alleen wordt vástgelegd. Dat verschil hoort
+   * op de kaart te staan, anders klikt iemand iets aan wat hij niet bedoelt.
+   */
+  const kaartkop = (cel: Cel) => (
+    <>
+      <p className="mb-1 text-sm text-gray-500">
+        {cel.code} — {critTitel(cel.code)} ·{' '}
+        {isSitebreed(cel.code) ? 'hele website' : sampleTitel(cel.sampleId)}
+      </p>
+      {isSitebreed(cel.code) && (
+        <p className="mb-3 text-xs text-gray-500">
+          Vastgelegd op {sampleTitel(cel.sampleId)}. Op de andere pagina&apos;s staat dit
+          criterium op &ldquo;niet aanwezig&rdquo;, met een verwijzing hierheen.
+        </p>
+      )}
+    </>
+  );
+
+  /** Boven de knoppen, zodat duidelijk is waarover je beslist. */
+  const sitebreedMelding = (cel: Cel) => {
+    if (!isSitebreed(cel.code)) return null;
+    // Het aantal pagina's komt uit de meting zelf, niet uit een aanname.
+    const meting = (cel.verantwoording ?? []).find(
+      (m) => typeof (m.uitkomst as any)?.paginas === 'number'
+    );
+    const paginas = meting ? ((meting.uitkomst as any).paginas as number) : null;
+    return (
+      <p className="mb-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+        Je beslist hier over de hele set samples, niet over deze pagina alleen
+        {paginas ? `. De vergelijking loopt over ${paginas} pagina's` : ''}.
+      </p>
+    );
+  };
+
   const sampleVoor = (id: string | null) =>
     id ? stand.samples.find((s) => s.id === id) ?? null : null;
   const sampleTitel = (id: string | null) =>
@@ -1742,9 +1781,7 @@ export default function Stapel({
             )}
           </div>
 
-          <p className="mb-1 text-sm text-gray-500">
-            {huidig.cel.code} — {critTitel(huidig.cel.code)} · {sampleTitel(huidig.cel.sampleId)}
-          </p>
+          {kaartkop(huidig.cel)}
           <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
             {huidig.cel.reden ?? '(geen onderbouwing gegeven)'}
           </p>
@@ -1861,6 +1898,8 @@ export default function Stapel({
               }
             )
           ) : (
+            <>
+            {sitebreedMelding(huidig.cel)}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -1897,6 +1936,7 @@ export default function Stapel({
                 Overleggen
               </button>
             </div>
+            </>
           )}
         </div>
       ) : huidig.soort === 'voorstel' ? (
@@ -2088,9 +2128,7 @@ export default function Stapel({
             )}
           </div>
 
-          <p className="mb-1 text-sm text-gray-500">
-            {huidig.cel.code} — {critTitel(huidig.cel.code)} · {sampleTitel(huidig.cel.sampleId)}
-          </p>
+          {kaartkop(huidig.cel)}
           <p className="mb-4 leading-relaxed text-gray-900">
             {huidig.cel.reden ?? 'Dit criterium vergt een browsertest.'}
           </p>
@@ -2123,6 +2161,7 @@ export default function Stapel({
             placeholder={VOORBEELD_PER_CRITERIUM[huidig.cel.code] ?? 'Wat je hebt gedaan, en wat je zag'}
           />
 
+          {sitebreedMelding(huidig.cel)}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
