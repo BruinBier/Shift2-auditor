@@ -38,6 +38,7 @@ import {
   timestamp,
 } from './lib/browser-fetch';
 import { legVast, leesLogboek } from './lib/audit-log';
+import { leesbareAanroep } from '../lib/metingen';
 import {
   lintFinding,
   formatLintIssues,
@@ -379,6 +380,81 @@ async function saveChecks(projectId: string, flags: Flags) {
 }
 
 /**
+ * Vastleggen wat er per deelgebied is nagelopen.
+ *
+ * Sommige criteria bestaan uit meerdere losse vragen. SC 1.3.1 is er zo een: dertien
+ * gebieden, van koppen tot citaten. Eén oordeel met een onderbouwing in lopende tekst maakt
+ * geen verschil tussen "geen tabellen op deze pagina" en "niet naar tabellen gekeken" — en
+ * dat verschil is precies wat er bij BEV-03 misging.
+ *
+ *   npm run cli -- save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json
+ *
+ * Verwacht formaat — de namen moeten woordelijk overeenkomen met `### Deelgebieden` in het
+ * regelbestand van het criterium; de route weigert een naam die daar niet in staat:
+ *   [{ "gebied": "Tabellen", "uitkomst": "nvt" },
+ *    { "gebied": "Lijsten", "uitkomst": "fout", "toelichting": "footerrij in een p" }]
+ *
+ * `uitkomst` is `ok`, `nvt` of `fout`. Bij `fout` is een toelichting verplicht: een rood
+ * kruis zonder uitleg kan niemand wegen. Wat je niet meestuurt blijft staan, dus je kunt de
+ * lijst in delen invullen.
+ */
+async function saveGebieden(projectId: string, flags: Flags) {
+  const sampleItemId = flags.sample;
+  const criterionCode = flags.criterium || flags.criterion;
+  if (!sampleItemId || !criterionCode) {
+    throw new Error('Gebruik: save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json');
+  }
+
+  /**
+   * Wissen: een gebied terugzetten op "nog niet nagelopen".
+   *
+   *   --wis="Tabellen,Lijsten"   die gebieden
+   *   --wis-alles                de hele lijst
+   *
+   * Overschrijven kan al met een gewone invoer, maar dat vervangt een bewering door een
+   * andere bewering. Terug naar géén bewering kan alleen zo — en dat is nodig zodra iets
+   * is afgevinkt wat niet werkelijk is nagekeken.
+   */
+  const wis = String(flags.wis ?? '').trim();
+  // Een losse vlag zonder waarde komt als lege string binnen, niet als true; `--wis-alles`
+  // en `--wis-alles=true` moeten allebei werken.
+  const wisAllesRuw = flags['wis-alles'];
+  const wisAlles = wisAllesRuw !== undefined && wisAllesRuw !== 'false';
+  if (wis || wisAlles) {
+    const gebieden = wis ? wis.split(',').map((g) => g.trim()).filter(Boolean) : [];
+    const result = await api(`/api/projects/${projectId}/criterion-checks/gebieden`, {
+      method: 'DELETE',
+      body: JSON.stringify({ sampleItemId, criterionCode, gebieden, ...(wisAlles ? { alles: true } : {}) }),
+    });
+    print(result);
+    return;
+  }
+
+  const invoer = await leesStdin();
+  if (!invoer.trim()) {
+    throw new Error('Geen invoer op stdin. Gebruik: save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json');
+  }
+
+  let gebieden: unknown;
+  try {
+    // Zelfde BOM-val als bij save-checks: PowerShell schrijft er bij `Out-File -Encoding
+    // utf8` standaard een voor, en die sloopt JSON.parse.
+    gebieden = JSON.parse(invoer.replace(/^﻿/, ''));
+  } catch (err) {
+    throw new Error(`Kon de invoer niet als JSON lezen: ${String(err)}`);
+  }
+  if (!Array.isArray(gebieden)) {
+    throw new Error('De invoer moet een JSON-array van gebieden zijn.');
+  }
+
+  const result = await api(`/api/projects/${projectId}/criterion-checks/gebieden`, {
+    method: 'PUT',
+    body: JSON.stringify({ sampleItemId, criterionCode, gebieden }),
+  });
+  print(result);
+}
+
+/**
  * Schrijft de beoordelingen van één sample weg (alle criteria van het onderzoekstype).
  *
  * Voedt zich uit een JSON-bestand met de vorm die de audit-samples-workflow teruggeeft:
@@ -522,7 +598,7 @@ async function getHtml(url: string, flags: Flags) {
   const wantText = flags.text === 'true';
   const session = await getBrowser();
   try {
-    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid, dichtgeklapt } = await openPage(session, url);
     try {
       const pageTitle = await page.title();
       const finalUrl = page.url();
@@ -585,7 +661,7 @@ async function getHtml(url: string, flags: Flags) {
         commando: 'get-html',
         stap: `De pagina opgehaald in een echte browser, zodat de JavaScript van de site heeft gedraaid: ${
           useFull ? 'de hele pagina inclusief header en footer, want dit is de homepage' : 'alleen de main-content, want dit is geen homepage'
-        }. Dit is de pagina waarop alle oordelen hieronder rusten.`,
+        }.`,
         // Alleen de vlaggen die werkelijk zijn meegegeven. `useFull` volgt uit de
         // homepage-detectie en niet uit een vlag; die hier opnemen maakt de regel
         // onbruikbaar om over te typen, want dan zet je iets aan wat de CLI zelf
@@ -623,6 +699,14 @@ async function getHtml(url: string, flags: Flags) {
         waarschuwing: gehydrateerd
           ? undefined
           : 'De JavaScript van deze pagina draait niet: er hangen geen klikafhandelaars aan. Trek hieruit GEEN conclusies over interactieve criteria (toetsenbord, uitklapmenu, zoeksuggesties, schakelknoppen). Start de audit-Chrome met `npm run chrome:debug` en haal de pagina opnieuw op.',
+        // Hoeveel inhoud er dichtgeklapt staat, en dus niet in deze meting zit. Nul is een
+        // uitkomst en geen leegte: dan is vastgesteld dat er niets verborgen was.
+        dichtgeklapt: dichtgeklapt.aantal,
+        dichtgeklapt_voorbeelden: dichtgeklapt.aantal ? dichtgeklapt.voorbeelden : undefined,
+        waarschuwing_dichtgeklapt:
+          dichtgeklapt.aantal && session.mode === 'headless'
+            ? `Er staan ${dichtgeklapt.aantal} blokken dichtgeklapt die niet zijn gemeten. Voor een criterium over de inhoud van de pagina — 1.3.1, 1.1.1, 2.4.6 — is dit onvolledig: koppen, lijsten en tabellen binnen een gesloten blok tellen gewoon mee. Start een auditsessie met \`npm run chrome:debug\` en klap ze open.`
+            : undefined,
       });
     } finally {
       await cleanup();
@@ -1912,9 +1996,26 @@ async function koppelLogboek(projectId: string, flags: Flags) {
   /** Per sample: per meting de laatste run, met de criteria van díe run. */
   const gerichtPerSample = new Map<string, Map<string, { meting: any; criteria: string[] }>>();
 
+  /**
+   * Regels die bij geen enkel sample horen.
+   *
+   * Die werden stilzwijgend overgeslagen, en dat is een dure stilte: toen `get-consistentie`
+   * per abuis het onderzoeksnummer in `url` zette, verdween elke meting een uur lang zonder
+   * dat er iets veranderde op het scherm — en het antwoord bleef "373 gekoppeld" melden,
+   * want die 373 gingen over de andere metingen.
+   *
+   * Een logboek van een ander onderzoek levert hier ook regels op; dat is normaal. Het
+   * getal is dus geen fout maar een waarneming. Staat er een commando van dit onderzoek
+   * tussen, dan is er iets mis met de koppeling.
+   */
+  const nietGeplaatst: { commando: string; url: string | null }[] = [];
+
   for (const r of regels) {
     const sample = sampleVanUrl.get(kaal(r.eindUrl || r.url || ''));
-    if (!sample) continue;
+    if (!sample) {
+      nietGeplaatst.push({ commando: r.commando, url: r.eindUrl || r.url || null });
+      continue;
+    }
     // Dezelfde vertaling als de meetknop op de kaart gebruikt, uit lib/verantwoording.ts.
     // Zou elk van de twee zelf bepalen welke velden meegaan, dan ziet dezelfde meting er
     // anders uit al naar gelang wie hem startte.
@@ -1994,7 +2095,20 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     method: 'POST',
     body: JSON.stringify({ bron: 'workflow', checks: teSchrijven }),
   });
-  print({ logboekregels: regels.length, gekoppeld: teSchrijven.length, ...result });
+  // Per commando hoeveel er niet te plaatsen waren; de volledige lijst is bij honderden
+  // regels onleesbaar, en het commando is genoeg om te zien of het je eigen meting betreft.
+  const nietGeplaatstPerCommando: Record<string, number> = {};
+  for (const n of nietGeplaatst) {
+    nietGeplaatstPerCommando[n.commando] = (nietGeplaatstPerCommando[n.commando] ?? 0) + 1;
+  }
+
+  print({
+    logboekregels: regels.length,
+    gekoppeld: teSchrijven.length,
+    niet_geplaatst: nietGeplaatst.length,
+    niet_geplaatst_per_commando: nietGeplaatst.length ? nietGeplaatstPerCommando : undefined,
+    ...result,
+  });
 }
 
 /**
@@ -7620,9 +7734,13 @@ async function leesOnderdelen(page: any, alleenMain: boolean): Promise<any> {
       let icoon: string | null = null;
       const plaatje = el.querySelector('img');
       const tekening = el.querySelector('svg');
+      let icoonAdres: string | null = null;
       if (plaatje) {
         const bron2 = (plaatje.getAttribute('src') || '').split('?')[0];
         icoon = `afbeelding:${bron2.split('/').pop()}`;
+        // Het volledige adres erbij, met querystring: dat is wat de browser werkelijk
+        // laadt, en de kaart moet het plaatje kunnen tonen.
+        icoonAdres = (plaatje as HTMLImageElement).src || null;
       } else if (tekening) {
         const gebruik = tekening.querySelector('use');
         const lijn = tekening.querySelector('path');
@@ -7644,12 +7762,70 @@ async function leesOnderdelen(page: any, alleenMain: boolean): Promise<any> {
         }
       }
 
+      // Het zichtbare label: wat een ziende gebruiker leest.
+      //
+      // Dat is iets anders dan de toegankelijke naam, en `Checklist_SC_3_2_4.md` noemt ze
+      // dan ook als twee aparte controles. Een knop met overal `aria-label="Zoeken"` maar
+      // met "Zoek" op de ene pagina en "Vind" op de andere is voor wie kijkt of met spraak
+      // bedient inconsistent, terwijl de namen gelijk zijn en de vergelijking niets meldt.
+      //
+      // Weggestopte tekst telt niet mee: een `sr-only`-span staat wél in de naam maar ziet
+      // niemand. Herkend aan wat het in de praktijk is: nul bij nul groot, buiten beeld
+      // geschoven, of dichtgeknipt met clip.
+      //
+      // Uitgeschreven en niet in een hulpfunctie: `tzx` zet een `__name`-aanroep om elke
+      // benoemde functie heen, en die bestaat niet in de browser. Een functie hierbinnen
+      // laat elke pagina falen met "__name is not defined".
+      let zichtbaar = '';
+      const teLopen: Node[] = Array.from(el.childNodes);
+      while (teLopen.length) {
+        const kind: any = teLopen.shift();
+        if (!kind) continue;
+        if (kind.nodeType === 3) {
+          zichtbaar += ' ' + (kind.textContent || '');
+          continue;
+        }
+        if (kind.nodeType !== 1) continue;
+        const ks = getComputedStyle(kind);
+        if (ks.display === 'none' || ks.visibility === 'hidden') continue;
+        if (kind.getAttribute('aria-hidden') === 'true') continue;
+        const kr = kind.getBoundingClientRect();
+        if (
+          (kr.width <= 1 && kr.height <= 1) ||
+          kr.right < 0 ||
+          kr.left < -999 ||
+          /inset\(50%\)|rect\(0(px)?, ?0(px)?, ?0(px)?, ?0(px)?\)/.test(ks.clipPath + ks.clip)
+        ) {
+          continue;
+        }
+        // Een plaatje of tekening draagt geen leesbare tekst; dat wordt apart als icoon
+        // vergeleken.
+        const kt = kind.tagName.toLowerCase();
+        if (kt === 'img' || kt === 'svg') continue;
+        teLopen.push(...Array.from(kind.childNodes as NodeListOf<Node>));
+      }
+      zichtbaar = zichtbaar.replace(/\s+/g, ' ').trim();
+
       uit.push({
         soort,
         sleutel,
         naam,
         bron,
         icoon,
+        icoonAdres,
+        zichtbaar,
+        // Waar het element op de pagina staat. Nodig om er in een tweede ronde een
+        // schermafdruk van te maken: pas na het vergelijken weten we welke onderdelen
+        // afwijken, en dan is deze pagina alweer gesloten.
+        vak: (function () {
+          var r = el.getBoundingClientRect();
+          return {
+            x: Math.round(r.left + window.scrollX),
+            y: Math.round(r.top + window.scrollY),
+            b: Math.round(r.width),
+            h: Math.round(r.height),
+          };
+        })(),
         href: el.getAttribute('href') || null,
       });
     }
@@ -7692,7 +7868,19 @@ async function leesOnderdelen(page: any, alleenMain: boolean): Promise<any> {
  * pagina's erbij.
  */
 async function getConsistentie(doel: string, flags: Flags) {
-  const max = Math.max(2, parseInt(flags.max || '12', 10));
+  /**
+   * Standaard de hele steekproef, niet de eerste twaalf.
+   *
+   * 3.2.4 gaat over een set pagina’s. "De eerste twaalf" is dan geen steekproef maar een
+   * willekeurige greep, en het verschil zit juist vaak in de afwijkende pagina achteraan:
+   * bij UTHEU-02 was het contactformulier het zestiende sample, en met de oude standaard
+   * viel precies dat sjabloon buiten de vergelijking. De kop van het artefact zei dan
+   * "12 van de 12" alsof dat de bedoeling was.
+   *
+   * `--max` blijft bestaan voor wie bewust wil beperken; dan meldt de uitvoer wat er
+   * niet bekeken is.
+   */
+  const max = flags.max ? Math.max(2, parseInt(flags.max, 10)) : Number.POSITIVE_INFINITY;
   const alleenMain = flags.scope === 'main';
 
   // Het onderzoek en zijn pagina's ophalen. Een adres mag ook: dan zoeken we op welk
@@ -7786,12 +7974,24 @@ async function getConsistentie(doel: string, flags: Flags) {
 
   // Per sleutel de namen die op de verschillende pagina's gevonden zijn.
   const perSleutel = new Map<string, Map<string, string[]>>();
+  /**
+   * Waar de naam vandaan komt, per naamvariant.
+   *
+   * Bij het logo van heuvelrug.nl is dat het hele verschil: op vijftien pagina's komt de
+   * naam uit een `title` en op het contactformulier uit het `alt` van de afbeelding. Twee
+   * mechanismen, en voor wie met de muis werkt ook twee ervaringen — een `title` toont een
+   * tekstballon, een `alt` niet. Zonder deze herkomst staat er alleen dat het anders heet.
+   */
+  const bronPerNaam = new Map<string, string>();
   for (const p of bruikbarePaginas) {
     for (const o of p.onderdelen) {
       if (!perSleutel.has(o.sleutel)) perSleutel.set(o.sleutel, new Map());
       const namen = perSleutel.get(o.sleutel)!;
       // Hoofdletters tellen niet mee: een schermlezer leest "Zoeken" en "zoeken" hetzelfde.
       const kaal = o.naam.toLowerCase();
+      if (!bronPerNaam.has(o.sleutel + '|' + kaal)) {
+        bronPerNaam.set(o.sleutel + '|' + kaal, o.bron);
+      }
       if (!namen.has(kaal)) namen.set(kaal, []);
       if (!namen.get(kaal)!.includes(p.sample)) namen.get(kaal)!.push(p.sample);
     }
@@ -7832,7 +8032,10 @@ async function getConsistentie(doel: string, flags: Flags) {
         binnenEenPagina,
         namen: Array.from(namen.entries()).map(([naam, paginas]) => ({
           naam,
-          paginas: paginas.slice(0, 6),
+          // Alle pagina&apos;s, niet de eerste zes. Een lijst die stil afkapt leest als
+          // de volledige lijst: het logo leek daardoor op zes pagina's te staan terwijl
+          // het er vijftien zijn.
+          paginas,
           aantal: paginas.length,
         })),
       };
@@ -7842,12 +8045,48 @@ async function getConsistentie(doel: string, flags: Flags) {
 
   // Hetzelfde voor de iconen. Een onderdeel dat overal hetzelfde heet maar niet overal
   // hetzelfde beeld draagt, is voor wie op beelden vaart net zo verwarrend.
+  /**
+   * Hetzelfde voor het zichtbare label. Stap 2 van de handmatige controle vergelijkt twee
+   * dingen apart: wat je ziet staan, en wat er in de code staat. Tot nu toe deed dit
+   * commando alleen dat tweede, en dan glipt het schoolvoorbeeld uit de checklist erdoor:
+   * overal `aria-label="Zoeken"`, maar "Zoek" op de ene pagina en "Vind" op de andere.
+   *
+   * Onderdelen zonder zichtbare tekst — een knop met alleen een pictogram — blijven buiten
+   * beschouwing: daar valt niets te vergelijken, en dat is 4.1.2 en niet 3.2.4.
+   */
+  const perSleutelZichtbaar = new Map<string, Map<string, string[]>>();
+  for (const p of bruikbarePaginas) {
+    for (const o of p.onderdelen) {
+      if (!o.zichtbaar) continue;
+      if (!perSleutelZichtbaar.has(o.sleutel)) perSleutelZichtbaar.set(o.sleutel, new Map());
+      const labels = perSleutelZichtbaar.get(o.sleutel)!;
+      const kaal = o.zichtbaar.toLowerCase();
+      if (!labels.has(kaal)) labels.set(kaal, []);
+      if (!labels.get(kaal)!.includes(p.sample)) labels.get(kaal)!.push(p.sample);
+    }
+  }
+  const andersZichtbaar = Array.from(perSleutelZichtbaar.entries())
+    .filter(([, labels]) => labels.size > 1 && paginasVan(labels).size > 1)
+    .map(([sleutel, labels]) => ({
+      onderdeel: sleutel,
+      labels: Array.from(labels.entries()).map(([label, paginas]) => ({
+        label,
+        paginas: paginas.slice(0, 6),
+        aantal: paginas.length,
+      })),
+    }));
+
   const perSleutelIcoon = new Map<string, Map<string, string[]>>();
+  /** Per icoonvariant een voorbeeldadres, zodat de kaart het plaatje kan laten zien. */
+  const adresPerIcoon = new Map<string, string>();
   for (const p of bruikbarePaginas) {
     for (const o of p.onderdelen) {
       if (!o.icoon) continue;
       if (!perSleutelIcoon.has(o.sleutel)) perSleutelIcoon.set(o.sleutel, new Map());
       const iconen = perSleutelIcoon.get(o.sleutel)!;
+      if (o.icoonAdres && !adresPerIcoon.has(o.sleutel + '|' + o.icoon)) {
+        adresPerIcoon.set(o.sleutel + '|' + o.icoon, o.icoonAdres);
+      }
       if (!iconen.has(o.icoon)) iconen.set(o.icoon, []);
       if (!iconen.get(o.icoon)!.includes(p.sample)) iconen.get(o.icoon)!.push(p.sample);
     }
@@ -7858,7 +8097,7 @@ async function getConsistentie(doel: string, flags: Flags) {
       onderdeel: sleutel,
       iconen: Array.from(iconen.entries()).map(([icoon, paginas]) => ({
         icoon,
-        paginas: paginas.slice(0, 6),
+        paginas,
         aantal: paginas.length,
       })),
     }));
@@ -7880,6 +8119,112 @@ async function getConsistentie(doel: string, flags: Flags) {
 
   const dir = ensureOutputDir();
   const stempel = timestamp();
+
+  /**
+   * De afbeeldingen van afwijkende onderdelen binnenhalen en naast het overzicht
+   * wegschrijven.
+   *
+   * Zou de kaart naar het adres op de site wijzen, dan verandert het bewijs zodra de
+   * gemeente het logo vervangt: je ziet dan een nieuw plaatje naast een oude meting,
+   * zonder dat iets dat meldt. En elke keer dat iemand de kaart opent gaat er een verzoek
+   * naar de onderzochte partij. Een kopie bij de meting lost allebei op.
+   *
+   * Lukt het ophalen niet, dan blijft alleen het adres staan. Een ontbrekend plaatje is
+   * geen reden om de hele meting te laten mislukken.
+   */
+  const artefactPerIcoon = new Map<string, string>();
+  let icoonTeller = 0;
+  // Alleen de afbeeldingen van onderdelen die werkelijk verschillen. De rest toont de
+  // kaart niet, en op een grote site zijn dat er tientallen om niets.
+  const teHalen: [string, string][] = [];
+  for (const v of anderIcoon) {
+    for (const i of v.iconen) {
+      const sleutel = v.onderdeel + '|' + i.icoon;
+      const adres = adresPerIcoon.get(sleutel);
+      if (adres) teHalen.push([sleutel, adres]);
+    }
+  }
+  for (const [sleutel, adres] of teHalen) {
+    try {
+      const antwoord = await fetch(adres);
+      if (!antwoord.ok) continue;
+      const soort = (antwoord.headers.get('content-type') || '').split('/')[1] || '';
+      const staart = (soort.split(';')[0] || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 4);
+      const naam = `${stempel}-beeld-${++icoonTeller}.${staart}`;
+      fs.writeFileSync(path.join(dir, naam), Buffer.from(await antwoord.arrayBuffer()));
+      artefactPerIcoon.set(sleutel, naam);
+    } catch {
+      // Adres blijft staan; de kaart valt daarop terug.
+    }
+  }
+
+  /**
+   * Tweede ronde: een schermafdruk van elk onderdeel dat afwijkt.
+   *
+   * Pas ná het vergelijken is bekend welke onderdelen anders heten, en dan zijn de pagina's
+   * alweer gesloten. Daarom nog een ronde langs alleen de pagina's die een afwijkende variant
+   * dragen — vier tot acht bezoeken, geen zestien.
+   *
+   * Waarom dit nodig is: bij het logo kon je het verschil zien omdat er een afbeelding in zat.
+   * Bij een tekstlink is er niets te zien, en dan staat er alleen dat iets anders heet. Een
+   * uitsnede van het element laat zien hoe het er in het echt bij staat — inclusief of het
+   * ergens in een dichtgeklapt blok zit of nauwelijks opvalt.
+   */
+  const afdrukPerNaam = new Map<string, string>();
+  const afdrukPaginaPerNaam = new Map<string, string>();
+  const afdrukken: { pad: string; bijschrift: string }[] = [];
+  if (verschillend.length) {
+    // Per pagina verzamelen wat daar vastgelegd moet worden, zodat elke pagina één keer opengaat.
+    const perPaginaTeDoen = new Map<string, { sleutel: string; naam: string }[]>();
+    for (const v of verschillend) {
+      for (const n of v.namen) {
+        const eerste = n.paginas[0];
+        if (!eerste) continue;
+        const lijst = perPaginaTeDoen.get(eerste) ?? [];
+        lijst.push({ sleutel: v.onderdeel, naam: n.naam });
+        perPaginaTeDoen.set(eerste, lijst);
+      }
+    }
+
+    const tweede = await getBrowser();
+    try {
+      for (const [sampleTitel, teVangen] of Array.from(perPaginaTeDoen.entries())) {
+        const pagina = bruikbarePaginas.find((p: any) => p.sample === sampleTitel);
+        if (!pagina?.url) continue;
+        const { page, cleanup } = await openPage(tweede, pagina.url);
+        try {
+          const gevonden = await leesOnderdelen(page, alleenMain);
+          for (const doel of teVangen) {
+            const el = (gevonden.onderdelen ?? []).find(
+              (o: any) => o.sleutel === doel.sleutel && (o.naam || '').toLowerCase() === doel.naam
+            );
+            if (!el?.vak || el.vak.b < 2 || el.vak.h < 2) continue;
+            const rand = 6;
+            const naam = `${stempel}-onderdeel-${afdrukken.length + 1}.png`;
+            await page.screenshot({
+              path: path.join(dir, naam),
+              clip: {
+                x: Math.max(0, el.vak.x - rand),
+                y: Math.max(0, el.vak.y - rand),
+                width: el.vak.b + rand * 2,
+                height: el.vak.h + rand * 2,
+              },
+            });
+            afdrukPerNaam.set(`${doel.sleutel}|${doel.naam}`, naam);
+            afdrukPaginaPerNaam.set(`${doel.sleutel}|${doel.naam}`, sampleTitel);
+            afdrukken.push({ pad: naam, bijschrift: `"${doel.naam}" op ${sampleTitel}` });
+          }
+        } catch {
+          // Eén pagina die niet opengaat mag de meting niet laten mislukken.
+        } finally {
+          await cleanup();
+        }
+      }
+    } finally {
+      await tweede.dispose();
+    }
+  }
+
   let overzicht: string | null = path.join(dir, `${stempel}-consistentie.txt`);
   try {
     const regels = [
@@ -7962,16 +8307,22 @@ async function getConsistentie(doel: string, flags: Flags) {
         .join(', ')}.`
     : '';
 
-  const stapZin = `${bruikbarePaginas.length} pagina's van de steekproef naast elkaar gelegd en per onderdeel de toegankelijke naam vergeleken. Links zijn gekoppeld op hun bestemming, knoppen op hun id of sjabloonklasse. ${
-    verschillend.length
-      ? `${verschillend.length} ${
-          verschillend.length === 1 ? 'onderdeel heet' : 'onderdelen heten'
-        } op de ene pagina anders dan op de andere: ${verschillend
-          .slice(0, 4)
-          .map((v) => `${v.onderdeel} (${v.namen.map((n) => `"${n.naam}"`).join(' / ')})`)
-          .join('; ')}.`
-      : 'Elk onderdeel dat op meer dan één pagina voorkomt, heet daar overal hetzelfde.'
-  }${overgeslagen ? ` ${overgeslagen} pagina's zijn niet bekeken door de grens van --max=${max}.` : ''}${omgeleidTekst}`;
+  /**
+   * Eén regel in het logboek: wat er vergeleken is, en of dat compleet was.
+   *
+   * Niet meer dan dat. De werkwijze staat in het regelbestand en op de kaart; welke
+   * onderdelen afwijken staat onder Bevindingen en in het overzichtsbestand. Stond dat
+   * hier ook, dan las je op één scherm drie keer hetzelfde — en liep het uit elkaar zodra
+   * er iets veranderde, want deze zin wordt bij het meten vastgelegd en verandert daarna
+   * niet meer mee.
+   */
+  const stapZin = `${bruikbarePaginas.length} van de ${bruikbaar.length} pagina's van de steekproef vergeleken.${
+    omgeleid.length ? ` ${omgeleid.length} omgeleid en dus niet onderzocht.` : ''
+  }${
+    overgeslagen ? ` ${overgeslagen} niet bekeken door --max=${max}.` : ''
+  }${
+    mislukt.length ? ` ${mislukt.length} niet gelukt.` : ''
+  }`;
 
   // Een omgeleid sample is niet onderzocht. Dat maakt de vergelijking van de rest niet
   // ongeldig, maar wel onvolledig, en dat hoort de kaart te zeggen.
@@ -7980,11 +8331,22 @@ async function getConsistentie(doel: string, flags: Flags) {
   legVast({
     commando: 'get-consistentie',
     stap: stapZin,
+    // Het argument dat werkelijk is meegegeven, niet het adres van de eerste pagina.
+    // Anders staat er in het logboek een commando dat niemand zo heeft gedraaid, en dat
+    // bovendien afwijkt van de werkwijze: die schrijft het onderzoeksnummer voor.
     argumenten: { ...(flags.max ? { max: String(max) } : {}), ...(flags.scope ? { scope: flags.scope } : {}) },
     url: teDoen[0]?.url ?? null,
+    aanroep: leesbareAanroep('get-consistentie', doel, {
+      ...(flags.max ? { max: String(max) } : {}),
+      ...(flags.scope ? { scope: flags.scope } : {}),
+    }),
     browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
     weergave: 'standaardweergave',
     artefact: overzicht,
+    // De uitsneden van de afwijkende onderdelen. Hiermee klopt ook de melding op de
+    // kaart weer: er is wél beeldmateriaal, alleen niet van "de pagina" — dit commando
+    // bezoekt er zestien.
+    schermafdrukken: afdrukken.length ? afdrukken : undefined,
     criteria: ['3.2.4'],
     uitkomst: {
       paginas: bruikbarePaginas.length,
@@ -7995,11 +8357,59 @@ async function getConsistentie(doel: string, flags: Flags) {
       anderIcoon: anderIcoon.length,
       nietOveralAanwezig: kentDrieTweeDrie ? nietOveral.length : undefined,
       beslist,
+      // De gevonden onderdelen zelf, niet alleen hoeveel het er zijn. De kaart in
+      // "Waar sta ik" toont ze; zonder dit zou daar een aantal staan en zou de
+      // onderzoeker het tekstbestand moeten openen om te zien wáár het over gaat.
+      // Paginanamen blijven eruit — die staan in het overzichtsbestand. Hier telt
+      // hoeveel pagina's een variant draagt, want dat is wat de weging bepaalt.
+      /**
+       * Per onderdeel of het uit het sjabloon komt of uit de redactie.
+       *
+       * Een onderdeel dat op meer dan de helft van de vergeleken pagina’s staat, komt uit
+       * het sjabloon: header, footer, navigatie. Daar gaat 3.2.4 over. Iets dat op twee of
+       * drie pagina’s staat is een link die een redacteur in een tekst zette, en dat is geen
+       * herhaald onderdeel — zie de regels bij dit criterium.
+       *
+       * Een aanwijzing, geen bewijs: een knop die alleen in een formulierstroom voorkomt
+       * staat ook op drie pagina’s en is wél sjabloon. Daarom gaat het aantal mee, zodat de
+       * onderzoeker de indeling kan nalopen en overrulen.
+       */
+      onderdelen: verschillend.map((v) => ({
+        sleutel: v.onderdeel,
+        opPaginas: paginasVan(perSleutel.get(v.onderdeel) ?? new Map()).size,
+        vanDePaginas: bruikbarePaginas.length,
+        sjabloon:
+          paginasVan(perSleutel.get(v.onderdeel) ?? new Map()).size >
+          bruikbarePaginas.length / 2,
+        namen: v.namen.map((n: any) => ({
+          naam: n.naam,
+          aantal: n.aantal,
+          bron: bronPerNaam.get(v.onderdeel + '|' + n.naam) ?? null,
+          afdruk: afdrukPerNaam.get(v.onderdeel + '|' + n.naam) ?? null,
+          afdrukPagina: afdrukPaginaPerNaam.get(v.onderdeel + '|' + n.naam) ?? null,
+          // Waar deze naam staat, met adres erbij. Zonder adres is een paginanaam een
+          // bewering die de onderzoeker niet kan natrekken; hij moet erheen kunnen.
+          paginas: (n.paginas ?? []).map((titel: string) => ({
+            titel,
+            url: bruikbarePaginas.find((pg: any) => pg.sample === titel)?.url ?? null,
+          })),
+        })),
+      })),
+      iconen: anderIcoon.map((v) => ({
+        sleutel: v.onderdeel,
+        varianten: v.iconen.map((i: any) => ({
+          icoon: i.icoon,
+          aantal: i.aantal,
+          adres: adresPerIcoon.get(v.onderdeel + '|' + i.icoon) ?? null,
+          artefact: artefactPerIcoon.get(v.onderdeel + '|' + i.icoon) ?? null,
+        })),
+      })),
     },
   });
 
   print({
     onderzoek: projectId,
+    anders_zichtbaar_label: andersZichtbaar.length ? andersZichtbaar : undefined,
     paginas_vergeleken: bruikbarePaginas.map((p: any) => p.sample),
     omgeleid_niet_meegenomen: omgeleid.length
       ? omgeleid.map((p: any) => ({ sample: p.sample, gevraagd: p.url, uitgekomen_op: p.eindUrl }))
@@ -8057,6 +8467,8 @@ async function main() {
       return setAssessment(requirePositional(positional, 0, 'projectId'), flags);
     case 'save-checks':
       return saveChecks(requirePositional(positional, 0, 'projectId'), flags);
+    case 'save-gebieden':
+      return saveGebieden(requirePositional(positional, 0, 'projectId'), flags);
     case 'koppel-logboek':
       return koppelLogboek(requirePositional(positional, 0, 'projectId'), flags);
     case 'get-checks':
@@ -8133,6 +8545,7 @@ async function main() {
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
         `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
         `  save-checks <projectId> [--bron=workflow|gesprek|handmatig] < oordelen.json   # sampleoordelen wegschrijven\n` +
+      `  save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json    # wat er per deelgebied is nagelopen\n` +
         `  get-checks <projectId>                           # de opgeslagen sampleoordelen\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
         `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner]\n` +

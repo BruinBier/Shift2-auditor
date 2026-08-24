@@ -1,0 +1,36 @@
+-- Wat er per deelgebied is nagelopen, bij een criterium dat uit meerdere losse vragen bestaat.
+--
+-- SC 1.3.1 is er zo een: dertien gebieden, van koppen tot citaten. Nu is daar één oordeel
+-- voor, met een onderbouwing in lopende tekst. Die tekst maakt geen verschil tussen "geen
+-- tabellen op deze pagina" en "niet naar tabellen gekeken" — een verhaal dat iets weglaat
+-- leest hetzelfde als een verhaal dat niets te melden had.
+--
+-- Aanleiding: BEV-03 (2026-08-04). De audit zette 1.3.1 op twee samples op `opmerking` met
+-- een onderbouwing over de koppenstructuur, terwijl er op diezelfde pagina's `em`-elementen
+-- om gewone zinnen stonden. Dat is een afkeuring, en die stond er al. Niemand zag dat de
+-- andere twaalf gebieden niet waren nagelopen.
+--
+-- Vorm: [{ gebied: string, uitkomst: "ok" | "nvt" | "fout", toelichting?: string }]
+--
+-- De gebieden zelf staan NIET in de database maar in het regelbestand van het criterium,
+-- onder `### Deelgebieden`. Daardoor is de lijst te wijzigen zonder migratie, en gaan
+-- bestaande oordelen niet stuk als er een gebied bijkomt: dat verschijnt dan als "nog niet
+-- nagelopen".
+--
+-- Waarom een eigen kolom en niet een van de bestaande:
+--
+--   `verantwoording` is het metinglogboek van de CLI. Een afvinklijst is geen meting.
+--
+--   `controle` is de verificatie van de onderbouwing door een tweede agent — een uitspraak
+--   over het oordeel, niet over de pagina.
+--
+--   `zelfGevonden` zijn de onderdelen die de onderzoeker zelf vond naast de meting.
+--
+--   `reden` kan niet: de poort kijkt naar die tekst, dus een gebied afvinken zou het
+--   akkoord van de onderzoeker laten vervallen.
+--
+-- Nullable en zonder standaardwaarde: leeg betekent nog niets nagelopen, of een criterium
+-- dat maar één vraag stelt. Dat is de normale toestand.
+
+ALTER TABLE "sample_criterion_checks"
+  ADD COLUMN IF NOT EXISTS "gebieden" JSONB;

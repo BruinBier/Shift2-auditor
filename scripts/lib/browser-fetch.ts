@@ -96,6 +96,14 @@ export interface OpenPageResult {
    * onder de naam van stap 2.
    */
   omgeleid: boolean;
+  /**
+   * Inhoud die dichtgeklapt op de pagina staat, en dus niet is beoordeeld.
+   *
+   * Zie `telDichtgeklapt`. Staat hier een aantal boven nul terwijl er headless is gemeten,
+   * dan waarschuwt het commando: wat dichtzit valt buiten de meting, en bij een criterium
+   * als 1.3.1 telt die inhoud gewoon mee.
+   */
+  dichtgeklapt: { aantal: number; voorbeelden: string[]; fout?: string };
 }
 
 /**
@@ -117,6 +125,80 @@ function zelfdePagina(a: string, b: string): boolean {
     }
   };
   return kaal(a) === kaal(b);
+}
+
+/**
+ * Telt de inhoud die dichtgeklapt op de pagina staat.
+ *
+ * Dit is een waarborg tegen een fout die niet als fout aanvoelt. Een headless meting van een
+ * pagina met dichtgeklapte blokken slaagt gewoon: er komt HTML terug, `gehydrateerd` staat op
+ * true, en niets meldt dat er inhoud ontbreekt. Wie daarop een oordeel bouwt, beoordeelt een
+ * halve pagina — en "ik heb niets gevonden" ziet er hetzelfde uit als "er is niets".
+ *
+ * Vooral 1.3.1 loopt hier tegenaan. De eerste auditinstructie daar luidt letterlijk "klap
+ * alle uitklapblokken open en maak dan pas een opname"; koppen, lijsten en tabellen binnen
+ * een gesloten blok tellen gewoon mee voor dat criterium. Op 23 augustus 2026 stond dat
+ * criterium op het punt headless beoordeeld te worden, en er was niets op het scherm of in
+ * de uitvoer dat dat tegenhield.
+ *
+ * Twee dingen bewust NIET meegeteld, want een waarschuwing die altijd afgaat leert je alleen
+ * om hem weg te klikken:
+ *
+ *   Navigatie. Een uitklapmenu in `nav` of `header` staat vrijwel altijd dicht en bevat geen
+ *   inhoud die onder een contentcriterium valt.
+ *
+ *   Lege schillen. Een zoeksuggestielijst bestaat pas ná typen; die is dicht én leeg. Daarom
+ *   telt alleen een blok met minstens 40 tekens tekst erin.
+ *
+ * De uitkomst is een telling, geen oordeel: het commando meldt hem en gaat door.
+ */
+export async function telDichtgeklapt(
+  page: Page
+): Promise<{ aantal: number; voorbeelden: string[]; fout?: string }> {
+  try {
+    return await page.evaluate(() => {
+      /*
+       * GEEN hulpfuncties hierbinnen, ook geen pijlfunctie aan een const.
+       *
+       * tsx/esbuild draait met `keepNames` en wikkelt elke functie die een naam krijgt in
+       * `__name(...)`. Dat bestaat niet in de paginacontext, dus de hele evaluatie klapt om
+       * met "__name is not defined". Bij de eerste versie hiervan stonden er twee zulke
+       * pijlfuncties in, en omdat de fout in een catch verdween meldde deze waarborg
+       * doodleuk "nul blokken dichtgeklapt" op een pagina met zes uitklapblokken. Een
+       * waarborg die faalt naar geruststelling is erger dan geen waarborg.
+       */
+      const MIN_TEKENS = 40;
+      const voorbeelden: string[] = [];
+
+      for (const d of Array.from(document.querySelectorAll('details:not([open])'))) {
+        // `header` telt hier niet als navigatie: SIMsite gebruikt dat element ook binnen
+        // kaarten en secties, en dan zou een gewoon uitklapblok wegvallen.
+        if (d.closest('nav, [role="navigation"]')) continue;
+        const tekst = (d.textContent || '').replace(/\s+/g, ' ').trim();
+        if (tekst.length < MIN_TEKENS) continue;
+        const kop = d.querySelector('summary');
+        const naam = ((kop && kop.textContent) || tekst).replace(/\s+/g, ' ').trim();
+        voorbeelden.push(naam.slice(0, 60));
+      }
+
+      for (const knop of Array.from(document.querySelectorAll('[aria-expanded="false"]'))) {
+        if (knop.closest('nav, [role="navigation"]')) continue;
+        const id = knop.getAttribute('aria-controls');
+        const doel = id ? document.getElementById(id) : knop.parentElement;
+        if (!doel) continue;
+        const tekst = (doel.textContent || '').replace(/\s+/g, ' ').trim();
+        if (tekst.length < MIN_TEKENS) continue;
+        const naam = (knop.textContent || tekst).replace(/\s+/g, ' ').trim();
+        voorbeelden.push(naam.slice(0, 60));
+      }
+
+      return { aantal: voorbeelden.length, voorbeelden: voorbeelden.slice(0, 8) };
+    });
+  } catch (err) {
+    // Een telling mag een meting niet laten mislukken, maar mag ook niet stilletjes nul
+    // teruggeven: dan leest een mislukte telling als "er staat niets verborgen".
+    return { aantal: 0, voorbeelden: [], fout: String(err) };
+  }
 }
 
 /**
@@ -193,10 +275,29 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
   await new Promise((r) => setTimeout(r, 1000));
   await maakWakker(page);
   const eindUrl = page.url();
+  const dichtgeklapt = await telDichtgeklapt(page);
+  // De waarschuwing hoort hier en niet in één commando: elk commando dat een pagina opent
+  // loopt hetzelfde risico, en een waarborg die je per commando moet aanzetten is er een
+  // die je vergeet. Naar stderr, zodat de JSON op stdout leesbaar blijft voor de aanroeper.
+  if (dichtgeklapt.fout) {
+    console.error(
+      `[browser] De telling van dichtgeklapte blokken is mislukt (${dichtgeklapt.fout}). ` +
+        `Neem "0 dichtgeklapt" hieronder dus NIET als bewijs dat er niets verborgen staat.`
+    );
+  }
+  if (dichtgeklapt.aantal > 0 && session.mode === 'headless') {
+    console.error(
+      `[browser] LET OP: ${dichtgeklapt.aantal} blok${dichtgeklapt.aantal === 1 ? '' : 'ken'} staat dichtgeklapt op deze pagina ` +
+        `en is dus niet gemeten (${dichtgeklapt.voorbeelden.join(' · ')}). ` +
+        `Voor een criterium over de inhoud — 1.3.1, 1.1.1, 2.4.6 — is dit oordeel onvolledig. ` +
+        `Start een auditsessie met "npm run chrome:debug" en klap de blokken open.`
+    );
+  }
   return {
     page,
     gevraagdeUrl: url,
     eindUrl,
+    dichtgeklapt,
     omgeleid: !zelfdePagina(url, eindUrl),
     cleanup: async () => {
       await page.close().catch(() => {});

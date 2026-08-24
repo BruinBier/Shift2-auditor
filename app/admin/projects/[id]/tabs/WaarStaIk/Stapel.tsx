@@ -12,12 +12,29 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Cel, Meting, Stand, Voorstel } from './gegevens';
-import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed } from '@/lib/metingen';
+import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
+import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
   | { soort: 'oordeel'; cel: Cel }
   | { soort: 'voorstel'; voorstel: Voorstel };
+
+/**
+ * De eerste zin van een bevinding, voor op de dichtgeklapte regel.
+ *
+ * Niet zomaar op een punt afbreken: in een bevinding staat `alt=""`, staan afkortingen en
+ * staan versienummers, en die dragen alle een punt. Er wordt daarom pas geknipt bij een punt
+ * met een spatie én een hoofdletter erachter — en levert dat een onbruikbaar kort of lang
+ * stuk op, dan wint een gewone afkapping.
+ */
+function eersteZin(tekst: string): string {
+  const heel = (tekst ?? '').trim().replace(/\s+/g, ' ');
+  if (heel.length <= 150) return heel;
+  const knip = heel.search(/\.\s+[A-Z]/);
+  if (knip >= 40 && knip <= 180) return heel.slice(0, knip + 1);
+  return heel.slice(0, 147).trimEnd() + '…';
+}
 
 const OORDEEL_KLEUR: Record<string, string> = {
   voldoet: 'bg-green-100 text-green-800',
@@ -107,8 +124,21 @@ function bespreekBlok(opties: {
   cel?: Cel | null;
   voorstellen: Voorstel[];
   huisregels: Huisregels | null;
+  /**
+   * Eén onderdeel uit de vergelijking, als het overleg daarover gaat.
+   *
+   * Zonder dit gaat het blok over het hele criterium, en dan moet degene met wie je
+   * overlegt raden welk van de vier onderdelen je bedoelt. Met de gemeten namen, hun
+   * herkomst en de bevinding van de agent erbij is het gesprek meteen concreet.
+   */
+  onderdeel?: {
+    sleutel: string;
+    namen: { naam: string; aantal: number; bron?: string | null }[];
+    bevinding?: string | null;
+    notitie?: string | null;
+  } | null;
 }): string {
-  const { code, critTitel, sample, projectId, bezwaar, cel, voorstellen, huisregels } =
+  const { code, critTitel, sample, projectId, bezwaar, cel, voorstellen, huisregels, onderdeel } =
     opties;
   const r: string[] = [];
 
@@ -127,6 +157,29 @@ function bespreekBlok(opties: {
   );
   r.push('hieronder een oordeel geveld dat volgens mij niet deugt. Denk met me mee.');
   r.push('');
+
+  if (onderdeel) {
+    r.push('## Het onderdeel waar het over gaat');
+    r.push('');
+    r.push('Sleutel in de vergelijking: ' + onderdeel.sleutel);
+    r.push('');
+    r.push('Gemeten namen:');
+    for (const n of onderdeel.namen) {
+      r.push(
+        `- "${n.naam}" op ${n.aantal} pagina${n.aantal === 1 ? '' : "'s"}${
+          n.bron ? ` (naam komt uit ${n.bron})` : ''
+        }`
+      );
+    }
+    r.push('');
+    if (onderdeel.bevinding) {
+      r.push('De geautomatiseerde auditor schreef hierover:');
+      r.push('');
+      r.push(`> ${onderdeel.bevinding}`);
+      if (onderdeel.notitie) r.push(`> ${onderdeel.notitie}`);
+      r.push('');
+    }
+  }
   r.push('## Wat ik terug wil');
   r.push('');
   r.push('1. Klopt mijn bezwaar? Zeg het als ik ernaast zit — daar heb ik meer aan.');
@@ -438,16 +491,38 @@ export default function Stapel({
   focus,
   terug,
   projectId,
+  kaartteksten = {},
 }: {
   stand: Stand;
   focus: string;
   terug: () => void;
   projectId: string;
+  /** Uitleg per criterium, gelezen uit de regelbestanden. Zie lib/criterium-kaarttekst.ts. */
+  kaartteksten?: Record<string, Kaarttekst>;
 }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
+  /** Het formulier waarmee de onderzoeker zelf een onderdeel aan stap 3 toevoegt. */
+  const [toevoegOpen, setToevoegOpen] = useState(false);
+  /** Het formulier waarmee de onderzoeker een afkeuring toevoegt. */
+  const [afkeurOpen, setAfkeurOpen] = useState(false);
+  const [afkeurBezig, setAfkeurBezig] = useState(false);
+  const [afkeurFout, setAfkeurFout] = useState<string | null>(null);
+  const [afkeurTekst, setAfkeurTekst] = useState('');
+  const [afkeurAdvies, setAfkeurAdvies] = useState('');
+  const [afkeurImpact, setAfkeurImpact] = useState('matig');
+  /** Over welke bevinding van de agent het overleg gaat, als er een openstaat. */
+  const [overlegOver, setOverlegOver] = useState<string | null>(null);
+  const [toevoegBezig, setToevoegBezig] = useState(false);
+  const [toevoegFout, setToevoegFout] = useState<string | null>(null);
+  const [nieuwOmschrijving, setNieuwOmschrijving] = useState('');
+  const [nieuwNotitie, setNieuwNotitie] = useState('');
+  const [nieuwVarianten, setNieuwVarianten] = useState<{ wat: string; waar: string }[]>([
+    { wat: '', waar: '' },
+    { wat: '', waar: '' },
+  ]);
   /** Welke uitgang de onderzoeker heeft aangeklikt, zolang de reden nog ontbreekt. */
   /**
    * `overleggen` is geen soort afkeuring maar een derde uitkomst. Het zat eerst in
@@ -744,9 +819,19 @@ export default function Stapel({
   const stapel: Taak[] = useMemo(() => {
     const [soort, a, b] = focus.split(':');
 
-    const past = (c: { sampleId: string | null; code: string }) => {
-      if (soort === 'rij') return c.code === a;
-      if (soort === 'kolom') return c.sampleId === a;
+    const past = (c: { sampleId: string | null; code: string; status?: string | null }) => {
+      if (soort === 'rij') {
+        // Bij een sitebreed criterium is er één oordeel, niet twintig. De andere samples
+        // staan op 'niet aanwezig' met een verwijzing; die als losse kaarten voorleggen
+        // maakt van één beslissing twintig keer bladeren.
+        if (isSitebreed(a)) return c.code === a && !!c.status && c.status !== 'niet_aanwezig';
+        return c.code === a;
+      }
+      if (soort === 'kolom') {
+        // Een sitebreed criterium hoort niet in de werklijst van één pagina: het gaat over
+        // de hele set. Je bereikt het via het vakje in de kolom "alle pagina’s" in de matrix.
+        return c.sampleId === a && !isSitebreed(c.code);
+      }
       if (soort === 'cel') return c.sampleId === a && c.code === b;
       return true;
     };
@@ -1283,14 +1368,897 @@ export default function Stapel({
    * dan is de meting die dat wél kan het eerste wat je wilt zien. Het controleblok hoort er
    * niet bij — er is nog geen oordeel om na te kijken.
    */
-  const metingenBlok = (cel: Cel) => {
+  /**
+   * Eén genummerde stap op de kaart. De nummering volgt de handmatige auditprocedure uit
+   * `wcag-checklists/Checklist_SC_3_2_4.md`: eerst weten wat het criterium borgt, dan hoe je
+   * het test, dan wat er gevonden is, dan pas oordelen.
+   */
+  const stapBlok = (nummer: number, titel: string, alineas: string[]) => (
+    <section className="mb-4">
+      <p className="mb-1 flex items-baseline gap-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[10px] font-semibold text-white">
+          {nummer}
+        </span>
+        {titel}
+      </p>
+      {alineas.map((alinea, i) => (
+        <p key={i} className="leading-relaxed text-gray-900">
+          {alinea}
+        </p>
+      ))}
+    </section>
+  );
+
+  /**
+   * `pad:/melden|main` is een sleutel om onderdelen op te koppelen, geen tekst voor een mens.
+   * Dit maakt er iets leesbaars van zonder te doen alsof het iets anders is.
+   */
+  const leesbaarOnderdeel = (sleutel: string) => {
+    const [kern, gebied] = sleutel.split('|');
+    const naam = kern
+      .replace(/^pad:/, '')
+      .replace(/^extern:/, '')
+      .replace(/^sprong:/, '')
+      .replace(/^klasse:/, 'knop .');
+    return { naam, gebied: gebied ?? '' };
+  };
+
+  /**
+   * Een onderdeel dat de onderzoeker zelf vond toevoegen aan de lijst van stap 3.
+   *
+   * Raakt het oordeel niet aan en laat het akkoord niet vervallen. Iets aan je eigen lijst
+   * toevoegen is geen uitspraak dat het criterium zakt; dat weeg je in stap 4.
+   */
+  const voegOnderdeelToe = async (cel: Cel) => {
+    setToevoegBezig(true);
+    setToevoegFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/criterion-checks/zelf-gevonden`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sampleItemId: cel.sampleId,
+          criterionCode: cel.code,
+          omschrijving: nieuwOmschrijving,
+          notitie: nieuwNotitie,
+          varianten: nieuwVarianten,
+        }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(antwoord.error || 'toevoegen mislukte');
+      setNieuwOmschrijving('');
+      setNieuwNotitie('');
+      setNieuwVarianten([
+        { wat: '', waar: '' },
+        { wat: '', waar: '' },
+      ]);
+      setToevoegOpen(false);
+      router.refresh();
+    } catch (e: any) {
+      setToevoegFout(e.message);
+    } finally {
+      setToevoegBezig(false);
+    }
+  };
+
+  /**
+   * Een lezing overnemen, afwijzen of terugzetten.
+   *
+   * Afwijzen wist niet. De lezing blijft staan met een merkteken erop, zodat het overzicht
+   * heel blijft: je ziet later dat er iets is voorgesteld en dat jij het hebt weggewogen.
+   */
+  const zetLezing = async (cel: Cel, onderdeelId: string, status: 'open' | 'overgenomen' | 'afgewezen') => {
+    setToevoegFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/criterion-checks/zelf-gevonden`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sampleItemId: cel.sampleId, criterionCode: cel.code, onderdeelId, status }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(antwoord.error || 'bijwerken mislukte');
+      router.refresh();
+    } catch (e: any) {
+      setToevoegFout(e.message);
+    }
+  };
+
+  const verwijderOnderdeel = async (cel: Cel, onderdeelId: string) => {
+    setToevoegFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/criterion-checks/zelf-gevonden`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sampleItemId: cel.sampleId, criterionCode: cel.code, onderdeelId }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(antwoord.error || 'verwijderen mislukte');
+      router.refresh();
+    } catch (e: any) {
+      setToevoegFout(e.message);
+    }
+  };
+
+  /**
+   * Stap 3: wat er gevonden is — door de meting én door jou.
+   *
+   * De meetuitkomst komt uit de meting zelf en niet uit een tekst die er ooit bij geschreven
+   * is: die veroudert zodra het commando iets nieuws gaat meten, en dat is precies wat er bij
+   * 3.2.4 gebeurde toen de icoonvergelijking erbij kwam.
+   *
+   * Maar een meting vindt niet alles. Een onderdeel dat pas na een klik verschijnt, een
+   * pagina buiten de steekproef, twee elementen die de sleutel niet aan elkaar koppelt — die
+   * ziet alleen een mens. Daarom staat wat jij toevoegt in dezelfde lijst, met erbij wie wat
+   * vond. Anders bestaat het alleen in je hoofd of als losse zin in een notitieveld.
+   */
+  /**
+   * `deel` volgt de instructies: deel 1 is wat er gevónden is (stap 1, in de
+   * auditsessie), deel 2 is hoe die onderdelen héten (stap 2, in de code). Eén commando
+   * levert allebei — het bezoekt elke pagina één keer — maar op de kaart hoort het bewijs
+   * onder de stap die het beantwoordt. Stond het als één blok, dan is niet te zien welk
+   * deel bij welke stap hoort.
+   */
+  const metingVondBlok = (cel: Cel, deel: 1 | 2) => {
+    const metingen = cel.verantwoording ?? [];
+    const meting = metingen.find((m) => Array.isArray((m.uitkomst as any)?.onderdelen));
+    const u: any = meting ? meting.uitkomst : null;
+    /**
+     * Dit blok gaat over onderdelen die op meerdere pagina's terugkomen en over de namen
+     * die ze daar dragen. Dat is de uitkomst van één soort meting, en die bestaat niet voor
+     * elk criterium.
+     *
+     * Zonder deze grens verscheen op de 1.1.1-kaart "Er is nog niet gemeten met een commando
+     * dat de gevonden onderdelen vastlegt" en daaronder "Geen onderdeel heet op de ene
+     * pagina anders dan op de andere". Het eerste leest als een openstaande taak die niet
+     * bestaat, het tweede als een bevinding over iets waar 1.1.1 niet over gaat.
+     *
+     * De grens is niet de criteriumcode maar de vraag of er iets te meten valt: is er niets
+     * gemeten én is er voor dit criterium geen meting geregistreerd in lib/metingen.ts, dan
+     * valt er ook niets te melden.
+     */
+    if (!u && !metingenVoorCriterium(cel.code).length) return null;
+    const alleGemeten: any[] = u?.onderdelen ?? [];
+    /**
+     * Twee groepen, want ze wegen niet hetzelfde.
+     *
+     * Wat op meer dan de helft van de pagina’s staat komt uit het sjabloon: dáár gaat 3.2.4
+     * over. Een link die op twee of drie pagina’s in een tekst staat is redactioneel, en dat
+     * is volgens de regels bij dit criterium geen herhaald onderdeel. Stonden ze op één hoop,
+     * dan begon deze kaart met vier vondsten waarvan er nul telde.
+     *
+     * De oudere metingen kennen dit onderscheid niet; die vallen terug op sjabloon, want dat
+     * is de kant waar je naar kijkt.
+     */
+    const gemeten = alleGemeten.filter((o) => o.sjabloon !== false);
+    const redactioneel = alleGemeten.filter((o) => o.sjabloon === false);
+    const iconenPer = new Map<string, any[]>();
+    for (const i of u?.iconen ?? []) iconenPer.set(i.sleutel, i.varianten);
+    const alleEigen = cel.zelfGevonden ?? [];
+    // Aantekeningen die bij een gemeten onderdeel horen, staan daaronder in plaats van
+    // los in de lijst. Anders raakt de lezing los van het ding waar hij over gaat.
+    const eigen = alleEigen.filter((o) => !o.overOnderdeel);
+    const bijOnderdeel = new Map<string, typeof alleEigen>();
+    for (const o of alleEigen) {
+      if (!o.overOnderdeel) continue;
+      const lijst = bijOnderdeel.get(o.overOnderdeel) ?? [];
+      lijst.push(o);
+      bijOnderdeel.set(o.overOnderdeel, lijst);
+    }
+
+    if (deel === 1) {
+      return (
+        <div className="mb-4 ml-5 mt-4 rounded bg-gray-50 px-3 py-2">
+          {u ? (
+            <p className="text-sm leading-relaxed text-gray-900">
+              {u.onderdelenOpMeerderePaginas} onderdelen komen op meer dan één pagina voor,
+              vergeleken over {u.paginas} van de {u.vanDeSteekproef} pagina&apos;s
+              {u.omgeleid ? ' (' + u.omgeleid + ' omgeleid)' : ''}.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">
+              Er is nog niet gemeten met een commando dat de gevonden onderdelen vastlegt.
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <section className="mb-4 ml-5 mt-4">
+
+        {gemeten.length > 0 && (
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+            Sjabloononderdelen — hier gaat 3.2.4 over
+          </p>
+        )}
+
+        {gemeten.length === 0 && eigen.length === 0 ? (
+          <p className="mb-2 text-sm text-gray-600">
+            Geen onderdeel heet op de ene pagina anders dan op de andere.
+          </p>
+        ) : (
+          <ul className="mb-3 space-y-3">
+            {gemeten.map((o: any) => {
+              const { naam, gebied } = leesbaarOnderdeel(o.sleutel);
+              const iconen = iconenPer.get(o.sleutel);
+              return (
+                <li key={o.sleutel}>
+                  {/* Inklapbaar: de samenvatting is om te scannen, de details om te lezen.
+                      Zes onderdelen met alles uitgeklapt is een muur waarin je niets terugvindt.
+
+                      Het kader zit om de <details> en niet om de <li>, want alleen daar weet de
+                      opmaak of het onderdeel openstaat. Met de `open:`-variant kleurt de rand
+                      mee zonder dat er toestand aan te pas komt: openstaand krijgt een donkere
+                      rand en een schaduw, zodat je ziet welk onderdeel je open hebt. */}
+                  <details className="group rounded border border-gray-200 open:border-blue-900 open:shadow-md">
+                    {/* Lichtblauwe balk: de kop van een onderdeel moet er anders uitzien dan
+                        de inhoud eronder, anders loopt het bij zes onderdelen in elkaar over.
+                        Licht genoeg om de tekst donker te houden. */}
+                    <summary className="cursor-pointer list-none rounded bg-blue-50 p-2 group-open:rounded-b-none group-open:bg-blue-100">
+                      <span className="flex flex-wrap items-baseline gap-x-2 text-xs text-gray-600">
+                        <span className="font-medium text-gray-900">{naam}</span>
+                        {gebied && <span>· {gebied}</span>}
+                        <span className="ml-auto rounded bg-white px-1.5 text-[10px] uppercase tracking-wide text-gray-500">
+                          gemeten
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-xs text-gray-600">
+                        {o.namen.length} namen
+                        {iconen && iconen.length > 1 ? ' · ook een andere afbeelding' : ''}
+                        {samenvattingLezing(bijOnderdeel.get(o.sleutel) ?? [])}
+                      </span>
+                    </summary>
+                    <div className="border-t border-gray-200 bg-white px-3 py-2">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    Namen
+                  </p>
+                  {/* In kolommen: de naam, op hoeveel pagina&apos;s, en waar hij vandaan komt.
+                      Achter elkaar op één regel loopt dat in elkaar over. Bij het logo is de
+                      bron het hele verschil: `title` op vijftien pagina's, `alt` op de zestiende. */}
+                  <ul className="mb-3 space-y-1">
+                    {o.namen.map((n: any, i: number) => (
+                      <li key={i} className="grid grid-cols-[1fr_auto] gap-x-3 text-sm">
+                        <span className="text-gray-900">&ldquo;{n.naam}&rdquo;</span>
+                        <span className="whitespace-nowrap text-xs text-gray-500">
+                          {n.aantal === 1 ? '1 pagina' : n.aantal + " pagina's"}
+                        </span>
+                        {n.bron && (
+                          <span className="col-span-2 text-xs text-gray-500">uit {n.bron}</span>
+                        )}
+                        {/* Waar het staat, met adres. Een paginanaam alleen is een bewering
+                            die je niet kunt natrekken; hiermee ga je erheen en kijk je zelf. */}
+                        {Array.isArray(n.paginas) && n.paginas.length > 0 && (
+                          <span className="col-span-2 flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
+                            {n.paginas.map((pg: any, j: number) =>
+                              pg.url ? (
+                                <a
+                                  key={j}
+                                  href={pg.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-blue-800 underline"
+                                  title={pg.url}
+                                >
+                                  {pg.titel}
+                                </a>
+                              ) : (
+                                <span key={j} className="text-gray-500">
+                                  {pg.titel}
+                                </span>
+                              )
+                            )}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {/* Wat je ziet, apart van wat er in de code staat. De namen hierboven komen
+                      uit `aria-label`, `alt` of `title` — dat is stap 2. Hoe het onderdeel er
+                      in het echt bij staat is stap 1, en dat hoort niet in hetzelfde blok. Bij
+                      /melden scheelt dat: drie namen blijken een grote knop met pictogram, een
+                      kaal webadres in een alinea, en een link in een lopende zin. */}
+                  {/* Niet tonen als het blok Afbeelding hieronder het beeld al laat zien: bij
+                      het logo is de uitsnede van het element hetzelfde plaatje nog een keer.
+                      De uitsneden blijven wel bij de meting bewaard, onderaan bij de
+                      verantwoording. */}
+                  {!(iconen && iconen.length > 1) && o.namen.some((n: any) => n.afdruk) && (
+                    <div className="mb-3">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Zo staat het op de pagina
+                      </p>
+                      <ul className="space-y-2">
+                        {o.namen
+                          .filter((n: any) => n.afdruk)
+                          .map((n: any, i: number) => (
+                            <li key={i}>
+                              <p className="mb-0.5 text-xs text-gray-600">
+                                &ldquo;{n.naam}&rdquo;
+                                {n.afdrukPagina && (
+                                  <span>
+                                    {' op '}
+                                    {(() => {
+                                      const pg = (n.paginas ?? []).find(
+                                        (x: any) => x.titel === n.afdrukPagina
+                                      );
+                                      return pg?.url ? (
+                                        <a
+                                          href={pg.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-blue-800 underline"
+                                        >
+                                          {n.afdrukPagina}
+                                        </a>
+                                      ) : (
+                                        n.afdrukPagina
+                                      );
+                                    })()}
+                                  </span>
+                                )}
+                              </p>
+                              <img
+                                src={`/api/meting/artefact?pad=${encodeURIComponent(n.afdruk)}`}
+                                alt=""
+                                className="max-h-20 max-w-full rounded border border-gray-200"
+                              />
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                  {iconen && iconen.length > 1 && (
+                    // Neutraal, niet in een waarschuwingskleur: dit is een meting en geen
+                    // oordeel. Het voorbehoud staat in woorden, want kleur als enige drager
+                    // van betekenis is nu juist wat we bij anderen afkeuren.
+                    <div className="mb-3">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Afbeelding
+                      </p>
+                      <ul className="space-y-2">
+                        {iconen.map((b: any, i: number) => (
+                          <li key={i} className="flex items-start gap-3 text-sm">
+                            {/* Het plaatje zelf erbij. Zonder dat blijft "twee bestanden
+                                kunnen hetzelfde tonen" een gok: pas als je ze naast elkaar
+                                ziet weet je of het verschil er ook een is voor wie kijkt.
+                                Een geruit vlak eronder, want een logo is vaak doorzichtig. */}
+                            {b.artefact || b.adres ? (
+                              <img
+                                src={
+                                  b.artefact
+                                    ? `/api/meting/artefact?pad=${encodeURIComponent(b.artefact)}`
+                                    : b.adres
+                                }
+                                alt=""
+                                className="h-10 w-24 shrink-0 rounded border border-gray-200 bg-[repeating-conic-gradient(#f3f4f6_0_25%,#ffffff_0_50%)] bg-[length:12px_12px] object-contain p-0.5"
+                              />
+                            ) : (
+                              <span className="h-10 w-24 shrink-0 rounded border border-dashed border-gray-300" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-gray-900">{leesbaarBeeld(b.icoon)}</p>
+                              {/* Waar het vandaan komt. Zonder adres is een plaatje op een
+                                  auditkaart een bewering: je ziet iets, maar niet waarvan. */}
+                              {b.adres && (
+                                <a
+                                  href={b.adres}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block break-all text-[11px] leading-tight text-blue-800 underline"
+                                >
+                                  {b.adres}
+                                </a>
+                              )}
+                              {b.artefact && (
+                                <p className="text-[10px] leading-tight text-gray-400">
+                                  Het beeld hierlinks is de kopie die bij deze meting is opgeslagen,
+                                  niet het bestand dat nu op de site staat.
+                                </p>
+                              )}
+                            </div>
+                            <span className="whitespace-nowrap text-xs text-gray-500">
+                              {b.aantal === 1 ? '1 pagina' : b.aantal + " pagina's"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Een aanwijzing, geen bewijs: twee bestanden kunnen hetzelfde tonen.
+                      </p>
+                    </div>
+                  )}
+                  {(bijOnderdeel.get(o.sleutel) ?? []).map((a) => {
+                    const stand = a.status ?? 'open';
+                    const afgehandeld = stand !== 'open';
+                    return (
+                      <div key={a.id} className="mt-2 border-t border-gray-200 pt-2">
+                        <p className="mb-0.5 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide">
+                          <span className="text-blue-700">
+                            {a.door === 'agent' ? 'Bevinding van de agent' : 'Jouw aantekening'}
+                          </span>
+                          {stand === 'overgenomen' && (
+                            <span className="rounded bg-green-100 px-1.5 text-green-800">
+                              overgenomen
+                            </span>
+                          )}
+                          {stand === 'afgewezen' && (
+                            <span className="rounded bg-gray-200 px-1.5 text-gray-700">
+                              afgewezen
+                            </span>
+                          )}
+                        </p>
+
+                        {/* Afgehandeld? Dan hoef je de afweging niet meer te lezen. Eén regel met
+                            wat je besloot, en de rest achter een klik. Uitgeklapt is het drie
+                            alinea's over iets waar je al doorheen bent. */}
+                        {afgehandeld ? (
+                          <details>
+                            <summary className="cursor-pointer text-sm text-gray-600">
+                              {a.reactie
+                                ? a.reactie.split('.')[0] + '.'
+                                : 'Zonder toelichting afgehandeld.'}
+                            </summary>
+                            <div className="mt-2">
+                              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                                {a.omschrijving}
+                              </p>
+                              {a.notitie && (
+                                <p className="mt-1 whitespace-pre-line text-xs text-gray-600">
+                                  {a.notitie}
+                                </p>
+                              )}
+                              {a.reactie && (
+                                <p className="mt-2 whitespace-pre-line text-xs text-gray-700">
+                                  <span className="font-medium">Jouw reactie:</span> {a.reactie}
+                                </p>
+                              )}
+                            </div>
+                          </details>
+                        ) : (
+                          <>
+                            <p className="whitespace-pre-line text-sm leading-relaxed text-gray-800">
+                              {a.omschrijving}
+                            </p>
+                            {a.notitie && (
+                              <p className="mt-1 whitespace-pre-line text-xs text-gray-600">
+                                {a.notitie}
+                              </p>
+                            )}
+                          </>
+                        )}
+
+                        {/* Afwijzen wist niet. De lezing blijft staan met een merkteken, zodat
+                            later te zien is dat er iets is voorgesteld en dat jij het hebt
+                            weggewogen. Dezelfde poort als bij een voorstel voor een bevinding. */}
+                        {a.door === 'agent' ? (
+                          <div className="mt-1 flex flex-wrap gap-3">
+                            {stand !== 'overgenomen' && (
+                              <button
+                                type="button"
+                                onClick={() => zetLezing(cel, a.id, 'overgenomen')}
+                                className="text-xs text-green-800 underline hover:text-green-900"
+                              >
+                                Overnemen
+                              </button>
+                            )}
+                            {stand !== 'afgewezen' && (
+                              <button
+                                type="button"
+                                onClick={() => zetLezing(cel, a.id, 'afgewezen')}
+                                className="text-xs text-gray-600 underline hover:text-gray-900"
+                              >
+                                Afwijzen
+                              </button>
+                            )}
+                            {stand !== 'open' && (
+                              <button
+                                type="button"
+                                onClick={() => zetLezing(cel, a.id, 'open')}
+                                className="text-xs text-gray-500 underline hover:text-gray-800"
+                              >
+                                Terugzetten
+                              </button>
+                            )}
+                            {/* Niet alleen ja of nee. Wat er mis is aan een bevinding is vaak
+                                niet de uitkomst maar de redenering, en daar is geen knop voor
+                                te maken. Ditzelfde paneel bestond al voor voorstellen; het
+                                neemt de huisregels mee zodat het gesprek ook werkt in een
+                                chatvenster dat deze repository niet kan lezen. */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOverlegOver(overlegOver === a.id ? null : a.id)
+                              }
+                              className="text-xs text-blue-800 underline hover:text-blue-900"
+                            >
+                              {overlegOver === a.id ? 'Overleg sluiten' : 'Overleggen'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => verwijderOnderdeel(cel, a.id)}
+                            className="mt-1 text-xs text-gray-500 underline hover:text-gray-800"
+                          >
+                            Deze aantekening verwijderen
+                          </button>
+                        )}
+                        {overlegOver === a.id &&
+                          overlegPaneel(
+                            cel.code,
+                            (huisregels) =>
+                              bespreekBlok({
+                                code: cel.code,
+                                critTitel: critTitel(cel.code),
+                                sample: sampleVoor(cel.sampleId),
+                                projectId,
+                                bezwaar: reden,
+                                cel,
+                                voorstellen: [],
+                                huisregels,
+                                onderdeel: {
+                                  sleutel: a.overOnderdeel ?? '',
+                                  namen: o.namen ?? [],
+                                  bevinding: a.omschrijving,
+                                  notitie: a.notitie ?? null,
+                                },
+                              }),
+                            {
+                              cel,
+                              voorstellen: [],
+                              aanleiding: `${cel.code} — ${leesbaarOnderdeel(o.sleutel).naam}`,
+                            }
+                          )}
+                      </div>
+                    );
+                  })}
+                    </div>
+                  </details>
+                </li>
+              );
+            })}
+
+            {eigen.map((o) => (
+              <li key={o.id} className="rounded border border-blue-200 bg-blue-50 p-2">
+                <p className="mb-1 flex flex-wrap items-baseline gap-x-2 text-xs text-gray-600">
+                  <span className="font-medium text-gray-900">{o.omschrijving}</span>
+                  <span className="ml-auto rounded bg-white px-1.5 text-[10px] uppercase tracking-wide text-blue-700">
+                    door jou gezien
+                  </span>
+                </p>
+                <ul className="space-y-0.5">
+                  {o.varianten.map((v, i) => (
+                    <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                      <span className="text-gray-900">&ldquo;{v.wat}&rdquo;</span>
+                      <span className="text-xs text-gray-500">op {v.waar}</span>
+                    </li>
+                  ))}
+                </ul>
+                {o.notitie && <p className="mt-1 text-xs text-gray-600">{o.notitie}</p>}
+                <button
+                  type="button"
+                  onClick={() => verwijderOnderdeel(cel, o.id)}
+                  className="mt-1 text-xs text-gray-500 underline hover:text-gray-800"
+                >
+                  Dit onderdeel uit de lijst halen
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Redactionele links staan niet op de kaart: ze vallen buiten dit criterium, en wat
+            buiten het onderzoek valt komt er niet als vondst uit. Ook geen telling — een
+            aantal is ook iets voorleggen.
+
+            Ze zijn niet weg: `redactioneel` hierboven houdt ze uit de lijst met
+            sjabloononderdelen, en ze staan bij naam in het overzichtsbestand en in de uitkomst
+            van de meting. */}
+        {toevoegFout && (
+          <p className="mb-2 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{toevoegFout}</p>
+        )}
+
+        {/* De knop "+ Onderdeel toevoegen" is weg: "Bevinding toevoegen" hieronder doet
+            hetzelfde werk, en twee toevoegknoppen onder elkaar is een keuze die niemand hoeft
+            te maken.
+
+            De rest blijft staan — de kolom `zelfGevonden`, de route en de weergave hierboven.
+            Staat er een eigen vondst in, dan wordt hij gewoon getoond, en de knop is met dit
+            blok terug. */}
+      </section>
+    );
+  };
+
+  /**
+   * Waaraan het beeld in een onderdeel te herkennen is, leesbaar.
+   *
+   * De meting slaat het op als `afbeelding:logo.png`, `svg:...` of `klasse:fa-search` —
+   * bruikbaar om te vergelijken, maar niet om te lezen. En "icoon" is het verkeerde woord
+   * zodra het een logo of woordmerk is.
+   */
+  const leesbaarBeeld = (waarde: string) => {
+    if (waarde.startsWith('afbeelding:')) return waarde.slice(11);
+    if (waarde.startsWith('svg:')) return 'een tekening (svg)';
+    if (waarde.startsWith('klasse:')) return 'een icoonlettertype (.' + waarde.slice(7) + ')';
+    return waarde;
+  };
+
+  /**
+   * Wat er in de samenvattingsregel over de bevindingen van de agent komt te staan.
+   *
+   * "Bevinding" is hier het woord van de onderzoeker, niet dat van het gegevensmodel. Een
+   * echte `Finding` heeft een code en bepaalt het criteriumoordeel; deze telt nergens in
+   * mee. Dat verschil staat in het label erbij en blijkt uit de knoppen: pas als de
+   * onderzoeker hem overneemt en als afkeuring opschrijft, wordt het er een.
+   */
+  const samenvattingLezing = (lezingen: { status?: string; door?: string }[]) => {
+    if (!lezingen.length) return '';
+    const stand = lezingen[0].status ?? 'open';
+    if (stand === 'overgenomen') return ' · bevinding van de agent overgenomen';
+    if (stand === 'afgewezen') return ' · bevinding van de agent afgewezen';
+    return '';
+  };
+
+  /**
+   * Tekst uit een regelbestand, met de code-stukjes als code.
+   *
+   * In markdown betekenen backticks "dit is code". De kaart toonde ze als losse tekens,
+   * dus er stond letterlijk `get-consistentie` op het scherm, inclusief de streepjes.
+   */
+  const metCode = (tekst: string) =>
+    tekst.split(String.fromCharCode(96)).map((deel, i) =>
+      i % 2 === 1 ? (
+        <code key={i} className="rounded bg-gray-100 px-1 text-[0.9em]">
+          {deel}
+        </code>
+      ) : (
+        <span key={i}>{deel}</span>
+      )
+    );
+
+  /** Het niveau van een criterium, voor de badge naast het succescriterium. */
+  const critNiveau = (code: string) => stand.criteria.find((c) => c.code === code)?.level ?? '';
+
+  /** Het interne id van een criterium; nodig om een bevinding aan te maken. */
+  const critId = (code: string) => stand.criteria.find((c) => c.code === code)?.id ?? '';
+
+  /**
+   * Een afkeuring aanmaken vanaf de kaart.
+   *
+   * Dit is de plek waar het oordeel vandaan komt. Niet een knop "voldoet niet": in
+   * `gegevens.ts` volgt `failed` uit de bevindingen, dus een status zonder bevinding leest
+   * onderaan als geslaagd. Wie hier een afkeuring toevoegt, schrijft hem ook, en dat is
+   * precies wat de poort bewaakt.
+   */
+  const voegAfkeuringToe = async (cel: Cel) => {
+    setAfkeurBezig(true);
+    setAfkeurFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/findings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          criterionId: critId(cel.code),
+          description: afkeurTekst,
+          advice: afkeurAdvies,
+          impact: afkeurImpact,
+          status: 'open',
+          sampleItemIds: [cel.sampleId],
+        }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(antwoord.error || 'de afkeuring kon niet worden opgeslagen');
+      setAfkeurTekst('');
+      setAfkeurAdvies('');
+      setAfkeurOpen(false);
+      router.refresh();
+    } catch (e: any) {
+      setAfkeurFout(e.message);
+    } finally {
+      setAfkeurBezig(false);
+    }
+  };
+
+  /**
+   * De afkeuringen bij dit criterium, met de knop om er een toe te voegen.
+   *
+   * Leeg is hier een volwaardige toestand en geen gebrek: "je hebt nog geen afkeuringen
+   * toegevoegd" betekent dat je de instructies hebt gevolgd en niets vond. Het oordeel
+   * onderaan volgt hieruit.
+   */
+  const afkeuringenBlok = (cel: Cel) => {
+    const afkeuringen = cel.bevindingen.filter((b) => b.type !== 'opmerking');
+    return (
+      <section className="mb-4 border-t border-gray-200 pt-3">
+        <h3 className="mb-2 text-lg font-semibold text-gray-900">Bevindingen</h3>
+
+        {/* Wat de meting vond en wat de agent ervan maakte. Stond eerst tussen de
+            instructies; daar maakte het de kaart drie keer zo lang als een auditkaart hoort
+            te zijn. Hier hoort het: het is het materiaal waaruit een bevinding volgt. */}
+        {metingVondBlok(cel, 1)}
+        {metingVondBlok(cel, 2)}
+
+        {/* Elke bevinding staat ingeklapt, met de eerste zin in de samenvatting.
+
+            Een bevinding is drie alinea's plus een advies. Staan er twee of drie op een
+            kaart, dan verdwijnt de afsluiting eronder uit beeld en lijkt de kaart een
+            rapport. Dichtgeklapt zie je hoeveel er zijn en waar ze over gaan; wat je moet
+            weten om te beslissen staat in de eerste zin, en de rest is één klik weg.
+
+            Lichtblauw en niet rood: rood is hier de kleur van een foutmelding — van iets dat
+            misging in het scherm zelf, zoals bij afkeurFout hieronder. Een bevinding is geen
+            storing maar de opbrengst van de kaart. */}
+        {afkeuringen.length === 0 ? (
+          <p className="border-y border-gray-100 py-3 text-center text-sm text-gray-500">
+            Je hebt nog geen bevindingen toegevoegd.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {afkeuringen.map((b) => (
+              <li key={b.id} className="rounded bg-blue-50 text-sm text-blue-950">
+                <details>
+                  <summary className="cursor-pointer p-3">
+                    <span className="mr-2 inline-flex flex-wrap items-center gap-2 text-xs align-middle">
+                      {b.findingCode && (
+                        <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono font-medium">
+                          {b.findingCode}
+                        </span>
+                      )}
+                      {b.impact && (
+                        <span className="rounded bg-white/70 px-1.5 py-0.5">{b.impact}</span>
+                      )}
+                    </span>
+                    <span className="leading-relaxed">{eersteZin(b.description)}</span>
+                  </summary>
+                  <div className="px-3 pb-3">
+                    <p className="whitespace-pre-line leading-relaxed">{b.description}</p>
+                    {b.advice && (
+                      <div className="mt-2 border-t border-black/10 pt-2">
+                        <p className="mb-0.5 text-xs font-medium opacity-70">Advies</p>
+                        <p className="whitespace-pre-line leading-relaxed">{b.advice}</p>
+                      </div>
+                    )}
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* De knop staat onder de lijst en niet naast de kop: je voegt iets toe nadat je
+            hebt gezien wat er al staat, niet ervoor. */}
+        {!afkeurOpen && (
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setAfkeurOpen(true)}
+              className="rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800"
+            >
+              Bevinding toevoegen
+            </button>
+          </div>
+        )}
+
+        {afkeurFout && (
+          <p className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{afkeurFout}</p>
+        )}
+
+        {afkeurOpen && (
+          <div className="mt-2 rounded border border-gray-300 p-3">
+            <textarea
+              value={afkeurTekst}
+              onChange={(e) => setAfkeurTekst(e.target.value)}
+              rows={3}
+              placeholder="Wat is er mis? Noem het onderdeel, de betrokken pagina en de namen die je naast elkaar legde."
+              className="mb-2 w-full rounded border border-gray-300 p-2 text-sm"
+            />
+            <textarea
+              value={afkeurAdvies}
+              onChange={(e) => setAfkeurAdvies(e.target.value)}
+              rows={2}
+              placeholder="Advies: welke naam moet het overal worden?"
+              className="mb-2 w-full rounded border border-gray-300 p-2 text-sm"
+            />
+            <label className="mb-2 block text-xs text-gray-600">
+              Impact
+              <select
+                value={afkeurImpact}
+                onChange={(e) => setAfkeurImpact(e.target.value)}
+                className="ml-2 rounded border border-gray-300 px-2 py-1 text-sm"
+              >
+                <option value="klein">klein</option>
+                <option value="matig">matig</option>
+                <option value="serieus">serieus</option>
+                <option value="kritiek">kritiek</option>
+              </select>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={afkeurBezig || !afkeurTekst.trim()}
+                onClick={() => voegAfkeuringToe(cel)}
+                className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-40"
+              >
+                Opslaan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAfkeurOpen(false);
+                  setAfkeurFout(null);
+                }}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  /**
+   * Het lijstje waarover je beslist, vlak boven de knoppen.
+   *
+   * Dezelfde vondsten als bij stap 3, maar dan kort en op de plek waar je ze nodig hebt. De
+   * instructie "weeg of een verschil aanvaardbaar is" stond los van de dingen die gewogen
+   * moeten worden; dan moet je terugbladeren en onthouden wat er ook alweer stond.
+   */
+  const teWegenBlok = (cel: Cel) => {
+    const metingen = cel.verantwoording ?? [];
+    const meting = metingen.find((m) => Array.isArray((m.uitkomst as any)?.onderdelen));
+    const gemeten: any[] = (meting ? (meting.uitkomst as any).onderdelen : []) ?? [];
+    // Aantekeningen bij een gemeten onderdeel staan daar al; hier alleen de eigen vondsten.
+    const eigen = (cel.zelfGevonden ?? []).filter((o) => !o.overOnderdeel);
+    const regels: { wat: string; varianten: string[]; bron: string }[] = [
+      ...gemeten.map((o: any) => ({
+        wat: leesbaarOnderdeel(o.sleutel).naam,
+        varianten: o.namen.map((n: any) => n.naam),
+        bron: 'gemeten',
+      })),
+      ...eigen.map((o) => ({
+        wat: o.omschrijving,
+        varianten: o.varianten.map((v) => v.wat),
+        bron: 'door jou',
+      })),
+    ];
+    if (!regels.length) return null;
+
+    return (
+      <div className="mb-3 rounded border border-gray-200 p-3">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+          Te wegen — {regels.length} {regels.length === 1 ? 'onderdeel' : 'onderdelen'}
+        </p>
+        <ol className="list-decimal space-y-1.5 pl-5 text-sm">
+          {regels.map((r, i) => (
+            <li key={i}>
+              <span className="font-medium text-gray-900">{r.wat}</span>
+              <span className="ml-1 text-xs text-gray-500">({r.bron})</span>
+              <br />
+              <span className="text-gray-700">
+                {r.varianten.map((v) => '\u201C' + v + '\u201D').join(' tegen ')}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-2 text-xs text-gray-500">
+          Per onderdeel: dezelfde functie? Zo ja, is dit aanvaardbare variatie of een afkeuring
+          (F31)? Consistent hoeft niet identiek te zijn.
+        </p>
+      </div>
+    );
+  };
+
+  const metingenBlok = (cel: Cel, metKop = true) => {
     const metingen = cel.verantwoording ?? [];
 
     return (
-        <div className="mb-4 border-t border-gray-200 pt-3">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-            Zo is het vastgesteld
-          </p>
+        <div className={metKop ? 'mb-4 border-t border-gray-200 pt-3' : 'mb-4'}>
+          {metKop && (
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+              Zo is het vastgesteld
+            </p>
+          )}
           {metingen.length === 0 ? (
             <p className="text-sm text-gray-500">
               {/* Op een vraagkaart is er nog geen oordeel, dus de zin erover klopt daar niet:
@@ -1305,11 +2273,16 @@ export default function Stapel({
                 // Een aan-uit-vlag schrijf je zonder waarde: --text, niet --text=true.
                 // Beide werken, maar de regel is er om over te typen en zo typt niemand
                 // het. Vlaggen met een echte waarde (--breedte=320) houden hun waarde.
-                const regel = `npm run cli -- ${m.commando} ${m.url ?? ''}${Object.entries(
-                  m.argumenten ?? {}
-                )
-                  .map(([k, v]) => (v === 'true' ? ` --${k}` : ` --${k}=${v}`))
-                  .join('')}`.trim();
+                // `aanroep` staat erin als het commando iets anders meekrijgt dan een
+                // pagina-adres — `get-consistentie` krijgt het onderzoeksnummer. Het veld
+                // `url` is een koppelsleutel voor `koppel-logboek` en niet wat er gedraaid is.
+                const regel =
+                  m.aanroep ??
+                  `npm run cli -- ${m.commando} ${m.url ?? ''}${Object.entries(
+                    m.argumenten ?? {}
+                  )
+                    .map(([k, v]) => (v === 'true' ? ` --${k}` : ` --${k}=${v}`))
+                    .join('')}`.trim();
                 const sleutel = `${m.commando}-${m.tijd ?? i}`;
                 const hermeting = hermetingen[sleutel];
                 return (
@@ -1335,7 +2308,14 @@ export default function Stapel({
                             // Een geneste waarde als tekst geeft "[object Object]", en dat
                             // is precies de plek waar de uitsplitsing per zijde staat — de
                             // interessantste helft van een randmeting.
+                            // Een lijst is inhoud en geen meetgetal: `onderdelen` en
+                            // `iconen` staan uitgewerkt op de kaart zelf. Hier alleen
+                            // hoeveel het er zijn, anders leest deze regel als
+                            // "onderdelen: 0 [object Object] / 1 [object Object]".
                             .map(([k, v]) =>
+                              Array.isArray(v)
+                                ? `${k}: ${v.length}`
+                                :
                               v !== null && typeof v === 'object'
                                 ? `${k}: ${Object.entries(v as Record<string, unknown>)
                                     .map(([z, w]) => `${z} ${w}`)
@@ -1458,7 +2438,12 @@ export default function Stapel({
                               {bestandsnaam(bestand)}
                             </a>
                           )}
-                          {!beeld && (
+                          {/* Ook de lijst telt mee. `get-consistentie` maakt geen afdruk van
+                              "de pagina" — hij bezoekt er zestien — maar wel van elk onderdeel
+                              dat afwijkt, en die komen in `schermafdrukken`. Keek deze regel
+                              alleen naar het enkelvoud, dan meldde hij "geen schermafdruk"
+                              terwijl er negen boven stonden. */}
+                          {!beeld && !m.schermafdrukken?.length && (
                             <p className="text-xs text-gray-500">
                               Bij deze meting is geen schermafdruk vastgelegd. Draai hem opnieuw
                               met &ldquo;Nog eens meten&rdquo;; sinds 17 augustus laat elke meting
@@ -1497,13 +2482,20 @@ export default function Stapel({
   };
 
   /** De onderbouwing plus de controle erop. Samen, op de oordeelkaart. */
-  const bewijsBlokken = (cel: Cel) => {
+  /**
+   * `metMetingen` uit betekent: alleen het akkoord, zonder de lijst met commando's.
+   *
+   * Op een auditkaart staat die lijst al onder "Zo is het vastgesteld". Stond hij hier ook,
+   * dan verscheen dat kopje twee keer in hetzelfde uitklapblok, met dezelfde commando's
+   * eronder.
+   */
+  const bewijsBlokken = (cel: Cel, metMetingen = true) => {
     const controle = cel.controle;
     const TEKEN: Record<string, string> = { ja: '✓', nee: '✗', nvt: '—' };
 
     return (
       <>
-        {metingenBlok(cel)}
+        {metMetingen && metingenBlok(cel)}
 
         <div className="mb-4 border-t border-gray-200 pt-3">
           {/* De onderzoeker is de controle. Niet een van twee.
@@ -1591,8 +2583,8 @@ export default function Stapel({
       </p>
       {isSitebreed(cel.code) && (
         <p className="mb-3 text-xs text-gray-500">
-          Vastgelegd op {sampleTitel(cel.sampleId)}. Op de andere pagina&apos;s staat dit
-          criterium op &ldquo;niet aanwezig&rdquo;, met een verwijzing hierheen.
+          Vastgelegd op {sampleTitel(cel.sampleId)}; op de andere pagina&apos;s staat een
+          verwijzing hierheen.
         </p>
       )}
     </>
@@ -1665,6 +2657,279 @@ export default function Stapel({
       ? huidig.voorstel.code
       : huidig.cel.code
     : null;
+
+  /**
+   * De uitleg boven aan deze kaart, uit het regelbestand van het criterium. Ontbreekt hij,
+   * dan toont de kaart wat hij altijd toonde. Zie lib/criterium-kaarttekst.ts.
+   */
+  const kaarttekst = huidigeCode ? kaartteksten[huidigeCode] ?? null : null;
+
+  /**
+   * Is dit oordeel al door de onderzoeker goedgekeurd?
+   *
+   * Alleen bij een echt akkoord, niet bij een afwijzing: na "Klopt niet" is er nog iets te
+   * kiezen, na "Klopt" niet meer.
+   */
+  const alAkkoord = huidig && huidig.soort !== 'voorstel' && huidig.cel.akkoord === 'akkoord';
+
+  /**
+   * Het lijf van een auditkaart: de naam van de toets, waar het op neerkomt, het
+   * succescriterium met zijn niveau, de instructies, en de bevindingen.
+   *
+   * Dit staat op één plek omdat twee kaarten het tonen: een criterium dat nog openstaat, en
+   * een oordeel dat op akkoord wacht. Die tweede had een eigen weergave — een blauw label,
+   * de lopende tekst van de workflow, en daaronder een lijst bevindingen — en die leek in
+   * niets op de kaart ernaast. Bij 1.1.1 op Home leverde dat twee verschillende schermen op
+   * voor dezelfde vraag, terwijl 3.2.4 de nieuwe indeling had.
+   *
+   * Alleen aan te roepen als `kaarttekst` er is.
+   */
+  /**
+   * Het criteriumnummer met zijn naam, bovenaan de kaart.
+   *
+   * De kaart begon met "Oordeel van de agent · voldoet niet" en daaronder de naam van de
+   * toets in gewone taal. Waaróver dat oordeel ging stond pas verderop, onder
+   * "Succescriterium". Bij het doorbladeren van twintig kaarten is dat precies het ene
+   * gegeven dat je bij binnenkomst nodig hebt.
+   */
+  /**
+   * Is dit criterium in een auditsessie bekeken, of headless?
+   *
+   * Het stond er altijd al — `browser: cdp | headless` per meting — maar als los woord
+   * tussen een tijdstip en een aantal bytes, ingeklapt onder "Zo is het vastgesteld". Daar
+   * leest niemand het, en dus valt het ook niemand op als het "headless" zegt terwijl de
+   * instructies van het criterium om klikken vragen.
+   *
+   * Dat is geen theoretisch risico. 1.3.1 begint met "klap alle uitklapblokken open"; wat
+   * dichtzit staat soms niet eens in de opgehaalde code, en dan ziet een pagina met
+   * verborgen gebreken er hetzelfde uit als een pagina zonder. Op 23 augustus 2026 stond ik
+   * op het punt 1.3.1 headless te beoordelen, en niets op het scherm hield me tegen.
+   *
+   * Geen metingen betekent geen badge: er valt dan niets te kwalificeren, en een rood kruis
+   * op zeshonderd kaarten leert je alleen om het niet meer te zien.
+   */
+  const auditsessieBadge = (cel: Cel) => {
+    const metingen = cel.verantwoording ?? [];
+    if (!metingen.length) return null;
+    // Het logboek schrijft 'auditsessie' of 'headless' (scripts/lib/audit-log.ts), niet de
+    // ruwe browsermodus 'cdp'. Op die verkeerde vergelijking zette de badge een kruis bij
+    // een meting die wél in een auditsessie was gedaan — een waarborg die het omgekeerde
+    // beweert is erger dan geen waarborg.
+    const inSessie = metingen.some((m) => m.browser === 'auditsessie' || m.browser === 'cdp');
+    return (
+      <span
+        className={`rounded px-2 py-0.5 font-medium ${
+          inSessie ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-900'
+        }`}
+        title={
+          inSessie
+            ? 'Ten minste één meting is gedaan in een auditsessie (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen.'
+            : 'Alle metingen zijn headless gedaan. Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is dan niet beoordeeld.'
+        }
+      >
+        {inSessie ? '✓ auditsessie' : '✗ zonder auditsessie'}
+      </span>
+    );
+  };
+
+  const criteriumRegel = (cel: Cel) =>
+    kaarttekst ? (
+      <p className="mb-2 text-sm font-medium text-gray-500">
+        {cel.code} {critTitel(cel.code)}
+      </p>
+    ) : null;
+
+  /**
+   * Wat er per deelgebied is nagelopen — alleen bij een criterium dat er meerdere heeft.
+   *
+   * Dit lost het gat dat een lopende onderbouwing laat vallen. Bij BEV-03 stond 1.3.1 op
+   * `opmerking` met een verhaal over de koppenstructuur, terwijl er op diezelfde pagina
+   * `em`-elementen om gewone zinnen stonden. Niemand zag dat de andere twaalf gebieden niet
+   * waren nagelopen, want een verhaal dat iets weglaat leest hetzelfde als een verhaal dat
+   * niets te melden had.
+   *
+   * Een streepje is hier informatie en geen leegte: "geen tabellen op deze pagina" is iets
+   * anders dan "niet naar tabellen gekeken". Dat laatste is de open ring.
+   */
+  const gebiedenBlok = (cel: Cel) => {
+    const lijst = kaarttekst?.gebieden ?? [];
+    if (!lijst.length) return null;
+    const per = new Map((cel.gebieden ?? []).map((g) => [g.gebied, g]));
+    const open = lijst.filter((g) => !per.has(g)).length;
+    /**
+     * Er ligt al een oordeel, maar er is niets per gebied vastgelegd.
+     *
+     * Dat is niet "niets nagekeken". Deze lijst bestaat sinds 2026-08-23; alles wat de
+     * workflow daarvóór beoordeelde heeft een onderbouwing in lopende tekst en verder
+     * niets. Op de 1.3.1-kaart van Home stond een bevinding over een footerrij die geen
+     * lijst is — de agent had dus wel degelijk naar lijsten gekeken — terwijl er dertien
+     * open ringen boven stonden met "nog niet nagelopen". Dat is een bewering die we niet
+     * kunnen waarmaken, en ze maakt het werk van de agent onzichtbaar.
+     */
+    const nietVastgelegd = per.size === 0 && !!cel.status;
+
+    return (
+      <section className="mb-4 border-t border-gray-200 pt-3">
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">Nagelopen</h3>
+        <p className="mb-2 text-sm text-gray-600">
+          {nietVastgelegd
+            ? 'Dit oordeel dateert van voordat deze lijst bestond. Wat er per gebied is nagekeken staat niet apart vastgelegd — kijk in de onderbouwing onder "Zo is het vastgesteld".'
+            : open === 0
+              ? `Alle ${lijst.length} gebieden zijn langsgelopen.`
+              : `${lijst.length - open} van de ${lijst.length} gebieden zijn langsgelopen; ${open} nog niet.`}
+        </p>
+        <ul className="space-y-1">
+          {lijst.map((gebied) => {
+            const u = per.get(gebied);
+            // Vier uitkomsten, vier tekens. Het uitroepteken is de opmerking: geen afkeuring,
+            // maar wel iets dat gemeld is. Zou dat een kruis krijgen, dan leest een criterium
+            // dat gewoon voldoet als afgekeurd.
+            const teken = !u
+              ? '○'
+              : u.uitkomst === 'ok'
+                ? '✓'
+                : u.uitkomst === 'nvt'
+                  ? '–'
+                  : u.uitkomst === 'opmerking'
+                    ? '!'
+                    : '✗';
+            const kleur = !u
+              ? 'text-gray-400'
+              : u.uitkomst === 'ok'
+                ? 'text-green-700'
+                : u.uitkomst === 'nvt'
+                  ? 'text-gray-400'
+                  : u.uitkomst === 'opmerking'
+                    ? 'text-amber-700'
+                    : 'text-red-700';
+            return (
+              <li key={gebied} className="flex gap-2 text-sm leading-relaxed">
+                <span className={kleur} aria-hidden="true">
+                  {teken}
+                </span>
+                <span className="flex-1">
+                  <span className={u ? 'text-gray-900' : 'text-gray-500'}>{gebied}</span>
+                  {u?.toelichting && (
+                    <span className="text-gray-600"> — {u.toelichting}</span>
+                  )}
+                  {!u && (
+                    <span className="text-gray-400">
+                      {nietVastgelegd ? ' — niet apart vastgelegd' : ' — nog niet nagelopen'}
+                    </span>
+                  )}
+                  {u && u.uitkomst === 'nvt' && !u.toelichting && (
+                    <span className="text-gray-500"> — niet aanwezig op deze pagina</span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    );
+  };
+
+  const auditkaartLijf = (cel: Cel) => (
+    <>
+      <h2 className="mb-1 text-2xl font-semibold text-gray-900">{kaarttekst!.titel}</h2>
+      {kaarttekst!.inKort.map((alinea, i) => (
+        <p key={i} className="mb-3 leading-relaxed text-gray-700">
+          {metCode(alinea)}
+        </p>
+      ))}
+
+      <h3 className="mb-1 mt-5 text-lg font-semibold text-gray-900">Succescriterium</h3>
+      <p className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="font-medium text-gray-900">
+          {cel.code} {critTitel(cel.code)}
+        </span>
+        {critNiveau(cel.code) && (
+          <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700">
+            WCAG {critNiveau(cel.code)}
+          </span>
+        )}
+        {isSitebreed(cel.code) && (
+          <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700">
+            hele website
+          </span>
+        )}
+      </p>
+
+      <h3 className="mb-2 mt-5 text-lg font-semibold text-gray-900">Audit-instructies</h3>
+      {/* De instructies staan in fasen: eerst wat je in de auditsessie doet (kijken,
+          klikken, de functie vaststellen), dan wat je in de code leest (namen, alt,
+          aria-label). Andersom vergelijk je namen van onderdelen waarvan je niet weet of
+          ze hetzelfde doen. */}
+      {kaarttekst!.instructies.map((groep, g) => (
+        <div key={g} className="mb-4">
+          {groep.titel && <p className="mb-1 font-medium text-gray-900">{groep.titel}</p>}
+          <ul className="space-y-1">
+            {groep.stappen.map((stap, i) => (
+              <li key={i} className="flex gap-2 leading-relaxed">
+                {/* Een vinkje bij wat de meting al deed, een open rondje bij wat nog van
+                    jou wordt gevraagd. Zonder dat leest een gedane stap als een opdracht. */}
+                <span
+                  className={stap.door === 'jij' ? 'text-gray-400' : 'text-green-700'}
+                  aria-hidden="true"
+                >
+                  {stap.door === 'jij' ? '○' : '✓'}
+                </span>
+                <span className="flex-1 text-gray-900">{metCode(stap.tekst)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+
+      {gebiedenBlok(cel)}
+      {afkeuringenBlok(cel)}
+    </>
+  );
+
+  /**
+   * "Zo is het vastgesteld", ingeklapt onder aan de kaart.
+   *
+   * `redenTonen` staat alleen aan op de kaart van een oordeel dat op akkoord wacht. Daar is
+   * de tekst van de workflow niet zomaar achtergrond: het is precies datgene waar je "Klopt"
+   * tegen zegt, en die mag dan niet onvindbaar zijn. Op een kaart die nog openstaat blijft
+   * hij weg — daar toont de meting zelf wat er gevonden is, en een oudere lezing ernaast
+   * wordt een tweede verhaal dat uit elkaar loopt met het eerste.
+   */
+  const vastgesteldDetails = (cel: Cel, redenTonen = false) =>
+    kaarttekst ? (
+      <details className="mt-4 border-t border-gray-200 pt-3">
+        <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-gray-500">
+          5 · Zo is het vastgesteld
+        </summary>
+        <div className="mt-3">
+          {/* Eerst wat er gebeurt en waar de gegevens vandaan komen, dan pas de commando’s.
+              Een lijst met tijdstippen zegt wat er gedraaid is, niet wat er gemeten is — en
+              niet wat het gereedschap niet ziet. */}
+          {kaarttekst.vastgesteld?.length ? (
+            <div className="mb-4 space-y-2">
+              {kaarttekst.vastgesteld.map((alinea, i) => (
+                <p key={i} className="text-sm leading-relaxed text-gray-700">
+                  {metCode(alinea)}
+                </p>
+              ))}
+            </div>
+          ) : null}
+
+          {redenTonen && (
+            <div className="mb-4">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                Wat de agent op deze pagina noteerde
+              </p>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                {cel.reden ?? '(geen onderbouwing gegeven)'}
+              </p>
+            </div>
+          )}
+
+          {metingenBlok(cel, false)}
+        </div>
+      </details>
+    ) : null;
 
   /**
    * De huisregels ophalen zodra het overlegpaneel opengaat.
@@ -1763,6 +3028,7 @@ export default function Stapel({
 
       {huidig.soort === 'oordeel' ? (
         <div className="rounded-lg border border-gray-300 bg-white p-6">
+          {criteriumRegel(huidig.cel)}
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
               Oordeel van de agent
@@ -1772,19 +3038,38 @@ export default function Stapel({
                 OORDEEL_KLEUR[huidig.cel.status ?? ''] ?? 'bg-gray-100 text-gray-700'
               }`}
             >
-              {huidig.cel.status}
+              {/* Op een auditkaart staat dezelfde uitkomst in dezelfde woorden als op de
+                  kaart van een criterium dat nog openstaat: "voldoet niet", niet
+                  "afgekeurd". Twee woorden voor hetzelfde lezen als twee dingen. */}
+              {kaarttekst
+                ? huidig.cel.status === 'afgekeurd'
+                  ? 'voldoet niet'
+                  : huidig.cel.status
+                : huidig.cel.status}
             </span>
             {huidig.cel.bron && (
               <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-600">
                 {HERKOMST[huidig.cel.bron] ?? huidig.cel.bron}
               </span>
             )}
+            {auditsessieBadge(huidig.cel)}
           </div>
 
-          {kaartkop(huidig.cel)}
-          <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
-            {huidig.cel.reden ?? '(geen onderbouwing gegeven)'}
-          </p>
+          {/* Heeft dit criterium een `## Op de kaart`, dan is dit dezelfde kaart als die
+              van een criterium dat nog openstaat: dezelfde kop, dezelfde instructies,
+              dezelfde bevindingen. Alleen de afsluiting verschilt — hier zeg je ja of nee
+              tegen een oordeel dat er al ligt. De lopende tekst van de workflow is niet weg
+              maar verhuisd naar "Zo is het vastgesteld"; zie vastgesteldDetails. */}
+          {kaarttekst ? (
+            auditkaartLijf(huidig.cel)
+          ) : (
+            <>
+              {kaartkop(huidig.cel)}
+              <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
+                {huidig.cel.reden ?? '(geen onderbouwing gegeven)'}
+              </p>
+            </>
+          )}
 
           {wachtendeVoorstellen.length > 0 && (
             <div className="mb-4 space-y-2 rounded border border-purple-200 bg-purple-50 p-3">
@@ -1811,7 +3096,7 @@ export default function Stapel({
             </div>
           )}
 
-          {huidig.cel.bevindingen.length > 0 && (
+          {!kaarttekst && huidig.cel.bevindingen.length > 0 && (
             <div className="mb-4 space-y-2">
               {huidig.cel.bevindingen.map((b) => (
                 <div key={b.id} className="rounded bg-gray-50 p-3 text-sm">
@@ -1833,7 +3118,7 @@ export default function Stapel({
             </div>
           )}
 
-          {bewijsBlokken(huidig.cel)}
+          {!kaarttekst && bewijsBlokken(huidig.cel)}
 
           {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
@@ -1900,10 +3185,40 @@ export default function Stapel({
           ) : (
             <>
             {sitebreedMelding(huidig.cel)}
-            <div className="flex flex-wrap gap-2">
+            {/* Ruim boven de afsluiting, en gecentreerd — net als op de kaart van een
+                criterium dat nog openstaat. Wat je hierboven doet is het materiaal lezen;
+                hier zeg je of het oordeel klopt. Zonder die ruimte lezen de drie knoppen als
+                een vervolg op de bevindingenlijst. */}
+            {/* De stand van het akkoord hoort hier, bij de knoppen die hem veranderen.
+
+                Hij stond onderaan in "Zo is het vastgesteld", ingeklapt, achter de
+                commando's en de artefacten. Daar is hij geen antwoord meer op de vraag die
+                de kaart stelt maar een voetnoot — terwijl er bovenaan stond dat het oordeel
+                nog op je akkoord wachtte en onderaan dat je het allang gegeven had. */}
+            {kaarttekst && (
+              <p
+                className={`mb-2 mt-12 text-center text-sm font-medium ${
+                  huidig.cel.akkoord === 'akkoord'
+                    ? 'text-green-800'
+                    : huidig.cel.akkoord === 'afgewezen'
+                      ? 'text-red-800'
+                      : 'text-gray-700'
+                }`}
+              >
+                {huidig.cel.akkoord === 'akkoord'
+                  ? '✓ Door jou nagekeken en akkoord bevonden.'
+                  : huidig.cel.akkoord === 'afgewezen'
+                    ? '✗ Door jou afgewezen.'
+                    : 'De agent heeft dit criterium beoordeeld. Dat oordeel telt pas mee als jij het bevestigt.'}
+              </p>
+            )}
+            {/* Heb je al akkoord gegeven, dan is er niets meer te kiezen: de drie knoppen
+                gaan uit. Ze bleven aanstaan boven de regel dat je het had nagekeken, en dan
+                staat er een vraag onder een antwoord. */}
+            <div className={kaarttekst ? 'flex flex-wrap justify-center gap-2' : 'flex flex-wrap gap-2'}>
               <button
                 type="button"
-                disabled={bezig}
+                disabled={bezig || alAkkoord}
                 onClick={() =>
                   beantwoord(huidig.cel, huidig.cel.status as any, {
                     behoudReden: true,
@@ -1919,7 +3234,7 @@ export default function Stapel({
               </button>
               <button
                 type="button"
-                disabled={bezig}
+                disabled={bezig || alAkkoord}
                 onClick={() => setUitgang('corrigeren')}
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >
@@ -1929,7 +3244,7 @@ export default function Stapel({
                   deugt maar nog niet wat het moet worden. */}
               <button
                 type="button"
-                disabled={bezig}
+                disabled={bezig || alAkkoord}
                 onClick={() => setUitgang('overleggen')}
                 className="rounded border border-blue-300 px-4 py-2 text-sm text-blue-900 hover:bg-blue-50 disabled:opacity-40"
               >
@@ -1938,6 +3253,10 @@ export default function Stapel({
             </div>
             </>
           )}
+
+          {/* De verantwoording, ingeklapt. Hier mét de tekst die de workflow bij dit oordeel
+              schreef: dát is waar "Klopt" ja tegen zegt, dus die mag niet onvindbaar zijn. */}
+          {vastgesteldDetails(huidig.cel, true)}
         </div>
       ) : huidig.soort === 'voorstel' ? (
         <div className="rounded-lg border border-gray-300 bg-white p-6">
@@ -2117,38 +3436,90 @@ export default function Stapel({
         </div>
       ) : (
         <div className="rounded-lg border border-gray-300 bg-white p-6">
+          {/* Wat de agent ervan maakt, niet "jij moet nog kijken".
+              
+              De agent heeft de stappen afgelopen: gemeten, nagelopen wat hij zelf kon
+              controleren, en bij elk gevonden onderdeel een bevinding voorgelegd. Wat overblijft
+              is een oordeel — en dat hoort hij te geven, net als bij een bevinding, zodat jij
+              iets hebt om ja of nee tegen te zeggen. "Jij moet kijken" verzweeg dat er al een
+              uitkomst lag.
+
+              Het volgt uit de bevindingen, niet uit een aparte knop: staat er een afkeuring,
+              dan voldoet het criterium niet. Dezelfde rekensom als criteriumOordeel in
+              gegevens.ts, en als de knop "Klaar" hieronder. */}
+          {criteriumRegel(huidig.cel)}
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded bg-blue-100 px-2 py-0.5 font-medium text-blue-800">
-              Jij moet kijken
-            </span>
+            {kaarttekst ? (
+              <>
+                <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
+                  Oordeel van de agent
+                </span>
+                <span
+                  className={`rounded px-2 py-0.5 font-medium ${
+                    huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}
+                >
+                  {huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                    ? 'voldoet niet'
+                    : 'voldoet'}
+                </span>
+              </>
+            ) : (
+              <span className="rounded bg-blue-100 px-2 py-0.5 font-medium text-blue-800">
+                Jij moet kijken
+              </span>
+            )}
             {huidig.cel.bron && (
               <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-600">
                 {HERKOMST[huidig.cel.bron] ?? huidig.cel.bron}
               </span>
             )}
+            {auditsessieBadge(huidig.cel)}
           </div>
 
-          {kaartkop(huidig.cel)}
-          <p className="mb-4 leading-relaxed text-gray-900">
-            {huidig.cel.reden ?? 'Dit criterium vergt een browsertest.'}
-          </p>
+          {/* Heeft dit criterium een `## Op de kaart` in zijn regelbestand, dan krijgt het de
+              indeling van een auditkaart: de naam van de toets in gewone taal, waar het op
+              neerkomt, het succescriterium met zijn niveau, en de instructies als lijst.
+              Zonder die sectie blijft de kaart wat hij was. */}
+          {kaarttekst ? (
+            <>
+              {auditkaartLijf(huidig.cel)}
+            </>
+          ) : (
+            <>
+              <p className="mb-4 leading-relaxed text-gray-900">
+                {huidig.cel.reden ?? 'Dit criterium vergt een browsertest.'}
+              </p>
 
-          {/* Wat er al gemeten is, en wat je hier alsnog kunt laten meten.
-              Op déze kaart staat dat een criterium niet vast te stellen was. Kan het wel
-              gemeten worden, dan is dat het eerste wat je wilt zien — anders staat er een
-              vraag aan jou waar een knop het antwoord had kunnen geven. */}
-          {metingenBlok(huidig.cel)}
+              {/* Wat er al gemeten is, en wat je hier alsnog kunt laten meten.
+                  Op déze kaart staat dat een criterium niet vast te stellen was. Kan het wel
+                  gemeten worden, dan is dat het eerste wat je wilt zien — anders staat er een
+                  vraag aan jou waar een knop het antwoord had kunnen geven. */}
+              {metingenBlok(huidig.cel)}
+            </>
+          )}
 
           {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
 
-          <label className="mb-1 block text-sm font-medium text-gray-800">
-            Wat zag je? <span className="font-normal text-gray-500">(mag leeg)</span>
-          </label>
-          <p className="mb-2 text-xs text-gray-500">
-            Wordt bewaard bij het oordeel, zodat later terug te zien is waarop het berust.
-            Schrijf op wat je hebt gedaan en wat je zag, met de waarden die je hebt gemeten.
-          </p>
+          {!kaarttekst && (
+            <label className="mb-1 block text-sm font-medium text-gray-800">
+              Wat zag je? <span className="font-normal text-gray-500">(mag leeg)</span>
+            </label>
+          )}
+          {!kaarttekst && (
+            <p className="mb-2 text-xs text-gray-500">
+              Wordt bewaard bij het oordeel, zodat later terug te zien is waarop het berust.
+              Schrijf op wat je hebt gedaan en wat je zag, met de waarden die je hebt gemeten.
+            </p>
+          )}
+          {/* Het notitieveld hoort niet op een auditkaart: daar leg je vast wat je vond,
+              niet wat je deed. Wie toch iets kwijt wil doet dat in een bevinding. Op de
+              kaarten zonder `## Op de kaart` blijft het staan, want daar is het het enige
+              wat de onderzoeker kan opschrijven. */}
+          {!kaarttekst && (
           <textarea
             value={reden}
             onChange={(e) => setReden(e.target.value)}
@@ -2160,40 +3531,97 @@ export default function Stapel({
             // op; dan is geen voorbeeld beter.
             placeholder={VOORBEELD_PER_CRITERIUM[huidig.cel.code] ?? 'Wat je hebt gedaan, en wat je zag'}
           />
+          )}
 
-          {sitebreedMelding(huidig.cel)}
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={bezig}
-              onClick={() => beantwoord(huidig.cel, 'voldoet')}
-              className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
-            >
-              In orde
-            </button>
-            <button
-              type="button"
-              disabled={bezig}
-              onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
-              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Niet van toepassing
-            </button>
-            {/* Zag je wél iets, noteer het dan als waarneming: ruw, in je eigen
-                woorden. De vraag blijft openstaan tot je hem beantwoordt — een
-                afkeuring zonder onderbouwing is precies wat de poort voorkomt. */}
-            <a
-              href={`?tab=stand&weergave=waarnemingen&sample=${huidig.cel.sampleId}`}
-              className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-            >
-              Ik zie iets — noteren
-            </a>
-          </div>
+          {!kaarttekst && sitebreedMelding(huidig.cel)}
+          {kaarttekst ? (
+            <>
+              {/* Zoals op een auditkaart: je kiest niet tussen "voldoet" en "voldoet niet".
+                  Je voegt toe wat je vindt, en zegt wanneer je klaar bent. Het oordeel volgt
+                  uit de afkeuringen — precies zoals criteriumOordeel in gegevens.ts rekent.
+                  Daarmee kan de toestand "afgekeurd zonder bevinding" niet meer ontstaan, en
+                  die las onderaan als geslaagd. */}
+              {/* Ruim boven de afsluiting. Wat je hierboven doet is materiaal verzamelen;
+                  hieronder sluit je de stap af. Zonder die ruimte lijkt "Bevinding toevoegen"
+                  een van de drie antwoordknoppen. */}
+              <p className="mb-2 mt-12 text-center text-sm font-medium text-gray-700">
+                {huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                  ? 'Je hebt een afkeuring toegevoegd. Markeer de stap als klaar om dat vast te leggen.'
+                  : 'Deze stap staat nog open.'}
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  disabled={bezig}
+                  onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Niet van toepassing
+                </button>
+                <button
+                  type="button"
+                  disabled={bezig}
+                  onClick={() =>
+                    beantwoord(
+                      huidig.cel,
+                      huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                        ? 'afgekeurd'
+                        : 'voldoet'
+                    )
+                  }
+                  className="rounded-full border border-green-700 px-4 py-2 text-sm font-medium text-green-800 hover:bg-green-50 disabled:opacity-40"
+                >
+                  Klaar
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => beantwoord(huidig.cel, 'voldoet')}
+                className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
+              >
+                In orde
+              </button>
+              <button
+                type="button"
+                disabled={bezig}
+                onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
+                className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                Niet van toepassing
+              </button>
+              {/* Zag je wél iets, noteer het dan als waarneming: ruw, in je eigen
+                  woorden. De vraag blijft openstaan tot je hem beantwoordt — een
+                  afkeuring zonder onderbouwing is precies wat de poort voorkomt. */}
+              <a
+                href={`?tab=stand&weergave=waarnemingen&sample=${huidig.cel.sampleId}`}
+                className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+              >
+                Ik zie iets — noteren
+              </a>
+            </div>
+          )}
 
-          <p className="mt-3 text-xs text-gray-500">
-            De vraag blijft openstaan tot je hem beantwoordt. Schrijf je een bevinding, kom dan
-            terug om hier vast te leggen wat je zag.
-          </p>
+          {/* Stap 5: de verantwoording. Belangrijk dat het er staat, niet belangrijk dat je
+              het als eerste leest — vandaar ingeklapt. Hier zit ook "Meet dit nu".
+
+              Zonder tweede argument: op een kaart die nog openstaat blijft de tekst van de
+              workflow weg. Wat de meting vandaag vond staat bij de bevindingen, en een oudere
+              lezing ernaast wordt een tweede verhaal dat daarmee uit elkaar loopt. */}
+          {vastgesteldDetails(huidig.cel)}
+          {/* Alleen op de oude kaarten. Deze zin gaat over de knop "Ik zie iets — noteren",
+              die je wegstuurde naar het waarnemingenscherm, en over het veld "Wat zag je?".
+              Op een kaart met eigen instructies bestaan die geen van beide: je schrijft een
+              bevinding daar waar hij hoort. */}
+          {!kaarttekst && (
+            <p className="mt-3 text-xs text-gray-500">
+              De vraag blijft openstaan tot je hem beantwoordt. Schrijf je een bevinding, kom dan
+              terug om hier vast te leggen wat je zag.
+            </p>
+          )}
         </div>
       )}
     </div>

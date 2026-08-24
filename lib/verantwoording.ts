@@ -22,7 +22,21 @@ import type { LogRegel } from '../scripts/lib/audit-log';
 export interface Meting {
   commando: string;
   argumenten?: Record<string, string>;
+  /**
+   * Het adres van de pagina waarop gemeten is.
+   *
+   * Dit is een koppelsleutel, geen weergave: `koppel-logboek` zoekt hiermee op welk
+   * sample de meting hoort. Zet er iets anders in — een onderzoeksnummer bijvoorbeeld —
+   * en de regel wordt stilzwijgend overgeslagen.
+   */
   url?: string | null;
+  /**
+   * Het commando zoals het werkelijk is aangeroepen, als dat afwijkt van commando + url.
+   *
+   * `get-consistentie` krijgt een onderzoeksnummer mee, niet een pagina-adres. Zonder dit
+   * veld toont de kaart een commando dat niemand zo heeft gedraaid.
+   */
+  aanroep?: string | null;
   tijd?: string;
   /**
    * De handeling in woorden: wat er gekeken is en wat eruit kwam. Geschreven door de code
@@ -68,6 +82,7 @@ export function metingUitLogregel(r: LogRegel): Meting {
     schermafdruk:
       r.schermafdruk ?? (r.artefact && /\.(png|jpe?g)$/i.test(r.artefact) ? r.artefact : null),
     schermafdrukken: r.schermafdrukken ?? [],
+    aanroep: (r as any).aanroep ?? null,
     uitkomst: r.uitkomst,
   };
 }

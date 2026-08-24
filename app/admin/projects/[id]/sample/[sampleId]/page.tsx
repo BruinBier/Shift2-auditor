@@ -378,7 +378,11 @@ export default async function SampleItemPage({
                 />
 
                 {/* Dekking: is dit steekproefitem op alle criteria nagelopen? */}
-                <CriterionChecks checks={criterionChecks} totaalCriteria={totaalCriteria} />
+                <CriterionChecks
+                  checks={criterionChecks}
+                  totaalCriteria={totaalCriteria}
+                  projectId={params.id}
+                />
 
                 {/* Bevindingen section */}
                 <div className="bg-white rounded-lg border border-gray-200">

@@ -19,13 +19,16 @@ import { bouwStand } from './gegevens';
 import Matrix from './Matrix';
 import Stapel from './Stapel';
 import Waarnemingen from './Waarnemingen';
+import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
 
 export default function WaarStaIk({
   project,
   allCriteria,
+  kaartteksten = {},
 }: {
   project: any;
   allCriteria: any[];
+  kaartteksten?: Record<string, Kaarttekst>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -118,6 +121,7 @@ export default function WaarStaIk({
           focus={focus}
           terug={() => zetFocus(null)}
           projectId={project.id}
+          kaartteksten={kaartteksten}
         />
       ) : (
         <>

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProjectAdminTabs from './ProjectAdminTabs';
+import { leesKaartteksten } from '@/lib/criterium-kaarttekst';
 
 export default async function ProjectAdminPage({ params }: { params: { id: string } }) {
   const project = await prisma.project.findUnique({
@@ -52,7 +53,13 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
               // de kaart alleen de tekst van de auditor, en is niet te zien of er
               // iets gemeten is of dat iemand het heeft nagekeken.
               verantwoording: true,
+              zelfGevonden: true,
               controle: true,
+              // Wat er per deelgebied is nagelopen, bij een criterium dat uit meerdere
+              // losse vragen bestaat (1.3.1). Vergeet je dit, dan schrijft de CLI netjes
+              // weg en blijft de kaart "niet apart vastgelegd" tonen — een select die te
+              // weinig ophaalt geeft geen foutmelding, alleen een leeg vak.
+              gebieden: true,
             },
           },
         },
@@ -201,5 +208,19 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
     reportDate: p.reportDate.toISOString(),
   }));
 
-  return <ProjectAdminTabs project={projectData} allCriteria={allCriteria} relatedProjects={relatedProjectsData} researchTypeExplanations={researchTypeExplanations} />;
+  // De uitleg boven aan een kaart in "Waar sta ik" komt uit het regelbestand van het
+  // criterium zelf. Hier gelezen, want dit is de server; de kaart is een clientcomponent
+  // en kan niet van schijf lezen. Criteria zonder zo'n sectie staan er niet in, en hun
+  // kaart verandert niet.
+  const kaartteksten = leesKaartteksten(allCriteria.map((c: any) => c.code));
+
+  return (
+    <ProjectAdminTabs
+      project={projectData}
+      allCriteria={allCriteria}
+      relatedProjects={relatedProjectsData}
+      researchTypeExplanations={researchTypeExplanations}
+      kaartteksten={kaartteksten}
+    />
+  );
 }

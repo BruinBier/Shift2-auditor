@@ -28,6 +28,8 @@ export interface Sample {
 }
 
 export interface Criterion {
+  /** Het interne id, nodig om een bevinding aan dit criterium te hangen. */
+  id: string;
   code: string;
   titleNl: string;
   level: string;
@@ -64,6 +66,7 @@ export const HERKOMST: Record<string, string> = {
  * en de meetknop op de kaart. Wat de een wegschrijft moet de ander kunnen lezen.
  */
 import type { Meting } from '@/lib/verantwoording';
+import { isSitebreed } from '@/lib/metingen';
 export type { Meting };
 
 /** Eén punt uit Shift2_Bewijsvoering.md, en of de onderbouwing eraan voldoet. */
@@ -76,6 +79,46 @@ export interface ControlePunt {
 export interface Controle {
   bevestigd?: boolean | null;
   punten?: ControlePunt[];
+}
+
+/** Eén variant van een onderdeel: wat er stond, en waar de onderzoeker het zag. */
+export interface ZelfGevondenVariant {
+  wat: string;
+  waar: string;
+}
+
+/** Een onderdeel dat de onderzoeker zelf vond. Zie de route zelf-gevonden. */
+export interface ZelfGevonden {
+  id: string;
+  omschrijving: string;
+  varianten: ZelfGevondenVariant[];
+  notitie?: string;
+  toegevoegdOp?: string;
+  /** Hoort deze aantekening bij een gemeten onderdeel? Dan de sleutel daarvan. */
+  overOnderdeel?: string;
+  /** `agent` is een lezing van de assistent: geen meting, en geen oordeel. */
+  door?: 'agent' | 'onderzoeker';
+  /** Wat de onderzoeker ermee deed. Afwijzen wist niet, maar merkt aan. */
+  status?: 'open' | 'overgenomen' | 'afgewezen';
+  reactie?: string;
+}
+
+/**
+ * De uitkomst van één deelgebied binnen een criterium.
+ *
+ * `nvt` is hier het punt van de hele lijst: "geen tabellen op deze pagina" is iets anders
+ * dan "niet naar tabellen gekeken", en dat verschil was tot nu toe nergens vast te leggen.
+ */
+export interface GebiedUitkomst {
+  /** Moet woordelijk gelijk zijn aan een regel onder `### Deelgebieden` in het regelbestand. */
+  gebied: string;
+  /**
+   * `opmerking` is geen lichte fout maar een andere soort: er gaat niets verloren, er wordt
+   * alleen een verband beweerd dat er niet is. Zo'n gebied laat het criterium niet zakken.
+   */
+  uitkomst: 'ok' | 'nvt' | 'fout' | 'opmerking';
+  /** Kort, één zin: wat er stond. Bij `fout` en `opmerking` hoort er een bevinding bij. */
+  toelichting?: string;
 }
 
 export interface Cel {
@@ -92,8 +135,25 @@ export interface Cel {
    * niets te staan, en dat is informatie.
    */
   verantwoording?: Meting[] | null;
+  /**
+   * Onderdelen die de onderzoeker zélf vond, naast wat de meting vond.
+   *
+   * Een meting vindt niet alles: iets dat pas na een klik verschijnt, een pagina buiten
+   * de steekproef, of twee elementen die de sleutel niet koppelt. Die staan op de kaart
+   * in dezelfde lijst, met erbij wie wat vond.
+   */
+  zelfGevonden?: ZelfGevonden[] | null;
   /** Of de onderbouwing standhoudt, per punt uit de bewijsvoeringsregels. */
   controle?: Controle | null;
+  /**
+   * Wat er per deelgebied is nagelopen, bij een criterium dat uit meerdere vragen bestaat.
+   *
+   * De gebieden zelf staan in het regelbestand (`### Deelgebieden`); hier staat alleen de
+   * uitkomst. Zo is te zien wát er is nagekeken en niet alleen wat er gevonden is — bij
+   * BEV-03 ging de onderbouwing van 1.3.1 alleen over koppen en bleef een `em`-afkeuring
+   * op dezelfde pagina onopgemerkt.
+   */
+  gebieden?: GebiedUitkomst[] | null;
   /** De akkoord bevonden bevindingen op deze combinatie. */
   bevindingen: Bevinding[];
 }
@@ -148,6 +208,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
   }));
 
   const criteria: Criterion[] = (allCriteria ?? []).map((c: any) => ({
+    id: c.id,
     code: c.code,
     titleNl: c.titleNl ?? c.code,
     level: c.level,
@@ -224,6 +285,8 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
         // object met punten; alles anders negeren we, zodat een oude of half
         // geschreven waarde de kaart niet sloopt.
         verantwoording: Array.isArray(check?.verantwoording) ? check.verantwoording : null,
+        zelfGevonden: Array.isArray(check?.zelfGevonden) ? check.zelfGevonden : null,
+        gebieden: Array.isArray(check?.gebieden) ? check.gebieden : null,
         controle:
           check?.controle && typeof check.controle === 'object' && !Array.isArray(check.controle)
             ? check.controle
@@ -236,8 +299,20 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
   const celVoor = (sampleId: string, code: string) =>
     cellen.find((c) => c.sampleId === sampleId && c.code === code);
 
+  /**
+   * Een sitebreed criterium hoort niet in de werklijst van één pagina.
+   *
+   * 3.2.4 wordt op het homepage-sample vastgelegd, maar het gaat over de hele set. Stond
+   * het in de kolom van Home, dan vraagt de stapel daar een oordeel over zestien pagina’s
+   * terwijl je bezig bent één pagina af te werken. Het is te bereiken via het vakje in de
+   * kolom "alle pagina’s" in de matrix, en dat is de enige plek waar het thuishoort.
+   */
+  const perPagina = (c: Cel) => !isSitebreed(c.code);
+
   const openVragenVoorSample = (sampleId: string) =>
-    cellen.filter((c) => c.sampleId === sampleId && c.status === 'niet_te_bepalen');
+    cellen.filter(
+      (c) => c.sampleId === sampleId && c.status === 'niet_te_bepalen' && perPagina(c)
+    );
 
   // Beoordeeld maar nog niet bevestigd. Een openstaande vraag telt hier niet mee:
   // die staat al als vraag op de stapel en heeft nog geen oordeel om te bevestigen.
@@ -245,7 +320,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     c.status !== null && c.status !== 'niet_te_bepalen' && c.akkoord !== 'akkoord';
 
   const teBeoordelenVoorSample = (sampleId: string) =>
-    cellen.filter((c) => c.sampleId === sampleId && teBeoordelen(c));
+    cellen.filter((c) => c.sampleId === sampleId && teBeoordelen(c) && perPagina(c));
 
   const voorstellenVoorSample = (sampleId: string) =>
     voorstellen.filter((v) => v.sampleId === sampleId);
@@ -261,7 +336,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
 
   const isNagekeken = (sampleId: string) =>
     werkVoorKolom(sampleId) === 0 &&
-    !cellen.some((c) => c.sampleId === sampleId && c.status === null);
+    !cellen.some((c) => c.sampleId === sampleId && c.status === null && perPagina(c));
 
   /**
    * Volledigheid wordt per criterium gemeten, niet per sample: of dit criterium
@@ -315,13 +390,30 @@ export const OORDEEL_LABEL: Record<CriteriumOordeel, { tekst: string; klasse: st
   not_tested: { tekst: 'Nog niet getoetst', klasse: 'bg-blue-100 text-blue-800' },
 };
 
+/**
+ * De woorden waarmee een celstatus in beeld komt. Eén lijst, want dezelfde toestand
+ * heette in de legenda van de matrix "Jij moet kijken" en drie regels verderop, in de
+ * zweeftekst en het paneel, "Niet te bepalen". Twee namen voor één ding laten een lezer
+ * zoeken naar een verschil dat er niet is.
+ *
+ * Het is "Jij moet kijken" geworden en niet andersom: dit is geen eindoordeel maar een
+ * taak die openstaat, en zo staat het ook op de kaarten in de stapel.
+ */
 export const STATUS_LABEL: Record<SampleOordeel, string> = {
   voldoet: 'Voldoet',
   afgekeurd: 'Afgekeurd',
   opmerking: 'Opmerking',
   niet_aanwezig: 'Niet aanwezig',
-  niet_te_bepalen: 'Niet te bepalen',
+  niet_te_bepalen: 'Jij moet kijken',
 };
+
+/** Nooit beoordeeld is geen status maar de afwezigheid ervan, en heeft toch een woord nodig. */
+export const ONBEOORDEELD_LABEL = 'Nog niet beoordeeld';
+
+/** Het woord bij een cel, ook als er nooit een oordeel is geweest. */
+export function celLabel(status: SampleOordeel | null): string {
+  return status ? STATUS_LABEL[status] : ONBEOORDEELD_LABEL;
+}
 
 /** Kleur per celstatus. `null` — nooit beoordeeld — krijgt bewust een eigen kleur. */
 export const CEL_KLEUR: Record<string, string> = {

@@ -4,20 +4,42 @@ import { useState } from 'react';
 import {
   CEL_KLEUR,
   HERKOMST,
+  ONBEOORDEELD_LABEL,
   OORDEEL_LABEL,
   STATUS_LABEL,
+  celLabel,
   type Cel,
+  type CriteriumOordeel,
+  type SampleOordeel,
   type Stand,
 } from './gegevens';
+import { isSitebreed } from '@/lib/metingen';
 
+/**
+ * De legenda voert dezelfde woorden als de zweefteksten en het paneel, doordat
+ * ze alle vier uit STATUS_LABEL komen. Stond die lijst hier apart, dan drijft hij af:
+ * zo heette één toestand hier "Jij moet kijken" en in het paneel "Niet te bepalen".
+ */
 const LEGENDA: { sleutel: string; label: string }[] = [
-  { sleutel: 'voldoet', label: 'Voldoet' },
-  { sleutel: 'afgekeurd', label: 'Afgekeurd' },
-  { sleutel: 'opmerking', label: 'Opmerking' },
-  { sleutel: 'niet_aanwezig', label: 'Niet aanwezig' },
-  { sleutel: 'niet_te_bepalen', label: 'Jij moet kijken' },
-  { sleutel: 'onbeoordeeld', label: 'Nog niet beoordeeld' },
+  ...(Object.keys(STATUS_LABEL) as SampleOordeel[]).map((s) => ({
+    sleutel: s as string,
+    label: STATUS_LABEL[s],
+  })),
+  { sleutel: 'onbeoordeeld', label: ONBEOORDEELD_LABEL },
 ];
+
+/**
+ * Het oordeel over de hele website in de kleuren van de legenda hierboven. Geen nieuwe
+ * kleurtaal: een afgekeurd criterium krijgt hetzelfde rood als een afgekeurde pagina, en
+ * "nog niet getoetst" hetzelfde gestippelde vakje als "nog niet beoordeeld" — het is
+ * tweemaal hetzelfde: er ligt nog geen uitspraak.
+ */
+const OORDEEL_KLEUR: Record<CriteriumOordeel, string> = {
+  failed: CEL_KLEUR.afgekeurd,
+  passed: CEL_KLEUR.voldoet,
+  not_present: CEL_KLEUR.niet_aanwezig,
+  not_tested: CEL_KLEUR.onbeoordeeld,
+};
 
 export default function Matrix({
   stand,
@@ -81,12 +103,66 @@ export default function Matrix({
                   </th>
                 );
               })}
+              {/* De laatste kolom draagt de criteria waarvan het oordeel over de héle
+                  set gaat. Zie lib/metingen.ts. Geen knop: de kolom staat voor de
+                  steekproef als geheel, niet voor een pagina die je kunt afwerken.
+
+                  sticky right-0, spiegelbeeld van de criteriumkolom links: anders moet
+                  je langs twintig paginakolommen slepen om het enige vakje te zien dat
+                  er op zo'n rij staat.
+
+                  De schaduw is een inset en geen border, want op een border-collapse-
+                  tabel schuiven randen van een vastgezette cel in Chrome gewoon mee weg.
+                  Hij heeft dezelfde kleur als de rijlijnen (gray-100). Met gray-200 was
+                  dit de enige donkerdere lijn in het raster, en dan leest hij als de rand
+                  van een apart paneel: de kolom leek naast de tabel te staan in plaats
+                  van erin. */}
+              <th
+                className="sticky right-0 z-10 bg-gray-50 px-1 py-2 align-bottom font-normal text-gray-700"
+                style={{ boxShadow: 'inset 1px 0 0 0 #f3f4f6' }}
+              >
+                <span
+                  className="mx-auto block max-h-40 overflow-hidden whitespace-nowrap text-xs font-medium"
+                  style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                >
+                  alle pagina&apos;s
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {stand.criteria.map((crit) => {
-              const oordeel = OORDEEL_LABEL[stand.criteriumOordeel(crit.code)];
+              const oordeelCode = stand.criteriumOordeel(crit.code);
+              const oordeel = OORDEEL_LABEL[oordeelCode];
               const werk = stand.werkVoorRij(crit.code);
+              const sitebreed = isSitebreed(crit.code);
+              /*
+               * Welk vakje draagt het sitebrede oordeel? Niet "dat van Home": die afspraak
+               * staat in een opmerking en wordt nergens afgedwongen, dus een steekproef
+               * zonder homepage breekt hem. We zoeken het vakje met een écht oordeel —
+               * alles behalve "niet aanwezig", want dat is precies wat de andere pagina's
+               * dragen.
+               */
+              const rijCellen = sitebreed
+                ? (stand.samples
+                    .map((s) => stand.celVoor(s.id, crit.code))
+                    .filter(Boolean) as Cel[])
+                : [];
+              const beoordeeld = rijCellen.filter((c) => c.status !== null);
+              const dragers = beoordeeld.filter((c) => c.status !== 'niet_aanwezig');
+              /*
+               * Twee dragers is een fout in de gegevens, geen randgeval om stilletjes op te
+               * lossen. En geen enkele drager betekent dat de hele rij op "niet aanwezig"
+               * staat — dan levert criteriumOordeel `not_present`, en dat telt in het
+               * rapport mee als geslaagd. Zeg het dus, in plaats van een grijs vakje te
+               * tonen dat eruitziet alsof er niets aan de hand is.
+               */
+              const siteWaarschuwing =
+                dragers.length > 1
+                  ? `op ${dragers.length} pagina's vastgelegd`
+                  : dragers.length === 0 && beoordeeld.length > 0
+                    ? 'geen pagina draagt dit oordeel'
+                    : null;
               return (
                 <tr key={crit.code} className="border-t border-gray-100 hover:bg-gray-50">
                   <th className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-1.5 text-left font-normal">
@@ -118,13 +194,38 @@ export default function Matrix({
                       {oordeel.tekst}
                     </span>
                   </td>
+                  {/* Een sitebreed criterium hoort niet in de paginakolommen: aan één
+                      pagina is 3.2.4 niet vast te stellen, dus een vakje per pagina zou
+                      een oordeel tonen dat niemand geveld heeft. Zie lib/metingen.ts. Het
+                      vakje staat in de laatste kolom, "alle pagina's". */}
                   {stand.samples.map((s) => {
+                    // Een leeg vakje leest in dit raster als "onbekend", en dat is precies
+                    // het tegenovergestelde van wat hier aan de hand is: er ligt wél een
+                    // oordeel, alleen niet over deze pagina. Een streepje zegt "hier niet
+                    // beoordeeld" en houdt de rij herkenbaar als een rij met inhoud.
+                    //
+                    // aria-hidden: twintig keer "niet hier beoordeeld" voorlezen is ruis.
+                    // Wat er te weten valt staat in de kolom "alle pagina's", waar de
+                    // sr-only tekst het oordeel voluit noemt.
+                    if (sitebreed) {
+                      return (
+                        <td key={s.id} className="px-1 py-1.5">
+                          <span
+                            aria-hidden="true"
+                            title={`${s.title} — hier niet beoordeeld; ${crit.code} geldt voor alle pagina's samen`}
+                            className="mx-auto block h-5 w-5 select-none text-center text-sm leading-5 text-gray-400"
+                          >
+                            –
+                          </span>
+                        </td>
+                      );
+                    }
                     const cel = stand.celVoor(s.id, crit.code);
                     if (!cel) return <td key={s.id} />;
                     const sleutel = cel.status ?? 'onbeoordeeld';
                     const actief =
                       gekozen?.sampleId === cel.sampleId && gekozen?.code === cel.code;
-                    const label = cel.status ? STATUS_LABEL[cel.status] : 'Nog niet beoordeeld';
+                    const label = celLabel(cel.status);
                     return (
                       <td key={s.id} className="px-1 py-1.5">
                         <button
@@ -142,6 +243,40 @@ export default function Matrix({
                       </td>
                     );
                   })}
+                  {/* De kolom "alle pagina's": het oordeel over de héle website, bij élk
+                      criterium. Het verschil tussen 1.1.1 en 3.2.4 zit niet hier maar in de
+                      paginakolommen — bij 1.1.1 is elke pagina afzonderlijk getoetst en
+                      volgt dit oordeel daaruit, bij 3.2.4 zijn de pagina's als geheel
+                      beoordeeld en staan daar streepjes.
+
+                      Dezelfde kleuren als de legenda, geen nieuwe kleurtaal erbij.
+
+                      Klikken opent het criterium in de stapel, net als klikken op de naam
+                      links: dit vakje gaat over de hele rij en niet over één pagina, dus
+                      het paneel van één cel zou hier het verkeerde openen.
+
+                      Een oranje rand betekent dat er iets mis is met de drager van een
+                      sitebreed oordeel — zie hierboven. */}
+                  <td
+                    className="sticky right-0 z-10 bg-white px-1 py-1.5"
+                    style={{ boxShadow: 'inset 1px 0 0 0 #f3f4f6' }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openStapel(`rij:${crit.code}`)}
+                      title={`alle pagina's — ${oordeel.tekst}${
+                        siteWaarschuwing ? ` — ${siteWaarschuwing}` : ''
+                      }`}
+                      className={`block h-5 w-5 rounded-sm ${OORDEEL_KLEUR[oordeelCode]} ${
+                        siteWaarschuwing ? 'ring-2 ring-amber-500 ring-offset-1' : ''
+                      }`}
+                    >
+                      <span className="sr-only">
+                        alle pagina&apos;s — {oordeel.tekst}
+                        {siteWaarschuwing ? ` — ${siteWaarschuwing}` : ''}
+                      </span>
+                    </button>
+                  </td>
                 </tr>
               );
             })}
@@ -159,8 +294,8 @@ export default function Matrix({
                 {gekozen.code} — {critTitel(gekozen.code)}
               </p>
               <p className="text-sm text-gray-500">
-                {sampleTitel(gekozen.sampleId)} ·{' '}
-                {gekozen.status ? STATUS_LABEL[gekozen.status] : 'Nog niet beoordeeld'}
+                {isSitebreed(gekozen.code) ? 'hele website' : sampleTitel(gekozen.sampleId)} ·{' '}
+                {celLabel(gekozen.status)}
                 {gekozen.bron && ` · ${HERKOMST[gekozen.bron] ?? gekozen.bron}`}
               </p>
             </div>

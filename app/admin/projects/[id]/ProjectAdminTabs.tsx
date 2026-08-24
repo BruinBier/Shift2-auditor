@@ -16,6 +16,7 @@ import Richtlijnen from './tabs/Richtlijnen';
 import PagecheckProgress from './tabs/PagecheckProgress';
 import Fixlijst from './tabs/Fixlijst';
 import WaarStaIk from './tabs/WaarStaIk';
+import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
 import CrawlAllButton from './CrawlAllButton';
 import AuditSessionIndicator from '@/app/components/AuditSessionIndicator';
 
@@ -24,9 +25,11 @@ interface ProjectAdminTabsProps {
   allCriteria: any[];
   relatedProjects?: any[];
   researchTypeExplanations?: any[];
+  /** Uitleg per criterium, gelezen uit de regelbestanden. Zie lib/criterium-kaarttekst.ts. */
+  kaartteksten?: Record<string, Kaarttekst>;
 }
 
-export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [] }: ProjectAdminTabsProps) {
+export default function ProjectAdminTabs({ project, allCriteria, relatedProjects = [], researchTypeExplanations = [], kaartteksten = {} }: ProjectAdminTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'details' | 'scope' | 'sample' | 'findings' | 'dekking' | 'conclusion' | 'finalize' | 'tussencheck' | 'richtlijnen' | 'progress' | 'fixlijst' | 'stand'>('details');
@@ -734,7 +737,9 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
             {activeTab === 'richtlijnen' && <Richtlijnen project={project} allCriteria={allCriteria} />}
             {activeTab === 'progress' && <PagecheckProgress project={project} />}
             {activeTab === 'fixlijst' && <Fixlijst project={project} />}
-            {activeTab === 'stand' && <WaarStaIk project={project} allCriteria={allCriteria} />}
+            {activeTab === 'stand' && (
+              <WaarStaIk project={project} allCriteria={allCriteria} kaartteksten={kaartteksten} />
+            )}
           </div>
         </div>
       </div>

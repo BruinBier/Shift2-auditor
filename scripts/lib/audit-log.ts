@@ -33,6 +33,14 @@ import { CRITERIA_PER_COMMANDO } from '../../lib/metingen';
 export interface LogRegel {
   /** Wanneer het commando draaide, in ISO-vorm. */
   tijd: string;
+  /**
+   * Het commando zoals het werkelijk is aangeroepen, als dat afwijkt van commando + url.
+   *
+   * `url` is een koppelsleutel: `koppel-logboek` zoekt daarmee bij welk sample de meting
+   * hoort. Een commando dat een onderzoeksnummer krijgt in plaats van een pagina-adres kan
+   * dat veld dus niet gebruiken om te tonen wat er gedraaid is.
+   */
+  aanroep?: string | null;
   commando: string;
   /** De vlaggen waarmee het draaide, zodat de meting te herhalen is. */
   argumenten: Record<string, string>;

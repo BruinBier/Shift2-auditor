@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { isSitebreed } from '@/lib/metingen';
 
 type Check = {
   code: string;
@@ -29,9 +31,11 @@ const AKKOORD_LABELS: Record<string, { tekst: string; kleur: string }> = {
 export default function CriterionChecks({
   checks,
   totaalCriteria,
+  projectId,
 }: {
   checks: Check[];
   totaalCriteria: number;
+  projectId: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -47,7 +51,15 @@ export default function CriterionChecks({
     );
   }
 
-  const tel = (s: string) => checks.filter((c) => c.status === s).length;
+  /**
+   * Een sitebreed criterium staat op de andere pagina's op "niet aanwezig" omdat het
+   * daar niet te beoordelen is, niet omdat het er niet is. Zie lib/metingen.ts. Het
+   * telt hier dus niet mee als "niet aanwezig", maar krijgt een eigen regel.
+   */
+  const opSiteniveau = (c: Check) => isSitebreed(c.code) && c.status === 'niet_aanwezig';
+  const siteniveau = checks.filter(opSiteniveau);
+  const tel = (s: string) =>
+    checks.filter((c) => c.status === s && !opSiteniveau(c)).length;
   const openstaand = checks.filter((c) => c.status === 'niet_te_bepalen');
   const wachtOpAkkoord = checks.filter((c) => c.akkoord === 'voorgesteld');
   const compleet = totaalCriteria > 0 && checks.length >= totaalCriteria;
@@ -75,6 +87,11 @@ export default function CriterionChecks({
             </span>
           );
         })}
+        {siteniveau.length > 0 && (
+          <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+            Op siteniveau beoordeeld: {siteniveau.length}
+          </span>
+        )}
       </div>
 
       {wachtOpAkkoord.length > 0 && (
@@ -113,7 +130,13 @@ export default function CriterionChecks({
       {open && (
         <ul className="mt-4 divide-y divide-gray-100 border-t border-gray-100">
           {checks.map((c) => {
-            const label = LABELS[c.status] ?? { tekst: c.status, kleur: 'bg-gray-100 text-gray-700' };
+            // Een sitebreed criterium is hier niet afwezig, het is elders beoordeeld.
+            // Zeg dat ook zo: "Niet aanwezig" leest als een uitspraak over deze pagina,
+            // en die is onwaar — consistente identificatie is hier wel degelijk
+            // aanwezig, alleen niet aan één pagina vast te stellen.
+            const label = opSiteniveau(c)
+              ? { tekst: 'Op siteniveau beoordeeld', kleur: 'bg-gray-100 text-gray-700' }
+              : (LABELS[c.status] ?? { tekst: c.status, kleur: 'bg-gray-100 text-gray-700' });
             const akkoord = c.akkoord ? AKKOORD_LABELS[c.akkoord] : null;
             return (
               <li key={c.code} className="py-3">
@@ -131,6 +154,14 @@ export default function CriterionChecks({
                         </span>
                       )}
                       <span className="text-xs text-gray-400">via {c.bron}</span>
+                      {opSiteniveau(c) && (
+                        <Link
+                          href={`/admin/projects/${projectId}?tab=stand&focus=rij:${c.code}`}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          waar het oordeel staat
+                        </Link>
+                      )}
                     </div>
                     {c.reden && <p className="text-sm text-gray-600 mt-1">{c.reden}</p>}
                   </div>

@@ -328,6 +328,35 @@ model SampleCriterionCheck {
   /// onderbouwing eraan voldoet. Een verifieerder mag hier "nee" zeggen terwijl het
   /// oordeel zelf klopt — een onterecht "voldoet" valt anders niemand op.
   controle        Json?
+  /// De onderdelen die de onderzoeker zélf vond, naast wat de meting vond.
+  ///
+  /// Een meting vindt niet alles: een onderdeel dat pas na een klik verschijnt, een
+  /// pagina buiten de steekproef, of twee elementen die de sleutel niet koppelt. Wat de
+  /// auditor met eigen ogen vindt hoort in dezelfde lijst als wat gemeten is.
+  ///
+  /// Bewust niet in `verantwoording` (dat is voor metingen uit het CLI-logboek) en niet
+  /// in `reden` (dan zou toevoegen het akkoord laten vervallen).
+  zelfGevonden    Json?                 @map("zelf_gevonden")
+  /// Wat er per deelgebied is nagelopen, bij een criterium dat uit meerdere losse vragen
+  /// bestaat.
+  ///
+  /// Welke gebieden dat zijn staat niet hier maar in het regelbestand van het criterium,
+  /// onder `### Deelgebieden`; hier staat alleen de uitkomst per gebied. Zo blijft de lijst
+  /// te wijzigen zonder migratie, en gaan bestaande oordelen niet stuk als er een gebied
+  /// bijkomt — dat verschijnt dan als "nog niet nagelopen".
+  ///
+  /// Vorm: `[{ gebied: string, uitkomst: "ok" | "nvt" | "fout", toelichting?: string }]`.
+  ///
+  /// `nvt` is de reden dat deze kolom bestaat. Een onderbouwing in lopende tekst maakt geen
+  /// verschil tussen "geen tabellen op deze pagina" en "niet naar tabellen gekeken": een
+  /// verhaal dat iets weglaat leest hetzelfde als een verhaal dat niets te melden had. Bij
+  /// BEV-03 (2026-08-04) stond 1.3.1 op `opmerking` met een onderbouwing over de
+  /// koppenstructuur, terwijl er op diezelfde pagina `em`-elementen om gewone zinnen
+  /// stonden — een afkeuring die er al was, gemist omdat niemand zag dat de andere twaalf
+  /// gebieden niet waren nagelopen.
+  ///
+  /// Leeg betekent: nog niets nagelopen, of een criterium dat maar één vraag stelt.
+  gebieden        Json?
   checkedAt       DateTime              @default(now()) @map("checked_at")
   updatedAt       DateTime              @updatedAt @map("updated_at")
 
