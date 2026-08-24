@@ -63,6 +63,10 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
   Uitzondering: bij een LOGO citeer je de tekst niet. Daar gaat het erom dat de organisatienaam niet overkomt, niet om de letterlijke inhoud van het beeldmerk. Schrijf dus geen zin als "in het logo staat de naam 'Gemeente X'". Vastgelegd door Frits op 2026-08-02.
 - LOGO OP EEN SUBSITE dat linkt naar de homepage van die subsite: is het tekstalternatief alleen de organisatienaam ("Logo gemeente X"), dan is dat een AFKEURING (klein, ontwikkelaar). De gebruiker hoort dat de link naar een homepagina gaat en denkt naar de hoofdsite van de organisatie te gaan, terwijl hij op de subsite blijft. Advies: neem zowel het logo als de bestemming op, bijvoorbeeld "Logo gemeente X, Website Duurzaam X". Speelt bij elke gemeentelijke subsite (duurzaam., open., mijn.). Voorbeelden: BEV-04 B003 (open.beverwijk.nl) en BEV-03 B017 (duurzaam.beverwijk.nl).
 - Complexe afbeelding (organogram, processchema, infographic): ga EERST na of de inhoud al elders op de pagina in tekst staat, inclusief uitklapbare/details-secties. Staat het er al: advies beperken tot een korte alt-tekst. Ontbreekt substantiele info: adviseer de inhoud ook als tekst op de pagina (voorkeur boven een lange alt-tekst). Meld de uitkomst van die vergelijking in het voorstel.
+  **GEEN PROGRAMMATISCHE KOPPELING VEREIST.** Staat de beschrijving elders op de pagina, dan is dat genoeg; eis geen `aria-describedby` en geen `figure` met `figcaption`, en keur het ontbreken daarvan niet af — ook niet als opmerking. Wat telt is dat de informatie beschikbaar is.
+  Dit wijkt bewust af van gereedschap van derden. RAMP (Accessible Web) heeft een toets "Complex Images" met als vijfde instructie: *"If a complex image does have a description but it is not programmatically related to the image, add a failure."* Neem die niet over.
+  Let op dat dit iets anders is dan de regel over een losse afbeelding met tekst in een `<p>` eronder, twee regels lager. Daar is de alt-tekst wél verplicht, juist omdat er geen semantische koppeling is. Die twee zijn niet met elkaar in strijd maar bewust verschillend: bij een complexe afbeelding gaat het om de inhoud die overgebracht moet worden, bij een gewone afbeelding om het beeld zelf. Harmoniseer ze niet.
+  Vastgelegd door Frits op 2026-08-23, naar aanleiding van de RAMP-toetsen onder Pictures &amp; Images.
 - Afbeelding in <figure> met <figcaption> die de afbeelding al uitlegt: alt hoort LEEG te zijn. Staat in beide dezelfde tekst, dan is dat een bevinding wegens dubbele voorlezing.
 - ONDERSCHRIFT DAT ALLEEN DE NAAM HERHAALT ("Zonneboiler" onder een foto van een zonneboiler): dit is oneigenlijk gebruik van het onderschrift. Een onderschrift hoort iets TOE TE VOEGEN (context, type, locatie, bron), niet te herhalen wat de afbeelding al is of wat de kop erboven al zegt. Afkeuring, klein en redacteur. Advies: haal het onderschrift weg en laat de alt leeg, OF geef het onderschrift informatie die nergens anders staat. Doe daarbij een concrete suggestie op basis van wat je op de foto ziet, bijvoorbeeld "Een zonneboiler met vacuümbuizen". Voorbeeld: BEV-03 B021 (duurzaam.beverwijk.nl/zelf-energie-opwekken).
 - Losse afbeelding met beschrijvende tekst in een <p> eronder (geen figure): alt-tekst is VERPLICHT, ongeacht wat de tekst eronder zegt. Er is geen semantische koppeling.
@@ -81,6 +85,85 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 - **WEL getagde PDF: concludeer niets over de tagkwaliteit uit de ruwe bytes.** Of een afbeelding als `/Figure` met een `/Alt` is opgenomen, staat meestal in een gecomprimeerde objectstroom en is zo niet te lezen. Vind je die markeringen niet, dan is dat géén bewijs dat ze ontbreken — maar het is ook geen bewijs dat ze er zijn.
   Zet het criterium dan op `niet_te_bepalen` met de vraag om PAC-output, of vraag de onderzoeker het in Acrobat na te kijken. Dat geldt óók voor een goedkeuring: schrijf niet "het is correct getagd" als je dat niet hebt gezien.
   Aanleiding: BEV-04 (2026-08-04). De audit concludeerde dat het logo als Artifact was gemarkeerd en dus correct werd overgeslagen, en zette 1.1.1 op `voldoet`. Er stonden nul `/Artifact`- en nul `/Figure`-voorkomens in de bytes, en bij controle in Acrobat bleek het logo helemaal niet getagd. Twee fouten in één: een aanname over wat er in het document stond, en een verkeerde regel over wat er hóórt te staan.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Tekstalternatieven voor wat geen tekst is
+
+### In het kort
+
+Alles wat geen tekst is — een afbeelding, een icoon, een schema, een CAPTCHA — heeft een
+tekstalternatief dat hetzelfde doel dient. Niet een beschrijving van het plaatje, maar dat
+wat het beeld op die plek overbrengt.
+
+Dat is per beeld een andere vraag. Bij versiering hoort géén tekst, bij een icoonknop hoort
+de functie en niet de tekening, bij een schema hoort de inhoud, en bij een CAPTCHA hoort een
+andere vorm. Vier beslissingen op één kaart.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — In de auditsessie
+
+1. [agent] Maak een opname van de hele pagina en loop elk beeld langs: foto's, iconen,
+   logo's, grafieken, kaarten, videoposters. Wat niet op de opname staat, is niet beoordeeld.
+2. [agent] Bepaal per beeld wat het doet: versiering, informatie, een link of knop, of een
+   complex beeld (schema, infographic, kaart met legenda).
+3. [agent] Staat er niets op de pagina dat geen tekst is, dan is deze toets niet van
+   toepassing. Dat kun je pas zeggen ná de opname, niet ervoor.
+4. [agent] Staat er leesbare tekst ín het beeld — merknaam, embleem, slogan, banner, poster?
+   Zoek dan of diezelfde tekst elders op de pagina als echte tekst staat.
+5. [agent] Bij een kaart met een legenda: lees de legenda uit het beeld en vink item voor item
+   af of elk gegeven ook in de tekst staat. Jaartallen, percentages en categorienamen worden
+   het vaakst vergeten.
+6. [agent] Noteer wat een eigen route heeft: een CAPTCHA, een ingesloten videospeler, een PDF.
+   Die beoordeel je niet op hun `alt`.
+
+#### Stap 2 — In de code
+
+7. [agent] Lees per beeld het tekstalternatief en waar het vandaan komt: `alt`, `aria-label`,
+   `aria-labelledby`, of een `role="img"` met een naam.
+8. [agent] Bij een leeg `alt`: leg de opname ernaast. Concludeer nooit "versiering" uit de HTML
+   of uit de bestandsnaam.
+9. [agent] Zit het beeld in een link of knop, kijk dan of de naam over de bestemming gaat en
+   niet over de tekening.
+10. [agent] Bij een complex beeld: staat de inhoud al elders op de pagina als tekst, ook in
+   uitklapsecties? Vergelijk, en noteer gericht wat ontbreekt. Een programmatische koppeling
+   tussen beeld en beschrijving is hier niet vereist — zie de regel hieronder.
+11. [jij] Weeg per beeld of het alternatief hetzelfde doel dient als het beeld, en voeg een
+    afkeuring toe waar dat niet zo is.
+
+### Zo is het vastgesteld
+
+Voor dit criterium is er geen meetcommando, en dat is geen tekort. Er valt niet uit te rekenen
+of een tekstalternatief hetzelfde doel dient als het beeld: dat is een uitspraak over
+betekenis, en die kan alleen iemand doen die het beeld gezien heeft. Een commando dat alle
+`alt`-attributen opsomt zou een lijst opleveren waar het oordeel nog helemaal in moet.
+
+Wat er wel is, zijn twee bronnen naast elkaar. `get-html` levert de code nadat de JavaScript
+van de site heeft gedraaid — daar staat wat er wordt voorgelezen. `get-screenshot` legt de
+pagina vast zoals hij op het meetmoment te zien was — daar staat wat er over te brengen valt.
+Het oordeel ontstaat pas als je die twee tegen elkaar houdt.
+
+Die opname is niet optioneel. Op duurzaam.beverwijk.nl stond in de hero-illustratie het embleem
+"Duurzaam Voordeel Beverwijk" met een leeg `alt`, en die naam stond nergens als tekst op de
+pagina. In de code was daar niets aan te zien: een afbeelding zonder alternatief ziet er
+hetzelfde uit of er nu tekst in staat of niet.
+
+Wat hier niet uit blijkt: wat er in een PDF is getagd — dat staat meestal in een samengeperste
+objectstroom en is niet uit de bytes te lezen, dus geen markering vinden is geen bewijs dat ze
+ontbreekt. En of een ingesloten videospeler een uitgeschreven tekst aanbiedt; daarvoor is
+`get-videosporen` het aangewezen middel, want die knop zit vaak in shadow DOM.
 
 ## Vastgelegd tijdens overleg
 
