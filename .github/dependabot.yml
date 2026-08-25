@@ -2,14 +2,25 @@
 # een voorstel van: een pull request die je doorklikt of laat liggen. Er verandert niets
 # zonder akkoord — hetzelfde patroon als een bevinding in Shift2.
 #
-# De meetmotor staat bewust apart van de rest. axe-core en puppeteer bepalen wat een
-# audit vindt; een nieuwe versie kan een regel aanscherpen en daarmee een hertoets anders
-# laten uitvallen dan de eerste toets, zonder dat er iets aan de site veranderd is. Zo'n
-# wijziging hoort een eigen voorstel te zijn — met een datum, een versienummer en een
-# lijst van wat er anders is — en niet weg te vallen in een verzamel-PR.
+# De indeling hieronder rust op één vraag per pakket: mag dit los bewegen?
 #
-# Al het overige komt gebundeld binnen, één keer per week, zodat de lijst leesbaar blijft.
-# Een major-versie valt buiten die bundel en krijgt altijd een eigen voorstel.
+#   1. De meetmotor moet juist los. axe-core en puppeteer bepalen wat een audit vindt;
+#      een nieuwe versie kan een regel aanscherpen en daarmee een hertoets anders laten
+#      uitvallen dan de eerste toets, zonder dat er iets aan de site veranderd is. Dat
+#      hoort een eigen voorstel te zijn, met een datum en een versienummer, en niet weg
+#      te vallen in een verzamel-PR. Ze staan daarom nergens in een groep.
+#
+#   2. Sommige pakketten mogen alleen samen. `prisma` en `@prisma/client` moeten exact
+#      dezelfde versie hebben, anders werken `migrate deploy` en `generate` niet meer.
+#      De zeven `@tiptap/*`-pakketten delen dezelfde hoofdversie; een v3-extensie past
+#      niet in een v2-editor. React en react-dom delen hun versie, en Next hangt daar aan
+#      vast: Next 15 eist React 19. Zonder deze groepen stelde Dependabot voor om er één
+#      van op te tillen en de rest te laten staan — twee voorstellen die het project
+#      zouden breken als je ze doorklikte. Gegroepeerd wordt het één voorstel voor de
+#      hele overstap, die je bewust doet.
+#
+#   3. Al het overige komt gebundeld binnen, één keer per week, zodat de lijst leesbaar
+#      blijft. Een major daarbuiten krijgt altijd een eigen voorstel.
 
 version: 2
 updates:
@@ -20,12 +31,43 @@ updates:
       day: monday
       time: "07:00"
       timezone: Europe/Amsterdam
-    # Ruim genoeg voor de meetmotor plus de gebundelde rest, krap genoeg om niet te stapelen.
-    open-pull-requests-limit: 5
+    # Ruim genoeg voor de meetmotor, de drie groepen en een losse major ernaast.
+    open-pull-requests-limit: 8
     commit-message:
       prefix: chore
       include: scope
+
+    ignore:
+      # @types/node hoort bij de Node-versie die je draait, niet bij de nieuwste die
+      # bestaat. Til dit met de hand op als je Node zelf bijwerkt.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
+
     groups:
+      # Deze twee moeten dezelfde versie houden — dus samen, ook bij een major.
+      prisma:
+        patterns:
+          - prisma
+          - "@prisma/client"
+
+      # Alle zes delen dezelfde hoofdversie — dus samen, ook bij een major.
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+
+      # react en react-dom moeten gelijk lopen, en Next hangt aan hun hoofdversie.
+      # Een overstap naar Next 15 is een overstap naar React 19 — één voorstel dus.
+      react-en-next:
+        patterns:
+          - react
+          - react-dom
+          - next
+          - eslint-config-next
+          - "@types/react"
+          - "@types/react-dom"
+
+      # De rest. Alleen minor en patch; een major hierbuiten verdient eigen aandacht.
       overige-pakketten:
         patterns:
           - "*"
@@ -33,6 +75,15 @@ updates:
           - axe-core
           - puppeteer
           - puppeteer-ui-testkit
+          - prisma
+          - "@prisma/client"
+          - "@tiptap/*"
+          - react
+          - react-dom
+          - next
+          - eslint-config-next
+          - "@types/react"
+          - "@types/react-dom"
         update-types:
           - minor
           - patch
