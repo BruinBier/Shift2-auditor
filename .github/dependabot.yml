@@ -1,0 +1,38 @@
+# Dependabot kijkt wekelijks of er nieuwe versies van onze pakketten zijn en maakt daar
+# een voorstel van: een pull request die je doorklikt of laat liggen. Er verandert niets
+# zonder akkoord — hetzelfde patroon als een bevinding in Shift2.
+#
+# De meetmotor staat bewust apart van de rest. axe-core en puppeteer bepalen wat een
+# audit vindt; een nieuwe versie kan een regel aanscherpen en daarmee een hertoets anders
+# laten uitvallen dan de eerste toets, zonder dat er iets aan de site veranderd is. Zo'n
+# wijziging hoort een eigen voorstel te zijn — met een datum, een versienummer en een
+# lijst van wat er anders is — en niet weg te vallen in een verzamel-PR.
+#
+# Al het overige komt gebundeld binnen, één keer per week, zodat de lijst leesbaar blijft.
+# Een major-versie valt buiten die bundel en krijgt altijd een eigen voorstel.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Amsterdam
+    # Ruim genoeg voor de meetmotor plus de gebundelde rest, krap genoeg om niet te stapelen.
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      overige-pakketten:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - axe-core
+          - puppeteer
+          - puppeteer-ui-testkit
+        update-types:
+          - minor
+          - patch
