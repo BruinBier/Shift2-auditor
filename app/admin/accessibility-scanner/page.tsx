@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import axe from 'axe-core';
 
 interface ScanResult {
   id: string;
@@ -29,6 +28,7 @@ interface ScanResponse {
   url: string;
   timestamp: string;
   screenshot?: string;
+  motor?: { naam: string; versie: string };
   results: AxeResults;
 }
 
@@ -38,6 +38,7 @@ export default function AccessibilityScannerPage() {
   const [url, setUrl] = useState('');
   const [scanning, setScanning] = useState(false);
   const [results, setResults] = useState<AxeResults | null>(null);
+  const [motor, setMotor] = useState<{ naam: string; versie: string } | null>(null);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +79,7 @@ export default function AccessibilityScannerPage() {
     setScanning(true);
     setError(null);
     setResults(null);
+    setMotor(null);
 
     try {
       // Call backend API to scan external URL
@@ -97,6 +99,7 @@ export default function AccessibilityScannerPage() {
       const data = await response.json();
 
       setScreenshot(data.screenshot || null);
+      setMotor(data.motor || null);
       setResults({
         violations: data.results.violations as ScanResult[],
         passes: data.results.passes as ScanResult[],
@@ -270,6 +273,13 @@ export default function AccessibilityScannerPage() {
         {/* Results */}
         {results && (
           <div className="space-y-6">
+            {motor && (
+              <p className="text-sm text-gray-600">
+                Gemeten met <strong>{motor.naam} {motor.versie}</strong>. Die versie komt uit
+                package.json, niet van een CDN: dezelfde pagina levert morgen dezelfde uitslag.
+              </p>
+            )}
+
             {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

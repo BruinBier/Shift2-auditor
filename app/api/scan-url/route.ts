@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
 import puppeteer from 'puppeteer';
+import axeCore from 'axe-core';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,10 +69,11 @@ export async function POST(request: NextRequest) {
 
       console.log(`Screenshot saved: ${screenshotPath}`);
 
-      // Run accessibility tests using axe-core
-      await page.addScriptTag({
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.7.2/axe.min.js'
-      });
+      // axe-core komt uit node_modules, niet van een CDN. Het pakket levert zijn eigen
+      // broncode als string (axe.source) juist om in een pagina geinjecteerd te worden.
+      // Zo draait de scan op de versie uit package.json, werkt hij zonder internet, en
+      // kan een uitslag niet veranderen doordat een CDN iets anders serveert dan gisteren.
+      await page.evaluate(axeCore.source);
 
       await page.waitForFunction('typeof axe !== "undefined"');
 
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`Scan completed for: ${url}`);
-      console.log(`Found ${axeResults.violations.length} violations`);
+      console.log(`Found ${axeResults.violations.length} violations (axe-core ${axeCore.version})`);
       console.log(`Screenshot available at: ${screenshotPublicPath}`);
 
       return NextResponse.json({
@@ -95,6 +97,7 @@ export async function POST(request: NextRequest) {
         url: url,
         timestamp: new Date().toISOString(),
         screenshot: screenshotPublicPath,
+        motor: { naam: 'axe-core', versie: axeCore.version },
         results: axeResults
       });
 
