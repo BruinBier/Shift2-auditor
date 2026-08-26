@@ -6613,6 +6613,9 @@ async function getVideosporen(url: string, flags: Flags) {
  */
 async function getLinks(url: string, flags: Flags) {
   const klik = flags.klik && flags.klik !== 'true' ? flags.klik : null;
+  // Laat de gemarkeerde pagina open staan in de auditsessie, zodat de onderzoeker er zelf
+  // doorheen kan scrollen in plaats van naar een opname te kijken.
+  const laatStaan = flags['laat-staan'] === 'true' || flags['laat-staan'] === '';
   // Zelfde afbakening als de rest van het onderzoek: op de homepage telt de hele pagina,
   // elders alleen de main-content. Zie Shift2_Scope_Per_Sample.md.
   const isHome = isHomepageUrl(url);
@@ -6747,6 +6750,55 @@ async function getLinks(url: string, flags: Flags) {
             : '';
           const naamInHouder = houderTekst.replace(naam, '').trim();
 
+          // WCAG rekent ook de tabelkoppen van de cel tot de context: "the table header cell
+          // for a cell that contains the link". Dat is niet hetzelfde element, maar wel
+          // programmatisch aan die cel gekoppeld -- anders dan een kop bóven een kaartje, die
+          // nergens aan vastzit. In een tarieventabel geeft juist de RIJkop de betekenis:
+          // "Paspoort | € 83,85 | Aanvragen".
+          //
+          // Volgorde: een expliciet headers-attribuut gaat voor, anders de eerste th in
+          // dezelfde rij plus de th op dezelfde kolompositie.
+          //
+          // Grens: bij colspan klopt die kolompositie niet altijd, en dan valt de kolomkop
+          // weg. De rijkop, die hier het vaakst telt, heeft daar geen last van.
+          let kopTekst = '';
+          if (houder && (houder.tagName === 'TD' || houder.tagName === 'TH')) {
+            const koppen: Element[] = [];
+            const verwezen = houder.getAttribute('headers');
+            if (verwezen) {
+              for (const id of verwezen.split(/s+/)) {
+                const el = id ? document.getElementById(id) : null;
+                if (el && el !== houder) koppen.push(el);
+              }
+            } else {
+              const rij = houder.parentElement;
+              const tabel = houder.closest('table');
+              if (rij) {
+                for (const th of Array.from(rij.querySelectorAll('th'))) {
+                  if (th !== houder) {
+                    koppen.push(th);
+                    break;
+                  }
+                }
+              }
+              if (rij && tabel) {
+                const kolom = Array.from(rij.children).indexOf(houder);
+                for (const r of Array.from(tabel.querySelectorAll('tr'))) {
+                  const c = r.children[kolom];
+                  if (c && c.tagName === 'TH' && c !== houder) {
+                    koppen.push(c);
+                    break;
+                  }
+                }
+              }
+            }
+            kopTekst = koppen
+              .map((k) => (k.textContent || '').replace(/s+/g, ' ').trim())
+              .filter(Boolean)
+              .join(' · ')
+              .slice(0, 160);
+          }
+
           // Waar de link werkelijk heen gaat, uitgerekend door de browser. Nodig om de
           // logolink naar de eigen homepage te herkennen; die is een uitzondering.
           let naarEigenHomepage = false;
@@ -6760,7 +6812,12 @@ async function getLinks(url: string, flags: Flags) {
             // Geen bruikbaar adres (mailto:, tel:, javascript:); dan is het geen logolink.
           }
 
+          // Een merkteken zodat de kaders straks bij het juiste element komen, en zodat het
+          // nummer in beeld overeenkomt met het nummer in het tekstoverzicht.
+          a.setAttribute('data-shift2-link', String(links.length));
+
           links.push({
+            nr: links.length,
             naam,
             bron,
             naarEigenHomepage,
@@ -6777,9 +6834,14 @@ async function getLinks(url: string, flags: Flags) {
             doel: a.getAttribute('target') || null,
             zichtbaar: rect.width > 0 && rect.height > 0,
             houder: houder ? houder.tagName.toLowerCase() : null,
+            // De rol die de bouwer erop gezet heeft. Een <a role="button"> wordt als knop
+            // aangekondigd en staat niet in de linklijst van een schermlezer; of die rol
+            // klopt hoort onder 4.1.2. Hier alleen vaststellen, niet oordelen.
+            rol: a.getAttribute('role'),
             // Alleen wat er nog meer in dezelfde houder staat. Is dat leeg, dan staat de
             // link daar in zijn eentje en is er geen context in hetzelfde element.
             contextInHouder: naamInHouder.slice(0, 160),
+            contextUitTabelkop: kopTekst || null,
             plek: Math.round(rect.top + window.scrollY),
           });
         }
@@ -6795,7 +6857,7 @@ async function getLinks(url: string, flags: Flags) {
       const WEBADRES = /^(https?:\/\/|www\.)/i;
       const PLATFORM = /facebook|instagram|linkedin|youtube|twitter|x\.com|mastodon|tiktok|whatsapp/i;
 
-      const links = gevonden.links.map((l: any) => {
+      const alleAnkers = gevonden.links.map((l: any) => {
         const naam = (l.naam || '').trim();
         const href = l.href || '';
         const platformInHref = (href.match(PLATFORM) || [])[0]?.toLowerCase() ?? null;
@@ -6830,7 +6892,13 @@ async function getLinks(url: string, flags: Flags) {
             !!naam && /^\(?(externe link|nieuw venster|pdf|link|document|download)\)?\.?$/i.test(naam),
           // Generiek, en de vraag is dan of er context in HETZELFDE element staat.
           generiek: GENERIEK.test(naam),
-          zonderContextInHetzelfdeElement: GENERIEK.test(naam) && !l.contextInHouder,
+          // Context komt uit hetzelfde element OF uit de tabelkoppen van de cel. Een kop
+          // bóven de link telt nog steeds niet: die zit nergens aan vast.
+          generiekZonderContext:
+            GENERIEK.test(naam) && !l.contextInHouder && !l.contextUitTabelkop,
+          // Gecodeerd als iets anders dan een link. Valt buiten dit criterium; de vraag of
+          // die rol klopt hoort onder 4.1.2.
+          rolIsGeenLink: !!l.rol && !/^link$/i.test(String(l.rol).trim()),
           // Alleen de platformnaam bij een link naar een organisatiepagina.
           socialeMediaZonderOrganisatie: platformNaam && !!platformInHref,
           // Naam noemt een ander platform dan de bestemming.
@@ -6858,6 +6926,13 @@ async function getLinks(url: string, flags: Flags) {
         };
       });
 
+      // Een <a role="button"> of role="menuitem" wordt aangekondigd als knop of menu-item en
+      // staat niet in de linklijst van een schermlezer. "Waar gaat deze link heen" is daar de
+      // verkeerde vraag, dus hij valt buiten het 2.4.4-oordeel. Niet uit het overzicht: stil
+      // verdwijnen is erger dan een verkeerde categorie. Zie Shift2_Regels_SC_4_1_2.md.
+      const ankersMetEenAndereRol = alleAnkers.filter((l: any) => l.rolIsGeenLink);
+      const links = alleAnkers.filter((l: any) => !l.rolIsGeenLink);
+
       // Dezelfde naam naar verschillende bestemmingen: dan zegt de naam niet waar je
       // uitkomt. Een signaal, geen automatische afkeuring -- twee keer "Aanvragen" onder
       // twee koppen kan in orde zijn.
@@ -6882,7 +6957,7 @@ async function getLinks(url: string, flags: Flags) {
         titelNaamOpEenSubsite: links.filter((l: any) => l.titelNaamOpEenSubsite).length,
         naamNoemtAlleenHetLinktype: links.filter((l: any) => l.naamNoemtAlleenHetLinktype).length,
         generiek: links.filter((l: any) => l.generiek).length,
-        generiekZonderContext: links.filter((l: any) => l.zonderContextInHetzelfdeElement).length,
+        generiekZonderContext: links.filter((l: any) => l.generiekZonderContext).length,
         socialeMediaZonderOrganisatie: links.filter((l: any) => l.socialeMediaZonderOrganisatie)
           .length,
         platformKlopptNiet: links.filter((l: any) => l.platformKlopptNietMetBestemming).length,
@@ -6891,20 +6966,192 @@ async function getLinks(url: string, flags: Flags) {
         belknopZonderWerkendeKoppeling: links.filter((l: any) => l.belofteZonderWerkendeKoppeling)
           .length,
         dezelfdeNaamAndereBestemming: dubbelzinnig.length,
+        ankersMetEenAndereRol: ankersMetEenAndereRol.length,
       };
       const opvallend = links.filter(
         (l: any) =>
           l.geenNaam ||
           (l.naamAlleenUitTitle && !l.logolinkNaarDeEigenHomepage) ||
           l.naamNoemtAlleenHetLinktype ||
-          l.zonderContextInHetzelfdeElement ||
+          l.generiekZonderContext ||
           l.socialeMediaZonderOrganisatie ||
           l.platformKlopptNietMetBestemming ||
           l.belofteKloptNiet ||
           l.naamIsEenWebadres
       );
 
+      // Kaders om de beoordeelde elementen. Een lijst vertelt je wat er mis is; een opname
+      // laat zien wáár het staat -- en vooral wat er buiten het oordeel viel. Op heuvelrug.nl
+      // is dat de hele hoofdnavigatie, en dat zie je in beeld meteen.
+      const merken = alleAnkers.map((l: any) => ({
+        nr: l.nr,
+        kleur: l.rolIsGeenLink ? 'rol' : opvallend.includes(l) ? 'op' : 'ok',
+      }));
+      const tekenKaders = async (alleenOpvallend: boolean) =>
+        page.evaluate(
+          (lijst: any[], alleenOp: boolean) => {
+            const oud = document.getElementById('shift2-kaders');
+            if (oud) oud.remove();
+            // Een vast of plakkend element wordt op een paginabrede opname geschilderd op zijn
+            // vensterpositie; het kader zou dan op de verkeerde hoogte liggen. Terugzetten naar
+            // static laat het op zijn plek in de pagina zakken. Uitsluiten zou erger zijn: in
+            // zo'n balk zit meestal juist de logolink en de hoofdnavigatie.
+            for (const el of Array.from(document.querySelectorAll('*'))) {
+              const p = getComputedStyle(el).position;
+              if (p === 'fixed' || p === 'sticky') {
+                // Wat er stond bewaren: bij --laat-staan gaat het terug, want dan kijkt de
+                // onderzoeker naar de pagina zelf en hoort die eruit te zien zoals hij is.
+                if (!el.hasAttribute('data-shift2-pos'))
+                  el.setAttribute('data-shift2-pos', (el as HTMLElement).style.position || '');
+                (el as HTMLElement).style.position = 'static';
+              }
+            }
+            const laag = document.createElement('div');
+            laag.id = 'shift2-kaders';
+            laag.setAttribute(
+              'style',
+              'position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none;'
+            );
+            const kleuren: Record<string, string> = {
+              op: '#d40000',
+              ok: '#0a7c2f',
+              rol: '#5a5a5a',
+            };
+            for (const m of lijst) {
+              if (alleenOp && m.kleur === 'ok') continue;
+              const el = document.querySelector('[data-shift2-link="' + m.nr + '"]');
+              if (!el) continue;
+              const r = el.getBoundingClientRect();
+              if (!r.width || !r.height) continue;
+              const x = r.left + window.scrollX;
+              const y = r.top + window.scrollY;
+              const kleur = kleuren[m.kleur] || '#000';
+              const vak = document.createElement('div');
+              vak.setAttribute(
+                'style',
+                'position:absolute;left:' + (x - 2) + 'px;top:' + (y - 2) + 'px;width:' +
+                  (r.width + 4) + 'px;height:' + (r.height + 4) + 'px;border:2px ' +
+                  (m.kleur === 'rol' ? 'dashed' : 'solid') + ' ' + kleur + ';box-sizing:border-box;'
+              );
+              const label = document.createElement('div');
+              label.textContent = String(m.nr + 1);
+              label.setAttribute(
+                'style',
+                'position:absolute;left:' + (x - 2) + 'px;top:' + Math.max(0, y - 15) + 'px;' +
+                  'background:' + kleur + ';color:#fff;font:bold 11px/14px sans-serif;padding:0 4px;'
+              );
+              laag.appendChild(vak);
+              laag.appendChild(label);
+            }
+            document.body.appendChild(laag);
+          },
+          merken,
+          alleenOpvallend
+        );
+
+      await tekenKaders(false);
       const opname = await legOpnameVast(page, page.url(), 'links');
+      await tekenKaders(true);
+      const opnameOpvallend = await legOpnameVast(page, page.url(), 'links-opvallend');
+
+      // In de auditsessie kan de pagina blijven staan met alle kaders erop. Het nummer in
+      // beeld is hetzelfde nummer als in het tekstoverzicht, dus je kunt er doorheen
+      // scrollen en opzoeken.
+      //
+      // De pagina is dan wél aangepast: er ligt een laag overheen en vaste elementen staan
+      // op static. Dat moet in beeld staan, anders wordt een verschoven balk voor een
+      // bevinding aangezien.
+      if (laatStaan) {
+        // Niet één keer tekenen maar een tekenfunctie achterlaten die meebeweegt.
+        //
+        // De meting draait op een venster van 1366 breed en rekent daar de posities uit.
+        // De onderzoeker kijkt in zijn eigen Chrome, vaak veel breder, en dan hercentreert
+        // de pagina terwijl de kaders op hun oude plek blijven staan -- op heuvelrug.nl lagen
+        // ze vierhonderd pixels naast de navigatie. Voor een opname geeft dat niets (zelfde
+        // venster), voor een pagina die je openhoudt wel.
+        //
+        // Daarnaast een outline op het element zelf. Die hoort bij het element en kan per
+        // definitie niet verschuiven; de genummerde kaders zijn er voor het opzoeken.
+        await page.evaluate((lijst: any[]) => {
+          const w = window as any;
+          // De opname zette vaste elementen op static; hier gaat dat terug. Een balk die
+          // niet meer plakt is precies het soort verschil dat later voor een bevinding
+          // wordt aangezien.
+          for (const el of Array.from(document.querySelectorAll('[data-shift2-pos]'))) {
+            const oud = el.getAttribute('data-shift2-pos') || '';
+            (el as HTMLElement).style.position = oud;
+            el.removeAttribute('data-shift2-pos');
+          }
+          w.__shift2Merken = lijst;
+          w.__shift2Teken = () => {
+            const oud = document.getElementById('shift2-kaders');
+            if (oud) oud.remove();
+            const kleuren: Record<string, string> = {
+              op: '#d40000',
+              ok: '#0a7c2f',
+              rol: '#5a5a5a',
+            };
+            const laag = document.createElement('div');
+            laag.id = 'shift2-kaders';
+            laag.setAttribute(
+              'style',
+              'position:absolute;left:0;top:0;width:0;height:0;z-index:2147483646;pointer-events:none;'
+            );
+            for (const m of w.__shift2Merken) {
+              const el = document.querySelector('[data-shift2-link="' + m.nr + '"]') as HTMLElement | null;
+              if (!el) continue;
+              const r = el.getBoundingClientRect();
+              if (!r.width || !r.height) continue;
+              const kleur = kleuren[m.kleur] || '#000';
+              // De outline zit op het element en verschuift dus nooit.
+              // Eerst de overgang uit: een lopende CSS-transitie wint van alles, ook van
+              // !important, en dan meet je nul terwijl de stijl er staat.
+              el.style.setProperty('transition', 'none', 'important');
+              // !important: veel sites zetten de outline zelf op nul, en dan blijft de
+              // markering onzichtbaar terwijl hij wel gezet is.
+              el.style.setProperty(
+                'outline',
+                '2px ' + (m.kleur === 'rol' ? 'dashed' : 'solid') + ' ' + kleur,
+                'important'
+              );
+              el.style.setProperty('outline-offset', '2px', 'important');
+              const x = r.left + window.scrollX;
+              const y = r.top + window.scrollY;
+              const label = document.createElement('div');
+              label.textContent = String(m.nr + 1);
+              label.setAttribute(
+                'style',
+                'position:absolute;left:' + x + 'px;top:' + Math.max(0, y - 15) + 'px;' +
+                  'background:' + kleur + ';color:#fff;font:bold 11px/14px sans-serif;padding:0 4px;'
+              );
+              laag.appendChild(label);
+            }
+            document.body.appendChild(laag);
+          };
+          w.__shift2Teken();
+          let wacht: any = null;
+          const opnieuw = () => {
+            clearTimeout(wacht);
+            wacht = setTimeout(w.__shift2Teken, 120);
+          };
+          window.addEventListener('resize', opnieuw);
+          window.addEventListener('load', opnieuw);
+          // Vaste elementen bewegen mee met het scrollen; hun nummer moet dat ook.
+          window.addEventListener('scroll', opnieuw, { passive: true });
+
+          const balk = document.createElement('div');
+          balk.setAttribute(
+            'style',
+            'position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#1f2937;color:#fff;' +
+              'font:14px/1.5 sans-serif;padding:8px 12px;text-align:center;'
+          );
+          balk.textContent =
+            'Shift2-markering — rood: opvallend · groen: naam in orde · grijs gestippeld: andere rol, valt buiten 2.4.4. ' +
+            'Deze pagina is aangepast voor de meting. Sluit de tab na gebruik.';
+          document.body.appendChild(balk);
+        }, merken);
+        await page.bringToFront().catch(() => {});
+      }
 
       const dir = ensureOutputDir();
       const stempel = timestamp();
@@ -6943,7 +7190,11 @@ async function getLinks(url: string, flags: Flags) {
                       ? 'WEBADRES   '
                       : 'GENERIEK   '
                   } "${l.naam}" [${l.bron}] → ${l.href}${
-                    l.contextInHouder ? ` · context: "${l.contextInHouder}"` : ' · geen context in hetzelfde element'
+                    l.contextInHouder
+                      ? ` · context: "${l.contextInHouder}"`
+                      : l.contextUitTabelkop
+                      ? ` · tabelkop: "${l.contextUitTabelkop}"`
+                      : ' · geen context in hetzelfde element en geen tabelkop'
                   }`
               )
             : ['  niets']),
@@ -6985,7 +7236,7 @@ async function getLinks(url: string, flags: Flags) {
           delen.push(`${telling.naamNoemtAlleenHetLinktype} die alleen het linktype noemt`);
         if (telling.generiekZonderContext)
           delen.push(
-            `${telling.generiekZonderContext} met een generieke tekst zonder context in hetzelfde element`
+            `${telling.generiekZonderContext} met een generieke tekst zonder context in hetzelfde element of tabelkop`
           );
         if (telling.socialeMediaZonderOrganisatie)
           delen.push(
@@ -6999,7 +7250,12 @@ async function getLinks(url: string, flags: Flags) {
           );
         if (telling.naamIsEenWebadres)
           delen.push(`${telling.naamIsEenWebadres} met een webadres als naam`);
-        return `Alle ${links.length} links in ${waar} afgelopen en per link de toegankelijke naam uitgerekend zoals een schermlezer die opbouwt: aria-labelledby, dan aria-label, dan de tekst zonder wat op aria-hidden staat, dan title. ${
+        const rolStaart = telling.ankersMetEenAndereRol
+          ? ` ${telling.ankersMetEenAndereRol} anker${
+              telling.ankersMetEenAndereRol === 1 ? '' : 's'
+            } droegen een andere rol dan link (knop, menu-item) en vielen buiten dit oordeel; die horen onder 4.1.2.`
+          : '';
+        return `Alle ${links.length} beoordeelde links in ${waar} afgelopen en per link de toegankelijke naam uitgerekend zoals een schermlezer die opbouwt: aria-labelledby, dan aria-label, dan de tekst zonder wat op aria-hidden staat, dan title. ${
           delen.length
             ? `Opvallend: ${delen.join('; ')}.`
             : 'Elke link heeft een naam die niet uit title alleen komt, en geen generieke tekst staat zonder context in hetzelfde element.'
@@ -7007,7 +7263,7 @@ async function getLinks(url: string, flags: Flags) {
           telling.dezelfdeNaamAndereBestemming
             ? ` ${telling.dezelfdeNaamAndereBestemming} namen komen meer dan eens voor met een andere bestemming.`
             : ''
-        }`;
+        }${rolStaart}`;
       })();
 
       legVast({
@@ -7022,6 +7278,17 @@ async function getLinks(url: string, flags: Flags) {
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
         weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         schermafdruk: opname,
+        // De tweede opname met een bijschrift, zodat de kaart in "Waar sta ik" beide toont.
+        // De complete is het bewijs dat alles bekeken is; deze is de leesbare.
+        schermafdrukken: opnameOpvallend
+          ? [
+              {
+                pad: opnameOpvallend,
+                bijschrift:
+                  'Alleen de opvallende gevallen. Rood: staat in "opvallend". Grijs gestippeld: draagt een andere rol dan link en valt buiten 2.4.4 -- die horen onder 4.1.2. De nummers zijn dezelfde als in het overzicht.',
+              },
+            ]
+          : [],
         artefact: overzicht,
         criteria: ['2.4.4'],
         uitkomst: telling,
@@ -7052,7 +7319,7 @@ async function getLinks(url: string, flags: Flags) {
               ? 'naam komt alleen uit title -- dekt hij de bestemming?'
               : null,
             l.naamNoemtAlleenHetLinktype ? 'noemt alleen het linktype' : null,
-            l.zonderContextInHetzelfdeElement ? 'generieke tekst zonder context' : null,
+            l.generiekZonderContext ? 'generieke tekst zonder context' : null,
             l.socialeMediaZonderOrganisatie ? 'alleen de platformnaam' : null,
             l.platformKlopptNietMetBestemming ? 'naam noemt een ander platform' : null,
             l.belofteKloptNiet ? 'tekst belooft een ander doel dan de bestemming' : null,
@@ -7061,15 +7328,29 @@ async function getLinks(url: string, flags: Flags) {
         })),
         dezelfde_naam_andere_bestemming: dubbelzinnig,
         schermafdruk: opname,
+        schermafdruk_alleen_opvallend: opnameOpvallend,
+        ...(laatStaan
+          ? {
+              pagina_blijft_open:
+                session.mode === 'cdp'
+                  ? 'De gemarkeerde pagina staat open in je auditsessie. De nummers in beeld zijn dezelfde als in het overzicht. Sluit de tab zelf.'
+                  : 'GEEN AUDITSESSIE: er draait geen Chrome op de foutopsporingspoort, dus er is niets om te laten staan. Start "npm run chrome:debug" en draai opnieuw.',
+            }
+          : {}),
         overzicht,
+        ankers_met_een_andere_rol: ankersMetEenAndereRol.map((l: any) => ({
+          naam: l.naam,
+          rol: l.rol,
+          href: l.href,
+        })),
         belknoppen_zonder_werkende_koppeling: links
           .filter((l: any) => l.belofteZonderWerkendeKoppeling)
           .map((l: any) => ({ naam: l.naam, href: l.href })),
         let_op:
-          'Uitgerekend, niet geoordeeld. Een link zonder enige naam is een afkeuring, en bovendien een aparte bevinding onder 4.1.2. Een naam die alleen uit title komt is dat NIET automatisch: de vraag is of hij de bestemming dekt. De logolink naar de eigen homepage met "Ga naar de homepage" voldoet en staat daarom apart geteld; dezelfde link op een subsite is wel een afkeuring. Bij een generieke tekst beslist de context IN HETZELFDE ELEMENT: een kop erboven telt niet. De rest van de lijst staat in het overzicht, want een naam als "Meer over paspoorten" moet een mens wegen.',
+          'Uitgerekend, niet geoordeeld. Een link zonder enige naam is een afkeuring, en bovendien een aparte bevinding onder 4.1.2. Een naam die alleen uit title komt is dat NIET automatisch: de vraag is of hij de bestemming dekt. De logolink naar de eigen homepage met "Ga naar de homepage" voldoet en staat daarom apart geteld; dezelfde link op een subsite is wel een afkeuring. Bij een generieke tekst beslist de context in hetzelfde element of in de tabelkoppen van de cel; een kop erboven telt niet, want die zit nergens aan vast. Ankers met een andere rol dan link staan apart: die worden als knop of menu-item aangekondigd en horen onder 4.1.2, niet hier. De rest van de lijst staat in het overzicht, want een naam als "Meer over paspoorten" moet een mens wegen.',
       });
     } finally {
-      await cleanup();
+      if (!laatStaan) await cleanup();
     }
   } finally {
     await session.dispose();

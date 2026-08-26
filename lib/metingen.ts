@@ -50,6 +50,21 @@ export interface Meetopdracht {
   waaromNiet?: string;
   /** Hoe lang het ongeveer duurt. Staat op de knop terwijl hij draait. */
   duurt?: string;
+  /**
+   * Vlaggen waarmee de meting draait als de onderzoeker hem wil BEKIJKEN in plaats van
+   * vastleggen.
+   *
+   * Dat is een andere handeling dan meten. Een meting is bewijs: die komt onder het oordeel
+   * te staan en blijft daar. Bekijken is ernaar kijken — de gemarkeerde pagina komt open te
+   * staan in de auditsessie, je scrollt erdoorheen, en er wordt niets vastgelegd. Zou dit
+   * wél een regel opleveren, dan staat er straks vijf keer dezelfde meting onder een oordeel
+   * omdat iemand vijf keer heeft gekeken.
+   *
+   * Leeg betekent: bij deze meting valt niets live te bekijken.
+   */
+  bekijkVlaggen?: Record<string, string>;
+  /** Wat de bekijk-knop doet, in één zin, voor ernaast. */
+  bekijkWat?: string;
 }
 
 export const METINGEN: Meetopdracht[] = [
@@ -138,10 +153,13 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-links',
     criteria: ['2.4.4'],
-    toegestaneVlaggen: ['scope', 'klik'],
+    toegestaneVlaggen: ['scope', 'klik', 'laat-staan'],
     vanafDeKaart: true,
     wat: 'Rekent per link de toegankelijke naam uit zoals een schermlezer die opbouwt, en meldt de links zonder naam, met alleen een title, of met een generieke tekst zonder context.',
     duurt: 'ongeveer 20 seconden',
+    bekijkVlaggen: { 'laat-staan': 'true' },
+    bekijkWat:
+      'Zet de pagina open in je auditsessie met een kader om elke link: rood is opvallend, groen in orde, grijs gestippeld valt buiten dit criterium. De nummers zijn dezelfde als in het overzicht.',
   },
   {
     commando: 'get-toetsenbordval',
