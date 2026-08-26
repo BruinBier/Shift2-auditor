@@ -168,6 +168,46 @@ Vastgelegd door Frits op 2026-08-04 bij BEV-03. Claude zette 4.1.2 eerst op `nie
 draaide dat terug toen bleek dat de acht knoppen AcroForm-pushbuttons zonder `/TU` waren, en
 Frits corrigeerde dat opnieuw: er zijn geen tags, en het zijn links, geen invulvelden.
 
+## De rol, naast de naam
+
+4.1.2 heet *naam, rol, waarde*. De regels hierboven gaan vrijwel allemaal over de **naam**.
+Deze sectie gaat over de rol, en dan specifiek over het geval dat op gemeentesites het
+vaakst voorkomt: een element dat als iets anders is gecodeerd dan het is.
+
+**De vraag.** Werkt een `<a>` als iets anders dan een link — als knop, tab of menu-item —
+dan moet het de bijbehorende ARIA-rol dragen én zich zo gedragen. En omgekeerd: draagt het
+een rol, dan moet die rol kloppen met wat het element doet.
+
+**Waarom dat uitmaakt.** De rol bepaalt hoe hulpsoftware het element aankondigt en waar het
+terechtkomt. Een `<a role="button">` wordt voorgelezen als "knop" en staat niet in de
+linklijst van een schermlezer. Wie die lijst gebruikt om te navigeren, mist hem dus — ook
+al is het gewoon een link naar een andere pagina.
+
+**Wat je nagaat, per anker met een rol:**
+
+1. Doet het element werkelijk wat de rol belooft? Een `role="button"` op een `<a href>` die
+   simpelweg navigeert, belooft het verkeerde.
+2. Hoort er gedrag bij dat er ook is? `role="menuitem"` hoort in een `menu` of `menubar` en
+   brengt pijltjesbediening met zich mee. Staat die constructie er niet omheen, dan is de rol
+   losse decoratie en werkt de navigatie anders dan wordt aangekondigd.
+3. Verdwijnt het element uit een lijst waar de gebruiker het zoekt? Dat is het concrete
+   nadeel, en het hoort in de bevinding te staan.
+
+**Afbakening met 2.4.4.** Zo'n element valt buiten 2.4.4: "waar gaat deze link heen" is de
+verkeerde vraag voor iets dat als knop wordt aangekondigd. `get-links` zet ze apart onder
+`ankers_met_een_andere_rol` en telt ze niet mee in het linkoordeel. Beoordeel ze hier.
+
+**Meten.** `get-links` meldt de rol van elk anker. Wat het niet doet, is oordelen of die rol
+klopt — dat vergt weten wat het element doet, en dat zie je pas als je het bedient.
+
+Aanleiding: de vergelijking met de RAMP-toets "Native Widgets: Link Function and Role"
+(2026-08-26). Die legde bloot dat onze 4.1.2-regels alleen over de naam gingen. De meting op
+heuvelrug.nl liet daarna vijf gevallen zien op de homepage: vier items van de hoofdnavigatie
+met `role="menuitem"`, en de ReadSpeaker-knop als `<a role="button">` met een gewone `href`.
+Geen van vijven was tot dat moment ergens aan te toetsen.
+
+Vastgelegd door Frits op 2026-08-26.
+
 ## Regels
 
 - Focus verschilt van 2.4.4: 4.1.2 gaat erover dat hulpsoftware een interactief element kan herkennen (naam, rol, waarde), 2.4.4 gaat erover of de gebruiker het linkdoel begrijpt.

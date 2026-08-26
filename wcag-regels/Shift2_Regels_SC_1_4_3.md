@@ -152,3 +152,109 @@ Bevinding B006 in BEV-03.
 - PDF-documenten: 1.4.3 wel per stuk inhoudelijk checken. De hoogcontrast-knop op de website geldt niet voor PDFs.
 - CONTRAST IN PDF'S DOET FRITS HANDMATIG. Meet het niet zelf uit en schrijf er geen bevinding voor. Zet 1.4.3 bij een PDF-sample op `niet_te_bepalen` met als reden dat de onderzoeker het contrast handmatig controleert. Reden: een pixelmeting rond de tekst is niet betrouwbaar genoeg bij tekst over een foto, een verloop of een gedeeltelijk gekleurd vlak, en bij een bevinding die naar de opdrachtgever gaat weegt een eigen meting zwaarder. Vastgelegd door Frits op 2026-08-02 bij UTHEU-01.
 - Noteer gemeten kleuren als #RRGGBB met de contrastverhouding erbij.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Tekst die genoeg afsteekt tegen zijn achtergrond
+
+### In het kort
+
+Tekst haalt 4,5:1 tegen zijn achtergrond, of 3:1 als hij groot genoeg is. Dat is te meten,
+dus het hoort niet als vraag aan de onderzoeker op deze kaart te staan.
+
+Heeft de site een hoogcontrastknop, dan verandert de vraag. Die knop geldt als alternatief
+voor de standaardversie — maar alleen als de knop zelf genoeg contrast heeft, én de weergave
+erachter deugt. Meet die knop één keer, op het homepage-sample. Twaalf samples leveren één
+knop-oordeel op, niet twaalf.
+
+Twee dingen schakelen niet mee met die knop en blijven dus altijd apart te beoordelen: tekst
+ín een afbeelding, en de PDF's in de steekproef.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — De knop, één keer, op het homepage-sample
+
+1. [meting] Meet de knop in de normale weergave met `get-contrast --selector=<knop>`. Bevat
+   hij zichtbare tekst, dan geldt 4,5:1 onder dit criterium; is het alleen een icoon, dan
+   3:1 onder 1.4.11.
+2. [agent] Staat de knop op een foto, een verloop of een half-transparante laag, dan zijn de
+   CSS-waarden onbruikbaar — de achtergrond leest dan uit als `rgba(0,0,0,0)` en rekenen
+   levert ten onrechte "voldoet" op. `get-contrast` waarschuwt daarvoor. Toets dan het
+   slechtste punt van een uitsnede, niet het gemiddelde.
+3. [agent] Haalt de knop de eis niet, dan is de hoogcontrastroute geen geldig alternatief en
+   toets je de standaardversie alsnog volledig op contrast. Sla deze stap nooit over.
+
+#### Stap 2 — De weergave achter de knop
+
+4. [meting] Meet de hele pagina met de knop aan: `get-contrast --klik="tekst:Contrast
+   verhogen"`. Zonder `--selector`, want een oordeel over de pagina is een uitspraak over
+   alles wat erop staat, niet over één element.
+5. [agent] Maak twee uitsneden van hetzelfde element, met en zonder de knop aan. Ontkleurt de
+   weergave, dan houdt tekst zijn helderheid. Keert hij om naar zwart-wit, dan kan tekst in
+   een afbeelding juist wegvallen.
+6. [agent] Let vooral op het footer-logo. Dat is vaak een PNG die een redacteur in de
+   footertekst heeft gezet, terwijl het header-logo een SVG is die wél netjes meeschakelt.
+
+#### Stap 3 — Wat niet meeschakelt
+
+7. [agent] Tekst ín een afbeelding — poster, infographic, banner — schakelt niet mee met de
+   knop en wordt apart getoetst, ook op pagina's waar je de reguliere contrastcheck overslaat.
+   Toets aan 4,5:1 en niet aan 3:1: in een afbeelding is de lettergrootte niet uitleesbaar,
+   dus je kunt niet vaststellen dat het als grote tekst telt.
+8. [agent] Staat de informatie van die afbeelding volledig als echte tekst op de pagina, dan
+   is het beeld niet meer de enige drager en vervalt de contrasteis. Is dat alternatief
+   incompleet, dan geldt hij gewoon.
+9. [jij] PDF's meet je hier niet. Zet 1.4.3 bij een PDF-sample op `niet te bepalen`, met als
+   reden dat de onderzoeker het contrast handmatig controleert.
+
+#### Stap 4 — Vastleggen
+
+10. [jij] Noteer welk element je gemeten hebt, de kleuren als #RRGGBB, de lettergrootte, de
+    verhouding, in welke weergave en in welke browser. Zonder dat is het opnieuw een bewering.
+
+### Zo is het vastgesteld
+
+`get-contrast` opent de pagina in een echte browser en leest per tekst de kleur, de
+achtergrondkleur en de lettergrootte uit, rekent de verhouding uit en zegt of die haalt wat
+nodig is. Zonder `--selector` gaat elke tekst mee en worden gelijke combinaties samengevoegd —
+een pagina met tweehonderd links levert anders tweehonderd regels op die hetzelfde zeggen.
+
+Er wordt gemeten op het element dat de tekst zelf bevat, niet op een omhulsel. Een `<a>` met
+een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde
+eerder een niet-bestaande afkeuring van 1,25:1 op.
+
+Waar de meting stopt: ligt er een achtergrondafbeelding achter het element, dan meldt het
+commando dat de gemeten achtergrondkleur niet is wat je ziet. Rekenen met die waarden geeft
+een uitkomst die niets waard is — daar is een pixelmeting op een uitsnede voor nodig.
+
+Let op waar de meting draaide. Het antwoord meldt of het in de auditsessie was of headless.
+Voor een openbare pagina heeft headless zelfs een voordeel: de hoogcontrastweergave blijft in
+`localStorage` staan, dus in een auditsessie vervuilt de ene meting de volgende. Achter een
+login of een cookiemuur heb je de auditsessie juist nodig.
+
+Wat hier niet uit blijkt: of de hoogcontrastweergave inhoudelijk deugt op de hele site, en of
+een afbeelding met tekst er naar het oordeel van een mens nog leesbaar in is. En het contrast
+in PDF's — dat doet de onderzoeker met de hand.
+
+Aanleiding: op heuvelrug.nl stond 1.4.3 klaar als vraag aan de onderzoeker terwijl het te meten
+was. Gemeten: de knop wit op #007373 is 5,68:1 waar 4,5:1 nodig is, in hoogcontrast wit op
+zwart 21:1, en over de hele pagina 46 elementen in 9 combinaties zonder één onvoldoende.
+
+### Deelgebieden
+
+1. De hoogcontrastknop zelf, in de normale weergave
+2. De hele pagina in de hoogcontrastweergave
+3. Logo's en afbeeldingen met tekst in die weergave
+4. Tekst in afbeeldingen in de main-content
+5. De PDF's uit de steekproef
