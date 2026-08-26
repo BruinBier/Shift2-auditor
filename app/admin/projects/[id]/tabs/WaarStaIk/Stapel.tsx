@@ -8,12 +8,12 @@
  * over alle pagina's), een kolom (één pagina) of één cel.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Cel, Meting, Stand, Voorstel } from './gegevens';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
-import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium } from '@/lib/metingen';
+import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -549,8 +549,289 @@ export default function Stapel({
     Record<string, { bezig: boolean; toen?: string; nu?: string; gelijk?: boolean; fout?: string }>
   >({});
   /** Per criterium en commando: een meting die nu vanaf de kaart draait. */
+  /**
+   * Het zijpaneel met de gemarkeerde opname.
+   *
+   * De levende site naast de kaart zetten kan niet: gemeentesites verbieden dat met
+   * `frame-ancestors` in hun CSP — heuvelrug.nl staat alleen zichzelf en polly.help toe.
+   * En een bevroren kopie zou er als de echte pagina uitzien terwijl er geen JavaScript
+   * draait; dat is precies de valkuil die op 15 augustus drie niet-bestaande afkeuringen
+   * opleverde. Een opname is eerlijk over wat hij is.
+   */
+  const [paneel, setPaneel] = useState<{
+    titel: string;
+    beelden: { pad: string; bijschrift: string }[];
+    tekstPad: string | null;
+    url: string | null;
+  } | null>(null);
+  const [paneelTekst, setPaneelTekst] = useState<string | null>(null);
+  /**
+   * Opname of levende browser.
+   *
+   * De opname is het bewijs van het meetmoment. De browser is er om te bedienen: Tab
+   * indrukken, een menu openen, kijken waar de focus heen springt. Dat laatste is bij 2.1.1,
+   * 2.1.2 en 2.4.7 de hele vraag en op een stilstaand beeld niet te beantwoorden.
+   *
+   * Het is een aparte browser, niet je auditsessie: Chrome tekent alleen voor de tab die vóór
+   * staat, dus een tab op de achtergrond levert geen beeld. Zie lib/schermsessie.ts.
+   */
+  const [paneelModus, setPaneelModus] = useState<'opname' | 'browser'>('opname');
+  const [schermBeeld, setSchermBeeld] = useState<string | null>(null);
+  const [schermFout, setSchermFout] = useState<string | null>(null);
+  /** Wat de markering vond, met een nummer per element zodat een klik het kan opzoeken. */
+  const [schermItems, setSchermItems] = useState<
+    { nr: number; kleur: string; naam: string; waarom: string }[]
+  >([]);
+  const [opgelicht, setOpgelicht] = useState<number | null>(null);
+  const [schermStand, setSchermStand] = useState<{ url: string; focus: any } | null>(null);
+  const [markeren, setMarkeren] = useState<{ bezig: boolean; melding?: string } | null>(null);
+  const schermRef = useRef<HTMLImageElement | null>(null);
+  const sessieRef = useRef<string>('');
+  const [paneelBeeld, setPaneelBeeld] = useState(0);
+  /**
+   * De breedte van het paneel, in pixels en zelf in te stellen.
+   *
+   * Vast op 45% van het venster was te veel: op een scherm van 1280 blijft er dan 704 over
+   * voor een app die er ongeveer duizend nodig heeft, en dan breekt de tabbladenrij over drie
+   * regels. Wat de goede verhouding is hangt af van het scherm en van wat je aan het doen
+   * bent — dus sleep je hem zelf.
+   *
+   * De ondergrens houdt de app leesbaar; de bovengrens houdt het paneel bruikbaar.
+   */
+  const [paneelPx, setPaneelPx] = useState(520);
+  const sleeptRef = useRef(false);
+
+  // Windows-paden gebruiken backslashes; die moeten hier dus ook gesplitst worden.
+  const bestandsnaamVan = (p: string) => p.split(/[\\/]/).pop()!;
+  const artefactBron = (p: string) =>
+    `/api/meting/artefact?pad=${encodeURIComponent(bestandsnaamVan(p))}`;
+
+  const BREED = 1280;
+  const HOOG = 800;
+
+  /**
+   * Het toetsnummer dat Chrome nodig heeft, afgeleid uit de toets zelf.
+   *
+   * `event.keyCode` is afgeschaft en niet overal betrouwbaar gevuld, terwijl CDP juist dat
+   * nummer wil: zonder een 9 herkent Chrome geen Tab, en dan gebeurt er niets terwijl alles
+   * lijkt te werken. De toetsen hieronder zijn de toetsen waarmee je toegankelijkheid toetst.
+   */
+  const TOETSNUMMER: Record<string, number> = {
+    Tab: 9,
+    Enter: 13,
+    Escape: 27,
+    ' ': 32,
+    PageUp: 33,
+    PageDown: 34,
+    End: 35,
+    Home: 36,
+    ArrowLeft: 37,
+    ArrowUp: 38,
+    ArrowRight: 39,
+    ArrowDown: 40,
+    Backspace: 8,
+    Delete: 46,
+  };
+  const toetsnummer = (e: { key: string; keyCode: number }) =>
+    TOETSNUMMER[e.key] ??
+    (e.key.length === 1 ? e.key.toUpperCase().charCodeAt(0) : e.keyCode || 0);
+
+  /** Zet een punt in het paneel om naar een punt in de browser erachter. */
+  const naarBrowserpunt = (e: { clientX: number; clientY: number }) => {
+    const el = schermRef.current;
+    if (!el) return { x: 0, y: 0 };
+    const r = el.getBoundingClientRect();
+    return {
+      x: ((e.clientX - r.left) / r.width) * BREED,
+      y: ((e.clientY - r.top) / r.height) * HOOG,
+    };
+  };
+
+  /**
+   * De kaders zetten, op wat de meting oplevert.
+   *
+   * Zowel de knop als het automatisch markeren bij het openen roepen dit aan. Twee kopieën
+   * van dezelfde aanroep lopen vroeg of laat uit elkaar; hier is er één.
+   */
+  const markeer = async (sessieId: string) => {
+    if (!sessieId) return;
+    setSchermItems([]);
+    setMarkeren({ bezig: true });
+    try {
+      const res = await fetch('/api/meting/scherm/markeer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessie: sessieId }),
+      });
+      const j = await res.json();
+      setSchermItems(Array.isArray(j.items) ? j.items : []);
+      setMarkeren({
+        bezig: false,
+        melding: j.ok
+          ? `${j.gemarkeerd} links omrand — ${j.opvallend} opvallend, ${j.andereRol} met een andere rol` +
+            (j.buitenDeMeting
+              ? `. ${j.buitenDeMeting} bedieningselementen vielen buiten deze meting (blauw gestippeld).`
+              : '.')
+          : j.error,
+      });
+    } catch (e: any) {
+      setMarkeren({ bezig: false, melding: e.message });
+    }
+  };
+
+  /** Eén gevonden element opzoeken in de pagina en het kader laten oplichten. */
+  const lichtOp = async (nr: number) => {
+    if (!sessieRef.current) return;
+    setOpgelicht(nr);
+    const res = await fetch('/api/meting/scherm/oplichten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessie: sessieRef.current, nr }),
+    }).catch(() => null);
+    const j = res ? await res.json().catch(() => null) : null;
+    if (j && !j.ok) setMarkeren((m) => ({ bezig: false, melding: j.error }));
+  };
+
+  const stuurInvoer = async (lading: Record<string, unknown>) => {
+    if (!sessieRef.current) return;
+    await fetch('/api/meting/scherm/invoer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...lading, sessie: sessieRef.current }),
+    }).catch(() => {});
+    // Wat er ná de handeling staat: het adres, en welk element focus heeft. Dat laatste is
+    // op een beeld niet af te lezen en is bij 2.4.7 juist de vraag.
+    fetch('/api/meting/scherm/invoer?sessie=' + encodeURIComponent(sessieRef.current))
+      .then((r) => r.json())
+      .then((j) => j.ok && setSchermStand(j.stand))
+      .catch(() => {});
+  };
+
+  /**
+   * De pagina smaller maken zolang het paneel openstaat.
+   *
+   * Het paneel staat vast aan de rechterkant, dus zonder dit loopt alles eronder door: de
+   * kaart kon ik opschuiven, maar de kopbalk en de tabbladen zitten in een andere component
+   * en die verdwenen half achter het paneel. Ruimte op de body werkt voor alles tegelijk,
+   * ook voor wat deze component niet in handen heeft.
+   */
+  useEffect(() => {
+    const body = document.body;
+    const weg = () => {
+      body.style.removeProperty('padding-right');
+    };
+    if (!paneel) {
+      weg();
+      return;
+    }
+    // Met 'important', want de opmaak van de app zet de padding van de body zelf op nul.
+    // Zonder dat staat de waarde er wél maar rekent de browser er 0px van uit, en dan loopt
+    // de kopbalk gewoon onder het paneel door. Zelfde val als bij de outline op de site.
+    // Geen overgang. Een lopende transitie wint van alles in de cascade -- ook van de
+    // important hieronder -- en dan meet je tijdens het animeren de beginwaarde nul. Dat
+    // kostte hier een half uur zoeken naar een regel die de padding overschreef en die niet
+    // bestond. Zelfde val als bij de outline op de gemeten site; nu in eigen code.
+    body.style.setProperty('padding-right', paneelPx + 'px', 'important');
+    return weg;
+  }, [paneel, paneelPx]);
+
+  // Slepen aan de linkerrand van het paneel.
+  useEffect(() => {
+    if (!paneel) return;
+    const beweeg = (e: MouseEvent) => {
+      if (!sleeptRef.current) return;
+      // Minimaal 700 pixels overhouden voor de app. Gemeten: bij 745 px staan de kopbalk en
+      // de tabbladenrij er precies zo bij als zonder paneel -- nav 95 px hoog, tabs 74. Bij 900
+      // was de bovengrens smaller dan de standaardbreedte, en maakte 'Breder' het paneel juist
+      // kleiner.
+      const max = Math.max(320, window.innerWidth - 700);
+      setPaneelPx(Math.min(Math.max(320, window.innerWidth - e.clientX), max));
+    };
+    const los = () => {
+      sleeptRef.current = false;
+      document.body.style.removeProperty('user-select');
+    };
+    window.addEventListener('mousemove', beweeg);
+    window.addEventListener('mouseup', los);
+    return () => {
+      window.removeEventListener('mousemove', beweeg);
+      window.removeEventListener('mouseup', los);
+    };
+  }, [paneel]);
+
+  useEffect(() => {
+    if (paneelModus !== 'browser' || !paneel?.url) return;
+    const id = Math.random().toString(36).slice(2);
+    sessieRef.current = id;
+    setSchermBeeld(null);
+    setSchermFout(null);
+    const bron = new EventSource(
+      '/api/meting/scherm?sessie=' + encodeURIComponent(id) + '&url=' + encodeURIComponent(paneel.url)
+    );
+    let gemarkeerd = false;
+    bron.addEventListener('beeld', (e: any) => {
+      setSchermBeeld(JSON.parse(e.data).beeld);
+      // Vanzelf markeren zodra er beeld is. Een knop die je eerst moet vinden is een knop
+      // die je vergeet, en dan kijk je naar een pagina zonder te weten wat eruit kwam.
+      if (!gemarkeerd) {
+        gemarkeerd = true;
+        markeer(id);
+      }
+    });
+    bron.addEventListener('start', (e: any) =>
+      setSchermStand({ url: JSON.parse(e.data).url, focus: null })
+    );
+    bron.onerror = () => setSchermFout('De verbinding met de browser is weggevallen.');
+    return () => {
+      bron.close();
+      // De browser sluiten: een proces dat niemand bekijkt hoort niet te blijven draaien.
+      fetch('/api/meting/scherm?sessie=' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+      sessieRef.current = '';
+    };
+  }, [paneelModus, paneel?.url]);
+
+
+  /**
+   * De levende browser naast de kaart.
+   *
+   * Niet in een losse Chrome-tab: dat is een apart venster, en dan zit de kaart niet meer
+   * naast wat je bekijkt. De opdrachtregel kan het nog wel — `get-links --laat-staan` — voor
+   * wie de auditsessie met zijn cookies nodig heeft.
+   */
+  const openBrowserPaneel = (url: string, titel: string) => {
+    setPaneel({ titel, beelden: [], tekstPad: null, url });
+    setPaneelTekst(null);
+    setPaneelModus('browser');
+  };
+
+  const openPaneel = (m: {
+    commando: string;
+    url?: string | null;
+    schermafdruk?: string | null;
+    schermafdrukken?: { pad: string; bijschrift: string }[] | null;
+    artefact?: string | null;
+  }) => {
+    const beelden = [
+      ...(m.schermafdruk
+        ? [{ pad: m.schermafdruk, bijschrift: 'De hele pagina, met een kader om elk beoordeeld element.' }]
+        : []),
+      ...(m.schermafdrukken ?? []),
+    ];
+    const tekstPad = m.artefact && !/.(png|jpe?g)$/i.test(m.artefact) ? m.artefact : null;
+    setPaneel({ titel: m.commando, beelden, tekstPad, url: (m as any).url ?? null });
+    setPaneelBeeld(0);
+    setPaneelTekst(null);
+    setPaneelModus('opname');
+    if (tekstPad) {
+      fetch(artefactBron(tekstPad))
+        .then((r) => (r.ok ? r.text() : Promise.reject()))
+        .then((t) => setPaneelTekst(t))
+        .catch(() => setPaneelTekst('Het overzicht is niet meer te lezen.'));
+    }
+  };
+
   const [nieuweMetingen, setNieuweMetingen] = useState<
-    Record<string, { bezig: boolean; fout?: string; stap?: string; nieuwOordeel?: boolean }>
+    Record<string, { bezig: boolean; fout?: string; stap?: string; nieuwOordeel?: boolean; bericht?: string }>
   >({});
 
   /**
@@ -565,7 +846,7 @@ export default function Stapel({
    * Meten is bewijs verzamelen, geen uitspraak doen — en een akkoord dat de onderzoeker al
    * gegeven heeft, hoort niet te vervallen omdat er bewijs bij komt.
    */
-  const startMeting = async (cel: Cel, commando: string) => {
+  const startMeting = async (cel: Cel, commando: string, bekijken = false) => {
     const sleutel = `${cel.sampleId}|${cel.code}|${commando}`;
     setNieuweMetingen((n) => ({ ...n, [sleutel]: { bezig: true } }));
     try {
@@ -576,6 +857,7 @@ export default function Stapel({
           sampleItemId: cel.sampleId,
           criterionCode: cel.code,
           commando,
+          ...(bekijken ? { bekijken: true } : {}),
         }),
       });
       const j = await res.json();
@@ -584,6 +866,11 @@ export default function Stapel({
           ...n,
           [sleutel]: { bezig: false, fout: j.error || 'De meting liep niet goed af' },
         }));
+        return;
+      }
+      if (j.bekeken) {
+        // Er is niets vastgelegd, dus er valt niets te verversen. Alleen de melding tonen.
+        setNieuweMetingen((n) => ({ ...n, [sleutel]: { bezig: false, bericht: j.bericht } }));
         return;
       }
       setNieuweMetingen((n) => ({
@@ -1326,6 +1613,17 @@ export default function Stapel({
                   >
                     {loopt?.bezig ? 'Bezig met meten…' : 'Meet dit nu'}
                   </button>
+                  {opdracht.bekijkVlaggen && (
+                    <button
+                      type="button"
+                      disabled={loopt?.bezig}
+                      title={opdracht.bekijkWat}
+                      onClick={() => startMeting(cel, opdracht.commando, true)}
+                      className="rounded border border-blue-700 px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100 disabled:opacity-40"
+                    >
+                      Laat het me zien in de browser
+                    </button>
+                  )}
                   <span className="text-xs text-gray-600">
                     {loopt?.bezig
                       ? `Dit duurt ${opdracht.duurt ?? 'even'}; het scherm wacht erop.`
@@ -1339,7 +1637,12 @@ export default function Stapel({
                     {loopt.fout}
                   </p>
                 )}
-                {loopt && !loopt.bezig && !loopt.fout && (
+                {loopt && !loopt.bezig && !loopt.fout && loopt.bericht && (
+                  <div className="mt-1.5 rounded bg-blue-50 px-2 py-1 text-xs text-blue-900">
+                    {loopt.bericht}
+                  </div>
+                )}
+                {loopt && !loopt.bezig && !loopt.fout && !loopt.bericht && (
                   <div className="mt-1.5 rounded bg-green-50 px-2 py-1 text-xs text-green-900">
                     <p className="font-medium">Gemeten. De uitkomst staat nu hierboven.</p>
                     {loopt.stap && <p className="mt-0.5">{loopt.stap}</p>}
@@ -2341,7 +2644,49 @@ export default function Stapel({
                       >
                         {hermeting?.bezig ? 'Bezig…' : 'Nog eens meten'}
                       </button>
+                      {/* Bekijken is iets anders dan (her)meten: de gemarkeerde pagina komt
+                          open te staan in de auditsessie en er wordt niets vastgelegd. De
+                          knop staat hier omdat je juist bij een gedraaide meting wilt zien
+                          wáár die uitkomst vandaan komt. */}
+                      {(() => {
+                        const opdracht = meetopdracht(m.commando);
+                        if (!opdracht?.bekijkVlaggen) return null;
+                        const bk = nieuweMetingen[`${cel.sampleId}|${cel.code}|${m.commando}`];
+                        return (
+                          <button
+                            type="button"
+                            disabled={!m.url}
+                            title={opdracht.bekijkWat}
+                            onClick={() => openBrowserPaneel(m.url!, `${cel.code} — ${m.commando}`)}
+                            className="rounded border border-blue-300 bg-white px-2 py-0.5 text-xs text-blue-900 hover:bg-blue-50 disabled:opacity-40"
+                          >
+                            Laat het me zien in de browser
+                          </button>
+                        );
+                      })()}
+                      {m.schermafdruk && (
+                        <button
+                          type="button"
+                          onClick={() => openPaneel(m)}
+                          className="rounded border border-blue-300 bg-blue-50 px-2 py-0.5 text-xs text-blue-900 hover:bg-blue-100"
+                        >
+                          Toon ernaast
+                        </button>
+                      )}
                     </div>
+                    {(() => {
+                      const bk = nieuweMetingen[`${cel.sampleId}|${cel.code}|${m.commando}`];
+                      if (!bk || bk.bezig) return null;
+                      if (bk.fout)
+                        return (
+                          <p className="mt-1 rounded bg-red-50 px-2 py-1 text-xs text-red-800">{bk.fout}</p>
+                        );
+                      if (bk.bericht)
+                        return (
+                          <p className="mt-1 rounded bg-blue-50 px-2 py-1 text-xs text-blue-900">{bk.bericht}</p>
+                        );
+                      return null;
+                    })()}
                     {/* Het beeld erbij, niet alleen de bestandsnaam. Een meting die
                         "nul elementen te breed" zegt is pas te vertrouwen als je ernaar
                         kunt kijken — dat is de reden dat get-reflow een schermafdruk
@@ -3055,6 +3400,54 @@ export default function Stapel({
             {auditsessieBadge(huidig.cel)}
           </div>
 
+          {/* Kan er voor dit criterium iets live bekeken worden, dan hoort die knop hier en
+              niet alleen onderaan bij de meting. In "Zo is het vastgesteld" stond hij op
+              drieduizend pixels naar beneden, achter een dichtgeklapt blok — dat is geen knop
+              waar je op klikt maar een knop die je moet vinden.
+
+              Bekijken legt niets vast: er komt een gemarkeerde pagina open te staan in de
+              auditsessie, meer niet. Zie bekijkVlaggen in lib/metingen.ts. */}
+          {(() => {
+            const teBekijken = metingenVoorCriterium(huidig.cel.code).filter(
+              (m) => m.bekijkVlaggen
+            );
+            if (!teBekijken.length) return null;
+            return (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {teBekijken.map((opdracht) => {
+                  const sleutel = `${huidig.cel.sampleId}|${huidig.cel.code}|${opdracht.commando}`;
+                  const bk = nieuweMetingen[sleutel];
+                  return (
+                    <div key={opdracht.commando} className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        disabled={!sampleVoor(huidig.cel.sampleId)?.url}
+                        title={opdracht.bekijkWat}
+                        onClick={() =>
+                          openBrowserPaneel(
+                            sampleVoor(huidig.cel.sampleId)!.url!,
+                            `${huidig.cel.code} op ${sampleVoor(huidig.cel.sampleId)?.title ?? 'deze pagina'}`
+                          )
+                        }
+                        className="rounded border border-blue-700 bg-white px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-50 disabled:opacity-40"
+                      >
+                        Laat het me zien in de browser
+                      </button>
+                      {!bk?.bezig && bk?.fout && (
+                        <p className="rounded bg-red-50 px-2 py-1 text-xs text-red-800">{bk.fout}</p>
+                      )}
+                      {!bk?.bezig && bk?.bericht && (
+                        <p className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-900">
+                          {bk.bericht}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           {/* Heeft dit criterium een `## Op de kaart`, dan is dit dezelfde kaart als die
               van een criterium dat nog openstaat: dezelfde kop, dezelfde instructies,
               dezelfde bevindingen. Alleen de afsluiting verschilt — hier zeg je ja of nee
@@ -3623,6 +4016,310 @@ export default function Stapel({
             </p>
           )}
         </div>
+      )}
+
+      {/* Het zijpaneel met de gemarkeerde opname.
+
+          Vast aan de rechterkant en over de pagina heen, niet als kolom in de kaart: de
+          kaart is een leeskolom met een vaste breedte, en die halveren maakt de instructies
+          onleesbaar. Zo blijft links de kaart staan en rechts het beeld, en kun je met de
+          lijst in de hand kijken waar nummer 27 stond. */}
+      {paneel && (
+        <aside
+          style={{ width: paneelPx }}
+          className="fixed right-0 top-0 z-40 flex h-screen flex-col border-l border-gray-300 bg-white shadow-xl"
+          aria-label="Gemarkeerde opname"
+        >
+          {/* De sleepgreep. Een rand van zes pixels is met de muis te pakken zonder dat hij
+              opvalt; de aanwijzer zegt wat je ermee kunt. */}
+          <div
+            onMouseDown={() => {
+              sleeptRef.current = true;
+              document.body.style.setProperty('user-select', 'none');
+            }}
+            title="Sleep om het paneel breder of smaller te maken"
+            className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize bg-gray-200 hover:bg-blue-400"
+          />
+          <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-3 py-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-medium text-gray-900">{paneel.titel}</p>
+              <div className="flex shrink-0 overflow-hidden rounded border border-gray-300">
+                {(['opname', 'browser'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    disabled={
+                      (k === 'browser' && !paneel.url) ||
+                      (k === 'opname' && !paneel.beelden.length && !paneel.tekstPad)
+                    }
+                    onClick={() => setPaneelModus(k)}
+                    className={
+                      (paneelModus === k ? 'bg-blue-700 text-white ' : 'bg-white text-gray-700 ') +
+                      'px-2 py-0.5 text-xs disabled:opacity-40'
+                    }
+                  >
+                    {k === 'opname' ? 'Opname' : 'Browser'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setPaneelPx((p) =>
+                    Math.min(Math.max(320, window.innerWidth - 700), Math.round(p * 1.25))
+                  )
+                }
+                className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+              >
+                Breder
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaneelPx((p) => Math.max(320, Math.round(p / 1.25)))}
+                className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+              >
+                Smaller
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaneel(null)}
+                className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+
+          {paneelModus === 'opname' && paneel.beelden.length > 1 && (
+            <div className="flex flex-wrap gap-1 border-b border-gray-200 px-3 py-2">
+              {paneel.beelden.map((b, i) => (
+                <button
+                  key={b.pad}
+                  type="button"
+                  onClick={() => setPaneelBeeld(i)}
+                  className={`rounded px-2 py-0.5 text-xs ${
+                    i === paneelBeeld
+                      ? 'bg-blue-700 text-white'
+                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {i === 0 ? 'Alles' : 'Alleen opvallend'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex-1 overflow-auto">
+            {paneelModus === 'browser' && (
+              <div className="p-2">
+                {/* De kaders komen uit de meting zelf, niet uit een tweede berekening in dit
+                    scherm. Zie de toelichting in app/api/meting/scherm/markeer/route.ts. */}
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={markeren?.bezig || !schermBeeld}
+                    onClick={() => markeer(sessieRef.current)}
+                    className="rounded bg-blue-700 px-2 py-1 text-xs font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+                  >
+                    {markeren?.bezig ? 'Bezig met meten…' : 'Markeer de links'}
+                  </button>
+                  <span className="text-xs text-gray-600">
+                    Rood: opvallend · groen: naam in orde · grijs: andere rol · blauw
+                    gestippeld: viel buiten de meting.
+                  </span>
+                </div>
+                {schermFout && (
+                  <p className="mb-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800">{schermFout}</p>
+                )}
+                {!schermBeeld && !schermFout && (
+                  <p className="mb-2 text-xs text-gray-600">
+                    De browser wordt gestart en de pagina geladen. Dat duurt een paar seconden.
+                  </p>
+                )}
+                {/* Het beeld is aanklikbaar en luistert naar het toetsenbord. tabIndex maakt
+                    het zelf focusbaar, want anders komen de toetsaanslagen nooit hier terecht.
+                    preventDefault op Tab: die toets hoort naar de site erachter te gaan, niet
+                    naar Shift2. */}
+                <div
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    e.preventDefault();
+                    const tekst = e.key.length === 1 ? e.key : '';
+                    stuurInvoer({
+                      soort: 'toets',
+                      type: 'keyDown',
+                      key: e.key,
+                      code: e.code,
+                      keyCode: toetsnummer(e),
+                      tekst,
+                      shift: e.shiftKey,
+                      ctrl: e.ctrlKey,
+                      alt: e.altKey,
+                      meta: e.metaKey,
+                    });
+                  }}
+                  onKeyUp={(e) => {
+                    e.preventDefault();
+                    stuurInvoer({
+                      soort: 'toets',
+                      type: 'keyUp',
+                      key: e.key,
+                      code: e.code,
+                      keyCode: toetsnummer(e),
+                    });
+                  }}
+                  onWheel={(e) => {
+                    const p = naarBrowserpunt(e);
+                    stuurInvoer({ soort: 'scroll', x: p.x, y: p.y, deltaX: e.deltaX, deltaY: e.deltaY });
+                  }}
+                  className="inline-block outline-none ring-blue-500 focus:ring-2"
+                >
+                  <img
+                    ref={schermRef}
+                    src={schermBeeld ? 'data:image/jpeg;base64,' + schermBeeld : undefined}
+                    alt="Levende weergave van de pagina"
+                    className="w-full cursor-crosshair border border-gray-300 bg-gray-100"
+                    style={{ aspectRatio: BREED + ' / ' + HOOG }}
+                    onMouseDown={(e) => {
+                      const p = naarBrowserpunt(e);
+                      stuurInvoer({ soort: 'muis', type: 'mousePressed', x: p.x, y: p.y, knop: 'left' });
+                    }}
+                    onMouseUp={(e) => {
+                      const p = naarBrowserpunt(e);
+                      stuurInvoer({ soort: 'muis', type: 'mouseReleased', x: p.x, y: p.y, knop: 'left' });
+                    }}
+                  />
+                </div>
+                {/* Waar de focus staat. Op het beeld zie je een omranding bewegen, maar niet
+                    wélk element het is en hoe het heet — en dat is bij 2.4.7 en 4.1.2 de vraag. */}
+                <div className="mt-2 rounded bg-gray-50 px-2 py-1 text-xs text-gray-800">
+                  <p className="truncate">
+                    <span className="text-gray-500">Adres: </span>
+                    {schermStand?.url ?? paneel.url}
+                  </p>
+                  {/* De uitslag van de meting hoort hier, bij het adres en de focus: dit is
+                      het blok waar je naar kijkt terwijl je door de pagina tabt. Bovenin,
+                      naast de knop, staat hij buiten je blikveld. */}
+                  <p className="mt-0.5">
+                    <span className="text-gray-500">Uitslag: </span>
+                    {markeren?.bezig
+                      ? 'get-links draait op deze pagina; dat duurt ongeveer twintig seconden.'
+                      : markeren?.melding ?? 'nog niet gemeten'}
+                  </p>
+                  <p className="mt-0.5">
+                    <span className="text-gray-500">Focus: </span>
+                    {schermStand?.focus
+                      ? `<${schermStand.focus.element}>${
+                          schermStand.focus.rol ? ' rol=' + schermStand.focus.rol : ''
+                        } — "${schermStand.focus.naam}"${
+                          schermStand.focus.ring ? ' — ' + schermStand.focus.ring : ' — geen outline en geen box-shadow gevonden'
+                        }`
+                      : 'nergens — klik in het beeld en druk op Tab'}
+                  </p>
+                  {!!schermItems.length && (
+                    <div className="mt-1.5 border-t border-gray-200 pt-1.5">
+                      <p className="mb-1 text-gray-500">
+                        Klik op een regel; de pagina springt ernaartoe en het kader licht op.
+                      </p>
+                      <ul className="max-h-44 space-y-0.5 overflow-auto">
+                        {schermItems.map((it) => (
+                          <li key={it.nr}>
+                            <button
+                              type="button"
+                              onClick={() => lichtOp(it.nr)}
+                              title={it.waarom}
+                              className={
+                                'w-full truncate rounded px-1.5 py-0.5 text-left hover:bg-gray-100 ' +
+                                (opgelicht === it.nr ? 'bg-amber-100 ring-1 ring-amber-400 ' : '')
+                              }
+                            >
+                              <span
+                                className={
+                                  'mr-1.5 inline-block h-2 w-2 rounded-full align-middle ' +
+                                  (it.kleur === 'op'
+                                    ? 'bg-red-600'
+                                    : it.kleur === 'rol'
+                                    ? 'bg-gray-500'
+                                    : 'bg-blue-700')
+                                }
+                              />
+                              {it.naam}
+                              <span className="ml-1 text-gray-500">
+                                {it.kleur === 'op'
+                                  ? '· opvallend'
+                                  : it.kleur === 'rol'
+                                  ? '· andere rol'
+                                  : '· niet meegenomen'}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {schermStand?.focus?.waarom && (
+                    <p className="mt-1 rounded bg-red-50 px-2 py-1 leading-relaxed text-red-900">
+                      <span className="font-medium">Fout: </span>
+                      {schermStand.focus.waarom}
+                    </p>
+                  )}
+                  {schermStand?.focus && !schermStand.focus.waarom && (
+                    <p className="mt-1 text-gray-500">
+                      Fout: over dit element is niets gemeld.{' '}
+                      {schermStand.focus.gemarkeerd
+                        ? 'De meting keurde het goed.'
+                        : 'Klik eerst op "Markeer de links" — zonder meting is er niets te melden.'}
+                    </p>
+                  )}
+                  {schermStand?.focus?.isOnzeMarkering && (
+                    <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-900">
+                      Let op: de rand die je ziet is de Shift2-markering, niet de focusring van
+                      de site. Zet de markering uit voordat je 2.4.7 beoordeelt.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {paneelModus === 'opname' && paneel.beelden[paneelBeeld] && (
+              <>
+                <p className="px-3 py-2 text-xs text-gray-600">
+                  {paneel.beelden[paneelBeeld].bijschrift}
+                </p>
+                {/* Op ware breedte, want de nummers zijn elf pixels hoog. Schuiven doe je
+                    in het paneel; verkleinen maakt de markering onleesbaar. */}
+                <img
+                  src={artefactBron(paneel.beelden[paneelBeeld].pad)}
+                  alt={paneel.beelden[paneelBeeld].bijschrift}
+                  className="max-w-none"
+                />
+              </>
+            )}
+            {paneelModus === 'opname' && paneelTekst !== null && (
+              <div className="border-t border-gray-200 p-3">
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Het overzicht
+                </p>
+                <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-gray-800">
+                  {paneelTekst}
+                </pre>
+              </div>
+            )}
+            {paneelModus === 'opname' && !paneel.beelden.length && paneelTekst === null && (
+              <p className="p-3 text-sm text-gray-500">Bij deze meting is niets vastgelegd om te tonen.</p>
+            )}
+          </div>
+
+          <p className="border-t border-gray-200 px-3 py-2 text-xs text-gray-500">
+            {paneelModus === 'browser'
+              ? 'Dit is een eigen browser, niet je auditsessie: zonder je cookies en zonder wat je daar hebt aangeklikt. Voor een pagina achter een login heb je de auditsessie nodig.'
+              : ''}
+            {paneelModus === 'browser' ? '' : 'Dit is een opname van het meetmoment, niet de levende site.'} Wat je moet bedienen —
+            klikken, tabben, een menu openen — doe je met &ldquo;Laat het me zien in de
+            browser&rdquo; in je auditsessie.
+          </p>
+        </aside>
       )}
     </div>
   );

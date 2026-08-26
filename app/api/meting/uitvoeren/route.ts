@@ -46,6 +46,8 @@ export async function POST(request: NextRequest) {
   const sampleItemId: string = body.sampleItemId ?? '';
   const criterionCode: string = body.criterionCode ?? '';
   const commando: string = body.commando ?? '';
+  // Bekijken is geen meten. Zie de toelichting bij bekijkVlaggen in lib/metingen.ts.
+  const bekijken: boolean = body.bekijken === true;
 
   const opdracht = meetopdracht(commando);
   if (!opdracht) {
@@ -95,6 +97,29 @@ export async function POST(request: NextRequest) {
       { ok: false, error: `Onbekend criterium ${criterionCode}` },
       { status: 400 }
     );
+  }
+
+  if (bekijken) {
+    if (!opdracht.bekijkVlaggen) {
+      return NextResponse.json(
+        { ok: false, error: `Bij ${commando} valt niets live te bekijken.` },
+        { status: 400 }
+      );
+    }
+    const bekeken = await draaiMeting(commando, sample.url, opdracht.bekijkVlaggen);
+    if (!bekeken.ok) {
+      return NextResponse.json(
+        { ok: false, error: bekeken.error, details: bekeken.details },
+        { status: 500 }
+      );
+    }
+    // Er wordt niets vastgelegd: geen logboekkoppeling, geen check, geen oordeel. Wat
+    // terugkomt is de melding van het commando zelf -- inclusief het geval dat er geen
+    // auditsessie draait en er dus niets te zien is.
+    const melding =
+      bekeken.antwoord?.pagina_blijft_open ??
+      'De meting draaide, maar meldde niet of er een pagina open is blijven staan.';
+    return NextResponse.json({ ok: true, bekeken: true, bericht: melding });
   }
 
   const vlaggen = opdracht.vlaggen ?? {};
