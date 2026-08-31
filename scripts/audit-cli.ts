@@ -6861,9 +6861,16 @@ async function getLinks(url: string, flags: Flags) {
         const naam = (l.naam || '').trim();
         const href = l.href || '';
         const platformInHref = (href.match(PLATFORM) || [])[0]?.toLowerCase() ?? null;
-        const platformNaam = /^(facebook|instagram|linkedin|youtube|twitter|x|mastodon|tiktok)$/i.test(
-          naam
-        );
+        // Deze lijst moet gelijk lopen met PLATFORM hierboven. Dat deed hij niet: PLATFORM
+        // herkende whatsapp in de bestemming, maar de naam "whatsapp" stond hier niet, dus een
+        // WhatsApp-link met alleen de platformnaam viel door de mazen terwijl facebook,
+        // twitter, linkedin, youtube en instagram wél gemeld werden. Op heuvelrug.nl stond
+        // die link naast de vijf andere in dezelfde footerkolom -- vijf gemeld, één niet.
+        //
+        // Twee lijsten die hetzelfde zouden moeten weten en uit elkaar lopen: precies het
+        // patroon uit Shift2_Regels_SC_2_4_4.md over de logolink.
+        const platformNaam =
+          /^(facebook|instagram|linkedin|youtube|twitter|x|mastodon|tiktok|whatsapp)$/i.test(naam);
         return {
           ...l,
           // Geen naam: hulpsoftware kondigt de link aan zonder te kunnen zeggen waarheen.
