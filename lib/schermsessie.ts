@@ -122,6 +122,32 @@ export async function haalSessie(id: string, url: string): Promise<Sessie> {
   // klikt of tabt.
   sessie.laatsteBeeld = await neemEenBeeld(cdp);
 
+  // Chrome stopt het doorsturen zodra de pagina navigeert. Klik je in het paneel op een
+  // link, dan bevriest het beeld op de oude pagina terwijl er achter de schermen een nieuwe
+  // staat -- en dat ziet eruit alsof de muis niet werkt.
+  page.on('framenavigated', async (frame: any) => {
+    if (frame !== page.mainFrame()) return;
+    sessie.url = page.url();
+    try {
+      await cdp.send('Page.startScreencast', {
+        format: 'jpeg',
+        quality: 55,
+        maxWidth: SCHERM_BREEDTE,
+        maxHeight: SCHERM_HOOGTE,
+        everyNthFrame: 2,
+      });
+    } catch {
+      // De sessie kan intussen gesloten zijn.
+    }
+    // Even wachten tot de nieuwe pagina iets te zien geeft.
+    await new Promise((r) => setTimeout(r, 900));
+    const beeld = await neemEenBeeld(cdp);
+    if (beeld) {
+      sessie.laatsteBeeld = beeld;
+      sessie.luisteraars.forEach((luister) => luister(beeld));
+    }
+  });
+
   sessies.set(id, sessie);
   return sessie;
 }

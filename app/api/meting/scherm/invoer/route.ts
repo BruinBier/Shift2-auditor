@@ -44,6 +44,82 @@ export async function POST(request: NextRequest) {
   };
 
   try {
+    if (body.soort === 'inspecteer') {
+      // Kijken zonder te bedienen. Er wordt géén muisgebeurtenis doorgestuurd: een klik op
+      // een link zou de pagina verlaten, en dan ben je je markering kwijt en sta je ergens
+      // anders dan waar je aan het beoordelen was.
+      const uit = await sessie.page.evaluate(
+        (x: number, y: number, kiezen: boolean) => {
+          const raak = document.elementFromPoint(x, y) as HTMLElement | null;
+          if (!raak) return null;
+          // Het element eromheen dat er werkelijk toe doet, want je klikt vaak op een icoon
+          // of een span binnen een link.
+          //
+          // De volgorde is het punt. Eerst kijken of er een gemeten element in de buurt is:
+          // dát is waar de uitspraak over gaat. Pas daarna naar een bedienbaar element.
+          //
+          // `[role]` mag NIET in die tweede zoekopdracht staan. Het icoon in een
+          // sociale-media-link is een `<span role="img">`, en met `[role]` erin stopt de klim
+          // daar: je klikt op een link die rood omrand staat en krijgt te horen dat er niets
+          // over gemeld is. Alleen rollen die een bedieningselement aanduiden tellen mee.
+          const el = (raak.closest('[data-shift2-markering]') ||
+            raak.closest(
+              'a[href], button, input, select, textarea, summary, [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"]'
+            ) ||
+            raak) as HTMLElement;
+
+          document.querySelectorAll('[data-shift2-aangeklikt]').forEach((a) => {
+            const b = a as HTMLElement;
+            const terug = b.getAttribute('data-shift2-markering') || '';
+            if (terug) b.style.setProperty('outline', terug, 'important');
+            else b.style.removeProperty('outline');
+            b.removeAttribute('data-shift2-aangeklikt');
+          });
+          el.style.setProperty('transition', 'none', 'important');
+          el.setAttribute('data-shift2-aangeklikt', '1');
+
+          // In of uit de selectie. Paars en dik, zodat je in één blik ziet wat er straks in
+          // de bevinding komt -- ook als je er zes bij elkaar zoekt die verspreid staan.
+          let staatErin = false;
+          if (kiezen) {
+            staatErin = !el.hasAttribute('data-shift2-gekozen');
+            if (staatErin) el.setAttribute('data-shift2-gekozen', '1');
+            else el.removeAttribute('data-shift2-gekozen');
+          } else {
+            staatErin = el.hasAttribute('data-shift2-gekozen');
+          }
+          if (staatErin) {
+            el.style.setProperty('outline', '4px solid #7e22ce', 'important');
+            el.style.setProperty('outline-offset', '3px', 'important');
+          } else {
+            el.style.setProperty('outline', '4px solid #f59e0b', 'important');
+            el.style.setProperty('outline-offset', '3px', 'important');
+          }
+
+          const naam =
+            el.getAttribute('aria-label') ||
+            (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80) ||
+            el.getAttribute('title') ||
+            el.getAttribute('alt') ||
+            '';
+          return {
+            element: el.tagName.toLowerCase(),
+            rol: el.getAttribute('role'),
+            naam,
+            href: el.getAttribute('href'),
+            waarom: el.getAttribute('data-shift2-waarom') || null,
+            gemarkeerd: el.hasAttribute('data-shift2-markering'),
+            gekozen: staatErin,
+          };
+        },
+        getal(body.x, 4000),
+        getal(body.y, 4000),
+        body.kiezen === true
+      );
+      await verversBeeld(String(body.sessie));
+      return NextResponse.json({ ok: true, aangeklikt: uit });
+    }
+
     if (body.soort === 'muis') {
       const type =
         body.type === 'mousePressed'
@@ -89,11 +165,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }
 
-  // Na een handeling meteen een vers beeld sturen. Niet elke klik levert een hertekening op
-  // die groot genoeg is voor de stroom, en dan lijkt het alsof de klik niet aankwam.
-  verversBeeld(String(body.sessie)).catch(() => {});
+  // Na een handeling een vers beeld sturen. Niet elke klik levert een hertekening op die
+  // groot genoeg is voor de stroom, en dan lijkt het alsof de klik niet aankwam.
+  //
+  // Bij het loslaten van de muis pas ná een pauze: een klik op een link, een uitklapmenu of
+  // een tabblad heeft tijd nodig voordat er iets te zien is. Meteen verversen levert het
+  // oude beeld op. Muisbewegingen krijgen die pauze niet -- die komen met tientallen tegelijk.
+  if (body.soort === 'muis' && body.type === 'mouseMoved') {
+    verversBeeld(String(body.sessie)).catch(() => {});
+  } else {
+    const wacht = body.soort === 'muis' ? 700 : 120;
+    setTimeout(() => verversBeeld(String(body.sessie)).catch(() => {}), wacht);
+    verversBeeld(String(body.sessie)).catch(() => {});
+  }
 
-  return NextResponse.json({ ok: true });
+  // Bij een muisbeweging teruggeven welke aanwijzer daar hoort. Zo staat er in het paneel
+  // een handje boven een link en een tekstcursor boven een invoerveld, net als in een gewone
+  // browser -- in plaats van overal hetzelfde kruisje, dat suggereert dat je iets moet
+  // aanwijzen in plaats van bedienen.
+  let cursor: string | null = null;
+  if (body.soort === 'muis' && body.type === 'mouseMoved') {
+    cursor = await sessie.page
+      .evaluate(
+        (x: number, y: number) => {
+          const el = document.elementFromPoint(x, y) as HTMLElement | null;
+          if (!el) return 'default';
+          const c = getComputedStyle(el).cursor;
+          return c && c !== 'auto' ? c : 'default';
+        },
+        getal(body.x, 4000),
+        getal(body.y, 4000)
+      )
+      .catch(() => null);
+  }
+
+  return NextResponse.json({ ok: true, ...(cursor ? { cursor } : {}) });
 }
 
 /**

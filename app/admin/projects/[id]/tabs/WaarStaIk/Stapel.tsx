@@ -583,10 +583,35 @@ export default function Stapel({
     { nr: number; kleur: string; naam: string; waarom: string }[]
   >([]);
   const [opgelicht, setOpgelicht] = useState<number | null>(null);
+  /** De aanwijzer die de pagina erachter op dit punt zou tonen. */
+  const [schermCursor, setSchermCursor] = useState('default');
+  /**
+   * Kijken of bedienen.
+   *
+   * Standaard kijken: een klik zoekt op wát daar staat en wat de meting erover zei, zonder
+   * de link te volgen. Zou elke klik navigeren, dan ben je bij het eerste element dat je
+   * onderzoekt je markering kwijt en sta je op een andere pagina.
+   *
+   * Bedienen is er voor wat je alleen doende kunt beoordelen: een menu openen, een formulier
+   * invullen, doorklikken naar een vervolgstap.
+   */
+  const [schermStand2, setSchermStand2] = useState<'kijken' | 'bedienen'>('kijken');
+  const [aangeklikt, setAangeklikt] = useState<any>(null);
+  /** Het criterium en de pagina waar dit paneel bij hoort; nodig om er een bevinding van te maken. */
+  const [paneelCode, setPaneelCode] = useState<string | null>(null);
+  const [waarnemingBezig, setWaarnemingBezig] = useState(false);
+  const [waarnemingMelding, setWaarnemingMelding] = useState<string | null>(null);
+  const [paneelSample, setPaneelSample] = useState<string | null>(null);
+  /** Wat je hebt aangewezen om samen in één bevinding te zetten. */
+  const [selectie, setSelectie] = useState<
+    { element: string; naam: string; href: string | null }[]
+  >([]);
   const [schermStand, setSchermStand] = useState<{ url: string; focus: any } | null>(null);
   const [markeren, setMarkeren] = useState<{ bezig: boolean; melding?: string } | null>(null);
   const schermRef = useRef<HTMLImageElement | null>(null);
   const sessieRef = useRef<string>('');
+  /** Wanneer we voor het laatst een muisbeweging doorstuurden; zie onMouseMove. */
+  const muisRef = useRef<number>(0);
   const [paneelBeeld, setPaneelBeeld] = useState(0);
   /**
    * De breedte van het paneel, in pixels en zelf in te stellen.
@@ -694,11 +719,18 @@ export default function Stapel({
 
   const stuurInvoer = async (lading: Record<string, unknown>) => {
     if (!sessieRef.current) return;
-    await fetch('/api/meting/scherm/invoer', {
+    const res = await fetch('/api/meting/scherm/invoer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...lading, sessie: sessieRef.current }),
-    }).catch(() => {});
+    }).catch(() => null);
+    if (res) {
+      const j = await res.json().catch(() => null);
+      if (j?.cursor) setSchermCursor(j.cursor);
+    }
+    // Na een muisbeweging niet ook nog de focus opvragen: die verandert er niet van, en het
+    // zijn er tien per seconde.
+    if (lading.soort === 'muis' && lading.type === 'mouseMoved') return;
     // Wat er ná de handeling staat: het adres, en welk element focus heeft. Dat laatste is
     // op een beeld niet af te lezen en is bij 2.4.7 juist de vraag.
     fetch('/api/meting/scherm/invoer?sessie=' + encodeURIComponent(sessieRef.current))
@@ -798,7 +830,11 @@ export default function Stapel({
    * naast wat je bekijkt. De opdrachtregel kan het nog wel — `get-links --laat-staan` — voor
    * wie de auditsessie met zijn cookies nodig heeft.
    */
-  const openBrowserPaneel = (url: string, titel: string) => {
+  const openBrowserPaneel = (url: string, titel: string, code?: string, sampleId?: string) => {
+    setPaneelCode(code ?? null);
+    setPaneelSample(sampleId ?? null);
+    setSelectie([]);
+    setAangeklikt(null);
     setPaneel({ titel, beelden: [], tekstPad: null, url });
     setPaneelTekst(null);
     setPaneelModus('browser');
@@ -2657,7 +2693,14 @@ export default function Stapel({
                             type="button"
                             disabled={!m.url}
                             title={opdracht.bekijkWat}
-                            onClick={() => openBrowserPaneel(m.url!, `${cel.code} — ${m.commando}`)}
+                            onClick={() =>
+                              openBrowserPaneel(
+                                m.url!,
+                                `${cel.code} — ${m.commando}`,
+                                cel.code,
+                                cel.sampleId ?? undefined
+                              )
+                            }
                             className="rounded border border-blue-300 bg-white px-2 py-0.5 text-xs text-blue-900 hover:bg-blue-50 disabled:opacity-40"
                           >
                             Laat het me zien in de browser
@@ -3408,25 +3451,32 @@ export default function Stapel({
               Bekijken legt niets vast: er komt een gemarkeerde pagina open te staan in de
               auditsessie, meer niet. Zie bekijkVlaggen in lib/metingen.ts. */}
           {(() => {
+            // De browser hoort bij elke kaart met een pagina, niet alleen bij criteria
+            // waarvoor toevallig een markeer-meting bestaat. Kijken naar de pagina waarover je
+            // oordeelt is bij 1.4.11, 2.1.2 en 3.2.4 net zo goed nodig als bij 2.4.4; alleen
+            // de kaders zijn criteriumgebonden.
+            const paginaUrl = sampleVoor(huidig.cel.sampleId)?.url;
+            if (!paginaUrl) return null;
             const teBekijken = metingenVoorCriterium(huidig.cel.code).filter(
               (m) => m.bekijkVlaggen
             );
-            if (!teBekijken.length) return null;
+            const opdrachten = teBekijken.length ? teBekijken : [null];
             return (
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                {teBekijken.map((opdracht) => {
-                  const sleutel = `${huidig.cel.sampleId}|${huidig.cel.code}|${opdracht.commando}`;
+                {opdrachten.map((opdracht) => {
+                  const sleutel = `${huidig.cel.sampleId}|${huidig.cel.code}|${opdracht?.commando ?? 'browser'}`;
                   const bk = nieuweMetingen[sleutel];
                   return (
-                    <div key={opdracht.commando} className="flex flex-col gap-1">
+                    <div key={opdracht?.commando ?? 'browser'} className="flex flex-col gap-1">
                       <button
                         type="button"
-                        disabled={!sampleVoor(huidig.cel.sampleId)?.url}
-                        title={opdracht.bekijkWat}
+                        title={opdracht?.bekijkWat}
                         onClick={() =>
                           openBrowserPaneel(
-                            sampleVoor(huidig.cel.sampleId)!.url!,
-                            `${huidig.cel.code} op ${sampleVoor(huidig.cel.sampleId)?.title ?? 'deze pagina'}`
+                            paginaUrl,
+                            `${huidig.cel.code} op ${sampleVoor(huidig.cel.sampleId)?.title ?? 'deze pagina'}`,
+                            huidig.cel.code,
+                            huidig.cel.sampleId ?? undefined
                           )
                         }
                         className="rounded border border-blue-700 bg-white px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-50 disabled:opacity-40"
@@ -4117,8 +4167,32 @@ export default function Stapel({
                 {/* De kaders komen uit de meting zelf, niet uit een tweede berekening in dit
                     scherm. Zie de toelichting in app/api/meting/scherm/markeer/route.ts. */}
                 <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <div className="flex overflow-hidden rounded border border-gray-300">
+                    {(['kijken', 'bedienen'] as const).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setSchermStand2(k)}
+                        title={
+                          k === 'kijken'
+                            ? 'Klikken zoekt op wat daar staat en zet het in de selectie; de link wordt niet gevolgd. Nog eens klikken haalt het er weer uit.'
+                            : 'Klikken gaat door naar de pagina: menu openen, formulier invullen, doorklikken.'
+                        }
+                        className={
+                          (schermStand2 === k ? 'bg-blue-700 text-white ' : 'bg-white text-gray-700 ') +
+                          'px-2 py-1 text-xs'
+                        }
+                      >
+                        {k === 'kijken' ? 'Kijken' : 'Bedienen'}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Markeren is criteriumgebonden: get-links kent 2.4.4. Op een kaart waar
+                      geen markeer-meting bij hoort, is er niets te tekenen -- dan alleen de
+                      browser, en de selectie hieronder. */}
                   <button
                     type="button"
+                    hidden={!metingenVoorCriterium(paneelCode ?? '').some((m) => m.bekijkVlaggen)}
                     disabled={markeren?.bezig || !schermBeeld}
                     onClick={() => markeer(sessieRef.current)}
                     className="rounded bg-blue-700 px-2 py-1 text-xs font-medium text-white hover:bg-blue-800 disabled:opacity-40"
@@ -4178,17 +4252,63 @@ export default function Stapel({
                 >
                   <img
                     ref={schermRef}
+                    onMouseMove={(e) => {
+                      // Doorsturen, maar niet elke beweging: tien per seconde is genoeg om een
+                      // uitklapmenu te laten opengaan en houdt de verbinding vrij voor het beeld.
+                      const nu = Date.now();
+                      if (nu - muisRef.current < 100) return;
+                      muisRef.current = nu;
+                      const p = naarBrowserpunt(e);
+                      stuurInvoer({ soort: 'muis', type: 'mouseMoved', x: p.x, y: p.y, knop: 'none' });
+                    }}
                     src={schermBeeld ? 'data:image/jpeg;base64,' + schermBeeld : undefined}
                     alt="Levende weergave van de pagina"
-                    className="w-full cursor-crosshair border border-gray-300 bg-gray-100"
-                    style={{ aspectRatio: BREED + ' / ' + HOOG }}
+                    className="w-full border border-gray-300 bg-gray-100"
+                    style={{ cursor: schermCursor, aspectRatio: BREED + ' / ' + HOOG }}
                     onMouseDown={(e) => {
-                      const p = naarBrowserpunt(e);
-                      stuurInvoer({ soort: 'muis', type: 'mousePressed', x: p.x, y: p.y, knop: 'left' });
+                      // De omhullende div focus geven, anders komen de toetsaanslagen na een
+                      // klik nergens terecht en lijkt het toetsenbord kapot.
+                      (e.currentTarget.parentElement as HTMLElement | null)?.focus();
+                      if (schermStand2 === 'bedienen') {
+                        const p = naarBrowserpunt(e);
+                        stuurInvoer({ soort: 'muis', type: 'mousePressed', x: p.x, y: p.y, knop: 'left' });
+                      }
                     }}
-                    onMouseUp={(e) => {
+                    onMouseUp={async (e) => {
                       const p = naarBrowserpunt(e);
-                      stuurInvoer({ soort: 'muis', type: 'mouseReleased', x: p.x, y: p.y, knop: 'left' });
+                      if (schermStand2 === 'bedienen') {
+                        stuurInvoer({ soort: 'muis', type: 'mouseReleased', x: p.x, y: p.y, knop: 'left' });
+                        return;
+                      }
+                      // Kijken: opzoeken wat daar staat, zonder de link te volgen.
+                      if (!sessieRef.current) return;
+                      const res = await fetch('/api/meting/scherm/invoer', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          sessie: sessieRef.current,
+                          soort: 'inspecteer',
+                          x: p.x,
+                          y: p.y,
+                          kiezen: true,
+                        }),
+                      }).catch(() => null);
+                      const j = res ? await res.json().catch(() => null) : null;
+                      if (!j?.ok || !j.aangeklikt) return;
+                      const a = j.aangeklikt;
+                      setAangeklikt(a);
+                      // De lijst hier bijhouden en niet in de pagina: die kan navigeren of
+                      // opnieuw geladen worden, en dan is je selectie weg terwijl je hem nog
+                      // nodig hebt om de bevinding te schrijven.
+                      setSelectie((lijst) => {
+                        const zelfde = (x: any) =>
+                          x.naam === a.naam && x.href === a.href && x.element === a.element;
+                        return a.gekozen
+                          ? lijst.some(zelfde)
+                            ? lijst
+                            : [...lijst, { element: a.element, naam: a.naam, href: a.href }]
+                          : lijst.filter((x) => !zelfde(x));
+                      });
                     }}
                   />
                 </div>
@@ -4218,6 +4338,125 @@ export default function Stapel({
                         }`
                       : 'nergens — klik in het beeld en druk op Tab'}
                   </p>
+                  {!!selectie.length && (
+                    <div className="mt-1.5 rounded border border-purple-300 bg-purple-50 px-2 py-1.5 text-purple-900">
+                      <p className="font-medium">
+                        {selectie.length} aangewezen voor één bevinding
+                      </p>
+                      <ul className="mt-0.5 space-y-0.5">
+                        {selectie.map((x, i) => (
+                          <li key={i} className="truncate">
+                            · &lt;{x.element}&gt; &ldquo;{x.naam || '(geen naam)'}&rdquo;
+                            {x.href ? ` → ${x.href}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // De tekst voorzetten in het formulier dat al op de kaart staat.
+                            // Geen tweede weg om een bevinding aan te maken: die zou een eigen
+                            // gedrag krijgen en op termijn iets anders doen dan de eerste.
+                            const regels = selectie
+                              .map(
+                                (x) =>
+                                  `- <${x.element}> "${x.naam || '(geen naam)'}"${
+                                    x.href ? ` → ${x.href}` : ''
+                                  }`
+                              )
+                              .join('\n');
+                            setAfkeurTekst(
+                              (t) =>
+                                (t ? t + '\n\n' : '') +
+                                `Aangewezen in de browser op ${paneel.url}:\n${regels}\n\n`
+                            );
+                            setAfkeurOpen(true);
+                            setSelectie([]);
+                          }}
+                          className="rounded bg-purple-700 px-2 py-1 text-xs font-medium text-white hover:bg-purple-800"
+                        >
+                          Maak hier een bevinding van
+                        </button>
+                        {/* De lichte uitgang, naast de zware. Een bevinding vraagt een
+                            criterium, een impact en tekst volgens de schrijfregels; een
+                            waarneming vraagt alleen dat je opschrijft wat je zag. Zonder deze
+                            knop is de enige weg uit het paneel de zwaarste, en dan schrijf je
+                            een bevinding over iets waarvan je nog niet weet of het er een is.
+                            Zie de toelichting in app/api/projects/[id]/waarnemingen/route.ts. */}
+                        <button
+                          type="button"
+                          disabled={waarnemingBezig}
+                          onClick={async () => {
+                            setWaarnemingBezig(true);
+                            setWaarnemingMelding(null);
+                            const regels = selectie
+                              .map(
+                                (x) =>
+                                  `- <${x.element}> "${x.naam || '(geen naam)'}"${
+                                    x.href ? ` → ${x.href}` : ''
+                                  }`
+                              )
+                              .join('\n');
+                            const res = await fetch(`/api/projects/${projectId}/waarnemingen`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                sampleItemId: paneelSample,
+                                url: paneel.url,
+                                tekst:
+                                  `Aangewezen in de browser${paneelCode ? ` bij ${paneelCode}` : ''}:\n` +
+                                  regels,
+                              }),
+                            }).catch(() => null);
+                            setWaarnemingBezig(false);
+                            if (res && res.ok) {
+                              setWaarnemingMelding(
+                                `${selectie.length} vastgelegd als waarneming. Die staat nu bij "Ik zie iets" en telt nergens mee tot je hem uitwerkt.`
+                              );
+                              setSelectie([]);
+                            } else {
+                              const j = res ? await res.json().catch(() => null) : null;
+                              setWaarnemingMelding(j?.error ?? 'Het vastleggen lukte niet.');
+                            }
+                          }}
+                          className="rounded border border-purple-400 bg-white px-2 py-1 text-xs font-medium text-purple-900 hover:bg-purple-100 disabled:opacity-40"
+                        >
+                          {waarnemingBezig ? 'Bezig…' : 'Noteer als waarneming'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectie([])}
+                          className="rounded border border-purple-300 px-2 py-1 text-xs text-purple-900 hover:bg-purple-100"
+                        >
+                          Selectie wissen
+                        </button>
+                      </div>
+                      {waarnemingMelding && (
+                        <p className="mt-1 rounded bg-white px-2 py-1 text-purple-900">
+                          {waarnemingMelding}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {aangeklikt && (
+                    <div className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-900">
+                      <p>
+                        <span className="text-amber-700">Aangeklikt: </span>
+                        &lt;{aangeklikt.element}&gt;
+                        {aangeklikt.rol ? ` rol=${aangeklikt.rol}` : ''} — &ldquo;
+                        {aangeklikt.naam || '(geen naam)'}&rdquo;
+                        {aangeklikt.href ? ` → ${aangeklikt.href}` : ''}
+                      </p>
+                      <p className="mt-0.5">
+                        {aangeklikt.waarom
+                          ? aangeklikt.waarom
+                          : aangeklikt.gemarkeerd
+                          ? 'De meting keurde dit element goed.'
+                          : 'Over dit element is niets gemeld — het viel buiten de meting of er is nog niet gemeten.'}
+                      </p>
+                    </div>
+                  )}
                   {!!schermItems.length && (
                     <div className="mt-1.5 border-t border-gray-200 pt-1.5">
                       <p className="mb-1 text-gray-500">
@@ -4313,7 +4552,7 @@ export default function Stapel({
 
           <p className="border-t border-gray-200 px-3 py-2 text-xs text-gray-500">
             {paneelModus === 'browser'
-              ? 'Dit is een eigen browser, niet je auditsessie: zonder je cookies en zonder wat je daar hebt aangeklikt. Voor een pagina achter een login heb je de auditsessie nodig.'
+              ? 'Kijken zoekt op wat er staat zonder de link te volgen; bedienen klikt echt door. Dit is een eigen browser, niet je auditsessie: zonder je cookies. Voor een pagina achter een login heb je de auditsessie nodig.'
               : ''}
             {paneelModus === 'browser' ? '' : 'Dit is een opname van het meetmoment, niet de levende site.'} Wat je moet bedienen —
             klikken, tabben, een menu openen — doe je met &ldquo;Laat het me zien in de
