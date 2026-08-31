@@ -1,6 +1,7 @@
 # Shift2-auditor installeren op een nieuwe computer
 
-Stappenplan voor Windows met PowerShell. Doorlopen op 1 augustus 2026.
+Stappenplan voor Windows met PowerShell. Doorlopen op 1 augustus 2026,
+branchnaam bijgewerkt op 31 augustus 2026.
 
 ## Belangrijk vooraf
 
@@ -61,7 +62,15 @@ New-Item -ItemType Directory -Force $HOME\IdeaProjects
 cd $HOME\IdeaProjects
 git clone https://github.com/BruinBier/Shift2-auditor.git
 cd Shift2-auditor
-git checkout claude/audit-tool-mvp-J2LaR
+git checkout claude/akkoord-als-poort
+```
+
+Het werk staat op `claude/akkoord-als-poort`, niet op de standaardbranch. Neem je
+die laatste, dan mis je alles van de afgelopen weken. Twijfel je welke het is,
+kijk dan op de computer waar je vandaan komt:
+
+```powershell
+git branch --show-current
 ```
 
 ## 5. Het .env-bestand overzetten
@@ -131,7 +140,9 @@ commando's open je een tweede PowerShell-venster.
   Next.js en Prisma.
 - **Claude Code** — apart installeren als je er ook met Claude wilt werken
 - **Chrome** — nodig voor `npm run chrome:debug` bij de audit-CLI
-- **Code bijwerken** — `git pull` om wijzigingen van de andere computer op te halen
+- **Code bijwerken** — `git pull` om wijzigingen van de andere computer op te halen.
+  Push op de computer waar je vandaan komt eerst je werk — `git status` laat zien
+  of er nog iets openstaat — anders haal je een oudere staat op dan je achterliet.
 
 ## Bekende Windows-valkuil
 
