@@ -63,6 +63,18 @@ console.log(`De CLI (get-html / get-screenshot) verbindt automatisch op http://l
 console.log(``);
 console.log(`Stop met Ctrl+C of door de Chrome-vensters te sluiten.`);
 
+/**
+ * `--los` maakt Chrome onafhankelijk van dit proces en keert meteen terug.
+ *
+ * Nodig voor wie het commando zelf aanroept in plaats van het te typen: een workflow die
+ * eerst een auditsessie nodig heeft, kan niet wachten op een proces dat pas eindigt als de
+ * browser dichtgaat. Zonder deze vlag blijft alles hangen tot iemand Chrome sluit.
+ *
+ * Chrome zelf blijft daarna gewoon staan, met het profiel en de sessies erin. Dat is de
+ * bedoeling: de volgende meting vindt hem dan al draaiend.
+ */
+const los = process.argv.includes('--los');
+
 const child = spawn(
   chromePath,
   [
@@ -71,7 +83,12 @@ const child = spawn(
     '--no-first-run',
     '--no-default-browser-check',
   ],
-  { stdio: 'inherit' },
+  los ? { detached: true, stdio: 'ignore' } : { stdio: 'inherit' },
 );
 
-child.on('exit', (code) => process.exit(code ?? 0));
+if (los) {
+  child.unref();
+  console.log(`Chrome gestart op poort ${PORT}; dit venster kan dicht.`);
+} else {
+  child.on('exit', (code) => process.exit(code ?? 0));
+}

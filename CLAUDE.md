@@ -61,6 +61,7 @@ npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://.
 npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --responsibility=redacteur --sample-items=<sampleItemId1>,<sampleItemId2>
 npm run cli -- create-finding-from-quick <projectId> <quickFindingId> --sample-items=<sampleItemId>
 npm run cli -- save-checks <projectId> --bron=workflow < oordelen.json   # oordeel per sample per criterium
+npm run cli -- save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json  # los bijwerken; normaal gaan ze mee met save-checks
 npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=failed
 ```
 
@@ -83,8 +84,65 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - Finding codes worden toegekend: `V001` voor een voorstel, `B001` pas bij akkoord. Geef er zelf nooit een mee.
 - Het criteriumoordeel volgt uit de bevindingen en wordt herberekend bij aanmaken, wijzigen en verwijderen (`lib/criterion-assessment.ts`). Zet het niet zelf met `set-assessment` tenzij je het echt handmatig wilt overrulen.
 - Een opmerking (`type=opmerking`, geen impact) keurt een criterium **niet** af.
+- **Een criterium met deelgebieden komt er niet in zonder die gebieden.** 1.1.1, 1.3.1, 1.4.3 en 2.4.4 bestaan uit meerdere losse vragen; die staan onder `### Deelgebieden` in hun regelbestand. Die lijst is de enige bron: zet er een gebied bij en de weigering geldt meteen, zonder dat er code verandert. Stuur ze mee in hetzelfde `save-checks`-bericht — `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking", "toelichting": "..." }]` — anders wordt het oordeel geweigerd met de namen erbij die nog ontbreken. Kon je een gebied niet beoordelen, dan is dat `nvt` met een toelichting: dát je het niet kon is precies de informatie die een lopende onderbouwing weglaat. Een agent die drie van de zes gebieden overslaat en over de andere drie netjes schrijft, levert iets op dat er hetzelfde uitziet als volledig werk.
+- **`reden` is één of twee zinnen** bij een criterium met deelgebieden: of de meting geldig was — kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Er is bijna nooit iets dat bij geen enkel gebied thuishoort.
 - Linking uses `SampleItem + FindingOccurrence` (the manual/UI path), not `ScopeUrl + FindingUrl` (crawler path).
 - Override base URL if needed: `AUDIT_CLI_BASE_URL=http://localhost:3001 npm run cli -- ...`
+
+### Deelgebieden: waar ze staan en wie ze mag aanvullen
+
+De deelgebieden van een criterium staan onder `### Deelgebieden` in zijn regelbestand, en
+nergens anders. Geen kopie in de database: de kaart leest het bestand rechtstreeks en de agent
+krijgt het als huisregels mee, dus een tweede plek zou een tweede waarheid worden.
+
+De onderzoeker kan er zelf een bij zetten. Op de kaart in "Waar sta ik" staat onder de
+gebiedenlijst een veld met "Aan de regels toevoegen"; dat schrijft naar het regelbestand via
+`POST /api/wcag-regels/deelgebied` (alleen op de dev-server). Vanaf dat moment moet elke agent
+dat gebied aflopen, op elke pagina en in elk project — het is een regel, geen aantekening bij
+één oordeel. Bestaande oordelen krijgen er een open ring bij; hun akkoord blijft staan, want
+dat gold voor de tekst die er lag.
+
+### Eén criterium opnieuw laten beoordelen
+
+`audit-samples` zet één agent per **pagina** neer die alle criteria afgaat. Dat is efficiënt,
+maar het maakt niet zichtbaar of die agent bij criterium zesentwintig nog even scherp was als
+bij criterium één. Moet één criterium alsnog of opnieuw beoordeeld worden, gebruik dan
+`.claude/workflows/audit-criterium.js`. Daar is de eenheid van werk het **criterium**: elke
+agent krijgt er precies één, plus één pagina, plus het regelbestand dat erbij hoort. Wat hij
+daarbuiten ziet, laat hij liggen.
+
+**De auditsessie start vanzelf.** Draait er geen Chrome op poort 9222, dan start de workflow er
+zelf een (`npm run cli:chrome-los`, hetzelfde script als `chrome:debug` maar losgekoppeld, met
+hetzelfde auditprofiel) en wacht tot de poort antwoordt. Dat moet, want de CLI valt anders
+stilzwijgend terug op headless — en dan mist de meting alles wat pas na een klik in de code
+komt: uitklapblokken, menu's, formulierstappen achter een sessie. Dat ziet er niet uit als een
+fout maar als een pagina waar het niet op staat, en dat leverde op 15 augustus 2026 drie
+afkeuringen op die geen van drieën bestonden. Achteraf zie je het aan de oranje badge op de
+kaart, maar dan is het werk al gedaan.
+
+```
+Workflow({ scriptPath: '.claude/workflows/audit-criterium.js',
+           args: { projectId: '...', criterium: '2.4.4' } })
+```
+
+Vlaggen: `samples` (alleen deze pagina's), `homepageSampleId` (welke pagina header en footer
+meeneemt), `drooglopen: true` (alleen rapporteren, niets wegschrijven), `headlessMag: true`
+(bewust zonder auditsessie — alleen bij een openbare pagina zonder login, cookiemuur of
+uitklapblokken die ertoe doen).
+
+Na de pagina-agents komt er één die de bevindingen samenvoegt. Dat is het enige moment waarop
+ze allemaal naast elkaar liggen — geen pagina-agent kan weten dat dezelfde footerlink op tien
+andere pagina's net zo staat, en zonder die stap komt hetzelfde tien keer in het rapport.
+
+Aanroepen met `scriptPath`, niet met `name`: dat laatste laadt een oudere geregistreerde kopie
+en negeert wijzigingen.
+
+**Een workflowscript kan niet zelf naar localhost.** `fetch('http://localhost:...')` in het
+script mislukt: het draait in een afgeschermde omgeving zonder verbinding met de eigen machine.
+Ook `process.env` bestaat er niet. Alles wat met de dev-server, de auditsessie of een lokale
+poort te maken heeft, moet dus door een agent gedaan worden — die draait `curl` gewoon in de
+shell. Op 2026-08-31 leverde die aanname het slechtst denkbare antwoord op: de workflow zag een
+draaiende Chrome niet, startte er een tweede, en concludeerde daarna dat die ook niet draaide.
 
 ### Een meting toevoegen: registreer hem in `lib/metingen.ts`
 

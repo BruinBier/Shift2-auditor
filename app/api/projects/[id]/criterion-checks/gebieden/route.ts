@@ -23,37 +23,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { leesKaarttekst } from '@/lib/criterium-kaarttekst';
-
-/**
- * `opmerking` staat er sinds 2026-08-23, en niet uit volledigheidsdrang.
- *
- * De eerste versie kende alleen ok, nvt en fout. Op de homepage van heuvelrug.nl staat het
- * bezoekadres in dezelfde opsomming als de drie contactnummers (B003) — volgens de regels een
- * OPMERKING en uitdrukkelijk geen afkeuring, want er gaat niets verloren; er wordt alleen een
- * verband beweerd dat er niet is. Zonder deze waarde moest dat als `fout` weg, en dan staat er
- * een rood kruis bij iets dat het criterium niet laat zakken.
- */
-const UITKOMSTEN = ['ok', 'nvt', 'fout', 'opmerking'] as const;
-type Uitkomst = (typeof UITKOMSTEN)[number];
-
-interface GebiedUitkomst {
-  gebied: string;
-  uitkomst: Uitkomst;
-  toelichting?: string;
-}
-
-/** De bestaande lijst, met de rommel eruit. Wat er niet uitziet als een regel, telt niet. */
-function huidigeLijst(waarde: unknown): GebiedUitkomst[] {
-  if (!Array.isArray(waarde)) return [];
-  return waarde.filter(
-    (r): r is GebiedUitkomst =>
-      !!r &&
-      typeof r === 'object' &&
-      typeof (r as any).gebied === 'string' &&
-      UITKOMSTEN.includes((r as any).uitkomst)
-  );
-}
+import {
+  GebiedUitkomst,
+  UITKOMSTEN,
+  Uitkomst,
+  bekendeGebieden,
+  huidigeLijst,
+  leesGebieden,
+  voegSamen,
+} from '@/lib/deelgebieden';
 
 /**
  * Zoekt het oordeel op en controleert of het sample bij dit project hoort.
@@ -95,17 +73,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    /**
-     * De gebieden staan in het regelbestand, niet in de database, en dus is dít de plek waar
-     * gecontroleerd wordt of een naam bestaat.
-     *
-     * Zonder die controle zou een tikfout stilzwijgend niets doen: de regel komt in de kolom
-     * te staan, de kaart zoekt hem op naam op, vindt niets, en toont het gebied als "nog niet
-     * nagelopen". Het werk is dan gedaan en toch onzichtbaar — precies het gat dat deze hele
-     * lijst moet dichten.
-     */
-    const kaart = leesKaarttekst(String(criterionCode));
-    const bekend = kaart?.gebieden ?? [];
+    const bekend = bekendeGebieden(String(criterionCode));
     if (!bekend.length) {
       return NextResponse.json(
         {
@@ -120,60 +88,26 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'geef minstens één gebied op' }, { status: 400 });
     }
 
-    const nieuw: GebiedUitkomst[] = [];
-    for (const r of ingevoerd) {
-      const gebied = String((r as any)?.gebied ?? '').trim();
-      const uitkomst = String((r as any)?.uitkomst ?? '').trim();
-      const toelichting = String((r as any)?.toelichting ?? '').trim();
-
-      if (!bekend.includes(gebied)) {
-        return NextResponse.json(
-          {
-            error: `onbekend gebied "${gebied}" bij ${criterionCode}`,
-            bekendeGebieden: bekend,
-          },
-          { status: 400 }
-        );
-      }
-      if (!UITKOMSTEN.includes(uitkomst as Uitkomst)) {
-        return NextResponse.json(
-          { error: `uitkomst moet ${UITKOMSTEN.join(', ')} zijn, niet "${uitkomst}"` },
-          { status: 400 }
-        );
-      }
-      // Een fout of opmerking zonder uitleg is een teken waar niemand iets mee kan. Bij `ok`
-      // en `nvt` mag de uitleg weg: daar is de uitkomst zelf het hele bericht.
-      if ((uitkomst === 'fout' || uitkomst === 'opmerking') && !toelichting) {
-        return NextResponse.json(
-          { error: `gebied "${gebied}" staat op ${uitkomst}; schrijf erbij wat er aan de hand is` },
-          { status: 400 }
-        );
-      }
-
-      nieuw.push({
-        gebied,
-        uitkomst: uitkomst as Uitkomst,
-        ...(toelichting ? { toelichting } : {}),
-      });
+    const gelezen = leesGebieden(String(criterionCode), ingevoerd, bekend);
+    if ('fout' in gelezen) {
+      return NextResponse.json(
+        {
+          error: gelezen.fout,
+          ...(gelezen.bekendeGebieden ? { bekendeGebieden: gelezen.bekendeGebieden } : {}),
+        },
+        { status: 400 }
+      );
     }
 
     const gevonden = await zoekOordeel(params.id, sampleItemId, String(criterionCode));
     if ('fout' in gevonden) return NextResponse.json({ error: gevonden.fout }, { status: 400 });
     const { oordeel } = gevonden;
 
-    /**
-     * Samenvoegen, niet overschrijven.
-     *
-     * Een ronde hoeft niet alle dertien gebieden tegelijk te doen — je kunt de koppen nu
-     * nalopen en de tabellen straks. Wie de hele lijst opnieuw wil zetten, stuurt hem
-     * gewoon in zijn geheel op.
-     */
-    const bestaand = huidigeLijst(oordeel.gebieden);
-    const perGebied = new Map(bestaand.map((g) => [g.gebied, g]));
-    for (const g of nieuw) perGebied.set(g.gebied, g);
-    // In de volgorde van het regelbestand, zodat de kaart niet van volgorde verspringt
-    // afhankelijk van wie wanneer wat invulde.
-    const samen = bekend.map((g) => perGebied.get(g)).filter(Boolean) as GebiedUitkomst[];
+    const { gebieden: samen, open } = voegSamen(
+      huidigeLijst(oordeel.gebieden),
+      gelezen.gebieden,
+      bekend
+    );
 
     await prisma.sampleCriterionCheck.update({
       where: { id: oordeel.id },
@@ -187,7 +121,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       gebieden: samen,
       nagelopen: samen.length,
       totaal: bekend.length,
-      open: bekend.filter((g) => !perGebied.has(g)),
+      open,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message ?? 'onbekende fout' }, { status: 500 });

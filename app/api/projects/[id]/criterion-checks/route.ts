@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { bekendeGebieden, huidigeLijst, leesGebieden, voegSamen } from '@/lib/deelgebieden';
+import { zetTerugNaarVoorstel } from '@/lib/finding-code';
 
 /**
  * De sampleoordelen van een project: het oordeel per criterium per pagina.
@@ -111,6 +113,8 @@ export async function POST(
     // Akkoorden die vervielen doordat het oordeel inhoudelijk veranderde. Melden
     // in het antwoord, zodat een workflow-run niet stilzwijgend werk terugdraait.
     let vervallen = 0;
+    /** De codes van bevindingen die met een vervallen akkoord weer voorstel zijn geworden. */
+    const teruggezet: string[] = [];
 
     for (const check of checks) {
       const { sampleItemId, criterionCode, status } = check;
@@ -143,6 +147,65 @@ export async function POST(
       const verantwoording = check.verantwoording ?? undefined;
       const controle = check.controle ?? undefined;
 
+      /**
+       * Een criterium met deelgebieden komt er niet in zonder die gebieden.
+       *
+       * Eén agent onderzoekt één succescriterium op één pagina. De vraag die de onderzoeker
+       * bij het nakijken heeft is niet alleen "klopt dit oordeel" maar "heeft de agent zijn
+       * opdracht afgemaakt" — en een agent die drie van de zes gebieden overslaat en over de
+       * andere drie netjes schrijft, levert iets op dat er precies zo uitziet als volledig
+       * werk. Dat is niet aan de tekst te zien; dat was de hele les van BEV-03.
+       *
+       * De controle staat hier en niet op de kaart, want daar is het te laat: dan moet de
+       * onderzoeker het bij elke kaart zelf opmerken en de agent terugsturen. Dertig criteria
+       * maal twintig pagina's aan waakzaamheid. Hier kan de fout niet ontstaan.
+       *
+       * De gebieden gaan in dezelfde aanroep mee, en niet via `save-gebieden` erna: die route
+       * eist een bestaand oordeel, dus zou een weigering hier betekenen dat de agent nooit
+       * kan beginnen. Oordeel en verantwoording zijn één handeling, of geen.
+       *
+       * Kan een gebied niet beoordeeld worden, dan is er `nvt` — dan staat er dát het niet
+       * kon, en dat is precies de informatie die een lopende onderbouwing weglaat.
+       *
+       * Alleen voor criteria die `### Deelgebieden` in hun regelbestand hebben; voor de rest
+       * verandert er niets tot iemand die lijst schrijft.
+       */
+      // Eén keer ophalen: de gebiedencontrole hieronder en het akkoord verderop kijken
+      // allebei naar de rij die er al staat.
+      const bestaande = await prisma.sampleCriterionCheck.findUnique({
+        where: { sampleItemId_wcagCriterionId: { sampleItemId, wcagCriterionId } },
+        select: { status: true, reden: true, akkoord: true, gebieden: true },
+      });
+
+      const bekend = bekendeGebieden(criterionCode);
+      let gebiedenVoorDitOordeel: any[] | undefined;
+      if (bekend.length) {
+        const gelezen = leesGebieden(
+          criterionCode,
+          Array.isArray(check.gebieden) ? check.gebieden : [],
+          bekend
+        );
+        if ('fout' in gelezen) {
+          fouten.push(`${criterionCode}: ${gelezen.fout}`);
+          continue;
+        }
+
+        const { gebieden: samen, open } = voegSamen(
+          huidigeLijst(bestaande?.gebieden),
+          gelezen.gebieden,
+          bekend
+        );
+
+        if (open.length) {
+          fouten.push(
+            `${criterionCode} op sample ${sampleItemId}: ${open.length} van de ${bekend.length} deelgebieden zijn niet nagelopen (${open.join(', ')}). ` +
+              `Stuur ze mee als "gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking", "toelichting": "..." }].`
+          );
+          continue;
+        }
+        gebiedenVoorDitOordeel = samen;
+      }
+
       // Per oordeel mag de bron mee; anders geldt die van de body.
       const bronVanDitOordeel: string = check.bron ?? bron;
       if (!GELDIGE_BRON.has(bronVanDitOordeel)) {
@@ -159,11 +222,6 @@ export async function POST(
       // op teksten die vanmiddag zijn overschreven. De bewering "dit is bevestigd"
       // sloeg dan op iets wat er niet meer stond.
       const nieuweReden = check.reden ?? null;
-      const bestaande = await prisma.sampleCriterionCheck.findUnique({
-        where: { sampleItemId_wcagCriterionId: { sampleItemId, wcagCriterionId } },
-        select: { status: true, reden: true, akkoord: true },
-      });
-
       const inhoudelijkGewijzigd =
         !!bestaande && (bestaande.status !== status || (bestaande.reden ?? null) !== nieuweReden);
 
@@ -186,6 +244,7 @@ export async function POST(
           akkoord: akkoord as any,
           ...(verantwoording !== undefined ? { verantwoording } : {}),
           ...(controle !== undefined ? { controle } : {}),
+          ...(gebiedenVoorDitOordeel ? { gebieden: gebiedenVoorDitOordeel as any } : {}),
         },
         update: {
           status,
@@ -195,16 +254,57 @@ export async function POST(
           checkedAt: new Date(),
           ...(verantwoording !== undefined ? { verantwoording } : {}),
           ...(controle !== undefined ? { controle } : {}),
+          ...(gebiedenVoorDitOordeel ? { gebieden: gebiedenVoorDitOordeel as any } : {}),
         },
       });
       geschreven++;
-      if (inhoudelijkGewijzigd && bestaande?.akkoord === 'akkoord' && !akkoord) vervallen++;
+
+      /**
+       * Vervalt het akkoord, dan gaan de bevindingen mee terug naar voorstel.
+       *
+       * Een nieuwe beoordeling is een nieuw oordeel: de tekst die je goedkeurde staat er niet
+       * meer, dus je akkoord slaat nergens meer op. De bevindingen die eronder hingen zijn
+       * daarmee ook weer voorstellen — hun code gaat van `B00x` terug naar `V00x` en hun
+       * status naar `voorstel`.
+       *
+       * Zonder dit staat er een code die "goedgekeurd" betekent op een kaart die om
+       * goedkeuring vraagt, en telt de bevinding intussen gewoon mee in het rapport. Dat is
+       * precies wat de poort moet voorkomen (docs/adr/0001-akkoord-als-poort.md).
+       */
+      if (inhoudelijkGewijzigd && bestaande?.akkoord === 'akkoord' && !akkoord) {
+        vervallen++;
+        const hangende = await prisma.finding.findMany({
+          where: {
+            projectId: params.id,
+            wcagCriterionId,
+            status: { in: ['open', 'published'] },
+            occurrences: { some: { sampleItemId } },
+          },
+          select: { id: true },
+        });
+        for (const f of hangende) {
+          try {
+            const nieuw = await zetTerugNaarVoorstel(params.id, f.id);
+            if (nieuw?.startsWith('V')) teruggezet.push(nieuw);
+          } catch (e: any) {
+            // Het oordeel is al weggeschreven; een bevinding die niet terugkan mag dat niet
+            // ongedaan maken. Melden en doorgaan.
+            fouten.push(
+              `${criterionCode}: bevinding ${f.id} kon niet terug naar voorstel (${e?.message ?? 'onbekende fout'})`
+            );
+          }
+        }
+      }
     }
 
     return NextResponse.json({
       geschreven,
       overgeslagen: fouten.length,
       akkoordVervallen: vervallen,
+      // Welke bevindingen weer voorstel zijn geworden. In het antwoord en niet alleen in de
+      // database, zodat een agent het meldt en de onderzoeker weet wat er opnieuw op zijn
+      // stapel ligt.
+      ...(teruggezet.length ? { terugNaarVoorstel: teruggezet } : {}),
       fouten: fouten.slice(0, 20),
     });
   } catch (error: any) {

@@ -119,6 +119,24 @@ export interface GebiedUitkomst {
   uitkomst: 'ok' | 'nvt' | 'fout' | 'opmerking';
   /** Kort, één zin: wat er stond. Bij `fout` en `opmerking` hoort er een bevinding bij. */
   toelichting?: string;
+  /**
+   * De bevindingen die bij dit gebied horen, als findingCode ("B001").
+   *
+   * Zonder deze koppeling staat een gebied op `fout` los van de bevinding die erover gaat, en
+   * moet de onderzoeker zelf verbinden wat bij elkaar hoort. Op 2026-08-31 stonden er op de
+   * 1.1.1-kaart van Home twee gebieden op `fout` met één bevinding, en of er iets ontbrak was
+   * alleen met terugzoeken vast te stellen.
+   *
+   * Leeg bij oordelen van vóór die datum; de kaart toont de bevindingen dan los eronder.
+   */
+  bevindingen?: string[];
+  /**
+   * Waar op de pagina het probleem zit, als CSS-selector per bevinding-id.
+   *
+   * De knop "Laat het me zien in de browser" bij die bevinding zet er dan een kader omheen,
+   * in plaats van de pagina te tonen met kaders om alles wat onder het criterium valt.
+   */
+  aanwijzingen?: Record<string, string>;
 }
 
 export interface Cel {

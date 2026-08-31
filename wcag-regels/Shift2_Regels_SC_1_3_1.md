@@ -172,6 +172,22 @@ om een zin die geen nadruk draagt.
 10. [jij] Weeg per punt of de code de structuur weergeeft die je ziet, en voeg een afkeuring toe
    waar dat niet zo is.
 
+#### Stap 4 — Wegschrijven
+
+11. [agent] Stuur de elf deelgebieden hieronder mee met het oordeel, in hetzelfde
+    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+    gebied niet beoordelen, gebruik dan `nvt` met een toelichting — dát je het niet kon is de
+    informatie die een lopende onderbouwing weglaat. Dit criterium is precies waarom die lijst
+    bestaat: bij BEV-03 stond 1.3.1 op `opmerking` met een verhaal over de koppenstructuur,
+    terwijl er `em`-elementen om gewone zinnen stonden.
+12. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+    verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf
+    je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Wat de
+    meting al telde hoort er evenmin in. Er is bijna nooit iets dat bij geen enkel gebied
+    thuishoort; denk je van wel, kijk dan nog eens of het niet toch ergens past.
+
 ### Deelgebieden
 
 > De punten die bij dit criterium hoe dan ook langsgelopen worden. Zo is te zien wát er is

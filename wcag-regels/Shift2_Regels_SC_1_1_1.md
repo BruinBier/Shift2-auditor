@@ -54,6 +54,8 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 ## Regels
 
 - Teaser-/kaart-afbeelding op een overzichtspagina of nieuwslijst (afbeelding + kop/link/datum die doorlinkt): alt="" is de GEWENSTE situatie. Geen bevinding. De toegankelijke naam komt uit de kop/link.
+  **DE LIJST BESLIST, NIET DE FOTO.** Staat een afbeelding in zo'n overzicht, dan is het oordeel daarmee klaar. Ga niet alsnog na wat er op de foto staat, of die tekst elders voorkomt, of het beeld informatie draagt — die afweging hoort bij een afbeelding in de lopende tekst en niet hier. In een overzicht kies je met de kop of je doorklikt; het hele verhaal staat op de pagina erachter, en dáár moet het kloppen.
+  Aanleiding: heuvelrug.nl (2026-08-31). Op de homepage staat een nieuwsteaser met een illustratie van een pompflacon boven een oranje container met "PMD" erop, bij de kop "Help mee: verbeter de kwaliteit van PMD-afval". De agent ging na of het woord PMD elders in tekst stond, concludeerde van wel en schreef daar een afweging over — werk dat niet gedaan hoefde te worden, en dat bovendien naar de letters in het beeld keek in plaats van naar wat het beeld overbrengt.
 - Kaart-afbeelding (plattegrond, strooiroute, locatiekaart) met een korte label-alt ("Plattegrond wijkverdeling X"): GEEN bevinding, mits de inhoudelijke informatie elders op de pagina in tekst staat. Eis niet dat de alt alle wijken/straten opsomt.
 - KAART MET EEN LEGENDA: een label-alt is niet genoeg om te concluderen dat het in orde is. Lees de legenda UIT DE AFBEELDING (bekijk hem echt, zoom zo nodig in) en vink item voor item af of elk gegeven ook in de tekst op de pagina staat. Let vooral op jaartallen, percentages en categorienamen; die worden vaak vergeten in de begeleidende tekst. Ontbreekt er iets, dan is dat een bevinding met de standaard kaarten-formulering. Voorbeeld: BEV-03 B024 (energietransitie, warmtetransitiekaart). De legenda noemde per categorie een startjaar (2021, 2022, 2023) dat nergens in de tekst stond; de auditor zag de label-alt en concludeerde ten onrechte "voldoet".
 - Kaart waarvan de informatie NIET elders in tekst staat: wel een bevinding, en sluit de description af met letterlijk deze twee zinnen: "Kaarten vallen onder de wettelijke uitzondering voor de overheid en hoeven niet toegankelijk te zijn. De informatie die ermee wordt overgebracht (X) moet echter ook op een andere manier beschikbaar zijn." Pas alleen het deel tussen haakjes aan.
@@ -75,6 +77,8 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 - SIMsite-galerij (class ImageGallery-module-scss-module...) met alt="" plus bestandsnaam als bijschrift: TWEE losse bevindingen, 1.1.1 (klein, redacteur) voor de ontbrekende tekstalternatieven en 2.4.6 (klein, redacteur) voor de bestandsnaam als bijschrift. Alt en onderschrift mogen dezelfde tekst hebben; ze verschijnen niet tegelijk.
 - Ingesloten videospeler (Bright/BBVMS, YouTube, Vimeo): check EERST of er een transcript-knop of "uitgeschreven tekst"-knop in de speler zit. Een toegankelijk gelabelde transcript-knop levert een geldig tekstalternatief. Dan GEEN 1.1.1-afkeuring.
 - Afbeelding-link zonder toegankelijke naam: schrijf dat de link GEEN naam heeft. Niet "geen duidelijke naam" en niet "de schermlezer leest het webadres voor" (dat verschilt per schermlezer). Zie ook 2.4.4 en 4.1.2: dit is het klassieke geval waarin beide criteria gelden.
+- HET LOGO TELT MAAR ÉÉN KEER. Het logo staat links boven aan de pagina en zit vrijwel altijd in een link naar de homepage; het valt daarmee zowel onder het deelgebied "Logo's" als onder "Afbeeldingen in een link of knop". Beoordeel het alleen bij **Logo's**. Het andere gebied heet daarom "(behalve het logo)" en gaat over de rest: teaserafbeeldingen die zelf de link vormen, knoppen met alleen een pictogram, beeldlinks in de lopende tekst.
+  Zonder die afbakening staat er een kruis bij een gebied waar niets mis is, en lijkt één afkeuring er twee. Op heuvelrug.nl (2026-08-31) stonden beide gebieden op `fout` terwijl er één bevinding was (B001, de logolink met leeg `alt`); de agent schreef er zelf bij dat het dezelfde afkeuring was.
 - Gebruik de term "tekstalternatief", niet "tekstbeschrijving". Formuleer alt als iets dat informatie OVERBRENGT, niet als iets dat de afbeelding "beschrijft".
 - Inline base64-afbeelding (src begint met data:image) zonder alt: dit is een plak-incident van een redacteur, geen template-issue. Verantwoordelijkheid redacteur.
 - Niet-getagde PDF onder 1.1.1: opmerking (status resolved, impact en responsibility leeg). Zonder tags kun je niet vaststellen wat er ontbreekt. De structuur-bevinding hoort onder 1.3.1.
@@ -122,7 +126,10 @@ andere vorm. Vier beslissingen op één kaart.
 3. [agent] Staat er niets op de pagina dat geen tekst is, dan is deze toets niet van
    toepassing. Dat kun je pas zeggen ná de opname, niet ervoor.
 4. [agent] Staat er leesbare tekst ín het beeld — merknaam, embleem, slogan, banner, poster?
-   Zoek dan of diezelfde tekst elders op de pagina als echte tekst staat.
+   Zoek dan of diezelfde tekst elders op de pagina als echte tekst staat. Bij een LOGO maak je
+   die vergelijking niet: daar is een leeg tekstalternatief altijd een afkeuring, wat er
+   verder op de pagina staat. Zoek dus niet in de footer of de paginatitel; er valt niets af
+   te wegen.
 5. [agent] Bij een kaart met een legenda: lees de legenda uit het beeld en vink item voor item
    af of elk gegeven ook in de tekst staat. Jaartallen, percentages en categorienamen worden
    het vaakst vergeten.
@@ -142,6 +149,34 @@ andere vorm. Vier beslissingen op één kaart.
    tussen beeld en beschrijving is hier niet vereist — zie de regel hieronder.
 11. [jij] Weeg per beeld of het alternatief hetzelfde doel dient als het beeld, en voeg een
     afkeuring toe waar dat niet zo is.
+
+#### Stap 3 — Wegschrijven
+
+12. [agent] Stuur de elf deelgebieden hieronder mee met het oordeel, in hetzelfde
+    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Staat een
+    soort beeld niet op deze pagina, gebruik dan `nvt` met de zin waaróp je hebt gezocht — een
+    leeg resultaat en een mislukte zoekactie zien er in een onderbouwing hetzelfde uit.
+13. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+    verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf
+    je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Er is
+    bijna nooit iets dat bij geen enkel gebied thuishoort; denk je van wel, kijk dan nog eens
+    of het niet toch ergens past.
+
+### Deelgebieden
+
+1. Logo's
+2. Hero- en headerafbeelding
+3. Teaser- en kaartafbeeldingen in overzichten
+4. Iconen en pictogrammen
+5. Afbeeldingen in een link of knop (behalve het logo)
+6. Complexe beelden: schema's, organogrammen, infographics
+7. Kaarten en plattegronden, inclusief de legenda
+8. Afbeeldingen met een onderschrift of in een `figure`
+9. Foto's in de lopende tekst en galerijen
+10. Posters en aankondigingen
+11. Beelden met een eigen route: videospeler, CAPTCHA, PDF
 
 ### Zo is het vastgesteld
 
@@ -221,3 +256,5 @@ Twee regels over wat een leeg tekstalternatief goedpraat, en wat niet.
 - ICOON MET aria-hidden: CONTROLEER OF DE BETEKENIS ERGENS ANDERS LANDT. Dat er tekst naast staat is niet genoeg, en aria-hidden is op zichzelf geen fout. Kijk naar twee dingen: draagt de tekst ernaast alles wat het icoon overbrengt, of zit er een omhulsel omheen dat het icoon zelf benoemt (`role="img"` met een `aria-label`)? Is een van beide waar, dan is het goed. Verbergt het icoon iets wat nergens landt — een PDF-icoontje naast "Jaarverslag", een pijl naar buiten bij een externe link, een vinkje dat een status aangeeft, een vlag voor een taal — dan is het een afkeuring, want die informatie valt weg. Voorbeeld van een goede opbouw: heuvelrug.nl zet het externe-link-icoontje in een `<span role="img" aria-label="externe link">` met het glyph eronder op aria-hidden. Schrijf in de onderbouwing wát de betekenis draagt, niet dát er tekst stond.
 
 Aanleiding: 1.1.1 op Home (heuvelrug.nl, 2026-08-15). Bij het nalopen van de onderbouwing bleek dat de auditor de teaser-uitzondering had toegepast zonder de overzichtscontext te noemen, en dat "hebben altijd tekst naast zich" als afdoende was opgeschreven zonder die tekst inhoudelijk te controleren.
+
+

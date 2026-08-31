@@ -222,6 +222,17 @@ Twee dingen schakelen niet mee met die knop en blijven dus altijd apart te beoor
 
 10. [jij] Noteer welk element je gemeten hebt, de kleuren als #RRGGBB, de lettergrootte, de
     verhouding, in welke weergave en in welke browser. Zonder dat is het opnieuw een bewering.
+11. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
+    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+    gebied niet beoordelen, gebruik dan `nvt` met een toelichting — dát je het niet kon is de
+    informatie die een lopende onderbouwing weglaat.
+12. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+    verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf
+    je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Wat de
+    meting al telde hoort er evenmin in. Er is bijna nooit iets dat bij geen enkel gebied
+    thuishoort; denk je van wel, kijk dan nog eens of het niet toch ergens past.
 
 ### Zo is het vastgesteld
 

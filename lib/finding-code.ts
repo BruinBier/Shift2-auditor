@@ -137,3 +137,57 @@ export async function kenBevindingCodeToe(
 
   throw laatsteFout ?? new Error('Kon geen vrije bevindingcode toekennen');
 }
+
+/**
+ * Een bevinding terug naar voorstel: de code van `B` naar `V`.
+ *
+ * Wordt een criterium opnieuw beoordeeld, dan is het oordeel dat er lag niet meer het
+ * oordeel dat er staat — het akkoord vervalt, en de kaart vraagt opnieuw om bevestiging. De
+ * bevinding hoort dan mee terug te gaan. Bleef die een `B` houden, dan stond er een code die
+ * "goedgekeurd" betekent op een kaart die om goedkeuring vraagt, en dat is precies de
+ * tegenspraak die de poort moet voorkomen (docs/adr/0001-akkoord-als-poort.md).
+ *
+ * De oude B-code komt niet terug: hij blijft bezet, zoals bij een afwijzing. Gaten in de
+ * B-reeks zijn hier het kleinere kwaad — beter een ontbrekend nummer dan een nummer dat iets
+ * anders betekent dan het zegt.
+ *
+ * Doet niets bij een code die al met `V` begint, en niets bij een bevinding zonder code.
+ */
+export async function zetTerugNaarVoorstel(
+  projectId: string,
+  findingId: string,
+  pogingen = 5
+): Promise<string | null> {
+  let laatsteFout: unknown = null;
+
+  for (let poging = 0; poging < pogingen; poging++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const huidig = await tx.finding.findUnique({
+          where: { id: findingId },
+          select: { findingCode: true, status: true },
+        });
+        if (!huidig?.findingCode?.startsWith('B')) return huidig?.findingCode ?? null;
+
+        const findingCode = await nextFindingCode(tx, projectId, 'V');
+        await tx.finding.update({
+          where: { id: findingId },
+          data: { findingCode, status: 'voorstel' as any },
+        });
+        return findingCode;
+      });
+    } catch (err: any) {
+      const isBotsing =
+        err?.code === 'P2002' ||
+        /P2002|Unique constraint failed/i.test(String(err?.message ?? ''));
+      if (isBotsing) {
+        laatsteFout = err;
+        await new Promise((r) => setTimeout(r, 20 * (poging + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw laatsteFout ?? new Error('Kon de bevinding niet terugzetten naar voorstel');
+}

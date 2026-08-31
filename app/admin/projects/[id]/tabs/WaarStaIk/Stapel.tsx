@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
-import type { Cel, Meting, Stand, Voorstel } from './gegevens';
+import type { Bevinding, Cel, Meting, Stand, Voorstel } from './gegevens';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
 import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
 
@@ -102,7 +102,7 @@ async function naarKlembord(tekst: string): Promise<boolean> {
 /**
  * Het blok dat je meeneemt naar een AI als een oordeel of een voorstel niet deugt.
  *
- * "Klopt niet" bood alleen een andere status. Maar wat er mis is, is vaak niet de
+ * "Niet akkoord" bood alleen een andere status. Maar wat er mis is, is vaak niet de
  * status maar de tekst: een bevinding die twee dingen door elkaar haalt, een advies
  * dat het ene punt repareert door het andere kapot te maken. Daar is geen knop voor
  * te maken — daar moet je over praten.
@@ -137,9 +137,53 @@ function bespreekBlok(opties: {
     bevinding?: string | null;
     notitie?: string | null;
   } | null;
+  /**
+   * Een vondst van de onderzoeker zelf, buiten wat de agent voorlegde.
+   *
+   * Dan is er geen oordeel om bezwaar tegen te maken: de vraag is niet "zit de auditor
+   * ernaast" maar "schrijf dit op zoals het hoort". De huisregels gaan hetzelfde mee — dat
+   * is juist de reden dat een eigen vondst hier langsgaat en niet door een tekstvak op de
+   * kaart. Wie een bevinding zelf in een haastig vak typt, gaat langs alle schrijfregels
+   * heen en belandt zo in het rapport.
+   */
+  eigenVondst?: boolean;
+  /**
+   * Alleen de verwoording, niet het oordeel.
+   *
+   * Dan gaat er één ding mee: het adres, de bevinding en het advies. Geen huisregels, geen
+   * scope, geen bewijsvoering, geen schrijfregels — dat is zeventien kilobyte om een vraag
+   * te beantwoorden die niemand stelt. Wie een tekst wil laten herschrijven vraagt niet of
+   * het een bevinding ís; hij weet zelf hoe het moet klinken.
+   *
+   * Het blok werd zo groot dat het op 31 augustus 2026 niet meer aankwam bij de chatdienst.
+   */
+  herschrijven?: boolean;
 }): string {
-  const { code, critTitel, sample, projectId, bezwaar, cel, voorstellen, huisregels, onderdeel } =
-    opties;
+  const {
+    code,
+    critTitel,
+    sample,
+    projectId,
+    bezwaar,
+    cel,
+    voorstellen,
+    huisregels,
+    onderdeel,
+    eigenVondst,
+    herschrijven,
+  } = opties;
+
+  if (herschrijven) {
+    const h: string[] = ['Maak deze tekst helder en to the point.', ''];
+    if (sample?.url) h.push(`Pagina: ${sample.url}`);
+    h.push(`Criterium: ${code} — ${critTitel}`);
+    for (const v of voorstellen.length ? voorstellen : cel?.bevindingen ?? []) {
+      h.push('', 'Bevinding:', v.description || '(geen beschrijving)');
+      if (v.advice) h.push('', 'Advies:', v.advice);
+    }
+    return h.join('\n');
+  }
+
   const r: string[] = [];
 
   // De eerste regel wordt de naam van het gesprek: chatdiensten titelen een gesprek
@@ -147,15 +191,25 @@ function bespreekBlok(opties: {
   // gesprek later terug tussen twintig andere.
   const codes = voorstellen.map((v) => v.findingCode).filter(Boolean);
   r.push(
-    `# Bezwaar ${codes.length ? `${codes.join(' en ')} — ` : ''}WCAG ${code} op ${
-      sample?.title ?? 'een pagina'
-    }`
+    `# ${eigenVondst ? 'Zelf gezien' : 'Bezwaar'} ${
+      codes.length ? `${codes.join(' en ')} — ` : ''
+    }WCAG ${code} op ${sample?.title ?? 'een pagina'}`
   );
   r.push('');
-  r.push(
-    'Ik voer een WCAG 2.2-toegankelijkheidsonderzoek uit. Een geautomatiseerde auditor heeft'
-  );
-  r.push('hieronder een oordeel geveld dat volgens mij niet deugt. Denk met me mee.');
+  if (eigenVondst) {
+    r.push(
+      'Ik voer een WCAG 2.2-toegankelijkheidsonderzoek uit. Ik zie op deze pagina iets dat de'
+    );
+    r.push(
+      'geautomatiseerde auditor niet heeft gemeld. Schrijf het op als bevinding, volgens de'
+    );
+    r.push('huisregels hieronder — of zeg me dat het er geen is.');
+  } else {
+    r.push(
+      'Ik voer een WCAG 2.2-toegankelijkheidsonderzoek uit. Een geautomatiseerde auditor heeft'
+    );
+    r.push('hieronder een oordeel geveld dat volgens mij niet deugt. Denk met me mee.');
+  }
   r.push('');
 
   if (onderdeel) {
@@ -182,13 +236,23 @@ function bespreekBlok(opties: {
   }
   r.push('## Wat ik terug wil');
   r.push('');
-  r.push('1. Klopt mijn bezwaar? Zeg het als ik ernaast zit — daar heb ik meer aan.');
-  r.push(
-    '2. Zo ja: een herschreven bevindingstekst en advies, of de conclusie dat het geen bevinding is.'
-  );
-  r.push(
-    '3. Een regel van een paar zinnen die dit voor de volgende keer vastlegt, in de stijl van de huisregels hieronder.'
-  );
+  if (eigenVondst) {
+    r.push('1. Is dit een bevinding onder dit criterium? Zeg het als ik ernaast zit.');
+    r.push(
+      '2. Zo ja: de bevindingstekst en het advies, geschreven volgens de huisregels hieronder.'
+    );
+    r.push(
+      '3. Als de auditor dit had moeten vinden: een regel van een paar zinnen die dat voor de volgende keer vastlegt.'
+    );
+  } else {
+    r.push('1. Klopt mijn bezwaar? Zeg het als ik ernaast zit — daar heb ik meer aan.');
+    r.push(
+      '2. Zo ja: een herschreven bevindingstekst en advies, of de conclusie dat het geen bevinding is.'
+    );
+    r.push(
+      '3. Een regel van een paar zinnen die dit voor de volgende keer vastlegt, in de stijl van de huisregels hieronder.'
+    );
+  }
   r.push('');
   r.push('Leg me je redenering gewoon uit — daar wil ik op kunnen reageren. Zet de');
   r.push('uitkomst daarna in twee losse blokken, want die lees ik machinaal terug in');
@@ -218,9 +282,14 @@ function bespreekBlok(opties: {
   r.push(`Pagina: ${sample?.title ?? '?'}${sample?.url ? ` — ${sample.url}` : ''}`);
   r.push(`Project: ${projectId}`);
   r.push('');
-  r.push('### Mijn bezwaar');
+  r.push(eigenVondst ? '### Wat ik zie' : '### Mijn bezwaar');
   r.push('');
-  r.push(bezwaar.trim() || '(nog niet ingevuld — ik licht het hieronder toe)');
+  r.push(
+    bezwaar.trim() ||
+      (eigenVondst
+        ? '(nog niet ingevuld — ik licht het hieronder toe)'
+        : 'Dat vertel ik je zo. Lees eerst de zaak hieronder; ik zeg daarna wat er volgens mij niet klopt.'),
+  );
 
   if (cel) {
     r.push('');
@@ -453,7 +522,27 @@ export function leesUitkomst(tekst: string): Uitkomst | null {
     resultaat[k] = lopend ? laatDoorlopen(waarde) : waarde;
   }
 
-  return Object.keys(resultaat).length ? (resultaat as Uitkomst) : null;
+  if (Object.keys(resultaat).length) return resultaat as Uitkomst;
+
+  /**
+   * Geen sleutels gevonden, maar er staat wel tekst: dan is het de herschreven bevinding.
+   *
+   * Sinds "Overleggen" alleen over de verwoording gaat, vraagt het blok niet meer om een
+   * antwoord in `sleutel: waarde`-vorm — het vraagt om een betere tekst. Wat er terugkomt is
+   * gewone taal, en dat hoort niet af te ketsen op een formaat dat we zelf niet meer vragen.
+   *
+   * Staat er een lege regel gevolgd door "Advies", dan splitsen we daar; anders is alles de
+   * bevinding.
+   */
+  const kaal = (omheind ? omheind[1] : tekst).trim();
+  if (!kaal) return null;
+  const splits = kaal.match(/^([\s\S]*?)\n\s*\n\s*advies\s*:?\s*\n?([\s\S]+)$/i);
+  return laatDoorlopen(splits ? splits[1].trim() : kaal)
+    ? ({
+        bevinding: laatDoorlopen(splits ? splits[1].trim() : kaal),
+        ...(splits ? { advies: laatDoorlopen(splits[2].trim()) } : {}),
+      } as Uitkomst)
+    : null;
 }
 
 /**
@@ -506,13 +595,40 @@ export default function Stapel({
   const [fout, setFout] = useState<string | null>(null);
   /** Het formulier waarmee de onderzoeker zelf een onderdeel aan stap 3 toevoegt. */
   const [toevoegOpen, setToevoegOpen] = useState(false);
-  /** Het formulier waarmee de onderzoeker een afkeuring toevoegt. */
+  /**
+   * Staat het overleg open waarmee de onderzoeker een eigen vondst laat opschrijven?
+   *
+   * Er stond hier ook een tekst, een advies en een impact: de velden van het formulier
+   * waarin je de bevinding zelf uitschreef. Dat gaat nu via het overleg, dus de tekst komt
+   * langs de huisregels en niet rechtstreeks uit een tekstvak in het rapport.
+   */
   const [afkeurOpen, setAfkeurOpen] = useState(false);
-  const [afkeurBezig, setAfkeurBezig] = useState(false);
   const [afkeurFout, setAfkeurFout] = useState<string | null>(null);
-  const [afkeurTekst, setAfkeurTekst] = useState('');
-  const [afkeurAdvies, setAfkeurAdvies] = useState('');
-  const [afkeurImpact, setAfkeurImpact] = useState('matig');
+  /**
+   * De deelgebieden die de onderzoeker zelf invult, zolang ze nog niet zijn opgeslagen.
+   *
+   * Zonder dit is een oordeel van vóór 23 augustus alleen te repareren door een agent te
+   * laten draaien of JSON op de opdrachtregel te typen — terwijl jij net in de browser hebt
+   * gekeken en het antwoord gewoon weet.
+   */
+  /** Bij welk criterium net de aanroep is gekopieerd; toont "Gekopieerd" op die ene knop. */
+  const [opnieuwGekopieerd, setOpnieuwGekopieerd] = useState<string | null>(null);
+  const [gebiedOpen, setGebiedOpen] = useState(false);
+  const [gebiedBezig, setGebiedBezig] = useState(false);
+  const [gebiedFout, setGebiedFout] = useState<string | null>(null);
+  const [gebiedInvoer, setGebiedInvoer] = useState<
+    Record<string, { uitkomst: string; toelichting: string }>
+  >({});
+  /**
+   * Een gebied dat de onderzoeker aan de REGELS toevoegt, niet aan dit ene oordeel.
+   *
+   * Merk je bij het nakijken dat er een soort beeld ontbreekt in de lijst, dan is dat geen
+   * aantekening maar een regel: vanaf nu moet elke agent dat gebied aflopen, op elke pagina
+   * en in elk project. Anders staat hetzelfde gat er over drie maanden weer.
+   */
+  const [nieuwGebied, setNieuwGebied] = useState('');
+  const [nieuwGebiedBezig, setNieuwGebiedBezig] = useState(false);
+  const [nieuwGebiedFout, setNieuwGebiedFout] = useState<string | null>(null);
   /** Over welke bevinding van de agent het overleg gaat, als er een openstaat. */
   const [overlegOver, setOverlegOver] = useState<string | null>(null);
   const [toevoegBezig, setToevoegBezig] = useState(false);
@@ -537,6 +653,12 @@ export default function Stapel({
   /** Het besprekingsblok, zichtbaar als het klembord niet beschikbaar is. */
   const [blok, setBlok] = useState<string | null>(null);
   const [gekopieerd, setGekopieerd] = useState(false);
+  /** Welke bevinding op de kaart in bewerking is, met zijn tekst en advies. */
+  const [bewerkt, setBewerkt] = useState<string | null>(null);
+  const [bewerkTekst, setBewerkTekst] = useState('');
+  const [bewerkAdvies, setBewerkAdvies] = useState('');
+  const [bewerkBezig, setBewerkBezig] = useState(false);
+  const [bewerkFout, setBewerkFout] = useState<string | null>(null);
   /** Wat er uit het overleg terugkomt, en wat ermee gebeurd is. */
   const [uitkomstTekst, setUitkomstTekst] = useState('');
   /** Het regelspoor apart, want het gaat naar een andere plek dan de tekst. */
@@ -610,6 +732,23 @@ export default function Stapel({
   const [markeren, setMarkeren] = useState<{ bezig: boolean; melding?: string } | null>(null);
   const schermRef = useRef<HTMLImageElement | null>(null);
   const sessieRef = useRef<string>('');
+  /**
+   * De selector die aangewezen moet worden zodra het paneel beeld heeft.
+   *
+   * Een ref en geen state: het paneel opent asynchroon, en de luisteraar die het beeld
+   * opvangt wordt één keer opgehangen. Met state zou die de waarde van het eerste renderen
+   * vasthouden en dus altijd leeg zijn.
+   */
+  const aanwijzenRef = useRef<{ selector: string; waarom?: string; gebied?: string } | null>(
+    null,
+  );
+  /**
+   * De code van de bevinding waarvoor het paneel is geopend, of null bij een gewone
+   * markering. Bepaalt de legenda en of het paneel je uitnodigt een bevinding te maken:
+   * kwam je hier vanuit B001 om te kijken, dan is "maak hier een bevinding van" het
+   * verkeerde aanbod.
+   */
+  const [aangewezenVoor, setAangewezenVoor] = useState<string | null>(null);
   /** Wanneer we voor het laatst een muisbeweging doorstuurden; zie onMouseMove. */
   const muisRef = useRef<number>(0);
   const [paneelBeeld, setPaneelBeeld] = useState(0);
@@ -717,6 +856,40 @@ export default function Stapel({
     if (j && !j.ok) setMarkeren((m) => ({ bezig: false, melding: j.error }));
   };
 
+  /**
+   * Een kader om het element waar één bevinding over gaat.
+   *
+   * De kaders van een markering zijn criteriumbreed: alles wat onder 1.1.1 valt, of alle
+   * links bij 2.4.4. Bij zeven afbeeldingen vind je het logo zo, bij dertig gemarkeerde
+   * links is "hier zit het probleem" een zoekopdracht. De selector komt van de agent, bij de
+   * bevinding.
+   *
+   * Vindt de selector niets, dan is dat geen fout in het oordeel maar een verwijzing die niet
+   * meer klopt — de site kan veranderd zijn. Dat komt als melding in het paneel te staan.
+   */
+  const wijsAan = async (selector: string, waarom?: string, gebied?: string) => {
+    if (!sessieRef.current) return;
+    const res = await fetch('/api/meting/scherm/aanwijzen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessie: sessieRef.current, selector, waarom }),
+    }).catch(() => null);
+    const j = res ? await res.json().catch(() => null) : null;
+    if (j && !j.ok) {
+      setMarkeren({ bezig: false, melding: j.error });
+    } else if (j?.ok) {
+      // Het deelgebied en niet de tagnaam: "<img>" is de techniek, "Logo's" is waar het
+      // over gaat. Weet de kaart het gebied niet, dan valt het terug op het element — beter
+      // iets dan niets, maar dat hoort de uitzondering te zijn.
+      setMarkeren({
+        bezig: false,
+        melding:
+          (gebied ?? `<${j.element}>${j.naam ? ` "${j.naam}"` : ''}`) +
+          (j.aantal > 1 ? ` — ${j.aantal} elementen, de pagina staat bij de eerste` : ''),
+      });
+    }
+  };
+
   const stuurInvoer = async (lading: Record<string, unknown>) => {
     if (!sessieRef.current) return;
     const res = await fetch('/api/meting/scherm/invoer', {
@@ -807,7 +980,16 @@ export default function Stapel({
       // die je vergeet, en dan kijk je naar een pagina zonder te weten wat eruit kwam.
       if (!gemarkeerd) {
         gemarkeerd = true;
-        markeer(id);
+        // Kwam je hier via een bevinding met een selector, dan wijst het paneel dat element
+        // aan in plaats van de markering van het hele criterium te draaien. Dat scheelt ook
+        // twintig seconden: markeren draait de meting opnieuw, aanwijzen niet.
+        if (aanwijzenRef.current) {
+          const opdracht = aanwijzenRef.current;
+          aanwijzenRef.current = null;
+          wijsAan(opdracht.selector, opdracht.waarom, opdracht.gebied);
+        } else {
+          markeer(id);
+        }
       }
     });
     bron.addEventListener('start', (e: any) =>
@@ -831,6 +1013,9 @@ export default function Stapel({
    * wie de auditsessie met zijn cookies nodig heeft.
    */
   const openBrowserPaneel = (url: string, titel: string, code?: string, sampleId?: string) => {
+    // Wie het paneel opent zonder een bevinding aan te wijzen, krijgt de markering. Zet dit
+    // niet terug, dan blijft de legenda van de vorige keer staan.
+    if (!aanwijzenRef.current) setAangewezenVoor(null);
     setPaneelCode(code ?? null);
     setPaneelSample(sampleId ?? null);
     setSelectie([]);
@@ -1065,7 +1250,7 @@ export default function Stapel({
     setFout(null);
     try {
       // Wachtende voorstellen op deze cel gaan mee: op de oordeelkaart staat hun
-      // tekst en advies al, dus wie hier "Klopt" zegt heeft ze beoordeeld. Ze
+      // tekst en advies al, dus wie hier akkoord geeft heeft ze beoordeeld. Ze
       // eerst afhandelen, zodat een mislukking niet leidt tot een bevestigd
       // oordeel met een voorstel dat blijft hangen.
       for (const v of opties.ookVoorstellen ?? []) {
@@ -1358,27 +1543,50 @@ export default function Stapel({
   const overlegPaneel = (
     code: string,
     bouw: (h: Huisregels | null) => string,
-    ctx: { cel?: Cel | null; voorstellen: Voorstel[]; aanleiding: string }
+    ctx: {
+      cel?: Cel | null;
+      voorstellen: Voorstel[];
+      aanleiding: string;
+      /**
+       * Overleg je over iets wat de agent zei, of over iets wat je zelf zag?
+       *
+       * Dezelfde machinerie, een andere vraag. Bij een eigen vondst is er geen bevinding om
+       * bezwaar tegen te maken: jij levert de waarneming, de agent schrijft hem op volgens
+       * de huisregels. Die staan in het blok dat hieronder wordt meegekopieerd, en daarom
+       * gaat een eigen vondst hier langs en niet door twee tekstvakken op de kaart.
+       */
+      eigenVondst?: boolean;
+    }
   ) => (
     <div className="mt-4 rounded border border-blue-300 bg-blue-50/40 p-3">
-      <label className="mb-1 block text-sm font-medium text-gray-800">
-        Wat klopt er niet aan?
-      </label>
-      <p className="mb-2 text-xs text-gray-600">
-        Bijvoorbeeld: de bevinding haalt twee dingen door elkaar, het advies deugt niet,
-        of dit is helemaal geen kwestie voor dit criterium. Mag ook leeg — dan licht je
-        het in het gesprek toe.
-      </p>
-      <textarea
-        value={reden}
-        onChange={(e) => setReden(e.target.value)}
-        rows={3}
-        autoFocus
-        className="w-full rounded border border-gray-300 p-2 text-sm"
-        placeholder="Je bezwaar in je eigen woorden"
-      />
+      {/* Bij een eigen vondst is dit vak de hele opdracht: zonder jouw waarneming weet de
+          agent niet waarover het gaat.
+
+          Bij overleggen niet. Daar stond "mag ook leeg — dan licht je het in het gesprek
+          toe", en dat is precies het punt: je gáát het toelichten, in de chatdienst. Twee
+          keer hetzelfde formuleren, de eerste keer in een vakje van drie regels. Eén klik op
+          een dienst is genoeg. */}
+      {ctx.eigenVondst && (
+        <>
+          <label className="mb-1 block text-sm font-medium text-gray-800">Wat zie je?</label>
+          <p className="mb-2 text-xs text-gray-600">
+            In gewone taal — waar het staat en wat eraan mankeert. De agent schrijft de
+            bevinding volgens de huisregels; die gaan mee in het blok hieronder.
+          </p>
+          <textarea
+            value={reden}
+            onChange={(e) => setReden(e.target.value)}
+            rows={3}
+            autoFocus
+            className="w-full rounded border border-gray-300 p-2 text-sm"
+            placeholder='Bijvoorbeeld: de link "Bekijk hier" in het nieuwsblok zegt niet waar hij heen gaat'
+          />
+        </>
+      )}
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className="text-sm text-gray-700">Kopieer en open in:</span>
+        <span className="text-sm text-gray-700">
+          {ctx.eigenVondst ? 'Kopieer en open in:' : 'Overleggen met:'}
+        </span>
         {DIENSTEN.map((d) => (
           <button
             key={d.naam}
@@ -1410,6 +1618,8 @@ export default function Stapel({
             setUitgang(null);
             setReden('');
             setBlok(null);
+            // Het paneel hangt ook onder "Ik zie hier nog iets"; die knop hoort dan terug.
+            setAfkeurOpen(false);
           }}
           className="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-white"
         >
@@ -1417,14 +1627,18 @@ export default function Stapel({
         </button>
       </div>
       <p className="mt-2 text-xs text-gray-600">
-        Het nieuwe gesprek opent leeg — plak het blok er met Ctrl+V in. Het krijgt dan
-        vanzelf de naam{' '}
-        <strong>
-          Bezwaar{' '}
-          {ctx.voorstellen.map((v) => v.findingCode).filter(Boolean).join(' en ') ||
-            `WCAG ${code}`}
-        </strong>
-        . Je krijgt de zaak én de huisregels mee; er wordt niets opgeslagen.
+        {ctx.eigenVondst ? (
+          <>
+            Het gesprek opent leeg — plak het blok er met Ctrl+V in. Je krijgt de zaak én de
+            huisregels mee; er wordt niets opgeslagen.
+          </>
+        ) : (
+          <>
+            Het gesprek opent leeg — plak het blok er met Ctrl+V in. Je krijgt het adres, de
+            bevinding en het advies mee, met de opdracht om het helder en to the point te
+            maken. De herschreven tekst plak je hieronder terug.
+          </>
+        )}
       </p>
       {blok && (
         <textarea
@@ -1441,12 +1655,24 @@ export default function Stapel({
       <div className="mt-4 border-t border-blue-200 pt-3">
         <p className="mb-1 text-sm font-medium text-gray-800">En terug: de uitkomst</p>
         <p className="mb-3 text-xs text-gray-600">
-          Twee sporen, twee bestemmingen. De regel gaat naar{' '}
-          <code className="rounded bg-white px-1">wcag-regels/</code> en geldt voor alle
-          volgende audits; de tekst gaat naar deze ene bevinding.
+          {ctx.eigenVondst ? (
+            <>
+              Twee sporen, twee bestemmingen. De regel gaat naar{' '}
+              <code className="rounded bg-white px-1">wcag-regels/</code> en geldt voor alle
+              volgende audits; de tekst gaat naar deze ene bevinding.
+            </>
+          ) : (
+            'Plak de herschreven tekst hieronder. Die gaat naar deze ene bevinding.'
+          )}
         </p>
 
-        <div className="mb-3">
+        {/* Het regelvak hoort bij een gesprek waar een regel uit komt. Sinds "Overleggen"
+            alleen nog over de verwoording gaat, komt daar niets meer uit dat voor alle
+            volgende audits geldt — en dan is dit vak niet alleen overbodig maar gevaarlijk:
+            het staat bovenaan en vult zich het makkelijkst. Op 31 augustus 2026 belandde een
+            herschreven bevinding zo in `wcag-regels/` in plaats van in de bevinding, en op de
+            kaart veranderde er niets. */}
+        <div className={ctx.eigenVondst ? 'mb-3' : 'hidden'}>
           <label className="mb-1 block text-xs font-medium text-gray-700">
             De regel — voor de volgende keer
           </label>
@@ -1472,9 +1698,13 @@ export default function Stapel({
               setUitkomstTekst(e.target.value);
               setGedaan(null);
             }}
-            rows={5}
+            rows={ctx.eigenVondst ? 5 : 8}
             className="w-full rounded border border-gray-300 p-2 font-mono text-xs"
-            placeholder={'```tekst\nstatus: afgekeurd\nbevinding: …\nadvies: …\n```'}
+            placeholder={
+              ctx.eigenVondst
+                ? '```tekst\nstatus: afgekeurd\nbevinding: …\nadvies: …\n```'
+                : 'Plak hier wat je terugkreeg. Het mag gewone tekst zijn: de eerste alinea wordt de bevinding, en wat na "Advies:" staat wordt het advies.'
+            }
           />
         </div>
 
@@ -1740,6 +1970,101 @@ export default function Stapel({
       .replace(/^sprong:/, '')
       .replace(/^klasse:/, 'knop .');
     return { naam, gebied: gebied ?? '' };
+  };
+
+  /**
+   * Wat er weg moet als je naar een andere kaart bladert.
+   *
+   * Op één plek, want het is telkens dezelfde lijst en er staan twee knoppen die hem
+   * gebruiken. Liepen die uiteen, dan blijft er iets van de vorige kaart staan — en dat
+   * beweert dan iets over een criterium waar het niet over gaat.
+   */
+  const wisselOpruimen = () => {
+    setGedaan(null);
+    setFout(null);
+    setGebiedOpen(false);
+    setGebiedInvoer({});
+    setGebiedFout(null);
+    setNieuwGebied('');
+    setNieuwGebiedFout(null);
+    setBewerkt(null);
+    setBewerkFout(null);
+  };
+
+  /**
+   * Een deelgebied aan de regels van dit criterium toevoegen.
+   *
+   * Schrijft naar `wcag-regels/Shift2_Regels_SC_<code>.md`, want dat bestand is de bron: de
+   * kaart leest het rechtstreeks en de agent krijgt het als huisregels mee. Een kopie in de
+   * database zou een tweede waarheid maken die uit de pas loopt.
+   *
+   * Vanaf dat moment staat er bij elk oordeel op dit criterium één ring open. Dat is de
+   * bedoeling: er is iets dat nog niet is nagelopen. Het akkoord blijft staan — dat gold voor
+   * de tekst die er lag.
+   */
+  const voegGebiedToeAanRegels = async (cel: Cel) => {
+    setNieuwGebiedBezig(true);
+    setNieuwGebiedFout(null);
+    try {
+      const res = await fetch('/api/wcag-regels/deelgebied', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ criterionCode: cel.code, gebied: nieuwGebied.trim() }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok || !antwoord.ok) throw new Error(antwoord.error || 'toevoegen mislukte');
+      setNieuwGebied('');
+      router.refresh();
+    } catch (e: any) {
+      setNieuwGebiedFout(e.message);
+    } finally {
+      setNieuwGebiedBezig(false);
+    }
+  };
+
+  /**
+   * Zelf vastleggen wat er per deelgebied is nagelopen.
+   *
+   * Dezelfde route als `save-gebieden` op de opdrachtregel — één weg naar binnen, dus
+   * dezelfde controles: een onbekende naam wordt geweigerd, en een `fout` of `opmerking`
+   * zonder toelichting ook.
+   *
+   * Raakt het oordeel niet aan en laat het akkoord niet vervallen. Een gebied afvinken is
+   * geen uitspraak dat het criterium zakt — ook niet bij `fout`: daar hoort een bevinding
+   * bij, en die weegt de onderzoeker. Zie de route zelf.
+   */
+  const legGebiedenVast = async (cel: Cel) => {
+    setGebiedBezig(true);
+    setGebiedFout(null);
+    try {
+      const gebieden = Object.entries(gebiedInvoer)
+        .filter(([, v]) => v.uitkomst)
+        .map(([gebied, v]) => ({
+          gebied,
+          uitkomst: v.uitkomst,
+          ...(v.toelichting.trim() ? { toelichting: v.toelichting.trim() } : {}),
+        }));
+      if (!gebieden.length) throw new Error('kies bij minstens één gebied een uitkomst');
+
+      const res = await fetch(`/api/projects/${projectId}/criterion-checks/gebieden`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sampleItemId: cel.sampleId,
+          criterionCode: cel.code,
+          gebieden,
+        }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(antwoord.error || 'vastleggen mislukte');
+      setGebiedInvoer({});
+      setGebiedOpen(false);
+      router.refresh();
+    } catch (e: any) {
+      setGebiedFout(e.message);
+    } finally {
+      setGebiedBezig(false);
+    }
   };
 
   /**
@@ -2361,54 +2686,296 @@ export default function Stapel({
   const critId = (code: string) => stand.criteria.find((c) => c.code === code)?.id ?? '';
 
   /**
-   * Een afkeuring aanmaken vanaf de kaart.
-   *
-   * Dit is de plek waar het oordeel vandaan komt. Niet een knop "voldoet niet": in
-   * `gegevens.ts` volgt `failed` uit de bevindingen, dus een status zonder bevinding leest
-   * onderaan als geslaagd. Wie hier een afkeuring toevoegt, schrijft hem ook, en dat is
-   * precies wat de poort bewaakt.
-   */
-  const voegAfkeuringToe = async (cel: Cel) => {
-    setAfkeurBezig(true);
-    setAfkeurFout(null);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/findings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          criterionId: critId(cel.code),
-          description: afkeurTekst,
-          advice: afkeurAdvies,
-          impact: afkeurImpact,
-          status: 'open',
-          sampleItemIds: [cel.sampleId],
-        }),
-      });
-      const antwoord = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(antwoord.error || 'de afkeuring kon niet worden opgeslagen');
-      setAfkeurTekst('');
-      setAfkeurAdvies('');
-      setAfkeurOpen(false);
-      router.refresh();
-    } catch (e: any) {
-      setAfkeurFout(e.message);
-    } finally {
-      setAfkeurBezig(false);
-    }
-  };
-
-  /**
    * De afkeuringen bij dit criterium, met de knop om er een toe te voegen.
    *
    * Leeg is hier een volwaardige toestand en geen gebrek: "je hebt nog geen afkeuringen
    * toegevoegd" betekent dat je de instructies hebt gevolgd en niets vond. Het oordeel
    * onderaan volgt hieruit.
    */
+  /**
+   * Eén bevinding, ingeklapt met de eerste zin in de samenvatting.
+   *
+   * Op één plek omdat hij op twee plekken staat: onder het deelgebied waar hij bij hoort, en
+   * in de lijst eronder voor wat aan geen enkel gebied hangt. Twee weergaven van hetzelfde
+   * zouden op termijn uit elkaar lopen.
+   *
+   * Een bevinding is drie alinea's plus een advies. Staan er twee of drie op een kaart, dan
+   * verdwijnt de afsluiting eronder uit beeld en leest de kaart als een rapport. Dichtgeklapt
+   * zie je hoeveel er zijn en waar ze over gaan; wat je moet weten om te beslissen staat in de
+   * eerste zin, en de rest is één klik weg.
+   *
+   * Lichtblauw en niet rood: rood is hier de kleur van een foutmelding — van iets dat misging
+   * in het scherm zelf. Een bevinding is geen storing maar de opbrengst van de kaart.
+   */
+  /**
+   * De aangepaste tekst van een bevinding opslaan.
+   *
+   * Via de API en niet rechtstreeks, want daar zit de schrijfregel-linter op: geen
+   * gedachtestreepjes, geen "hulpsoftware laat zien", niet met de URL beginnen. Klaagt hij,
+   * dan komt dat hier in beeld met de regel erbij — niet als "opslaan mislukt".
+   *
+   * Verandert alleen de tekst. Het akkoord gaat over het hele criterium en zeg je met
+   * "Akkoord" onderaan; een voorstel blijft dus een voorstel.
+   */
+  const slaBevindingOp = async (b: Bevinding) => {
+    setBewerkBezig(true);
+    setBewerkFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/findings/${b.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: bewerkTekst.trim(),
+          advice: bewerkAdvies.trim(),
+        }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // De linter geeft per overtreding een regel terug; die zijn bruikbaar, de
+        // samenvatting "voldoet niet aan de schrijfregels" niet.
+        const regels = (antwoord.lintIssues ?? [])
+          .filter((i: any) => i.severity === 'error')
+          .map((i: any) => `· ${i.message ?? i.regel ?? JSON.stringify(i)}`)
+          .join('\n');
+        throw new Error(
+          regels ? `De schrijfregels klagen:\n${regels}` : antwoord.error || 'opslaan mislukte',
+        );
+      }
+      setBewerkt(null);
+      router.refresh();
+    } catch (e: any) {
+      setBewerkFout(e.message);
+    } finally {
+      setBewerkBezig(false);
+    }
+  };
+
+  const bevindingRegel = (b: Bevinding, cel?: Cel) => (
+    <li key={b.id} className="rounded bg-blue-50 text-sm text-blue-950">
+      {/* Openklappen is aanwijzen. Er stond een knop "Laat zien in de browser" in het
+          uitgeklapte deel, maar dat is een tweede handeling voor iets wat je op hetzelfde
+          moment wilt: je klapt de bevinding open om te lezen wat er mis is, en dan wil je
+          ook zien wáár. De browser opent nu vanzelf, met een kader om het element als de
+          agent een selector heeft meegegeven.
+
+          Alleen bij openklappen: dichtklappen vuurt hetzelfde `onToggle` af, en dan zou het
+          paneel opnieuw opengaan terwijl je het juist wegklikt. */}
+      <details
+        onToggle={(e) => {
+          const open = (e.currentTarget as HTMLDetailsElement).open;
+          if (!open || !cel) return;
+          const url = sampleVoor(cel.sampleId)?.url;
+          if (!url) return;
+          // Het gebied waar deze bevinding bij hoort — dat komt in het paneel te staan als
+          // wat er is aangewezen, niet de tagnaam van het element.
+          const bijGebied = (cel.gebieden ?? []).find((g) => g.aanwijzingen?.[b.id]);
+          const selector = bijGebied?.aanwijzingen?.[b.id];
+          // De hele bevinding gaat mee, mét het advies: klik je in het paneel op het
+          // element, dan wil je niet alleen zien wat er mis is maar ook wat eraan moet
+          // gebeuren. Dezelfde tekst als hier op de kaart.
+          aanwijzenRef.current = selector
+            ? {
+                selector,
+                waarom:
+                  `${b.findingCode ? `${b.findingCode} · ` : ''}${b.description}` +
+                  (b.advice ? `\n\nAdvies: ${b.advice}` : ''),
+                gebied: bijGebied?.gebied,
+              }
+            : null;
+          setAangewezenVoor(selector ? (b.findingCode ?? 'deze bevinding') : null);
+          // De keuzeknoppen zijn hier verborgen, dus de stand van de vorige keer zou blijven
+          // staan: had je toen "bedienen" aan, dan klik je nu ongemerkt door naar een andere
+          // pagina terwijl je alleen wilde kijken.
+          if (selector) setSchermStand2('kijken');
+          openBrowserPaneel(
+            url,
+            `${b.findingCode ?? cel.code} op ${sampleVoor(cel.sampleId)?.title ?? 'deze pagina'}`,
+            cel.code,
+            cel.sampleId ?? undefined,
+          );
+        }}
+      >
+        <summary className="cursor-pointer p-3">
+          <span className="mr-2 inline-flex flex-wrap items-center gap-2 align-middle text-xs">
+            {b.findingCode && (
+              <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono font-medium">
+                {b.findingCode}
+              </span>
+            )}
+            {b.impact && <span className="rounded bg-white/70 px-1.5 py-0.5">{b.impact}</span>}
+          </span>
+          <span className="leading-relaxed">{eersteZin(b.description)}</span>
+        </summary>
+        <div className="px-3 pb-3">
+          {/* De tekst is bewerkbaar, hier waar hij staat.
+
+              Hij was alleen te wijzigen via "Overleggen": knop, gesprek, kopiëren, terugplakken.
+              Dat is de goede weg als je hem wilt laten hérschrijven, maar meestal pas je twee
+              woorden aan — en dan is een gesprek met een chatdienst een omweg.
+
+              Wat hier NIET gebeurt is akkoord geven. De tekst verandert, de bevinding blijft
+              een voorstel: het akkoord gaat over het hele criterium, met de deelgebieden en
+              eventuele andere bevindingen erbij, en dat zeg je met "Akkoord" onderaan. */}
+          {bewerkt === b.id ? (
+            <div>
+              <label className="mb-1 block text-xs font-medium opacity-70">Bevinding</label>
+              <textarea
+                value={bewerkTekst}
+                onChange={(e) => setBewerkTekst(e.target.value)}
+                rows={6}
+                className="w-full rounded border border-blue-300 p-2 text-sm leading-relaxed"
+              />
+              <label className="mb-1 mt-2 block text-xs font-medium opacity-70">Advies</label>
+              <textarea
+                value={bewerkAdvies}
+                onChange={(e) => setBewerkAdvies(e.target.value)}
+                rows={3}
+                className="w-full rounded border border-blue-300 p-2 text-sm leading-relaxed"
+              />
+              {bewerkFout && (
+                <p className="mt-2 whitespace-pre-line rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                  {bewerkFout}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={bewerkBezig || !bewerkTekst.trim()}
+                  onClick={() => slaBevindingOp(b)}
+                  className="rounded bg-blue-700 px-3 py-1 text-xs font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+                >
+                  {bewerkBezig ? 'Bezig…' : 'Opslaan'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBewerkt(null);
+                    setBewerkFout(null);
+                  }}
+                  className="rounded px-3 py-1 text-xs opacity-70 hover:bg-white/50"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="whitespace-pre-line leading-relaxed">{b.description}</p>
+              {b.advice && (
+                <div className="mt-2 border-t border-black/10 pt-2">
+                  <p className="mb-0.5 text-xs font-medium opacity-70">Advies</p>
+                  <p className="whitespace-pre-line leading-relaxed">{b.advice}</p>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setBewerkt(b.id);
+                  setBewerkTekst(b.description);
+                  setBewerkAdvies(b.advice ?? '');
+                  setBewerkFout(null);
+                }}
+                className="mt-3 rounded border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100"
+              >
+                Tekst aanpassen
+              </button>
+            </>
+          )}
+        </div>
+      </details>
+    </li>
+  );
+
+  /**
+   * Welke bevindingen bij welk gebied horen, en wat er overblijft.
+   *
+   * De koppeling komt uit `gebied.bevindingen` en bevat de **id's** van de findings, niet
+   * hun code: een voorstel heet `V001` en wordt bij akkoord `B00x` uit een andere reeks, dus
+   * een koppeling op de code gaat stuk zodra jij goedkeurt. Zie lib/deelgebieden.ts.
+   *
+   * Een bevinding die bij twee gebieden hoort, wordt getoond bij het eerste en alleen genoemd
+   * bij het tweede — anders staat dezelfde tekst er twee keer.
+   */
+  const verdeelBevindingen = (cel: Cel) => {
+    /**
+     * Voorstellen tellen hier mee, net als bevestigde bevindingen.
+     *
+     * Ze staan in de gegevens apart — `cel.bevindingen` bevat wat akkoord is, `voorstellen`
+     * wat nog wacht — maar voor het gebied waar ze bij horen maakt dat niet uit: de
+     * koppeling wijst naar hetzelfde id. Zonder dit staat er "hier hoort een bevinding bij,
+     * maar die is niet gevonden" bij een gebied waar de koppeling gewoon klopt, alleen is de
+     * bevinding na een nieuwe test weer voorstel geworden.
+     */
+    const voorstellenHier = stand.voorstellen.filter(
+      (v) => v.sampleId === cel.sampleId && v.code === cel.code,
+    );
+    const alle = [...cel.bevindingen, ...voorstellenHier].filter((b) => b.type !== 'opmerking');
+    const perGebied = new Map<string, Bevinding[]>();
+    const alGetoond = new Set<string>();
+    const genoemd = new Set<string>();
+
+    for (const g of cel.gebieden ?? []) {
+      const ids = g.bevindingen ?? [];
+      if (!ids.length) continue;
+      const hier: Bevinding[] = [];
+      for (const id of ids) {
+        const b = alle.find((x) => x.id === id);
+        if (!b) continue;
+        genoemd.add(b.id);
+        if (alGetoond.has(b.id)) continue;
+        alGetoond.add(b.id);
+        hier.push(b);
+      }
+      if (hier.length) perGebied.set(g.gebied, hier);
+    }
+
+    return {
+      perGebied,
+      // Wat aan geen enkel gebied hangt: alles bij een oordeel van vóór deze koppeling, en
+      // een bevinding die de agent niet aan een gebied hing.
+      losse: alle.filter((b) => !genoemd.has(b.id)),
+      /**
+       * Bevindingen die bij een tweede gebied alleen genoemd worden — als code, want dát is
+       * wat de onderzoeker leest. Een id zegt hem niets.
+       */
+      elders: (gebied: string) => {
+        const g = (cel.gebieden ?? []).find((x) => x.gebied === gebied);
+        const hier = perGebied.get(gebied) ?? [];
+        return (g?.bevindingen ?? [])
+          .filter((id) => !hier.some((b) => b.id === id))
+          .map((id) => alle.find((b) => b.id === id)?.findingCode)
+          .filter((c): c is string => !!c);
+      },
+    };
+  };
+
+  /**
+   * De bevindingen die niet bij een deelgebied staan, plus de knop om er een toe te voegen.
+   *
+   * Bij een criterium met deelgebieden staan de meeste bevindingen boven, onder het gebied
+   * waar ze bij horen. Wat hier overblijft is wat aan geen gebied hangt — bij een oordeel van
+   * vóór 31 augustus 2026 is dat alles, want die koppeling bestond nog niet.
+   *
+   * Bij een criterium zonder deelgebieden staat hier gewoon alles.
+   */
   const afkeuringenBlok = (cel: Cel) => {
-    const afkeuringen = cel.bevindingen.filter((b) => b.type !== 'opmerking');
+    const heeftGebieden = !!kaarttekst?.gebieden?.length;
+    const afkeuringen = heeftGebieden
+      ? verdeelBevindingen(cel).losse
+      : cel.bevindingen.filter((b) => b.type !== 'opmerking');
+    // Staan alle bevindingen al bij hun gebied en valt er niets toe te voegen, dan is dit
+    // blok een kop met een lege lijst eronder. Dan alleen de knop.
+    const alleenDeKnop = heeftGebieden && afkeuringen.length === 0;
     return (
       <section className="mb-4 border-t border-gray-200 pt-3">
-        <h3 className="mb-2 text-lg font-semibold text-gray-900">Bevindingen</h3>
+        {/* Gewoon "Bevindingen", ook als er hierboven al een paar bij hun gebied staan.
+            "Bevindingen zonder gebied" leest als een gebrek — alsof er iets mankeert aan een
+            bevinding die alleen nog geen koppeling heeft — en het gaat over onze
+            administratie, niet over het werk. */}
+        {!alleenDeKnop && (
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">Bevindingen</h3>
+        )}
 
         {/* Wat de meting vond en wat de agent ervan maakte. Stond eerst tussen de
             instructies; daar maakte het de kaart drie keer zo lang als een auditkaart hoort
@@ -2416,63 +2983,61 @@ export default function Stapel({
         {metingVondBlok(cel, 1)}
         {metingVondBlok(cel, 2)}
 
-        {/* Elke bevinding staat ingeklapt, met de eerste zin in de samenvatting.
-
-            Een bevinding is drie alinea's plus een advies. Staan er twee of drie op een
-            kaart, dan verdwijnt de afsluiting eronder uit beeld en lijkt de kaart een
-            rapport. Dichtgeklapt zie je hoeveel er zijn en waar ze over gaan; wat je moet
-            weten om te beslissen staat in de eerste zin, en de rest is één klik weg.
-
-            Lichtblauw en niet rood: rood is hier de kleur van een foutmelding — van iets dat
-            misging in het scherm zelf, zoals bij afkeurFout hieronder. Een bevinding is geen
-            storing maar de opbrengst van de kaart. */}
-        {afkeuringen.length === 0 ? (
+        {alleenDeKnop ? null : afkeuringen.length === 0 ? (
           <p className="border-y border-gray-100 py-3 text-center text-sm text-gray-500">
             Je hebt nog geen bevindingen toegevoegd.
           </p>
         ) : (
-          <ul className="space-y-2">
-            {afkeuringen.map((b) => (
-              <li key={b.id} className="rounded bg-blue-50 text-sm text-blue-950">
-                <details>
-                  <summary className="cursor-pointer p-3">
-                    <span className="mr-2 inline-flex flex-wrap items-center gap-2 text-xs align-middle">
-                      {b.findingCode && (
-                        <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono font-medium">
-                          {b.findingCode}
-                        </span>
-                      )}
-                      {b.impact && (
-                        <span className="rounded bg-white/70 px-1.5 py-0.5">{b.impact}</span>
-                      )}
-                    </span>
-                    <span className="leading-relaxed">{eersteZin(b.description)}</span>
-                  </summary>
-                  <div className="px-3 pb-3">
-                    <p className="whitespace-pre-line leading-relaxed">{b.description}</p>
-                    {b.advice && (
-                      <div className="mt-2 border-t border-black/10 pt-2">
-                        <p className="mb-0.5 text-xs font-medium opacity-70">Advies</p>
-                        <p className="whitespace-pre-line leading-relaxed">{b.advice}</p>
-                      </div>
-                    )}
-                  </div>
-                </details>
-              </li>
-            ))}
-          </ul>
+          <ul className="space-y-2">{afkeuringen.map((b) => bevindingRegel(b, cel))}</ul>
         )}
 
         {/* De knop staat onder de lijst en niet naast de kop: je voegt iets toe nadat je
-            hebt gezien wat er al staat, niet ervoor. */}
+            hebt gezien wat er al staat, niet ervoor.
+
+            Hij opende een formulier met twee tekstvakken waarin je de bevinding zelf
+            uitschreef. Dat ging langs alle schrijfregels heen — hulpsoftware leest voor,
+            geen gedachtestreepjes, begin niet met de URL, en nog tientallen andere — en wat
+            je daar typte belandde zo in het rapport. Nu levert de onderzoeker de waarneming
+            en schrijft de agent de tekst, met de huisregels ernaast. Dezelfde weg als
+            "Overleggen", en dezelfde terugweg: de bevinding komt terug als voorstel en de
+            regel landt in wcag-regels/. */}
         {!afkeurOpen && (
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            {/* De pagina erbij, ook als er geen bevinding is.
+                Bij een afkeuring staat deze knop onder de bevinding waar hij bij hoort; bij
+                een criterium dat voldoet is er geen bevinding, en dan zou er nergens meer een
+                weg naar de browser zijn. Juist daar wil je kunnen kijken voor je "Akkoord"
+                zegt. */}
+            {(() => {
+              const url = sampleVoor(cel.sampleId)?.url;
+              if (!url) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openBrowserPaneel(
+                      url,
+                      `${cel.code} op ${sampleVoor(cel.sampleId)?.title ?? 'deze pagina'}`,
+                      cel.code,
+                      cel.sampleId ?? undefined,
+                    )
+                  }
+                  className="rounded border border-blue-700 bg-white px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-50"
+                >
+                  Laat de pagina zien
+                </button>
+              );
+            })()}
             <button
               type="button"
-              onClick={() => setAfkeurOpen(true)}
+              onClick={() => {
+                setReden('');
+                setBlok(null);
+                setAfkeurOpen(true);
+              }}
               className="rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800"
             >
-              Bevinding toevoegen
+              Ik zie hier nog iets
             </button>
           </div>
         )}
@@ -2481,57 +3046,29 @@ export default function Stapel({
           <p className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{afkeurFout}</p>
         )}
 
-        {afkeurOpen && (
-          <div className="mt-2 rounded border border-gray-300 p-3">
-            <textarea
-              value={afkeurTekst}
-              onChange={(e) => setAfkeurTekst(e.target.value)}
-              rows={3}
-              placeholder="Wat is er mis? Noem het onderdeel, de betrokken pagina en de namen die je naast elkaar legde."
-              className="mb-2 w-full rounded border border-gray-300 p-2 text-sm"
-            />
-            <textarea
-              value={afkeurAdvies}
-              onChange={(e) => setAfkeurAdvies(e.target.value)}
-              rows={2}
-              placeholder="Advies: welke naam moet het overal worden?"
-              className="mb-2 w-full rounded border border-gray-300 p-2 text-sm"
-            />
-            <label className="mb-2 block text-xs text-gray-600">
-              Impact
-              <select
-                value={afkeurImpact}
-                onChange={(e) => setAfkeurImpact(e.target.value)}
-                className="ml-2 rounded border border-gray-300 px-2 py-1 text-sm"
-              >
-                <option value="klein">klein</option>
-                <option value="matig">matig</option>
-                <option value="serieus">serieus</option>
-                <option value="kritiek">kritiek</option>
-              </select>
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={afkeurBezig || !afkeurTekst.trim()}
-                onClick={() => voegAfkeuringToe(cel)}
-                className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-40"
-              >
-                Opslaan
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAfkeurOpen(false);
-                  setAfkeurFout(null);
-                }}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Annuleren
-              </button>
-            </div>
-          </div>
-        )}
+        {afkeurOpen &&
+          overlegPaneel(
+            cel.code,
+            (huisregels) =>
+              bespreekBlok({
+                code: cel.code,
+                critTitel: critTitel(cel.code),
+                sample: sampleVoor(cel.sampleId),
+                projectId,
+                bezwaar: reden,
+                cel,
+                voorstellen: [],
+                huisregels,
+                eigenVondst: true,
+              }),
+            {
+              cel,
+              voorstellen: [],
+              aanleiding: `${cel.code} op ${sampleTitel(cel.sampleId)} — zelf gezien`,
+              eigenVondst: true,
+            }
+          )}
+
       </section>
     );
   };
@@ -3032,7 +3569,7 @@ export default function Stapel({
   }, [focus, stapel, gepositioneerdVoor]);
 
   // De voorstellen die op deze cel wachten. Die staan op de oordeelkaart en gaan
-  // mee met "Klopt" — een losse kaart zou hetzelfde nog eens vragen.
+  // mee met "Akkoord" — een losse kaart zou hetzelfde nog eens vragen.
   const wachtendeVoorstellen =
     huidig?.soort === 'oordeel'
       ? stand.voorstellen.filter(
@@ -3055,8 +3592,8 @@ export default function Stapel({
   /**
    * Is dit oordeel al door de onderzoeker goedgekeurd?
    *
-   * Alleen bij een echt akkoord, niet bij een afwijzing: na "Klopt niet" is er nog iets te
-   * kiezen, na "Klopt" niet meer.
+   * Alleen bij een echt akkoord, niet bij een afwijzing: na "Niet akkoord" is er nog iets te
+   * kiezen, na "Akkoord" niet meer.
    */
   const alAkkoord = huidig && huidig.soort !== 'voorstel' && huidig.cel.akkoord === 'akkoord';
 
@@ -3120,11 +3657,29 @@ export default function Stapel({
     );
   };
 
+  /**
+   * Waar deze kaart over gaat, bovenaan.
+   *
+   * Dit was een grijze regeltje boven een koptekst in gewone taal ("Het linkdoel, uit de
+   * naam die wordt voorgelezen"). Die koptekst zit nu onder de klep, en dan is dit de kop:
+   * het criteriumnummer met zijn naam, zijn niveau, en de pagina waarover je oordeelt. Bij
+   * het doorbladeren van twintig kaarten is dat precies wat je bij binnenkomst nodig hebt.
+   */
   const criteriumRegel = (cel: Cel) =>
     kaarttekst ? (
-      <p className="mb-2 text-sm font-medium text-gray-500">
-        {cel.code} {critTitel(cel.code)}
-      </p>
+      <div className="mb-2 flex flex-wrap items-baseline gap-2">
+        <h2 className="text-xl font-semibold text-gray-900">
+          {cel.code} {critTitel(cel.code)}
+        </h2>
+        {critNiveau(cel.code) && (
+          <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700">
+            WCAG {critNiveau(cel.code)}
+          </span>
+        )}
+        <span className="text-sm text-gray-500">
+          {isSitebreed(cel.code) ? 'hele website' : sampleTitel(cel.sampleId)}
+        </span>
+      </div>
     ) : null;
 
   /**
@@ -3138,12 +3693,20 @@ export default function Stapel({
    *
    * Een streepje is hier informatie en geen leegte: "geen tabellen op deze pagina" is iets
    * anders dan "niet naar tabellen gekeken". Dat laatste is de open ring.
+   *
+   * Alleen de lijst zelf; de regel erboven en de uitgang eronder staan in
+   * `gebiedenMelding`, want die verschillen per toestand. Deze lijst zit onder de regel
+   * die erover gaat en niet onder een aparte klep: wie wil zien wát er is nagekeken, zoekt
+   * dat bij het oordeel en niet drie blokken verderop.
    */
-  const gebiedenBlok = (cel: Cel) => {
+  const gebiedenLijst = (
+    cel: Cel,
+    alleen: 'mankeert' | 'inorde' | 'alles' = 'alles',
+    metToelichting = true,
+  ) => {
     const lijst = kaarttekst?.gebieden ?? [];
     if (!lijst.length) return null;
     const per = new Map((cel.gebieden ?? []).map((g) => [g.gebied, g]));
-    const open = lijst.filter((g) => !per.has(g)).length;
     /**
      * Er ligt al een oordeel, maar er is niets per gebied vastgelegd.
      *
@@ -3155,19 +3718,26 @@ export default function Stapel({
      * kunnen waarmaken, en ze maakt het werk van de agent onzichtbaar.
      */
     const nietVastgelegd = per.size === 0 && !!cel.status;
+    const verdeeld = verdeelBevindingen(cel);
+    // `alleen`: welk deel van de lijst getekend wordt. Wat mankeert staat zichtbaar op de
+    // kaart, wat in orde is achter een klik.
+    const teTonen =
+      alleen === 'mankeert'
+        ? lijst.filter((g) => {
+            const u = per.get(g);
+            return !u || u.uitkomst === 'fout' || u.uitkomst === 'opmerking';
+          })
+        : alleen === 'inorde'
+          ? lijst.filter((g) => {
+              const u = per.get(g);
+              return !!u && (u.uitkomst === 'ok' || u.uitkomst === 'nvt');
+            })
+          : lijst;
+    if (!teTonen.length) return null;
 
     return (
-      <section className="mb-4 border-t border-gray-200 pt-3">
-        <h3 className="mb-1 text-lg font-semibold text-gray-900">Nagelopen</h3>
-        <p className="mb-2 text-sm text-gray-600">
-          {nietVastgelegd
-            ? 'Dit oordeel dateert van voordat deze lijst bestond. Wat er per gebied is nagekeken staat niet apart vastgelegd — kijk in de onderbouwing onder "Zo is het vastgesteld".'
-            : open === 0
-              ? `Alle ${lijst.length} gebieden zijn langsgelopen.`
-              : `${lijst.length - open} van de ${lijst.length} gebieden zijn langsgelopen; ${open} nog niet.`}
-        </p>
-        <ul className="space-y-1">
-          {lijst.map((gebied) => {
+      <ul className="space-y-1">
+          {teTonen.map((gebied) => {
             const u = per.get(gebied);
             // Vier uitkomsten, vier tekens. Het uitroepteken is de opmerking: geen afkeuring,
             // maar wel iets dat gemeld is. Zou dat een kruis krijgen, dan leest een criterium
@@ -3197,9 +3767,17 @@ export default function Stapel({
                 </span>
                 <span className="flex-1">
                   <span className={u ? 'text-gray-900' : 'text-gray-500'}>{gebied}</span>
-                  {u?.toelichting && (
-                    <span className="text-gray-600"> — {u.toelichting}</span>
-                  )}
+                  {/* De toelichting van de agent is een alinea; de bevinding eronder is wat
+                      je moet lezen. Staat er een bevinding, dan komt de toelichting pas in
+                      beeld als je de regel erboven openklapt — anders duw je het blauwe blok
+                      onder de vouw met tekst die je op dat moment niet nodig hebt.
+
+                      Zonder bevinding blijft hij wel staan: een kruis zonder uitleg is
+                      erger. */}
+                  {u?.toelichting &&
+                    (metToelichting || !verdeeld.perGebied.get(gebied)?.length) && (
+                      <span className="text-gray-600"> — {u.toelichting}</span>
+                    )}
                   {!u && (
                     <span className="text-gray-400">
                       {nietVastgelegd ? ' — niet apart vastgelegd' : ' — nog niet nagelopen'}
@@ -3208,16 +3786,455 @@ export default function Stapel({
                   {u && u.uitkomst === 'nvt' && !u.toelichting && (
                     <span className="text-gray-500"> — niet aanwezig op deze pagina</span>
                   )}
+
+                  {/* De bevinding onder het gebied waar hij over gaat.
+
+                      Zonder dit staat een gebied op `fout` los van de afkeuring die erover
+                      gaat, en moet je zelf verbinden wat bij elkaar hoort. En je ziet niet
+                      wat je hier wél ziet: een gebied op `fout` zónder bevinding eronder. */}
+                  {!!verdeeld.perGebied.get(gebied)?.length && (
+                    <ul className="mt-2 space-y-2">
+                      {verdeeld.perGebied.get(gebied)!.map((b) => bevindingRegel(b, cel))}
+                    </ul>
+                  )}
+                  {(() => {
+                    // Een bevinding die al bij een eerder gebied staat: hier alleen noemen,
+                    // anders staat dezelfde tekst er twee keer.
+                    const ook = verdeeld.elders(gebied);
+                    return ook.length ? (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Zie ook {ook.join(', ')}, hierboven.
+                      </p>
+                    ) : null;
+                  })()}
+                  {u && (u.uitkomst === 'fout' || u.uitkomst === 'opmerking') &&
+                    !verdeeld.perGebied.get(gebied)?.length &&
+                    !verdeeld.elders(gebied).length &&
+                    !!(cel.gebieden ?? []).find((g) => g.gebied === gebied)?.bevindingen && (
+                      <p className="mt-1 text-xs text-amber-800">
+                        Hier hoort een bevinding bij, maar die is niet gevonden.
+                      </p>
+                    )}
                 </span>
               </li>
             );
           })}
-        </ul>
+      </ul>
+    );
+  };
+
+  /**
+   * Of de agent zijn opdracht heeft afgemaakt — één regel, boven aan de kaart.
+   *
+   * Eén agent onderzoekt één succescriterium op één pagina. De vraag die je bij het
+   * nakijken als eerste hebt is niet "wat heeft hij gevonden" maar "is hij de weg
+   * kwijtgeraakt": een agent die drie van de zes gebieden overslaat en over de andere drie
+   * netjes schrijft, levert iets op dat er precies zo uitziet als volledig werk.
+   *
+   * Daarom alleen melden wat mankeert, mét de namen erbij. Is alles nagelopen, dan is één
+   * groene regel genoeg — de volledige lijst met zes vinkjes staat onder "Meer over dit
+   * criterium" en is bij dertig criteria maal twaalf pagina's ruis die je overal leest.
+   * Ontbreekt er iets, dan wil je die namen zien zonder te klikken, want dat is precies
+   * waar je zelf moet gaan kijken.
+   */
+  const gebiedenMelding = (cel: Cel) => {
+    const lijst = kaarttekst?.gebieden ?? [];
+    if (!lijst.length) return null;
+    const per = new Map((cel.gebieden ?? []).map((g) => [g.gebied, g]));
+    const ontbreekt = lijst.filter((g) => !per.has(g));
+    if (!ontbreekt.length) {
+      /**
+       * Alles nagelopen — maar er moet nog steeds een weg naar "Aan de regels toevoegen" zijn.
+       *
+       * Juist hier merk je dat er een gebied ontbreekt in de LIJST: alle elf staan op groen en
+       * toch zag je iets waar geen vakje voor was. Zonder deze knop is dat inzicht alleen
+       * kwijt te raken.
+       */
+      const mankeert = lijst.filter((g) => {
+        const u = per.get(g);
+        return !u || u.uitkomst === 'fout' || u.uitkomst === 'opmerking';
+      });
+      return (
+        <div className="mb-4 text-sm">
+          {/* Wat mankeert staat zichtbaar, mét de bevinding eronder; wat in orde is gaat
+              achter een klik.
+
+              Zo is de kaart kort bij een criterium dat gewoon voldoet — dan staat er alleen
+              "11 van 11, alles in orde" — en zie je bij een afkeuring meteen wát er mis is en
+              welke bevinding erbij hoort. Bij dertig criteria maal twintig pagina's leest
+              niemand elf vinkjes; één gebied op fout lees je wel. */}
+          {/* De regel is uitklapbaar, en wat eronder verschijnt is de onderbouwing van de
+              agent per gebied. Dicht zie je alleen het gebied dat aandacht vraagt met zijn
+              bevinding — dat is wat je moet lezen om te beslissen. De toelichting is een
+              alinea; die duwt het blauwe blok anders onder de vouw. */}
+          {mankeert.length ? (
+            <details className="mb-2">
+              <summary className="cursor-pointer text-gray-700">
+                Alle {lijst.length} deelgebieden zijn nagelopen; {mankeert.length}{' '}
+                {mankeert.length === 1 ? 'daarvan vraagt' : 'daarvan vragen'} aandacht.
+              </summary>
+              <div className="mt-2 text-gray-900">
+                {gebiedenLijst(cel, 'alles', true)}
+              </div>
+            </details>
+          ) : (
+            <details className="text-green-800">
+              <summary className="cursor-pointer">
+                ✓ Alle {lijst.length} deelgebieden zijn nagelopen, en er is niets aan de hand.
+              </summary>
+              <div className="mt-2 text-gray-900">{gebiedenLijst(cel, 'alles', true)}</div>
+            </details>
+          )}
+
+          {/* Wat aandacht vraagt, met de bevinding eronder — zonder de toelichting, want
+              die staat in de uitklapper hierboven. */}
+          {!!mankeert.length && (
+            <div className="mb-2 text-gray-900">{gebiedenLijst(cel, 'mankeert', false)}</div>
+          )}
+          <p className="mt-1">
+            {!gebiedOpen && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNieuwGebied('');
+                  setNieuwGebiedFout(null);
+                  setGebiedOpen(true);
+                }}
+                className="text-xs font-medium text-gray-600 underline hover:text-gray-900"
+              >
+                Een nieuw gebied toevoegen
+              </button>
+            )}
+          </p>
+          {gebiedOpen && (
+            <div className="mt-2 rounded border border-gray-300 bg-white p-3 text-gray-900">
+              <p className="mb-1 text-xs text-gray-600">
+                Voeg het toe aan de regels van {cel.code} — dan loopt elke volgende beoordeling
+                het ook na, op elke pagina en in elk project.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  value={nieuwGebied}
+                  onChange={(e) => {
+                    setNieuwGebied(e.target.value);
+                    setNieuwGebiedFout(null);
+                  }}
+                  placeholder="Bijvoorbeeld: Posters in nieuwsberichten"
+                  className="min-w-[16rem] flex-1 rounded border border-gray-300 p-1.5 text-xs"
+                />
+                <button
+                  type="button"
+                  disabled={nieuwGebiedBezig || !nieuwGebied.trim()}
+                  onClick={() => voegGebiedToeAanRegels(cel)}
+                  className="rounded border border-gray-400 px-3 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Aan de regels toevoegen
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGebiedOpen(false);
+                    setNieuwGebiedFout(null);
+                  }}
+                  className="rounded px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-50"
+                >
+                  Annuleren
+                </button>
+              </div>
+              {nieuwGebiedFout && (
+                <p className="mt-1 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                  {nieuwGebiedFout}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+    /**
+     * Er ligt al een oordeel, maar er is niets per gebied vastgelegd.
+     *
+     * Dat is niet "niets nagekeken". Deze lijst bestaat sinds 2026-08-23; alles wat de
+     * workflow daarvóór beoordeelde heeft een onderbouwing in lopende tekst en verder
+     * niets. "Niet vastgelegd" zegt dat eerlijk; "nog niet nagelopen" zou een bewering zijn
+     * die we niet kunnen waarmaken.
+     */
+    const nietVastgelegd = per.size === 0 && !!cel.status;
+    // Twee meldingen die niet even zwaar zijn.
+    //
+    // Ontbreken er gebieden bij een oordeel dat ze wél had moeten hebben, dan is dat een
+    // waarschuwing: een agent heeft zijn werk niet afgemaakt. Die krijgt een kader.
+    //
+    // Een oordeel van vóór deze lijst is iets anders. Daar is wel degelijk onderzocht — op
+    // de 1.1.1-kaart van Home staat een bevinding over het logo, dus dat gebied is
+    // aantoonbaar nagelopen — alleen is het niet per gebied geboekt. "Niet vastgelegd" las
+    // als een uitspraak over het werk en maakte dat werk onzichtbaar, terwijl het over de
+    // administratie gaat. Vandaar één grijze regel zonder kader.
+    return (
+      <div
+        className={
+          nietVastgelegd
+            ? 'mb-4 text-sm text-gray-600'
+            : 'mb-4 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900'
+        }
+      >
+        {/* Zelf invullen kan, want jij hebt net in de browser gekeken.
+
+            Zonder deze uitgang is een oordeel van vóór deze lijst alleen te repareren door
+            een agent te laten draaien of JSON op de opdrachtregel te typen — voor iets
+            waarvan je het antwoord al weet.
+
+            Bij een oud oordeel staat de uitgang áchter de zin en als tekstlink: de melding
+            is daar een voetnoot, geen waarschuwing. Bij een agent die gebieden liet liggen
+            staat hij eronder, als knop. */}
+        <p>
+          {nietVastgelegd ? (
+            <>
+              Wat er per gebied is nagekeken staat niet apart bijgehouden — die lijst bestond
+              nog niet toen dit oordeel werd gegeven.
+              {!gebiedOpen && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGebiedFout(null);
+                    setGebiedInvoer({});
+                    setGebiedOpen(true);
+                  }}
+                  className="ml-1 font-medium underline hover:text-gray-900"
+                >
+                  Alsnog vastleggen
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <strong>Nog niet nagelopen:</strong> {ontbreekt.join(', ')}.
+            </>
+          )}
+        </p>
+
+        {/* Ook hier de volledige lijst binnen bereik: bij een gedeeltelijk ingevuld oordeel
+            wil je zien wat er wél is nagekeken, en bij een oud oordeel welke gebieden er
+            zijn. De namen van wat ontbreekt staan al in de zin hierboven. */}
+        <details className="mt-1">
+          <summary className="cursor-pointer text-xs underline">
+            {nietVastgelegd
+              ? `De ${lijst.length} gebieden van dit criterium`
+              : `Alle ${lijst.length} gebieden`}
+          </summary>
+          <div className="mt-2 text-gray-900">{gebiedenLijst(cel)}</div>
+        </details>
+
+        {!gebiedOpen ? (
+          !nietVastgelegd && (
+            <button
+              type="button"
+              onClick={() => {
+                setGebiedFout(null);
+                setGebiedInvoer({});
+                setGebiedOpen(true);
+              }}
+              className="mt-2 rounded border border-current/40 px-2 py-1 text-xs font-medium hover:bg-white/60"
+            >
+              Zelf vastleggen
+            </button>
+          )
+        ) : (
+          <div className="mt-3 rounded border border-gray-300 bg-white p-3">
+            <p className="mb-2 text-xs text-gray-600">
+              Kies per gebied wat je hebt gezien. Wat je leeg laat, blijft &ldquo;nog niet
+              nagelopen&rdquo;. Bij <strong>fout</strong> en <strong>opmerking</strong> is een
+              toelichting verplicht — een teken zonder uitleg is er een waar niemand iets mee
+              kan.
+            </p>
+            <ul className="space-y-2">
+              {ontbreekt.map((gebied) => {
+                const v = gebiedInvoer[gebied] ?? { uitkomst: '', toelichting: '' };
+                const uitlegNodig = v.uitkomst === 'fout' || v.uitkomst === 'opmerking';
+                return (
+                  <li key={gebied} className="border-t border-gray-100 pt-2 first:border-0">
+                    <p className="mb-1 text-sm text-gray-900">{gebied}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { w: 'ok', l: 'in orde' },
+                        { w: 'nvt', l: 'niet aanwezig' },
+                        { w: 'opmerking', l: 'opmerking' },
+                        { w: 'fout', l: 'fout' },
+                      ].map((k) => (
+                        <button
+                          key={k.w}
+                          type="button"
+                          onClick={() =>
+                            setGebiedInvoer((s) => ({
+                              ...s,
+                              [gebied]: {
+                                toelichting: s[gebied]?.toelichting ?? '',
+                                uitkomst: s[gebied]?.uitkomst === k.w ? '' : k.w,
+                              },
+                            }))
+                          }
+                          className={`rounded px-2 py-0.5 text-xs ${
+                            v.uitkomst === k.w
+                              ? 'bg-gray-900 text-white'
+                              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {k.l}
+                        </button>
+                      ))}
+                    </div>
+                    {uitlegNodig && (
+                      <input
+                        value={v.toelichting}
+                        onChange={(e) =>
+                          setGebiedInvoer((s) => ({
+                            ...s,
+                            [gebied]: { uitkomst: s[gebied]?.uitkomst ?? '', toelichting: e.target.value },
+                          }))
+                        }
+                        placeholder="Wat is er aan de hand?"
+                        className="mt-1 w-full rounded border border-gray-300 p-1.5 text-xs"
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {gebiedFout && (
+              <p className="mt-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800">{gebiedFout}</p>
+            )}
+
+            {/* Ontbreekt er een gebied in de lijst zelf, dan is dat een regel en geen
+                aantekening: vanaf nu moet elke agent het aflopen, op elke pagina en in elk
+                project. Het gaat daarom naar het regelbestand, niet naar dit ene oordeel. */}
+            <div className="mt-3 border-t border-gray-200 pt-3">
+              <p className="mb-1 text-xs text-gray-600">
+                Mist er een gebied in deze lijst? Voeg het toe aan de regels van {cel.code} — dan
+                loopt elke volgende beoordeling het ook na, op elke pagina.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  value={nieuwGebied}
+                  onChange={(e) => {
+                    setNieuwGebied(e.target.value);
+                    setNieuwGebiedFout(null);
+                  }}
+                  placeholder="Bijvoorbeeld: Posters in nieuwsberichten"
+                  className="min-w-[16rem] flex-1 rounded border border-gray-300 p-1.5 text-xs"
+                />
+                <button
+                  type="button"
+                  disabled={nieuwGebiedBezig || !nieuwGebied.trim()}
+                  onClick={() => voegGebiedToeAanRegels(cel)}
+                  className="rounded border border-gray-400 px-3 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Aan de regels toevoegen
+                </button>
+              </div>
+              {nieuwGebiedFout && (
+                <p className="mt-1 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                  {nieuwGebiedFout}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                disabled={gebiedBezig}
+                onClick={() => legGebiedenVast(cel)}
+                className="rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-40"
+              >
+                Opslaan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setGebiedOpen(false);
+                  setGebiedFout(null);
+                }}
+                className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  /**
+   * Dit ene criterium opnieuw laten beoordelen.
+   *
+   * De aanroep gaat naar het klembord, niet naar een route die hem uitvoert. Een meting is
+   * één commando van een halve minuut; dit zet een agent per pagina aan het werk en duurt
+   * minuten. Een knop die dat vanuit de app start, laat ondertussen niets zien: geen
+   * voortgang, geen agents, en bij een fout geen spoor van wat er misging — terwijl kunnen
+   * zien of het werk is afgemaakt precies is waar deze kaart voor bestaat.
+   *
+   * Dezelfde weg als "Overleggen": de app maakt het blok, jij plakt het waar het draait.
+   *
+   * `audit-criterium` zet één agent per pagina neer die niets anders doet dan dit criterium.
+   * Dat is het verschil met `audit-samples`, waar één agent per pagina alle dertig criteria
+   * afgaat — daar is niet te zien of hij bij nummer zesentwintig nog even scherp was.
+   */
+  const opnieuwBeoordelenBlok = (cel: Cel) => {
+    const aanroep =
+      `Workflow({ scriptPath: '.claude/workflows/audit-criterium.js', args: { projectId: '${projectId}', criterium: '${cel.code}' } })`;
+    return (
+      <section className="mb-4 border-t border-gray-200 pt-3">
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">Opnieuw laten beoordelen</h3>
+        <p className="mb-2 text-sm leading-relaxed text-gray-700">
+          Eén agent per pagina, die niets anders doet dan {cel.code}. De uitkomsten komen
+          binnen als voorstel en wachten hier op je akkoord. Kopieer de aanroep en plak hem in
+          Claude Code.
+        </p>
+        {/* Waarom de auditsessie ertoe doet, staat hier en niet in een foutmelding achteraf:
+            als de oranje badge verschijnt is het werk al gedaan. Starten hoeft niet meer met
+            de hand — de workflow doet het zelf — maar wéten waarom wel. */}
+        <p className="mb-2 text-sm leading-relaxed text-gray-600">
+          Draait er geen auditsessie, dan start de workflow er zelf een. Dat is nodig omdat
+          headless alles mist wat pas na een klik in de code komt — uitklapblokken,
+          menu&apos;s, formulierstappen — en dat ziet er hetzelfde uit als een pagina waar het
+          niet op staat.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              const gelukt = await naarKlembord(aanroep);
+              setOpnieuwGekopieerd(gelukt ? cel.code : null);
+              if (gelukt) setTimeout(() => setOpnieuwGekopieerd(null), 4000);
+            }}
+            className="rounded border border-gray-400 bg-white px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
+          >
+            {opnieuwGekopieerd === cel.code ? 'Gekopieerd' : 'Kopieer de aanroep'}
+          </button>
+          <span className="text-xs text-gray-500">
+            Voeg <code className="rounded bg-gray-100 px-1">samples</code> toe om alleen
+            bepaalde pagina&apos;s te doen, of{' '}
+            <code className="rounded bg-gray-100 px-1">drooglopen: true</code> om alleen te
+            kijken wat eruit komt.
+          </span>
+        </div>
+        <textarea
+          readOnly
+          onFocus={(e) => e.currentTarget.select()}
+          value={aanroep}
+          rows={2}
+          className="mt-2 w-full rounded border border-gray-300 p-2 font-mono text-xs text-gray-700"
+        />
       </section>
     );
   };
 
-  const auditkaartLijf = (cel: Cel) => (
+  /**
+   * De achtergrond bij een criterium: waar het over gaat, en wat er nagelopen hoort te
+   * worden. Zit onder een klep; zie `auditkaartLijf`.
+   */
+  const achtergrondLijf = (cel: Cel) => (
     <>
       <h2 className="mb-1 text-2xl font-semibold text-gray-900">{kaarttekst!.titel}</h2>
       {kaarttekst!.inKort.map((alinea, i) => (
@@ -3269,8 +4286,68 @@ export default function Stapel({
         </div>
       ))}
 
-      {gebiedenBlok(cel)}
+      {/* Hoe het gereedschap werkt en wat het niet ziet.
+
+          Dit stond onder "Zo is het vastgesteld", tussen de commando's van déze pagina. Maar
+          het gaat niet over deze pagina: het is per criterium dezelfde tekst, bij elke kaart
+          en elke ronde. Zo stonden er twee kleppen met criteriumuitleg naast elkaar, en dan
+          weet je van geen van beide meer wat erin zit. */}
+      {kaarttekst!.vastgesteld?.length ? (
+        <section className="mb-4 border-t border-gray-200 pt-3">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">Hoe dit gemeten wordt</h3>
+          <div className="space-y-2">
+            {kaarttekst!.vastgesteld.map((alinea, i) => (
+              <p key={i} className="text-sm leading-relaxed text-gray-700">
+                {metCode(alinea)}
+              </p>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {opnieuwBeoordelenBlok(cel)}
+    </>
+  );
+
+  /**
+   * Het lijf van een auditkaart: wat je bij het nakijken nodig hebt, en verder niets.
+   *
+   * Hier staat de vraag en het antwoord: of de agent zijn gebieden heeft afgelopen, en welke
+   * bevindingen hij voorlegt. Daarna volgen de knoppen. Zo loopt de kaart van boven naar
+   * beneden in één lijn — oordeel, gebieden, bevindingen, beslissen — zonder dat er
+   * achtergrond tussen staat.
+   *
+   * Die achtergrond staat ONDER de knoppen, in `vastgesteldDetails`: de uitleg van het
+   * criterium naast de metingen van deze pagina. Bij dertig criteria maal twintig pagina's
+   * betaal je alles wat er standaard bij staat honderden keren, en dit hoort daar niet bij.
+   */
+  const auditkaartLijf = (cel: Cel) => (
+    <>
+      {gebiedenMelding(cel)}
+
+      {/* Wat de agent over déze pagina concludeerde — de tekst waar "Akkoord" ja tegen zegt.
+
+          Alleen bij een criterium ZONDER deelgebieden. Daar is dit het enige wat er staat, en
+          het hoorde niet weggeklikt onder de metingen te zitten: dan geef je akkoord op een
+          bevindingenlijst zonder de redenering eronder.
+
+          Heeft het criterium wél deelgebieden, dan is er niets meer dat alleen hier kan staan.
+          Waarop is gezocht staat bij het gebied waar gezocht is, een afweging bij het gebied
+          waar hij over gaat, de afkeuring in de bevinding, en of de meting deugde in de badge
+          en onder "De metingen". Wat er dan overblijft is een samenvatting van wat er drie
+          regels lager al staat. Het veld wordt nog wel gevuld — je vindt het terug onder "De
+          metingen" — maar het hoort niet tussen het oordeel en de bevindingen. */}
+      {cel.reden && !(kaarttekst?.gebieden?.length) && (
+        <details className="mb-4 rounded bg-gray-50 text-gray-900">
+          <summary className="cursor-pointer p-3 leading-relaxed">
+            {eersteZin(cel.reden)}
+          </summary>
+          <p className="whitespace-pre-line px-3 pb-3 leading-relaxed">{cel.reden}</p>
+        </details>
+      )}
+
       {afkeuringenBlok(cel)}
+
     </>
   );
 
@@ -3278,45 +4355,57 @@ export default function Stapel({
    * "Zo is het vastgesteld", ingeklapt onder aan de kaart.
    *
    * `redenTonen` staat alleen aan op de kaart van een oordeel dat op akkoord wacht. Daar is
-   * de tekst van de workflow niet zomaar achtergrond: het is precies datgene waar je "Klopt"
+   * de tekst van de workflow niet zomaar achtergrond: het is precies datgene waar je "Akkoord"
    * tegen zegt, en die mag dan niet onvindbaar zijn. Op een kaart die nog openstaat blijft
    * hij weg — daar toont de meting zelf wat er gevonden is, en een oudere lezing ernaast
    * wordt een tweede verhaal dat uit elkaar loopt met het eerste.
    */
-  const vastgesteldDetails = (cel: Cel, redenTonen = false) =>
+  const vastgesteldDetails = (cel: Cel, oordeelLigtEr = true) =>
     kaarttekst ? (
-      <details className="mt-4 border-t border-gray-200 pt-3">
-        <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-gray-500">
-          5 · Zo is het vastgesteld
+      <div className="mt-4 border-t border-gray-200 pt-3">
+        {/* De twee achtergrondblokken staan bij elkaar, onder de knoppen.
+
+            Ze beantwoorden verschillende vragen — "waar gaat dit criterium over" lees je bij
+            de eerste kaarten en daarna nooit meer, "hoe is dit vastgesteld" open je telkens
+            als je twijfelt — dus ze blijven twee kleppen. Maar allebei zijn ze achtergrond,
+            en achtergrond hoort niet tussen de bevindingen en de knoppen: dan onderbreekt hij
+            de weg van oordeel naar beslissing.
+
+            De eerste staat open zolang er nog geen oordeel ligt. Dan zijn de instructies geen
+            verslag maar een opdracht, en hoor je ze te zien zonder te klikken. */}
+        <details
+          open={!oordeelLigtEr}
+          className="mb-2 rounded border border-gray-200 bg-gray-50 px-3 py-2"
+        >
+          <summary className="cursor-pointer text-sm font-medium text-gray-700">
+            Waar dit criterium over gaat
+          </summary>
+          <div className="mt-3">{achtergrondLijf(cel)}</div>
+        </details>
+
+        <details className="rounded border border-gray-200 bg-gray-50 px-3 py-2">
+        <summary className="cursor-pointer text-sm font-medium text-gray-700">
+          Hoe dit is vastgesteld
         </summary>
         <div className="mt-3">
-          {/* Eerst wat er gebeurt en waar de gegevens vandaan komen, dan pas de commando’s.
-              Een lijst met tijdstippen zegt wat er gedraaid is, niet wat er gemeten is — en
-              niet wat het gereedschap niet ziet. */}
-          {kaarttekst.vastgesteld?.length ? (
-            <div className="mb-4 space-y-2">
-              {kaarttekst.vastgesteld.map((alinea, i) => (
-                <p key={i} className="text-sm leading-relaxed text-gray-700">
-                  {metCode(alinea)}
-                </p>
-              ))}
-            </div>
-          ) : null}
-
-          {redenTonen && (
+          {/* De onderbouwing van de agent, bij een criterium met deelgebieden.
+              Hierboven op de kaart staat hij niet meer — daar is alles wat erin stond
+              inmiddels op een betere plek te vinden — maar weggooien is iets anders dan
+              verplaatsen: dit is wel de tekst waar het akkoord aan hangt. */}
+          {!!kaarttekst.gebieden?.length && cel.reden && (
             <div className="mb-4">
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-                Wat de agent op deze pagina noteerde
+                Wat de agent noteerde
               </p>
               <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                {cel.reden ?? '(geen onderbouwing gegeven)'}
+                {cel.reden}
               </p>
             </div>
           )}
-
           {metingenBlok(cel, false)}
         </div>
-      </details>
+        </details>
+      </div>
     ) : null;
 
   /**
@@ -3386,13 +4475,15 @@ export default function Stapel({
         </span>
         <div className="flex gap-2">
           {/* Bij het wisselen van kaart moet de melding van de vorige weg: die gaat
-              over een andere bevinding en zou hier iets beweren dat niet is gebeurd. */}
+              over een andere bevinding en zou hier iets beweren dat niet is gebeurd.
+
+              Het gebiedenformulier gaat om dezelfde reden dicht: half ingevulde uitkomsten
+              horen bij het criterium waarvoor je ze invulde, niet bij het volgende. */}
           <button
             type="button"
             onClick={() => {
               setIndex((i) => Math.max(0, i - 1));
-              setGedaan(null);
-              setFout(null);
+              wisselOpruimen();
             }}
             disabled={positie === 0}
             className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
@@ -3403,8 +4494,7 @@ export default function Stapel({
             type="button"
             onClick={() => {
               setIndex((i) => Math.min(stapel.length - 1, i + 1));
-              setGedaan(null);
-              setFout(null);
+              wisselOpruimen();
             }}
             disabled={positie >= stapel.length - 1}
             className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
@@ -3455,6 +4545,11 @@ export default function Stapel({
             // waarvoor toevallig een markeer-meting bestaat. Kijken naar de pagina waarover je
             // oordeelt is bij 1.4.11, 2.1.2 en 3.2.4 net zo goed nodig als bij 2.4.4; alleen
             // de kaders zijn criteriumgebonden.
+            //
+            // Op een auditkaart staat deze knop bij de bevinding zelf, in `bevindingRegel`:
+            // daar wil je hem hebben, op het moment dat je leest wat er mis is. Hier zou hij
+            // dan twee keer staan. Zonder auditkaart is dit de enige.
+            if (kaarttekst) return null;
             const paginaUrl = sampleVoor(huidig.cel.sampleId)?.url;
             if (!paginaUrl) return null;
             const teBekijken = metingenVoorCriterium(huidig.cel.code).filter(
@@ -3499,10 +4594,10 @@ export default function Stapel({
           })()}
 
           {/* Heeft dit criterium een `## Op de kaart`, dan is dit dezelfde kaart als die
-              van een criterium dat nog openstaat: dezelfde kop, dezelfde instructies,
+              van een criterium dat nog openstaat: dezelfde kop, dezelfde onderbouwing,
               dezelfde bevindingen. Alleen de afsluiting verschilt — hier zeg je ja of nee
-              tegen een oordeel dat er al ligt. De lopende tekst van de workflow is niet weg
-              maar verhuisd naar "Zo is het vastgesteld"; zie vastgesteldDetails. */}
+              tegen een oordeel dat er al ligt. De lopende tekst van de workflow staat in
+              `auditkaartLijf`, boven de bevindingen. */}
           {kaarttekst ? (
             auditkaartLijf(huidig.cel)
           ) : (
@@ -3514,14 +4609,22 @@ export default function Stapel({
             </>
           )}
 
-          {wachtendeVoorstellen.length > 0 && (
+          {/* Wat al bij een deelgebied staat, hoort hier niet nog eens: dan lees je dezelfde
+              tekst twee keer op één kaart. De melding dat het op akkoord wacht blijft wel —
+              die staat bij de knoppen onderaan. */}
+          {(() => {
+            const bijGebied = new Set(
+              (huidig.cel.gebieden ?? []).flatMap((g) => g.bevindingen ?? []),
+            );
+            const losseVoorstellen = wachtendeVoorstellen.filter((v) => !bijGebied.has(v.id));
+            return losseVoorstellen.length > 0 ? (
             <div className="mb-4 space-y-2 rounded border border-purple-200 bg-purple-50 p-3">
               <p className="text-xs font-medium text-purple-900">
-                {wachtendeVoorstellen.length === 1
-                  ? 'Dit voorstel wacht op akkoord en wordt goedgekeurd als je "Klopt" kiest:'
-                  : `Deze ${wachtendeVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je "Klopt" kiest:`}
+                {losseVoorstellen.length === 1
+                  ? 'Dit voorstel wacht op akkoord en wordt goedgekeurd als je akkoord geeft:'
+                  : `Deze ${losseVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je akkoord geeft:`}
               </p>
-              {wachtendeVoorstellen.map((v) => (
+              {losseVoorstellen.map((v) => (
                 <div key={v.id} className="rounded bg-white p-3 text-sm">
                   <p className="mb-1 text-xs text-gray-500">
                     {v.findingCode} · {v.type}
@@ -3537,7 +4640,8 @@ export default function Stapel({
                 </div>
               ))}
             </div>
-          )}
+            ) : null;
+          })()}
 
           {!kaarttekst && huidig.cel.bevindingen.length > 0 && (
             <div className="mb-4 space-y-2">
@@ -3614,6 +4718,9 @@ export default function Stapel({
                   cel: huidig.cel,
                   voorstellen: wachtendeVoorstellen,
                   huisregels,
+                  // Overleggen gaat over de verwoording, niet over de vraag of het een
+                  // bevinding is. Dus alleen het adres, de bevinding en het advies.
+                  herschrijven: true,
                 }),
               {
                 cel: huidig.cel,
@@ -3671,9 +4778,10 @@ export default function Stapel({
                 }
                 className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
               >
-                {wachtendeVoorstellen.length > 0
-                  ? `Klopt — en keur ${wachtendeVoorstellen.length === 1 ? 'het voorstel' : 'de voorstellen'} goed`
-                  : 'Klopt'}
+                {/* Eén woord, ook als er voorstellen aan hangen. Er stond "Akkoord — en keur
+                    het voorstel goed", maar dat staat al in het paarse blok erboven; een knop
+                    die zijn eigen gevolgen opsomt wordt een zin. */}
+                Akkoord
               </button>
               <button
                 type="button"
@@ -3681,25 +4789,22 @@ export default function Stapel({
                 onClick={() => setUitgang('corrigeren')}
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >
-                Klopt niet
+                Niet akkoord
               </button>
-              {/* Derde uitkomst, naast eens en oneens: je weet dat er iets niet
-                  deugt maar nog niet wat het moet worden. */}
-              <button
-                type="button"
-                disabled={bezig || alAkkoord}
-                onClick={() => setUitgang('overleggen')}
-                className="rounded border border-blue-300 px-4 py-2 text-sm text-blue-900 hover:bg-blue-50 disabled:opacity-40"
-              >
-                Overleggen
-              </button>
+              {/* Hier stond "Overleggen": een derde uitgang die het blok naar een chatdienst
+                  kopieerde om de bevinding te laten herschrijven. Overbodig sinds de tekst
+                  op de kaart zelf te bewerken is — een chatdienst erbij halen om twee
+                  woorden aan te passen is een omweg.
+
+                  Wat blijft: "Ik zie hier nog iets" hierboven, want daar schrijft de agent
+                  wél de tekst, volgens de huisregels die dan meegaan. */}
             </div>
             </>
           )}
 
           {/* De verantwoording, ingeklapt. Hier mét de tekst die de workflow bij dit oordeel
-              schreef: dát is waar "Klopt" ja tegen zegt, dus die mag niet onvindbaar zijn. */}
-          {vastgesteldDetails(huidig.cel, true)}
+              schreef: dát is waar "Akkoord" ja tegen zegt, dus die mag niet onvindbaar zijn. */}
+          {vastgesteldDetails(huidig.cel)}
         </div>
       ) : huidig.soort === 'voorstel' ? (
         <div className="rounded-lg border border-gray-300 bg-white p-6">
@@ -3762,6 +4867,7 @@ export default function Stapel({
                   cel: stand.celVoor(huidig.voorstel.sampleId ?? '', huidig.voorstel.code),
                   voorstellen: [huidig.voorstel],
                   huisregels,
+                  herschrijven: true,
                 }),
               {
                 cel: stand.celVoor(huidig.voorstel.sampleId ?? '', huidig.voorstel.code),
@@ -3856,14 +4962,9 @@ export default function Stapel({
               >
                 Dit is techniek
               </button>
-              <button
-                type="button"
-                disabled={bezig}
-                onClick={() => setUitgang('overleggen')}
-                className="rounded border border-blue-300 px-4 py-2 text-sm text-blue-900 hover:bg-blue-50 disabled:opacity-40"
-              >
-                Overleggen
-              </button>
+              {/* Hier stond "Overleggen", net als op de oordeelkaart. Weg om dezelfde reden:
+                  het kopieerde een blok naar een chatdienst om de tekst te laten
+                  herschrijven, en die tekst is nu gewoon te bewerken. */}
 
               {/* Het moment waarop je merkt dat de tekst niet deugt, is juist dit
                   moment. Eerst akkoord geven en daarna herstellen zou betekenen
@@ -3923,9 +5024,11 @@ export default function Stapel({
           </div>
 
           {/* Heeft dit criterium een `## Op de kaart` in zijn regelbestand, dan krijgt het de
-              indeling van een auditkaart: de naam van de toets in gewone taal, waar het op
-              neerkomt, het succescriterium met zijn niveau, en de instructies als lijst.
-              Zonder die sectie blijft de kaart wat hij was. */}
+              indeling van een auditkaart. Zonder die sectie blijft de kaart wat hij was.
+
+              Dezelfde indeling als op de nakijkkaart — één vorm om aan te wennen, ook al
+              ligt er hier nog geen bevestigd oordeel. Alleen staat de achtergrond open:
+              zolang er niets ligt zijn de instructies geen verslag maar een opdracht. */}
           {kaarttekst ? (
             <>
               {auditkaartLijf(huidig.cel)}
@@ -4051,10 +5154,9 @@ export default function Stapel({
           {/* Stap 5: de verantwoording. Belangrijk dat het er staat, niet belangrijk dat je
               het als eerste leest — vandaar ingeklapt. Hier zit ook "Meet dit nu".
 
-              Zonder tweede argument: op een kaart die nog openstaat blijft de tekst van de
-              workflow weg. Wat de meting vandaag vond staat bij de bevindingen, en een oudere
-              lezing ernaast wordt een tweede verhaal dat daarmee uit elkaar loopt. */}
-          {vastgesteldDetails(huidig.cel)}
+              `false`: er ligt hier nog geen bevestigd oordeel, dus "Waar dit criterium over
+              gaat" staat open. Daar zijn de instructies geen verslag maar een opdracht. */}
+          {vastgesteldDetails(huidig.cel, false)}
           {/* Alleen op de oude kaarten. Deze zin gaat over de knop "Ik zie iets — noteren",
               die je wegstuurde naar het waarnemingenscherm, en over het veld "Wat zag je?".
               Op een kaart met eigen instructies bestaan die geen van beide: je schrijft een
@@ -4165,7 +5267,13 @@ export default function Stapel({
             {paneelModus === 'browser' && (
               <div className="p-2">
                 {/* De kaders komen uit de meting zelf, niet uit een tweede berekening in dit
-                    scherm. Zie de toelichting in app/api/meting/scherm/markeer/route.ts. */}
+                    scherm. Zie de toelichting in app/api/meting/scherm/markeer/route.ts.
+
+                    De hele balk hoort bij onderzoeken. Kwam je hier via een bevinding, dan
+                    kijk je naar één element waarvan al vaststaat wat eraan mankeert: kijken
+                    versus bedienen is dan geen keuze die je hoeft te maken, markeren zou de
+                    aanwijzing overschrijven, en de legenda vertelt je wat je al ziet. */}
+                {!aangewezenVoor && (
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <div className="flex overflow-hidden rounded border border-gray-300">
                     {(['kijken', 'bedienen'] as const).map((k) => (
@@ -4199,11 +5307,14 @@ export default function Stapel({
                   >
                     {markeren?.bezig ? 'Bezig met meten…' : 'Markeer de links'}
                   </button>
+                  {/* De legenda hoort bij de markering, en die staat hier binnen de balk die
+                      bij een aangewezen bevinding helemaal wegvalt. */}
                   <span className="text-xs text-gray-600">
                     Rood: opvallend · groen: naam in orde · grijs: andere rol · blauw
                     gestippeld: viel buiten de meting.
                   </span>
                 </div>
+                )}
                 {schermFout && (
                   <p className="mb-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800">{schermFout}</p>
                 )}
@@ -4297,6 +5408,19 @@ export default function Stapel({
                       if (!j?.ok || !j.aangeklikt) return;
                       const a = j.aangeklikt;
                       setAangeklikt(a);
+                      /**
+                       * Selecteren hoort bij zoeken, niet bij kijken.
+                       *
+                       * Kwam je hier via "Wijs het aan" bij een bevinding, dan kijk je naar
+                       * iets dat al is opgeschreven. Een klik levert dan de bevinding op en
+                       * verder niets — geen paars blok met "Maak hier een bevinding van",
+                       * want die bestaat al en dat aanbod spreekt de kaart tegen waar je net
+                       * vandaan komt.
+                       *
+                       * Kwam je via "Laat de pagina zien", dan zoek je juist naar wat de
+                       * agent heeft gemist, en is dat blok precies wat je nodig hebt.
+                       */
+                      if (aangewezenVoor) return;
                       // De lijst hier bijhouden en niet in de pagina: die kan navigeren of
                       // opnieuw geladen worden, en dan is je selectie weg terwijl je hem nog
                       // nodig hebt om de bevinding te schrijven.
@@ -4323,25 +5447,43 @@ export default function Stapel({
                       het blok waar je naar kijkt terwijl je door de pagina tabt. Bovenin,
                       naast de knop, staat hij buiten je blikveld. */}
                   <p className="mt-0.5">
-                    <span className="text-gray-500">Uitslag: </span>
+                    {/* "Uitslag" hoort bij een meting. Wijs je één element aan, dan is dit
+                        geen uitkomst maar een plaatsaanduiding: het deelgebied. */}
+                    <span className="text-gray-500">
+                      {aangewezenVoor ? 'Aangewezen: ' : 'Uitslag: '}
+                    </span>
                     {markeren?.bezig
                       ? 'get-links draait op deze pagina; dat duurt ongeveer twintig seconden.'
                       : markeren?.melding ?? 'nog niet gemeten'}
                   </p>
-                  <p className="mt-0.5">
-                    <span className="text-gray-500">Focus: </span>
-                    {schermStand?.focus
-                      ? `<${schermStand.focus.element}>${
-                          schermStand.focus.rol ? ' rol=' + schermStand.focus.rol : ''
-                        } — "${schermStand.focus.naam}"${
-                          schermStand.focus.ring ? ' — ' + schermStand.focus.ring : ' — geen outline en geen box-shadow gevonden'
-                        }`
-                      : 'nergens — klik in het beeld en druk op Tab'}
-                  </p>
+                  {/* Waar de focus staat — alleen als je aan het onderzoeken bent.
+                      Wijs je één element aan bij een bevinding, dan ga je niet tabben: die
+                      regel hoort bij 2.4.7 en 2.1.1, en hier staat hij in de weg. Staat er
+                      tóch focus, dan tonen we hem wel: dan is er iemand aan het tabben. */}
+                  {(!aangewezenVoor || schermStand?.focus) && (
+                    <p className="mt-0.5">
+                      <span className="text-gray-500">Focus: </span>
+                      {schermStand?.focus
+                        ? `<${schermStand.focus.element}>${
+                            schermStand.focus.rol ? ' rol=' + schermStand.focus.rol : ''
+                          } — "${schermStand.focus.naam}"${
+                            schermStand.focus.ring
+                              ? ' — ' + schermStand.focus.ring
+                              : ' — geen outline en geen box-shadow gevonden'
+                          }`
+                        : 'nergens — klik in het beeld en druk op Tab'}
+                    </p>
+                  )}
                   {!!selectie.length && (
                     <div className="mt-1.5 rounded border border-purple-300 bg-purple-50 px-2 py-1.5 text-purple-900">
+                      {/* "aangewezen" botste met het aanwijzen van een bestaande bevinding:
+                          klik je op het element dat B001 markeert, dan stond er "1 aangewezen
+                          voor één bevinding" met de knop "maak hier een bevinding van" — een
+                          uitnodiging om te maken wat je aan het lezen was. */}
                       <p className="font-medium">
-                        {selectie.length} aangewezen voor één bevinding
+                        {selectie.length === 1
+                          ? 'Eén element geselecteerd'
+                          : `${selectie.length} elementen geselecteerd, samen één bevinding`}
                       </p>
                       <ul className="mt-0.5 space-y-0.5">
                         {selectie.map((x, i) => (
@@ -4355,9 +5497,11 @@ export default function Stapel({
                         <button
                           type="button"
                           onClick={() => {
-                            // De tekst voorzetten in het formulier dat al op de kaart staat.
-                            // Geen tweede weg om een bevinding aan te maken: die zou een eigen
-                            // gedrag krijgen en op termijn iets anders doen dan de eerste.
+                            // De waarneming voorzetten in het overleg dat al op de kaart
+                            // staat. Geen tweede weg om een bevinding aan te maken: die zou
+                            // een eigen gedrag krijgen en op termijn iets anders doen dan de
+                            // eerste. Wat je hier aanwijst is de waarneming; de tekst schrijft
+                            // de agent, met de huisregels ernaast.
                             const regels = selectie
                               .map(
                                 (x) =>
@@ -4366,11 +5510,12 @@ export default function Stapel({
                                   }`
                               )
                               .join('\n');
-                            setAfkeurTekst(
-                              (t) =>
+                            setReden(
+                              (t: string) =>
                                 (t ? t + '\n\n' : '') +
                                 `Aangewezen in de browser op ${paneel.url}:\n${regels}\n\n`
                             );
+                            setBlok(null);
                             setAfkeurOpen(true);
                             setSelectie([]);
                           }}
@@ -4439,24 +5584,40 @@ export default function Stapel({
                       )}
                     </div>
                   )}
-                  {aangeklikt && (
-                    <div className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-900">
-                      <p>
-                        <span className="text-amber-700">Aangeklikt: </span>
-                        &lt;{aangeklikt.element}&gt;
-                        {aangeklikt.rol ? ` rol=${aangeklikt.rol}` : ''} — &ldquo;
-                        {aangeklikt.naam || '(geen naam)'}&rdquo;
-                        {aangeklikt.href ? ` → ${aangeklikt.href}` : ''}
-                      </p>
-                      <p className="mt-0.5">
-                        {aangeklikt.waarom
-                          ? aangeklikt.waarom
-                          : aangeklikt.gemarkeerd
-                          ? 'De meting keurde dit element goed.'
-                          : 'Over dit element is niets gemeld — het viel buiten de meting of er is nog niet gemeten.'}
-                      </p>
-                    </div>
-                  )}
+                  {aangeklikt &&
+                    (aangewezenVoor ? (
+                      /* Kijken, niet zoeken: alleen wat erover gemeld is. Het element
+                         ontleden — tagnaam, rol, href — hoort bij het opschrijven van een
+                         nieuwe bevinding, en die schrijf je hier niet. */
+                      aangeklikt.waarom && (
+                        // Hetzelfde blauw als de bevinding op de kaart: het ís die
+                        // bevinding, en met een andere kleur lijkt het iets nieuws.
+                        //
+                        // `whitespace-pre-line`: de bevinding en het advies zijn door een
+                        // lege regel gescheiden, en zonder dit vouwt de browser dat samen
+                        // tot één lap.
+                        <p className="mt-1 whitespace-pre-line rounded bg-blue-50 px-2 py-1 leading-relaxed text-blue-950">
+                          {aangeklikt.waarom}
+                        </p>
+                      )
+                    ) : (
+                      <div className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-900">
+                        <p>
+                          <span className="text-amber-700">Aangeklikt: </span>
+                          &lt;{aangeklikt.element}&gt;
+                          {aangeklikt.rol ? ` rol=${aangeklikt.rol}` : ''} — &ldquo;
+                          {aangeklikt.naam || '(geen naam)'}&rdquo;
+                          {aangeklikt.href ? ` → ${aangeklikt.href}` : ''}
+                        </p>
+                        <p className="mt-0.5">
+                          {aangeklikt.waarom
+                            ? aangeklikt.waarom
+                            : aangeklikt.gemarkeerd
+                              ? 'De meting keurde dit element goed.'
+                              : 'Over dit element is niets gemeld — het viel buiten de meting of er is nog niet gemeten.'}
+                        </p>
+                      </div>
+                    ))}
                   {!!schermItems.length && (
                     <div className="mt-1.5 border-t border-gray-200 pt-1.5">
                       <p className="mb-1 text-gray-500">
@@ -4550,14 +5711,17 @@ export default function Stapel({
             )}
           </div>
 
-          <p className="border-t border-gray-200 px-3 py-2 text-xs text-gray-500">
-            {paneelModus === 'browser'
-              ? 'Kijken zoekt op wat er staat zonder de link te volgen; bedienen klikt echt door. Dit is een eigen browser, niet je auditsessie: zonder je cookies. Voor een pagina achter een login heb je de auditsessie nodig.'
-              : ''}
-            {paneelModus === 'browser' ? '' : 'Dit is een opname van het meetmoment, niet de levende site.'} Wat je moet bedienen —
-            klikken, tabben, een menu openen — doe je met &ldquo;Laat het me zien in de
-            browser&rdquo; in je auditsessie.
-          </p>
+          {/* De uitleg over kijken versus bedienen hoort bij het onderzoeken van een pagina.
+              Kwam je hier via een bevinding, dan kijk je naar één element waarvan al is
+              opgeschreven wat eraan mankeert: dan is een verhandeling over cookies en
+              inloggen alleen ruis onder de tekst die je wilt lezen. */}
+          {!aangewezenVoor && (
+            <p className="border-t border-gray-200 px-3 py-2 text-xs text-gray-500">
+              {paneelModus === 'browser'
+                ? 'Kijken zoekt op wat er staat zonder de link te volgen; bedienen klikt echt door. Dit is een eigen browser, niet je auditsessie: zonder je cookies. Voor een pagina achter een login heb je de auditsessie nodig.'
+                : 'Dit is een opname van het meetmoment, niet de levende site. Wat je moet bedienen — klikken, tabben, een menu openen — doe je in je auditsessie.'}
+            </p>
+          )}
         </aside>
       )}
     </div>

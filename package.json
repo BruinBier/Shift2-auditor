@@ -19,6 +19,7 @@
     "restore": "tsx scripts/import-all-data.ts",
     "cli": "tsx scripts/audit-cli.ts",
     "chrome:debug": "tsx scripts/start-chrome-debug.ts",
+    "cli:chrome-los": "tsx scripts/start-chrome-debug.ts --los",
     "test:audit-evidence": "tsx --test lib/audit-evidence.test.ts",
     "test:browser-versions": "tsx --test lib/browser-versions.test.ts"
   },

@@ -225,6 +225,20 @@ als één geheel.
     bevindingen met twee verschillende verhalen: hier weet de bezoeker niet waar de link heen
     gaat, daar kan hulpsoftware de link niet aankondigen.
 
+#### Stap 4 — Wegschrijven
+
+12. [agent] Stuur de zes deelgebieden hieronder mee met het oordeel, in hetzelfde
+    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+    gebied niet beoordelen, gebruik dan `nvt` met een toelichting — dát je het niet kon is de
+    informatie die een lopende onderbouwing weglaat.
+13. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+    verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf
+    je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Wat de
+    meting al telde hoort er evenmin in. Er is bijna nooit iets dat bij geen enkel gebied
+    thuishoort; denk je van wel, kijk dan nog eens of het niet toch ergens past.
+
 ### Zo is het vastgesteld
 
 `get-links` opent de pagina in een echte browser en rekent per link de toegankelijke naam uit,

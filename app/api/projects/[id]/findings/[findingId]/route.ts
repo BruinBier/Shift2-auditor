@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { typeVoorImpact } from '@/lib/finding-classification';
+import { lintFinding } from '@/lib/finding-lint';
 import {
   herberekenCriteriumOordeel,
   herberekenCriteriumOordelen,
@@ -79,6 +80,49 @@ export async function PUT(
     }
 
     console.log('Update data:', JSON.stringify(updateData, null, 2));
+
+    /**
+     * De schrijfregels, ook bij een wijziging.
+     *
+     * Ze stonden alleen op het aanmaken. Wie een bevinding daarna aanpaste — in de
+     * bevindingen-tab of vanaf de kaart in "Waar sta ik" — kwam er ongecontroleerd langs, en
+     * dan komt een gedachtestreepje of een "hulpsoftware laat zien" alsnog in het rapport.
+     * Dat is precies wat de linter moet vangen; dat het op de ene weg wel en op de andere
+     * niet gebeurde, was geen keuze.
+     *
+     * De tekst wordt beoordeeld zoals hij na de wijziging wordt: wat niet is meegestuurd
+     * blijft wat het was. Een wijziging die alleen `interimNotes` zet, wordt dus getoetst op
+     * de bestaande beschrijving en niet op een halve.
+     */
+    if (
+      body.skipLint !== true &&
+      (body.description !== undefined || body.advice !== undefined)
+    ) {
+      const criterion = await prisma.wCAGCriterion.findUnique({
+        where: { id: updateData.wcagCriterionId ?? existingFinding.wcagCriterionId },
+        select: { code: true },
+      });
+      const issues = lintFinding({
+        description: updateData.description ?? existingFinding.description,
+        advice: updateData.advice ?? existingFinding.advice,
+        impact: updateData.impact ?? existingFinding.impact,
+        responsibility: updateData.responsibility ?? existingFinding.responsibility,
+        status: updateData.status ?? existingFinding.status,
+        type: updateData.type ?? existingFinding.type,
+        criterionCode: criterion?.code,
+      });
+      const errors = issues.filter((i) => i.severity === 'error');
+      if (errors.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Bevinding voldoet niet aan de schrijfregels',
+            lintIssues: issues,
+            hint: 'Pas de tekst aan, of stuur skipLint mee als de linter er hier naast zit.',
+          },
+          { status: 422 }
+        );
+      }
+    }
 
     // Update the finding
     const updatedFinding = await prisma.finding.update({
