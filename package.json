@@ -8,7 +8,7 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "prisma db push",
+    "db:push": "node -e \"console.error('db:push is uitgeschakeld. Het synchroniseert het schema rechtstreeks en kan tabellen verwijderen; op deze database met een niet-naspeelbare migratiegeschiedenis is dat hoe je alles kwijtraakt. Gebruik: npm run schema:update (prisma migrate deploy). Weet je het zeker, draai dan npx prisma db push met de hand.'); process.exit(1)\"",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:check": "node -e \"require('@prisma/client').PrismaClient && console.log('✅ Database connected')\" || echo '❌ Database connection failed'",
