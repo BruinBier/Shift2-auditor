@@ -184,7 +184,19 @@ export async function GET(request: Request) {
     }
 
     const bestaande = await prisma.project.findMany({
-      where: { kenmerk: { startsWith: `${opdrachtgever.kenmerk}-` } },
+      /**
+       * Een proeftuin verbruikt geen klantnummer. Het is intern testwerk waar toevallig een
+       * echte URL in staat; dat er een opdrachtgever aan hangt is een overblijfsel, geen
+       * opdracht. Telde hij mee, dan zat er een gat in de reeks van het echte werk.
+       *
+       * In de praktijk valt een proeftuin hier meestal al buiten, want zijn kenmerk begint
+       * met TEST- en niet met dat van de opdrachtgever. Deze regel vangt het geval waarin
+       * dat wél zo is.
+       */
+      where: {
+        kenmerk: { startsWith: `${opdrachtgever.kenmerk}-` },
+        isProeftuin: false,
+      },
       select: { kenmerk: true },
     });
     const nummers = bestaande

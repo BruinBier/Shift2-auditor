@@ -103,7 +103,16 @@ function Blok({
 
 export default async function AdminPage() {
   const projects = await prisma.project.findMany({
-    where: { status: { notIn: ['Gereed', 'Geannuleerd'] } },
+    /**
+     * Een proeftuin hoort hier niet: dit scherm zegt wat er vandaag te doen is, en intern
+     * testwerk staat niet op die lijst.
+     *
+     * Vooral de rappelbewaking hieronder maakt dat storend. Die kijkt of er veertien dagen
+     * geen reactie of akkoord is geweest — bij een proeftuin is dat per definitie zo, dus
+     * hij komt permanent in het rode blok "Actie nodig" te staan met "herinnering sturen".
+     * Vier blokken, hun tellers en die bewaking komen allemaal uit deze ene query.
+     */
+    where: { status: { notIn: ['Gereed', 'Geannuleerd'] }, isProeftuin: false },
     orderBy: { dateStart: 'asc' },
   });
 

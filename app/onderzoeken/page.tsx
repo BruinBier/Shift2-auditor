@@ -19,6 +19,11 @@ async function statusVolgtDePlanning() {
       dateStart: { not: null, lte: vandaag },
       // Doorlopend werk heeft geen planning die af kan lopen.
       isOngoing: false,
+      // Een proeftuin volgt geen planning: er is geen klant die op iets wacht. Dit is
+      // bovendien een schrijfactie, dus wegfilteren in de weergave repareert het niet — de
+      // status zou blijven staan als "In uitvoering" en het project daarmee in elk overzicht
+      // opduiken dat op status filtert.
+      isProeftuin: false,
     },
     data: { status: 'In uitvoering' },
   });
