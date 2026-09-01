@@ -57,6 +57,21 @@ export async function getReportData(projectId: string) {
         })
       : null;
 
+  /**
+   * Hoeveel succescriteria bij de nulmeting werden afgekeurd.
+   *
+   * Zonder dit getal luidt de samenvatting van een geslaagd heronderzoek
+   * "Bij 0 succescriteria zijn afwijkingen vastgesteld" - een omslachtige
+   * manier om te zeggen dat alles is opgelost, die verzwijgt hoeveel er is
+   * verholpen. Met het aantal erbij staat er wat er werkelijk gebeurd is.
+   */
+  const nulmetingFailedCriteria =
+    isHeronderzoek && project.parentProjectId
+      ? await prisma.criterionAssessment.count({
+          where: { projectId: project.parentProjectId, status: 'failed' },
+        })
+      : 0;
+
   // Onderzoekstype bepaalt welke succescriteria in het rapport horen.
   let researchTypeData: any = null;
   let filteredAssessments = project.criterionAssessments;
@@ -90,6 +105,7 @@ export async function getReportData(projectId: string) {
     researchTypeData,
     isHeronderzoek,
     nulmeting,
+    nulmetingFailedCriteria,
   };
 }
 

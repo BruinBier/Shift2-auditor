@@ -60,6 +60,25 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const isOpenOpmerking = (f: any) =>
     isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
 
+  /**
+   * Hoeveel opmerkingen er bij een heronderzoek zijn opgelost.
+   *
+   * Ze verdwijnen uit het rapport zodra ze op 'resolved' staan, en dan blijft
+   * er alleen "Er zijn geen opmerkingen vastgesteld" over. Dat leest als een
+   * onderzoek waarin niets te melden was, terwijl er punten zijn verholpen.
+   *
+   * Bij de bevindingen staat het aantal afgekeurde SUCCESCRITERIA van de
+   * nulmeting, niet het aantal bevindingen: dat is de eenheid waarin de
+   * samenvatting bovenaan het rapport ook telt, en twee verschillende getallen
+   * voor hetzelfde resultaat verwarren de lezer.
+   *
+   * Alleen bij een heronderzoek: bij een nulmeting betekent 'resolved' niet
+   * hetzelfde, en daar zegt dit getal dus niets.
+   */
+  const opgelosteOpmerkingen = isHeronderzoekReport
+    ? (project.findings?.filter((f: any) => isOpmerking(f) && f.status === 'resolved').length ?? 0)
+    : 0;
+
   const handleDownloadPdf = async () => {
     try {
       const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement;
@@ -243,6 +262,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     const nulmetingPeriode = nulmetingStart && nulmetingEnd
       ? `${format(nulmetingStart, 'd MMMM yyyy', { locale: nl })} en ${format(nulmetingEnd, 'd MMMM yyyy', { locale: nl })}`
       : null;
+    const nulmetingFailedCriteria = project.nulmetingFailedCriteria ?? 0;
 
     // For formulieren projects: count in-scope URLs (each URL = one form)
     // For other projects: use total sample items
@@ -271,6 +291,22 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           template = template.replace(
             /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
             `$1 De nulmeting vond plaats tussen ${nulmetingPeriode}.`
+          );
+        }
+
+        /**
+         * Alles opgelost: zeg dat, en noem hoeveel het er waren.
+         *
+         * Het sjabloon eindigt met "Bij {failedCriteria} succescriteria zijn
+         * afwijkingen vastgesteld". Bij een geslaagd heronderzoek staat daar
+         * "Bij 0 succescriteria" - grammaticaal juist, maar het leest als een
+         * onderzoek waarin niets te vinden was, terwijl er dertien criteria zijn
+         * verholpen. Het aantal van de nulmeting erbij maakt dat zichtbaar.
+         */
+        if (failedCriteria === 0 && nulmetingFailedCriteria > 0) {
+          template = template.replace(
+            /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
+            `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${nulmetingFailedCriteria}.`
           );
         }
       }
@@ -323,7 +359,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         </p>
 
         <p className="mb-4">
-          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit {isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). Bij {failedCriteria} {failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.
+          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit {isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). {failedCriteria === 0 && isHeronderzoek && project.nulmetingFailedCriteria > 0
+            ? `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${project.nulmetingFailedCriteria}.`
+            : `Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`}
         </p>
 
         {/* Researcher feedback if available */}
@@ -1076,7 +1114,16 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
 
             {/* Show message if no findings */}
             {sortedCriteria.filter((a: any) => a.status === 'failed').length === 0 && (
-              <p className="text-sm text-gray-500 italic">Er zijn geen bevindingen vastgesteld.</p>
+              <p className="text-sm text-gray-500 italic">
+                {/*
+                  Volgorde: eerst waar het onderzoek mee begon, dan wat er is gedaan,
+                  dan de uitkomst. Andersom valt het getal uit de lucht: "er is niets
+                  gevonden" gevolgd door een aantal dat de lezer nergens kan plaatsen.
+                */}
+                {isHeronderzoekReport && (project.nulmetingFailedCriteria ?? 0) > 0
+                  ? `${project.nulmetingFailedCriteria === 1 ? 'Het succescriterium dat' : `De ${project.nulmetingFailedCriteria} succescriteria die`} bij de nulmeting ${project.nulmetingFailedCriteria === 1 ? 'werd' : 'werden'} afgekeurd, ${project.nulmetingFailedCriteria === 1 ? 'is' : 'zijn'} nu ${project.nulmetingFailedCriteria === 1 ? '' : 'allemaal '}opgelost.`
+                  : 'Er zijn geen bevindingen vastgesteld.'}
+              </p>
             )}
           </div>
         </section>
@@ -1251,7 +1298,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               const hasRemark = project.findings?.some((f: any) => f.wcagCriterionId === criterion.id && isOpenOpmerking(f));
               return hasRemark;
             }).length === 0 && (
-              <p className="text-sm text-gray-500 italic">Er zijn geen opmerkingen vastgesteld.</p>
+              <p className="text-sm text-gray-500 italic">
+                {/* Zelfde opbouw als bij de bevindingen: uitgangspunt, wat er is gedaan, uitkomst. */}
+                {opgelosteOpmerkingen > 0
+                  ? `${opgelosteOpmerkingen === 1 ? 'De opmerking die' : `De ${opgelosteOpmerkingen} opmerkingen die`} bij de nulmeting ${opgelosteOpmerkingen === 1 ? 'openstond' : 'openstonden'}, ${opgelosteOpmerkingen === 1 ? 'is' : 'zijn'} nu ${opgelosteOpmerkingen === 1 ? '' : 'allemaal '}opgelost.`
+                  : 'Er zijn geen opmerkingen vastgesteld.'}
+              </p>
             )}
           </div>
         </section>

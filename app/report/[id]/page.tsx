@@ -92,6 +92,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
     reportDate: project.reportDate.toISOString(),
     userAgents: project.userAgents || null,
     nulmetingDates,
+    nulmetingFailedCriteria: data.nulmetingFailedCriteria,
     researchTypeData: researchTypeData,
     scopeInfo: scopeInfoHtml,
     sampleInfo: sampleInfoHtml,

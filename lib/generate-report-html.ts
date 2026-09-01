@@ -122,7 +122,7 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const data = await getReportData(projectId);
   if (!data) throw new Error('Project not found');
 
-  const { project, researchTypeData, isHeronderzoek, nulmeting } = data;
+  const { project, researchTypeData, isHeronderzoek, nulmeting, nulmetingFailedCriteria } = data;
 
   const nulmetingPeriode =
     nulmeting?.dateStart && nulmeting?.dateEnd
@@ -201,22 +201,43 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     project,
     stats,
     researchTypeData,
-    nulmetingPeriode
+    nulmetingPeriode,
+    nulmetingFailedCriteria
   );
   const overOnderzoekHtml = renderOverOnderzoek(project, researchTypeData);
   const overzichtHtml = renderOverzichtResultaten(
     allCriteriaRows,
     principleStats
   );
+  /**
+   * Bij een geslaagd heronderzoek is elk blok leeg, en dan blijft er alleen
+   * "Er zijn geen bevindingen vastgesteld" staan. Dat leest als een onderzoek
+   * waarin niets te vinden was, terwijl er van alles is verholpen. Deze twee
+   * getallen maken dat zichtbaar; de formulering staat gelijk aan die in het
+   * rapport op het scherm (OverDitOnderzoek.tsx).
+   *
+   * Bij de bevindingen tellen we SUCCESCRITERIA, niet losse bevindingen: dat is
+   * de eenheid waarin de samenvatting bovenaan ook telt.
+   */
+  const opgelosteOpmerkingen = isHeronderzoek
+    ? (project.findings ?? []).filter(
+        (f: any) =>
+          (f.type != null ? f.type === 'opmerking' : f.impact == null) &&
+          f.status === 'resolved'
+      ).length
+    : 0;
+
   const bevindingenHtml = renderBevindingenSectie(
     grouped,
     'bevinding',
-    isHeronderzoek
+    isHeronderzoek,
+    nulmetingFailedCriteria
   );
   const opmerkingenHtml = renderBevindingenSectie(
     grouped,
     'opmerking',
-    isHeronderzoek
+    isHeronderzoek,
+    opgelosteOpmerkingen
   );
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
@@ -264,7 +285,9 @@ function renderSamenvatting(
   project: any,
   stats: any,
   researchTypeData: any,
-  nulmetingPeriode?: string | null
+  nulmetingPeriode?: string | null,
+  /** Hoeveel succescriteria bij de nulmeting werden afgekeurd; 0 bij een nulmeting zelf. */
+  nulmetingFailedCriteria: number = 0
 ): string {
   // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting.
   // Zelfde toets als in report-data.ts: na afronden staat checkPhase op
@@ -315,6 +338,16 @@ function renderSamenvatting(
           `$1 De nulmeting vond plaats tussen ${escapeHtml(nulmetingPeriode)}.`
         );
       }
+
+      // Alles opgelost: zeg dat, en noem hoeveel het er waren. Zelfde
+      // formulering als in het rapport op het scherm; die twee horen
+      // woordelijk gelijk te zijn.
+      if (failedCriteria === 0 && nulmetingFailedCriteria > 0) {
+        summaryTemplate = summaryTemplate.replace(
+          /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
+          `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${nulmetingFailedCriteria}.`
+        );
+      }
     }
 
     mainHtml = summaryTemplate
@@ -361,7 +394,13 @@ function renderSamenvatting(
     )}.${nulmetingZin} Voor dit ${onderzoekWoord} is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p>
 <p>De onderzochte content voldoet ${
       percentage === 100 ? 'volledig' : 'niet volledig'
-    } aan WCAG 2.2 niveau A en AA. In dit ${onderzoekWoord} zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.</p>`;
+    } aan WCAG 2.2 niveau A en AA. In dit ${onderzoekWoord} zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). ${
+      // Zelfde formulering als in het rapport op het scherm; die twee horen
+      // woordelijk gelijk te zijn.
+      failedCriteria === 0 && isHeronderzoek && nulmetingFailedCriteria > 0
+        ? `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${nulmetingFailedCriteria}.`
+        : `Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.`
+    }</p>`;
   }
 
   const feedbackHtml = project.researcherFeedback
@@ -544,7 +583,12 @@ function renderOverzichtResultaten(
 function renderBevindingenSectie(
   grouped: any[],
   kind: 'bevinding' | 'opmerking',
-  isHeronderzoek = false
+  isHeronderzoek = false,
+  /**
+   * Hoeveel er bij de nulmeting openstond: succescriteria bij de bevindingen,
+   * opmerkingen bij de opmerkingen. 0 als er niets te melden valt.
+   */
+  opgelostBijNulmeting = 0
 ): string {
   const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
@@ -640,9 +684,16 @@ ${findingsHtml}`);
   }
 
   if (criteriaBlocks.length === 0) {
+    const een = opgelostBijNulmeting === 1;
+    let leegTekst = `Er zijn geen ${heading.toLowerCase()} vastgesteld.`;
+    if (isHeronderzoek && opgelostBijNulmeting > 0) {
+      leegTekst = isOpmerkingen
+        ? `${een ? 'De opmerking die' : `De ${opgelostBijNulmeting} opmerkingen die`} bij de nulmeting ${een ? 'openstond' : 'openstonden'}, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`
+        : `${een ? 'Het succescriterium dat' : `De ${opgelostBijNulmeting} succescriteria die`} bij de nulmeting ${een ? 'werd' : 'werden'} afgekeurd, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`;
+    }
     return `<section class="content-block">
   <h2 id="${isOpmerkingen ? 'opmerkingen' : 'bevindingen'}">${heading}</h2>
-  <p>Er zijn geen ${heading.toLowerCase()} vastgesteld.</p>
+  <p>${escapeHtml(leegTekst)}</p>
 </section>`;
   }
 
