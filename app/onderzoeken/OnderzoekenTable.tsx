@@ -52,6 +52,8 @@ interface Props {
 export default function OnderzoekenTable({ projects }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  /** Proeftuinen erbij? Staat standaard uit; deze lijst is voor de echte onderzoeken. */
+  const [toonProeftuinen, setToonProeftuinen] = useState(false);
   const [sortBy, setSortBy] = useState('dateStart');
   const [showFilters, setShowFilters] = useState(false);
   const [showBeheerMenu, setShowBeheerMenu] = useState(false);
@@ -901,6 +903,15 @@ export default function OnderzoekenTable({ projects }: Props) {
 
   // Filter and search projects
   const filteredProjects = projects.filter((project) => {
+    /**
+     * Een proeftuin hoort hier niet: in deze lijst staan de onderzoeken die werkelijk
+     * worden uitgevoerd. Een proeftuin is intern werk om de werkwijze te verfijnen, en die
+     * ertussen laten staan betekent dat elke telling en elk overzicht hem meerekent.
+     *
+     * De schakelaar hierboven haalt hem erbij wanneer je er wél in wilt werken.
+     */
+    if ((project as any).isProeftuin && !toonProeftuinen) return false;
+
     // Search filter
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = (
@@ -1497,6 +1508,22 @@ export default function OnderzoekenTable({ projects }: Props) {
               </svg>
             </button>
           </div>
+
+          {/* De proeftuinen erbij. Staat standaard uit: in deze lijst horen de onderzoeken
+              die werkelijk worden uitgevoerd, en een proeftuin telt anders mee in elk
+              overzicht. Alleen zichtbaar als er ook echt een proeftuin is — een schakelaar
+              voor niets is ruis. */}
+          {projects.some((p) => (p as any).isProeftuin) && (
+            <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm text-gray-600">
+              <input
+                type="checkbox"
+                checked={toonProeftuinen}
+                onChange={(e) => setToonProeftuinen(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Toon proeftuinen
+            </label>
+          )}
         </div>
 
         {/* Table */}

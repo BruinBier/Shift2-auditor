@@ -49,6 +49,12 @@ export default async function OnderzoekekenPage() {
     parentProjectId: project.parentProjectId,
     hasReinspection: project.hasReinspection,
     isOngoing: project.isOngoing,
+    // Een proeftuin hoort niet in deze lijst, maar hij gaat wél mee naar de client: de
+    // schakelaar daar haalt hem erbij zonder de pagina opnieuw te laden.
+    //
+    // `as any`: het veld bestaat pas in de gegenereerde Prisma-client nadat de migratie
+    // 20260831_proeftuin_vlag is gedraaid. Zo compileert dit ervoor en erna.
+    isProeftuin: (project as any).isProeftuin ?? false,
   } as any));
 
   return <OnderzoekenTable projects={projectsData} />;

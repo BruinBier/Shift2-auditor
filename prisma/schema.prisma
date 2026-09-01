@@ -131,6 +131,16 @@ model Project {
   notes                   String?        @db.Text
   isAnonymous             Boolean        @default(false) @map("is_anonymous")
   isPrivate               Boolean        @default(false) @map("is_private")
+  /// Een proeftuin: intern werk om de werkwijze te verfijnen, geen klantonderzoek.
+  ///
+  /// Staat niet in de lijst met onderzoeken; daar horen alleen de echte onderzoeken te
+  /// staan. Een schakelaar boven de lijst haalt ze erbij.
+  ///
+  /// Waarom een veld en niet een afspraak over de naam: "TEST-" vooraan werkt alleen zolang
+  /// iedereen die afspraak kent en er niets op filtert. Hier kan code op beslissen. Op
+  /// 2026-08-31 zijn er in de proeftuin akkoorden vervallen en is er een oordeel
+  /// overschreven -- dat mocht, maar niets in het systeem wist dat het een proeftuin was.
+  isProeftuin             Boolean        @default(false) @map("is_proeftuin")
 
   // Rich text fields
   summaryText             String?        @map("summary_text") @db.Text
