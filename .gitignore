@@ -25,6 +25,14 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+# Ook reservekopieen: .env2 stond hier een maand buiten, met het
+# databasewachtwoord erin. Een `git add -A` had dat gepubliceerd.
+.env?
+.env.backup*
+
+# Tussenbestanden van het uitproberen van de Word-export.
+debug-*.xml
+debug-*.txt
 
 # vercel
 .vercel
