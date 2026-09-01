@@ -262,10 +262,76 @@ export async function PATCH(
       }
     }
 
-    // Only update the fields that are provided in the request
+    /**
+     * Alleen de velden die deze route hoort te kunnen zetten.
+     *
+     * Hier stond `data: body` — alles wat een client meestuurde ging er ongefilterd in. Dat
+     * is meer dan een tikfout-risico: Prisma accepteert in `data` ook geneste writes, dus
+     * `{ findings: { deleteMany: {} } }` zou alle bevindingen van een project wissen. En
+     * velden die de betekenis van een project bepalen — `parentProjectId` (de
+     * herinspectie-relatie), `isProeftuin` (echt werk of testwerk) — stuurt geen enkel
+     * scherm mee, maar konden wel gezet worden.
+     *
+     * De lijst komt uit een inventarisatie van alle zeventien PATCH-aanroepen naar deze
+     * route, in zes bestanden. Voeg je een veld toe aan een formulier, zet het dan hier
+     * ook neer — de melding hieronder wijst je erop.
+     *
+     * `title`, `kenmerk`, `notes` en dergelijke staan er bewust NIET in: die lopen via de
+     * PUT-handler hierboven, met een eigen, ruimere set.
+     */
+    const TOEGESTAAN = new Set([
+      'accountmanager',
+      'cancellationReason',
+      'clientProjectId',
+      'commissionedBy',
+      'dateEnd',
+      'dateStart',
+      'hasReinspection',
+      'invitationSent',
+      'isOngoing',
+      'managementSummary',
+      'planningApproved',
+      'planningSent',
+      'reinspectionWeeks',
+      'reportDate',
+      'researcherFeedback',
+      'sampleClientPages',
+      'sampleInfo',
+      'scopeCallHeld',
+      'scopeCallTranscript',
+      'scopeInfo',
+      'scopeInScope',
+      'scopeOutOfScope',
+      'status',
+      'technologies',
+      'userAgents',
+    ]);
+
+    /**
+     * Weigeren en niet stilzwijgend negeren.
+     *
+     * Een veld dat je vergeet toe te voegen levert anders een knop op die lijkt te werken
+     * maar niets bewaart — precies het soort stille fout dat deze allowlist moet voorkomen,
+     * alleen omgekeerd. Nu staat er meteen welk veld het is.
+     */
+    const onbekend = Object.keys(body).filter((k) => !TOEGESTAAN.has(k));
+    if (onbekend.length) {
+      return NextResponse.json(
+        {
+          error: `Deze route mag ${onbekend.join(', ')} niet zetten.`,
+          hint: 'Hoort dit veld hier wel thuis, voeg het dan toe aan TOEGESTAAN in app/api/projects/[id]/route.ts.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Alleen de meegestuurde velden bijwerken. `null` blijft staan: dat is hoe een vinkje
+    // bij de voorbereidingsstappen wordt uitgezet, en wegfilteren zou dat stil breken.
+    const data = Object.fromEntries(Object.entries(body).filter(([k]) => TOEGESTAAN.has(k)));
+
     const project = await prisma.project.update({
       where: { id },
-      data: body,
+      data,
     });
 
     await syncReinspectionChild(id);
