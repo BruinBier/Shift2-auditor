@@ -3,6 +3,10 @@
 Kant-en-klare opdrachten om te kopiëren. Per situatie één blok tekst; vul in wat tussen
 `[vierkante haken]` staat.
 
+**Kopieer alleen het ingesprongen blok**, de regels achter de `>`. De uitleg eromheen is voor
+jou, niet voor Work. Geef je dit bestand als geheel door, dan leest Work het als een handleiding
+en vraagt het welke van de opdrachten je bedoelt.
+
 Werkt alleen als de projectinstructies uit [work-instructie-intake.md](work-instructie-intake.md)
 in Work staan. Zonder die instructies kent Work de werkwijze niet en moet je hem elke keer
 meesturen.
