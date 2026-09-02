@@ -25,12 +25,21 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
 
   // Standaardtekst voor de uitnodiging. Wijkt de situatie af, dan pas je de
   // tekst aan in je mailprogramma voor je hem verstuurt.
+  //
+  // De openingszin hangt af van hoe de opdracht binnenkwam. Staat er een
+  // accountmanager op, dan liep het via sales en is dat de aanleiding die de
+  // klant herkent. Is dat veld leeg, dan heeft de onderzoeker er zelf over
+  // gemaild -- en dan klopt "via onze salesafdeling" niet, want de klant heeft
+  // die correspondentie zelf gevoerd.
+  const viaSales = Boolean(project.accountmanager?.trim());
   const uitnodiging = [
     `Dag ${contactnaam || '[naam]'},`,
     '',
-    `Via onze salesafdeling heb ik een aanvraag binnengekregen voor een toegankelijkheidsonderzoek voor ${scopeUrl || '[website]'}`,
+    viaSales
+      ? `Via onze salesafdeling heb ik een aanvraag binnengekregen voor een toegankelijkheidsonderzoek voor ${scopeUrl || '[website]'}`
+      : `Naar aanleiding van je akkoord kan het toegankelijkheidsonderzoek voor ${scopeUrl || '[website]'} van start.`,
     '',
-    'Ik bespreek graag kort de scope en planning met je door.',
+    'Ik bespreek graag kort de scope en planning met je door: wat we wel en niet meenemen in het onderzoek, en wanneer het uitkomt.',
     '',
     'Laat je me weten wanneer het jou uitkomt om hierover kort te overleggen?',
   ].join('\n');
