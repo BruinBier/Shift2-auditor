@@ -96,6 +96,11 @@ Zoek in de offerte naar:
   onderzoeker toegewezen.
 - **Wat voor onderzoek het is.** Vrijwel altijd een deelonderzoek content op een website.
   Soms komen er formulieren of een Mijn-omgeving bij.
+- **Welke WCAG-versie erin staat.** De tool zet altijd WCAG 2.2 AA, en dat is voor de
+  Nederlandse overheid ook de geldende norm. Staat er in de offerte een andere versie — 2.1
+  bijvoorbeeld — meld dat dan apart. Waarschijnlijk is het offertesjabloon verouderd, maar
+  het is wel wat de klant heeft getekend, en dat wil de onderzoeker weten voordat het rapport
+  af is. In de offerte voor Nissewaard stond "WCAG 2.1 AA incl. hertest".
 
 Zit er geen offerte bij, of staat het er niet in, laat de velden dan weg. De tool vult
 standaardwaarden in die voor de meeste onderzoeken kloppen. Een verkeerd geraden waarde is
@@ -189,10 +194,20 @@ Regels voor het blok:
 - **Velden die je niet weet, laat je weg.** Niet leeg meesturen, niet raden.
 - **`url` met `https://` ervoor.**
 
-Zet onder het blok in gewone taal wat er ontbreekt en wat je hebt aangenomen. Bijvoorbeeld:
-*"Het CRM-nummer moet nog worden toegekend. In de mail stond E10478-101, maar dat is het
-inkoopnummer van de gemeente voor op de factuur. In de offerte staat een contentonderzoek
-met herinspectie; de termijn staat er niet bij, dus ik houd 12 weken aan."*
+Zet onder het blok in gewone taal wat er ontbreekt en wat je hebt aangenomen. Zoals bij
+Nissewaard:
+
+> Het CRM-nummer moet nog worden toegekend. In de mail stond E10478-101, maar dat is het
+> inkoopnummer van de gemeente voor op de factuur.
+>
+> De offerte noemt "Contentonderzoek Toegankelijkheid WCAG 2.1 AA incl. hertest". De hertest
+> zit er dus bij; een termijn staat er niet bij, dus ik houd 12 weken aan. Let op de versie:
+> er staat 2.1 en de tool werkt met 2.2.
+>
+> Het aantal uur staat niet in de offerte. Er wordt geen onderzoeker bij naam genoemd, dus ik
+> ga ervan uit dat Shift2 het zelf uitvoert.
+>
+> De klant ging op 31 augustus 2026 akkoord.
 
 ### Hiermee ben je klaar
 
