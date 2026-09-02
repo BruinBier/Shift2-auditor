@@ -17,14 +17,24 @@ meesturen.
 |---|---|---|
 | **Dynamics CRM** | Agent-modus, jouw sessie | De projectenlijst lezen |
 | **SIMcms** | Agent-modus, jouw sessie | Een pagina als concept aanmaken |
-| **Outlook** | Agent-modus, jouw sessie | Eén mail openen die jij aanwijst |
+| **Outlook** | Agent-modus, jouw sessie | Zoeken en mail openen |
 | **Shift2Auditor** | Codex, alleen lezen | Opzoeken wat er loopt |
 
-**Werk kan niet in je mailbox zoeken.** Er is geen mailconnector, dus het opent alleen wat je
-aanwijst met een link. Vragen als "welke mails moet ik nog beantwoorden" kan het niet
-beantwoorden.
+**Zoeken in Outlook gaat via de zoekbalk**, niet via een connector. Work typt er een
+zoekopdracht in en leest de resultaten, in alle mappen tegelijk. Dat werkt met de gewone
+Outlook-syntaxis:
 
-Wat er openstaat aan lopende onderzoeken, weet Shift2Auditor wel. Het dashboard heeft twee
+| Zoekterm | Wat je krijgt |
+|---|---|
+| `from:(@nissewaard.nl)` | Alles van die organisatie, ook van collega's daar |
+| `from:(r.kruijmel@nissewaard.nl)` | Alleen van die persoon |
+| `subject:(offerte)` | Op onderwerp |
+| `received:>=8/1/2026` | Vanaf een datum |
+
+Geef Work dus een concrete zoekterm. Een open vraag als "wat moet ik nog beantwoorden" heeft
+niets om op te zoeken; "zoek op `from:(@nissewaard.nl)`" wel.
+
+Wat er openstaat aan lopende onderzoeken, weet Shift2Auditor zelf. Het dashboard heeft twee
 blokken: **Actie nodig** (jij bent aan zet) en **Wacht op iemand anders** (met het aantal dagen
 erbij). Na veertien dagen zonder reactie verschuift een onderzoek van het tweede blok naar het
 eerste.
@@ -92,12 +102,36 @@ opzoeken.
 Punt 3 staat nergens anders. Negatieve uren betekent dat een project over zijn budget heen is;
 dat zie je in Shift2Auditor niet.
 
+**De mailbox erbij halen** kan met een vervolgvraag, per klant die uit de vergelijking komt:
+
+> Zoek in Outlook op `from:(@[domein])` en kijk of er sinds [datum] iets is binnengekomen over
+> dit onderzoek dat ik nog niet verwerkt heb.
+
+Dat werkt gericht en niet als open vraag: de zoekbalk heeft een zoekterm nodig. De vergelijking
+CRM ↔ Shift2Auditor levert die termen op.
+
 **Let op de match.** Dezelfde klant kan meerdere sites hebben — Zoetermeer heeft in het CRM
 "omgevingsdocumenten.zoetermeer.nl" terwijl er in de tool ZOET-01 voor bo.zoetermeer.nl loopt.
 Dat zijn twee verschillende onderzoeken, geen dubbeling. Laat Work bij twijfel melden in plaats
 van gokken.
 
-## 4. Een mail aan de klant klaarzetten
+## 4. De geschiedenis van een klant opzoeken
+
+Bij een nieuwe opdracht van een bestaande klant: wat is er eerder gedaan?
+
+> Zoek in mijn Outlook-mailbox op `from:(@[domein van de klant])` en `to:(@[domein])`, in alle
+> mappen. Geef een tijdlijn van wat er over toegankelijkheidsonderzoek is gewisseld: wanneer,
+> waarover, en met wie.
+
+Dat levert vaak meer op dan verwacht. Bij gemeente Nissewaard bleek uit acht berichten dat de
+site in december 2023 al eens is onderzocht, dat Cardan toen de hertest deed, en dat er in
+januari 2024 een toegankelijkheidsverklaring is opgeleverd. Geen van die onderzoeken staat in
+Shift2Auditor — de tool bestond toen nog niet.
+
+Dat verandert het nieuwe onderzoek niet, maar het is context: er ligt een eerder rapport over
+dezelfde site.
+
+## 5. Een mail aan de klant klaarzetten
 
 De tool heeft sjablonen voor de uitnodiging en de planningsmail: op de projectpagina onder
 **Voorbereiding** staat per stap een knop "Kopieer uitnodiging" of "Kopieer planningsmail",
@@ -116,7 +150,7 @@ naam naar een gemeente.
 Na het versturen: op de projectpagina de stap afvinken. Dat kan Work niet, en zonder die klik
 begint de bewaking niet te lopen.
 
-## 5. Het antwoord van de klant verwerken
+## 6. Het antwoord van de klant verwerken
 
 Na het scopegesprek, of als de klant per mail op de scope reageert.
 
@@ -130,7 +164,7 @@ De uitkomst gaat naar de velden **In scope**, **Buiten scope** en **Door klant a
 pagina's** op de projectpagina. Met de knop "Importeer naar scope & steekproef" worden daar
 scope-items en steekproefpagina's van gemaakt.
 
-## 6. Het rapport op SIMcms zetten
+## 7. Het rapport op SIMcms zetten
 
 Als het onderzoek klaar is en het rapport eruit kan.
 
@@ -146,7 +180,7 @@ gaan lopen.
 verhaspeld raken of een tabel zonder koprij is meer dan een schoonheidsfoutje. Kijk ernaar
 voordat je publiceert.
 
-## 7. Een tekst schrijven of nakijken
+## 8. Een tekst schrijven of nakijken
 
 Voor alles wat geen vaste stap is: een lastige mail, een uitleg aan de klant, een stuk tekst
 voor het rapport.
