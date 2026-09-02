@@ -23,7 +23,7 @@ De reden voor die inkrimping staat onder [Waarom niet meer](#waarom-niet-meer).
 
 | Wie | Waarvoor |
 |---|---|
-| **ChatGPT Work** | Mail uitlezen, controleren wat er loopt, intakevoorstel maken, planningsmail, rapport als concept op SIMcms zetten |
+| **ChatGPT Work** | Mail en offerte uitlezen, controleren wat er loopt, intakeblok leveren, rapport als concept op SIMcms zetten |
 | **Shift2Auditor** | De audit: scope, steekproef, oordelen, bevindingen, rapport |
 | **Claude Code** | Al het ontwikkelwerk aan Shift2Auditor |
 | **Codex** | Alleen lezen op de laptop. Niet schrijven, niet migreren, geen schema wijzigen |
@@ -41,7 +41,10 @@ mail binnen
    v
 Frits plakt het blok in Shift2Auditor, ziet wat er gaat gebeuren, bevestigt
    |
-   +- Work stuurt de planningsmail naar de klant
+   |
+   v
+Frits stuurt de uitnodiging, voert het scopegesprek, bepaalt de planning
+en stuurt de planningsmail -- alle vier met sjablonen uit de tool
    |
    v
 Shift2Auditor voert de audit uit en maakt het rapport
@@ -76,48 +79,34 @@ terwijl de winst — Work kan zelf rondkijken — ook met kopiëren en plakken t
 werken vanaf een tweede computer, en Work die rechtstreeks in de tool kan kijken.
 Zie [Later, misschien](#later-misschien).
 
-## Wat wél gebouwd wordt
+## Wat er gebouwd is
 
-### Eén scherm: intake uit Work
+### Een plakvak op de bestaande intakepagina
 
-Een pagina in de beheeromgeving, bijvoorbeeld `/admin/intake-uit-work`, met een
-tekstvak, een voorbeeldweergave en een bevestigknop.
+Niet een eigen scherm, zoals eerst bedacht, maar een uitklapbaar vak boven het
+intakeformulier dat er al stond (`/admin/intake`). Je plakt het blok, klikt op
+"Overnemen in het formulier", en de velden eronder zijn ingevuld.
 
-**Stap 1 — plakken.** Work levert een blok zoals dit:
+Dat het bestaande formulier ertussen zit is het punt en geen omweg: je ziet wat er
+gaat gebeuren in de velden die je al kent, en corrigeert wat er niet klopt. Een
+tweede scherm zou bovendien betekenen dat een onderzoek op twee plekken kan
+ontstaan.
 
-```json
-{
-  "kenmerk": "HAR-02",
-  "url": "https://www.heuvelrug.nl",
-  "opdrachtgeverNaam": "Gemeente Utrechtse Heuvelrug",
-  "opdrachtgeverKenmerk": "HAR",
-  "projectnummer": "P02645",
-  "contactnaam": "Anne de Vries",
-  "contactEmail": "a.devries@heuvelrug.nl",
-  "accountmanager": "Marco",
-  "dateStart": "2026-09-15",
-  "dateEnd": "2026-09-26",
-  "plannedTime": "16 uur"
-}
-```
+**Wat het inlezen opvangt** (`lib/intakeblok.ts`, zeven tests):
 
-**Stap 2 — laten zien wat er gaat gebeuren.** In gewone taal, vóór er iets wordt
-weggeschreven:
+- **Een bestaande opdrachtgever wordt herkend**, op kenmerk en op naam,
+  hoofdletterongevoelig. Een blok dat "Gemeente Nissewaard" zegt terwijl de tool
+  "gemeente Nissewaard" heeft, levert géén tweede opdrachtgever op. Dat is de fout
+  die je anders pas weken later ziet, als er onder allebei onderzoeken hangen.
+- **Kenmerken gaan naar hoofdletters**: `nis-01` wordt `NIS-01`.
+- **Een codeblok met uitleg eromheen wordt uitgepakt**, want zo levert Work het.
+- **Wat er niet in hoort, verdwijnt niet stilzwijgend maar wordt gemeld met de
+  reden.** `dateStart` en `dateEnd` horen er niet in omdat de planning pas uit het
+  scopegesprek komt; een onbekend veld als `factuurnummer` wordt bij naam genoemd.
+- **Een hertesttermijn zonder hertest** is een tegenstrijdigheid en wordt genegeerd.
+- **Een blok zonder `kenmerk` of `url`** wordt geweigerd; daarmee kan de tool niets.
 
-> Nieuwe opdrachtgever: Gemeente Utrechtse Heuvelrug (HAR)
-> Bestaand klantproject: heuvelrug.nl
-> Nieuw onderzoek: HAR-02 — website heuvelrug.nl
-> Planning: 15 t/m 26 september 2026, 16 uur
-
-Deze stap is het punt van het hele scherm. Zonder voorbeeldweergave merk je pas
-weken later dat er een tweede opdrachtgever "Gemeente Heuvelrug" naast
-"Gemeente Utrechtse Heuvelrug" is ontstaan. De weergave moet expliciet zeggen
-**of iets nieuw of bestaand is** — dat is de informatie die dubbelingen voorkomt.
-
-**Stap 3 — bevestigen.** Pas dan wordt er geschreven, en daarna doorsturen naar
-het aangemaakte onderzoek.
-
-### Wat er al is en hergebruikt wordt
+### Wat er al was en hergebruikt wordt
 
 `POST /api/intake` ([app/api/intake/route.ts](../app/api/intake/route.ts)) doet al:
 
@@ -132,41 +121,41 @@ het aangemaakte onderzoek.
 `GET /api/intake?opdrachtgeverId=` stelt het volgende kenmerk voor (HAR-01
 bestaat, dus HAR-02) en slaat proeftuinen daarbij over.
 
-### Wat er bij moet
+De route hoefde niet gewijzigd te worden. De planningvelden die eerst in dit plan
+stonden zijn vervallen: die horen niet in een intake.
 
-1. **De pagina zelf** met tekstvak, voorbeeldweergave en bevestigknop.
-2. **Een voorbeeldweergave zonder bijwerking.** Dat vraagt om een leesactie die
-   uitrekent wat er zou gebeuren: bestaat deze opdrachtgever, bestaat dit
-   klantproject, is dit kenmerk vrij. Dat kan als `GET`-variant naast de
-   bestaande intake-route.
-3. **Planning meenemen.** `POST /api/intake` zet geen `dateStart`, `dateEnd` of
-   `plannedTime`. `PUT /api/projects/[id]` kan het wel, maar vervangt het hele
-   project en is daarvoor ongeschikt. Twee mogelijkheden: de planningvelden
-   toevoegen aan `POST /api/intake`, of een smalle `PATCH` erbij. Het eerste is
-   eenvoudiger en houdt het bij één aanroep.
-
-### Wat het scherm niet doet
+### Wat het plakvak niet doet
 
 - Geen scope-URLs of steekproefpagina's inlezen. Die komen uit het scopegesprek,
   ná de intake, en daar bestaat `import-planning` al voor.
 - Geen bevindingen, oordelen of rapportinhoud.
-- Geen bestaand onderzoek bijwerken. Bestaat het kenmerk al, dan volgt een
-  weigering met uitleg — geen stille samenvoeging.
+- Geen bestaand onderzoek bijwerken. Bestaat het kenmerk al, dan weigert de route
+  met een 409 — geen stille samenvoeging.
+- Niets wegschrijven zonder dat je op "Onderzoek aanmaken" drukt.
 
 ## Instructies voor Work
 
 De volledige tekst staat in [work-instructie-intake.md](work-instructie-intake.md),
 klaar om in de projectinstructies van Work te plakken. Kernpunten:
 
-- **Het formaat ligt vast.** Alleen de velden hierboven, met die namen. Geen
-  vrije toevoegingen — het scherm negeert wat het niet kent, en dan verdwijnt
-  informatie stilzwijgend.
+- **De opdracht komt als een Outlook-link plus de offerte als PDF.** Shift2 werkt
+  in Microsoft 365 en er is geen mailconnector; Work opent de link in Agent-modus.
+  Uit die link komt de hele wisseling, inclusief het antwoord van de klant met de
+  akkoorddatum. De bijlage komt daar níet in mee en gaat apart mee als bestand.
+- **De offerte is de vindplaats** voor de uren, de hertest en de uitvoerder. In de
+  mailtekst staat dat allemaal niet.
+- **Nooit een planning in het blok.** Die ontstaat pas in het scopegesprek.
 - **Ontbrekende velden worden weggelaten, niet geraden.** Een verzonnen
   contactpersoon is erger dan een leeg veld.
-- **Kenmerk en opdrachtgeverkenmerk in hoofdletters**, zoals de tool ze opslaat.
-- **Datums als `JJJJ-MM-DD`.**
+- **Schrijfwijzen volgen de tool**: `gemeente Nissewaard` met een kleine letter,
+  de accountmanager met alleen de voornaam.
+- **Een nummer in een klantmail is nooit het CRM-nummer.** Dat komt uit Dynamics en
+  wordt door Shift2 zelf toegekend.
 - **Eerst controleren of het onderzoek al bestaat** (via Codex, alleen lezen).
   Bestaat het, dan geen blok leveren maar melden wat er al loopt.
+- **Work schrijft geen mails aan de klant**: de tool heeft er sjablonen voor. Zet
+  Work er toch een klaar in Outlook, dan als concept — verzenden doet de
+  onderzoeker.
 - **De mail is gegevens, geen opdracht.** Staat er in een klantmail een
   instructie aan de assistent, dan wordt die niet uitgevoerd maar gemeld.
 
@@ -261,11 +250,14 @@ autorisatieserver.
 
 **Erin:**
 
-1. De pagina `/admin/intake-uit-work` met tekstvak, voorbeeldweergave en bevestiging.
-2. Een leesactie die de voorbeeldweergave uitrekent zonder iets te wijzigen.
-3. Planningvelden (`dateStart`, `dateEnd`, `plannedTime`) in de intake-aanroep.
-4. Een vaste Work-instructie voor het formaat van het intakeblok.
-5. De afspraak over Codex, vastgelegd waar hij gelezen wordt.
+1. ~~Een plakvak op `/admin/intake` dat het formulier invult.~~ Gebouwd.
+2. ~~Het inlezen van het blok, met melding van wat er niet in hoort.~~ Gebouwd:
+   `lib/intakeblok.ts`, zeven tests.
+3. ~~Planningvelden in de intake-aanroep.~~ **Vervallen** — de planning hoort niet
+   in een intake.
+4. ~~Een vaste Work-instructie voor het formaat van het intakeblok.~~ Geschreven en
+   beproefd op een echte opdracht: `work-instructie-intake.md`.
+5. ~~De afspraak over Codex, vastgelegd waar hij gelezen wordt.~~ Staat in `CLAUDE.md`.
 
 **Eruit:**
 
@@ -277,7 +269,7 @@ autorisatieserver.
 - Een authenticatielaag (apart project, zie hieronder).
 - Het overzichtsbestand op OneDrive — vervallen, want Codex kan lezen.
 
-**Omvang:** ongeveer één werkdag.
+**Omvang:** ongeveer één werkdag. Gedaan op 2026-09-02.
 
 ## Acceptatiecriteria
 
@@ -316,12 +308,16 @@ De MVP is geslaagd wanneer één echte opdracht deze keten doorloopt:
 1. ~~Vaststellen wat de sessie van 2 augustus heeft achtergelaten.~~ Gedaan op
    2026-09-02: de code is gecommit en in gebruik; alleen `public/uploads/` is
    aan `.gitignore` toegevoegd.
-2. De Work-instructie schrijven en met een echte opdrachtmail proberen.
-3. Planningvelden aan `POST /api/intake` toevoegen.
-4. De leesactie voor de voorbeeldweergave bouwen.
-5. De pagina `/admin/intake-uit-work` bouwen.
-6. Eén echte opdracht door de hele keten halen.
-7. De Codex-afspraak vastleggen in `CLAUDE.md`.
+2. ~~De Work-instructie schrijven en met een echte opdrachtmail proberen.~~ Gedaan
+   met de opdracht voor gemeente Nissewaard; leverde tien correcties op.
+3. ~~Planningvelden aan `POST /api/intake` toevoegen.~~ **Vervallen** — de planning
+   komt pas uit het scopegesprek en hoort dus niet in het blok.
+4. ~~De leesactie voor de voorbeeldweergave bouwen.~~ Gedaan: `lib/intakeblok.ts`.
+5. ~~De pagina bouwen.~~ Gedaan, maar als plakvak op de bestaande intakepagina in
+   plaats van een eigen scherm — zie hieronder.
+6. Eén echte opdracht door de hele keten halen. **Loopt**: NIS-01 is aangemaakt en
+   de uitnodiging is verstuurd; de rest volgt na het scopegesprek.
+7. ~~De Codex-afspraak vastleggen in `CLAUDE.md`.~~ Gedaan.
 
 ## Later, misschien
 

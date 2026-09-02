@@ -25,6 +25,31 @@ npm run backup             # Export all data to JSON
 npm run restore            # Import data from JSON backup
 ```
 
+## Wie wat doet: Claude Code, ChatGPT Work en Codex
+
+**Al het ontwikkelwerk aan Shift2Auditor gaat naar Claude Code.** Codex mag lezen op de
+laptop -- opzoeken of een onderzoek al bestaat, bijvoorbeeld -- maar niet schrijven, niet
+migreren en geen schema wijzigen.
+
+De aanleiding: op 2 augustus 2026 stuurde een ChatGPT Work-coördinator een Codex-agent aan met
+de opdracht de audit van heuvelrug.nl uit te voeren. Er kwamen veertien gewijzigde bestanden
+terug, een toegepaste databasemigratie en de melding dat de devserver nog herstart moest
+worden -- terwijl hierboven staat dat migraties met de hand gaan en dat op Windows eerst de
+server gestopt moet worden. Dezelfde agent keurde de zoeksuggesties af onder 4.1.2, dezelfde
+niet-bestaande afkeuring die op 15 augustus al eens is teruggedraaid, en las een correcte
+`resolved`-opmerking als een gebrek omdat er geen impact bij stond.
+
+Geen van die dingen is een fout van Codex: het is een programmeur, en hem werd gevraagd iets te
+implementeren. Maar alles wat de werkwijze vastlegt -- `wcag-regels/`, `wcag-checklists/`, dit
+bestand, de schrijfregels -- zit hier en niet daar.
+
+Dit is een afspraak en geen grendel; Codex heeft technisch schrijfrechten op de hele
+projectmap. Het vangnet is `git status` na elke Work-sessie waarin Codex meedeed.
+
+**Work raakt de tool niet aan.** Een nieuwe opdracht komt binnen als intakeblok dat de
+onderzoeker plakt op `/admin/intake`. Zie `docs/shift2-work-integration-plan.md` en
+`docs/adr/0003-work-schrijft-niet-in-de-tool.md`.
+
 ## WCAG-checklists (referentiemateriaal)
 
 Bij het uitvoeren van WCAG-audits: gebruik de checklists in `wcag-checklists/`. Start met `wcag-checklists/Project_Instructie_WCAG_Audit.md` voor de werkwijze en het bevindingformat. Per SC is een `Checklist_SC_X_X_X.md` beschikbaar, voor sommige SC's ook `Richtlijnen_Grensgevallen_SC_X_X_X.md`. Gebruik `Voorbeelden_Bevindingen.md` voor schrijfstijl. Zie `wcag-checklists/README.md` voor het volledige overzicht.
