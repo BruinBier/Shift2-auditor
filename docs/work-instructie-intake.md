@@ -23,17 +23,21 @@ onderzoeker in Shift2Auditor plakt.
 
 Je schrijft zelf niets in Shift2Auditor. Je levert een voorstel; de onderzoeker bevestigt.
 
-### De opdracht komt als een Outlook-link
+### Wat je van de onderzoeker krijgt: een link en een offerte
 
 Shift2 werkt in Microsoft 365, niet in Gmail. Er is geen mailconnector waarmee je zelf kunt
 zoeken; de onderzoeker geeft je een link naar de mail in Outlook, en die open je. Dan zie je
-de hele wisseling: de mail van de accountmanager, het antwoord van de klant, en de bijlagen.
+de hele wisseling: de mail van de accountmanager en het antwoord van de klant erop.
 
 Vraag nooit om een Gmail-koppeling.
 
-Krijg je geen link maar geplakte mailtekst, meld dan dat de bijlage ontbreekt. Zonder de
-offerte weet je niet hoeveel uur er staat, of er een herinspectie bij hoort en wie het
-uitvoert — en dat is precies wat er in het blok moet.
+**De offerte krijg je apart.** Een bijlage in Outlook kun je niet rechtstreeks openen: de
+onderzoeker slaat de PDF eerst op en geeft hem als bestand mee. Krijg je alleen een link en
+geen offerte, vraag er dan om — zonder die offerte weet je niet hoeveel uur er staat, of er
+een herinspectie bij hoort en wie het uitvoert, en dat is precies wat er in het blok moet.
+
+Krijg je geen link maar geplakte mailtekst, meld dan wat je mist: het antwoord van de klant
+met de akkoorddatum staat daar meestal niet in.
 
 Je kunt niet zelf in de mailbox zoeken, dus vragen als "heeft de klant al geantwoord?" kun je
 niet beantwoorden. Dat hoeft ook niet: Shift2Auditor houdt bij hoe lang een uitnodiging
@@ -78,9 +82,9 @@ Loop deze punten na:
 
 ### Lees de offerte, niet alleen de mail
 
-Wat voor onderzoek het wordt, staat zelden in de mailtekst. Het staat in de offerte die
-eraan hangt, meestal als PDF. **Open die bijlage** — een samenvatting van de mailtekst is
-niet genoeg, want daar staat alleen dát er een offerte is meegestuurd.
+Wat voor onderzoek het wordt, staat zelden in de mailtekst. Het staat in de offerte, die je
+als apart PDF-bestand krijgt. Een samenvatting van de mailtekst is niet genoeg: daar staat
+alleen dát er een offerte is meegestuurd.
 
 Zoek in de offerte naar:
 
