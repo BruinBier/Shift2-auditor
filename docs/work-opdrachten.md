@@ -89,6 +89,14 @@ hieronder erbij hoort — een nieuwe opdracht wordt nummer 3, een antwoord over 
 een mail die terug moet nummer 7. Zo is het vanochtend ook gegaan met de opdracht voor
 Nissewaard: één mail, één blok, één handeling. Bij tien berichten is het hetzelfde, tien keer.
 
+**Wat verwerkt is, gaat uit TG.** Archiveren volstaat: Work zoekt in alle mappen, dus je vindt
+het later terug. Blijft een verwerkte mail staan, dan komt hij volgende week opnieuw in het
+overzicht.
+
+Verwerkt betekent: de handeling die eruit volgde is gedaan **én** afgevinkt in de tool. Een
+antwoord dat wel verstuurd is maar niet afgevinkt telt niet — dan loopt de bewaking niet, en
+dat is precies waarvoor de map bestaat.
+
 ## 3. Een nieuwe opdracht binnengekregen
 
 Open de mail in Outlook, kopieer de link uit de adresbalk, sla de offerte op als PDF en
