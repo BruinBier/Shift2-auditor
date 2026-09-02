@@ -114,6 +114,10 @@ export default async function AdminPage() {
      */
     where: { status: { notIn: ['Gereed', 'Geannuleerd'] }, isProeftuin: false },
     orderBy: { dateStart: 'asc' },
+    // Het CRM-nummer staat op het klantproject en niet op het onderzoek: het hoort bij de
+    // opdracht, dus een tweede onderzoek op dezelfde site erft het. De routekaart hieronder
+    // kijkt ernaar voordat de planningsmail uitgaat.
+    include: { clientProject: { select: { projectnummer: true } } },
   });
 
   const loopt: Regel[] = [];
@@ -199,6 +203,15 @@ export default async function AdminPage() {
       }
       if (!p.dateStart || !p.dateEnd) {
         actie.push({ ...basis, toelichting: 'planning bepalen' });
+        continue;
+      }
+      // Het CRM-nummer wordt door Shift2 zelf toegekend en is bij een getekende offerte vaak
+      // nog niet bekend. Dat mag de uitnodiging en het scopegesprek niet ophouden, maar bij
+      // de planningsmail wordt de opdracht officieel: er gaan datums naar de klant, en dan
+      // hoort de administratie compleet te zijn. Wachten tot het factureren betekent het
+      // achteraf uitzoeken bij een onderzoek dat al gedaan is.
+      if (!p.clientProject?.projectnummer?.trim()) {
+        actie.push({ ...basis, toelichting: 'CRM-nummer invullen' });
         continue;
       }
       if (!p.planningSent) {

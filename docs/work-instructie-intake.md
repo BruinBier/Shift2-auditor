@@ -43,16 +43,34 @@ verzonnen naam gaat de klantadministratie in.
 
 Loop deze punten na:
 
-- **Om welke organisatie gaat het?** De volledige naam zoals de organisatie zichzelf noemt:
-  "Gemeente Utrechtse Heuvelrug", niet "Heuvelrug".
-- **Welke website?** Het webadres van de site die onderzocht wordt.
-- **Is er een projectnummer uit het CRM?** Meestal een code als P02645.
+- **Om welke organisatie gaat het?** Bij een gemeente is de schrijfwijze
+  `gemeente Nissewaard`: het woord "gemeente" met een kleine letter, dan de naam. Zo staan
+  ze allemaal in de tool, en een hoofdletter levert een tweede opdrachtgever op naast de
+  bestaande. Staat de organisatie er al in, neem dan over hoe hij daar heet.
+- **Welke website?** Het webadres van de site die onderzocht wordt. Let op: dat is niet
+  altijd de hoofdsite van de organisatie. Bij Nissewaard ging het onderzoek over
+  `thuisinnissewaard.nl`, terwijl de handtekening naar `nissewaard.nl` verwees.
 - **Wie is de contactpersoon?** Naam en e-mailadres.
-- **Wie is de accountmanager?** De persoon bij Shift2 die de opdracht binnenhaalde.
+- **Wie is de accountmanager?** De collega bij Shift2 die de opdracht binnenhaalde. Alleen
+  de voornaam: in de tool staat `Katja`, niet "Katja Dorder".
 - **Wanneer moet het onderzoek plaatsvinden?** Een periode, een deadline, of een gewenste
-  opleverdatum.
-- **Hoeveel tijd staat ervoor?** Bijvoorbeeld "16 uur".
+  opleverdatum. Meestal staat dit er niet in: de planning komt pas uit het scopegesprek.
+  Laat de velden dan weg.
+- **Hoeveel tijd staat ervoor?** Bijvoorbeeld "16 uur". Ook dit volgt meestal pas later.
 - **Is het een herinspectie?** Dan hoort er een eerder onderzoek bij.
+
+### Het CRM-nummer staat nooit in de mail
+
+Het CRM-nummer komt uit Dynamics en wordt door Shift2 zelf toegekend, vaak pas nadat de
+opdracht binnen is. Het heeft de vorm `P02371`.
+
+Een nummer dat in een klantmail staat, is dus **nooit** het CRM-nummer. Bij de opdracht voor
+Nissewaard stond `E10478-101` met de tekst "in de factuur kan je het volgende nummer
+vermelden": dat is een inkoopnummer van de gemeente, geen CRM-nummer.
+
+Laat `projectnummer` weg tenzij de onderzoeker het je geeft. Noem het nummer dat je wél in
+de mail zag apart in gewone tekst, zodat het niet verloren gaat. Het CRM-nummer wordt later
+aangevuld.
 
 ### Stap 3 — bepaal het kenmerk
 
@@ -61,25 +79,36 @@ volgnummer. `HAR-02` is het tweede onderzoek voor de opdrachtgever met kenmerk `
 
 Bestaat de opdrachtgever al in Shift2Auditor, gebruik dan de afkorting die daar staat en het
 eerstvolgende vrije nummer. Bestaat de opdrachtgever nog niet, stel dan een afkorting van
-drie letters voor en begin bij `01`. Zet erbij dat het een voorstel is, zodat de onderzoeker
-het kan wijzigen.
+drie letters in hoofdletters voor en begin bij `01` — `NIS` voor gemeente Nissewaard. Zet
+erbij dat het een voorstel is, zodat de onderzoeker het kan wijzigen.
 
-Kenmerken schrijf je in hoofdletters.
+In de bestaande lijst staan een paar opdrachtgevers met hun naam voluit als kenmerk
+(`Heerlen`, `Wierden`). Volg dat niet na: voor een nieuwe opdrachtgever is drie letters de
+regel.
 
 ### Stap 4 — lever het blok
 
-Geef het blok als JSON in een codeblok, zodat het in één keer te kopiëren is:
+Geef het blok als JSON in een codeblok, zodat het in één keer te kopiëren is. Dit is het blok
+zoals het er voor de opdracht van Nissewaard uitzag — een nieuwe opdrachtgever, zonder
+planning, zonder CRM-nummer:
 
 ```json
 {
-  "kenmerk": "HAR-02",
-  "url": "https://www.heuvelrug.nl",
-  "opdrachtgeverNaam": "Gemeente Utrechtse Heuvelrug",
-  "opdrachtgeverKenmerk": "HAR",
-  "projectnummer": "P02645",
-  "contactnaam": "Anne de Vries",
-  "contactEmail": "a.devries@heuvelrug.nl",
-  "accountmanager": "Marco",
+  "kenmerk": "NIS-01",
+  "url": "https://www.thuisinnissewaard.nl",
+  "opdrachtgeverNaam": "gemeente Nissewaard",
+  "opdrachtgeverKenmerk": "NIS",
+  "contactnaam": "Rosalie Kruijmel",
+  "contactEmail": "r.kruijmel@nissewaard.nl",
+  "accountmanager": "Katja"
+}
+```
+
+Is er wél een planning en een CRM-nummer bekend, dan komen die velden erbij:
+
+```json
+{
+  "projectnummer": "P02371",
   "dateStart": "2026-09-15",
   "dateEnd": "2026-09-26",
   "plannedTime": "16 uur"
