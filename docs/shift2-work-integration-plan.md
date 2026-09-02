@@ -155,8 +155,8 @@ bestaat, dus HAR-02) en slaat proeftuinen daarbij over.
 
 ## Instructies voor Work
 
-Work heeft een vaste instructie nodig om het blok in de juiste vorm te leveren.
-Kernpunten:
+De volledige tekst staat in [work-instructie-intake.md](work-instructie-intake.md),
+klaar om in de projectinstructies van Work te plakken. Kernpunten:
 
 - **Het formaat ligt vast.** Alleen de velden hierboven, met die namen. Geen
   vrije toevoegingen — het scherm negeert wat het niet kent, en dan verdwijnt
