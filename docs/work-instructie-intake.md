@@ -53,10 +53,7 @@ Loop deze punten na:
 - **Wie is de contactpersoon?** Naam en e-mailadres.
 - **Wie is de accountmanager?** De collega bij Shift2 die de opdracht binnenhaalde. Alleen
   de voornaam: in de tool staat `Katja`, niet "Katja Dorder".
-- **Wanneer moet het onderzoek plaatsvinden?** Een periode, een deadline, of een gewenste
-  opleverdatum. Meestal staat dit er niet in: de planning komt pas uit het scopegesprek.
-  Laat de velden dan weg.
-- **Hoeveel tijd staat ervoor?** Bijvoorbeeld "16 uur". Ook dit volgt meestal pas later.
+- **Hoeveel tijd staat ervoor?** Bijvoorbeeld "16 uur". Staat in de offerte, niet in de mail.
 - **Is het een herinspectie?** Dan hoort er een eerder onderzoek bij.
 
 ### Lees de offerte, niet alleen de mail
@@ -110,8 +107,8 @@ regel.
 ### Stap 4 — lever het blok
 
 Geef het blok als JSON in een codeblok, zodat het in één keer te kopiëren is. Dit is het blok
-zoals het er voor de opdracht van Nissewaard uitzag — een nieuwe opdrachtgever, zonder
-planning, zonder CRM-nummer:
+voor de opdracht van Nissewaard: een nieuwe opdrachtgever, een contentonderzoek met
+herinspectie uit de offerte, geen planning en geen CRM-nummer.
 
 ```json
 {
@@ -121,32 +118,31 @@ planning, zonder CRM-nummer:
   "opdrachtgeverKenmerk": "NIS",
   "contactnaam": "Rosalie Kruijmel",
   "contactEmail": "r.kruijmel@nissewaard.nl",
-  "accountmanager": "Katja"
-}
-```
-
-Is er wél een planning en een CRM-nummer bekend, dan komen die velden erbij:
-
-```json
-{
-  "projectnummer": "P02371",
-  "dateStart": "2026-09-15",
-  "dateEnd": "2026-09-26",
-  "plannedTime": "16 uur"
-}
-```
-
-En staat er in de offerte een herinspectie of een uitvoering door Cardan, dan deze:
-
-```json
-{
+  "accountmanager": "Katja",
   "hasReinspection": true,
-  "reinspectionWeeks": 12,
-  "uitgevoerdDoor": "Cardan"
+  "reinspectionWeeks": 12
 }
 ```
 
-`uitgevoerdDoor` laat je weg als Shift2 het zelf doet — dat is de standaard.
+### Zet er nooit een planning in
+
+`dateStart` en `dateEnd` horen niet in het intakeblok van een nieuwe opdracht. De planning
+ontstaat pas in het scopegesprek: eerst gaat er een uitnodiging voor een Teams-gesprek uit,
+daarna volgt het gesprek, en pas daarna worden de datums bepaald en gaat de planningsmail
+naar de klant.
+
+Staat er in de mail toch een datum of een gewenste periode, noem die dan in gewone tekst
+onder het blok. Dan neemt de onderzoeker hem mee naar het gesprek, in plaats van dat hij als
+vastgestelde planning in de tool belandt.
+
+`plannedTime` mag wel mee als het in de offerte staat: dat is de omvang van de opdracht, geen
+planning.
+
+### De velden uit de offerte
+
+`hasReinspection` en `reinspectionWeeks` staan hierboven al in het voorbeeld. Voert Cardan het
+onderzoek uit, dan komt daar `"uitgevoerdDoor": "Cardan"` bij. Doet Shift2 het zelf, laat het
+veld dan weg — dat is de standaard.
 `reinspectionWeeks` is 12 als er wel een herinspectie is afgesproken maar geen termijn
 genoemd wordt.
 
@@ -164,17 +160,39 @@ Regels voor het blok:
 - **Bij een nieuwe opdrachtgever ook verplicht:** `opdrachtgeverNaam` en
   `opdrachtgeverKenmerk`.
 - **Velden die je niet weet, laat je weg.** Niet leeg meesturen, niet raden.
-- **Datums als `JJJJ-MM-DD`.**
 - **`url` met `https://` ervoor.**
 
 Zet onder het blok in gewone taal wat er ontbreekt en wat je hebt aangenomen. Bijvoorbeeld:
-*"Het CRM-nummer stond niet in de mail. De einddatum is berekend op twee weken na de start,
-want er stond alleen een startweek."*
+*"Het CRM-nummer moet nog worden toegekend. In de mail stond E10478-101, maar dat is het
+inkoopnummer van de gemeente voor op de factuur. In de offerte staat een contentonderzoek
+met herinspectie; de termijn staat er niet bij, dus ik houd 12 weken aan."*
 
-### Stap 5 — de planningsmail
+### Stap 5 — de uitnodiging voor het scopegesprek
 
-Nadat de onderzoeker het onderzoek heeft aangemaakt, stel je de planningsmail aan de klant
-op. Die verstuur je niet zelf: de onderzoeker leest hem na en verstuurt hem.
+Nadat de onderzoeker het onderzoek heeft aangemaakt, stel je de uitnodiging aan de
+contactpersoon op. Dat is een korte mail met het verzoek om een Teams-gesprek van een half
+uur over scope en planning. Niet de planningsmail — die komt later, en er is nog geen
+planning om te versturen.
+
+De mail zegt kort dat er via sales een aanvraag binnenkwam voor een toegankelijkheidsonderzoek
+voor de betreffende website, dat je scope en planning graag doorspreekt, en vraagt wanneer het
+de ontvanger uitkomt. Het factuur- of inkoopnummer uit de opdrachtmail hoort er niet in: dat
+gaat over de administratie en loopt via de accountmanager.
+
+Je verstuurt hem niet zelf: de onderzoeker leest hem na en verstuurt hem.
+
+### Wat er daarna gebeurt, en waarom jij daar niets doet
+
+De rest van het traject loopt in Shift2Auditor, in deze volgorde:
+
+```
+uitnodiging verstuurd -> scopegesprek gehouden -> transcript vastgelegd
+   -> scope afgemaakt -> planning bepaald -> CRM-nummer ingevuld
+   -> planningsmail verstuurd -> akkoord van de klant
+```
+
+Pas bij die laatste twee stappen komt er weer een mail aan de klant. Vraagt de onderzoeker je
+om de planningsmail, dan zijn de datums inmiddels bekend en krijg je ze erbij.
 
 ## Wat je niet doet
 
