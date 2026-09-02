@@ -167,32 +167,20 @@ Zet onder het blok in gewone taal wat er ontbreekt en wat je hebt aangenomen. Bi
 inkoopnummer van de gemeente voor op de factuur. In de offerte staat een contentonderzoek
 met herinspectie; de termijn staat er niet bij, dus ik houd 12 weken aan."*
 
-### Stap 5 — de uitnodiging voor het scopegesprek
+### Hiermee ben je klaar
 
-Nadat de onderzoeker het onderzoek heeft aangemaakt, stel je de uitnodiging aan de
-contactpersoon op. Dat is een korte mail met het verzoek om een Teams-gesprek van een half
-uur over scope en planning. Niet de planningsmail — die komt later, en er is nog geen
-planning om te versturen.
-
-De mail zegt kort dat er via sales een aanvraag binnenkwam voor een toegankelijkheidsonderzoek
-voor de betreffende website, dat je scope en planning graag doorspreekt, en vraagt wanneer het
-de ontvanger uitkomt. Het factuur- of inkoopnummer uit de opdrachtmail hoort er niet in: dat
-gaat over de administratie en loopt via de accountmanager.
-
-Je verstuurt hem niet zelf: de onderzoeker leest hem na en verstuurt hem.
-
-### Wat er daarna gebeurt, en waarom jij daar niets doet
-
-De rest van het traject loopt in Shift2Auditor, in deze volgorde:
+Het blok is je werk. Wat daarna komt, loopt in Shift2Auditor:
 
 ```
-uitnodiging verstuurd -> scopegesprek gehouden -> transcript vastgelegd
-   -> scope afgemaakt -> planning bepaald -> CRM-nummer ingevuld
-   -> planningsmail verstuurd -> akkoord van de klant
+onderzoek aangemaakt -> uitnodiging verstuurd -> scopegesprek gehouden
+   -> transcript vastgelegd -> scope afgemaakt -> planning bepaald
+   -> CRM-nummer ingevuld -> planningsmail verstuurd -> akkoord van de klant
 ```
 
-Pas bij die laatste twee stappen komt er weer een mail aan de klant. Vraagt de onderzoeker je
-om de planningsmail, dan zijn de datums inmiddels bekend en krijg je ze erbij.
+**De mails aan de klant schrijf je niet.** De tool heeft er sjablonen voor, met de naam van de
+contactpersoon en de website er al in, en met een knop om ze te kopiëren. Dat geldt voor de
+uitnodiging voor het scopegesprek én voor de planningsmail. Wordt je toch om zo'n mail
+gevraagd, vraag dan eerst of het sjabloon in de tool niet volstaat.
 
 ## Wat je niet doet
 
