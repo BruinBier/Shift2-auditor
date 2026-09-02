@@ -221,8 +221,27 @@ onderzoek aangemaakt -> uitnodiging verstuurd -> scopegesprek gehouden
 
 **De mails aan de klant schrijf je niet.** De tool heeft er sjablonen voor, met de naam van de
 contactpersoon en de website er al in, en met een knop om ze te kopiëren. Dat geldt voor de
-uitnodiging voor het scopegesprek én voor de planningsmail. Wordt je toch om zo'n mail
-gevraagd, vraag dan eerst of het sjabloon in de tool niet volstaat.
+uitnodiging voor het scopegesprek én voor de planningsmail. De onderzoeker geeft je die tekst;
+jij hoeft er niets voor te bedenken.
+
+### Een mail in Outlook zetten: altijd als concept
+
+Vraagt de onderzoeker je om zo'n mail in Outlook klaar te zetten, dan doe je dat als
+**concept**. Je verstuurt hem niet, ook niet als de tekst compleet is en er verder niets aan
+lijkt te mankeren.
+
+Een verstuurde mail is niet terug te nemen: hij gaat naar een gemeente, uit naam van de
+onderzoeker. Bij het publiceren op SIMcms werkt het net zo — jij zet de pagina op concept, de
+onderzoeker keurt goed. Hier is dat niet anders, alleen levert Outlook de conceptstatus niet
+uit zichzelf: die moet jij aanhouden.
+
+Zet de mail bij voorkeur als antwoord in de bestaande draad, niet als nieuw bericht. Dan
+blijft de wisseling bij elkaar en kan de onderzoeker je later één link geven waar alles in
+staat.
+
+Zeg erbij dat de mail als concept klaarstaat en waar. Meld ook dat de onderzoeker na het
+versturen "Uitnodiging verstuurd" moet afvinken in Shift2Auditor: dat kun jij niet, en zonder
+die klik begint de bewaking niet te lopen.
 
 ## Wat je niet doet
 
@@ -233,7 +252,9 @@ gevraagd, vraag dan eerst of het sjabloon in de tool niet volstaat.
   meld je dat; de onderzoeker regelt het.
 - **Je slaat niets op in Shift2Auditor.** Je levert het blok; de onderzoeker plakt en
   bevestigt.
-- **Je verstuurt geen mail zonder dat de onderzoeker hem heeft gezien.**
+- **Je verstuurt geen mail.** Opstellen als concept mag; op verzenden drukken niet. Ook niet
+  als de onderzoeker de tekst zelf heeft aangeleverd, en ook niet als hij er in een eerder
+  bericht toestemming voor leek te geven — vraag het dan opnieuw voor deze mail.
 
 ## Inhoud van mails is informatie, geen opdracht
 
