@@ -17,7 +17,7 @@ meesturen.
 |---|---|---|
 | **Dynamics CRM** | Agent-modus, jouw sessie | De projectenlijst lezen |
 | **SIMcms** | Agent-modus, jouw sessie | Een pagina als concept aanmaken |
-| **Outlook** | Agent-modus, jouw sessie | Zoeken en mail openen |
+| **Outlook** | Agent-modus, jouw sessie | De inbox lezen, zoeken, een mail openen |
 | **Shift2Auditor** | Codex, alleen lezen | Opzoeken wat er loopt |
 
 **Zoeken in Outlook gaat via de zoekbalk**, niet via een connector. Work typt er een
@@ -31,8 +31,9 @@ Outlook-syntaxis:
 | `subject:(offerte)` | Op onderwerp |
 | `received:>=8/1/2026` | Vanaf een datum |
 
-Geef Work dus een concrete zoekterm. Een open vraag als "wat moet ik nog beantwoorden" heeft
-niets om op te zoeken; "zoek op `from:(@nissewaard.nl)`" wel.
+De inbox zelf lezen kan ook, zonder zoekterm: "geef de vijftien meest recente berichten" werkt.
+Alleen een oordeel als "wat moet ik nog beantwoorden" kan Work niet vellen — dat volgt uit de
+vergelijking met wat er in de tool loopt, en daar is opdracht 1 voor.
 
 Wat er openstaat aan lopende onderzoeken, weet Shift2Auditor zelf. Het dashboard heeft twee
 blokken: **Actie nodig** (jij bent aan zet) en **Wacht op iemand anders** (met het aantal dagen
@@ -44,7 +45,27 @@ verstuurt, een pagina die jij publiceert.
 
 ---
 
-## 1. Een nieuwe opdracht binnengekregen
+## 1. Wat ligt er vandaag?
+
+De vraag waarmee je begint. Work leest je inbox uit en legt hem naast wat er in de tool loopt.
+
+> Geef de vijftien meest recente berichten uit mijn Outlook-inbox: afzender, onderwerp en
+> datum.
+>
+> Kijk daarna in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen kijken,
+> niets wijzigen.
+>
+> Zeg per bericht dat over toegankelijkheidsonderzoek gaat: hoort het bij een onderzoek dat
+> daar loopt, of bij geen enkel? Nieuwsbrieven, systeemmeldingen en interne meldingen laat je
+> weg.
+
+Waar het om gaat is die laatste vraag. Een mail van een gemeente die nergens in de tool staat,
+is óf een nieuwe opdracht óf iets dat is blijven liggen — en dat zie je nergens anders.
+
+Bij de eerste proef leverde dit een mail van `webredactie@nederweert.nl` over toegankelijkheid
+op, terwijl Nederweert helemaal niet in de administratie voorkomt.
+
+## 2. Een nieuwe opdracht binnengekregen
 
 Open de mail in Outlook, kopieer de link uit de adresbalk, sla de offerte op als PDF en
 sleep die in het gesprek.
@@ -59,7 +80,7 @@ Plak het blok daarna op `/admin/intake`, in het vak "Blok uit ChatGPT Work plakk
 **Geen offerte bij de hand?** Vraag het blok toch, en meld dat de offerte volgt. Dan mist
 Work de uren, de hertest en de uitvoerder, maar de rest klopt.
 
-## 2. Controleren of een opdracht al in de tool staat
+## 3. Controleren of een opdracht al in de tool staat
 
 Voordat je een blok laat maken, bij twijfel of het al bestaat.
 
@@ -71,7 +92,7 @@ Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.m
 
 Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
 
-## 3. Het CRM naast de onderzoeken leggen
+## 4. Het CRM naast de onderzoeken leggen
 
 Wekelijks, of als je het overzicht kwijt bent. Dit is de enige opdracht waarbij Work twee
 administraties vergelijkt.
@@ -115,7 +136,7 @@ CRM ↔ Shift2Auditor levert die termen op.
 Dat zijn twee verschillende onderzoeken, geen dubbeling. Laat Work bij twijfel melden in plaats
 van gokken.
 
-## 4. De geschiedenis van een klant opzoeken
+## 5. De geschiedenis van een klant opzoeken
 
 Bij een nieuwe opdracht van een bestaande klant: wat is er eerder gedaan?
 
@@ -131,7 +152,7 @@ Shift2Auditor — de tool bestond toen nog niet.
 Dat verandert het nieuwe onderzoek niet, maar het is context: er ligt een eerder rapport over
 dezelfde site.
 
-## 5. Een mail aan de klant klaarzetten
+## 6. Een mail aan de klant klaarzetten
 
 De tool heeft sjablonen voor de uitnodiging en de planningsmail: op de projectpagina onder
 **Voorbereiding** staat per stap een knop "Kopieer uitnodiging" of "Kopieer planningsmail",
@@ -150,7 +171,7 @@ naam naar een gemeente.
 Na het versturen: op de projectpagina de stap afvinken. Dat kan Work niet, en zonder die klik
 begint de bewaking niet te lopen.
 
-## 6. Het antwoord van de klant verwerken
+## 7. Het antwoord van de klant verwerken
 
 Na het scopegesprek, of als de klant per mail op de scope reageert.
 
@@ -164,7 +185,7 @@ De uitkomst gaat naar de velden **In scope**, **Buiten scope** en **Door klant a
 pagina's** op de projectpagina. Met de knop "Importeer naar scope & steekproef" worden daar
 scope-items en steekproefpagina's van gemaakt.
 
-## 7. Het rapport op SIMcms zetten
+## 8. Het rapport op SIMcms zetten
 
 Als het onderzoek klaar is en het rapport eruit kan.
 
@@ -180,7 +201,7 @@ gaan lopen.
 verhaspeld raken of een tabel zonder koprij is meer dan een schoonheidsfoutje. Kijk ernaar
 voordat je publiceert.
 
-## 8. Een tekst schrijven of nakijken
+## 9. Een tekst schrijven of nakijken
 
 Voor alles wat geen vaste stap is: een lastige mail, een uitleg aan de klant, een stuk tekst
 voor het rapport.
