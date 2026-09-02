@@ -47,6 +47,17 @@ Kort: op de homepage header, main en footer; op elk ander sample alleen de main-
 Lees dat bestand voordat je aan een criterium begint, anders rapporteer je sitebrede
 problemen bij elk sample opnieuw.
 
+## Wanneer is een steekproef compleet?
+
+`Shift2_Dekkingslijst_Steekproef.md` is het stopcriterium bij het samenstellen van een
+steekproef. Niet het aantal pagina's bepaalt wanneer je klaar bent, maar de dekking:
+doorgaan tot elk gebied uit groep 2 dat de site heeft, minstens één keer voorkomt. Een
+pagina met een tabel, een galerij, een video en een PDF-link dekt vier gebieden tegelijk;
+dan is de steekproef korter, en dat is de bedoeling.
+
+De lijst is afgeleid uit de regelbestanden zelf. Komt er een deelgebied bij, dan hoort het
+daar ook.
+
 ## Voldoet of niet aanwezig?
 
 `Shift2_Voldoet_Of_Niet_Aanwezig.md` legt uit wanneer een criterium gehaald is en wanneer het
