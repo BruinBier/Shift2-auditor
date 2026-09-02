@@ -85,3 +85,21 @@ Uitspraak over volledigheid, per sample: geen enkel sampleoordeel staat nog op
 "niet te bepalen" en er zijn geen openstaande voorstellen. Volgt uit de
 sampleoordelen — het is geen vinkje dat de onderzoeker zelf zet.
 _Avoid_: Afgerond, klaar, gecontroleerd
+
+**Intakeblok**:
+Het blok gegevens waarmee een nieuw onderzoek de tool binnenkomt: kenmerk,
+website, opdrachtgever, contactpersoon en planning. Opgesteld door ChatGPT Work
+uit de opdrachtmail, met de hand geplakt in de tool. Een voorstel dat nog nergens
+bestaat — pas na bevestiging is het een onderzoek. Zie
+`docs/adr/0003-work-schrijft-niet-in-de-tool.md`.
+_Avoid_: Import, payload, intake-JSON
+
+**Opdrachtgever, klantproject, onderzoek**:
+Drie niveaus die niet door elkaar mogen lopen. De opdrachtgever is de
+klantorganisatie (gemeente, bedrijf) met een eigen kenmerk: HAR. Het klantproject
+is de groepering waaronder onderzoeken vallen, meestal één website, met het
+CRM-nummer: P02645. Het onderzoek is het losse WCAG-onderzoek met een eigen
+kenmerk uit de reeks van de opdrachtgever: HAR-02. Eén opdrachtgever kan meerdere
+klantprojecten hebben, en elk klantproject meerdere onderzoeken — een nulmeting,
+een herinspectie, een deelonderzoek.
+_Avoid_: Klant, project, audit (zonder aan te geven welk niveau)

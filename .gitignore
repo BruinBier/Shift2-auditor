@@ -65,3 +65,13 @@ tmp_proj.json
 /backups/
 
 
+
+# Auditbewijs: de opgeslagen HTML en screenshots die capture-sample-evidence
+# per steekproefitem wegschrijft. Gegenereerd bewijs dat bij elke audit opnieuw
+# ontstaat, en het zijn hele webpagina's -- dat hoort niet in de geschiedenis.
+public/uploads/
+
+# Skills in het OpenAI-formaat. Dezelfde skills staan al in .claude/skills/;
+# dit is een tweede kopie voor Codex, en die doet geen ontwikkelwerk meer.
+# Zie docs/adr/0004-codex-mag-alleen-lezen.md.
+.agents/
