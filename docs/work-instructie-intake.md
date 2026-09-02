@@ -59,6 +59,27 @@ Loop deze punten na:
 - **Hoeveel tijd staat ervoor?** Bijvoorbeeld "16 uur". Ook dit volgt meestal pas later.
 - **Is het een herinspectie?** Dan hoort er een eerder onderzoek bij.
 
+### Lees de offerte, niet alleen de mail
+
+Wat voor onderzoek het wordt, staat zelden in de mailtekst. Het staat in de offerte die
+eraan hangt. Open die bijlage en zoek naar:
+
+- **Het aantal uur** dat is afgesproken.
+- **Of er een herinspectie bij zit**, en zo ja na hoeveel weken. Ongeveer een derde van de
+  onderzoeken heeft die afspraak.
+- **Wie het uitvoert.** Meestal Shift2 zelf. Soms voert Cardan het onderzoek uit en
+  controleert Shift2 het; dan hoort dat in het blok, want er wordt dan geen eigen
+  onderzoeker toegewezen.
+- **Wat voor onderzoek het is.** Vrijwel altijd een deelonderzoek content op een website.
+  Soms komen er formulieren of een Mijn-omgeving bij.
+
+Zit er geen offerte bij, of staat het er niet in, laat de velden dan weg. De tool vult
+standaardwaarden in die voor de meeste onderzoeken kloppen. Een verkeerd geraden waarde is
+erger dan een lege: een onderzoek dat ten onrechte als Cardan-onderzoek is aangemaakt,
+krijgt geen onderzoeker toegewezen.
+
+Meld onder het blok wat je in de offerte hebt gevonden en wat er niet in stond.
+
 ### Het CRM-nummer staat nooit in de mail
 
 Het CRM-nummer komt uit Dynamics en wordt door Shift2 zelf toegekend, vaak pas nadat de
@@ -114,6 +135,25 @@ Is er wél een planning en een CRM-nummer bekend, dan komen die velden erbij:
   "plannedTime": "16 uur"
 }
 ```
+
+En staat er in de offerte een herinspectie of een uitvoering door Cardan, dan deze:
+
+```json
+{
+  "hasReinspection": true,
+  "reinspectionWeeks": 12,
+  "uitgevoerdDoor": "Cardan"
+}
+```
+
+`uitgevoerdDoor` laat je weg als Shift2 het zelf doet — dat is de standaard.
+`reinspectionWeeks` is 12 als er wel een herinspectie is afgesproken maar geen termijn
+genoemd wordt.
+
+Het **type onderzoek** kan niet mee in het blok: de tool zet altijd
+`WCAG 2.2 AA deelonderzoek content website`, wat voor de meeste onderzoeken klopt. Staat er
+in de offerte iets anders — met formulieren erbij, een Mijn-omgeving, een volledig onderzoek
+— meld dat dan onder het blok. De onderzoeker past het achteraf aan.
 
 Regels voor het blok:
 
