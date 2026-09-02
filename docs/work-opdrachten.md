@@ -7,17 +7,26 @@ Werkt alleen als de projectinstructies uit [work-instructie-intake.md](work-inst
 in Work staan. Zonder die instructies kent Work de werkwijze niet en moet je hem elke keer
 meesturen.
 
-## Wat Work wel en niet kan
+## Waar Work bij kan
 
-**Work kan niet in je mailbox zoeken.** Er is geen mailconnector; Work komt via Agent-modus
-bij Outlook met jouw ingelogde sessie. Het opent dus alleen wat jij aanwijst met een link.
-Vragen als "welke mails moet ik beantwoorden" kan het niet beantwoorden.
+| Bron | Hoe | Wat het kan |
+|---|---|---|
+| **Dynamics CRM** | Agent-modus, jouw sessie | De projectenlijst lezen |
+| **SIMcms** | Agent-modus, jouw sessie | Een pagina als concept aanmaken |
+| **Outlook** | Agent-modus, jouw sessie | Eén mail openen die jij aanwijst |
+| **Shift2Auditor** | Codex, alleen lezen | Opzoeken wat er loopt |
 
-Wat er wél openstaat, weet Shift2Auditor. Het dashboard heeft twee blokken: **Actie nodig**
-(jij bent aan zet) en **Wacht op iemand anders** (met het aantal dagen erbij). Na veertien
-dagen zonder reactie verschuift een onderzoek van het tweede blok naar het eerste.
+**Werk kan niet in je mailbox zoeken.** Er is geen mailconnector, dus het opent alleen wat je
+aanwijst met een link. Vragen als "welke mails moet ik nog beantwoorden" kan het niet
+beantwoorden.
 
-**Work raakt de tool niet aan.** Het levert een blok dat jij plakt op `/admin/intake`.
+Wat er openstaat aan lopende onderzoeken, weet Shift2Auditor wel. Het dashboard heeft twee
+blokken: **Actie nodig** (jij bent aan zet) en **Wacht op iemand anders** (met het aantal dagen
+erbij). Na veertien dagen zonder reactie verschuift een onderzoek van het tweede blok naar het
+eerste.
+
+**Work schrijft nergens.** Het levert voorstellen: een blok dat jij plakt, een mail die jij
+verstuurt, een pagina die jij publiceert.
 
 ---
 
@@ -48,7 +57,43 @@ Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.m
 
 Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
 
-## 3. Een mail aan de klant klaarzetten
+## 3. Het CRM naast de onderzoeken leggen
+
+Wekelijks, of als je het overzicht kwijt bent. Dit is de enige opdracht waarbij Work twee
+administraties vergelijkt.
+
+> Vergelijk twee lijsten voor me.
+>
+> **De eerste** staat in Dynamics, in de weergave "Mijn actieve projecten":
+> https://cnxlm.crm4.dynamics.com/main.aspx?appid=7e1d990e-4bc4-ef11-b8e9-000d3aa94544&pagetype=entitylist&etn=pm_project&viewid=79626e75-2c8b-f111-ab0f-000d3a44acb4&viewType=4230
+>
+> **De tweede** staat in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen
+> kijken, niets wijzigen.
+>
+> Niet elk CRM-project levert een onderzoek op: abonnementen, strippenkaarten en
+> "Toegankelijkheid Zilver" zijn doorlopende contracten. Kijk alleen naar projecten die een
+> contentonderzoek, nulmeting of herinspectie beschrijven.
+>
+> Meld drie dingen:
+> 1. CRM-projecten voor een onderzoek dat nog niet in Shift2Auditor staat.
+> 2. Onderzoeken in Shift2Auditor waarvan het CRM-nummer ontbreekt.
+> 3. Projecten met negatieve resterende uren.
+>
+> Zet er per punt bij om welke klant en welk projectnummer het gaat. Wijzig niets.
+
+Punt 2 is de reden dat dit ertoe doet: het CRM-nummer moet er zijn voordat de planningsmail
+uitgaat, en het dashboard houdt je daaraan. Deze opdracht vertelt je welk nummer je moet
+opzoeken.
+
+Punt 3 staat nergens anders. Negatieve uren betekent dat een project over zijn budget heen is;
+dat zie je in Shift2Auditor niet.
+
+**Let op de match.** Dezelfde klant kan meerdere sites hebben — Zoetermeer heeft in het CRM
+"omgevingsdocumenten.zoetermeer.nl" terwijl er in de tool ZOET-01 voor bo.zoetermeer.nl loopt.
+Dat zijn twee verschillende onderzoeken, geen dubbeling. Laat Work bij twijfel melden in plaats
+van gokken.
+
+## 4. Een mail aan de klant klaarzetten
 
 De tool heeft sjablonen voor de uitnodiging en de planningsmail: op de projectpagina onder
 **Voorbereiding** staat per stap een knop "Kopieer uitnodiging" of "Kopieer planningsmail",
@@ -67,7 +112,7 @@ naam naar een gemeente.
 Na het versturen: op de projectpagina de stap afvinken. Dat kan Work niet, en zonder die klik
 begint de bewaking niet te lopen.
 
-## 4. Het antwoord van de klant verwerken
+## 5. Het antwoord van de klant verwerken
 
 Na het scopegesprek, of als de klant per mail op de scope reageert.
 
@@ -81,7 +126,7 @@ De uitkomst gaat naar de velden **In scope**, **Buiten scope** en **Door klant a
 pagina's** op de projectpagina. Met de knop "Importeer naar scope & steekproef" worden daar
 scope-items en steekproefpagina's van gemaakt.
 
-## 5. Het rapport op SIMcms zetten
+## 6. Het rapport op SIMcms zetten
 
 Als het onderzoek klaar is en het rapport eruit kan.
 
@@ -97,7 +142,7 @@ gaan lopen.
 verhaspeld raken of een tabel zonder koprij is meer dan een schoonheidsfoutje. Kijk ernaar
 voordat je publiceert.
 
-## 6. Een tekst schrijven of nakijken
+## 7. Een tekst schrijven of nakijken
 
 Voor alles wat geen vaste stap is: een lastige mail, een uitleg aan de klant, een stuk tekst
 voor het rapport.
