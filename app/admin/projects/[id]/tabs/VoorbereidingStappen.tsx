@@ -39,7 +39,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       ? `Via onze salesafdeling heb ik een aanvraag binnengekregen voor een toegankelijkheidsonderzoek voor ${scopeUrl || '[website]'}`
       : `Naar aanleiding van je akkoord kan het toegankelijkheidsonderzoek voor ${scopeUrl || '[website]'} van start.`,
     '',
-    'Ik bespreek graag kort de scope en planning met je door: wat we wel en niet meenemen in het onderzoek, en wanneer het uitkomt.',
+    'Ik bespreek graag kort de scope en planning met je door: wat we wel en niet meenemen in het onderzoek, en wanneer we het kunnen inplannen.',
     '',
     'Laat je me weten wanneer het jou uitkomt om hierover kort te overleggen?',
   ].join('\n');
