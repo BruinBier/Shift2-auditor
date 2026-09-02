@@ -111,6 +111,32 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     return regels.join('\n');
   })();
 
+  // Uitnodiging voor het adviesgesprek, ná de oplevering van het rapport. De planningsmail
+  // heeft dit gesprek al aangekondigd; deze mail maakt er een afspraak van.
+  //
+  // Na een nulmeting gaat het gesprek over wat er hersteld moet worden vóór de hertest; na
+  // de hertest zelf is er niets meer te herstellen en gaat het over het eindresultaat.
+  const isHerinspectie = Boolean(project.parentProjectId);
+  const adviesuitnodiging = [
+    `Dag ${contactnaam || '[naam]'},`,
+    '',
+    `Het toegankelijkheidsonderzoek van ${scopeUrl.split('\n')[0]?.replace(/^[-*•]\s*/, '').trim() || '[website]'} is afgerond en het rapport heb je van ons ontvangen.`,
+    '',
+    isHerinspectie
+      ? 'Ik neem de resultaten graag met je door. In dat gesprek lopen we langs wat er is opgelost en wat er eventueel nog openstaat.'
+      : 'Zoals afgesproken neem ik de resultaten graag met je door. In dat gesprek lopen we de bevindingen langs en bespreken we de vervolgstappen richting de hertest.',
+    '',
+    'Laat je me weten wanneer het jou uitkomt?',
+  ].join('\n');
+
+  // Welke stap welke mailtekst heeft. Een stap die er niet in staat krijgt geen
+  // kopieerknop -- dat is het verschil tussen "hier gaat een mail uit" en "dit vink je af".
+  const MAILS: Record<string, { knop: string; tekst: string }> = {
+    invitationSent: { knop: 'Kopieer uitnodiging', tekst: uitnodiging },
+    planningSent: { knop: 'Kopieer planningsmail', tekst: planningsmail },
+    adviceCallInvited: { knop: 'Kopieer uitnodiging adviesgesprek', tekst: adviesuitnodiging },
+  };
+
   const kopieer = async (tekst: string, welke: string) => {
     try {
       await navigator.clipboard.writeText(tekst);
@@ -120,6 +146,13 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       alert('Kopiëren is niet gelukt. Selecteer de tekst en kopieer met Ctrl+C.');
     }
   };
+
+  // Voert een ander bureau het onderzoek uit, dan loopt de voorbereiding anders: er is
+  // geen scopegesprek en geen scope om in te vullen, want dat doet het bureau. Wat er
+  // overblijft is de planning regelen -- verzoek indienen, wachten op een datum, en die
+  // doorgeven aan de klant. Dezelfde velden, andere namen en drie stappen minder.
+  const viaBureau = Boolean(project.isExternalProject);
+  const bureau = project.externalBureau || 'het bureau';
 
   const stappen = [
     {
@@ -131,36 +164,43 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     },
     {
       key: 'invitationSent',
-      label: 'Uitnodiging verstuurd',
+      label: viaBureau ? `Planningsverzoek ingediend bij ${bureau}` : 'Uitnodiging verstuurd',
       klaar: Boolean(project.invitationSent),
       datum: project.invitationSent,
       handmatig: true,
     },
-    {
-      key: 'scopeCallHeld',
-      label: 'Scopegesprek gevoerd',
-      klaar: Boolean(project.scopeCallHeld),
-      datum: project.scopeCallHeld,
-      handmatig: true,
-    },
-    {
-      key: 'transcript',
-      label: 'Transcript toegevoegd',
-      klaar: Boolean(project.scopeCallTranscript?.trim()),
-      datum: null,
-      handmatig: false,
-    },
-    {
-      // De website staat er al vanaf de intake; de scope is pas af als na het
-      // scopegesprek ook de overige informatie is ingevuld, met de wettelijke
-      // uitzonderingen. "Buiten scope" telt niet mee: dat mag leeg blijven als
-      // er niets specifieks is uitgesloten.
-      key: 'scope',
-      label: 'Scope ingevuld',
-      klaar: Boolean(project.scopeInScope?.trim() && project.scopeInfo?.trim()),
-      datum: null,
-      handmatig: false,
-    },
+    // Scopegesprek, transcript en scope vallen weg bij een extern bureau: dat bepaalt de
+    // scope zelf en voert het gesprek met de klant. Wat er voor ons overblijft is de
+    // planning regelen -- verzoek indienen, wachten op een datum, die doorgeven aan de klant.
+    ...(viaBureau
+      ? []
+      : [
+          {
+            key: 'scopeCallHeld',
+            label: 'Scopegesprek gevoerd',
+            klaar: Boolean(project.scopeCallHeld),
+            datum: project.scopeCallHeld,
+            handmatig: true,
+          },
+          {
+            key: 'transcript',
+            label: 'Transcript toegevoegd',
+            klaar: Boolean(project.scopeCallTranscript?.trim()),
+            datum: null,
+            handmatig: false,
+          },
+          {
+            // De website staat er al vanaf de intake; de scope is pas af als na het
+            // scopegesprek ook de overige informatie is ingevuld, met de wettelijke
+            // uitzonderingen. "Buiten scope" telt niet mee: dat mag leeg blijven als
+            // er niets specifieks is uitgesloten.
+            key: 'scope',
+            label: 'Scope ingevuld',
+            klaar: Boolean(project.scopeInScope?.trim() && project.scopeInfo?.trim()),
+            datum: null,
+            handmatig: false,
+          },
+        ]),
     {
       key: 'planning',
       label: 'Planning bepaald',
@@ -184,6 +224,33 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       datum: project.planningApproved,
       handmatig: true,
     },
+    // Het adviesgesprek hoort bij een onderzoek met hertest, en de planningsmail belooft
+    // het daar ook: "na afronding van de nulmeting ontvang je van mij een uitnodiging voor
+    // een overleg". Zonder hertest staat die alinea er niet in en is er niets te bespreken
+    // voor een herstelronde die niet komt.
+    //
+    // Deze twee stappen volgen niet meteen op het akkoord: daartussen wordt het onderzoek
+    // uitgevoerd en het rapport opgeleverd. Pas dan is er iets te bespreken.
+    ...(project.hasReinspection
+      ? [
+          {
+            key: 'adviceCallInvited',
+            label: 'Uitnodiging adviesgesprek verstuurd',
+            klaar: Boolean(project.adviceCallInvited),
+            datum: project.adviceCallInvited,
+            handmatig: true,
+            naOplevering: true,
+          },
+          {
+            key: 'adviceCallHeld',
+            label: 'Adviesgesprek gevoerd',
+            klaar: Boolean(project.adviceCallHeld),
+            datum: project.adviceCallHeld,
+            handmatig: true,
+            naOplevering: true,
+          },
+        ]
+      : []),
   ];
 
   const gedaan = stappen.filter((s) => s.klaar).length;
@@ -231,8 +298,23 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       </div>
       <div className="p-4">
         <ol className="space-y-2">
-          {stappen.map((s) => (
-            <li key={s.key} className="flex items-start gap-2">
+          {stappen.map((s, i) => (
+            <li
+              key={s.key}
+              className={`flex items-start gap-2 ${
+                // De laatste twee stappen volgen niet meteen op het akkoord: daartussen
+                // wordt het onderzoek uitgevoerd en het rapport opgeleverd. Zonder deze
+                // scheiding leest de lijst alsof het gesprek er direct achteraan komt.
+                s.naOplevering && !stappen[i - 1]?.naOplevering
+                  ? 'mt-3 pt-3 border-t border-gray-100 relative'
+                  : ''
+              }`}
+            >
+              {s.naOplevering && !stappen[i - 1]?.naOplevering && (
+                <span className="absolute -top-0.5 left-6 text-[10px] uppercase tracking-wide text-gray-400">
+                  na de oplevering
+                </span>
+              )}
               <span
                 className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border flex items-center justify-center ${
                   s.klaar ? 'bg-shift2-primary border-shift2-primary' : 'border-gray-300'
@@ -256,23 +338,14 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                 )}
                 {/* Zolang een mail nog niet verstuurd is, staat de
                     standaardtekst klaar om naar het mailprogramma te kopiëren. */}
-                {!s.klaar && (s.key === 'invitationSent' || s.key === 'planningSent') && (
+                {!s.klaar && MAILS[s.key] && (
                   <div className="mt-1 mb-1">
                     <button
                       type="button"
-                      onClick={() =>
-                        kopieer(
-                          s.key === 'invitationSent' ? uitnodiging : planningsmail,
-                          s.key
-                        )
-                      }
+                      onClick={() => kopieer(MAILS[s.key].tekst, s.key)}
                       className="text-xs text-shift2-primary hover:underline"
                     >
-                      {gekopieerd === s.key
-                        ? 'Gekopieerd'
-                        : s.key === 'invitationSent'
-                          ? 'Kopieer uitnodiging'
-                          : 'Kopieer planningsmail'}
+                      {gekopieerd === s.key ? 'Gekopieerd' : MAILS[s.key].knop}
                     </button>
                     {contact?.contactEmail && (
                       <div className="text-xs text-gray-400 mt-0.5 break-all">
@@ -284,7 +357,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                         Tekst bekijken
                       </summary>
                       <pre className="mt-1 text-xs text-gray-600 whitespace-pre-wrap font-sans bg-gray-50 rounded p-2">
-                        {s.key === 'invitationSent' ? uitnodiging : planningsmail}
+                        {MAILS[s.key].tekst}
                       </pre>
                     </details>
                   </div>

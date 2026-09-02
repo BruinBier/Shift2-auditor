@@ -281,6 +281,8 @@ export async function PATCH(
      */
     const TOEGESTAAN = new Set([
       'accountmanager',
+      'adviceCallHeld',
+      'adviceCallInvited',
       'cancellationReason',
       'clientProjectId',
       'commissionedBy',

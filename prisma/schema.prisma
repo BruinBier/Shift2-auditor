@@ -187,6 +187,18 @@ model Project {
   // hierboven zijn wel als TIMESTAMP(3) aangemaakt en blijven daarom kaal.
   planningSent            DateTime?      @map("planning_sent") @db.Timestamp(6)
   planningApproved        DateTime?      @map("planning_approved") @db.Timestamp(6)
+  /// Het adviesgesprek na de oplevering van de nulmeting: de resultaten doornemen en de
+  /// vervolgstappen bespreken, voordat de klant aan het herstellen gaat.
+  ///
+  /// Hoort bij een onderzoek met hertest -- de planningsmail belooft het gesprek daar ook,
+  /// en zonder hertest valt die alinea weg. Tot nu toe stond nergens of het gesprek ook
+  /// gevoerd was; de klant kreeg de toezegging en de tool wist er niets van.
+  ///
+  /// Twee velden en niet een: tussen de uitnodiging en het gesprek zit wachttijd, net als
+  /// bij het scopegesprek. Met een veld zou een verstuurde uitnodiging waar niemand op
+  /// reageert er hetzelfde uitzien als een uitnodiging die nooit verstuurd is.
+  adviceCallInvited       DateTime?      @map("advice_call_invited")
+  adviceCallHeld          DateTime?      @map("advice_call_held")
   scopeInScope            String?        @map("scope_in_scope") @db.Text
   scopeOutOfScope         String?        @map("scope_out_of_scope") @db.Text
   sampleClientPages       String?        @map("sample_client_pages") @db.Text

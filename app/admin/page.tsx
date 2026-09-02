@@ -112,7 +112,17 @@ export default async function AdminPage() {
      * hij komt permanent in het rode blok "Actie nodig" te staan met "herinnering sturen".
      * Vier blokken, hun tellers en die bewaking komen allemaal uit deze ene query.
      */
-    where: { status: { notIn: ['Gereed', 'Geannuleerd'] }, isProeftuin: false },
+    where: {
+      isProeftuin: false,
+      OR: [
+        { status: { notIn: ['Gereed', 'Geannuleerd'] } },
+        // Een opgeleverd onderzoek met hertest is nog niet uit beeld: de planningsmail
+        // beloofde een overleg na afronding van de nulmeting, en zolang dat gesprek er
+        // niet is geweest staat er een toezegging open. "Gereed" gaat over het rapport,
+        // niet over de nazorg.
+        { status: 'Gereed', hasReinspection: true, adviceCallHeld: null },
+      ],
+    },
     orderBy: { dateStart: 'asc' },
     // Het CRM-nummer staat op het klantproject en niet op het onderzoek: het hoort bij de
     // opdracht, dus een tweede onderzoek op dezelfde site erft het. De routekaart hieronder
@@ -152,6 +162,23 @@ export default async function AdminPage() {
       continue;
     }
 
+    // Een opgeleverd onderzoek staat hier alleen nog voor het adviesgesprek: de query
+    // hierboven laat er niets anders van door. Het rapport is af, dus dit is het enige
+    // wat er nog te doen valt.
+    if (p.status === 'Gereed') {
+      if (!p.adviceCallInvited) {
+        actie.push({ ...basis, toelichting: 'uitnodiging adviesgesprek versturen' });
+      } else {
+        const dagen = dagenGeleden(p.adviceCallInvited);
+        if (dagen >= RAPPELTERMIJN_DAGEN) {
+          actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen reactie` });
+        } else {
+          wacht.push({ ...basis, toelichting: `uitnodiging adviesgesprek ${dagen} dagen geleden verstuurd` });
+        }
+      }
+      continue;
+    }
+
     if (p.status === 'In de wacht') {
       wacht.push({
         ...basis,
@@ -180,11 +207,23 @@ export default async function AdminPage() {
       Boolean(p.invitationSent || p.scopeCallHeld || p.scopeCallTranscript);
 
     if (heeftIntakeRoute) {
+      // Voert een ander bureau het onderzoek uit, dan bepaalt dat bureau de scope en
+      // voert het het gesprek met de klant. Wat wij doen is de planning regelen: het
+      // verzoek indienen, wachten op een datum, die doorgeven. Scopegesprek, transcript
+      // en scope slaan we daarom over -- die velden blijven bij zo'n onderzoek leeg en
+      // zouden hem anders permanent op "transcript toevoegen" laten staan.
+      const viaBureau = p.isExternalProject;
+      const bureau = p.externalBureau || 'het bureau';
+
       if (!p.invitationSent) {
-        actie.push({ ...basis, toelichting: 'uitnodiging versturen' });
+        actie.push({
+          ...basis,
+          toelichting: viaBureau ? `planningsverzoek indienen bij ${bureau}` : 'uitnodiging versturen',
+        });
         continue;
       }
-      if (!p.scopeCallHeld) {
+
+      if (!viaBureau && !p.scopeCallHeld) {
         const dagen = dagenGeleden(p.invitationSent);
         if (dagen >= RAPPELTERMIJN_DAGEN) {
           actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen reactie` });
@@ -193,16 +232,27 @@ export default async function AdminPage() {
         }
         continue;
       }
-      if (!p.scopeCallTranscript?.trim()) {
+      if (!viaBureau && !p.scopeCallTranscript?.trim()) {
         actie.push({ ...basis, toelichting: 'transcript toevoegen' });
         continue;
       }
-      if (!p.scopeInfo?.trim()) {
+      if (!viaBureau && !p.scopeInfo?.trim()) {
         actie.push({ ...basis, toelichting: 'scope afmaken' });
         continue;
       }
       if (!p.dateStart || !p.dateEnd) {
-        actie.push({ ...basis, toelichting: 'planning bepalen' });
+        if (viaBureau) {
+          // De datum komt van het bureau, dus hier valt niets te bepalen -- alleen te
+          // wachten, en na de rappeltermijn te rappelleren.
+          const dagen = dagenGeleden(p.invitationSent);
+          if (dagen >= RAPPELTERMIJN_DAGEN) {
+            actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen planning van ${bureau}` });
+          } else {
+            wacht.push({ ...basis, toelichting: `wacht op planning van ${bureau}, ${dagen} dagen` });
+          }
+        } else {
+          actie.push({ ...basis, toelichting: 'planning bepalen' });
+        }
         continue;
       }
       // Het CRM-nummer wordt door Shift2 zelf toegekend en is bij een getekende offerte vaak
