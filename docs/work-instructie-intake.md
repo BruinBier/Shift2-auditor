@@ -23,6 +23,22 @@ onderzoeker in Shift2Auditor plakt.
 
 Je schrijft zelf niets in Shift2Auditor. Je levert een voorstel; de onderzoeker bevestigt.
 
+### De opdracht komt als een Outlook-link
+
+Shift2 werkt in Microsoft 365, niet in Gmail. Er is geen mailconnector waarmee je zelf kunt
+zoeken; de onderzoeker geeft je een link naar de mail in Outlook, en die open je. Dan zie je
+de hele wisseling: de mail van de accountmanager, het antwoord van de klant, en de bijlagen.
+
+Vraag nooit om een Gmail-koppeling.
+
+Krijg je geen link maar geplakte mailtekst, meld dan dat de bijlage ontbreekt. Zonder de
+offerte weet je niet hoeveel uur er staat, of er een herinspectie bij hoort en wie het
+uitvoert — en dat is precies wat er in het blok moet.
+
+Je kunt niet zelf in de mailbox zoeken, dus vragen als "heeft de klant al geantwoord?" kun je
+niet beantwoorden. Dat hoeft ook niet: Shift2Auditor houdt bij hoe lang een uitnodiging
+openstaat en meldt het na veertien dagen.
+
 ### Stap 1 — controleer of het onderzoek al bestaat
 
 Voordat je een blok maakt, kijk je in Shift2Auditor of deze opdracht er al in staat. Zoek op
@@ -54,12 +70,19 @@ Loop deze punten na:
 - **Wie is de accountmanager?** De collega bij Shift2 die de opdracht binnenhaalde. Alleen
   de voornaam: in de tool staat `Katja`, niet "Katja Dorder".
 - **Hoeveel tijd staat ervoor?** Bijvoorbeeld "16 uur". Staat in de offerte, niet in de mail.
+- **Wanneer ging de klant akkoord?** Dat staat in het antwoord van de klant, niet in de
+  oorspronkelijke mail. Bij Nissewaard was dat 31 augustus 2026. Het veld bestaat niet in het
+  blok, maar noem de datum eronder: het is het echte begin van de opdracht, en de onderzoeker
+  weet dan hoe lang de intake al openstaat.
 - **Is het een herinspectie?** Dan hoort er een eerder onderzoek bij.
 
 ### Lees de offerte, niet alleen de mail
 
 Wat voor onderzoek het wordt, staat zelden in de mailtekst. Het staat in de offerte die
-eraan hangt. Open die bijlage en zoek naar:
+eraan hangt, meestal als PDF. **Open die bijlage** — een samenvatting van de mailtekst is
+niet genoeg, want daar staat alleen dát er een offerte is meegestuurd.
+
+Zoek in de offerte naar:
 
 - **Het aantal uur** dat is afgesproken.
 - **Of er een herinspectie bij zit**, en zo ja na hoeveel weken. Ongeveer een derde van de
