@@ -3,11 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { leesIntakeblok } from '@/lib/intakeblok';
 
 /**
  * Intakeformulier: de gegevens uit het CRM waaruit een onderzoek wordt
  * opgebouwd. Klantproject, titel, taal, norm en controleur worden afgeleid;
  * de datums volgen pas na het scopegesprek met de klant.
+ *
+ * Bovenaan zit een plakvak voor het intakeblok van ChatGPT Work. Dat vult de
+ * velden hieronder in plaats van zelf een onderzoek aan te maken: zo zie je wat
+ * er gaat gebeuren voordat het gebeurt, en corrigeer je wat er niet klopt. Zie
+ * docs/adr/0003-work-schrijft-niet-in-de-tool.md.
  */
 
 const BUREAUS = ['Shift2', 'Cardan'];
@@ -33,6 +39,10 @@ export default function IntakePage() {
   const [anderBureau, setAnderBureau] = useState('');
   const [hasReinspection, setHasReinspection] = useState(false);
   const [reinspectionWeeks, setReinspectionWeeks] = useState('12');
+
+  const [blokTekst, setBlokTekst] = useState('');
+  const [blokFout, setBlokFout] = useState('');
+  const [blokMeldingen, setBlokMeldingen] = useState<string[]>([]);
 
   const nieuweOpdrachtgever = opdrachtgeverId === 'nieuw';
   const anders = uitgevoerdDoor === 'anders';
@@ -61,6 +71,95 @@ export default function IntakePage() {
     const code = opdrachtgeverKenmerk.trim().toUpperCase();
     setKenmerk(code ? `${code}-01` : '');
   }, [nieuweOpdrachtgever, opdrachtgeverKenmerk]);
+
+  /**
+   * Neemt een geplakt intakeblok over in het formulier.
+   *
+   * Zoekt zelf op of de opdrachtgever al bestaat, op naam en op kenmerk. Dat is
+   * het punt waar het misgaat als niemand kijkt: "Gemeente Heuvelrug" naast
+   * "gemeente Utrechtse Heuvelrug" levert twee opdrachtgevers op met elk hun
+   * eigen onderzoeken, en dat merk je pas weken later.
+   */
+  const neemBlokOver = () => {
+    setBlokFout('');
+    setBlokMeldingen([]);
+
+    const uit = leesIntakeblok(blokTekst);
+    if (!uit.ok) {
+      setBlokFout(uit.fout);
+      return;
+    }
+
+    const { blok } = uit;
+    const meldingen = [...uit.waarschuwingen];
+
+    // Bestaande opdrachtgever herkennen: eerst op kenmerk, dan op naam. Beide
+    // hoofdletterongevoelig, want daar zit het verschil zelden echt in.
+    const opKenmerk = blok.opdrachtgeverKenmerk
+      ? opdrachtgevers.find(
+          (o) => (o.kenmerk || '').toUpperCase() === blok.opdrachtgeverKenmerk
+        )
+      : undefined;
+    const opNaam = blok.opdrachtgeverNaam
+      ? opdrachtgevers.find(
+          (o) =>
+            (o.naam || '').trim().toLowerCase() ===
+            blok.opdrachtgeverNaam!.trim().toLowerCase()
+        )
+      : undefined;
+    const bestaand = opKenmerk || opNaam;
+
+    if (bestaand) {
+      setOpdrachtgeverId(bestaand.id);
+      meldingen.push(`Opdrachtgever "${bestaand.naam}" bestaat al en wordt hergebruikt.`);
+      // Het voorgestelde kenmerk uit het blok kan achterlopen; de pagina vraagt
+      // het eerstvolgende vrije nummer op zodra de opdrachtgever is gekozen.
+      if (blok.kenmerk) {
+        meldingen.push(
+          `Het kenmerk uit het blok was ${blok.kenmerk}; controleer wat er nu in het veld staat.`
+        );
+      }
+    } else {
+      setOpdrachtgeverId('nieuw');
+      if (blok.opdrachtgeverNaam) setOpdrachtgeverNaam(blok.opdrachtgeverNaam);
+      if (blok.opdrachtgeverKenmerk) setOpdrachtgeverKenmerk(blok.opdrachtgeverKenmerk);
+      if (blok.contactnaam) setContactnaam(blok.contactnaam);
+      if (blok.contactEmail) setContactEmail(blok.contactEmail);
+      if (blok.accountmanager && ACCOUNTMANAGERS.includes(blok.accountmanager)) {
+        setAccountmanager(blok.accountmanager);
+      } else if (blok.accountmanager) {
+        meldingen.push(
+          `Accountmanager "${blok.accountmanager}" staat niet in de lijst; kies er zelf een.`
+        );
+      }
+      if (blok.kenmerk) setKenmerk(blok.kenmerk);
+      meldingen.push(
+        `Opdrachtgever "${blok.opdrachtgeverNaam || '(zonder naam)'}" is nieuw en wordt aangemaakt.`
+      );
+    }
+
+    if (blok.url) setUrl(blok.url);
+    if (blok.projectnummer) setProjectnummer(blok.projectnummer);
+
+    if (blok.uitgevoerdDoor) {
+      if (BUREAUS.includes(blok.uitgevoerdDoor)) {
+        setUitgevoerdDoor(blok.uitgevoerdDoor);
+      } else {
+        setUitgevoerdDoor('anders');
+        setAnderBureau(blok.uitgevoerdDoor);
+      }
+    }
+
+    if (blok.hasReinspection) {
+      setHasReinspection(true);
+      setReinspectionWeeks(String(blok.reinspectionWeeks ?? 12));
+      if (!blok.reinspectionWeeks) {
+        meldingen.push('Er staat een hertest in het blok zonder termijn; 12 weken aangehouden.');
+      }
+    }
+
+    setBlokMeldingen(meldingen);
+  };
 
   const verstuur = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +212,55 @@ export default function IntakePage() {
           de planning volgt na het scopegesprek.
         </p>
       </div>
+
+      <details className="bg-white rounded-lg border border-gray-200 mb-6">
+        <summary className="px-6 py-4 text-sm font-medium text-gray-900 cursor-pointer">
+          Blok uit ChatGPT Work plakken
+        </summary>
+        <div className="px-6 pb-6 space-y-3">
+          <p className="text-sm text-gray-600">
+            Work leest de opdrachtmail en de offerte en levert een blok met de gegevens.
+            Plak dat hier: het vult het formulier hieronder in, zodat je ziet wat er gaat
+            gebeuren voordat het onderzoek wordt aangemaakt.
+          </p>
+          <label htmlFor="intakeblok" className="sr-only">
+            Intakeblok
+          </label>
+          <textarea
+            id="intakeblok"
+            value={blokTekst}
+            onChange={(e) => setBlokTekst(e.target.value)}
+            rows={6}
+            placeholder={'{\n  "kenmerk": "NIS-01",\n  "url": "https://www.thuisinnissewaard.nl",\n  ...\n}'}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+          />
+          <button
+            type="button"
+            onClick={neemBlokOver}
+            disabled={!blokTekst.trim()}
+            className="px-4 py-2 bg-shift2-primary text-white rounded-lg text-sm font-medium disabled:opacity-50"
+          >
+            Overnemen in het formulier
+          </button>
+
+          {blokFout && (
+            <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {blokFout}
+            </p>
+          )}
+
+          {blokMeldingen.length > 0 && (
+            <div className="text-sm bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="font-medium text-amber-900 mb-1">Overgenomen. Let op:</p>
+              <ul className="list-disc list-inside space-y-1 text-amber-900">
+                {blokMeldingen.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </details>
 
       <form onSubmit={verstuur} className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
         <div>
