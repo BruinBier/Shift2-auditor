@@ -1,0 +1,122 @@
+# Wat je aan ChatGPT Work vraagt
+
+Kant-en-klare opdrachten om te kopiëren. Per situatie één blok tekst; vul in wat tussen
+`[vierkante haken]` staat.
+
+Werkt alleen als de projectinstructies uit [work-instructie-intake.md](work-instructie-intake.md)
+in Work staan. Zonder die instructies kent Work de werkwijze niet en moet je hem elke keer
+meesturen.
+
+## Wat Work wel en niet kan
+
+**Work kan niet in je mailbox zoeken.** Er is geen mailconnector; Work komt via Agent-modus
+bij Outlook met jouw ingelogde sessie. Het opent dus alleen wat jij aanwijst met een link.
+Vragen als "welke mails moet ik beantwoorden" kan het niet beantwoorden.
+
+Wat er wél openstaat, weet Shift2Auditor. Het dashboard heeft twee blokken: **Actie nodig**
+(jij bent aan zet) en **Wacht op iemand anders** (met het aantal dagen erbij). Na veertien
+dagen zonder reactie verschuift een onderzoek van het tweede blok naar het eerste.
+
+**Work raakt de tool niet aan.** Het levert een blok dat jij plakt op `/admin/intake`.
+
+---
+
+## 1. Een nieuwe opdracht binnengekregen
+
+Open de mail in Outlook, kopieer de link uit de adresbalk, sla de offerte op als PDF en
+sleep die in het gesprek.
+
+> Maak een intakeblok van deze opdracht: [link naar de mail in Outlook]
+>
+> De offerte stuur ik als bijlage mee. Lees de hele mailwisseling en de offerte. Lever het
+> blok als JSON, en zet eronder in gewone taal wat er ontbreekt en wat je hebt aangenomen.
+
+Plak het blok daarna op `/admin/intake`, in het vak "Blok uit ChatGPT Work plakken".
+
+**Geen offerte bij de hand?** Vraag het blok toch, en meld dat de offerte volgt. Dan mist
+Work de uren, de hertest en de uitvoerder, maar de rest klopt.
+
+## 2. Controleren of een opdracht al in de tool staat
+
+Voordat je een blok laat maken, bij twijfel of het al bestaat.
+
+> Kijk in Shift2Auditor (draait lokaal op localhost:3000) of er al een onderzoek loopt voor
+> [website of gemeente]. Alleen kijken, niets wijzigen. Meld wat je vindt: kenmerk, status en
+> planning.
+
+Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.md`.
+
+Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
+
+## 3. Een mail aan de klant klaarzetten
+
+De tool heeft sjablonen voor de uitnodiging en de planningsmail: op de projectpagina onder
+**Voorbereiding** staat per stap een knop "Kopieer uitnodiging" of "Kopieer planningsmail",
+met het adres van de contactpersoon ernaast. Die tekst geef je aan Work.
+
+> Zet in Outlook een antwoord klaar aan [naam] ([e-mailadres]), in de draad van [onderwerp of
+> datum van de laatste mail]. Zet er deze tekst in:
+>
+> [de gekopieerde tekst]
+>
+> Laat hem als concept staan; ik verstuur hem zelf.
+
+**Work verstuurt nooit.** Een verstuurde mail is niet terug te nemen, en hij gaat uit jouw
+naam naar een gemeente.
+
+Na het versturen: op de projectpagina de stap afvinken. Dat kan Work niet, en zonder die klik
+begint de bewaking niet te lopen.
+
+## 4. Het antwoord van de klant verwerken
+
+Na het scopegesprek, of als de klant per mail op de scope reageert.
+
+> Vat samen wat er in deze mail is afgesproken over de scope: [link naar de mail]
+>
+> Ik zoek: welke onderdelen van de site wel en niet onderzocht worden, welke pagina's de klant
+> zelf aandraagt, of er testaccounts nodig zijn, en wanneer het onderzoek kan plaatsvinden.
+> Zet wachtwoorden niet in je antwoord; meld alleen dát ze er zijn.
+
+De uitkomst gaat naar de velden **In scope**, **Buiten scope** en **Door klant aangedragen
+pagina's** op de projectpagina. Met de knop "Importeer naar scope & steekproef" worden daar
+scope-items en steekproefpagina's van gemaakt.
+
+## 5. Het rapport op SIMcms zetten
+
+Als het onderzoek klaar is en het rapport eruit kan.
+
+> Zet dit rapport als concept op simcms.shift2.nl. Neem de inhoud over zoals hij is; verander
+> niets aan de tekst en de koppenstructuur. Publiceer niet — laat de moderatiestatus op
+> concept staan, ik keur het zelf goed.
+
+De inhoud komt uit de tool: `/api/reports/[id]/html` of de Word-export. Laat Work het rapport
+nooit zelf opnieuw opbouwen uit losse gegevens — dan ontstaan er twee versies die uit elkaar
+gaan lopen.
+
+**Let op de opmaak.** Het rapport gaat over toegankelijkheid; koppen die door het overzetten
+verhaspeld raken of een tabel zonder koprij is meer dan een schoonheidsfoutje. Kijk ernaar
+voordat je publiceert.
+
+## 6. Een tekst schrijven of nakijken
+
+Voor alles wat geen vaste stap is: een lastige mail, een uitleg aan de klant, een stuk tekst
+voor het rapport.
+
+> [je vraag]
+>
+> Schrijf in het Nederlands, zakelijk en kort. Geen gedachtestreepjes.
+
+Voor teksten die in het rapport terechtkomen gelden de schrijfregels uit `wcag-regels/`; die
+kent Work niet. Laat rapportteksten liever door Claude Code schrijven, of leg ze daarna
+daarlangs.
+
+---
+
+## Wat je niet aan Work vraagt
+
+- **Een website beoordelen.** Dat doet Shift2Auditor met de regels in `wcag-regels/`. Work
+  kent die niet, en een agent die zonder die regels naar een pagina kijkt levert afkeuringen
+  op die niet bestaan — dat is op heuvelrug.nl twee keer gebeurd.
+- **Iets in de tool wijzigen.** Work levert voorstellen; jij plakt en bevestigt.
+- **Code aanpassen.** Dat gaat naar Claude Code.
+- **Een mail versturen.** Opstellen als concept mag; op verzenden drukken niet.

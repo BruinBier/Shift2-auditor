@@ -136,7 +136,9 @@ stonden zijn vervallen: die horen niet in een intake.
 ## Instructies voor Work
 
 De volledige tekst staat in [work-instructie-intake.md](work-instructie-intake.md),
-klaar om in de projectinstructies van Work te plakken. Kernpunten:
+klaar om in de projectinstructies van Work te plakken. De opdrachten die je per
+situatie aan Work geeft staan in [work-opdrachten.md](work-opdrachten.md).
+Kernpunten:
 
 - **De opdracht komt als een Outlook-link plus de offerte als PDF.** Shift2 werkt
   in Microsoft 365 en er is geen mailconnector; Work opent de link in Agent-modus.
