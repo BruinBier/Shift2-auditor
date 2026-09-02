@@ -65,7 +65,31 @@ is óf een nieuwe opdracht óf iets dat is blijven liggen — en dat zie je nerg
 Bij de eerste proef leverde dit een mail van `webredactie@nederweert.nl` over toegankelijkheid
 op, terwijl Nederweert helemaal niet in de administratie voorkomt.
 
-## 2. Een nieuwe opdracht binnengekregen
+## 2. De map TG doorlopen
+
+Wekelijks. Alles wat behandeld moet worden gaat in Outlook naar de map **TG**; wat eruit is, is
+klaar. Deze opdracht inventariseert wat erin zit — verwerken doe je daarna per bericht.
+
+> Lees alle berichten in de Outlook-map TG. Geef per bericht: afzender, onderwerp, datum, en in
+> twee zinnen waar het over gaat en wat er van mij verwacht wordt.
+>
+> Kijk daarna in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen kijken,
+> niets wijzigen. Zeg per bericht of het bij een lopend onderzoek hoort, en bij welk.
+>
+> Zet er per bericht bij wat voor soort het is: een nieuwe opdracht, een antwoord op iets dat
+> loopt, of iets anders. Sorteer op wat het meest urgent is.
+>
+> Verwerk nog niets — ik ga per bericht beslissen wat ermee gebeurt.
+
+**Die laatste regel is niet vrijblijvend.** Zonder die zin begint Work bij alles wat op een
+opdracht lijkt alvast een intakeblok te maken, en dan staan er tien voorstellen door elkaar.
+
+**Daarna per bericht.** Het overzicht zegt welk soort het is; daarmee weet je welke opdracht
+hieronder erbij hoort — een nieuwe opdracht wordt nummer 3, een antwoord over scope nummer 8,
+een mail die terug moet nummer 7. Zo is het vanochtend ook gegaan met de opdracht voor
+Nissewaard: één mail, één blok, één handeling. Bij tien berichten is het hetzelfde, tien keer.
+
+## 3. Een nieuwe opdracht binnengekregen
 
 Open de mail in Outlook, kopieer de link uit de adresbalk, sla de offerte op als PDF en
 sleep die in het gesprek.
@@ -80,7 +104,7 @@ Plak het blok daarna op `/admin/intake`, in het vak "Blok uit ChatGPT Work plakk
 **Geen offerte bij de hand?** Vraag het blok toch, en meld dat de offerte volgt. Dan mist
 Work de uren, de hertest en de uitvoerder, maar de rest klopt.
 
-## 3. Controleren of een opdracht al in de tool staat
+## 4. Controleren of een opdracht al in de tool staat
 
 Voordat je een blok laat maken, bij twijfel of het al bestaat.
 
@@ -92,7 +116,7 @@ Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.m
 
 Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
 
-## 4. Het CRM naast de onderzoeken leggen
+## 5. Het CRM naast de onderzoeken leggen
 
 Wekelijks, of als je het overzicht kwijt bent. Dit is de enige opdracht waarbij Work twee
 administraties vergelijkt.
@@ -136,7 +160,7 @@ CRM ↔ Shift2Auditor levert die termen op.
 Dat zijn twee verschillende onderzoeken, geen dubbeling. Laat Work bij twijfel melden in plaats
 van gokken.
 
-## 5. De geschiedenis van een klant opzoeken
+## 6. De geschiedenis van een klant opzoeken
 
 Bij een nieuwe opdracht van een bestaande klant: wat is er eerder gedaan?
 
@@ -152,7 +176,7 @@ Shift2Auditor — de tool bestond toen nog niet.
 Dat verandert het nieuwe onderzoek niet, maar het is context: er ligt een eerder rapport over
 dezelfde site.
 
-## 6. Een mail aan de klant klaarzetten
+## 7. Een mail aan de klant klaarzetten
 
 De tool heeft sjablonen voor de uitnodiging en de planningsmail: op de projectpagina onder
 **Voorbereiding** staat per stap een knop "Kopieer uitnodiging" of "Kopieer planningsmail",
@@ -171,7 +195,7 @@ naam naar een gemeente.
 Na het versturen: op de projectpagina de stap afvinken. Dat kan Work niet, en zonder die klik
 begint de bewaking niet te lopen.
 
-## 7. Het antwoord van de klant verwerken
+## 8. Het antwoord van de klant verwerken
 
 Na het scopegesprek, of als de klant per mail op de scope reageert.
 
@@ -185,7 +209,7 @@ De uitkomst gaat naar de velden **In scope**, **Buiten scope** en **Door klant a
 pagina's** op de projectpagina. Met de knop "Importeer naar scope & steekproef" worden daar
 scope-items en steekproefpagina's van gemaakt.
 
-## 8. Het rapport op SIMcms zetten
+## 9. Het rapport op SIMcms zetten
 
 Als het onderzoek klaar is en het rapport eruit kan.
 
@@ -201,7 +225,7 @@ gaan lopen.
 verhaspeld raken of een tabel zonder koprij is meer dan een schoonheidsfoutje. Kijk ernaar
 voordat je publiceert.
 
-## 9. Een tekst schrijven of nakijken
+## 10. Een tekst schrijven of nakijken
 
 Voor alles wat geen vaste stap is: een lastige mail, een uitleg aan de klant, een stuk tekst
 voor het rapport.
