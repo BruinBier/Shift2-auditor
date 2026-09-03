@@ -311,9 +311,9 @@ model SampleItem {
   /// neemt bovendien ALLE sample-items mee, dus zonder deze vlag zou er een volledige
   /// audit draaien op pagina's die niemand heeft nagekeken.
   ///
-  /// Anders dan bij een bevinding keur je hier de lijst als geheel goed, niet elk
-  /// item apart: de vraag is niet "klopt deze pagina" maar "dekt deze verzameling
-  /// de site". Zelf een sample bewerken laat de vlag ook vervallen -- dat is kijken.
+  /// Vervalt per pagina: een knop bij de rij, en zelf een sample bewerken telt ook
+  /// als bekeken. Slepen niet -- dat loopt via de reorder-route, en de lijst schikken
+  /// is iets anders dan hem beoordelen.
   voorgesteld    Boolean      @default(false)
   notes          String?      @db.Text
   crawledAt      DateTime?    @map("crawled_at")

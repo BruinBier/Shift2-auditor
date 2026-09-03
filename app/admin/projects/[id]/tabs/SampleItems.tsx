@@ -458,14 +458,22 @@ export default function SampleItems({ project }: { project: any }) {
   };
 
   const voorgesteldeItems = project.sampleItems.filter((i: any) => i.voorgesteld);
-  const [bezigMetGoedkeuren, setBezigMetGoedkeuren] = useState(false);
+  const [bezigMetGoedkeuren, setBezigMetGoedkeuren] = useState<string | null>(null);
 
-  /** Alle voorstellen in één keer accorderen -- de lijst als geheel, niet per pagina. */
-  const keurSteekproefGoed = async () => {
-    setBezigMetGoedkeuren(true);
+  /**
+   * Eén pagina accorderen.
+   *
+   * Per pagina en niet in één keer: je loopt de lijst rij voor rij na, en dan is
+   * de knop waar je kijkt. Bewerken laat de vlag ook vervallen -- deze knop is voor
+   * de pagina's waar niets aan hoeft.
+   */
+  const keurGoed = async (itemId: string) => {
+    setBezigMetGoedkeuren(itemId);
     try {
-      const res = await fetch(`/api/projects/${project.id}/sample-items/akkoord`, {
-        method: 'POST',
+      const res = await fetch(`/api/sample-items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voorgesteld: false }),
       });
       if (!res.ok) {
         const fout = await res.json().catch(() => ({}));
@@ -476,7 +484,7 @@ export default function SampleItems({ project }: { project: any }) {
     } catch {
       alert('Goedkeuren is niet gelukt.');
     } finally {
-      setBezigMetGoedkeuren(false);
+      setBezigMetGoedkeuren(null);
     }
   };
 
@@ -603,28 +611,20 @@ export default function SampleItems({ project }: { project: any }) {
         juist dat er niet gekeken wordt.
       */}
       {voorgesteldeItems.length > 0 && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
-            </svg>
-            <div>
-              <p className="font-medium text-amber-900">
-                {voorgesteldeItems.length} van de {project.sampleItems.length} pagina&apos;s {voorgesteldeItems.length === 1 ? 'is' : 'zijn'} voorgesteld en nog niet bekeken
-              </p>
-              <p className="text-sm text-amber-800 mt-1">
-                Loop de lijst na: schrap wat niet past, vul aan wat mist. De audit start pas
-                als de steekproef akkoord is.
-              </p>
-            </div>
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
+          </svg>
+          <div>
+            <p className="font-medium text-amber-900">
+              Nog {voorgesteldeItems.length} van de {project.sampleItems.length} pagina&apos;s te bekijken
+            </p>
+            <p className="text-sm text-amber-800 mt-1">
+              Deze pagina&apos;s zijn door een agent voorgesteld. Loop ze na en klik per pagina op
+              Akkoord; schrap wat niet past, vul aan wat mist. Bewerken telt ook als bekeken.
+              De audit start pas als er niets meer openstaat.
+            </p>
           </div>
-          <button
-            onClick={keurSteekproefGoed}
-            disabled={bezigMetGoedkeuren}
-            className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm font-medium"
-          >
-            {bezigMetGoedkeuren ? 'Bezig...' : 'Steekproef akkoord'}
-          </button>
         </div>
       )}
 
@@ -687,6 +687,8 @@ export default function SampleItems({ project }: { project: any }) {
                           selectedTest={selectedTest}
                           setSelectedTest={setSelectedTest}
                           availableTests={availableTests}
+                          keurGoed={keurGoed}
+                          bezigMetGoedkeuren={bezigMetGoedkeuren}
                         />
                       ))}
                       </tbody>

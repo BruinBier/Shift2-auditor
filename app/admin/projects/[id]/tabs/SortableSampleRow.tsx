@@ -20,6 +20,8 @@ interface SortableSampleRowProps {
   selectedTest: string;
   setSelectedTest: (test: string) => void;
   availableTests: string[];
+  keurGoed: (itemId: string) => void;
+  bezigMetGoedkeuren: string | null;
 }
 
 export function SortableSampleRow({
@@ -38,6 +40,8 @@ export function SortableSampleRow({
   selectedTest,
   setSelectedTest,
   availableTests,
+  keurGoed,
+  bezigMetGoedkeuren,
 }: SortableSampleRowProps) {
   const {
     attributes,
@@ -79,6 +83,31 @@ export function SortableSampleRow({
         <span className="text-sm text-gray-600">
           {item.sampleType === 'structured' ? 'structured' : item.sampleType === 'random' ? 'willekeurig' : 'pdf'}
         </span>
+        {/*
+          Een pagina die een agent voorstelde, wacht op een blik. Pas als je hem
+          hebt bekeken vervalt de markering -- en zolang er nog een openstaat,
+          weigert `audit-samples` te starten. Bewerken laat de vlag ook vervallen;
+          deze knop is voor de pagina's waar niets aan hoeft.
+        */}
+        {item.voorgesteld && (
+          <button
+            onClick={() => keurGoed(item.id)}
+            disabled={bezigMetGoedkeuren === item.id}
+            className="mt-2 flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded text-xs font-medium hover:bg-amber-200 disabled:opacity-50"
+            title="Deze pagina is voorgesteld door een agent. Klik als hij klopt."
+          >
+            {bezigMetGoedkeuren === item.id ? (
+              'Bezig...'
+            ) : (
+              <>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Akkoord
+              </>
+            )}
+          </button>
+        )}
       </td>
 
       {/* Content column */}

@@ -105,6 +105,14 @@ Geen stopcriterium. Wordt beoordeeld, maar stuurt de paginakeuze niet.
 niet bij content. Dat sluit aan op de scoperegel bij 2.1.2, waar hoofdmenu en
 hoofdnavigatie bij een deelonderzoek content ook buiten beschouwing blijven.
 
+**Voorleesknoppen en tekstvereenvoudiging.** "Lees voor", "Eenvoudige tekst" en
+wat er verder in de toegankelijkheidsbalk zit, blijven buiten een deelonderzoek
+content. Het is voorziening van de leverancier, niet iets wat de redacteur maakt
+of kan herstellen -- dezelfde reden waarom een schakelknop in de
+SIMsite-toegankelijkheidsbalk onder 4.1.2 geen bevinding oplevert. Ze staan op
+élke pagina, dus als ze wél zouden meetellen was het bovendien geen reden om een
+pagina toe te voegen.
+
 ## De twee harde eisen
 
 Twee gebieden vragen om precies twee exemplaren, en ze moeten van elkaar
