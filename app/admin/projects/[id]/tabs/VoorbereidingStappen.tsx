@@ -14,6 +14,19 @@ import { nl } from 'date-fns/locale';
  */
 export default function VoorbereidingStappen({ project }: { project: any }) {
   const [bezig, setBezig] = useState<string | null>(null);
+  /**
+   * Dicht zodra alles af is, maar wel zichtbaar.
+   *
+   * Dit blok verdween eerst helemaal zodra de planning akkoord was. Twee dingen
+   * gingen daar mis. Het lijkt op een fout -- je klikt "planning akkoord" en er
+   * valt een gat in de kolom. En het klopte niet: de laatste twee stappen (de
+   * uitnodiging en het adviesgesprek) komen pas ná de oplevering, dus bij een
+   * onderzoek met hertest stonden er nog open stappen die je niet meer zag.
+   *
+   * Nu blijft de kop staan met "8 van 10", en klap je hem open als je wilt zien
+   * wat er nog is.
+   */
+  const [open, setOpen] = useState<boolean | null>(null);
   const [gekopieerd, setGekopieerd] = useState<string | null>(null);
 
   const contact = project.clientProject?.opdrachtgever;
@@ -285,18 +298,35 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     }
   };
 
+  // Niet aangeraakt? Dan dicht als alles af is, open als er nog iets te doen valt.
+  const allesAf = gedaan === stappen.length;
+  const uitgeklapt = open === null ? !allesAf : open;
+
   return (
     <div className="bg-white rounded-lg border border-gray-200">
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <button
+        type="button"
+        onClick={() => setOpen(!uitgeklapt)}
+        aria-expanded={uitgeklapt}
+        className="w-full p-4 border-b border-gray-200 flex items-center justify-between text-left hover:bg-gray-50"
+      >
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h3 className="font-semibold text-gray-900">Voorbereiding</h3>
         </div>
-        <span className="text-sm text-gray-500">{gedaan} van {stappen.length}</span>
-      </div>
-      <div className="p-4">
+        <span className="flex items-center gap-2 text-sm text-gray-500">
+          {gedaan} van {stappen.length}
+          <svg
+            className={`w-4 h-4 transition-transform ${uitgeklapt ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </button>
+      <div className={`p-4 ${uitgeklapt ? '' : 'hidden'}`}>
         <ol className="space-y-2">
           {stappen.map((s, i) => (
             <li

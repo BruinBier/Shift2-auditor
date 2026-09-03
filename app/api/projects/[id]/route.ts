@@ -336,6 +336,18 @@ export async function PATCH(
       data,
     });
 
+    /**
+     * Ook hier het herinspectieproject aanmaken, niet alleen in de PUT.
+     *
+     * `hasReinspection` staat in de allowlist hierboven, dus de hertest kan via
+     * deze route worden aangezet -- en dan gebeurde er niets. `syncReinspectionChild`
+     * repareert dat niet: die zoekt een bestaand kind en stopt als er geen is.
+     *
+     * Het resultaat was een vinkje zonder onderzoek: ZOET-01 stond op
+     * `hasReinspection: true` met twaalf weken, maar er was geen v1.1 om over
+     * twaalf weken te openen. Dat merk je pas als je hem nodig hebt.
+     */
+    await ensureReinspectionChild(id);
     await syncReinspectionChild(id);
 
     return NextResponse.json({

@@ -1196,15 +1196,15 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
 
         {/* Column 2: Voorbereiding + Statistieken + Bijlagen */}
         <div className="space-y-6">
-          {/* Het routekaartje hoort bij de voorbereiding. Zodra de planning
-              akkoord is of het onderzoek loopt, is het niet meer nuttig en
-              zou het alleen maar onafgevinkte stappen tonen van iets wat al
-              lang achter de rug is. */}
-          {!project.planningApproved &&
-            projectStatus !== 'Gereed' &&
-            projectStatus !== 'Geannuleerd' && (
-              <VoorbereidingStappen project={project} />
-            )}
+          {/* Het routekaartje bleef eerst alleen staan zolang de planning nog
+              niet akkoord was. Dat verborg te veel: de laatste twee stappen (de
+              uitnodiging en het adviesgesprek) komen pas ná de oplevering, dus
+              bij een onderzoek met hertest verdwenen er open stappen uit beeld.
+              En het gat dat viel zodra je "planning akkoord" klikte, las als een
+              fout. Het blok klapt nu zelf dicht als alles af is. */}
+          {projectStatus !== 'Gereed' && projectStatus !== 'Geannuleerd' && (
+            <VoorbereidingStappen project={project} />
+          )}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center gap-2">
