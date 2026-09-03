@@ -168,6 +168,10 @@ async function getProject(projectId: string) {
       // beslissend: dat een stap van een formulier niet met een los adres te openen
       // is, bijvoorbeeld. Zonder dit veld hier ziet geen enkele agent het.
       description: s.description || null,
+      // Door een agent voorgesteld en nog niet nagekeken. `audit-samples` weigert te
+      // starten zolang dit ergens true is: die workflow neemt ALLE samples mee, dus
+      // anders draait er een audit op pagina's die niemand heeft gekozen.
+      voorgesteld: Boolean(s.voorgesteld),
     })),
     findings: (Array.isArray(findings) ? findings : []).map((f: any) => ({
       id: f.id,
@@ -228,6 +232,10 @@ async function createSampleItem(projectId: string, flags: Flags) {
     url: flags.url || null,
     description: flags.description || '',
     makeScreenshot: flags.screenshot === 'true',
+    // Wat een agent aanmaakt is een voorstel: het staat in de steekproef, maar
+    // `audit-samples` weigert te starten tot de onderzoeker de lijst heeft
+    // goedgekeurd. Voer je zelf een sample in via de UI, dan blijft dit false.
+    voorgesteld: flags.voorgesteld === 'true',
   };
   const result = await api(`/api/projects/${projectId}/sample-items`, {
     method: 'POST',

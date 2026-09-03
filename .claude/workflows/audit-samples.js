@@ -49,13 +49,17 @@ const CONTEXT_SCHEMA = {
         // bijzonder is aan een pagina — dat een stap van een formulier alleen via een
         // ingevulde vorige stap te bereiken is, bijvoorbeeld. Zo moet hij er actief
         // null van maken in plaats van hem stilzwijgend te laten vallen.
-        required: ['id', 'title', 'url', 'sampleType', 'description'],
+        // `voorgesteld` staat er om dezelfde reden verplicht in: laat een agent hem
+        // weg, dan lijkt elke sample goedgekeurd en valt de blokkade hieronder stil
+        // weg. Precies het geval dat de vlag moet afvangen.
+        required: ['id', 'title', 'url', 'sampleType', 'description', 'voorgesteld'],
         properties: {
           id: { type: 'string' },
           title: { type: 'string' },
           url: { type: ['string', 'null'] },
           sampleType: { type: 'string' },
           description: { type: ['string', 'null'] },
+          voorgesteld: { type: 'boolean' },
         },
       },
     },
@@ -132,7 +136,7 @@ Project-id: ${projectId}
 
 Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het schema:
 
-1. \`npm run cli -- get-project ${projectId}\` — noteer project.researchType (de naam van het onderzoekstype) en de volledige lijst sampleItems (id, title, url, sampleType, description). Neem ALLE sample-items op, en neem de description letterlijk over — daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.
+1. \`npm run cli -- get-project ${projectId}\` — noteer project.researchType (de naam van het onderzoekstype) en de volledige lijst sampleItems (id, title, url, sampleType, description, voorgesteld). Neem ALLE sample-items op, en neem de description letterlijk over — daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.
 
 2. Haal de SC-set van het onderzoekstype op met een GET naar de API. De research-type-route accepteert de NAAM:
    \`curl -s "http://localhost:3000/api/research-types/<researchTypeName-url-encoded>"\`
@@ -175,6 +179,28 @@ Geef puur de verzamelde data terug. Verzin niets; laat een lege array als iets n
 
 if (!context || !context.samples.length) {
   return { error: 'Geen sample-items gevonden voor dit project.', context }
+}
+
+/**
+ * Niet auditen op een steekproef die niemand heeft nagekeken.
+ *
+ * Deze workflow neemt ALLE sample-items mee. Staat er nog werk van de
+ * steekproef-workflow in dat de onderzoeker niet heeft gezien, dan draait er een
+ * volledige audit op pagina's die een agent heeft uitgekozen -- en wat niet in de
+ * steekproef zat, ontbreekt geruisloos in het rapport. Daar is achteraf niets aan
+ * te zien.
+ *
+ * Met args.ookVoorgesteld = true draai je bewust door, bijvoorbeeld in een proeftuin.
+ */
+const nogVoorgesteld = context.samples.filter((s) => s.voorgesteld)
+if (nogVoorgesteld.length && !args.ookVoorgesteld) {
+  return {
+    error:
+      `Er ${nogVoorgesteld.length === 1 ? 'staat' : 'staan'} nog ${nogVoorgesteld.length} voorgestelde ` +
+      `${nogVoorgesteld.length === 1 ? 'pagina' : "pagina's"} in de steekproef. Keur de steekproef eerst ` +
+      'goed op het tabblad Steekproef, of draai met args.ookVoorgesteld = true.',
+    voorgesteld: nogVoorgesteld.map((s) => ({ id: s.id, title: s.title })),
+  }
 }
 if (!context.criteria.length) {
   return { error: 'Geen succescriteria gevonden (onderzoekstype leeg?).', context }

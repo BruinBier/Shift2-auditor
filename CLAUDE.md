@@ -82,7 +82,7 @@ npm run cli -- get-consistentie <projectId|url> [--max=12]  # 3.2.4: legt de pag
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write
-npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured
+npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured [--voorgesteld=true]
 npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --responsibility=redacteur --sample-items=<sampleItemId1>,<sampleItemId2>
 npm run cli -- create-finding-from-quick <projectId> <quickFindingId> --sample-items=<sampleItemId>
 npm run cli -- save-checks <projectId> --bron=workflow < oordelen.json   # oordeel per sample per criterium
@@ -105,6 +105,7 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - `--bron` (save-checks): `workflow` | `gesprek` | `handmatig`
 
 **Notes:**
+- **Een steekproef die jij samenstelt is ook een voorstel.** Maak samples aan met `--voorgesteld=true`; ze staan dan in de steekproef, maar `audit-samples` weigert te starten tot de onderzoeker op "Steekproef akkoord" heeft geklikt. Die workflow neemt ALLE sample-items mee, dus zonder die poort draait er een volledige audit op pagina's die niemand heeft gekozen — en wat niet in de steekproef zat, ontbreekt geruisloos in het rapport. Anders dan bij een bevinding keurt de onderzoeker de lijst als geheel goed: de vraag is niet "klopt deze pagina" maar "dekt deze verzameling de site". Bewust doordraaien kan met `args.ookVoorgesteld = true`.
 - Wat jij aanmaakt is een **voorstel**, geen bevinding. Het telt nergens mee — niet in het criteriumoordeel, niet in het rapport — tot de onderzoeker akkoord geeft in het tabblad "Waar sta ik". Zie `docs/adr/0001-akkoord-als-poort.md` en de woordenlijst in `CONTEXT.md`.
 - Finding codes worden toegekend: `V001` voor een voorstel, `B001` pas bij akkoord. Geef er zelf nooit een mee.
 - Het criteriumoordeel volgt uit de bevindingen en wordt herberekend bij aanmaken, wijzigen en verwijderen (`lib/criterion-assessment.ts`). Zet het niet zelf met `set-assessment` tenzij je het echt handmatig wilt overrulen.

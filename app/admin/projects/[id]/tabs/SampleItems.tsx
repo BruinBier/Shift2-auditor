@@ -457,6 +457,29 @@ export default function SampleItems({ project }: { project: any }) {
     }
   };
 
+  const voorgesteldeItems = project.sampleItems.filter((i: any) => i.voorgesteld);
+  const [bezigMetGoedkeuren, setBezigMetGoedkeuren] = useState(false);
+
+  /** Alle voorstellen in één keer accorderen -- de lijst als geheel, niet per pagina. */
+  const keurSteekproefGoed = async () => {
+    setBezigMetGoedkeuren(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/sample-items/akkoord`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const fout = await res.json().catch(() => ({}));
+        alert(fout.error || 'Goedkeuren is niet gelukt.');
+        return;
+      }
+      router.refresh();
+    } catch {
+      alert('Goedkeuren is niet gelukt.');
+    } finally {
+      setBezigMetGoedkeuren(false);
+    }
+  };
+
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
@@ -568,6 +591,42 @@ export default function SampleItems({ project }: { project: any }) {
           padding-top: 12px;
         }
       `}} />
+
+      {/*
+        Een steekproef die een agent heeft samengesteld, wacht op één blik van de
+        onderzoeker. Niet per pagina zoals bij een bevinding: de vraag is niet
+        "klopt deze pagina" maar "dekt deze verzameling de site". Vandaar één knop
+        voor de hele lijst.
+
+        Zolang deze melding er staat, weigert `audit-samples` te starten. Zonder
+        dat zou de vlag een sticker zijn -- en het geval dat we willen afvangen is
+        juist dat er niet gekeken wordt.
+      */}
+      {voorgesteldeItems.length > 0 && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
+            </svg>
+            <div>
+              <p className="font-medium text-amber-900">
+                {voorgesteldeItems.length} van de {project.sampleItems.length} pagina&apos;s {voorgesteldeItems.length === 1 ? 'is' : 'zijn'} voorgesteld en nog niet bekeken
+              </p>
+              <p className="text-sm text-amber-800 mt-1">
+                Loop de lijst na: schrap wat niet past, vul aan wat mist. De audit start pas
+                als de steekproef akkoord is.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={keurSteekproefGoed}
+            disabled={bezigMetGoedkeuren}
+            className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm font-medium"
+          >
+            {bezigMetGoedkeuren ? 'Bezig...' : 'Steekproef akkoord'}
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-6">
         {/* Left column - Sample items list */}

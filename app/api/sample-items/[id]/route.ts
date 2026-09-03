@@ -23,6 +23,18 @@ export async function PATCH(
         auditCapturedAt: body.auditCapturedAt ? new Date(body.auditCapturedAt) : null,
       }),
       ...(body.notes !== undefined && { notes: body.notes }),
+      /**
+       * Zelf bewerken is ook kijken.
+       *
+       * Een sample die een agent voorstelde en die jij aanpast, heb je gezien --
+       * dan hoeft hij niet meer in de wachtrij. Dat scheelt: anders zou je na het
+       * bijschaven van één pagina alsnog de knop moeten zoeken.
+       *
+       * Het herordenen loopt via een eigen route (sample-items/reorder), dus
+       * slepen laat de vlag terecht staan: dat is de lijst schikken, niet de
+       * inhoud beoordelen.
+       */
+      voorgesteld: false,
     };
 
     // If makeScreenshot is true and URL is provided, create/update screenshot

@@ -59,6 +59,19 @@ export async function POST(
       }
     }
 
+    // Achteraan de lijst als er geen plek is meegegeven. De UI rekent zelf een
+    // orderIndex uit, de CLI niet -- en dan bleef hij null, waardoor de sortering
+    // op orderIndex de volgorde liet vallen.
+    let orderIndex = body.orderIndex;
+    if (orderIndex === undefined || orderIndex === null) {
+      const laatste = await prisma.sampleItem.findFirst({
+        where: { projectId: params.id },
+        orderBy: { orderIndex: 'desc' },
+        select: { orderIndex: true },
+      });
+      orderIndex = (laatste?.orderIndex ?? 0) + 1;
+    }
+
     const sampleItem = await prisma.sampleItem.create({
       data: {
         projectId: params.id,
@@ -66,9 +79,12 @@ export async function POST(
         title: body.title,
         url: body.url,
         description: body.description || '',
-        orderIndex: body.orderIndex,
+        orderIndex,
         makeScreenshot: body.makeScreenshot || false,
         screenshotPath: screenshotPath,
+        // Door een agent voorgesteld en nog niet nagekeken. Ontbreekt deze regel,
+        // dan komt de steekproef er als goedgekeurd in en valt de poort stil weg.
+        voorgesteld: body.voorgesteld === true,
       },
     });
     return NextResponse.json(sampleItem, { status: 201 });
