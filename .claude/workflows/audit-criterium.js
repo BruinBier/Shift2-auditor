@@ -295,6 +295,36 @@ if (!homepageSample) {
 
 const isPdf = (s) => s.sampleType === 'pdf' || /\.pdf(\?|#|$)/i.test(s.url || '')
 
+/**
+ * Video-criteria overslaan als de steekproef nergens video heeft.
+ *
+ * 1.2.1 t/m 1.2.5 gaan allemaal over media. De steekproef-workflow zet per sample al een
+ * kale opsomming van contenttypen in de description ("tabel, galerij, video (2x)" — zie
+ * .claude/workflows/steekproef-samenstellen.js). Staat het woord "video" of "audio" nergens
+ * in de descriptions van de HELE steekproef, dan heeft geen enkele pagina media, en is het
+ * zinloos om twintig agents dat één voor één te laten vaststellen.
+ *
+ * Voorwaardelijk: alleen als ELKE sample een description heeft. Ontbreekt die ergens — een
+ * steekproef die (deels) met de hand is samengesteld, van vóór dit systeem — dan is er geen
+ * bewijs dat de description volledig is, en beoordeelt de pipeline gewoon alle pagina's zoals
+ * voorheen. Een lege description is geen "geen video"; het is "onbekend".
+ */
+const VIDEO_CRITERIA = ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5']
+const descriptiesCompleet = teBeoordelen.every(
+  (s) => typeof s.description === 'string' && s.description.trim().length > 0,
+)
+const steekproefHeeftVideo = teBeoordelen.some((s) =>
+  /video|audio/i.test(s.description || ''),
+)
+const magKortsluiten =
+  VIDEO_CRITERIA.includes(criterium) && descriptiesCompleet && !steekproefHeeftVideo
+
+if (magKortsluiten) {
+  log(
+    `Geen enkele sample-beschrijving in deze steekproef noemt video of audio. ${criterium} wordt voor alle ${teBeoordelen.length} pagina's op niet_aanwezig gezet zonder ze apart te laten beoordelen.`,
+  )
+}
+
 log(
   `${criterium} ${context.criteriumTitel} (${context.criteriumNiveau}) op ${teBeoordelen.length} pagina's` +
     `${zonderUrl.length ? `, ${zonderUrl.length} zonder adres overgeslagen` : ''}. ` +
@@ -462,7 +492,29 @@ verkeerde aanwijst is erger dan niets.`
     }`
   : ''
 
-const oordelen = await pipeline(
+/**
+ * Kant-en-klaar oordeel voor de kortsluiting: elk deelgebied op `nvt`, met de reden
+ * waarop de kortsluiting zelf rust — niet een verzonnen pagina-specifieke onderbouwing,
+ * want die is er niet: geen agent heeft deze pagina voor dit criterium bekeken.
+ */
+const kortgeslotenOordeel = (sample) => ({
+  sampleId: sample.id,
+  sampleTitel: sample.title,
+  status: 'niet_aanwezig',
+  reden:
+    'Niet apart beoordeeld: geen enkele sample-beschrijving in deze steekproef noemt video of audio, dus dit media-criterium is op geen van de pagina\'s van toepassing.',
+  deelgebieden: context.deelgebieden.map((g) => ({
+    gebied: g,
+    uitkomst: 'nvt',
+    toelichting:
+      'Vastgesteld op steekproefniveau: de contenttypen-beschrijving van elke sample in deze steekproef is nagelopen op het woord video of audio, en dat komt nergens voor.',
+  })),
+  bevindingen: [],
+})
+
+const oordelen = magKortsluiten
+  ? teBeoordelen.map(kortgeslotenOordeel)
+  : await pipeline(
   teBeoordelen,
   (sample) => {
     const homepage = homepageSample && sample.id === homepageSample.id
