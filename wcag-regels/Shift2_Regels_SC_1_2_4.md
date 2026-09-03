@@ -106,9 +106,20 @@ raadsvergadering die je terugkijkt is vooraf opgenomen media.
 
 #### Stap 4 -- Wegschrijven
 
-9. [agent] Dit criterium heeft geen deelgebieden: het is één vraag, geen verzameling losse
-   deelvragen. De onderbouwing bij `reden` mag daarom de volledige afweging bevatten, in
-   plaats van alleen de meetgeldigheid.
+9. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht. Zonder een complete lijst wordt het oordeel geweigerd. Staat er
+   geen ingesloten livestream op de pagina, gebruik dan `nvt` bij alle vier, met de zin
+   waaróp je hebt gezocht.
+10. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was --
+    kwam je op de gevraagde pagina uit, was het een auditsessie -- en verder niets. Al het
+    inhoudelijke gaat naar de deelgebieden.
+
+### Deelgebieden
+
+1. Ingesloten livestream (zonder speler op de pagina zelf, of alleen een link, telt niet)
+2. Buiten de scope: een formulierstap, of alleen een link naar een externe omgeving
+3. Actief op het moment van meten
+4. Live ondertiteling
 
 ### Zo is het vastgesteld
 
