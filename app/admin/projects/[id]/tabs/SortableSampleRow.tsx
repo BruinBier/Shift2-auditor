@@ -130,7 +130,27 @@ export function SortableSampleRow({
                 )}
               </div>
               {item.url && (
-                <div className="text-sm text-gray-500">{item.url}</div>
+                /*
+                  De pagina zelf openen is de snelste manier om te controleren of een
+                  sample klopt. In een nieuw tabblad, want anders raak je de steekproef
+                  kwijt waar je middenin zit.
+
+                  `rel="noopener"`: zonder dat kan de geopende pagina via window.opener
+                  bij dit tabblad.
+                */
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all inline-flex items-start gap-1"
+                  title="Openen in een nieuw tabblad"
+                >
+                  <span>{item.url}</span>
+                  <svg className="w-3 h-3 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
               )}
             </>
           ) : (
@@ -150,7 +170,27 @@ export function SortableSampleRow({
                 )}
               </div>
               {item.url && (
-                <div className="text-sm text-gray-500">{item.url}</div>
+                /*
+                  De pagina zelf openen is de snelste manier om te controleren of een
+                  sample klopt. In een nieuw tabblad, want anders raak je de steekproef
+                  kwijt waar je middenin zit.
+
+                  `rel="noopener"`: zonder dat kan de geopende pagina via window.opener
+                  bij dit tabblad.
+                */
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all inline-flex items-start gap-1"
+                  title="Openen in een nieuw tabblad"
+                >
+                  <span>{item.url}</span>
+                  <svg className="w-3 h-3 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
               )}
             </>
           )}
