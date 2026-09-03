@@ -85,6 +85,9 @@ export async function POST(
         // Door een agent voorgesteld en nog niet nagekeken. Ontbreekt deze regel,
         // dan komt de steekproef er als goedgekeurd in en valt de poort stil weg.
         voorgesteld: body.voorgesteld === true,
+        // Blijft staan waar `voorgesteld` vervalt, zodat een goedgekeurd voorstel te
+        // onderscheiden is van een sample die de onderzoeker zelf heeft ingevoerd.
+        vanAgent: body.voorgesteld === true,
       },
     });
     return NextResponse.json(sampleItem, { status: 201 });

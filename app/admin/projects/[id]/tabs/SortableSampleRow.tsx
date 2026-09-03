@@ -89,6 +89,22 @@ export function SortableSampleRow({
           weigert `audit-samples` te starten. Bewerken laat de vlag ook vervallen;
           deze knop is voor de pagina's waar niets aan hoeft.
         */}
+        {/*
+          Goedgekeurd voorstel: het vinkje blijft staan waar de knop stond. Zo is te
+          zien dat er een voorstel lag en dat je het hebt nagekeken -- zonder dat is
+          een goedgekeurde sample niet te onderscheiden van een die je zelf invoerde.
+        */}
+        {!item.voorgesteld && item.vanAgent && (
+          <span
+            className="mt-2 flex items-center gap-1 text-xs text-gray-500"
+            title="Voorgesteld door een agent en door jou goedgekeurd"
+          >
+            <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Akkoord
+          </span>
+        )}
         {item.voorgesteld && (
           <button
             onClick={() => keurGoed(item.id)}

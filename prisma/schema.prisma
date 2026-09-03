@@ -315,6 +315,14 @@ model SampleItem {
   /// als bekeken. Slepen niet -- dat loopt via de reorder-route, en de lijst schikken
   /// is iets anders dan hem beoordelen.
   voorgesteld    Boolean      @default(false)
+  /// Deze sample is ooit door een agent voorgesteld, ook als hij inmiddels is
+  /// goedgekeurd. Blijft staan waar `voorgesteld` vervalt.
+  ///
+  /// Zonder dit veld is "goedgekeurd voorstel" niet te onderscheiden van "zelf
+  /// ingevoerd": allebei staan op voorgesteld=false. Dan zegt een vinkje op de kaart
+  /// niets meer. Nu wel: een vinkje betekent dat er een voorstel lag en dat je het
+  /// hebt nagekeken.
+  vanAgent       Boolean      @default(false) @map("van_agent")
   notes          String?      @db.Text
   crawledAt      DateTime?    @map("crawled_at")
 
