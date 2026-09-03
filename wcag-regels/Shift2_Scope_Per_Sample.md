@@ -95,3 +95,20 @@ Aanleiding: UTHEU-01 (2026-08-03), pagina /archeologie met zes links naar de ser
 het Groen" op YouTube. De auditor maakte er een 1.2.2-bevinding van over automatische
 ondertiteling en zette 1.2.3 en 1.2.5 op `niet_te_bepalen`; Frits gaf aan dat deze video's
 buiten de scope vallen.
+
+## Een formulierstap heeft nooit video
+
+Een pagina die uit de formuliergenerator komt — elke stap van een meerstapsformulier —
+bevat naar zijn aard geen ingesloten video. Beoordeel de video-criteria (1.2.1 tot en met
+1.2.5) op zo'n stap dan niet apart; zet ze op `niet_aanwezig` met die reden.
+
+Dit gaat verder dan "niet gevonden op deze pagina". Een formulierstap die alleen via de
+vorige stap te bereiken is — met testgegevens, in een auditsessie — hoeft daar niet voor
+opnieuw doorlopen te worden. Er is geen twijfelgeval om vast te stellen: een generatorpagina
+met invoervelden, een voortgangsbalk en een verzendknop draagt geen media.
+
+Vastgelegd door Frits op 2026-09-03, naar aanleiding van "Stap 2: Uw gegevens" en "Stap 3:
+Controleren" op de proeftuin: beide kregen `niet_te_bepalen` voor 1.2.4 omdat de agent de
+stap niet los kon bereiken en terecht weigerde zelf een testmelding te verzenden zonder
+toestemming. Het antwoord was niet die stap alsnog doorlopen, maar vaststellen dat de vraag
+zichzelf al beantwoordt.
