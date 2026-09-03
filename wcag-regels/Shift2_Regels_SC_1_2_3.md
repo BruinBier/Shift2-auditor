@@ -95,6 +95,103 @@ het ook wordt verteld.
 - Maximaal twee a drie voorbeelden met tijdstip. Geen lange opsomming.
 - Check eerst of de speler een transcript-knop heeft (zie 1.1.1). Is die er, dan is er een geldig alternatief.
 
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort -- een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Visuele informatie hoorbaar bij vooraf opgenomen video
+
+### In het kort
+
+Wie blind of slechtziend is, mist wat er alleen te zien is. Een naambalkje onder een
+spreker, een titelkaart, een kaart die wordt aangewezen, een handeling die wordt
+voorgedaan zonder dat iemand zegt wat er gebeurt.
+
+Er zijn **drie** manieren waarop dat toch aankomt, en de eerste twee stel je zelf vast: een
+apart audiospoor met audiodescriptie, een transcript op de pagina, of -- veruit het meest
+voorkomend -- de spreker die het gewoon zelf zegt. "Ik ben Suzanne Klaassen, wethouder in
+Beverwijk" maakt het naambalkje hoorbaar, en dan is er geen bevinding.
+
+Uit "geen audiodescriptie-knop" volgt dus niet dat de tekst onhoorbaar is. Dat bewijst
+alleen dat de eerste route dicht is.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 -- Is er iets te beoordelen?
+
+1. [agent] Zoek de ingesloten videospelers: `video`-elementen en `iframe`-insluitingen van
+   YouTube, Vimeo of een eigen speler. Noteer waarop je hebt gezocht.
+2. [agent] Een video die alleen gelínkt is, zonder speler op de pagina, valt buiten dit
+   criterium -- ook als hij van de organisatie zelf is. De grens ligt bij het insluiten, niet
+   bij het eigendom. Dan `niet_aanwezig`, met die reden erbij.
+
+#### Stap 2 -- Wat is er te zien dat niet te horen is?
+
+3. [agent] Bekijk beeldjes verspreid over de video. Noteer wat er in beeld staat: naambalkjes,
+   titelkaarten, locatielabels, teksten op schermen.
+4. [agent] Kijk ook naar wat er GEBEURT, niet alleen naar letters. Iemand die een apparaat
+   bedient, iets aanwijst op een kaart, of iets voordoet zonder het te benoemen -- dat is
+   visuele informatie zonder één letter tekst, en een scan op tekst vindt hem niet.
+
+#### Stap 3 -- De drie routes aflopen
+
+5. [agent] **Audiodescriptie.** Lees de audiosporen met `get-videosporen`. Eén spoor betekent
+   geen audiodescriptie.
+6. [agent] **Transcript.** Staat er een uitgeschreven tekst op de pagina of een transcript-knop
+   bij de speler? Dan is er een geldig alternatief en vervalt de bevinding.
+7. [agent] **De spreker zelf.** Heeft de video ondertiteling, lees die dan op de tijdstippen
+   waar iets in beeld staat. Zegt de ondertiteling op dat moment iets anders, dan wordt het niet
+   uitgesproken: afkeuring, zonder vraag. Komt de tekst terug in de ondertiteling, dan is hij
+   hoorbaar. Kijk ook naar het beeldje ervóór en erná -- iemand kan zich net eerder voorstellen.
+
+#### Stap 4 -- Wegen
+
+8. [jij] Is er geen ondertiteling en geen transcript, dan kun je niet horen of de spreker het
+   zelf noemt. Dan `niet_te_bepalen`, met de tijdstippen en de teksten erbij zodat er alleen
+   geluisterd hoeft te worden. Nooit stilzwijgend op `voldoet` omdat je het niet kon horen.
+9. [jij] Bij een afkeuring: gebruik de vaste QuickFinding ed3a4d2a-ce67-4474-88a0-edba1c124624
+   en herformuleer die tekst niet. Impact `matig`, verantwoordelijkheid `redacteur`. Twee tot
+   drie voorbeelden met tijdstip, niet meer. En schrijf een tweede bevinding onder 1.2.5: dat
+   zijn twee criteria, niet één.
+
+#### Stap 5 -- Wegschrijven
+
+10. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+    `save-checks`-bericht. Zonder een complete lijst wordt het oordeel geweigerd. Staat er geen
+    ingesloten video op de pagina, gebruik dan `nvt` met de zin waaróp je hebt gezocht.
+11. [agent] Vond je niets dat hoorbaar gemaakt moet worden, zet het dan zelf op `voldoet` -- maar
+    schrijf in de toelichting bij gebied 2 waaróp je dat baseert: hoeveel beeldjes, met welk
+    interval, en wat je wél zag. `voldoet` is de status waar een fout onzichtbaar blijft.
+12. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was --
+    kwam je op de gevraagde pagina uit, speelde de video, was het een auditsessie -- en verder
+    niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Deelgebieden
+
+1. Ingesloten video met beeld
+2. Tekst in beeld: naambalkjes, titelkaarten, labels
+3. Handelingen en aanwijzingen zonder woorden
+4. De drie routes: audiodescriptie, transcript, of de spreker zelf
+
+### Zo is het vastgesteld
+
+`get-videosporen` leest de audio- en ondertitelsporen per video en legt drie beeldjes vast,
+verspreid over de duur. Dat is het middel voor route 1 en voor het lezen van open
+ondertiteling bij route 3.
+
+Wat het niet doet: het beoordeelt niet wat er in beeld gebeurt. Handelingen, aanwijzingen en
+apparaten moet je zelf op de beeldjes zien. En drie beeldjes over een video van vijf minuten
+zijn een steekproef, geen dekking -- staat er veel in beeld, kijk dan verder.
+
 ## Alleen ingesloten media telt mee
 
 Media valt onder dit criterium wanneer de speler **op de pagina zelf is ingesloten**:
