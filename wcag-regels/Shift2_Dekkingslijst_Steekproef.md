@@ -45,6 +45,7 @@ Geen stopcriterium. Wordt beoordeeld, maar stuurt de paginakeuze niet.
 - Leesvolgorde: code tegenover beeld
 - Herhaalde sjabloononderdelen: header, footer, navigatie
 - Cookiescherm of toestemmingsvenster
+- De hoogcontrastknop en zijn weergave
 
 ---
 
@@ -104,6 +105,12 @@ Geen stopcriterium. Wordt beoordeeld, maar stuurt de paginakeuze niet.
 **De zoekfunctie en zijn suggestielijst.** Hoort bij het deelonderzoek techniek,
 niet bij content. Dat sluit aan op de scoperegel bij 2.1.2, waar hoofdmenu en
 hoofdnavigatie bij een deelonderzoek content ook buiten beschouwing blijven.
+
+**De hoogcontrastknop staat in groep 1, niet buiten het onderzoek.** Dat is een
+verschil met de voorleesknoppen hieronder. Hij wordt wél beoordeeld -- 1.4.3 heeft
+er een eigen deelgebied voor, en is er een knop die voldoet, dan is die weergave
+de weergave die telt (`get-pixelcontrast --klik`). Maar hij staat op élke pagina
+van de site, dus hij is nooit een reden om er een toe te voegen.
 
 **Voorleesknoppen en tekstvereenvoudiging.** "Lees voor", "Eenvoudige tekst" en
 wat er verder in de toegankelijkheidsbalk zit, blijven buiten een deelonderzoek
