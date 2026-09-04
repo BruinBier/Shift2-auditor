@@ -3638,7 +3638,7 @@ export default function Stapel({
               : cel.akkoord === 'afgewezen'
                 ? '✗ Door jou afgewezen.'
                 : cel.akkoord === 'akkoord'
-                  ? 'Er staat nog een voorstel open — dit telt pas mee als je akkoord geeft.'
+                  ? 'Er staat nog een voorstel open.'
                   : 'Nog niet door jou nagekeken — dit wacht op je akkoord.'}
           </p>
 
@@ -4969,7 +4969,7 @@ export default function Stapel({
                   : huidig.cel.akkoord === 'afgewezen'
                     ? '✗ Door jou afgewezen.'
                     : huidig.cel.akkoord === 'akkoord'
-                      ? 'Er staat nog een voorstel open — dit telt pas mee als je akkoord geeft.'
+                      ? 'Er staat nog een voorstel open.'
                       : 'De agent heeft dit criterium beoordeeld. Dat oordeel telt pas mee als jij het bevestigt.'}
               </p>
             )}
