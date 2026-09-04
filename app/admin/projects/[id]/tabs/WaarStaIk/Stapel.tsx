@@ -3765,8 +3765,18 @@ export default function Stapel({
    *
    * Alleen bij een echt akkoord, niet bij een afwijzing: na "Niet akkoord" is er nog iets te
    * kiezen, na "Akkoord" niet meer.
+   *
+   * `cel.akkoord === 'akkoord'` is niet genoeg: dat veld verandert niet vanzelf als er ná het
+   * akkoord alsnog een voorstel bijkomt (een latere workflow-run, of "Akkoord herzien" op één
+   * bevinding terwijl een andere op deze kaart nog klopt). Zonder deze aanvulling bleef
+   * "Pagina akkoord voor 1.3.1" grijs en afgevinkt staan terwijl er nog een open V-voorstel
+   * op dezelfde kaart stond -- precies de tegenstelling die de akkoord-poort tegenhoudt.
    */
-  const alAkkoord = huidig && huidig.soort !== 'voorstel' && huidig.cel.akkoord === 'akkoord';
+  const alAkkoord =
+    huidig &&
+    huidig.soort !== 'voorstel' &&
+    huidig.cel.akkoord === 'akkoord' &&
+    wachtendeVoorstellen.length === 0;
 
   /**
    * Het lijf van een auditkaart: de naam van de toets, waar het op neerkomt, het
