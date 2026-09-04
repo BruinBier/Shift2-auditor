@@ -1350,6 +1350,34 @@ export default function Stapel({
     }
   };
 
+  /**
+   * Een eerder akkoord op één bevinding herzien.
+   *
+   * Los van `beantwoord` (het hele criteriumoordeel) en `beoordeel` (akkoord/afwijzen op een
+   * voorstel): dit is de derde richting, terug van B-nummer naar V-nummer, voor de
+   * onderzoeker die op de kaart terugkomt op iets dat al akkoord was zonder dat er een
+   * nieuwe meting aan te pas kwam. Zie app/api/.../terug-naar-voorstel/route.ts.
+   */
+  const zetTerugNaarVoorstel = async (findingId: string) => {
+    setBezig(true);
+    setFout(null);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/findings/${findingId}/terug-naar-voorstel`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        const f = await res.json().catch(() => ({}));
+        throw new Error(f.error || 'Terugzetten naar voorstel is niet gelukt');
+      }
+      router.refresh();
+    } catch (e: any) {
+      setFout(e.message);
+    } finally {
+      setBezig(false);
+    }
+  };
+
   const stapel: Taak[] = useMemo(() => {
     const [soort, a, b] = focus.split(':');
 
@@ -2980,6 +3008,26 @@ export default function Stapel({
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+              {/* Een bevestigde bevinding (B-nummer, status open/published) heeft geen
+                  akkoord/afwijs-knop meer nodig -- die beslissing is al genomen. Maar er
+                  stond hier niets, en dan is een eerder akkoord niet te herzien zonder het
+                  hele criteriumoordeel opnieuw te laten beoordelen. */}
+              {b.status !== 'voorstel' && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-black/10 pt-3">
+                  <span className="text-xs text-green-700">✓ Akkoord</span>
+                  <button
+                    type="button"
+                    disabled={bezig}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      zetTerugNaarVoorstel(b.id);
+                    }}
+                    className="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                  >
+                    Akkoord herzien
+                  </button>
                 </div>
               )}
               <button
