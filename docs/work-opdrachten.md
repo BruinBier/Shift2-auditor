@@ -85,7 +85,8 @@ klaar. Deze opdracht inventariseert wat erin zit — verwerken doe je daarna per
 > Staat het onderzoek al in Shift2Auditor maar ontbreekt daar het CRM-nummer, zeg dat er dan bij.
 >
 > Gaat het om een onderzoek dat Cardan uitvoert, kijk dan ook op https://mijn.cardan.com/dashboard
-> wat de status daar is, en met welk kenmerk (C-xxxx).
+> onder Onderzoeken wat de status daar is, en met welk kenmerk (C-xxxx). Kijk niet onder
+> Aanvragen; dat zijn offertes.
 >
 > Zet er per bericht bij wat voor soort het is: een nieuwe opdracht, een antwoord op iets dat
 > loopt, of iets anders. Sorteer op wat het meest urgent is.
@@ -144,9 +145,12 @@ gaan, of werk dat bij Cardan klaarstaat zonder dat wij het volgen.
 > **Shift2Auditor**, localhost:3000/onderzoeken — wat wij volgen. Alleen kijken, niets wijzigen.
 >
 > **Het Cardan-portaal**, https://mijn.cardan.com/dashboard — wat Cardan voor ons uitvoert.
-> Kijk op het tabblad Onderzoeken naar "Binnenkort" en "Bezig"; de voltooide onderzoeken zijn
-> afgerond werk en die laat je liggen. Kijk daarnaast onder Diensten > Afspraken naar wat er op
-> "Te plannen door klant" staat.
+> Kijk **alleen** op het tabblad Onderzoeken, en daar alleen naar "Binnenkort" en "Bezig". De
+> voltooide onderzoeken zijn afgerond werk en die laat je liggen. Kijk **niet** onder Aanvragen:
+> dat zijn offertes en die zeggen niets over wat er loopt. Noem per onderzoek de status en het
+> kenmerk (C-xxxx).
+>
+> Kijk daarnaast onder Diensten > Afspraken naar wat er op "Te plannen door klant" staat.
 >
 > Niet elk CRM-project levert een onderzoek op: abonnementen, strippenkaarten en
 > "Toegankelijkheid Zilver" zijn doorlopende contracten. Kijk alleen naar projecten die een
@@ -164,8 +168,13 @@ gaan, of werk dat bij Cardan klaarstaat zonder dat wij het volgen.
 uitgaat, en het dashboard houdt je daaraan.
 
 **Punt 3** kwam bij de eerste proef meteen boven: bij Cardan stonden zes contentonderzoeken voor
-gemeente Waalwijk klaar (C-4521, € 9.156), terwijl Waalwijk in Shift2Auditor niet eens als
-opdrachtgever bestond. Er lag geen mail over in TG, dus langs die weg was het niet gevonden.
+gemeente Waalwijk klaar (C-4521), terwijl Waalwijk in Shift2Auditor niet eens als opdrachtgever
+bestond. Er lag geen mail over in TG, dus langs die weg was het niet gevonden.
+
+Diezelfde proef liet zien waarom het tabblad ertoe doet. Work keek ook onder Aanvragen en
+meldde Dalfsen, Urk en Echt-Susteren als lopend werk, terwijl dat offertes waren van
+onderzoeken die allang afgerond zijn. Onder Onderzoeken > Binnenkort stonden alleen de zes
+Waalwijk-sites.
 
 **Punt 4** staat nergens anders. Negatieve uren betekent dat een project over zijn budget heen
 is. En op het Cardan-portaal staan afspraken op "Te plannen door klant" — kick-offs en
