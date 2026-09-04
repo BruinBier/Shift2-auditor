@@ -46,27 +46,24 @@ verstuurt, een pagina die jij publiceert.
 
 ---
 
-## 1. Wat ligt er vandaag?
+## Wanneer draai je wat
 
-De vraag waarmee je begint. Work leest je inbox uit en legt hem naast wat er in de tool loopt.
+| Ritme | Opdracht | Waarom |
+|---|---|---|
+| **Dagelijks** | 1. De map TG doorlopen | Dat is je wachtrij. Blijft hij een week staan, dan is de urgentie-sortering weinig waard: er ligt dan iets van maandag onderin. |
+| **Wekelijks** | 2. De drie administraties naast elkaar | Verandert traag, en kost Work echt tijd — drie systemen doorlopen. Draai hem **vóór** de TG-ronde van die dag. |
+| **Zo nu en dan** | 3. Wat ligt er in de inbox? | Vangt op wat niet in TG belandde. |
+| **Per geval** | 4 tot en met 10 | Volgen uit wat de eerste drie opleveren. |
 
-> Geef de vijftien meest recente berichten uit mijn Outlook-inbox: afzender, onderwerp en
-> datum.
->
-> Kijk daarna in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen kijken,
-> niets wijzigen.
->
-> Zeg per bericht dat over toegankelijkheidsonderzoek gaat: hoort het bij een onderzoek dat
-> daar loopt, of bij geen enkel? Nieuwsbrieven, systeemmeldingen en interne meldingen laat je
-> weg.
+**De volgorde op de dag dat je allebei doet:** eerst de vergelijking, dan TG. De vergelijking
+vult de context waar de TG-ronde uit put — weet je dat er zes onderzoeken voor Waalwijk bij
+Cardan klaarstaan, dan kun je een bericht daaraan koppelen. Andersom lees je een mail en weet je
+niet dat er al iets loopt. En de CRM-nummers heb je dan al, zodat de TG-ronde ze niet per bericht
+opnieuw hoeft op te zoeken.
 
-Waar het om gaat is die laatste vraag. Een mail van een gemeente die nergens in de tool staat,
-is óf een nieuwe opdracht óf iets dat is blijven liggen — en dat zie je nergens anders.
+---
 
-Bij de eerste proef leverde dit een mail van `webredactie@nederweert.nl` over toegankelijkheid
-op, terwijl Nederweert helemaal niet in de administratie voorkomt.
-
-## 2. De map TG doorlopen
+## 1. De map TG doorlopen
 
 Wekelijks. Alles wat behandeld moet worden gaat in Outlook naar de map **TG**; wat eruit is, is
 klaar. Deze opdracht inventariseert wat erin zit — verwerken doe je daarna per bericht.
@@ -112,7 +109,7 @@ een doorlopend contract, niet het contentonderzoek van De Helster. Werk meldt wa
 de keuze is aan de onderzoeker.
 
 **Daarna per bericht.** Het overzicht zegt welk soort het is; daarmee weet je welke opdracht
-hieronder erbij hoort — een nieuwe opdracht wordt nummer 3, een antwoord over scope nummer 8,
+hieronder erbij hoort — een nieuwe opdracht wordt nummer 4, een antwoord over scope nummer 8,
 een mail die terug moet nummer 7. Zo is het vanochtend ook gegaan met de opdracht voor
 Nissewaard: één mail, één blok, één handeling. Bij tien berichten is het hetzelfde, tien keer.
 
@@ -130,38 +127,11 @@ Verwerkt betekent: de handeling die eruit volgde is gedaan **én** afgevinkt in 
 antwoord dat wel verstuurd is maar niet afgevinkt telt niet — dan loopt de bewaking niet, en
 dat is precies waarvoor de map bestaat.
 
-## 3. Een nieuwe opdracht binnengekregen
-
-Open de mail in Outlook, kopieer de link uit de adresbalk, sla de offerte op als PDF en
-sleep die in het gesprek.
-
-> Maak een intakeblok van deze opdracht: [link naar de mail in Outlook]
->
-> De offerte stuur ik als bijlage mee. Lees de hele mailwisseling en de offerte. Lever het
-> blok als JSON, en zet eronder in gewone taal wat er ontbreekt en wat je hebt aangenomen.
-
-Plak het blok daarna op `/admin/intake`, in het vak "Blok uit ChatGPT Work plakken".
-
-**Geen offerte bij de hand?** Vraag het blok toch, en meld dat de offerte volgt. Dan mist
-Work de uren, de hertest en de uitvoerder, maar de rest klopt.
-
-## 4. Controleren of een opdracht al in de tool staat
-
-Voordat je een blok laat maken, bij twijfel of het al bestaat.
-
-> Kijk in Shift2Auditor (draait lokaal op localhost:3000) of er al een onderzoek loopt voor
-> [website of gemeente]. Alleen kijken, niets wijzigen. Meld wat je vindt: kenmerk, status en
-> planning.
-
-Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.md`.
-
-Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
-
-## 5. De drie administraties naast elkaar leggen
+## 2. De drie administraties naast elkaar leggen
 
 Wekelijks, of als je het overzicht kwijt bent.
 
-Dit is iets anders dan opdracht 2. Daar gaat het per bericht: hoort hier een onderzoek en een
+Dit is iets anders dan opdracht 1. Daar gaat het per bericht: hoort hier een onderzoek en een
 CRM-project bij? Hier gaat het om de hele administratie, ook om onderzoeken waar helemaal geen
 mail bij ligt — een verkocht project dat nooit is aangemaakt, uren die over hun budget heen
 gaan, of werk dat bij Cardan klaarstaat zonder dat wij het volgen.
@@ -208,6 +178,69 @@ zijn geschiedenis en horen er niet alsnog in; het gaat om wat nog moet gebeuren.
 
 > Zoek in Outlook op `from:(@[domein])` en kijk of er sinds [datum] iets is binnengekomen over
 > dit onderzoek dat ik nog niet verwerkt heb.
+
+### Wat je met de uitkomst doet
+
+Een vergelijking die je alleen leest verandert niets. Per punt:
+
+| Uitkomst | Wat er gebeurt |
+|---|---|
+| CRM-nummer gevonden voor een onderzoek dat het miste | Invullen bij Project > Bewerken. Zonder dat nummer blokkeert het dashboard de planningsmail. |
+| Verkocht project zonder onderzoek | Aanmaken via `/admin/intake` — opdracht 4 als er een mail met offerte bij hoort, anders met de hand. |
+| Cardan-onderzoek dat niet in de tool staat | Aanmaken met `uitgevoerdDoor: "Cardan"`, en het C-kenmerk in de notitie. |
+| Afspraak op "Te plannen door klant" | Inplannen bij Cardan, of vastleggen waarom niet. |
+| Negatieve uren | Geen actie in de tool; wel weten voordat je nieuw werk toezegt. |
+
+Loop ze af voordat je de TG-ronde draait. Wat je hier oplost, hoeft daar niet nog een keer op te
+vallen.
+
+## 3. Wat ligt er in de inbox?
+
+Vangt op wat niet in TG belandde. Werk leest je inbox uit en legt hem naast wat er in de tool
+loopt — nuttig als je het gevoel hebt dat er iets langs de wachtrij is geglipt.
+
+> Geef de vijftien meest recente berichten uit mijn Outlook-inbox: afzender, onderwerp en
+> datum.
+>
+> Kijk daarna in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen kijken,
+> niets wijzigen.
+>
+> Zeg per bericht dat over toegankelijkheidsonderzoek gaat: hoort het bij een onderzoek dat
+> daar loopt, of bij geen enkel? Nieuwsbrieven, systeemmeldingen en interne meldingen laat je
+> weg.
+
+Waar het om gaat is die laatste vraag. Een mail van een gemeente die nergens in de tool staat,
+is óf een nieuwe opdracht óf iets dat is blijven liggen — en dat zie je nergens anders.
+
+Bij de eerste proef leverde dit een mail van `webredactie@nederweert.nl` over toegankelijkheid
+op, terwijl Nederweert helemaal niet in de administratie voorkomt.
+
+## 4. Een nieuwe opdracht binnengekregen
+
+Open de mail in Outlook, kopieer de link uit de adresbalk, sla de offerte op als PDF en
+sleep die in het gesprek.
+
+> Maak een intakeblok van deze opdracht: [link naar de mail in Outlook]
+>
+> De offerte stuur ik als bijlage mee. Lees de hele mailwisseling en de offerte. Lever het
+> blok als JSON, en zet eronder in gewone taal wat er ontbreekt en wat je hebt aangenomen.
+
+Plak het blok daarna op `/admin/intake`, in het vak "Blok uit ChatGPT Work plakken".
+
+**Geen offerte bij de hand?** Vraag het blok toch, en meld dat de offerte volgt. Dan mist
+Work de uren, de hertest en de uitvoerder, maar de rest klopt.
+
+## 5. Controleren of een opdracht al in de tool staat
+
+Voordat je een blok laat maken, bij twijfel of het al bestaat.
+
+> Kijk in Shift2Auditor (draait lokaal op localhost:3000) of er al een onderzoek loopt voor
+> [website of gemeente]. Alleen kijken, niets wijzigen. Meld wat je vindt: kenmerk, status en
+> planning.
+
+Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.md`.
+
+Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
 
 ## 6. De geschiedenis van een klant opzoeken
 
