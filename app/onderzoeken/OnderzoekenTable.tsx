@@ -1618,7 +1618,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                         </div>
                       </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{project.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{project.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}{!project.crmProjectActief && <span className="ml-1 text-amber-600" title="Staat niet in je actieve projecten in het CRM">*</span>}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {editingCell?.projectId === project.id && editingCell?.field === 'planningSent' ? (
                         <input
@@ -1802,7 +1802,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       <span>{getSimplifiedTitle(childReinspection)}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{Number(childReinspection.version).toFixed(1)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{childReinspection.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{childReinspection.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}{!childReinspection.crmProjectActief && <span className="ml-1 text-amber-600" title="Staat niet in je actieve projecten in het CRM">*</span>}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {editingCell?.projectId === childReinspection.id && editingCell?.field === 'planningSent' ? (
                         <input
@@ -2205,7 +2205,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{project.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{project.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}{!project.crmProjectActief && <span className="ml-1 text-amber-600" title="Staat niet in je actieve projecten in het CRM">*</span>}</td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {editingCell?.projectId === project.id && editingCell?.field === 'planningSent' ? (
                             <input
@@ -2378,7 +2378,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">{Number(childReinspection.version).toFixed(1)}</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{childReinspection.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900">{childReinspection.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}{!childReinspection.crmProjectActief && <span className="ml-1 text-amber-600" title="Staat niet in je actieve projecten in het CRM">*</span>}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">
                             {editingCell?.projectId === childReinspection.id && editingCell?.field === 'planningSent' ? (
                               <input

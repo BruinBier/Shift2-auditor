@@ -22,6 +22,30 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [editorKey, setEditorKey] = useState(0);
   const [showBijlagenTooltip, setShowBijlagenTooltip] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Of dit onderzoek in de Dynamics-weergave "Mijn actieve projecten" staat. Lokaal
+  // bijgehouden zodat het vinkje meteen omslaat; de server volgt.
+  const [crmProjectActief, setCrmProjectActief] = useState<boolean>(project.crmProjectActief ?? true);
+  const [crmBezig, setCrmBezig] = useState(false);
+
+  const zetCrmProjectActief = async (actief: boolean) => {
+    setCrmBezig(true);
+    const vorige = crmProjectActief;
+    setCrmProjectActief(actief);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crmProjectActief: actief }),
+      });
+      if (!res.ok) throw new Error('mislukt');
+    } catch {
+      setCrmProjectActief(vorige);
+      alert('Het bijwerken is niet gelukt.');
+    } finally {
+      setCrmBezig(false);
+    }
+  };
   const [opdrachtgevers, setOpdrachtgevers] = useState<any[]>([]);
   const [clientProjects, setClientProjects] = useState<any[]>([]);
   const [filteredClientProjects, setFilteredClientProjects] = useState<any[]>([]);
@@ -1024,6 +1048,28 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                       <div className="text-gray-900 mt-1">{project.clientProject.projectnummer}</div>
                     </div>
                   )}
+                  {/* Staat het onderzoek in de Dynamics-weergave "Mijn actieve projecten"?
+                      Iets anders dan een ontbrekend CRM-nummer: het project bestaat wel,
+                      maar de onderzoeker staat er niet als projectmanager op en ziet het
+                      dus niet in zijn eigen lijst. Zolang dit aanstaat, meldt het dashboard
+                      het bovenaan. */}
+                  <div>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!crmProjectActief}
+                        onChange={(e) => zetCrmProjectActief(!e.target.checked)}
+                        disabled={crmBezig}
+                        className="mt-0.5"
+                      />
+                      <span className="text-gray-700">
+                        Staat niet in mijn actieve projecten in het CRM
+                        <span className="block text-xs text-gray-500">
+                          Zet dit uit zodra het in Dynamics is rechtgezet.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
                   <div>
                     <span className="font-medium text-gray-700">Projectdetails:</span>
                     <div

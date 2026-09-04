@@ -303,6 +303,16 @@ export default async function AdminPage() {
     { titel: 'Komt eraan', regels: komtEraan, kleur: 'bg-blue-600' },
   ].filter((b) => b.regels.length > 0);
 
+  /**
+   * Onderzoeken die wel een CRM-project hebben, maar niet in de Dynamics-weergave
+   * "Mijn actieve projecten" staan.
+   *
+   * Als losse melding boven de blokken en niet als regel bij "Actie nodig": het is één
+   * handeling in een ander systeem, geen stap in de routekaart van een onderzoek. Tussen
+   * de andere regels zou het bovendien verdwijnen -- daar staan er al vijftien.
+   */
+  const nietInCrmLijst = projects.filter((p) => !p.crmProjectActief);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -325,6 +335,26 @@ export default async function AdminPage() {
             Nieuwe intake
           </Link>
         </div>
+
+        {nietInCrmLijst.length > 0 && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-medium text-amber-900">
+              {nietInCrmLijst.length === 1
+                ? 'Eén onderzoek staat niet in je actieve projecten in het CRM'
+                : `${nietInCrmLijst.length} onderzoeken staan niet in je actieve projecten in het CRM`}
+            </p>
+            <p className="mt-1 text-sm text-amber-900">
+              {nietInCrmLijst.map((p, i) => (
+                <span key={p.id}>
+                  {i > 0 && ', '}
+                  <Link href={`/admin/projects/${p.id}`} className="underline hover:no-underline">
+                    {p.kenmerk ?? '(geen kenmerk)'}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          </div>
+        )}
 
         {blokken.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">

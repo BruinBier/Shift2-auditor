@@ -286,6 +286,7 @@ export async function PATCH(
       'cancellationReason',
       'clientProjectId',
       'commissionedBy',
+      'crmProjectActief',
       'dateEnd',
       'dateStart',
       'hasReinspection',
