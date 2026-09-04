@@ -4791,9 +4791,17 @@ export default function Stapel({
             return losseVoorstellen.length > 0 ? (
             <div className="mb-4 space-y-2 rounded border border-purple-200 bg-purple-50 p-3">
               <p className="text-xs font-medium text-purple-900">
-                {losseVoorstellen.length === 1
-                  ? 'Dit voorstel wacht op akkoord en wordt goedgekeurd als je akkoord geeft:'
-                  : `Deze ${losseVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je akkoord geeft:`}
+                {/* Bij deelgebieden: "niet gekoppeld", want er staan hier ook voorstellen
+                    die WEL bij een gebied getoond worden — die hebben daar hun eigen
+                    Akkoord-knop en gaan dus niet via de knop hieronder. Zonder deelgebieden
+                    bestaat dat onderscheid niet en heet de knop gewoon "Akkoord". */}
+                {kaarttekst
+                  ? losseVoorstellen.length === 1
+                    ? 'Dit voorstel is aan geen deelgebied gekoppeld. Het wordt meegenomen als je hieronder op "Oordeel akkoord" klikt:'
+                    : `Deze ${losseVoorstellen.length} voorstellen zijn aan geen deelgebied gekoppeld. Ze worden meegenomen als je hieronder op "Oordeel akkoord" klikt:`
+                  : losseVoorstellen.length === 1
+                    ? 'Dit voorstel wacht op akkoord en wordt goedgekeurd als je hieronder op "Akkoord" klikt:'
+                    : `Deze ${losseVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je hieronder op "Akkoord" klikt:`}
               </p>
               {losseVoorstellen.map((v) => (
                 <div key={v.id} className="rounded bg-white p-3 text-sm">
@@ -4949,10 +4957,14 @@ export default function Stapel({
                 }
                 className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
               >
-                {/* Eén woord, ook als er voorstellen aan hangen. Er stond "Akkoord — en keur
-                    het voorstel goed", maar dat staat al in het paarse blok erboven; een knop
-                    die zijn eigen gevolgen opsomt wordt een zin. */}
-                Akkoord
+                {/* Bij een criterium met deelgebieden staan de meeste voorstellen inmiddels
+                    bij hun gebied, elk met een eigen Akkoord-knop (bevindingRegel). Deze knop
+                    gaat dan niet meer over "het voorstel", maar over het OORDEEL: klopt
+                    voldoet/afgekeurd/etc. voor deze pagina. Wat hij aan losse voorstellen nog
+                    meeneemt staat expliciet in het paarse blok erboven, niet hierin verstopt.
+                    Zonder deelgebieden is dit nog steeds de enige knop, en klopt "Akkoord"
+                    zoals het was. */}
+                {kaarttekst ? 'Oordeel akkoord' : 'Akkoord'}
               </button>
               <button
                 type="button"
@@ -4960,7 +4972,7 @@ export default function Stapel({
                 onClick={() => setUitgang('corrigeren')}
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >
-                Niet akkoord
+                {kaarttekst ? 'Oordeel niet akkoord' : 'Niet akkoord'}
               </button>
               {/* Hier stond "Overleggen": een derde uitgang die het blok naar een chatdienst
                   kopieerde om de bevinding te laten herschrijven. Overbodig sinds de tekst
