@@ -16,6 +16,7 @@ meesturen.
 | Bron | Hoe | Wat het kan |
 |---|---|---|
 | **Dynamics CRM** | Agent-modus, jouw sessie | De projectenlijst lezen |
+| **Cardan-portaal** | Agent-modus, jouw sessie | Zien wat Cardan voor ons uitvoert |
 | **SIMcms** | Agent-modus, jouw sessie | Een pagina als concept aanmaken |
 | **Outlook** | Agent-modus, jouw sessie | De inbox lezen, zoeken, een mail openen |
 | **Shift2Auditor** | Codex, alleen lezen | Opzoeken wat er loopt |
@@ -86,6 +87,9 @@ klaar. Deze opdracht inventariseert wat erin zit — verwerken doe je daarna per
 >
 > Staat het onderzoek al in Shift2Auditor maar ontbreekt daar het CRM-nummer, zeg dat er dan bij.
 >
+> Gaat het om een onderzoek dat Cardan uitvoert, kijk dan ook op https://mijn.cardan.com/dashboard
+> wat de status daar is, en met welk kenmerk (C-xxxx).
+>
 > Zet er per bericht bij wat voor soort het is: een nieuwe opdracht, een antwoord op iets dat
 > loopt, of iets anders. Sorteer op wat het meest urgent is.
 >
@@ -153,53 +157,57 @@ Dit gaat via Codex, die alleen mag lezen. Zie `adr/0004-codex-mag-alleen-lezen.m
 
 Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
 
-## 5. Het CRM naast de onderzoeken leggen
+## 5. De drie administraties naast elkaar leggen
 
 Wekelijks, of als je het overzicht kwijt bent.
 
 Dit is iets anders dan opdracht 2. Daar gaat het per bericht: hoort hier een onderzoek en een
 CRM-project bij? Hier gaat het om de hele administratie, ook om onderzoeken waar helemaal geen
-mail bij ligt — een verkocht project dat nooit is aangemaakt, of uren die over hun budget heen
-gaan. Dat komt in een TG-ronde niet boven.
+mail bij ligt — een verkocht project dat nooit is aangemaakt, uren die over hun budget heen
+gaan, of werk dat bij Cardan klaarstaat zonder dat wij het volgen.
 
-> Vergelijk twee lijsten voor me.
+> Vergelijk drie lijsten voor me.
 >
-> **De eerste** staat in Dynamics, in de weergave "Mijn actieve projecten":
+> **Dynamics**, weergave "Mijn actieve projecten" — wat er verkocht is:
 > https://cnxlm.crm4.dynamics.com/main.aspx?appid=7e1d990e-4bc4-ef11-b8e9-000d3aa94544&pagetype=entitylist&etn=pm_project&viewid=79626e75-2c8b-f111-ab0f-000d3a44acb4&viewType=4230
 >
-> **De tweede** staat in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen
-> kijken, niets wijzigen.
+> **Shift2Auditor**, localhost:3000/onderzoeken — wat wij volgen. Alleen kijken, niets wijzigen.
+>
+> **Het Cardan-portaal**, https://mijn.cardan.com/dashboard — wat Cardan voor ons uitvoert.
+> Kijk op het tabblad Onderzoeken naar "Binnenkort" en "Bezig"; de voltooide onderzoeken zijn
+> afgerond werk en die laat je liggen. Kijk daarnaast onder Diensten > Afspraken naar wat er op
+> "Te plannen door klant" staat.
 >
 > Niet elk CRM-project levert een onderzoek op: abonnementen, strippenkaarten en
 > "Toegankelijkheid Zilver" zijn doorlopende contracten. Kijk alleen naar projecten die een
 > contentonderzoek, nulmeting of herinspectie beschrijven.
 >
-> Meld drie dingen:
+> Meld vier dingen:
 > 1. CRM-projecten voor een onderzoek dat nog niet in Shift2Auditor staat.
 > 2. Onderzoeken in Shift2Auditor waarvan het CRM-nummer ontbreekt.
-> 3. Projecten met negatieve resterende uren.
+> 3. Onderzoeken die bij Cardan lopen maar niet in Shift2Auditor staan.
+> 4. Projecten met negatieve resterende uren, en afspraken die op mij staan te wachten.
 >
-> Zet er per punt bij om welke klant en welk projectnummer het gaat. Wijzig niets.
+> Zet er per punt bij om welke klant het gaat, met projectnummer en Cardan-kenmerk. Wijzig niets.
 
-Punt 2 is de reden dat dit ertoe doet: het CRM-nummer moet er zijn voordat de planningsmail
-uitgaat, en het dashboard houdt je daaraan. Deze opdracht vertelt je welk nummer je moet
-opzoeken.
+**Punt 2** is de reden dat dit ertoe doet: het CRM-nummer moet er zijn voordat de planningsmail
+uitgaat, en het dashboard houdt je daaraan.
 
-Punt 3 staat nergens anders. Negatieve uren betekent dat een project over zijn budget heen is;
-dat zie je in Shift2Auditor niet.
+**Punt 3** kwam bij de eerste proef meteen boven: bij Cardan stonden zes contentonderzoeken voor
+gemeente Waalwijk klaar (C-4521, € 9.156), terwijl Waalwijk in Shift2Auditor niet eens als
+opdrachtgever bestond. Er lag geen mail over in TG, dus langs die weg was het niet gevonden.
+
+**Punt 4** staat nergens anders. Negatieve uren betekent dat een project over zijn budget heen
+is. En op het Cardan-portaal staan afspraken op "Te plannen door klant" — kick-offs en
+adviesgesprekken die op jou wachten, niet op Cardan.
+
+**Alles wat bij Cardan loopt hoort in Shift2Auditor te staan.** De voltooide onderzoeken daar
+zijn geschiedenis en horen er niet alsnog in; het gaat om wat nog moet gebeuren.
 
 **De mailbox erbij halen** kan met een vervolgvraag, per klant die uit de vergelijking komt:
 
 > Zoek in Outlook op `from:(@[domein])` en kijk of er sinds [datum] iets is binnengekomen over
 > dit onderzoek dat ik nog niet verwerkt heb.
-
-Dat werkt gericht en niet als open vraag: de zoekbalk heeft een zoekterm nodig. De vergelijking
-CRM ↔ Shift2Auditor levert die termen op.
-
-**Let op de match.** Dezelfde klant kan meerdere sites hebben — Zoetermeer heeft in het CRM
-"omgevingsdocumenten.zoetermeer.nl" terwijl er in de tool ZOET-01 voor bo.zoetermeer.nl loopt.
-Dat zijn twee verschillende onderzoeken, geen dubbeling. Laat Work bij twijfel melden in plaats
-van gokken.
 
 ## 6. De geschiedenis van een klant opzoeken
 
