@@ -1535,6 +1535,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titel</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versie</th>
+                {/* Het CRM-nummer hangt aan het klantproject en was daardoor alleen op de
+                    projectpagina te zien. Hier staat het naast het kenmerk, zodat in een
+                    oogopslag zichtbaar is waar het ontbreekt -- en het moet er zijn voordat
+                    de planningsmail uitgaat. */}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CRM-nummer</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Planning verstuurd</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Planning akkoord</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Startdatum</th>
@@ -1613,6 +1618,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                         </div>
                       </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{project.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {editingCell?.projectId === project.id && editingCell?.field === 'planningSent' ? (
                         <input
@@ -1796,6 +1802,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                       <span>{getSimplifiedTitle(childReinspection)}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{Number(childReinspection.version).toFixed(1)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{childReinspection.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {editingCell?.projectId === childReinspection.id && editingCell?.field === 'planningSent' ? (
                         <input
@@ -2110,6 +2117,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titel</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versie</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CRM-nummer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Planning verstuurd</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Planning akkoord</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Onderzoekstype</th>
@@ -2197,6 +2205,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">{Number(project.version).toFixed(1)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{project.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {editingCell?.projectId === project.id && editingCell?.field === 'planningSent' ? (
                             <input
@@ -2369,6 +2378,7 @@ export default function OnderzoekenTable({ projects }: Props) {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">{Number(childReinspection.version).toFixed(1)}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900">{childReinspection.clientProject?.projectnummer || <span className="text-gray-300" title="Nog geen CRM-nummer">-</span>}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">
                             {editingCell?.projectId === childReinspection.id && editingCell?.field === 'planningSent' ? (
                               <input
