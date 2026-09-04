@@ -3218,31 +3218,10 @@ export default function Stapel({
             regel landt in wcag-regels/. */}
         {!afkeurOpen && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            {/* De pagina erbij, ook als er geen bevinding is.
-                Bij een afkeuring staat deze knop onder de bevinding waar hij bij hoort; bij
-                een criterium dat voldoet is er geen bevinding, en dan zou er nergens meer een
-                weg naar de browser zijn. Juist daar wil je kunnen kijken voor je "Akkoord"
-                zegt. */}
-            {(() => {
-              const url = sampleVoor(cel.sampleId)?.url;
-              if (!url) return null;
-              return (
-                <button
-                  type="button"
-                  onClick={() =>
-                    openBrowserPaneel(
-                      url,
-                      `${cel.code} op ${sampleVoor(cel.sampleId)?.title ?? 'deze pagina'}`,
-                      cel.code,
-                      cel.sampleId ?? undefined,
-                    )
-                  }
-                  className="rounded border border-blue-700 bg-white px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-50"
-                >
-                  Laat de pagina zien
-                </button>
-              );
-            })()}
+            {/* "Laat de pagina zien" stond hier, los van elke bevinding. Weggehaald: het
+                aanwijzen zit nu bij de bevinding zelf ("Laat zien in browser" in
+                bevindingRegel), en een criterium zonder bevinding heeft niets om aan te
+                wijzen. */}
             <button
               type="button"
               onClick={() => {
