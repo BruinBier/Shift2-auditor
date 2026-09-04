@@ -2809,51 +2809,54 @@ export default function Stapel({
     }
   };
 
+  /**
+   * Eén bevinding aanwijzen in het browserpaneel.
+   *
+   * Stond eerst in `onToggle` van de details hieronder: openklappen deed automatisch ook
+   * aanwijzen. Dat koppelde twee losse dingen -- lezen, en het element zien -- aan elkaar,
+   * en de tweede gebeurde dan ongevraagd zodra je de eerste deed. Nu een losse knop, die je
+   * apart kiest nadat je de bevinding hebt gelezen.
+   */
+  const laatZienInBrowser = (b: Bevinding, cel: Cel) => {
+    const url = sampleVoor(cel.sampleId)?.url;
+    if (!url) return;
+    // Het gebied waar deze bevinding bij hoort — dat komt in het paneel te staan als wat er
+    // is aangewezen, niet de tagnaam van het element.
+    const bijGebied = (cel.gebieden ?? []).find((g) => g.aanwijzingen?.[b.id]);
+    const selector = bijGebied?.aanwijzingen?.[b.id];
+    // De hele bevinding gaat mee, mét het advies: klik je in het paneel op het element, dan
+    // wil je niet alleen zien wat er mis is maar ook wat eraan moet gebeuren. Dezelfde tekst
+    // als hier op de kaart.
+    aanwijzenRef.current = selector
+      ? {
+          selector,
+          waarom:
+            `${b.findingCode ? `${b.findingCode} · ` : ''}${b.description}` +
+            (b.advice ? `\n\nAdvies: ${b.advice}` : ''),
+          gebied: bijGebied?.gebied,
+        }
+      : null;
+    setAangewezenVoor(selector ? (b.findingCode ?? 'deze bevinding') : null);
+    // De keuzeknoppen zijn hier verborgen, dus de stand van de vorige keer zou blijven staan:
+    // had je toen "bedienen" aan, dan klik je nu ongemerkt door naar een andere pagina
+    // terwijl je alleen wilde kijken.
+    if (selector) setSchermStand2('kijken');
+    openBrowserPaneel(
+      url,
+      `${b.findingCode ?? cel.code} op ${sampleVoor(cel.sampleId)?.title ?? 'deze pagina'}`,
+      cel.code,
+      cel.sampleId ?? undefined,
+    );
+  };
+
   const bevindingRegel = (b: Bevinding, cel?: Cel) => (
     <li key={b.id} className="rounded bg-blue-50 text-sm text-blue-950">
-      {/* Openklappen is aanwijzen. Er stond een knop "Laat zien in de browser" in het
-          uitgeklapte deel, maar dat is een tweede handeling voor iets wat je op hetzelfde
-          moment wilt: je klapt de bevinding open om te lezen wat er mis is, en dan wil je
-          ook zien wáár. De browser opent nu vanzelf, met een kader om het element als de
-          agent een selector heeft meegegeven.
-
-          Alleen bij openklappen: dichtklappen vuurt hetzelfde `onToggle` af, en dan zou het
-          paneel opnieuw opengaan terwijl je het juist wegklikt. */}
-      <details
-        onToggle={(e) => {
-          const open = (e.currentTarget as HTMLDetailsElement).open;
-          if (!open || !cel) return;
-          const url = sampleVoor(cel.sampleId)?.url;
-          if (!url) return;
-          // Het gebied waar deze bevinding bij hoort — dat komt in het paneel te staan als
-          // wat er is aangewezen, niet de tagnaam van het element.
-          const bijGebied = (cel.gebieden ?? []).find((g) => g.aanwijzingen?.[b.id]);
-          const selector = bijGebied?.aanwijzingen?.[b.id];
-          // De hele bevinding gaat mee, mét het advies: klik je in het paneel op het
-          // element, dan wil je niet alleen zien wat er mis is maar ook wat eraan moet
-          // gebeuren. Dezelfde tekst als hier op de kaart.
-          aanwijzenRef.current = selector
-            ? {
-                selector,
-                waarom:
-                  `${b.findingCode ? `${b.findingCode} · ` : ''}${b.description}` +
-                  (b.advice ? `\n\nAdvies: ${b.advice}` : ''),
-                gebied: bijGebied?.gebied,
-              }
-            : null;
-          setAangewezenVoor(selector ? (b.findingCode ?? 'deze bevinding') : null);
-          // De keuzeknoppen zijn hier verborgen, dus de stand van de vorige keer zou blijven
-          // staan: had je toen "bedienen" aan, dan klik je nu ongemerkt door naar een andere
-          // pagina terwijl je alleen wilde kijken.
-          if (selector) setSchermStand2('kijken');
-          openBrowserPaneel(
-            url,
-            `${b.findingCode ?? cel.code} op ${sampleVoor(cel.sampleId)?.title ?? 'deze pagina'}`,
-            cel.code,
-            cel.sampleId ?? undefined,
-          );
-        }}
-      >
+      {/* Openklappen deed eerst ook meteen aanwijzen in de browser. Dat leek handig -- lezen
+          en zien in één klik -- maar het is ook een bijeffect dat je niet koos: je klapt de
+          bevinding open om de tekst te lezen, en dan verschijnt er ongevraagd een browser.
+          Openklappen is nu weer alleen lezen; "Laat zien in browser" hieronder, naast
+          Akkoord/Akkoord herzien, is de eigen knop voor wie ook het element wil zien. */}
+      <details>
         <summary className="cursor-pointer p-3">
           <span className="mr-2 inline-flex flex-wrap items-center gap-2 align-middle text-xs">
             {b.findingCode && (
@@ -3023,6 +3026,18 @@ export default function Stapel({
                       >
                         Niet akkoord
                       </button>
+                      {cel && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            laatZienInBrowser(b, cel);
+                          }}
+                          className="ml-auto rounded border border-blue-300 bg-white px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100"
+                        >
+                          Laat zien in browser
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -3045,6 +3060,18 @@ export default function Stapel({
                   >
                     Akkoord herzien
                   </button>
+                  {cel && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        laatZienInBrowser(b, cel);
+                      }}
+                      className="ml-auto rounded border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100"
+                    >
+                      Laat zien in browser
+                    </button>
+                  )}
                 </div>
               )}
               <button
