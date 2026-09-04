@@ -3597,7 +3597,7 @@ export default function Stapel({
    * dan verscheen dat kopje twee keer in hetzelfde uitklapblok, met dezelfde commando's
    * eronder.
    */
-  const bewijsBlokken = (cel: Cel, metMetingen = true) => {
+  const bewijsBlokken = (cel: Cel, metMetingen = true, heeftOpenVoorstellen = false) => {
     const controle = cel.controle;
     const TEKEN: Record<string, string> = { ja: '✓', nee: '✗', nvt: '—' };
 
@@ -3624,18 +3624,22 @@ export default function Stapel({
 
           <p
             className={`text-sm ${
-              cel.akkoord === 'akkoord'
+              cel.akkoord === 'akkoord' && !heeftOpenVoorstellen
                 ? 'font-medium text-green-800'
                 : cel.akkoord === 'afgewezen'
                   ? 'font-medium text-red-800'
                   : 'text-amber-800'
             }`}
           >
-            {cel.akkoord === 'akkoord'
+            {/* Niet alleen `cel.akkoord === 'akkoord'`: dat blijft "waar" staan als er ná het
+                akkoord alsnog een voorstel bijkomt. Dan klopt "akkoord bevonden" niet meer. */}
+            {cel.akkoord === 'akkoord' && !heeftOpenVoorstellen
               ? '✓ Door jou nagekeken en akkoord bevonden.'
               : cel.akkoord === 'afgewezen'
                 ? '✗ Door jou afgewezen.'
-                : 'Nog niet door jou nagekeken — dit wacht op je akkoord.'}
+                : cel.akkoord === 'akkoord'
+                  ? 'Er staat nog een voorstel open — dit telt pas mee als je akkoord geeft.'
+                  : 'Nog niet door jou nagekeken — dit wacht op je akkoord.'}
           </p>
 
           {!!controle?.punten?.length && (
@@ -4866,7 +4870,7 @@ export default function Stapel({
             </div>
           )}
 
-          {!kaarttekst && bewijsBlokken(huidig.cel)}
+          {!kaarttekst && bewijsBlokken(huidig.cel, true, wachtendeVoorstellen.length > 0)}
 
           {verwerktMelding}
           {fout && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{fout}</p>}
@@ -4949,18 +4953,24 @@ export default function Stapel({
             {kaarttekst && (
               <p
                 className={`mb-2 mt-12 text-center text-sm font-medium ${
-                  huidig.cel.akkoord === 'akkoord'
+                  alAkkoord
                     ? 'text-green-800'
                     : huidig.cel.akkoord === 'afgewezen'
                       ? 'text-red-800'
                       : 'text-gray-700'
                 }`}
               >
-                {huidig.cel.akkoord === 'akkoord'
+                {/* Niet alleen `cel.akkoord === 'akkoord'`: dat blijft "waar" staan als er ná
+                    het akkoord alsnog een voorstel bijkomt (zoals V011 hierboven). Dan klopt
+                    "akkoord bevonden" niet meer -- er ligt weer iets open. `alAkkoord` telt
+                    ook wachtendeVoorstellen mee, net als de knoppen hieronder. */}
+                {alAkkoord
                   ? '✓ Door jou nagekeken en akkoord bevonden.'
                   : huidig.cel.akkoord === 'afgewezen'
                     ? '✗ Door jou afgewezen.'
-                    : 'De agent heeft dit criterium beoordeeld. Dat oordeel telt pas mee als jij het bevestigt.'}
+                    : huidig.cel.akkoord === 'akkoord'
+                      ? 'Er staat nog een voorstel open — dit telt pas mee als je akkoord geeft.'
+                      : 'De agent heeft dit criterium beoordeeld. Dat oordeel telt pas mee als jij het bevestigt.'}
               </p>
             )}
             {/* Heb je al akkoord gegeven, dan is er niets meer te kiezen: de drie knoppen
