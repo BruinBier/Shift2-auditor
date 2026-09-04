@@ -43,6 +43,12 @@ interface Project {
   /** Naam van het bureau dat de audit uitvoert, als we het niet zelf doen. */
   externalBureau?: string | null;
   isOngoing?: boolean;
+  /**
+   * Staat dit onderzoek in de Dynamics-weergave "Mijn actieve projecten"? Op false
+   * bestaat het project daar wel, maar staat de onderzoeker er niet als projectmanager
+   * op. Iets anders dan een ontbrekend CRM-nummer.
+   */
+  crmProjectActief?: boolean;
 }
 
 interface Props {
