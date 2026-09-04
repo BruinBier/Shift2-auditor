@@ -142,7 +142,9 @@ gaan, of werk dat bij Cardan klaarstaat zonder dat wij het volgen.
 > **Dynamics**, weergave "Mijn actieve projecten" — wat er verkocht is:
 > https://cnxlm.crm4.dynamics.com/main.aspx?appid=7e1d990e-4bc4-ef11-b8e9-000d3aa94544&pagetype=entitylist&etn=pm_project&viewid=79626e75-2c8b-f111-ab0f-000d3a44acb4&viewType=4230
 >
-> **Shift2Auditor**, localhost:3000/onderzoeken — wat wij volgen. Alleen kijken, niets wijzigen.
+> **Shift2Auditor**, localhost:3000/onderzoeken — wat wij volgen. Neem de hele lijst, ook de
+> onderzoeken met status "In de wacht": die bestaan wel degelijk, ze liggen alleen stil omdat de
+> klant aan zet is. Alleen kijken, niets wijzigen.
 >
 > **Het Cardan-portaal**, https://mijn.cardan.com/dashboard — wat Cardan voor ons uitvoert.
 > Kijk **alleen** op het tabblad Onderzoeken, en daar alleen naar "Binnenkort" en "Bezig". De
@@ -163,6 +165,12 @@ gaan, of werk dat bij Cardan klaarstaat zonder dat wij het volgen.
 > 4. Projecten met negatieve resterende uren, en afspraken die op mij staan te wachten.
 >
 > Zet er per punt bij om welke klant het gaat, met projectnummer en Cardan-kenmerk. Wijzig niets.
+
+**Punt 1 gaat mis als Work alleen naar actieve onderzoeken kijkt.** Bij de eerste proef meldde
+het BOZ-01, HAR-01, NIJKERK-01 en MDL-01 als ontbrekend, terwijl ze er alle vier stonden met
+precies het CRM-nummer dat het noemde. Ze staan op "In de wacht" omdat de klant aan zet is — de
+website is nog niet live, er staat nog geen content, de site wordt omgezet. Zonder de regel dat
+de hele lijst telt, komt dat elke week terug.
 
 **Punt 2** is de reden dat dit ertoe doet: het CRM-nummer moet er zijn voordat de planningsmail
 uitgaat, en het dashboard houdt je daaraan.
