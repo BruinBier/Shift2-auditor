@@ -593,6 +593,16 @@ export default function Stapel({
   const [index, setIndex] = useState(0);
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
+  /**
+   * Niet akkoord, per los voorstel op de oordeelkaart (bv. V011 naast V012 en V013).
+   *
+   * Een eigen paar state, los van `uitgang`/`reden` hierboven: die zijn voor het losse
+   * voorstel-scherm, waar er maar één voorstel tegelijk in beeld is. Hier staan er soms
+   * drie naast elkaar; met de gedeelde state zou de reden die je voor V012 typt ook voor
+   * V013 gelden zodra je daar ook op "Niet akkoord" klikt.
+   */
+  const [afwijzenVoorstelId, setAfwijzenVoorstelId] = useState<string | null>(null);
+  const [afwijzenVoorstelReden, setAfwijzenVoorstelReden] = useState('');
   /** Het formulier waarmee de onderzoeker zelf een onderdeel aan stap 3 toevoegt. */
   const [toevoegOpen, setToevoegOpen] = useState(false);
   /**
@@ -1297,7 +1307,19 @@ export default function Stapel({
     }
   };
 
-  const beoordeel = async (findingId: string, actie: string, type?: string) => {
+  const beoordeel = async (
+    findingId: string,
+    actie: string,
+    type?: string,
+    /**
+     * Expliciete reden, voor akkoord/afwijzen per los voorstel op de oordeelkaart.
+     *
+     * Zonder dit viel de functie terug op de gedeelde `reden`-state van het volledige
+     * voorstel-scherm — verkeerd hier, want die staat los van welk voorstel je nu
+     * afwijst als er meerdere (V011, V012, V013) op dezelfde kaart staan.
+     */
+    expliciteReden?: string
+  ) => {
     setBezig(true);
     setFout(null);
     try {
@@ -1306,7 +1328,11 @@ export default function Stapel({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ actie, type, reden: reden.trim() || undefined }),
+          body: JSON.stringify({
+            actie,
+            type,
+            reden: (expliciteReden ?? reden).trim() || undefined,
+          }),
         }
       );
       if (!res.ok) {
@@ -2802,7 +2828,14 @@ export default function Stapel({
                 {b.findingCode}
               </span>
             )}
-            {b.impact && <span className="rounded bg-white/70 px-1.5 py-0.5">{b.impact}</span>}
+            {/* Een opmerking heeft geen impact, en dan stond hier niets -- alsof het label
+                vergeten was. "Opmerking" is net zo goed een oordeel als "matig" of "klein",
+                dus hij verdient dezelfde plek. */}
+            {b.impact ? (
+              <span className="rounded bg-white/70 px-1.5 py-0.5">{b.impact}</span>
+            ) : b.type === 'opmerking' ? (
+              <span className="rounded bg-white/70 px-1.5 py-0.5">opmerking</span>
+            ) : null}
           </span>
           <span className="leading-relaxed">{eersteZin(b.description)}</span>
         </summary>
@@ -2867,6 +2900,88 @@ export default function Stapel({
                   <p className="whitespace-pre-line leading-relaxed">{b.advice}</p>
                 </div>
               )}
+              {/* Los akkoord per voorstel.
+                  De grote "Akkoord"-knop onderaan de kaart nam alle wachtende voorstellen in
+                  één keer mee — praktisch bij één voorstel, maar bij twee of drie kon je ze
+                  niet meer los wegen: het ene mocht een bevinding zijn, het andere een
+                  opmerking, of je was het niet met alle drie eens. Deze knoppen doen precies
+                  wat de knoppen op het losse voorstel-scherm doen, hier waar je het voorstel
+                  al aan het lezen bent. */}
+              {b.status === 'voorstel' && (
+                <div className="mt-3 border-t border-black/10 pt-3">
+                  {afwijzenVoorstelId === b.id ? (
+                    <div>
+                      <label className="mb-1 block text-xs font-medium opacity-70">
+                        Reden (verplicht)
+                      </label>
+                      <textarea
+                        value={afwijzenVoorstelReden}
+                        onChange={(e) => setAfwijzenVoorstelReden(e.target.value)}
+                        rows={2}
+                        autoFocus
+                        className="w-full rounded border border-red-300 p-2 text-sm leading-relaxed"
+                        placeholder="Waarom klopt dit niet? Zo weet een volgende ronde dat dit al bekeken is."
+                      />
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={bezig || !afwijzenVoorstelReden.trim()}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            await beoordeel(b.id, 'afwijzen', undefined, afwijzenVoorstelReden);
+                            setAfwijzenVoorstelId(null);
+                            setAfwijzenVoorstelReden('');
+                          }}
+                          className="rounded bg-red-700 px-3 py-1 text-xs font-medium text-white hover:bg-red-800 disabled:opacity-40"
+                        >
+                          Afwijzen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setAfwijzenVoorstelId(null);
+                            setAfwijzenVoorstelReden('');
+                          }}
+                          className="rounded px-3 py-1 text-xs opacity-70 hover:bg-white/50"
+                        >
+                          Annuleren
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {/* Akkoord neemt over wat de agent voorstelde (b.type) — geen
+                          losse bevinding/opmerking-keuze hier. Wil je dat corrigeren,
+                          dan doe je dat via "Tekst aanpassen" of op het volledige
+                          voorstel-scherm. */}
+                      <button
+                        type="button"
+                        disabled={bezig}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          beoordeel(b.id, 'akkoord', b.type);
+                        }}
+                        className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
+                      >
+                        Akkoord
+                      </button>
+                      <button
+                        type="button"
+                        disabled={bezig}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setAfwijzenVoorstelId(b.id);
+                          setAfwijzenVoorstelReden('');
+                        }}
+                        className="rounded border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                      >
+                        Niet akkoord
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={(e) => {
@@ -2906,11 +3021,19 @@ export default function Stapel({
      * koppeling wijst naar hetzelfde id. Zonder dit staat er "hier hoort een bevinding bij,
      * maar die is niet gevonden" bij een gebied waar de koppeling gewoon klopt, alleen is de
      * bevinding na een nieuwe test weer voorstel geworden.
+     *
+     * Een opmerking telt hier ook mee. Een gebied als "Visuele relaties en groepering" kan
+     * terecht op `opmerking` staan in plaats van `fout` — zie Shift2_Regels_SC_1_3_1.md over
+     * een adres dat MEE in de contactopsomming staat: er gaat niets verloren, maar er wordt
+     * een verband beweerd dat er niet is (F43). Die opmerking hoort net zo goed bij zijn
+     * gebied als een bevinding. Sloot je hem hier uit, dan kon de koppeling nooit kloppen en
+     * stond er altijd "hier hoort een bevinding bij, maar die is niet gevonden" — ook al was
+     * het id juist ingevuld.
      */
     const voorstellenHier = stand.voorstellen.filter(
       (v) => v.sampleId === cel.sampleId && v.code === cel.code,
     );
-    const alle = [...cel.bevindingen, ...voorstellenHier].filter((b) => b.type !== 'opmerking');
+    const alle = [...cel.bevindingen, ...voorstellenHier];
     const perGebied = new Map<string, Bevinding[]>();
     const alGetoond = new Set<string>();
     const genoemd = new Set<string>();
