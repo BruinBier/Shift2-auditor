@@ -76,6 +76,16 @@ klaar. Deze opdracht inventariseert wat erin zit — verwerken doe je daarna per
 > Kijk daarna in Shift2Auditor, dat lokaal draait op localhost:3000/onderzoeken. Alleen kijken,
 > niets wijzigen. Zeg per bericht of het bij een lopend onderzoek hoort, en bij welk.
 >
+> Kijk ook in Dynamics, in de weergave "Mijn actieve projecten":
+> https://cnxlm.crm4.dynamics.com/main.aspx?appid=7e1d990e-4bc4-ef11-b8e9-000d3aa94544&pagetype=entitylist&etn=pm_project&viewid=79626e75-2c8b-f111-ab0f-000d3a44acb4&viewType=4230
+>
+> Meld per bericht wat je daar bij die klant aantreft: projectnummer en projectnaam. Zeg erbij
+> of het om een onderzoek gaat of om een doorlopend contract — abonnementen, strippenkaarten en
+> "Toegankelijkheid Zilver" zijn dat laatste. Kies niet welk nummer het juiste is; dat beoordeel
+> ik zelf. Staat er niets, meld dat dan.
+>
+> Staat het onderzoek al in Shift2Auditor maar ontbreekt daar het CRM-nummer, zeg dat er dan bij.
+>
 > Zet er per bericht bij wat voor soort het is: een nieuwe opdracht, een antwoord op iets dat
 > loopt, of iets anders. Sorteer op wat het meest urgent is.
 >
@@ -84,10 +94,29 @@ klaar. Deze opdracht inventariseert wat erin zit — verwerken doe je daarna per
 **Die laatste regel is niet vrijblijvend.** Zonder die zin begint Work bij alles wat op een
 opdracht lijkt alvast een intakeblok te maken, en dan staan er tien voorstellen door elkaar.
 
+**Waarom het CRM erbij zit.** Bij een bericht uit TG wil je twee dingen weten: loopt er een
+onderzoek voor, en is het verkocht? Dat tweede staat alleen in Dynamics. En het levert meteen
+het nummer op dat de tool nodig heeft — het CRM-nummer blokkeert de planningsmail, dus vroeg of
+laat moet je het toch opzoeken.
+
+**Waarom Work niet kiest welk nummer het juiste is.** De projectnamen hebben geen vaste vorm.
+Soms staat de site erin (P02337 omgevingsdocumenten.zoetermeer.nl), soms alleen de dienst
+(P02383 Toegankelijkheid + hertest + adviesgesprek). Eén project kan meerdere onderzoeken dekken:
+onder P02371 vallen vier contentonderzoeken voor Beverwijk. En bij een gemeente met een
+Zilver-abonnement staat er een projectnummer dat er níet bij hoort — bij Overbetuwe is P01165
+een doorlopend contract, niet het contentonderzoek van De Helster. Werk meldt wat het aantreft;
+de keuze is aan de onderzoeker.
+
 **Daarna per bericht.** Het overzicht zegt welk soort het is; daarmee weet je welke opdracht
 hieronder erbij hoort — een nieuwe opdracht wordt nummer 3, een antwoord over scope nummer 8,
 een mail die terug moet nummer 7. Zo is het vanochtend ook gegaan met de opdracht voor
 Nissewaard: één mail, één blok, één handeling. Bij tien berichten is het hetzelfde, tien keer.
+
+**Staat een bericht nergens** — niet in Shift2Auditor en niet in Dynamics — dan meldt Work dat
+en verder niets. Wil je weten wat er speelt, gebruik dan opdracht 6: die zoekt de mailgeschiedenis
+van die klant op. Bij Overbetuwe leverde dat een akkoord van vijftien dagen eerder op dat was
+blijven liggen. Nuttig, maar te lang om het voor elk onvindbaar bericht in het overzicht te
+zetten.
 
 **Wat verwerkt is, gaat uit TG.** Archiveren volstaat: Work zoekt in alle mappen, dus je vindt
 het later terug. Blijft een verwerkte mail staan, dan komt hij volgende week opnieuw in het
@@ -126,8 +155,12 @@ Sneller is zelf kijken in de onderzoekenlijst — daar kun je op titel filteren.
 
 ## 5. Het CRM naast de onderzoeken leggen
 
-Wekelijks, of als je het overzicht kwijt bent. Dit is de enige opdracht waarbij Work twee
-administraties vergelijkt.
+Wekelijks, of als je het overzicht kwijt bent.
+
+Dit is iets anders dan opdracht 2. Daar gaat het per bericht: hoort hier een onderzoek en een
+CRM-project bij? Hier gaat het om de hele administratie, ook om onderzoeken waar helemaal geen
+mail bij ligt — een verkocht project dat nooit is aangemaakt, of uren die over hun budget heen
+gaan. Dat komt in een TG-ronde niet boven.
 
 > Vergelijk twee lijsten voor me.
 >
