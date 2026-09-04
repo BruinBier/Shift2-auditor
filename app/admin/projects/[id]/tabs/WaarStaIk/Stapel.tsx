@@ -2859,10 +2859,10 @@ export default function Stapel({
                  dat nog niet beoordeeld is, is geen fout. Zonder dit onderscheid moest je
                  de letter voor de code lezen om te weten of iets al akkoord was. */
               <span
-                className={`rounded px-1.5 py-0.5 font-mono font-medium ${
+                className={`rounded border px-1.5 py-0.5 font-mono font-medium ${
                   b.status === 'voorstel'
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-green-100 text-green-800'
+                    ? 'border-purple-400 bg-purple-100 text-purple-800'
+                    : 'border-green-400 bg-green-100 text-green-800'
                 }`}
               >
                 {b.findingCode}
