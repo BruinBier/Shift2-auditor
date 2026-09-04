@@ -4800,8 +4800,8 @@ export default function Stapel({
                     ? `Dit voorstel is aan geen deelgebied gekoppeld. Het wordt meegenomen als je hieronder op "Akkoord voor ${huidig.cel.code}" klikt:`
                     : `Deze ${losseVoorstellen.length} voorstellen zijn aan geen deelgebied gekoppeld. Ze worden meegenomen als je hieronder op "Akkoord voor ${huidig.cel.code}" klikt:`
                   : losseVoorstellen.length === 1
-                    ? 'Dit voorstel wacht op akkoord en wordt goedgekeurd als je hieronder op "Akkoord" klikt:'
-                    : `Deze ${losseVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je hieronder op "Akkoord" klikt:`}
+                    ? `Dit voorstel wacht op akkoord en wordt goedgekeurd als je hieronder op "Akkoord voor ${huidig.cel.code}" klikt:`
+                    : `Deze ${losseVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je hieronder op "Akkoord voor ${huidig.cel.code}" klikt:`}
               </p>
               {losseVoorstellen.map((v) => (
                 <div key={v.id} className="rounded bg-white p-3 text-sm">
@@ -4969,7 +4969,11 @@ export default function Stapel({
                     kan allang akkoord zijn terwijl 1.3.1 op diezelfde Home nog open staat.
                     De code staat al bovenaan de kaart, maar herhaald op de knop zelf hoef
                     je niet omhoog te kijken om te weten waar je "ja" tegen zegt. */}
-                {kaarttekst ? `Akkoord voor ${huidig.cel.code}` : 'Akkoord'}
+                {/* Ook zonder deelgebieden: de code staat al bovenaan de kaart, maar dat
+                    argument gold óók bij een kaart mét deelgebieden en loste de
+                    dubbelzinnigheid daar niet op ("pagina akkoord voor 1.1.1 of 1.3.1?").
+                    Dezelfde vraag speelt op elke kaart, dus dezelfde oplossing overal. */}
+                {`Akkoord voor ${huidig.cel.code}`}
               </button>
               <button
                 type="button"
@@ -4977,7 +4981,7 @@ export default function Stapel({
                 onClick={() => setUitgang('corrigeren')}
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >
-                {kaarttekst ? `Niet akkoord voor ${huidig.cel.code}` : 'Niet akkoord'}
+                {`Niet akkoord voor ${huidig.cel.code}`}
               </button>
               {/* Hier stond "Overleggen": een derde uitgang die het blok naar een chatdienst
                   kopieerde om de bevinding te laten herschrijven. Overbodig sinds de tekst
