@@ -2852,7 +2852,19 @@ export default function Stapel({
         <summary className="cursor-pointer p-3">
           <span className="mr-2 inline-flex flex-wrap items-center gap-2 align-middle text-xs">
             {b.findingCode && (
-              <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono font-medium">
+              /* Groen voor een bevestigde B-code, paars voor een V-code die nog op
+                 akkoord wacht -- dezelfde paarse kleur als "Wacht op akkoord" verderop
+                 op de kaart, zodat het één kleurtaal is. Geen rood: dat betekent hier al
+                 "afgekeurd"/"fout" (afgekeurd, kritiek, foutmeldingen), en een voorstel
+                 dat nog niet beoordeeld is, is geen fout. Zonder dit onderscheid moest je
+                 de letter voor de code lezen om te weten of iets al akkoord was. */
+              <span
+                className={`rounded px-1.5 py-0.5 font-mono font-medium ${
+                  b.status === 'voorstel'
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-green-100 text-green-800'
+                }`}
+              >
                 {b.findingCode}
               </span>
             )}
