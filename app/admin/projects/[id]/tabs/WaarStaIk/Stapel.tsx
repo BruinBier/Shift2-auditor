@@ -2231,10 +2231,15 @@ export default function Stapel({
      * bestaat, het tweede als een bevinding over iets waar 1.1.1 niet over gaat.
      *
      * De grens is niet de criteriumcode maar de vraag of er iets te meten valt: is er niets
-     * gemeten én is er voor dit criterium geen meting geregistreerd in lib/metingen.ts, dan
-     * valt er ook niets te melden.
+     * gemeten én registreert dit criterium niet specifiek `get-consistentie` (de meting die
+     * de onderdelen-vergelijking oplevert) in lib/metingen.ts, dan valt er niets te melden.
+     *
+     * Eerst stond hier "heeft dit criterium ÜBERHAUPT een meting geregistreerd", en dat was
+     * te grof: 1.2.5 deelt `get-videosporen` met 1.2.3 (audiosporen, geen onderdelenlijst),
+     * dus die grens klapte niet dicht en toonde dezelfde twee 3.2.4-zinnen op de 1.2.5-kaart.
      */
-    if (!u && !metingenVoorCriterium(cel.code).length) return null;
+    if (!u && !metingenVoorCriterium(cel.code).some((m) => m.commando === 'get-consistentie'))
+      return null;
     const alleGemeten: any[] = u?.onderdelen ?? [];
     /**
      * Twee groepen, want ze wegen niet hetzelfde.
