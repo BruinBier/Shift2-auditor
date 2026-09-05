@@ -37,21 +37,15 @@ function datumNl(d: Date): string {
   return format(d, 'd MMMM', { locale: nl });
 }
 
-/**
- * Eén blok met een gekleurde kop en de onderzoeken die erin vallen.
- * Met `tweeKolommen` staan de regels naast elkaar; dat is bedoeld voor een
- * blok over de volle breedte.
- */
+/** Eén blok met een gekleurde kop en de onderzoeken die erin vallen. */
 function Blok({
   titel,
   kleur,
   regels,
-  tweeKolommen = false,
 }: {
   titel: string;
   kleur: string;
   regels: Regel[];
-  tweeKolommen?: boolean;
 }) {
   return (
     <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -59,15 +53,9 @@ function Blok({
         <h2 className="font-semibold">{titel}</h2>
         <span className="text-sm">{regels.length}</span>
       </div>
-      <ul
-        className={
-          tweeKolommen
-            ? 'grid grid-cols-1 md:grid-cols-2 md:divide-x divide-gray-100'
-            : 'divide-y divide-gray-100'
-        }
-      >
+      <ul className="divide-y divide-gray-100">
         {regels.map((r) => (
-          <li key={r.id} className={tweeKolommen ? 'border-b border-gray-100' : undefined}>
+          <li key={r.id}>
             <Link
               href={`/admin/projects/${r.id}`}
               className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors h-full"
@@ -377,41 +365,21 @@ export default async function AdminPage() {
             <p className="text-gray-600">Er loopt op dit moment geen onderzoek.</p>
           </div>
         ) : (
+          /* Elk blok over de volle breedte, onder elkaar. De volgorde is de urgentie:
+             wat jij moet doen bovenaan, doorlopend werk onderaan.
+
+             Eerder stonden "Actie nodig" en "Loopt nu" naast elkaar en had het wachtblok
+             twee kolommen. Dat paste minder naarmate er meer bij kwam: een regel bestaat
+             uit kenmerk, titel, soort onderzoek, bureau en een toelichting, en in een
+             halve kolom valt daar te veel van weg. */
           <div className="space-y-6">
-            {/* Bovenste rij: wat jij moet doen links, wat er nu draait rechts.
-                Expliciet in die volgorde, niet zoals ze in de lijst staan. */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {['Actie nodig', 'Loopt nu'].map((naam) => {
-                const blok = blokken.find((b) => b.titel === naam);
-                if (!blok) return null;
-                return (
-                  <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-                );
-              })}
-            </div>
-
-            {/* Tweede rij: over de volle breedte met de regels onder elkaar,
-                want in een halve kolom is er geen ruimte voor de titel plus
-                het soort onderzoek. */}
-            {blokken
-              .filter((b) => b.titel === 'Komt eraan')
-              .map((blok) => (
+            {['Actie nodig', 'Loopt nu', 'Komt eraan', 'Wacht op iemand anders'].map((naam) => {
+              const blok = blokken.find((b) => b.titel === naam);
+              if (!blok) return null;
+              return (
                 <Blok key={blok.titel} titel={blok.titel} kleur={blok.kleur} regels={blok.regels} />
-              ))}
-
-            {/* Waar je op een ander wacht. Dat kost de meeste ruimte door de
-                redenen, dus over de volle breedte in twee kolommen. */}
-            {blokken
-              .filter((b) => b.titel === 'Wacht op iemand anders')
-              .map((blok) => (
-                <Blok
-                  key={blok.titel}
-                  titel={blok.titel}
-                  kleur={blok.kleur}
-                  regels={blok.regels}
-                  tweeKolommen
-                />
-              ))}
+              );
+            })}
 
             {/* Helemaal onderaan: werk zonder begin of eind, dus zonder
                 urgentie. */}
