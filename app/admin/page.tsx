@@ -149,7 +149,11 @@ export default async function AdminPage() {
         : 'Nulmeting';
     const basis = {
       id: p.id,
-      kenmerk: `${p.kenmerk ?? '(geen kenmerk)'}${isVervolg ? ' v1.1' : ''}`,
+      // Altijd het versienummer erbij, ook bij een nulmeting. Nulmeting en herinspectie
+      // delen hetzelfde kenmerk, en sinds een opgeleverd onderzoek hier kan staan voor
+      // het adviesgesprek, staan ze soms allebei in de lijst. Zonder versie zie je dan
+      // twee keer "BEL-05" en is niet duidelijk welke regel welke is.
+      kenmerk: `${p.kenmerk ?? '(geen kenmerk)'} v${Number(p.version).toFixed(1)}`,
       titel: p.title,
       bureau: p.externalBureau,
       ronde,
