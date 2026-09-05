@@ -127,22 +127,19 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   // Uitnodiging voor het adviesgesprek, ná de oplevering van het rapport. De planningsmail
   // heeft dit gesprek al aangekondigd; deze mail maakt er een afspraak van.
   //
-  // Na een nulmeting gaat het gesprek over wat er hersteld moet worden vóór de hertest; na
-  // de hertest zelf is er niets meer te herstellen en gaat het over het eindresultaat.
   const isHerinspectie = Boolean(project.parentProjectId);
 
-  // Het adviesgesprek hoort bij een onderzoek met hertest, en bij de hertest zelf. Het veld
-  // hasReinspection staat op de nulmeting en wordt niet geerfd, dus een herinspectie herken
-  // je aan parentProjectId.
-  const heeftAdviesgesprek = Boolean(project.hasReinspection || project.parentProjectId);
+  // Het adviesgesprek hoort bij de herinspectie en niet bij de nulmeting. Er is er een per
+  // opdracht -- de offerte noemt "nulmeting, herinspectie en adviesgesprek", en bij Cardan
+  // staat er ook een per onderzoek klaar. Het gaat over het rapport van de hertest: wat is
+  // er opgelost en wat staat er nog open.
+  const heeftAdviesgesprek = isHerinspectie;
   const adviesuitnodiging = [
     `Dag ${contactnaam || '[naam]'},`,
     '',
     `Het toegankelijkheidsonderzoek van ${scopeUrl.split('\n')[0]?.replace(/^[-*•]\s*/, '').trim() || '[website]'} is afgerond en het rapport heb je van ons ontvangen.`,
     '',
-    isHerinspectie
-      ? 'Ik neem de resultaten graag met je door. In dat gesprek lopen we langs wat er is opgelost en wat er eventueel nog openstaat.'
-      : 'Zoals afgesproken neem ik de resultaten graag met je door. In dat gesprek lopen we de bevindingen langs en bespreken we de vervolgstappen richting de hertest.',
+    'Zoals afgesproken neem ik de resultaten graag met je door. In dat gesprek lopen we langs wat er is opgelost en wat er eventueel nog openstaat.',
     '',
     'Laat je me weten wanneer het jou uitkomt?',
   ].join('\n');

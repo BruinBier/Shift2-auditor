@@ -1252,8 +1252,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               Bij status "Gereed" blijft het staan zolang het adviesgesprek nog
               niet is gevoerd: het dashboard stuurt je hierheen om dat af te
               vinken, en dan moet die knop er zijn. */}
-          {(projectStatus !== 'Gereed' ||
-            ((project.hasReinspection || project.parentProjectId) && !project.adviceCallHeld)) &&
+          {(projectStatus !== 'Gereed' || (project.parentProjectId && !project.adviceCallHeld)) &&
             projectStatus !== 'Geannuleerd' && (
             <VoorbereidingStappen project={project} />
           )}
