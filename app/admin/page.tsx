@@ -59,10 +59,9 @@ function Blok({
         <table className="w-full table-fixed">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className={`${kop} w-28`}>Kenmerk</th>
-              <th className={`${kop} w-44`}>Opdrachtgever</th>
+              <th className={`${kop} w-52`}>Onderzoek</th>
               <th className={`${kop} w-44`}>Website</th>
-              <th className={`${kop} w-40`}>Ronde</th>
+              <th className={`${kop} w-40`}>Soort onderzoek</th>
               <th className={`${kop} w-24`}>Uitvoerder</th>
               <th className={`${kop} w-24`}>CRM</th>
               <th className={kop}>Actie</th>
@@ -132,11 +131,11 @@ export default async function AdminPage() {
     // oplevering nog komt (een adviesgesprek) en of er later een tweede ronde volgt.
     // Zonder dat onderscheid zie je het pas als er twee regels met hetzelfde kenmerk staan.
     const ronde = /aanvullend/i.test(p.researchType || '')
-      ? 'Aanvullend onderzoek'
+      ? 'Aanvullend'
       : isVervolg
-        ? 'Herinspectie'
+        ? 'Hertest'
         : p.hasReinspection
-          ? 'Nulmeting + hertest'
+          ? 'Nulmeting, met hertest'
           : 'Nulmeting';
     const basis = {
       id: p.id,

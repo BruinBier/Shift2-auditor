@@ -38,12 +38,20 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
   return (
     <>
       <tr className="hover:bg-gray-50 transition-colors">
-        <td className={`${cel} font-medium text-gray-900 whitespace-nowrap`}>
-          <Link href={`/admin/projects/${regel.id}`} className="hover:underline">
+        {/* Kenmerk en opdrachtgever in een cel, onder elkaar: samen zeggen ze om welk
+            onderzoek van welke klant het gaat, en zo blijft er breedte over voor de
+            actiekolom. */}
+        <td className={cel}>
+          <Link
+            href={`/admin/projects/${regel.id}`}
+            className="font-medium text-gray-900 hover:underline"
+          >
             {regel.kenmerk}
           </Link>
+          {regel.opdrachtgever && (
+            <div className="text-gray-500">{regel.opdrachtgever}</div>
+          )}
         </td>
-        <td className={`${cel} text-gray-700 whitespace-nowrap`}>{regel.opdrachtgever}</td>
         <td className={`${cel} text-gray-900`}>{regel.website}</td>
         <td className={`${cel} text-blue-700`}>{regel.ronde ?? ''}</td>
         <td
@@ -80,7 +88,7 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
       </tr>
       {lang && open && (
         <tr className="bg-gray-50">
-          <td colSpan={7} className="px-3 pb-3 pt-0 text-sm text-gray-600">
+          <td colSpan={6} className="px-3 pb-3 pt-0 text-sm text-gray-600">
             {regel.toelichting}
           </td>
         </tr>
