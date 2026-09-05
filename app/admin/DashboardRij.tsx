@@ -45,7 +45,7 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
         </td>
         <td className={`${cel} text-gray-700 whitespace-nowrap`}>{regel.opdrachtgever}</td>
         <td className={`${cel} text-gray-900`}>{regel.website}</td>
-        <td className={`${cel} text-blue-700 whitespace-nowrap`}>{regel.ronde ?? ''}</td>
+        <td className={`${cel} text-blue-700`}>{regel.ronde ?? ''}</td>
         <td
           className={`${cel} whitespace-nowrap ${
             regel.uitvoerder === 'Shift2' ? 'text-gray-500' : 'text-amber-700'

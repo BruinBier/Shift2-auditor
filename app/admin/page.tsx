@@ -61,8 +61,8 @@ function Blok({
             <tr>
               <th className={`${kop} w-28`}>Kenmerk</th>
               <th className={`${kop} w-44`}>Opdrachtgever</th>
-              <th className={`${kop} w-52`}>Website</th>
-              <th className={`${kop} w-28`}>Ronde</th>
+              <th className={`${kop} w-44`}>Website</th>
+              <th className={`${kop} w-40`}>Ronde</th>
               <th className={`${kop} w-24`}>Uitvoerder</th>
               <th className={`${kop} w-24`}>CRM</th>
               <th className={kop}>Actie</th>
@@ -128,11 +128,16 @@ export default async function AdminPage() {
     const isVervolg = Boolean(p.parentProjectId);
     // Dezelfde indeling als in de onderzoekenlijst: een aanvullende ronde
     // blijkt uit het onderzoekstype, een herinspectie uit de parent-relatie.
+    // Bij een nulmeting telt of er een hertest bij hoort: dat bepaalt wat er na de
+    // oplevering nog komt (een adviesgesprek) en of er later een tweede ronde volgt.
+    // Zonder dat onderscheid zie je het pas als er twee regels met hetzelfde kenmerk staan.
     const ronde = /aanvullend/i.test(p.researchType || '')
       ? 'Aanvullend onderzoek'
       : isVervolg
         ? 'Herinspectie'
-        : 'Nulmeting';
+        : p.hasReinspection
+          ? 'Nulmeting + hertest'
+          : 'Nulmeting';
     const basis = {
       id: p.id,
       // Altijd het versienummer erbij, ook bij een nulmeting. Nulmeting en herinspectie
