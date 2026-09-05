@@ -70,12 +70,14 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     return Math.ceil(((t.getTime() - jaarStart.getTime()) / 86400000 + 1) / 7);
   };
 
+  /** De eerste regel uit het scopeveld: de site waar het onderzoek over gaat. */
+  const site = scopeUrl.split('\n')[0]?.replace(/^[-*•]\s*/, '').trim() || '[website]';
+
   // Standaardtekst voor de planningsmail. De alinea over het vervolgoverleg
   // hoort bij een onderzoek met hertest; zonder hertest valt die weg.
   const planningsmail = (() => {
     const start = project.dateStart ? new Date(project.dateStart) : null;
     const eind = project.dateEnd ? new Date(project.dateEnd) : null;
-    const site = scopeUrl.split('\n')[0]?.replace(/^[-*•]\s*/, '').trim() || '[website]';
     const domein = site.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 
     const klantpaginas = (project.sampleClientPages || '')
@@ -124,24 +126,41 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     return regels.join('\n');
   })();
 
-  // Uitnodiging voor het adviesgesprek, ná de oplevering van het rapport. De planningsmail
-  // heeft dit gesprek al aangekondigd; deze mail maakt er een afspraak van.
-  //
   const isHerinspectie = Boolean(project.parentProjectId);
 
-  // Het adviesgesprek hoort bij de herinspectie en niet bij de nulmeting. Er is er een per
-  // opdracht -- de offerte noemt "nulmeting, herinspectie en adviesgesprek", en bij Cardan
-  // staat er ook een per onderzoek klaar. Het gaat over het rapport van de hertest: wat is
-  // er opgelost en wat staat er nog open.
-  const heeftAdviesgesprek = isHerinspectie;
+  // Het adviesgesprek hoort bij de nulmeting: de mail meldt dat die is afgerond, verwijst
+  // naar het rapport en vraagt om een afspraak om de bevindingen door te nemen. Dat gesprek
+  // gaat vooraf aan het herstel, niet erna -- en de planningsmail kondigt het ook zo aan.
+  //
+  // Na de herinspectie is er geen gesprek maar een melding dat het onderzoek klaar is.
+  const heeftAdviesgesprek = Boolean(project.hasReinspection) && !isHerinspectie;
+
   const adviesuitnodiging = [
     `Dag ${contactnaam || '[naam]'},`,
     '',
-    `Het toegankelijkheidsonderzoek van ${scopeUrl.split('\n')[0]?.replace(/^[-*•]\s*/, '').trim() || '[website]'} is afgerond en het rapport heb je van ons ontvangen.`,
+    `De nulmeting van het toegankelijkheidsonderzoek voor ${site} is inmiddels afgerond.`,
     '',
-    'Zoals afgesproken neem ik de resultaten graag met je door. In dat gesprek lopen we langs wat er is opgelost en wat er eventueel nog openstaat.',
+    'Het volledige onderzoeksrapport is te vinden op:',
+    '[link naar het rapport]',
     '',
-    'Laat je me weten wanneer het jou uitkomt?',
+    'Ik plan graag een sessie met je in om de bevindingen en geconstateerde issues door te nemen.',
+    '',
+    'Laat me even weten wanneer het jou schikt, dan zorg ik dat het overleg wordt ingepland.',
+  ].join('\n');
+
+  // Na de herinspectie: geen uitnodiging maar een melding. Het onderzoek is klaar, hier is
+  // het rapport, laat het weten als je de issues nog wilt bespreken.
+  const opleveringsmail = [
+    `Dag ${contactnaam || '[naam]'},`,
+    '',
+    `Het heronderzoek toegankelijkheid voor ${site} is afgerond.`,
+    '',
+    'De website is op dit moment voor [percentage]% toegankelijk. Proficiat!',
+    '',
+    'De resultaten van dit onderzoek zijn direct beschikbaar via onderstaande URL:',
+    '[link naar het rapport]',
+    '',
+    'Laat het gerust weten als je de issues nog kort samen wilt bespreken. Ik hoor graag van je.',
   ].join('\n');
 
   // Welke stap welke mailtekst heeft. Een stap die er niet in staat krijgt geen
@@ -150,6 +169,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     invitationSent: { knop: 'Kopieer uitnodiging', tekst: uitnodiging },
     planningSent: { knop: 'Kopieer planningsmail', tekst: planningsmail },
     adviceCallInvited: { knop: 'Kopieer uitnodiging adviesgesprek', tekst: adviesuitnodiging },
+    reportSentAt: { knop: 'Kopieer opleveringsmail', tekst: opleveringsmail },
   };
 
   const kopieer = async (tekst: string, welke: string) => {
@@ -266,12 +286,26 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
           },
         ]
       : []),
+    // Na de hertest gaat er geen uitnodiging uit maar een melding dat het onderzoek klaar
+    // is. Dat is het laatste wat er naar de klant gaat.
+    ...(isHerinspectie
+      ? [
+          {
+            key: 'reportSentAt',
+            label: 'Rapport opgeleverd',
+            klaar: Boolean(project.reportSentAt),
+            datum: project.reportSentAt,
+            handmatig: true,
+            naOplevering: true,
+          },
+        ]
+      : []),
   ].filter((s) => {
     // Een herinspectie erft de voorbereiding van de nulmeting: daar is de uitnodiging
     // verstuurd, het scopegesprek gevoerd, de scope bepaald en de planningsmail afgestemd.
     // De hertest hoeft dat niet over te doen -- in de praktijk blijven die velden er leeg
     // (bij twintig herinspecties is er één met een uitnodiging), en het dashboard slaat het
-    // planningsakkoord er ook al over. Wat blijft is de eigen periode en het adviesgesprek.
+    // planningsakkoord er ook al over. Wat blijft is de eigen periode en de oplevering.
     if (!isHerinspectie) return true;
     return !['invitationSent', 'scopeCallHeld', 'transcript', 'scope', 'planningSent', 'planningApproved'].includes(s.key);
   });

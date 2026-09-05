@@ -297,6 +297,7 @@ export async function PATCH(
       'planningSent',
       'reinspectionWeeks',
       'reportDate',
+      'reportSentAt',
       'researcherFeedback',
       'sampleClientPages',
       'sampleInfo',
