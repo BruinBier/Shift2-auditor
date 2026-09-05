@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import Navigation from '@/app/components/Navigation';
+import DashboardRij, { type DashboardRegel } from './DashboardRij';
 
 /**
  * Dashboard: waar sta ik vandaag.
@@ -19,15 +20,7 @@ import Navigation from '@/app/components/Navigation';
 
 const RAPPELTERMIJN_DAGEN = 14;
 
-type Regel = {
-  id: string;
-  kenmerk: string;
-  titel: string;
-  toelichting: string;
-  bureau?: string | null;
-  /** Nulmeting, herinspectie of een aanvullende ronde. */
-  ronde?: string;
-};
+
 
 function dagenGeleden(d: Date): number {
   return Math.floor((Date.now() - d.getTime()) / 86400000);
@@ -37,7 +30,13 @@ function datumNl(d: Date): string {
   return format(d, 'd MMMM', { locale: nl });
 }
 
-/** Eén blok met een gekleurde kop en de onderzoeken die erin vallen. */
+/**
+ * Eén blok met een gekleurde kop en de onderzoeken die erin vallen, als tabel.
+ *
+ * Zeven kolommen, want een regel moet twee vragen beantwoorden zonder doorklikken: waar
+ * gaat dit over (opdrachtgever, website, ronde, uitvoerder) en wat moet ermee (actie). Het
+ * CRM-nummer staat erbij omdat een ontbrekend nummer straks de planningsmail blokkeert.
+ */
 function Blok({
   titel,
   kleur,
@@ -45,46 +44,37 @@ function Blok({
 }: {
   titel: string;
   kleur: string;
-  regels: Regel[];
+  regels: DashboardRegel[];
 }) {
+  const kop = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide';
   return (
     <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className={`px-5 py-3 flex items-baseline justify-between text-white ${kleur}`}>
         <h2 className="font-semibold">{titel}</h2>
         <span className="text-sm">{regels.length}</span>
       </div>
-      <ul className="divide-y divide-gray-100">
-        {regels.map((r) => (
-          <li key={r.id}>
-            <Link
-              href={`/admin/projects/${r.id}`}
-              className="lijstrij block px-5 py-3 hover:bg-gray-50 transition-colors h-full"
-            >
-              <div className="flex items-baseline gap-3">
-                <span className="text-sm font-medium text-gray-900 w-28 flex-shrink-0">
-                  {r.kenmerk}
-                </span>
-                <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
-                  {r.titel}
-                  {r.ronde && (
-                    <span className="ml-2 text-xs text-blue-700">{r.ronde}</span>
-                  )}
-                  {r.bureau && <span className="ml-2 text-xs text-amber-700">{r.bureau}</span>}
-                </span>
-                {/* Korte toelichtingen passen naast de titel; een reden van
-                    wachten is vaak een hele zin en krijgt een eigen regel,
-                    zodat de rij niet buiten beeld loopt. */}
-                {r.toelichting && r.toelichting.length <= 40 && (
-                  <span className="text-sm text-gray-500 flex-shrink-0">{r.toelichting}</span>
-                )}
-              </div>
-              {r.toelichting && r.toelichting.length > 40 && (
-                <p className="text-sm text-gray-500 mt-1 ml-28 pl-3">{r.toelichting}</p>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-x-auto">
+        {/* Vaste kolombreedtes: zonder table-fixed rekt de browser de kolom met de
+            langste inhoud op, en dan puilt de actietekst buiten beeld. */}
+        <table className="w-full table-fixed">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className={`${kop} w-28`}>Kenmerk</th>
+              <th className={`${kop} w-44`}>Opdrachtgever</th>
+              <th className={`${kop} w-52`}>Website</th>
+              <th className={`${kop} w-28`}>Ronde</th>
+              <th className={`${kop} w-24`}>Uitvoerder</th>
+              <th className={`${kop} w-24`}>CRM</th>
+              <th className={kop}>Actie</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {regels.map((r) => (
+              <DashboardRij key={r.id} regel={r} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -126,11 +116,11 @@ export default async function AdminPage() {
     include: { clientProject: { select: { projectnummer: true } } },
   });
 
-  const loopt: Regel[] = [];
-  const doorlopend: Regel[] = [];
-  const actie: Regel[] = [];
-  const wacht: Regel[] = [];
-  const komtEraan: Regel[] = [];
+  const loopt: DashboardRegel[] = [];
+  const doorlopend: DashboardRegel[] = [];
+  const actie: DashboardRegel[] = [];
+  const wacht: DashboardRegel[] = [];
+  const komtEraan: DashboardRegel[] = [];
 
   for (const p of projects) {
     // Nulmeting en herinspectie delen hetzelfde kenmerk; het versienummer
@@ -150,9 +140,15 @@ export default async function AdminPage() {
       // het adviesgesprek, staan ze soms allebei in de lijst. Zonder versie zie je dan
       // twee keer "BEL-05" en is niet duidelijk welke regel welke is.
       kenmerk: `${p.kenmerk ?? '(geen kenmerk)'} v${Number(p.version).toFixed(1)}`,
-      titel: p.title,
-      bureau: p.externalBureau,
+      opdrachtgever: p.commissionedBy ?? '',
+      // De titel is "website waalwijktaalrijk.nl"; in een kolom met de kop "Website" is
+      // dat woord dubbel, en bij een PDF-onderzoek klopt het niet eens.
+      website: p.title.replace(/^website\s+/i, ''),
       ronde,
+      // Leeg betekent hier "wij doen het zelf". In een kolom "Uitvoerder" is een lege cel
+      // dubbelzinnig, dus dan staat er Shift2.
+      uitvoerder: p.externalBureau || 'Shift2',
+      crmNummer: p.clientProject?.projectnummer ?? null,
     };
 
     if (p.isOngoing) {
