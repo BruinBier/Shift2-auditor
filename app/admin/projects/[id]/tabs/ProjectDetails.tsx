@@ -1242,18 +1242,18 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
 
         {/* Column 2: Voorbereiding + Statistieken + Bijlagen */}
         <div className="space-y-6">
-          {/* Het routekaartje bleef eerst alleen staan zolang de planning nog
-              niet akkoord was. Dat verborg te veel: de laatste twee stappen (de
-              uitnodiging en het adviesgesprek) komen pas ná de oplevering, dus
-              bij een onderzoek met hertest verdwenen er open stappen uit beeld.
-              En het gat dat viel zodra je "planning akkoord" klikte, las als een
-              fout. Het blok klapt nu zelf dicht als alles af is.
+          {/* Het routekaartje verdween eerst zodra de planning akkoord was, en
+              later zodra het onderzoek op "Gereed" stond. Allebei verborgen te
+              veel. De laatste twee stappen komen pas ná de oplevering, dus bij
+              een herinspectie stonden er open stappen die je niet meer zag. En
+              bij een afgerond onderzoek viel er een gat in de kolom waar eerst
+              iets stond -- dat leest als een fout, en je kunt dan niet meer
+              terugzien wanneer de uitnodiging uitging of het scopegesprek was.
 
-              Bij status "Gereed" blijft het staan zolang het adviesgesprek nog
-              niet is gevoerd: het dashboard stuurt je hierheen om dat af te
-              vinken, en dan moet die knop er zijn. */}
-          {(projectStatus !== 'Gereed' || (project.parentProjectId && !project.adviceCallHeld)) &&
-            projectStatus !== 'Geannuleerd' && (
+              Het blok blijft nu staan en klapt zichzelf dicht als alles af is;
+              de kop toont "8 van 8". Alleen een geannuleerd onderzoek krijgt het
+              niet: daar is de voorbereiding niet afgemaakt maar afgebroken. */}
+          {projectStatus !== 'Geannuleerd' && (
             <VoorbereidingStappen project={project} />
           )}
           <div className="bg-white rounded-lg border border-gray-200">
