@@ -1247,8 +1247,13 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               uitnodiging en het adviesgesprek) komen pas ná de oplevering, dus
               bij een onderzoek met hertest verdwenen er open stappen uit beeld.
               En het gat dat viel zodra je "planning akkoord" klikte, las als een
-              fout. Het blok klapt nu zelf dicht als alles af is. */}
-          {projectStatus !== 'Gereed' && projectStatus !== 'Geannuleerd' && (
+              fout. Het blok klapt nu zelf dicht als alles af is.
+
+              Bij status "Gereed" blijft het staan zolang het adviesgesprek nog
+              niet is gevoerd: het dashboard stuurt je hierheen om dat af te
+              vinken, en dan moet die knop er zijn. */}
+          {(projectStatus !== 'Gereed' || (project.hasReinspection && !project.adviceCallHeld)) &&
+            projectStatus !== 'Geannuleerd' && (
             <VoorbereidingStappen project={project} />
           )}
           <div className="bg-white rounded-lg border border-gray-200">
