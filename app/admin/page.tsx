@@ -26,6 +26,14 @@ function dagenGeleden(d: Date): number {
   return Math.floor((Date.now() - d.getTime()) / 86400000);
 }
 
+/** "vandaag", "gisteren" of "3 dagen geleden" -- 0 en 1 dag lezen anders gek. */
+function sinds(d: Date): string {
+  const n = dagenGeleden(d);
+  if (n <= 0) return 'vandaag';
+  if (n === 1) return 'gisteren';
+  return `${n} dagen geleden`;
+}
+
 function datumNl(d: Date): string {
   return format(d, 'd MMMM', { locale: nl });
 }
@@ -174,9 +182,9 @@ export default async function AdminPage() {
       } else {
         const dagen = dagenGeleden(p.adviceCallInvited);
         if (dagen >= RAPPELTERMIJN_DAGEN) {
-          actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen reactie` });
+          actie.push({ ...basis, toelichting: `${sinds(p.adviceCallInvited)} uitgenodigd voor het adviesgesprek` });
         } else {
-          wacht.push({ ...basis, toelichting: `uitnodiging adviesgesprek ${dagen} dagen geleden verstuurd` });
+          wacht.push({ ...basis, toelichting: `${sinds(p.adviceCallInvited)} uitgenodigd voor het adviesgesprek` });
         }
       }
       continue;
@@ -229,9 +237,9 @@ export default async function AdminPage() {
       if (!viaBureau && !p.scopeCallHeld) {
         const dagen = dagenGeleden(p.invitationSent);
         if (dagen >= RAPPELTERMIJN_DAGEN) {
-          actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen reactie` });
+          actie.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} uitgenodigd voor het scopegesprek` });
         } else {
-          wacht.push({ ...basis, toelichting: `uitnodiging ${dagen} dagen geleden verstuurd` });
+          wacht.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} uitgenodigd voor het scopegesprek` });
         }
         continue;
       }
@@ -249,9 +257,9 @@ export default async function AdminPage() {
           // wachten, en na de rappeltermijn te rappelleren.
           const dagen = dagenGeleden(p.invitationSent);
           if (dagen >= RAPPELTERMIJN_DAGEN) {
-            actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen planning van ${bureau}` });
+            actie.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} om planning gevraagd bij ${bureau}` });
           } else {
-            wacht.push({ ...basis, toelichting: `wacht op planning van ${bureau}, ${dagen} dagen` });
+            wacht.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} om planning gevraagd bij ${bureau}` });
           }
         } else {
           actie.push({ ...basis, toelichting: 'planning bepalen' });
@@ -276,9 +284,9 @@ export default async function AdminPage() {
       if (!p.planningApproved && !isVervolg) {
         const dagen = dagenGeleden(p.planningSent);
         if (dagen >= RAPPELTERMIJN_DAGEN) {
-          actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen akkoord` });
+          actie.push({ ...basis, toelichting: `${sinds(p.planningSent!)} planningsmail verstuurd, nog geen akkoord` });
         } else {
-          wacht.push({ ...basis, toelichting: `wacht op akkoord, ${dagen} dagen` });
+          wacht.push({ ...basis, toelichting: `${sinds(p.planningSent!)} planningsmail verstuurd` });
         }
         continue;
       }
@@ -287,7 +295,7 @@ export default async function AdminPage() {
       // Een herinspectie niet: die erft de planningsdatums van de nulmeting.
       const dagen = dagenGeleden(p.planningSent);
       if (dagen >= RAPPELTERMIJN_DAGEN) {
-        actie.push({ ...basis, toelichting: `herinnering sturen, ${dagen} dagen geen akkoord` });
+        actie.push({ ...basis, toelichting: `${sinds(p.planningSent!)} planningsmail verstuurd, nog geen akkoord` });
         continue;
       }
     }
