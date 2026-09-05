@@ -116,14 +116,19 @@ export default async function AdminPage() {
       isProeftuin: false,
       OR: [
         { status: { notIn: ['Gereed', 'Geannuleerd'] } },
-        // Een opgeleverd onderzoek met hertest is nog niet uit beeld: de planningsmail
-        // beloofde een overleg na afronding van de nulmeting, en zolang dat gesprek er
-        // niet is geweest staat er een toezegging open. "Gereed" gaat over het rapport,
-        // niet over de nazorg.
-        // Alleen een opgeleverde herinspectie: het adviesgesprek gaat over het rapport van
-        // de hertest, en er is er een per opdracht. Een nulmeting met hertest krijgt het
-        // dus niet -- dat gesprek volgt pas na de herinspectie.
-        { status: 'Gereed', adviceCallHeld: null, parentProjectId: { not: null } },
+        // Een opgeleverd onderzoek is nog niet uit beeld zolang er een mail openstaat.
+        // "Gereed" gaat over het rapport, niet over de nazorg.
+        //
+        // Na een nulmeting met hertest is dat het adviesgesprek: de planningsmail beloofde
+        // een overleg na afronding, en dat gaat vooraf aan het herstel. Na de hertest zelf
+        // is er geen gesprek maar een melding dat het onderzoek klaar is.
+        {
+          status: 'Gereed',
+          hasReinspection: true,
+          parentProjectId: null,
+          adviceCallHeld: null,
+        },
+        { status: 'Gereed', parentProjectId: { not: null }, reportSentAt: null },
       ],
     },
     orderBy: { dateStart: 'asc' },
@@ -169,11 +174,14 @@ export default async function AdminPage() {
       continue;
     }
 
-    // Een opgeleverd onderzoek staat hier alleen nog voor het adviesgesprek: de query
+    // Een opgeleverd onderzoek staat hier alleen nog voor de laatste mail: de query
     // hierboven laat er niets anders van door. Het rapport is af, dus dit is het enige
     // wat er nog te doen valt.
     if (p.status === 'Gereed') {
-      if (!p.adviceCallInvited) {
+      if (isVervolg) {
+        // Na de hertest: alleen het rapport opleveren, geen gesprek.
+        actie.push({ ...basis, toelichting: 'rapport opleveren' });
+      } else if (!p.adviceCallInvited) {
         actie.push({ ...basis, toelichting: 'uitnodiging adviesgesprek versturen' });
       } else {
         const dagen = dagenGeleden(p.adviceCallInvited);
