@@ -269,7 +269,15 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
           },
         ]
       : []),
-  ];
+  ].filter((s) => {
+    // Een herinspectie erft de voorbereiding van de nulmeting: daar is de uitnodiging
+    // verstuurd, het scopegesprek gevoerd, de scope bepaald en de planningsmail afgestemd.
+    // De hertest hoeft dat niet over te doen -- in de praktijk blijven die velden er leeg
+    // (bij twintig herinspecties is er één met een uitnodiging), en het dashboard slaat het
+    // planningsakkoord er ook al over. Wat blijft is de eigen periode en het adviesgesprek.
+    if (!isHerinspectie) return true;
+    return !['invitationSent', 'scopeCallHeld', 'transcript', 'scope', 'planningSent', 'planningApproved'].includes(s.key);
+  });
 
   const gedaan = stappen.filter((s) => s.klaar).length;
 
