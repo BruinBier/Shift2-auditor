@@ -120,7 +120,15 @@ export default async function AdminPage() {
         // beloofde een overleg na afronding van de nulmeting, en zolang dat gesprek er
         // niet is geweest staat er een toezegging open. "Gereed" gaat over het rapport,
         // niet over de nazorg.
-        { status: 'Gereed', hasReinspection: true, adviceCallHeld: null },
+        // hasReinspection hoort bij de nulmeting ("hier komt een hertest bij") en wordt niet
+        // geerfd: alle twintig herinspecties in de database hebben het op false. Een
+        // vervolgonderzoek herken je aan parentProjectId, en ook daar hoort een gesprek na
+        // de oplevering -- over wat er is opgelost in plaats van over de vervolgstappen.
+        {
+          status: 'Gereed',
+          adviceCallHeld: null,
+          OR: [{ hasReinspection: true }, { parentProjectId: { not: null } }],
+        },
       ],
     },
     orderBy: { dateStart: 'asc' },

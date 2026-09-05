@@ -130,6 +130,11 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   // Na een nulmeting gaat het gesprek over wat er hersteld moet worden vóór de hertest; na
   // de hertest zelf is er niets meer te herstellen en gaat het over het eindresultaat.
   const isHerinspectie = Boolean(project.parentProjectId);
+
+  // Het adviesgesprek hoort bij een onderzoek met hertest, en bij de hertest zelf. Het veld
+  // hasReinspection staat op de nulmeting en wordt niet geerfd, dus een herinspectie herken
+  // je aan parentProjectId.
+  const heeftAdviesgesprek = Boolean(project.hasReinspection || project.parentProjectId);
   const adviesuitnodiging = [
     `Dag ${contactnaam || '[naam]'},`,
     '',
@@ -244,7 +249,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     //
     // Deze twee stappen volgen niet meteen op het akkoord: daartussen wordt het onderzoek
     // uitgevoerd en het rapport opgeleverd. Pas dan is er iets te bespreken.
-    ...(project.hasReinspection
+    ...(heeftAdviesgesprek
       ? [
           {
             key: 'adviceCallInvited',
