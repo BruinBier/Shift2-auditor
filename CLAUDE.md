@@ -327,6 +327,18 @@ telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel pro
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
+## CRM-sync (Dynamics-nummers)
+
+Het CRM-nummer (P0xxxx) staat op het klantproject (`ClientProject.projectnummer`) en geldt voor alle onderzoeken eronder. Om te zien welke onderzoeken er nog geen hebben, of om nummers in bulk te zetten:
+
+```bash
+npm run crm:sync -- report                        # onderzoeken zonder CRM-nummer, per opdrachtgever
+npm run crm:sync -- apply lijst.json --dry-run    # laat zien wat er zou veranderen
+npm run crm:sync -- apply lijst.json              # zet de nummers (bestaande niet overschrijven, tenzij --force)
+```
+
+Het JSON-bestand is een lijst met `{ "kenmerk": "ECHT-01" | "WAAL", "projectnummer": "P02645" }`; zie `scripts/crm-sync.example.json`.
+
 ## Database & Prisma Workflow
 
 ### Critical User Preferences
