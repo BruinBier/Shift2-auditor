@@ -284,6 +284,8 @@ export async function PATCH(
       'adviceCallHeld',
       'adviceCallInvited',
       'cancellationReason',
+      'cardanIntakeUrl',
+      'cardanOnderzoekUrl',
       'clientProjectId',
       'commissionedBy',
       'crmProjectActief',

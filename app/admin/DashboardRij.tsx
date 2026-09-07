@@ -17,6 +17,8 @@ export type DashboardRegel = {
   website: string;
   ronde?: string;
   uitvoerder: string;
+  /** Link naar het onderzoek in het portaal van het bureau, als die er is. */
+  uitvoerderUrl?: string | null;
   crmNummer?: string | null;
   toelichting: string;
 };
@@ -54,12 +56,26 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
         </td>
         <td className={`${cel} text-gray-900`}>{regel.website}</td>
         <td className={`${cel} text-blue-700`}>{regel.ronde ?? ''}</td>
+        {/* Bij een extern bureau met een link erin: doorklikken naar hun portaal. Dat is
+            de plek waar je "Cardan" leest, dus daar verwacht je die doorklik. */}
         <td
           className={`${cel} whitespace-nowrap ${
             regel.uitvoerder === 'Shift2' ? 'text-gray-500' : 'text-amber-700'
           }`}
         >
-          {regel.uitvoerder}
+          {regel.uitvoerderUrl ? (
+            <a
+              href={regel.uitvoerderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+              title={`Open dit onderzoek bij ${regel.uitvoerder}`}
+            >
+              {regel.uitvoerder} ↗
+            </a>
+          ) : (
+            regel.uitvoerder
+          )}
         </td>
         <td className={`${cel} whitespace-nowrap`}>
           {regel.crmNummer ? (

@@ -763,6 +763,19 @@ export default function Stapel({
   const muisRef = useRef<number>(0);
   const [paneelBeeld, setPaneelBeeld] = useState(0);
   /**
+   * De hele-pagina-opname bij "Ik zie hier nog iets": screenshot plus de volledige HTML.
+   *
+   * Eerst geprobeerd met een sleep-rechthoek (een gebied aanwijzen, met een vaste
+   * checkvraag) — die versie werkte niet naar wens: geen kader nodig, wél zelf blijven
+   * typen wát en waar het probleem is. Dit is dus terug naar simpel: één klik neemt de
+   * hele pagina op, de tekst blijft vrije invoer in het bestaande "Wat zie je?"-vak.
+   */
+  const [paginaOpnameBezig, setPaginaOpnameBezig] = useState(false);
+  const [paginaOpname, setPaginaOpname] = useState<{
+    screenshot: string | null;
+    html: string | null;
+  } | null>(null);
+  /**
    * De breedte van het paneel, in pixels en zelf in te stellen.
    *
    * Vast op 45% van het venster was te veel: op een scherm van 1280 blijft er dan 704 over
@@ -3228,6 +3241,19 @@ export default function Stapel({
                 setReden('');
                 setBlok(null);
                 setAfkeurOpen(true);
+                // Het browserpaneel opent meteen mee, niet pas als je in het tekstvak begint
+                // te typen. Zonder URL (een PDF-sample) is er niets om te tonen; dan blijft
+                // alleen het tekstvak over, zoals voorheen.
+                const url = sampleVoor(cel.sampleId)?.url;
+                if (url) {
+                  setPaginaOpname(null);
+                  openBrowserPaneel(
+                    url,
+                    `${cel.code} op ${sampleVoor(cel.sampleId)?.title ?? 'deze pagina'} — zelf gezien`,
+                    cel.code,
+                    cel.sampleId ?? undefined,
+                  );
+                }
               }}
               className="rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800"
             >
@@ -5542,6 +5568,31 @@ export default function Stapel({
                   >
                     {markeren?.bezig ? 'Bezig met meten…' : 'Markeer de links'}
                   </button>
+                  {/* De opname voor "Ik zie hier nog iets": geen gebied aanwijzen, gewoon de
+                      hele pagina vastleggen -- screenshot en HTML samen, zodat je ze meteen
+                      klaar hebt staan om bij je eigen tekst in het overlegpaneel te plakken. */}
+                  <button
+                    type="button"
+                    disabled={paginaOpnameBezig || !schermBeeld}
+                    onClick={async () => {
+                      if (!sessieRef.current) return;
+                      setPaginaOpnameBezig(true);
+                      const res = await fetch('/api/meting/scherm/pagina-opname', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessie: sessieRef.current }),
+                      }).catch(() => null);
+                      const j = res ? await res.json().catch(() => null) : null;
+                      setPaginaOpnameBezig(false);
+                      setPaginaOpname({
+                        screenshot: j?.ok ? j.screenshot ?? null : null,
+                        html: j?.ok ? j.html ?? null : null,
+                      });
+                    }}
+                    className="rounded bg-purple-700 px-2 py-1 text-xs font-medium text-white hover:bg-purple-800 disabled:opacity-40"
+                  >
+                    {paginaOpnameBezig ? 'Bezig met opnemen…' : 'Neem screenshot + code op'}
+                  </button>
                   {/* De legenda hoort bij de markering, en die staat hier binnen de balk die
                       bij een aangewezen bevinding helemaal wegvalt. */}
                   <span className="text-xs text-gray-600">
@@ -5549,6 +5600,44 @@ export default function Stapel({
                     gestippeld: viel buiten de meting.
                   </span>
                 </div>
+                )}
+                {paginaOpname && (
+                  <div className="mb-2 rounded border border-purple-300 bg-purple-50 px-2 py-2 text-xs text-purple-950">
+                    <p className="font-medium">Pagina opgenomen</p>
+                    {paginaOpname.screenshot && (
+                      <img
+                        src={'data:image/jpeg;base64,' + paginaOpname.screenshot}
+                        alt="Screenshot van de hele pagina"
+                        className="mt-1 max-h-64 w-full rounded border border-purple-200 object-contain object-top"
+                      />
+                    )}
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Puur de opname bijvoegen aan wat er al staat -- niets invullen of
+                          // overschrijven. Wát het probleem is en welke eis erbij hoort, typ
+                          // je zelf; dat is precies waarom de vaste checkvraag eruit is.
+                          setReden(
+                            (t: string) =>
+                              (t ? t + '\n\n' : '') +
+                              `Pagina ${paneel?.url}:\n` +
+                              (paginaOpname.html ? `${paginaOpname.html}\n` : ''),
+                          );
+                        }}
+                        className="rounded bg-purple-700 px-2 py-1 text-xs font-medium text-white hover:bg-purple-800"
+                      >
+                        Voeg toe aan "Wat zie je?"
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaginaOpname(null)}
+                        className="rounded border border-purple-300 px-2 py-1 text-xs text-purple-900 hover:bg-purple-100"
+                      >
+                        Wissen
+                      </button>
+                    </div>
+                  </div>
                 )}
                 {schermFout && (
                   <p className="mb-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800">{schermFout}</p>
@@ -5596,6 +5685,7 @@ export default function Stapel({
                   }}
                   className="inline-block outline-none ring-blue-500 focus:ring-2"
                 >
+                  <div className="relative">
                   <img
                     ref={schermRef}
                     onMouseMove={(e) => {
@@ -5609,12 +5699,22 @@ export default function Stapel({
                     }}
                     src={schermBeeld ? 'data:image/jpeg;base64,' + schermBeeld : undefined}
                     alt="Levende weergave van de pagina"
+                    // Een <img> is standaard sleepbaar, en Chrome vangt een muis-drag daarop af
+                    // als een NATIVE afbeelding-drag: de mouseup die daarna komt, komt niet
+                    // meer bij React terecht. Bij "Kijken"/"Bedienen" viel dat niet op (daar is
+                    // er toch geen sleepbeweging), maar bij "Gebied" bleef de rechthoek
+                    // daardoor voor altijd "bezig" hangen. draggable={false} zet het native
+                    // slepen uit zodat de eigen mouseup-handler weer aan de beurt komt.
+                    draggable={false}
                     className="w-full border border-gray-300 bg-gray-100"
-                    style={{ cursor: schermCursor, aspectRatio: BREED + ' / ' + HOOG }}
+                    style={{
+                      cursor: schermCursor,
+                      aspectRatio: BREED + ' / ' + HOOG,
+                    }}
                     onMouseDown={(e) => {
                       // De omhullende div focus geven, anders komen de toetsaanslagen na een
                       // klik nergens terecht en lijkt het toetsenbord kapot.
-                      (e.currentTarget.parentElement as HTMLElement | null)?.focus();
+                      (e.currentTarget.parentElement?.parentElement as HTMLElement | null)?.focus();
                       if (schermStand2 === 'bedienen') {
                         const p = naarBrowserpunt(e);
                         stuurInvoer({ soort: 'muis', type: 'mousePressed', x: p.x, y: p.y, knop: 'left' });
@@ -5670,6 +5770,7 @@ export default function Stapel({
                       });
                     }}
                   />
+                  </div>
                 </div>
                 {/* Waar de focus staat. Op het beeld zie je een omranding bewegen, maar niet
                     wélk element het is en hoe het heet — en dat is bij 2.4.7 en 4.1.2 de vraag. */}

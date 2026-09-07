@@ -160,6 +160,7 @@ export default async function AdminPage() {
       // Leeg betekent hier "wij doen het zelf". In een kolom "Uitvoerder" is een lege cel
       // dubbelzinnig, dus dan staat er Shift2.
       uitvoerder: p.externalBureau || 'Shift2',
+      uitvoerderUrl: p.cardanOnderzoekUrl,
       crmNummer: p.clientProject?.projectnummer ?? null,
     };
 

@@ -223,6 +223,15 @@ model Project {
   /// URK-02 wel in die weergave en URK-03 en URK-04 niet, met dezelfde opdrachtgever.
   crmProjectActief        Boolean        @default(true) @map("crm_project_actief")
 
+  /// Twee links naar het onderzoek in het portaal van het bureau dat het uitvoert.
+  ///
+  /// De volledige URL en niet alleen het nummer: bij Cardan draagt de intakepagina een
+  /// ander nummer dan het onderzoek zelf (project/934/intake tegenover projecten/2301),
+  /// dus er valt niets af te leiden. En verandert de vorm van hun adressen, dan plak je
+  /// gewoon de nieuwe link.
+  cardanIntakeUrl         String?        @map("cardan_intake_url")
+  cardanOnderzoekUrl      String?        @map("cardan_onderzoek_url")
+
   // External project fields
   isExternalProject       Boolean        @default(false) @map("is_external_project")
   /// Doorlopend werk zonder begin- en einddatum, zoals template-monitoring.

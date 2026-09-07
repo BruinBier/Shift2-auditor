@@ -86,6 +86,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     scopeInScope: project.scopeInScope || '',
     scopeOutOfScope: project.scopeOutOfScope || '',
     sampleClientPages: project.sampleClientPages || '',
+    cardanIntakeUrl: project.cardanIntakeUrl || '',
+    cardanOnderzoekUrl: project.cardanOnderzoekUrl || '',
   });
 
   // Fetch opdrachtgevers, client projects, and notes
@@ -375,6 +377,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
           scopeInScope: planningFormData.scopeInScope || null,
           scopeOutOfScope: planningFormData.scopeOutOfScope || null,
           sampleClientPages: planningFormData.sampleClientPages || null,
+          cardanIntakeUrl: planningFormData.cardanIntakeUrl.trim() || null,
+          cardanOnderzoekUrl: planningFormData.cardanOnderzoekUrl.trim() || null,
         }),
       });
 
@@ -951,6 +955,44 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 })()}
               </div>
             )}
+            {/* Voert een ander bureau het onderzoek uit, dan staat het daar ook in een
+                portaal. Twee links, want de intakepagina en het onderzoek dragen bij Cardan
+                elk een eigen nummer -- er valt niets af te leiden uit het ene naar het
+                andere. */}
+            {project.isExternalProject &&
+              (project.cardanIntakeUrl || project.cardanOnderzoekUrl) && (
+                <div className="pt-2 border-t border-gray-200">
+                  <label className="block text-sm text-gray-500 mb-1">
+                    Bij {project.externalBureau || 'het bureau'}
+                  </label>
+                  <div className="space-y-1">
+                    {project.cardanIntakeUrl && (
+                      <div>
+                        <a
+                          href={project.cardanIntakeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-shift2-primary hover:underline"
+                        >
+                          Intake — controleer de gegevens
+                        </a>
+                      </div>
+                    )}
+                    {project.cardanOnderzoekUrl && (
+                      <div>
+                        <a
+                          href={project.cardanOnderzoekUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-shift2-primary hover:underline"
+                        >
+                          Onderzoek
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             {planningChanges.length > 0 && (
               <div className="pt-2 border-t border-gray-200">
                 <label className="block text-sm text-gray-500 mb-2">Uitgesteld</label>
@@ -1826,6 +1868,46 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
                 />
               </div>
+
+              {/* Alleen bij een extern onderzoek: daar staat het ook in het portaal van het
+                  bureau. Twee losse velden, want de intakepagina en het onderzoek dragen bij
+                  Cardan elk een eigen nummer. */}
+              {project.isExternalProject && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Link naar de intake bij {project.externalBureau || 'het bureau'}
+                    </label>
+                    <input
+                      type="url"
+                      value={planningFormData.cardanIntakeUrl}
+                      onChange={(e) =>
+                        setPlanningFormData({ ...planningFormData, cardanIntakeUrl: e.target.value })
+                      }
+                      placeholder="https://mijn.cardan.com/projecten/project/934/intake"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Link naar het onderzoek bij {project.externalBureau || 'het bureau'}
+                    </label>
+                    <input
+                      type="url"
+                      value={planningFormData.cardanOnderzoekUrl}
+                      onChange={(e) =>
+                        setPlanningFormData({
+                          ...planningFormData,
+                          cardanOnderzoekUrl: e.target.value,
+                        })
+                      }
+                      placeholder="https://mijn.cardan.com/projecten/2301"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary text-sm"
+                    />
+                  </div>
+                </>
+              )}
 
               </div>
 
