@@ -1,6 +1,6 @@
 [
-  { "kenmerk": "ECHT-01", "projectnummer": "", "opmerking": "Gemeente Echt-Susteren, Cardan C-3670" },
+  { "kenmerk": "ECHT-01", "projectnummer": "", "cardanKenmerk": "C-3670", "opmerking": "Gemeente Echt-Susteren" },
   { "kenmerk": "NIS-01",  "projectnummer": "", "opmerking": "Gemeente Thuis in Nissewaard" },
   { "kenmerk": "OVB-01",  "projectnummer": "", "opmerking": "Gemeente De Helster" },
-  { "kenmerk": "WAAL",    "projectnummer": "", "opmerking": "Gemeente Waalwijk, alle klantprojecten (WAAL-01 t/m WAAL-06), Cardan C-4521" }
+  { "kenmerk": "WAAL",    "projectnummer": "", "cardanKenmerk": "C-4521", "opmerking": "Gemeente Waalwijk, alle klantprojecten (WAAL-01 t/m WAAL-06)" }
 ]

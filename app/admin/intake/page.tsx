@@ -28,6 +28,7 @@ export default function IntakePage() {
 
   const [kenmerk, setKenmerk] = useState('');
   const [projectnummer, setProjectnummer] = useState('');
+  const [cardanKenmerk, setCardanKenmerk] = useState('');
   const [url, setUrl] = useState('');
   const [uitgevoerdDoor, setUitgevoerdDoor] = useState('Shift2');
   const [anderBureau, setAnderBureau] = useState('');
@@ -73,6 +74,7 @@ export default function IntakePage() {
         body: JSON.stringify({
           kenmerk,
           projectnummer,
+          cardanKenmerk,
           url,
           opdrachtgeverId: nieuweOpdrachtgever ? null : opdrachtgeverId,
           opdrachtgeverNaam: nieuweOpdrachtgever ? opdrachtgeverNaam : '',
@@ -238,6 +240,22 @@ export default function IntakePage() {
             />
           </div>
         </div>
+
+        {(anders || uitgevoerdDoor !== 'Shift2') && (
+          <div>
+            <label htmlFor="cardanKenmerk" className="block text-sm font-medium text-gray-700 mb-1">
+              Kenmerk bij {anders ? anderBureau || 'het bureau' : uitgevoerdDoor}
+            </label>
+            <input
+              id="cardanKenmerk"
+              value={cardanKenmerk}
+              onChange={(e) => setCardanKenmerk(e.target.value)}
+              placeholder="C-4521"
+              className={veld}
+            />
+            <p className="text-xs text-gray-500 mt-1">Het nummer waaronder het traject bij het andere bureau loopt.</p>
+          </div>
+        )}
 
         <div>
           <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">

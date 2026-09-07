@@ -89,7 +89,10 @@ model Opdrachtgever {
 model ClientProject {
   id              String        @id @default(uuid())
   name            String
+  /// Dynamics-nummer (P02645); geldt voor alle onderzoeken onder dit klantproject.
   projectnummer   String?
+  /// Kenmerk van hetzelfde traject bij Cardan (C-4521), als Cardan de audit uitvoert.
+  cardanKenmerk   String?       @map("cardan_kenmerk")
   opdrachtgeverId String        @map("opdrachtgever_id")
   details         String?       @db.Text
   createdAt       DateTime      @default(now()) @map("created_at")

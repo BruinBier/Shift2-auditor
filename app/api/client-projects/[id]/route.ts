@@ -52,6 +52,9 @@ export async function PATCH(
     if (data.projectnummer !== undefined) {
       updateData.projectnummer = data.projectnummer || null;
     }
+    if (data.cardanKenmerk !== undefined) {
+      updateData.cardanKenmerk = data.cardanKenmerk || null;
+    }
     if (data.opdrachtgeverId !== undefined) {
       updateData.opdrachtgeverId = data.opdrachtgeverId;
     }

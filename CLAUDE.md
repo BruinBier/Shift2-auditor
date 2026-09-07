@@ -76,7 +76,7 @@ npm run crm:sync -- apply lijst.json --dry-run    # laat zien wat er zou verande
 npm run crm:sync -- apply lijst.json              # zet de nummers (bestaande niet overschrijven, tenzij --force)
 ```
 
-Het JSON-bestand is een lijst met `{ "kenmerk": "ECHT-01" | "WAAL", "projectnummer": "P02645" }`; zie `scripts/crm-sync.example.json`.
+Het JSON-bestand is een lijst met `{ "kenmerk": "ECHT-01" | "WAAL", "projectnummer": "P02645", "cardanKenmerk": "C-4521" }`; beide nummers zijn optioneel. Het Cardan-kenmerk staat naast het CRM-nummer op het klantproject (`ClientProject.cardanKenmerk`). Zie `scripts/crm-sync.example.json`.
 
 ## Database & Prisma Workflow
 
