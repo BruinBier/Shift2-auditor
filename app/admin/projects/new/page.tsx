@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { onderzoekerOpties, controleurOpties, isExternBureau } from '@/lib/onderzoekers';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -113,8 +114,11 @@ export default function NewProjectPage() {
     e.preventDefault();
 
     // Build payload
+    const extern = isExternBureau(formData.researcherName);
     const payload = {
       ...formData,
+      isExternalProject: extern,
+      externalBureau: extern ? formData.researcherName : null,
       version: parseInt(formData.version) || 1,
       dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
       dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
@@ -373,7 +377,9 @@ export default function NewProjectPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
                     <option value="">Selecteer...</option>
-                    <option value="Frits Karskens">Frits Karskens</option>
+                    {onderzoekerOpties(formData.researcherName).map((naam) => (
+                      <option key={naam} value={naam}>{naam}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -388,7 +394,9 @@ export default function NewProjectPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                   >
                     <option value="">Selecteer...</option>
-                    <option value="Frits Karskens">Frits Karskens</option>
+                    {controleurOpties(formData.controllerName).map((naam) => (
+                      <option key={naam} value={naam}>{naam}</option>
+                    ))}
                   </select>
                 </div>
               </div>
