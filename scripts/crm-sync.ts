@@ -14,7 +14,7 @@
  *
  * Het bestand is een lijst met regels; elke regel wijst met het kenmerk van
  * een onderzoek (ECHT-01) of van een opdrachtgever (WAAL) naar een
- * CRM-nummer. Zie scripts/crm-sync.example.json.
+ * CRM-nummer en/of een Cardan-kenmerk. Zie scripts/crm-sync.example.json.
  */
 import { PrismaClient } from '@prisma/client';
 import { readFileSync } from 'fs';
@@ -26,11 +26,18 @@ type Regel = {
   kenmerk: string;
   /** Dynamics-nummer, bijvoorbeeld P02645. Leeg = overslaan. */
   projectnummer?: string | null;
-  /** Vrije notitie, bijvoorbeeld het Cardan-kenmerk. Wordt niet opgeslagen. */
+  /** Kenmerk bij Cardan, bijvoorbeeld C-4521. Leeg = overslaan. */
+  cardanKenmerk?: string | null;
+  /** Vrije notitie. Wordt niet opgeslagen. */
   opmerking?: string;
 };
 
-const CRM_NUMMER = /^P\d{5}$/i;
+/** De twee nummers die op het klantproject staan, met hun vorm. */
+const VELDEN = [
+  { veld: 'projectnummer', label: 'CRM-nummer', vorm: /^P\d{5}$/i, voorbeeld: 'P0xxxx' },
+  { veld: 'cardanKenmerk', label: 'Cardan-kenmerk', vorm: /^C-\d{4}$/i, voorbeeld: 'C-xxxx' },
+] as const;
+type Veld = (typeof VELDEN)[number]['veld'];
 
 async function report(asJson: boolean) {
   const projects = await prisma.project.findMany({
@@ -45,6 +52,7 @@ async function report(asJson: boolean) {
           id: true,
           name: true,
           projectnummer: true,
+          cardanKenmerk: true,
           opdrachtgever: { select: { kenmerk: true, naam: true } },
         },
       },
@@ -66,6 +74,7 @@ async function report(asJson: boolean) {
             status: p.status,
             opdrachtgever: p.clientProject?.opdrachtgever.naam ?? p.commissionedBy ?? null,
             klantproject: p.clientProject?.name ?? null,
+            cardanKenmerk: p.clientProject?.cardanKenmerk ?? null,
             heeftKlantproject: Boolean(p.clientProject),
           })),
         },
@@ -87,7 +96,8 @@ async function report(asJson: boolean) {
     console.log(naam);
     for (const p of lijst) {
       const kp = p.clientProject ? p.clientProject.name : 'GEEN KLANTPROJECT';
-      console.log(`  ${(p.kenmerk ?? '-').padEnd(10)} ${p.status.padEnd(16)} ${kp}  —  ${p.title}`);
+      const cardan = p.clientProject?.cardanKenmerk ? `  [Cardan ${p.clientProject.cardanKenmerk}]` : '';
+      console.log(`  ${(p.kenmerk ?? '-').padEnd(10)} ${p.status.padEnd(16)} ${kp}${cardan}  —  ${p.title}`);
     }
   }
 
@@ -113,33 +123,40 @@ async function apply(bestand: string, dryRun: boolean, force: boolean) {
 
   for (const regel of regels) {
     const kenmerk = (regel.kenmerk || '').trim().toUpperCase();
-    const nummer = (regel.projectnummer || '').trim().toUpperCase();
     if (!kenmerk) {
       console.log('- regel zonder kenmerk overgeslagen');
       overgeslagen++;
       continue;
     }
-    if (!nummer) {
-      console.log(`- ${kenmerk}: geen CRM-nummer ingevuld, overgeslagen`);
-      overgeslagen++;
+
+    // Welke nummers staan er in deze regel, en zien ze er goed uit?
+    const nieuw: Partial<Record<Veld, string>> = {};
+    let regelFout = false;
+    for (const { veld, label, vorm, voorbeeld } of VELDEN) {
+      const waarde = (regel[veld] || '').trim().toUpperCase();
+      if (!waarde) continue;
+      if (!vorm.test(waarde)) {
+        console.log(`! ${kenmerk}: "${waarde}" ziet er niet uit als een ${label} (${voorbeeld})`);
+        regelFout = true;
+        continue;
+      }
+      nieuw[veld] = waarde;
+    }
+    if (regelFout) {
+      fouten++;
       continue;
     }
-    if (!CRM_NUMMER.test(nummer)) {
-      console.log(`! ${kenmerk}: "${nummer}" ziet er niet uit als een CRM-nummer (P0xxxx)`);
-      fouten++;
+    if (Object.keys(nieuw).length === 0) {
+      console.log(`- ${kenmerk}: geen nummer ingevuld, overgeslagen`);
+      overgeslagen++;
       continue;
     }
 
     // Welke klantprojecten horen bij dit kenmerk?
+    const select = { id: true, name: true, projectnummer: true, cardanKenmerk: true } as const;
     const klantprojecten = kenmerk.includes('-')
-      ? await prisma.clientProject.findMany({
-          where: { projects: { some: { kenmerk } } },
-          select: { id: true, name: true, projectnummer: true },
-        })
-      : await prisma.clientProject.findMany({
-          where: { opdrachtgever: { kenmerk } },
-          select: { id: true, name: true, projectnummer: true },
-        });
+      ? await prisma.clientProject.findMany({ where: { projects: { some: { kenmerk } } }, select })
+      : await prisma.clientProject.findMany({ where: { opdrachtgever: { kenmerk } }, select });
 
     if (klantprojecten.length === 0) {
       const bestaat = kenmerk.includes('-')
@@ -155,36 +172,50 @@ async function apply(bestand: string, dryRun: boolean, force: boolean) {
     }
 
     for (const kp of klantprojecten) {
-      const eerder = gepland.get(kp.id);
-      if (eerder && eerder.nummer !== nummer) {
-        console.log(
-          `! ${kenmerk}: klantproject "${kp.name}" kreeg via ${eerder.via} al ${eerder.nummer}, nu ${nummer}. Regel overgeslagen.`
-        );
-        fouten++;
-        continue;
-      }
-      if (eerder) continue;
+      const wijziging: Partial<Record<Veld, string>> = {};
+      const meldingen: string[] = [];
 
-      if (kp.projectnummer === nummer) {
-        console.log(`= ${kenmerk}: "${kp.name}" heeft al ${nummer}`);
+      for (const { veld, label } of VELDEN) {
+        const nummer = nieuw[veld];
+        if (!nummer) continue;
+        const sleutel = `${kp.id}:${veld}`;
+        const eerder = gepland.get(sleutel);
+        if (eerder && eerder.nummer !== nummer) {
+          console.log(
+            `! ${kenmerk}: "${kp.name}" kreeg via ${eerder.via} al ${label} ${eerder.nummer}, nu ${nummer}. Overgeslagen.`
+          );
+          fouten++;
+          continue;
+        }
+        if (eerder) continue;
+
+        const huidig = kp[veld];
+        if (huidig === nummer) {
+          meldingen.push(`heeft al ${label} ${nummer}`);
+          continue;
+        }
+        if (huidig && !force) {
+          console.log(
+            `! ${kenmerk}: "${kp.name}" heeft al ${label} ${huidig}; ${nummer} niet gezet (gebruik --force om te overschrijven)`
+          );
+          fouten++;
+          continue;
+        }
+        gepland.set(sleutel, { nummer, via: kenmerk });
+        wijziging[veld] = nummer;
+        meldingen.push(huidig ? `${label} ${huidig} → ${nummer}` : `${label} ${nummer}`);
+      }
+
+      if (Object.keys(wijziging).length === 0) {
+        if (meldingen.length) console.log(`= ${kenmerk}: "${kp.name}" ${meldingen.join(', ')}`);
         overgeslagen++;
         continue;
       }
-      if (kp.projectnummer && !force) {
-        console.log(
-          `! ${kenmerk}: "${kp.name}" heeft al ${kp.projectnummer}; ${nummer} niet gezet (gebruik --force om te overschrijven)`
-        );
-        fouten++;
-        continue;
-      }
-
-      gepland.set(kp.id, { nummer, via: kenmerk });
-      const actie = kp.projectnummer ? `${kp.projectnummer} → ${nummer}` : nummer;
       if (dryRun) {
-        console.log(`~ ${kenmerk}: "${kp.name}" zou ${actie} krijgen`);
+        console.log(`~ ${kenmerk}: "${kp.name}" zou krijgen: ${meldingen.join(', ')}`);
       } else {
-        await prisma.clientProject.update({ where: { id: kp.id }, data: { projectnummer: nummer } });
-        console.log(`+ ${kenmerk}: "${kp.name}" krijgt ${actie}`);
+        await prisma.clientProject.update({ where: { id: kp.id }, data: wijziging });
+        console.log(`+ ${kenmerk}: "${kp.name}" krijgt: ${meldingen.join(', ')}`);
       }
       gezet++;
     }

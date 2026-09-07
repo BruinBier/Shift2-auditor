@@ -1024,6 +1024,12 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                       <div className="text-gray-900 mt-1">{project.clientProject.projectnummer}</div>
                     </div>
                   )}
+                  {project.clientProject.cardanKenmerk && (
+                    <div>
+                      <span className="font-medium text-gray-700">Cardan-kenmerk:</span>
+                      <div className="text-gray-900 mt-1">{project.clientProject.cardanKenmerk}</div>
+                    </div>
+                  )}
                   <div>
                     <span className="font-medium text-gray-700">Projectdetails:</span>
                     <div
