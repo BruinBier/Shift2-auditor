@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { EIGEN_ORGANISATIE } from '@/lib/onderzoekers';
 
 /**
  * Intake: uit een handvol gegevens uit het CRM een onderzoek opbouwen.
@@ -16,7 +17,6 @@ import { prisma } from '@/lib/prisma';
  * start daarom op status "Intake".
  */
 
-const EIGEN_ORGANISATIE = 'Shift2';
 const CONTROLEUR = 'Frits Karskens';
 const STANDAARD_TYPE = 'WCAG 2.2 AA deelonderzoek content website';
 

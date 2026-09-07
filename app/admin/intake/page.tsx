@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { leesIntakeblok } from '@/lib/intakeblok';
+import { BUREAUS } from '@/lib/onderzoekers';
 
 /**
  * Intakeformulier: de gegevens uit het CRM waaruit een onderzoek wordt
@@ -16,7 +17,6 @@ import { leesIntakeblok } from '@/lib/intakeblok';
  * docs/adr/0003-work-schrijft-niet-in-de-tool.md.
  */
 
-const BUREAUS = ['Shift2', 'Cardan'];
 const ACCOUNTMANAGERS = ['Katja', 'Guus', 'Nick van de Venn'];
 
 export default function IntakePage() {

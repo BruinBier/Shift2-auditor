@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { onderzoekerOpties, controleurOpties, isExternBureau } from '@/lib/onderzoekers';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -369,7 +370,9 @@ export default function OnderzoekenTable({ projects }: Props) {
       standard: project.standard,
       level: project.level,
       status: project.status,
-      researcherName: project.researcherName || '',
+      // Een extern onderzoek (intake) heeft geen onderzoeker maar wel een
+      // bureau; dat bureau is dan de "onderzoeker" in het formulier.
+      researcherName: project.researcherName || project.externalBureau || '',
       controllerName: project.controllerName || '',
       plannedTime: project.plannedTime || '',
       dateStart: formatDateForInput(project.dateStart),
@@ -485,8 +488,12 @@ export default function OnderzoekenTable({ projects }: Props) {
 
     if (!editingProject) return;
 
+    const extern = isExternBureau(formData.researcherName);
     const payload = {
       ...formData,
+      // Zonder deze twee velden zet de API het bureau bij elk opslaan op leeg.
+      isExternalProject: extern,
+      externalBureau: extern ? formData.researcherName : null,
       version: parseFloat(formData.version) || 1.0,
       dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
       dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
@@ -519,8 +526,12 @@ export default function OnderzoekenTable({ projects }: Props) {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const extern = isExternBureau(formData.researcherName);
     const payload = {
       ...formData,
+      // Zonder deze twee velden zet de API het bureau bij elk opslaan op leeg.
+      isExternalProject: extern,
+      externalBureau: extern ? formData.researcherName : null,
       version: parseFloat(formData.version) || 1.0,
       dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
       dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
@@ -2698,8 +2709,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     >
                       <option value="">Selecteer...</option>
-                      <option value="frits Karskens">frits Karskens</option>
-                      <option value="Frits Karskens">Frits Karskens</option>
+                      {onderzoekerOpties(formData.researcherName).map((naam) => (
+                        <option key={naam} value={naam}>{naam}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -2714,8 +2726,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     >
                       <option value="">Selecteer...</option>
-                      <option value="frits Karskens">frits Karskens</option>
-                      <option value="Frits Karskens">Frits Karskens</option>
+                      {controleurOpties(formData.controllerName).map((naam) => (
+                        <option key={naam} value={naam}>{naam}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -3231,8 +3244,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     >
                       <option value="">Selecteer...</option>
-                      <option value="frits Karskens">frits Karskens</option>
-                      <option value="Frits Karskens">Frits Karskens</option>
+                      {onderzoekerOpties(formData.researcherName).map((naam) => (
+                        <option key={naam} value={naam}>{naam}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -3247,8 +3261,9 @@ export default function OnderzoekenTable({ projects }: Props) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     >
                       <option value="">Selecteer...</option>
-                      <option value="frits Karskens">frits Karskens</option>
-                      <option value="Frits Karskens">Frits Karskens</option>
+                      {controleurOpties(formData.controllerName).map((naam) => (
+                        <option key={naam} value={naam}>{naam}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
