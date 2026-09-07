@@ -66,6 +66,18 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - Creating a finding with `status=open` auto-upserts the criterion's assessment to `failed` — this is existing API behavior.
 - Override base URL if needed: `AUDIT_CLI_BASE_URL=http://localhost:3001 npm run cli -- ...`
 
+## CRM-sync (Dynamics-nummers)
+
+Het CRM-nummer (P0xxxx) staat op het klantproject (`ClientProject.projectnummer`) en geldt voor alle onderzoeken eronder. Om te zien welke onderzoeken er nog geen hebben, of om nummers in bulk te zetten:
+
+```bash
+npm run crm:sync -- report                        # onderzoeken zonder CRM-nummer, per opdrachtgever
+npm run crm:sync -- apply lijst.json --dry-run    # laat zien wat er zou veranderen
+npm run crm:sync -- apply lijst.json              # zet de nummers (bestaande niet overschrijven, tenzij --force)
+```
+
+Het JSON-bestand is een lijst met `{ "kenmerk": "ECHT-01" | "WAAL", "projectnummer": "P02645" }`; zie `scripts/crm-sync.example.json`.
+
 ## Database & Prisma Workflow
 
 ### Critical User Preferences
