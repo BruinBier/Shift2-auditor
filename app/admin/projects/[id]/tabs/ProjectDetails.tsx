@@ -1090,6 +1090,14 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                       <div className="text-gray-900 mt-1">{project.clientProject.projectnummer}</div>
                     </div>
                   )}
+                  {/* Het kenmerk van hetzelfde traject bij Cardan, als dat bureau de
+                      audit uitvoert. Staat net als het CRM-nummer op het klantproject. */}
+                  {project.clientProject.cardanKenmerk && (
+                    <div>
+                      <span className="font-medium text-gray-700">Cardan-kenmerk:</span>
+                      <div className="text-gray-900 mt-1">{project.clientProject.cardanKenmerk}</div>
+                    </div>
+                  )}
                   {/* Staat het onderzoek in de Dynamics-weergave "Mijn actieve projecten"?
                       Iets anders dan een ontbrekend CRM-nummer: het project bestaat wel,
                       maar de onderzoeker staat er niet als projectmanager op en ziet het
