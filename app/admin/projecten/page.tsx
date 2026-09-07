@@ -13,6 +13,7 @@ interface ClientProject {
   id: string;
   name: string;
   projectnummer: string | null;
+  cardanKenmerk: string | null;
   opdrachtgeverId: string;
   details: string;
   createdAt: string;
@@ -45,6 +46,7 @@ export default function ProjectenPage() {
   const [formData, setFormData] = useState({
     name: '',
     projectnummer: '',
+    cardanKenmerk: '',
     opdrachtgeverId: '',
     details: '',
   });
@@ -268,6 +270,7 @@ export default function ProjectenPage() {
     setFormData({
       name: project.name,
       projectnummer: project.projectnummer || '',
+      cardanKenmerk: project.cardanKenmerk || '',
       opdrachtgeverId: project.opdrachtgeverId,
       details: project.details || '',
     });
@@ -280,6 +283,7 @@ export default function ProjectenPage() {
     setFormData({
       name: '',
       projectnummer: '',
+    cardanKenmerk: '',
       opdrachtgeverId: '',
       details: '',
     });
@@ -293,6 +297,7 @@ export default function ProjectenPage() {
     setFormData({
       name: '',
       projectnummer: '',
+    cardanKenmerk: '',
       opdrachtgeverId: '',
       details: '',
     });
@@ -646,7 +651,8 @@ export default function ProjectenPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectnummer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CRM-nummer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cardan</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accountmanager</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectdetails</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opdrachtgever</th>
@@ -656,13 +662,13 @@ export default function ProjectenPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
                     Laden...
                   </td>
                 </tr>
               ) : sortedProjects.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
                     Geen projecten gevonden
                   </td>
                 </tr>
@@ -671,6 +677,7 @@ export default function ProjectenPage() {
                   <tr key={project.id}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{project.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{project.projectnummer || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{project.cardanKenmerk || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{project.opdrachtgever.accountmanager || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div
@@ -821,18 +828,33 @@ export default function ProjectenPage() {
                 </div>
               </div>
 
-              {/* Projectnummer */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Projectnummer
-                </label>
-                <input
-                  type="text"
-                  value={formData.projectnummer}
-                  onChange={(e) => setFormData({ ...formData, projectnummer: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                  placeholder="Bijv. 2024-001"
-                />
+              {/* CRM-nummer en Cardan-kenmerk: twee nummers voor dezelfde
+                  opdracht, elk uit een ander systeem. */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CRM-nummer
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.projectnummer}
+                    onChange={(e) => setFormData({ ...formData, projectnummer: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="P02645"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cardan-kenmerk
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cardanKenmerk}
+                    onChange={(e) => setFormData({ ...formData, cardanKenmerk: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="C-4521"
+                  />
+                </div>
               </div>
 
               {/* Projectdetails with Tiptap Editor */}

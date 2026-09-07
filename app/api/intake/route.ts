@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { EIGEN_ORGANISATIE } from '@/lib/onderzoekers';
 
 /**
  * Intake: uit een handvol gegevens uit het CRM een onderzoek opbouwen.
@@ -16,7 +17,6 @@ import { prisma } from '@/lib/prisma';
  * start daarom op status "Intake".
  */
 
-const EIGEN_ORGANISATIE = 'Shift2';
 const CONTROLEUR = 'Frits Karskens';
 const STANDAARD_TYPE = 'WCAG 2.2 AA deelonderzoek content website';
 
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
     const domein = domeinVan(url);
     const volledigeUrl = url.startsWith('http') ? url : `https://${url}`;
     const crmNummer = (body.projectnummer || '').trim() || null;
+    const cardanKenmerk = (body.cardanKenmerk || '').trim() || null;
 
     // 1. Opdrachtgever: bestaande hergebruiken, anders aanmaken.
     let opdrachtgever = body.opdrachtgeverId
@@ -95,11 +96,15 @@ export async function POST(request: Request) {
       where: { opdrachtgeverId: opdrachtgever.id, name: { contains: domein } },
     });
     if (clientProject) {
-      // Het CRM-nummer kan later bekend worden; vul het aan als het nog leeg is.
-      if (crmNummer && !clientProject.projectnummer) {
+      // Nummers kunnen later bekend worden; vul aan wat nog leeg is, maar
+      // overschrijf niets.
+      const aanvulling: { projectnummer?: string; cardanKenmerk?: string } = {};
+      if (crmNummer && !clientProject.projectnummer) aanvulling.projectnummer = crmNummer;
+      if (cardanKenmerk && !clientProject.cardanKenmerk) aanvulling.cardanKenmerk = cardanKenmerk;
+      if (Object.keys(aanvulling).length) {
         clientProject = await prisma.clientProject.update({
           where: { id: clientProject.id },
-          data: { projectnummer: crmNummer },
+          data: aanvulling,
         });
       }
     } else {
@@ -108,6 +113,7 @@ export async function POST(request: Request) {
           name: domein,
           opdrachtgeverId: opdrachtgever.id,
           projectnummer: crmNummer,
+          cardanKenmerk,
         },
       });
     }

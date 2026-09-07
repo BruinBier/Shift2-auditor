@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { leesIntakeblok } from '@/lib/intakeblok';
+import { BUREAUS } from '@/lib/onderzoekers';
 
 /**
  * Intakeformulier: de gegevens uit het CRM waaruit een onderzoek wordt
@@ -16,7 +17,6 @@ import { leesIntakeblok } from '@/lib/intakeblok';
  * docs/adr/0003-work-schrijft-niet-in-de-tool.md.
  */
 
-const BUREAUS = ['Shift2', 'Cardan'];
 const ACCOUNTMANAGERS = ['Katja', 'Guus', 'Nick van de Venn'];
 
 export default function IntakePage() {
@@ -34,6 +34,7 @@ export default function IntakePage() {
 
   const [kenmerk, setKenmerk] = useState('');
   const [projectnummer, setProjectnummer] = useState('');
+  const [cardanKenmerk, setCardanKenmerk] = useState('');
   const [url, setUrl] = useState('');
   const [uitgevoerdDoor, setUitgevoerdDoor] = useState('Shift2');
   const [anderBureau, setAnderBureau] = useState('');
@@ -172,6 +173,7 @@ export default function IntakePage() {
         body: JSON.stringify({
           kenmerk,
           projectnummer,
+          cardanKenmerk,
           url,
           opdrachtgeverId: nieuweOpdrachtgever ? null : opdrachtgeverId,
           opdrachtgeverNaam: nieuweOpdrachtgever ? opdrachtgeverNaam : '',
@@ -386,6 +388,22 @@ export default function IntakePage() {
             />
           </div>
         </div>
+
+        {(anders || uitgevoerdDoor !== 'Shift2') && (
+          <div>
+            <label htmlFor="cardanKenmerk" className="block text-sm font-medium text-gray-700 mb-1">
+              Kenmerk bij {anders ? anderBureau || 'het bureau' : uitgevoerdDoor}
+            </label>
+            <input
+              id="cardanKenmerk"
+              value={cardanKenmerk}
+              onChange={(e) => setCardanKenmerk(e.target.value)}
+              placeholder="C-4521"
+              className={veld}
+            />
+            <p className="text-xs text-gray-500 mt-1">Het nummer waaronder het traject bij het andere bureau loopt.</p>
+          </div>
+        )}
 
         <div>
           <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">

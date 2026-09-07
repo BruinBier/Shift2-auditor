@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       data: {
         name: data.name,
         projectnummer: data.projectnummer || null,
+        cardanKenmerk: data.cardanKenmerk || null,
         opdrachtgeverId: data.opdrachtgeverId,
         details: data.details || null,
       },

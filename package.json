@@ -18,6 +18,7 @@
     "backup": "tsx scripts/export-all-data.ts",
     "restore": "tsx scripts/import-all-data.ts",
     "cli": "tsx scripts/audit-cli.ts",
+    "crm:sync": "tsx scripts/crm-sync.ts",
     "chrome:debug": "tsx scripts/start-chrome-debug.ts",
     "cli:chrome-los": "tsx scripts/start-chrome-debug.ts --los",
     "test:audit-evidence": "tsx --test lib/audit-evidence.test.ts",
