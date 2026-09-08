@@ -48,6 +48,7 @@ export default async function OnderzoekekenPage() {
     reportDate: project.reportDate.toISOString(),
     planningSent: project.planningSent?.toISOString(),
     planningApproved: project.planningApproved?.toISOString(),
+    reinspectionDate: project.reinspectionDate?.toISOString(),
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     clientProject: project.clientProject,

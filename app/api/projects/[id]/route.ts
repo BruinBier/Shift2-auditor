@@ -87,12 +87,22 @@ async function syncReinspectionChild(parentId: string) {
       status: true,
       dateEnd: true,
       reinspectionWeeks: true,
+      reinspectionDate: true,
     },
   });
-  if (!parent || !parent.dateEnd || !parent.reinspectionWeeks) return;
+  if (!parent) return;
 
-  const reinspectionStart = new Date(parent.dateEnd);
-  reinspectionStart.setDate(reinspectionStart.getDate() + parent.reinspectionWeeks * 7);
+  // Dezelfde voorrang als bij het aanmaken: een vaste datum (extern bureau) wint van
+  // deadline + weken. Zonder allebei valt er niets te herberekenen.
+  let reinspectionStart: Date;
+  if (parent.reinspectionDate) {
+    reinspectionStart = new Date(parent.reinspectionDate);
+  } else if (parent.dateEnd && parent.reinspectionWeeks) {
+    reinspectionStart = new Date(parent.dateEnd);
+    reinspectionStart.setDate(reinspectionStart.getDate() + parent.reinspectionWeeks * 7);
+  } else {
+    return;
+  }
   const reinspectionEnd = new Date(reinspectionStart);
   reinspectionEnd.setDate(reinspectionEnd.getDate() + 7);
 
@@ -297,6 +307,7 @@ export async function PATCH(
       'managementSummary',
       'planningApproved',
       'planningSent',
+      'reinspectionDate',
       'reinspectionWeeks',
       'reportDate',
       'reportSentAt',

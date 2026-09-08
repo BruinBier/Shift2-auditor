@@ -34,6 +34,8 @@ interface Project {
   clientProject?: any;
   hasReinspection?: boolean;
   reinspectionWeeks?: number | null;
+  /** Vaste startdatum van de herinspectie; bij Cardan komt die van hen, niet uit een aantal weken. */
+  reinspectionDate?: string | null;
   parentProjectId?: string | null;
   planningSent: string | null;
   planningApproved: string | null;
@@ -100,7 +102,12 @@ export default function OnderzoekenTable({ projects }: Props) {
     isPrivate: false,
     hasReinspection: false,
     reinspectionWeeks: 14,
+    reinspectionDate: '',
   });
+  // Een extern bureau (Cardan) levert op zijn eigen moment op; wij leggen daar geen
+  // deadline op vast. Bij een eigen onderzoek blijft de deadline verplicht, behalve
+  // zolang het in de wacht staat.
+  const deadlineVereist = formData.status !== 'In de wacht' && !isExternBureau(formData.researcherName);
   const [showAnonymousTooltip, setShowAnonymousTooltip] = useState(false);
   const [showPrivateTooltip, setShowPrivateTooltip] = useState(false);
   const [filters, setFilters] = useState({
@@ -392,6 +399,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       isPrivate: project.isPrivate,
       hasReinspection: project.hasReinspection ?? false,
       reinspectionWeeks: project.reinspectionWeeks ?? 14,
+      reinspectionDate: formatDateForInput(project.reinspectionDate ?? null),
     });
 
     setShowEditModal(true);
@@ -426,6 +434,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       isPrivate: false,
       hasReinspection: false,
       reinspectionWeeks: 14,
+      reinspectionDate: '',
     });
   };
 
@@ -455,6 +464,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       isPrivate: false,
       hasReinspection: false,
       reinspectionWeeks: 14,
+      reinspectionDate: '',
     });
     setShowCreateModal(true);
   };
@@ -486,6 +496,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       isPrivate: false,
       hasReinspection: false,
       reinspectionWeeks: 14,
+      reinspectionDate: '',
     });
   };
 
@@ -507,6 +518,10 @@ export default function OnderzoekenTable({ projects }: Props) {
       planningApproved: formData.planningApproved ? new Date(formData.planningApproved).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
       reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : new Date().toISOString(),
+      // Bij een extern bureau geeft de klant de datum van de herinspectie door; de
+      // wekenlijst is dan niet van toepassing en mag niet stiekem meerekenen.
+      reinspectionWeeks: extern ? null : formData.reinspectionWeeks,
+      reinspectionDate: extern && formData.reinspectionDate ? new Date(formData.reinspectionDate).toISOString() : null,
     };
 
     try {
@@ -545,6 +560,10 @@ export default function OnderzoekenTable({ projects }: Props) {
       planningApproved: formData.planningApproved ? new Date(formData.planningApproved).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
       reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : new Date().toISOString(),
+      // Bij een extern bureau geeft de klant de datum van de herinspectie door; de
+      // wekenlijst is dan niet van toepassing en mag niet stiekem meerekenen.
+      reinspectionWeeks: extern ? null : formData.reinspectionWeeks,
+      reinspectionDate: extern && formData.reinspectionDate ? new Date(formData.reinspectionDate).toISOString() : null,
     };
 
     try {
@@ -2780,11 +2799,11 @@ export default function OnderzoekenTable({ projects }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
+                      Deadline {deadlineVereist && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required={formData.status !== 'In de wacht'}
+                      required={deadlineVereist}
                       value={formData.dateEnd}
                       onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -2833,7 +2852,23 @@ export default function OnderzoekenTable({ projects }: Props) {
                     </label>
                     <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
                   </div>
-                  {formData.hasReinspection && (
+                  {formData.hasReinspection && isExternBureau(formData.researcherName) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Startdatum herinspectie
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.reinspectionDate}
+                        onChange={(e) => setFormData({ ...formData, reinspectionDate: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                      />
+                      <p className="mt-2 text-xs text-gray-500">
+                        {formData.researcherName} plant de herinspectie zelf; vul hier de datum in die zij doorgeven. De startdatum van de nulmeting staat hierboven bij &ldquo;Startdatum&rdquo;.
+                      </p>
+                    </div>
+                  )}
+                  {formData.hasReinspection && !isExternBureau(formData.researcherName) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Aantal weken na deadline
@@ -3315,11 +3350,11 @@ export default function OnderzoekenTable({ projects }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
+                      Deadline {deadlineVereist && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required={formData.status !== 'In de wacht'}
+                      required={deadlineVereist}
                       value={formData.dateEnd}
                       onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -3368,7 +3403,23 @@ export default function OnderzoekenTable({ projects }: Props) {
                     </label>
                     <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
                   </div>
-                  {formData.hasReinspection && (
+                  {formData.hasReinspection && isExternBureau(formData.researcherName) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Startdatum herinspectie
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.reinspectionDate}
+                        onChange={(e) => setFormData({ ...formData, reinspectionDate: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                      />
+                      <p className="mt-2 text-xs text-gray-500">
+                        {formData.researcherName} plant de herinspectie zelf; vul hier de datum in die zij doorgeven. De startdatum van de nulmeting staat hierboven bij &ldquo;Startdatum&rdquo;.
+                      </p>
+                    </div>
+                  )}
+                  {formData.hasReinspection && !isExternBureau(formData.researcherName) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Aantal weken na deadline
