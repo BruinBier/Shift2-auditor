@@ -105,8 +105,9 @@ export default async function AdminPage() {
         // "Gereed" gaat over het rapport, niet over de nazorg.
         //
         // Na een nulmeting met hertest is dat het adviesgesprek: de planningsmail beloofde
-        // een overleg na afronding, en dat gaat vooraf aan het herstel. Na de hertest zelf
-        // is er geen gesprek maar een melding dat het onderzoek klaar is.
+        // een overleg na afronding, en dat gaat vooraf aan het herstel. Na de hertest zelf,
+        // en na een nulmeting zónder hertest, is er geen gesprek maar een melding dat het
+        // onderzoek klaar is.
         {
           status: 'Gereed',
           hasReinspection: true,
@@ -114,6 +115,7 @@ export default async function AdminPage() {
           adviceCallHeld: null,
         },
         { status: 'Gereed', parentProjectId: { not: null }, reportSentAt: null },
+        { status: 'Gereed', hasReinspection: false, parentProjectId: null, reportSentAt: null },
       ],
     },
     orderBy: { dateStart: 'asc' },
@@ -175,8 +177,9 @@ export default async function AdminPage() {
     // hierboven laat er niets anders van door. Het rapport is af, dus dit is het enige
     // wat er nog te doen valt.
     if (p.status === 'Gereed') {
-      if (isVervolg) {
-        // Na de hertest: alleen het rapport opleveren, geen gesprek.
+      if (isVervolg || !p.hasReinspection) {
+        // Na de hertest, of na een nulmeting zonder hertest: alleen het rapport
+        // opleveren, geen gesprek. Het gesprek is alleen beloofd als er een hertest komt.
         actie.push({ ...basis, toelichting: 'rapport opleveren' });
       } else if (!p.adviceCallInvited) {
         actie.push({ ...basis, toelichting: 'uitnodiging adviesgesprek versturen' });

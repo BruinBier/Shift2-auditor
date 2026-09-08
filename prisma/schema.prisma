@@ -202,11 +202,13 @@ model Project {
   /// reageert er hetzelfde uitzien als een uitnodiging die nooit verstuurd is.
   adviceCallInvited       DateTime?      @map("advice_call_invited")
   adviceCallHeld          DateTime?      @map("advice_call_held")
-  /// De mail waarmee het rapport van een herinspectie wordt opgeleverd.
+  /// De mail waarmee het rapport wordt opgeleverd: na een herinspectie, of na een
+  /// nulmeting zonder hertest.
   ///
-  /// Na de hertest is er geen gesprek meer -- dat was er al na de nulmeting -- maar wel een
-  /// bericht: het onderzoek is klaar, hier is het rapport, laat het weten als je de issues
-  /// nog wilt bespreken. Dit is het laatste wat er naar de klant gaat.
+  /// In beide gevallen is er geen gesprek -- na de hertest was dat er al na de nulmeting,
+  /// en zonder hertest is er geen herstelronde om te bespreken -- maar wel een bericht:
+  /// het onderzoek is klaar, hier is het rapport, laat het weten als je de issues nog
+  /// wilt bespreken. Dit is het laatste wat er naar de klant gaat.
   reportSentAt            DateTime?      @map("report_sent_at")
   scopeInScope            String?        @map("scope_in_scope") @db.Text
   scopeOutOfScope         String?        @map("scope_out_of_scope") @db.Text

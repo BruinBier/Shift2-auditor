@@ -135,6 +135,12 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   // Na de herinspectie is er geen gesprek maar een melding dat het onderzoek klaar is.
   const heeftAdviesgesprek = Boolean(project.hasReinspection) && !isHerinspectie;
 
+  // Een nulmeting zónder hertest eindigt ook met zo'n melding. De planningsmail heeft
+  // geen overleg beloofd, dus er komt geen adviesgesprek -- maar de klant moet wel horen
+  // dat het rapport er is. Zonder deze stap stond er bij zo'n onderzoek (HAR-02, een
+  // nulmeting door Cardan) helemaal niets na de oplevering.
+  const heeftOpleveringsmail = isHerinspectie || !project.hasReinspection;
+
   const adviesuitnodiging = [
     `Dag ${contactnaam || '[naam]'},`,
     '',
@@ -148,14 +154,20 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     'Laat me even weten wanneer het jou schikt, dan zorg ik dat het overleg wordt ingepland.',
   ].join('\n');
 
-  // Na de herinspectie: geen uitnodiging maar een melding. Het onderzoek is klaar, hier is
-  // het rapport, laat het weten als je de issues nog wilt bespreken.
+  // Na de herinspectie, of na een nulmeting zonder hertest: geen uitnodiging maar een
+  // melding. Het onderzoek is klaar, hier is het rapport, laat het weten als je de issues
+  // nog wilt bespreken. Het "Proficiat" hoort bij de hertest: daar is iets hersteld. Na
+  // een nulmeting is het percentage een vertrekpunt, geen prestatie.
   const opleveringsmail = [
     `Dag ${contactnaam || '[naam]'},`,
     '',
-    `Het heronderzoek toegankelijkheid voor ${site} is afgerond.`,
+    isHerinspectie
+      ? `Het heronderzoek toegankelijkheid voor ${site} is afgerond.`
+      : `De nulmeting van het toegankelijkheidsonderzoek voor ${site} is afgerond.`,
     '',
-    'De website is op dit moment voor [percentage]% toegankelijk. Proficiat!',
+    isHerinspectie
+      ? 'De website is op dit moment voor [percentage]% toegankelijk. Proficiat!'
+      : 'De website is op dit moment voor [percentage]% toegankelijk.',
     '',
     'De resultaten van dit onderzoek zijn direct beschikbaar via onderstaande URL:',
     '[link naar het rapport]',
@@ -237,9 +249,11 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
           },
         ]),
     {
+      // Bij een extern bureau is er geen deadline: dat bureau levert op zijn eigen
+      // moment op. Een startdatum is dan de hele planning.
       key: 'planning',
       label: 'Planning bepaald',
-      klaar: Boolean(project.dateStart && project.dateEnd),
+      klaar: Boolean(project.dateStart && (viaBureau || project.dateEnd)),
       datum: project.dateStart,
       handmatig: false,
     },
@@ -286,9 +300,10 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
           },
         ]
       : []),
-    // Na de hertest gaat er geen uitnodiging uit maar een melding dat het onderzoek klaar
-    // is. Dat is het laatste wat er naar de klant gaat.
-    ...(isHerinspectie
+    // Na de hertest, of na een nulmeting zonder hertest, gaat er geen uitnodiging uit
+    // maar een melding dat het onderzoek klaar is. Dat is het laatste wat er naar de
+    // klant gaat.
+    ...(heeftOpleveringsmail
       ? [
           {
             key: 'reportSentAt',
