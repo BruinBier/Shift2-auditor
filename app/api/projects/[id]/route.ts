@@ -77,7 +77,7 @@ async function ensureReinspectionChild(parentId: string) {
 async function syncReinspectionChild(parentId: string) {
   const child = await prisma.project.findFirst({
     where: { parentProjectId: parentId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, isExternalProject: true },
   });
   if (!child) return;
 
@@ -97,6 +97,12 @@ async function syncReinspectionChild(parentId: string) {
   let reinspectionStart: Date;
   if (parent.reinspectionDate) {
     reinspectionStart = new Date(parent.reinspectionDate);
+  } else if (child.isExternalProject) {
+    // Een hertest door een ander bureau (ECHT-01 v1.1, Cardan) krijgt zijn datum van dat
+    // bureau en staat op zijn eigen pagina. Zonder vaste datum op de nulmeting valt er
+    // niets over te rekenen: "deadline + weken" zou de doorgegeven datum overschrijven
+    // bij elke wijziging aan de nulmeting.
+    return;
   } else if (parent.dateEnd && parent.reinspectionWeeks) {
     reinspectionStart = new Date(parent.dateEnd);
     reinspectionStart.setDate(reinspectionStart.getDate() + parent.reinspectionWeeks * 7);

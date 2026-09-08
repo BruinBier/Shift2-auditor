@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import VoorbereidingStappen from './VoorbereidingStappen';
+import { isExternBureau } from '@/lib/onderzoekers';
 import 'md-editor-rt/lib/style.css';
 
 const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
@@ -81,6 +82,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     dateEnd: project.dateEnd ? new Date(project.dateEnd).toISOString().split('T')[0] : '',
     hasReinspection: Boolean(project.hasReinspection),
     reinspectionWeeks: project.reinspectionWeeks ? String(project.reinspectionWeeks) : '12',
+    reinspectionDate: project.reinspectionDate ? new Date(project.reinspectionDate).toISOString().split('T')[0] : '',
     planningSent: project.planningSent ? new Date(project.planningSent).toISOString().split('T')[0] : '',
     planningApproved: project.planningApproved ? new Date(project.planningApproved).toISOString().split('T')[0] : '',
     scopeInScope: project.scopeInScope || '',
@@ -368,10 +370,24 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
           ...(planningFormData.dateEnd
             ? { reportDate: new Date(planningFormData.dateEnd).toISOString() }
             : {}),
-          hasReinspection: planningFormData.hasReinspection,
-          reinspectionWeeks: planningFormData.hasReinspection
-            ? Number(planningFormData.reinspectionWeeks) || null
-            : null,
+          // Een hertest heeft geen eigen hertest. De keuze hoort bij de nulmeting en
+          // wordt hier niet meegestuurd -- anders zou "Nulmeting met hertest" op de
+          // pagina van de hertest een v1.1 van de v1.1 aanmaken.
+          ...(isHerinspectie
+            ? {}
+            : {
+                hasReinspection: planningFormData.hasReinspection,
+                // Bij een extern bureau geeft dat bureau een datum door; de weken
+                // gelden alleen als wij de hertest zelf inplannen.
+                reinspectionWeeks:
+                  planningFormData.hasReinspection && !extern
+                    ? Number(planningFormData.reinspectionWeeks) || null
+                    : null,
+                reinspectionDate:
+                  planningFormData.hasReinspection && extern && planningFormData.reinspectionDate
+                    ? new Date(planningFormData.reinspectionDate).toISOString()
+                    : null,
+              }),
           planningSent: planningFormData.planningSent ? new Date(planningFormData.planningSent).toISOString() : null,
           planningApproved: planningFormData.planningApproved ? new Date(planningFormData.planningApproved).toISOString() : null,
           scopeInScope: planningFormData.scopeInScope || null,
@@ -399,7 +415,13 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
    * weken na de deadline en duurt een week. Je geeft de startdatum, de rest
    * volgt daaruit maar blijft aanpasbaar.
    */
-  const LOOPTIJD_DAGEN = 14;
+  const isHerinspectie = Boolean(project.parentProjectId || project.parentProject);
+  // Voert een ander bureau het uit, dan plant dat bureau de hertest en geeft het een
+  // datum door. "Weken na de deadline" is dan niet de regel.
+  const extern = Boolean(project.isExternalProject) || isExternBureau(project.researcherName);
+  const bureau = project.externalBureau || project.researcherName || 'het bureau';
+  // Een hertest duurt een week, zoals de API hem ook aanmaakt.
+  const LOOPTIJD_DAGEN = isHerinspectie ? 7 : 14;
 
   const plusDagen = (datum: string, dagen: number) => {
     if (!datum) return '';
@@ -421,9 +443,11 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     }));
   };
 
-  const herinspectieStart = planningFormData.hasReinspection
-    ? plusDagen(planningFormData.dateEnd, Number(planningFormData.reinspectionWeeks || 0) * 7)
-    : '';
+  const herinspectieStart = !planningFormData.hasReinspection
+    ? ''
+    : extern
+      ? planningFormData.reinspectionDate
+      : plusDagen(planningFormData.dateEnd, Number(planningFormData.reinspectionWeeks || 0) * 7);
 
   /**
    * Maakt van een tekstvak een opsomming: bij Enter komt er meteen een streepje
@@ -931,10 +955,21 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               <div>
                 <label className="block text-sm text-gray-500 mb-1">Hertest</label>
                 {(() => {
+                  if (project.reinspectionDate) {
+                    return (
+                      <div className="text-sm text-gray-900">
+                        {format(new Date(project.reinspectionDate), 'd MMMM yyyy', { locale: nl })}
+                        <span className="text-gray-500"> (datum van {bureau})</span>
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          Wordt aangemaakt bij het afronden van dit onderzoek.
+                        </div>
+                      </div>
+                    );
+                  }
                   if (!project.dateEnd || !project.reinspectionWeeks) {
                     return (
                       <div className="text-sm text-gray-900">
-                        Gepland, datum volgt uit de deadline
+                        {extern ? `Gepland, datum volgt van ${bureau}` : 'Gepland, datum volgt uit de deadline'}
                       </div>
                     );
                   }
@@ -1746,7 +1781,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary text-sm"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Standaard twee weken na de start.</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {isHerinspectie ? 'Standaard een week na de start.' : 'Standaard twee weken na de start.'}
+                  </p>
                 </div>
               </div>
 
@@ -1754,6 +1791,20 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Soort onderzoek
                 </label>
+                {/* Op de pagina van de hertest valt er niets te kiezen: dit ís de hertest.
+                    Of er een hertest komt, en hoeveel weken na de deadline, staat bij de
+                    nulmeting. Zonder deze tak stond hier "Nulmeting" aangevinkt, wat leest
+                    alsof de hertest was vergeten. */}
+                {isHerinspectie ? (
+                  <p className="text-sm text-gray-900">
+                    Hertest van de nulmeting (v{Number(project.parentProject?.version ?? 1).toFixed(1)}).
+                    <span className="block text-xs text-gray-500 mt-1">
+                      {extern
+                        ? `${bureau} plant de hertest zelf. De datum die zij doorgeven vul je hierboven in bij Startdatum.`
+                        : 'Of er een hertest is en hoeveel weken na de deadline hij valt, pas je aan bij de nulmeting.'}
+                    </span>
+                  </p>
+                ) : (
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm text-gray-900">
                     <input
@@ -1778,7 +1829,27 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                     Nulmeting met hertest
                   </label>
                 </div>
-                {planningFormData.hasReinspection && (
+                )}
+                {!isHerinspectie && planningFormData.hasReinspection && extern && (
+                  <div className="mt-3 pl-6">
+                    <label htmlFor="pl-hertest" className="block text-sm text-gray-700 mb-1">
+                      Startdatum hertest
+                    </label>
+                    <input
+                      id="pl-hertest"
+                      type="date"
+                      value={planningFormData.reinspectionDate}
+                      onChange={(e) =>
+                        setPlanningFormData({ ...planningFormData, reinspectionDate: e.target.value })
+                      }
+                      className="w-44 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {bureau} plant de hertest zelf; vul de datum in die zij doorgeven. De hertest duurt een week.
+                    </p>
+                  </div>
+                )}
+                {!isHerinspectie && planningFormData.hasReinspection && !extern && (
                   <div className="mt-3 pl-6">
                     <label htmlFor="pl-weken" className="block text-sm text-gray-700 mb-1">
                       Weken tot de hertest
