@@ -4559,26 +4559,14 @@ export default function Stapel({
     <>
       {gebiedenMelding(cel)}
 
-      {/* Wat de agent over déze pagina concludeerde — de tekst waar "Akkoord" ja tegen zegt.
+      {/* De onderbouwing van de agent staat niet hier maar onder "Hoe dit is vastgesteld",
+          als "Wat de agent noteerde" — bij elk criterium, met of zonder deelgebieden.
 
-          Alleen bij een criterium ZONDER deelgebieden. Daar is dit het enige wat er staat, en
-          het hoorde niet weggeklikt onder de metingen te zitten: dan geef je akkoord op een
-          bevindingenlijst zonder de redenering eronder.
-
-          Heeft het criterium wél deelgebieden, dan is er niets meer dat alleen hier kan staan.
-          Waarop is gezocht staat bij het gebied waar gezocht is, een afweging bij het gebied
-          waar hij over gaat, de afkeuring in de bevinding, en of de meting deugde in de badge
-          en onder "De metingen". Wat er dan overblijft is een samenvatting van wat er drie
-          regels lager al staat. Het veld wordt nog wel gevuld — je vindt het terug onder "De
-          metingen" — maar het hoort niet tussen het oordeel en de bevindingen. */}
-      {cel.reden && !(kaarttekst?.gebieden?.length) && (
-        <details className="mb-4 rounded bg-gray-50 text-gray-900">
-          <summary className="cursor-pointer p-3 leading-relaxed">
-            {eersteZin(cel.reden)}
-          </summary>
-          <p className="whitespace-pre-line px-3 pb-3 leading-relaxed">{cel.reden}</p>
-        </details>
-      )}
+          Bij een criterium zonder deelgebieden stond hij eerst wél hier, ingeklapt op zijn
+          eerste zin, met als reden dat het daar het enige inhoudelijke was. In de praktijk
+          (ZOET-01, 8 september 2026) leverde dat twee soorten kaarten op: 1.3.1 met een
+          gebiedenlijst en 1.3.2 met een afgekapte lap tekst op dezelfde plek. Eén opbouw voor
+          alle kaarten weegt zwaarder; wie de redenering wil lezen klapt hem open. */}
 
       {afkeuringenBlok(cel)}
 
@@ -4622,11 +4610,12 @@ export default function Stapel({
           Hoe dit is vastgesteld
         </summary>
         <div className="mt-3">
-          {/* De onderbouwing van de agent, bij een criterium met deelgebieden.
-              Hierboven op de kaart staat hij niet meer — daar is alles wat erin stond
-              inmiddels op een betere plek te vinden — maar weggooien is iets anders dan
-              verplaatsen: dit is wel de tekst waar het akkoord aan hangt. */}
-          {!!kaarttekst.gebieden?.length && cel.reden && (
+          {/* De onderbouwing van de agent. Hierboven op de kaart staat hij niet — bij een
+              criterium met deelgebieden is alles wat erin stond op een betere plek te vinden,
+              en bij een criterium zonder deelgebieden hoort de kaart er hetzelfde uit te zien —
+              maar weggooien is iets anders dan verplaatsen: dit is wel de tekst waar het
+              akkoord aan hangt. */}
+          {cel.reden && (
             <div className="mb-4">
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
                 Wat de agent noteerde
