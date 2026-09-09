@@ -14,6 +14,8 @@ interface ClientProject {
   name: string;
   projectnummer: string | null;
   cardanKenmerk: string | null;
+  contactnaam: string | null;
+  contactEmail: string | null;
   opdrachtgeverId: string;
   details: string;
   createdAt: string;
@@ -47,6 +49,8 @@ export default function ProjectenPage() {
     name: '',
     projectnummer: '',
     cardanKenmerk: '',
+    contactnaam: '',
+    contactEmail: '',
     opdrachtgeverId: '',
     details: '',
   });
@@ -271,6 +275,8 @@ export default function ProjectenPage() {
       name: project.name,
       projectnummer: project.projectnummer || '',
       cardanKenmerk: project.cardanKenmerk || '',
+      contactnaam: project.contactnaam || '',
+      contactEmail: project.contactEmail || '',
       opdrachtgeverId: project.opdrachtgeverId,
       details: project.details || '',
     });
@@ -283,7 +289,9 @@ export default function ProjectenPage() {
     setFormData({
       name: '',
       projectnummer: '',
-    cardanKenmerk: '',
+      cardanKenmerk: '',
+      contactnaam: '',
+      contactEmail: '',
       opdrachtgeverId: '',
       details: '',
     });
@@ -297,7 +305,9 @@ export default function ProjectenPage() {
     setFormData({
       name: '',
       projectnummer: '',
-    cardanKenmerk: '',
+      cardanKenmerk: '',
+      contactnaam: '',
+      contactEmail: '',
       opdrachtgeverId: '',
       details: '',
     });
@@ -647,16 +657,16 @@ export default function ProjectenPage() {
 
         {/* Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CRM-nummer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cardan</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accountmanager</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectdetails</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opdrachtgever</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                <th className="w-[22%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                <th className="w-[11%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CRM-nummer</th>
+                <th className="w-[8%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cardan</th>
+                <th className="w-[13%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accountmanager</th>
+                <th className="w-[26%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projectdetails</th>
+                <th className="w-[14%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opdrachtgever</th>
+                <th className="w-[6%] px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -675,17 +685,17 @@ export default function ProjectenPage() {
               ) : (
                 sortedProjects.map((project) => (
                   <tr key={project.id}>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{project.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{project.projectnummer || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{project.cardanKenmerk || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{project.opdrachtgever.accountmanager || '-'}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 break-words">{project.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 break-words">{project.projectnummer || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 break-words">{project.cardanKenmerk || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 break-words">{project.opdrachtgever.accountmanager || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div
-                        className="prose prose-sm max-w-none"
+                        className="prose prose-sm max-w-none [overflow-wrap:anywhere]"
                         dangerouslySetInnerHTML={{ __html: project.details || '' }}
                       />
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{project.opdrachtgever.naam}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 break-words">{project.opdrachtgever.naam}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {project.projects && project.projects.length > 0 && (
@@ -853,6 +863,36 @@ export default function ProjectenPage() {
                     onChange={(e) => setFormData({ ...formData, cardanKenmerk: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                     placeholder="C-4521"
+                  />
+                </div>
+              </div>
+
+              {/* Contactpersoon voor dit project. Bij de opdrachtgever staat er
+                  ook een, maar die geldt voor de organisatie; per project kan
+                  het iemand anders zijn. */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Contactpersoon
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contactnaam}
+                    onChange={(e) => setFormData({ ...formData, contactnaam: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="Voor- en achternaam"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-mail contactpersoon
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.contactEmail}
+                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="naam@gemeente.nl"
                   />
                 </div>
               </div>

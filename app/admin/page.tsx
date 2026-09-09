@@ -135,6 +135,13 @@ export default async function AdminPage() {
     // Nulmeting en herinspectie delen hetzelfde kenmerk; het versienummer
     // houdt ze uit elkaar.
     const isVervolg = Boolean(p.parentProjectId);
+
+    // Een hertest zonder startdatum heeft nog niets te melden: de rij van de nulmeting
+    // zegt al "met hertest", en de datum volgt uit de deadline van de nulmeting. Zo'n
+    // hertest staat vaak op "In de wacht" als plaatsvervanger voor "nog geen datum", en
+    // kwam daardoor in het wachtblok met "geen reden vastgelegd". Alleen een hertest die
+    // bewust in de wacht is gezet, met een reden, blijft staan.
+    if (isVervolg && !p.dateStart && !p.cancellationReason?.trim()) continue;
     // Dezelfde indeling als in de onderzoekenlijst: een aanvullende ronde
     // blijkt uit het onderzoekstype, een herinspectie uit de parent-relatie.
     // Bij een nulmeting telt of er een hertest bij hoort: dat bepaalt wat er na de
@@ -157,7 +164,12 @@ export default async function AdminPage() {
       opdrachtgever: p.commissionedBy ?? '',
       // De titel is "website waalwijktaalrijk.nl"; in een kolom met de kop "Website" is
       // dat woord dubbel, en bij een PDF-onderzoek klopt het niet eens.
-      website: p.title.replace(/^website\s+/i, ''),
+      // Zonder "https://" en zonder slash aan het eind: bij UTHEU-01 is de titel een
+      // volledig adres, en dat liep de kolom uit tot in "Soort onderzoek".
+      website: p.title
+        .replace(/^website\s+/i, '')
+        .replace(/^https?:\/\//i, '')
+        .replace(/\/$/, ''),
       ronde,
       // Leeg betekent hier "wij doen het zelf". In een kolom "Uitvoerder" is een lege cel
       // dubbelzinnig, dus dan staat er Shift2.
@@ -183,12 +195,23 @@ export default async function AdminPage() {
         actie.push({ ...basis, toelichting: 'rapport opleveren' });
       } else if (!p.adviceCallInvited) {
         actie.push({ ...basis, toelichting: 'uitnodiging adviesgesprek versturen' });
+      } else if (p.adviceCallAccepted) {
+        // Het gesprek is gepland: er is niemand om aan te herinneren. Staat er een dag
+        // bij, dan is het een afspraak die eraan komt, geen wachten op een ander; is die
+        // dag voorbij, dan is het gesprek geweest en moet het alleen nog afgevinkt worden.
+        if (p.adviceCallDate && dagenGeleden(p.adviceCallDate) > 0) {
+          actie.push({ ...basis, toelichting: `afvinken als gevoerd\nadviesgesprek was op ${datumNl(p.adviceCallDate)}` });
+        } else if (p.adviceCallDate) {
+          komtEraan.push({ ...basis, toelichting: `adviesgesprek op ${datumNl(p.adviceCallDate)}` });
+        } else {
+          wacht.push({ ...basis, toelichting: `gesprek nog te voeren\n${sinds(p.adviceCallAccepted)} uitnodiging adviesgesprek geaccepteerd` });
+        }
       } else {
         const dagen = dagenGeleden(p.adviceCallInvited);
         if (dagen >= RAPPELTERMIJN_DAGEN) {
-          actie.push({ ...basis, toelichting: `${sinds(p.adviceCallInvited)} uitgenodigd voor het adviesgesprek` });
+          actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.adviceCallInvited)} uitgenodigd voor het adviesgesprek` });
         } else {
-          wacht.push({ ...basis, toelichting: `${sinds(p.adviceCallInvited)} uitgenodigd voor het adviesgesprek` });
+          wacht.push({ ...basis, toelichting: `uitnodiging nog niet geaccepteerd\n${sinds(p.adviceCallInvited)} uitgenodigd voor het adviesgesprek` });
         }
       }
       continue;
@@ -239,11 +262,19 @@ export default async function AdminPage() {
       }
 
       if (!viaBureau && !p.scopeCallHeld) {
-        const dagen = dagenGeleden(p.invitationSent);
-        if (dagen >= RAPPELTERMIJN_DAGEN) {
-          actie.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} uitgenodigd voor het scopegesprek` });
+        // Zelfde drie situaties als bij het adviesgesprek: gepland met een dag die nog
+        // komt, gepland met een dag die voorbij is, of gepland zonder dag. Niet gepland
+        // is wachten op de klant, en na de rappeltermijn een herinnering.
+        if (p.scopeCallPlanned && p.scopeCallDate && dagenGeleden(p.scopeCallDate) > 0) {
+          actie.push({ ...basis, toelichting: `afvinken als gevoerd\nscopegesprek was op ${datumNl(p.scopeCallDate)}` });
+        } else if (p.scopeCallPlanned && p.scopeCallDate) {
+          komtEraan.push({ ...basis, toelichting: `scopegesprek op ${datumNl(p.scopeCallDate)}` });
+        } else if (p.scopeCallPlanned) {
+          wacht.push({ ...basis, toelichting: `gesprek nog te voeren\n${sinds(p.scopeCallPlanned)} scopegesprek gepland` });
+        } else if (dagenGeleden(p.invitationSent) >= RAPPELTERMIJN_DAGEN) {
+          actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.invitationSent!)} uitgenodigd voor het scopegesprek` });
         } else {
-          wacht.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} uitgenodigd voor het scopegesprek` });
+          wacht.push({ ...basis, toelichting: `nog geen datum voor het scopegesprek\n${sinds(p.invitationSent!)} uitgenodigd` });
         }
         continue;
       }
@@ -255,15 +286,18 @@ export default async function AdminPage() {
         actie.push({ ...basis, toelichting: 'scope afmaken' });
         continue;
       }
-      if (!p.dateStart || !p.dateEnd) {
+      // Een extern bureau geeft een startweek en geen deadline; het routekaartje telt de
+      // planning dan als bepaald zodra de startdatum er staat. Zelfde regel hier, anders
+      // blijft een ingepland Cardan-onderzoek op "nog geen startdatum" staan.
+      if (!p.dateStart || (!viaBureau && !p.dateEnd)) {
         if (viaBureau) {
           // De datum komt van het bureau, dus hier valt niets te bepalen -- alleen te
           // wachten, en na de rappeltermijn te rappelleren.
           const dagen = dagenGeleden(p.invitationSent);
           if (dagen >= RAPPELTERMIJN_DAGEN) {
-            actie.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} om planning gevraagd bij ${bureau}` });
+            actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.invitationSent!)} om planning gevraagd bij ${bureau}` });
           } else {
-            wacht.push({ ...basis, toelichting: `${sinds(p.invitationSent!)} om planning gevraagd bij ${bureau}` });
+            wacht.push({ ...basis, toelichting: `nog geen startdatum van ${bureau}\n${sinds(p.invitationSent!)} gevraagd` });
           }
         } else {
           actie.push({ ...basis, toelichting: 'planning bepalen' });
@@ -288,9 +322,9 @@ export default async function AdminPage() {
       if (!p.planningApproved && !isVervolg) {
         const dagen = dagenGeleden(p.planningSent);
         if (dagen >= RAPPELTERMIJN_DAGEN) {
-          actie.push({ ...basis, toelichting: `${sinds(p.planningSent!)} planningsmail verstuurd, nog geen akkoord` });
+          actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.planningSent!)} planningsmail verstuurd` });
         } else {
-          wacht.push({ ...basis, toelichting: `${sinds(p.planningSent!)} planningsmail verstuurd` });
+          wacht.push({ ...basis, toelichting: `planning nog niet akkoord\n${sinds(p.planningSent!)} planningsmail verstuurd` });
         }
         continue;
       }
@@ -299,7 +333,7 @@ export default async function AdminPage() {
       // Een herinspectie niet: die erft de planningsdatums van de nulmeting.
       const dagen = dagenGeleden(p.planningSent);
       if (dagen >= RAPPELTERMIJN_DAGEN) {
-        actie.push({ ...basis, toelichting: `${sinds(p.planningSent!)} planningsmail verstuurd, nog geen akkoord` });
+        actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.planningSent!)} planningsmail verstuurd` });
         continue;
       }
     }

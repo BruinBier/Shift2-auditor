@@ -20,16 +20,22 @@ export type DashboardRegel = {
   /** Link naar het onderzoek in het portaal van het bureau, als die er is. */
   uitvoerderUrl?: string | null;
   crmNummer?: string | null;
+  /**
+   * Wat er moet gebeuren of waar je op wacht. Een regeleinde scheidt het wat van het
+   * wanneer: "uitnodiging nog niet geaccepteerd" op de eerste regel, "gisteren uitgenodigd
+   * voor het adviesgesprek" kleiner eronder. Eerst lezen wat telt, dan hoe lang het al duurt.
+   */
   toelichting: string;
 };
 
 /**
  * Boven deze lengte krijgt een toelichting een driehoekje in plaats van hele tekst.
  *
- * Ruim boven de langste actietekst ("herinnering sturen, 24 dagen geen planning van Cardan",
- * 51 tekens) en ruim onder een reden van wachten, die uit hele zinnen bestaat.
+ * Ruim boven de langste actietekst ("gesprek nog te voeren" plus "29 dagen geleden
+ * uitnodiging adviesgesprek geaccepteerd", 84 tekens) en ruim onder een reden van wachten,
+ * die uit hele zinnen bestaat.
  */
-const TE_LANG = 70;
+const TE_LANG = 100;
 
 export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
   const [open, setOpen] = useState(false);
@@ -54,7 +60,9 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
             <div className="text-gray-500">{regel.opdrachtgever}</div>
           )}
         </td>
-        <td className={`${cel} text-gray-900`}>{regel.website}</td>
+        {/* Een domein heeft geen spaties; zonder afbreekregel loopt een lange naam de
+            vaste kolom uit. */}
+        <td className={`${cel} text-gray-900 [overflow-wrap:anywhere]`}>{regel.website}</td>
         <td className={`${cel} text-blue-700`}>{regel.ronde ?? ''}</td>
         {/* Bij een extern bureau met een link erin: doorklikken naar hun portaal. Dat is
             de plek waar je "Cardan" leest, dus daar verwacht je die doorklik. */}
@@ -98,7 +106,15 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
               {open ? 'minder' : regel.toelichting.slice(0, TE_LANG).trimEnd() + '…'}
             </button>
           ) : (
-            regel.toelichting
+            (() => {
+              const [wat, wanneer] = regel.toelichting.split('\n');
+              return (
+                <>
+                  <div>{wat}</div>
+                  {wanneer && <div className="text-xs text-gray-400">{wanneer}</div>}
+                </>
+              );
+            })()
           )}
         </td>
       </tr>

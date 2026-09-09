@@ -34,6 +34,8 @@ export async function POST(request: Request) {
         name: data.name,
         projectnummer: data.projectnummer || null,
         cardanKenmerk: data.cardanKenmerk || null,
+        contactnaam: data.contactnaam?.trim() || null,
+        contactEmail: data.contactEmail?.trim() || null,
         opdrachtgeverId: data.opdrachtgeverId,
         details: data.details || null,
       },

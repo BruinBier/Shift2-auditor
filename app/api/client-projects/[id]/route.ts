@@ -55,6 +55,12 @@ export async function PATCH(
     if (data.cardanKenmerk !== undefined) {
       updateData.cardanKenmerk = data.cardanKenmerk || null;
     }
+    if (data.contactnaam !== undefined) {
+      updateData.contactnaam = data.contactnaam?.trim() || null;
+    }
+    if (data.contactEmail !== undefined) {
+      updateData.contactEmail = data.contactEmail?.trim() || null;
+    }
     if (data.opdrachtgeverId !== undefined) {
       updateData.opdrachtgeverId = data.opdrachtgeverId;
     }

@@ -93,6 +93,10 @@ model ClientProject {
   projectnummer   String?
   /// Kenmerk van hetzelfde traject bij Cardan (C-4521), als Cardan de audit uitvoert.
   cardanKenmerk   String?       @map("cardan_kenmerk")
+  /// Contactpersoon voor dit project. Gaat vóór de contactpersoon van de
+  /// opdrachtgever, want die is voor de organisatie als geheel.
+  contactnaam     String?
+  contactEmail    String?       @map("contact_email")
   opdrachtgeverId String        @map("opdrachtgever_id")
   details         String?       @db.Text
   createdAt       DateTime      @default(now()) @map("created_at")
@@ -181,6 +185,11 @@ model Project {
   // tool (mail in Outlook, gesprek in Teams) en worden daarom met de hand
   // afgevinkt. De datum legt vast wanneer het gebeurde.
   invitationSent          DateTime?      @map("invitation_sent")
+  /// De klant heeft op de uitnodiging gereageerd en het scopegesprek staat gepland,
+  /// plus de dag zelf. Zelfde opzet als bij het adviesgesprek: tot dit moment
+  /// rappelleert het dashboard, daarna niet meer.
+  scopeCallPlanned        DateTime?      @map("scope_call_planned")
+  scopeCallDate           DateTime?      @map("scope_call_date") @db.Date
   scopeCallHeld           DateTime?      @map("scope_call_held")
   /// Transcript van het scopegesprek; de bron voor de scope-afspraken.
   scopeCallTranscript     String?        @map("scope_call_transcript") @db.Text
@@ -201,6 +210,13 @@ model Project {
   /// bij het scopegesprek. Met een veld zou een verstuurde uitnodiging waar niemand op
   /// reageert er hetzelfde uitzien als een uitnodiging die nooit verstuurd is.
   adviceCallInvited       DateTime?      @map("advice_call_invited")
+  /// De klant heeft op de uitnodiging gereageerd en er staat een datum. Vanaf dan is er
+  /// niets meer om aan te herinneren; het dashboard rappelleert alleen tot dit moment.
+  adviceCallAccepted      DateTime?      @map("advice_call_accepted")
+  /// De dag waarop het adviesgesprek staat. Los van het accepteren: dat is wanneer de
+  /// klant reageerde, dit is wanneer het gesprek is. Het dashboard weet zo of het gesprek
+  /// nog komt of al geweest is.
+  adviceCallDate          DateTime?      @map("advice_call_date") @db.Date
   adviceCallHeld          DateTime?      @map("advice_call_held")
   /// De mail waarmee het rapport wordt opgeleverd: na een herinspectie, of na een
   /// nulmeting zonder hertest.

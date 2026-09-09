@@ -1133,6 +1133,23 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                       <div className="text-gray-900 mt-1">{project.clientProject.cardanKenmerk}</div>
                     </div>
                   )}
+                  {/* De contactpersoon van dit project; te wijzigen via het
+                      menu bij het project op /admin/projecten. */}
+                  {(project.clientProject.contactnaam || project.clientProject.contactEmail) && (
+                    <div>
+                      <span className="font-medium text-gray-700">Contactpersoon:</span>
+                      <div className="text-gray-900 mt-1">
+                        {project.clientProject.contactnaam || '-'}
+                        {project.clientProject.contactEmail && (
+                          <div className="text-gray-600 break-all">
+                            <a href={`mailto:${project.clientProject.contactEmail}`} className="hover:underline">
+                              {project.clientProject.contactEmail}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {/* Staat het onderzoek in de Dynamics-weergave "Mijn actieve projecten"?
                       Iets anders dan een ontbrekend CRM-nummer: het project bestaat wel,
                       maar de onderzoeker staat er niet als projectmanager op en ziet het

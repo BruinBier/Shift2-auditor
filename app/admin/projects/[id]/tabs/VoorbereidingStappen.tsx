@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { isExternBureau } from '@/lib/onderzoekers';
 
 /**
  * Routekaartje voor de voorbereiding van een onderzoek: van aanmaken tot een
@@ -29,7 +30,12 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   const [open, setOpen] = useState<boolean | null>(null);
   const [gekopieerd, setGekopieerd] = useState<string | null>(null);
 
-  const contact = project.clientProject?.opdrachtgever;
+  // De contactpersoon van het project gaat vóór die van de opdrachtgever:
+  // per project kan het iemand anders zijn dan wie de organisatie opgaf.
+  const contact =
+    project.clientProject?.contactnaam || project.clientProject?.contactEmail
+      ? project.clientProject
+      : project.clientProject?.opdrachtgever;
   const contactnaam = (contact?.contactnaam || '').split(' ')[0];
   const scopeUrl =
     project.scopeInScope?.trim() ||
@@ -70,32 +76,66 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     return Math.ceil(((t.getTime() - jaarStart.getTime()) / 86400000 + 1) / 7);
   };
 
+  /** De maandag van de week waarin een datum valt. */
+  const maandagVan = (d: Date) => {
+    const m = new Date(d);
+    m.setDate(m.getDate() - ((m.getDay() + 6) % 7));
+    return m;
+  };
+
+  /**
+   * Zo geeft een extern bureau (Cardan) een planning door: geen periode met een
+   * deadline, maar de week waarin het werk begint, met datum en weeknummer.
+   * Bijvoorbeeld "start in de week van 21-09-2026 (week 39)".
+   */
+  const startInWeek = (d: Date) =>
+    `start in de week van ${format(maandagVan(d), 'dd-MM-yyyy')} (week ${weeknummer(d)})`;
+
+  // Bij een extern bureau plant dat bureau; wij geven de startweek door in plaats
+  // van een looptijd tot een deadline. Zelfde afleiding als op de detailpagina.
+  const extern = Boolean(project.isExternalProject) || isExternBureau(project.researcherName);
+
   /** De eerste regel uit het scopeveld: de site waar het onderzoek over gaat. */
   const site = scopeUrl.split('\n')[0]?.replace(/^[-*•]\s*/, '').trim() || '[website]';
+  /** Dezelfde site zonder protocol en "www.": zo staat hij in een onderwerpregel. */
+  const domein = site.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 
   // Standaardtekst voor de planningsmail. De alinea over het vervolgoverleg
   // hoort bij een onderzoek met hertest; zonder hertest valt die weg.
   const planningsmail = (() => {
     const start = project.dateStart ? new Date(project.dateStart) : null;
     const eind = project.dateEnd ? new Date(project.dateEnd) : null;
-    const domein = site.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 
-    const klantpaginas = (project.sampleClientPages || '')
-      .split('\n')
-      .map((r: string) => r.trim().replace(/^[-*•]\s*/, ''))
-      .filter(Boolean);
+    const alsBullets = (veld: string | null | undefined) =>
+      (veld || '')
+        .split('\n')
+        .map((r: string) => r.trim().replace(/^[-*•]\s*/, ''))
+        .filter(Boolean);
+    const klantpaginas = alsBullets(project.sampleClientPages);
+    // Wat in het scopegesprek is uitgesloten hoort in de mail: de klant bevestigt de
+    // planning en de afbakening in één keer. De detailpagina belooft al dat dit veld in
+    // de mail komt; tot nu toe stond het alleen daar.
+    const buitenScope = alsBullets(project.scopeOutOfScope);
 
     const regels: string[] = [
       `Dag ${contactnaam || '[naam]'},`,
       '',
       `Hierbij de planning voor het toegankelijkheidsonderzoek van ${domein}.`,
       '',
-      start && eind
-        ? `Het onderzoek (nulmeting) loopt van ${datumNl(start)} tot en met ${datumNl(eind)}.`
-        : 'Het onderzoek (nulmeting) loopt van [startdatum] tot en met [deadline].',
+      // Wat er wél is staat erin; alleen wat ontbreekt blijft een invulveld. Eerder
+      // verdween de ingevulde startdatum zodra de deadline nog leeg was.
+      extern
+        ? `Het onderzoek (nulmeting): ${start ? startInWeek(start) : 'start in de week van [startdatum]'}.`
+        : `Het onderzoek (nulmeting) loopt van ${start ? datumNl(start) : '[startdatum]'} tot en met ${eind ? datumNl(eind) : '[deadline]'}.`,
       '',
       `De volgende website zal worden getoetst: ${site}`,
     ];
+
+    if (buitenScope.length) {
+      regels.push('');
+      regels.push('Buiten het onderzoek vallen:');
+      buitenScope.forEach((b: string) => regels.push(`- ${b}`));
+    }
 
     if (klantpaginas.length) {
       regels.push('');
@@ -103,12 +143,25 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       klantpaginas.forEach((p: string) => regels.push(p));
     }
 
-    if (project.hasReinspection && eind && project.reinspectionWeeks) {
-      const hertest = new Date(eind);
-      hertest.setDate(hertest.getDate() + project.reinspectionWeeks * 7);
+    // Een nulmeting met hertest zegt dat ook als de datum nog niet vast te rekenen is.
+    // Eerder viel de hele alinea weg zodra de deadline ontbrak, en dan las de mail als
+    // een nulmeting zónder hertest. Een vaste datum (bij een extern bureau) gaat voor;
+    // anders deadline plus weken; en zonder deadline alleen het aantal weken.
+    if (project.hasReinspection) {
+      let hertest: Date | null = null;
+      if (project.reinspectionDate) {
+        hertest = new Date(project.reinspectionDate);
+      } else if (eind && project.reinspectionWeeks) {
+        hertest = new Date(eind);
+        hertest.setDate(hertest.getDate() + project.reinspectionWeeks * 7);
+      }
       regels.push('');
       regels.push(
-        `De hertest staat gepland in week ${weeknummer(hertest)}, dat is in de week van ${datumNl(hertest)}.`
+        extern
+          ? `De herinspectie: ${hertest ? startInWeek(hertest) : 'start in de week van [datum herinspectie]'}.`
+          : hertest
+            ? `De hertest staat gepland in week ${weeknummer(hertest)}, dat is in de week van ${datumNl(hertest)}.`
+            : `De hertest volgt ${project.reinspectionWeeks || '[aantal]'} weken na de deadline van de nulmeting.`
       );
       regels.push('');
       regels.push(
@@ -175,13 +228,72 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     'Laat het gerust weten als je de issues nog kort samen wilt bespreken. Ik hoor graag van je.',
   ].join('\n');
 
+  // Voert een ander bureau het onderzoek uit, dan loopt de voorbereiding anders: er is
+  // geen scopegesprek en geen scope om in te vullen, want dat doet het bureau. Wat er
+  // overblijft is de planning regelen -- verzoek indienen, wachten op een datum, en die
+  // doorgeven aan de klant. Dezelfde velden, andere namen en drie stappen minder.
+  const viaBureau = Boolean(project.isExternalProject);
+  const bureau = project.externalBureau || 'het bureau';
+
   // Welke stap welke mailtekst heeft. Een stap die er niet in staat krijgt geen
   // kopieerknop -- dat is het verschil tussen "hier gaat een mail uit" en "dit vink je af".
-  const MAILS: Record<string, { knop: string; tekst: string }> = {
-    invitationSent: { knop: 'Kopieer uitnodiging', tekst: uitnodiging },
-    planningSent: { knop: 'Kopieer planningsmail', tekst: planningsmail },
-    adviceCallInvited: { knop: 'Kopieer uitnodiging adviesgesprek', tekst: adviesuitnodiging },
-    reportSentAt: { knop: 'Kopieer opleveringsmail', tekst: opleveringsmail },
+  //
+  // Het onderwerp staat er los bij, want dat plak je in een ander veld dan de tekst. Bij
+  // een extern bureau gaat de eerste stap niet naar de klant maar naar het bureau; daar
+  // hoort geen onderwerp voor een afstemmingsmail bij.
+  const MAILS: Record<string, { knop: string; naam: string; tekst: string; onderwerp?: string }> = {
+    invitationSent: {
+      knop: 'Kopieer uitnodiging',
+      naam: 'uitnodiging',
+      tekst: uitnodiging,
+      onderwerp: viaBureau ? undefined : `Afstemming scope en planning toegankelijkheidsonderzoek ${domein}`,
+    },
+    planningSent: {
+      knop: 'Kopieer planningsmail',
+      naam: 'planningsmail',
+      tekst: planningsmail,
+      onderwerp: `Planning toegankelijkheidsonderzoek ${domein}`,
+    },
+    adviceCallInvited: {
+      knop: 'Kopieer uitnodiging adviesgesprek',
+      naam: 'uitnodiging adviesgesprek',
+      tekst: adviesuitnodiging,
+      onderwerp: `Adviesgesprek toegankelijkheidsonderzoek ${domein}`,
+    },
+    reportSentAt: {
+      knop: 'Kopieer opleveringsmail',
+      naam: 'opleveringsmail',
+      tekst: opleveringsmail,
+      onderwerp: `Rapport toegankelijkheidsonderzoek ${domein}`,
+    },
+  };
+
+  /**
+   * Kopieerknop als icoontje. De naam staat in title en aria-label; na een klik is het
+   * twee seconden een groen vinkje. Geen knoptekst: naast een onderwerpregel of een
+   * mailtekst is een woord als "Kopieer uitnodiging" meer regel dan knop.
+   */
+  const KopieerIcoon = ({ tekst, welke, naam }: { tekst: string; welke: string; naam: string }) => {
+    const klaar = gekopieerd === welke;
+    return (
+      <button
+        type="button"
+        onClick={() => kopieer(tekst, welke)}
+        title={klaar ? 'Gekopieerd' : naam}
+        aria-label={klaar ? 'Gekopieerd' : naam}
+        className="flex-shrink-0 text-gray-400 hover:text-shift2-primary"
+      >
+        {klaar ? (
+          <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        )}
+      </button>
+    );
   };
 
   const kopieer = async (tekst: string, welke: string) => {
@@ -193,13 +305,6 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       alert('Kopiëren is niet gelukt. Selecteer de tekst en kopieer met Ctrl+C.');
     }
   };
-
-  // Voert een ander bureau het onderzoek uit, dan loopt de voorbereiding anders: er is
-  // geen scopegesprek en geen scope om in te vullen, want dat doet het bureau. Wat er
-  // overblijft is de planning regelen -- verzoek indienen, wachten op een datum, en die
-  // doorgeven aan de klant. Dezelfde velden, andere namen en drie stappen minder.
-  const viaBureau = Boolean(project.isExternalProject);
-  const bureau = project.externalBureau || 'het bureau';
 
   const stappen = [
     {
@@ -222,6 +327,16 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     ...(viaBureau
       ? []
       : [
+          {
+            // De klant heeft een datum doorgegeven. Pas dan stopt het dashboard met
+            // rappelleren; de dag zelf komt in het datumveld eronder.
+            key: 'scopeCallPlanned',
+            label: 'Scopegesprek gepland',
+            klaar: Boolean(project.scopeCallPlanned),
+            datum: project.scopeCallPlanned,
+            handmatig: true,
+            datumVeld: 'scopeCallDate',
+          },
           {
             key: 'scopeCallHeld',
             label: 'Scopegesprek gevoerd',
@@ -291,6 +406,17 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
             naOplevering: true,
           },
           {
+            // De klant heeft gereageerd en er staat een datum. Pas dan stopt het
+            // dashboard met rappelleren.
+            key: 'adviceCallAccepted',
+            label: 'Uitnodiging adviesgesprek geaccepteerd',
+            klaar: Boolean(project.adviceCallAccepted),
+            datum: project.adviceCallAccepted,
+            handmatig: true,
+            naOplevering: true,
+            datumVeld: 'adviceCallDate',
+          },
+          {
             key: 'adviceCallHeld',
             label: 'Adviesgesprek gevoerd',
             klaar: Boolean(project.adviceCallHeld),
@@ -322,10 +448,35 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     // (bij twintig herinspecties is er één met een uitnodiging), en het dashboard slaat het
     // planningsakkoord er ook al over. Wat blijft is de eigen periode en de oplevering.
     if (!isHerinspectie) return true;
-    return !['invitationSent', 'scopeCallHeld', 'transcript', 'scope', 'planningSent', 'planningApproved'].includes(s.key);
+    return !['invitationSent', 'scopeCallPlanned', 'scopeCallHeld', 'transcript', 'scope', 'planningSent', 'planningApproved'].includes(s.key);
   });
 
   const gedaan = stappen.filter((s) => s.klaar).length;
+
+  /**
+   * De dag van een gesprek, als losse datum bij de stap die zegt dat het gepland is
+   * (`datumVeld` op de stap: scopeCallDate of adviceCallDate). Een leeg veld wist de
+   * datum weer. Zelfde herlaad als bij een stap: de pagina is een servercomponent.
+   */
+  const zetGespreksdatum = async (veld: string, waarde: string) => {
+    setBezig(veld);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [veld]: waarde ? new Date(waarde).toISOString() : null }),
+      });
+      if (res.ok) window.location.reload();
+      else alert('Het opslaan van de gespreksdatum is niet gelukt.');
+    } catch (error) {
+      console.error('Error saving call date:', error);
+      alert('Het opslaan van de gespreksdatum is niet gelukt.');
+    } finally {
+      setBezig(null);
+    }
+  };
+  const gespreksdatum = (veld: string) =>
+    project[veld] ? format(new Date(project[veld]), 'yyyy-MM-dd') : '';
 
   const zetStap = async (key: string, aan: boolean) => {
     setBezig(key);
@@ -429,13 +580,25 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                     standaardtekst klaar om naar het mailprogramma te kopiëren. */}
                 {!s.klaar && MAILS[s.key] && (
                   <div className="mt-1 mb-1">
-                    <button
-                      type="button"
-                      onClick={() => kopieer(MAILS[s.key].tekst, s.key)}
-                      className="text-xs text-shift2-primary hover:underline"
-                    >
-                      {gekopieerd === s.key ? 'Gekopieerd' : MAILS[s.key].knop}
-                    </button>
+                    {MAILS[s.key].onderwerp && (
+                      <div className="text-xs text-gray-500 mb-0.5 flex items-center justify-between gap-1">
+                        <span>
+                          <span className="text-gray-400">Onderwerp:</span> {MAILS[s.key].onderwerp}
+                        </span>
+                        <KopieerIcoon
+                          tekst={MAILS[s.key].onderwerp!}
+                          welke={`${s.key}-onderwerp`}
+                          naam="Kopieer onderwerp"
+                        />
+                      </div>
+                    )}
+                    {/* Icoontjes rechts uitgelijnd, onder elkaar, ongeacht de lengte van de regel. */}
+                    <div className="text-xs text-gray-500 flex items-center justify-between gap-1">
+                      <span>
+                        <span className="text-gray-400">Tekst:</span> {MAILS[s.key].naam}
+                      </span>
+                      <KopieerIcoon tekst={MAILS[s.key].tekst} welke={s.key} naam={MAILS[s.key].knop} />
+                    </div>
                     {contact?.contactEmail && (
                       <div className="text-xs text-gray-400 mt-0.5 break-all">
                         {contact.contactEmail}
@@ -450,6 +613,20 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                       </pre>
                     </details>
                   </div>
+                )}
+                {/* Bij een gepland gesprek hoort een dag: die staat in de reactie van
+                    de klant en het dashboard rekent ermee. */}
+                {s.datumVeld && s.klaar && (
+                  <label className="mt-1 mb-1 flex items-center gap-2 text-xs text-gray-500">
+                    Gesprek op
+                    <input
+                      type="date"
+                      defaultValue={gespreksdatum(s.datumVeld)}
+                      disabled={bezig === s.datumVeld}
+                      onChange={(e) => zetGespreksdatum(s.datumVeld!, e.target.value)}
+                      className="px-2 py-1 border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:opacity-50"
+                    />
+                  </label>
                 )}
                 {s.handmatig && (
                   <button

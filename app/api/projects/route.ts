@@ -291,7 +291,9 @@ export async function POST(request: NextRequest) {
           researchType: body.researchType,
           version: 1.1,
           language: body.language || 'Nederlands',
-          status: body.status === 'In de wacht' ? 'In de wacht' : 'Gepland',
+          // Altijd "Gepland", ook als de nulmeting in de wacht start: zie de
+          // toelichting bij het aanmaken in de detailroute.
+          status: 'Gepland',
           clientName: body.clientName,
           commissionedBy: body.commissionedBy,
           clientProjectId: body.clientProjectId || null,

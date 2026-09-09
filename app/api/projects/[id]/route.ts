@@ -49,7 +49,11 @@ async function ensureReinspectionChild(parentId: string) {
       researchType: parent.researchType,
       version: 1.1,
       language: parent.language,
-      status: parent.status === 'In de wacht' ? 'In de wacht' : 'Gepland',
+      // Altijd "Gepland", ook zonder datum. Een hertest die de wachtstatus van de
+      // nulmeting erfde bleef daarin hangen en kwam op het dashboard als "wacht op
+      // iemand anders, geen reden vastgelegd". In de wacht staat de nulmeting; de
+      // hertest is gewoon gepland, alleen nog zonder dag.
+      status: 'Gepland',
       clientName: parent.clientName,
       commissionedBy: parent.commissionedBy,
       clientProjectId: parent.clientProjectId,
@@ -91,6 +95,14 @@ async function syncReinspectionChild(parentId: string) {
     },
   });
   if (!parent) return;
+
+  // Komt de nulmeting uit de wacht, dan de hertest ook -- vóór de datumberekening, want
+  // die stopt zodra er niets te rekenen valt, en dan bleef de hertest op "In de wacht"
+  // staan terwijl de nulmeting allang in de intake zat (BOZ-01 v1.1).
+  if (child.status === 'In de wacht' && parent.status !== 'In de wacht') {
+    await prisma.project.update({ where: { id: child.id }, data: { status: 'Gepland' } });
+    child.status = 'Gepland';
+  }
 
   // Dezelfde voorrang als bij het aanmaken: een vaste datum (extern bureau) wint van
   // deadline + weken. Zonder allebei valt er niets te herberekenen.
@@ -297,6 +309,8 @@ export async function PATCH(
      */
     const TOEGESTAAN = new Set([
       'accountmanager',
+      'adviceCallAccepted',
+      'adviceCallDate',
       'adviceCallHeld',
       'adviceCallInvited',
       'cancellationReason',
@@ -320,7 +334,9 @@ export async function PATCH(
       'researcherFeedback',
       'sampleClientPages',
       'sampleInfo',
+      'scopeCallDate',
       'scopeCallHeld',
+      'scopeCallPlanned',
       'scopeCallTranscript',
       'scopeInfo',
       'scopeInScope',
