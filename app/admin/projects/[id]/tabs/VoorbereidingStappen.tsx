@@ -29,6 +29,13 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
    */
   const [open, setOpen] = useState<boolean | null>(null);
   const [gekopieerd, setGekopieerd] = useState<string | null>(null);
+  /**
+   * Aangepaste mailteksten, per stap. De standaardtekst is een vertrekpunt; wat je hier
+   * typt gaat mee met het kopieer-icoontje. Niet opgeslagen: na verversen staat de
+   * standaardtekst er weer, en dat is de bedoeling -- de mail zelf leeft in je
+   * mailprogramma, niet hier.
+   */
+  const [bewerkt, setBewerkt] = useState<Record<string, string>>({});
 
   // De contactpersoon van het project gaat vóór die van de opdrachtgever:
   // per project kan het iemand anders zijn dan wie de organisatie opgaf.
@@ -597,7 +604,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                       <span>
                         <span className="text-gray-400">Tekst:</span> {MAILS[s.key].naam}
                       </span>
-                      <KopieerIcoon tekst={MAILS[s.key].tekst} welke={s.key} naam={MAILS[s.key].knop} />
+                      <KopieerIcoon tekst={bewerkt[s.key] ?? MAILS[s.key].tekst} welke={s.key} naam={MAILS[s.key].knop} />
                     </div>
                     {contact?.contactEmail && (
                       <div className="text-xs text-gray-400 mt-0.5 break-all">
@@ -606,11 +613,27 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                     )}
                     <details className="mt-1">
                       <summary className="text-xs text-gray-400 cursor-pointer">
-                        Tekst bekijken
+                        {bewerkt[s.key] !== undefined ? 'Tekst aangepast' : 'Tekst bekijken en aanpassen'}
                       </summary>
-                      <pre className="mt-1 text-xs text-gray-600 whitespace-pre-wrap font-sans bg-gray-50 rounded p-2">
-                        {MAILS[s.key].tekst}
-                      </pre>
+                      <textarea
+                        value={bewerkt[s.key] ?? MAILS[s.key].tekst}
+                        onChange={(e) => setBewerkt({ ...bewerkt, [s.key]: e.target.value })}
+                        rows={Math.min(24, (bewerkt[s.key] ?? MAILS[s.key].tekst).split('\n').length + 1)}
+                        className="mt-1 w-full text-xs text-gray-700 font-sans bg-gray-50 border border-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                      />
+                      {bewerkt[s.key] !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const rest = { ...bewerkt };
+                            delete rest[s.key];
+                            setBewerkt(rest);
+                          }}
+                          className="text-xs text-gray-400 hover:text-gray-600 hover:underline"
+                        >
+                          Standaardtekst terugzetten
+                        </button>
+                      )}
                     </details>
                   </div>
                 )}

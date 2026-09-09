@@ -5,6 +5,13 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import VoorbereidingStappen from './VoorbereidingStappen';
+
+// Dezelfde editor als het bewerkvenster op /admin/projecten, zodat de projectdetails hier
+// hetzelfde bewerkt worden als daar.
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), {
+  ssr: false,
+  loading: () => <div className="border border-gray-300 rounded-lg p-4">Laden...</div>,
+});
 import { isExternBureau } from '@/lib/onderzoekers';
 import 'md-editor-rt/lib/style.css';
 
@@ -23,6 +30,48 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [editorKey, setEditorKey] = useState(0);
   const [showBijlagenTooltip, setShowBijlagenTooltip] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  /**
+   * Bewerkvenster voor het gekoppelde klantproject: naam, nummers, contactpersoon en
+   * projectdetails. Eerder opende "Bewerken" bij het blok Project alleen "Project
+   * koppelen", terwijl het blok vol projectgegevens staat; die kon je alleen op
+   * /admin/projecten bewerken, via de drie puntjes bij het juiste project in een lijst
+   * van tientallen.
+   */
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [projectFormData, setProjectFormData] = useState({
+    name: project.clientProject?.name || '',
+    projectnummer: project.clientProject?.projectnummer || '',
+    cardanKenmerk: project.clientProject?.cardanKenmerk || '',
+    contactnaam: project.clientProject?.contactnaam || '',
+    contactEmail: project.clientProject?.contactEmail || '',
+    details: project.clientProject?.details || '',
+  });
+
+  const handleProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project.clientProject) return;
+    setIsSavingProject(true);
+    try {
+      const res = await fetch(`/api/client-projects/${project.clientProject.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectFormData),
+      });
+      if (res.ok) {
+        setShowProjectModal(false);
+        window.location.reload();
+      } else {
+        const fout = await res.json().catch(() => ({}));
+        alert(`Opslaan is niet gelukt: ${fout.details || fout.error || res.status}`);
+      }
+    } catch (error) {
+      console.error('Error saving client project:', error);
+      alert('Opslaan is niet gelukt.');
+    } finally {
+      setIsSavingProject(false);
+    }
+  };
 
   // Of dit onderzoek in de Dynamics-weergave "Mijn actieve projecten" staat. Lokaal
   // bijgehouden zodat het vinkje meteen omslaat; de server volgt.
@@ -135,7 +184,15 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       );
       setFilteredClientProjects(filtered);
 
-      if (editFormData.clientProjectId && !filtered.find(p => p.id === editFormData.clientProjectId)) {
+      // Pas leegmaken als de lijst er is. Dit effect draait ook bij het laden, vóór de
+      // klantprojecten zijn opgehaald; toen was de lijst leeg, werd het gekoppelde project
+      // "niet gevonden" en stond het venster op "Geen project" bij een onderzoek dat wél
+      // gekoppeld was (ZOET-02).
+      if (
+        clientProjects.length &&
+        editFormData.clientProjectId &&
+        !filtered.find(p => p.id === editFormData.clientProjectId)
+      ) {
         setEditFormData(prev => ({ ...prev, clientProjectId: '' }));
       }
     } else {
@@ -149,6 +206,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && showBijlagenTooltip) {
         setShowBijlagenTooltip(false);
+      }
+      if (e.key === 'Escape' && showProjectModal) {
+        setShowProjectModal(false);
       }
       if (e.key === 'Escape' && showEditModal) {
         setShowEditModal(false);
@@ -1098,12 +1158,32 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               </svg>
               <h3 className="font-semibold text-gray-900">Project</h3>
             </div>
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="text-sm text-shift2-primary hover:underline"
-            >
-              Bewerken
-            </button>
+            {/* Is er een project gekoppeld, dan bewerkt "Bewerken" dat project. De koppeling
+                zelf wijzig je zelden; die knop staat er klein naast. Zonder project is
+                koppelen het enige wat er te doen valt. */}
+            {project.clientProject ? (
+              <div className="flex items-center gap-3 text-sm">
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="text-xs text-gray-400 hover:text-gray-600 hover:underline"
+                >
+                  Koppeling wijzigen
+                </button>
+                <button
+                  onClick={() => setShowProjectModal(true)}
+                  className="text-shift2-primary hover:underline"
+                >
+                  Bewerken
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="text-sm text-shift2-primary hover:underline"
+              >
+                Project koppelen
+              </button>
+            )}
           </div>
           <div className="p-4">
             <div className="space-y-3 text-sm">
@@ -1564,6 +1644,129 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                   className="px-4 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity"
                 >
                   Opslaan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Projectgegevens bewerken: dezelfde velden als op /admin/projecten. */}
+      {showProjectModal && project.clientProject && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowProjectModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Project bewerken</h2>
+              <button
+                onClick={() => setShowProjectModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Sluiten"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleProjectSubmit} className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project <span className="text-gray-400">vereist</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={projectFormData.name}
+                    onChange={(e) => setProjectFormData({ ...projectFormData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Opdrachtgever</label>
+                  <div className="px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md">
+                    {project.clientProject.opdrachtgever?.naam || project.commissionedBy || '-'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CRM-nummer</label>
+                  <input
+                    type="text"
+                    value={projectFormData.projectnummer}
+                    onChange={(e) => setProjectFormData({ ...projectFormData, projectnummer: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="P02645"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cardan-kenmerk</label>
+                  <input
+                    type="text"
+                    value={projectFormData.cardanKenmerk}
+                    onChange={(e) => setProjectFormData({ ...projectFormData, cardanKenmerk: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="C-4521"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contactpersoon</label>
+                  <input
+                    type="text"
+                    value={projectFormData.contactnaam}
+                    onChange={(e) => setProjectFormData({ ...projectFormData, contactnaam: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="Voor- en achternaam"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">E-mail contactpersoon</label>
+                  <input
+                    type="email"
+                    value={projectFormData.contactEmail}
+                    onChange={(e) => setProjectFormData({ ...projectFormData, contactEmail: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                    placeholder="naam@gemeente.nl"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Projectdetails</label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Alle details die de onderzoeker nodig heeft zoals URL-basis (URL), logingegevens en bijzonderheden.
+                </p>
+                <RichTextEditor
+                  content={projectFormData.details}
+                  onChange={(content: string) => setProjectFormData({ ...projectFormData, details: content })}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowProjectModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Annuleren
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProject}
+                  className="px-4 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {isSavingProject ? 'Opslaan...' : 'Opslaan'}
                 </button>
               </div>
             </form>
