@@ -43,10 +43,8 @@ function datumNl(d: Date): string {
  *
  * Zeven kolommen, want een regel moet twee vragen beantwoorden zonder doorklikken: waar
  * gaat dit over (opdrachtgever, website, ronde, uitvoerder) en wat moet ermee (actie). Het
- * CRM-nummer staat erbij omdat een ontbrekend nummer straks de planningsmail blokkeert.
- *
- * Eén onderzoek kan in twee blokken staan (CRM-nummer invullen én wachten op het akkoord);
- * elk blok is een eigen tabel, dus het id als sleutel botst niet.
+ * CRM-nummer staat erbij omdat het ontbreken ervan nergens anders als actie terugkomt: de
+ * kolom is de herinnering.
  */
 function Blok({
   titel,
@@ -123,8 +121,8 @@ export default async function AdminPage() {
     },
     orderBy: { dateStart: 'asc' },
     // Het CRM-nummer staat op het klantproject en niet op het onderzoek: het hoort bij de
-    // opdracht, dus een tweede onderzoek op dezelfde site erft het. De routekaart hieronder
-    // kijkt ernaar voordat de planningsmail uitgaat.
+    // opdracht, dus een tweede onderzoek op dezelfde site erft het. Het staat in de kolom
+    // CRM en in de uitklapmelding bovenaan; de routekaart rekent er niet mee.
     include: { clientProject: { select: { projectnummer: true } } },
   });
 
@@ -307,22 +305,11 @@ export default async function AdminPage() {
         }
         continue;
       }
-      // Het CRM-nummer wordt door Shift2 zelf toegekend en is bij een getekende offerte vaak
-      // nog niet bekend. Dat mag de uitnodiging en het scopegesprek niet ophouden, maar bij
-      // de planningsmail wordt de opdracht officieel: er gaan datums naar de klant, en dan
-      // hoort de administratie compleet te zijn. Wachten tot het factureren betekent het
-      // achteraf uitzoeken bij een onderzoek dat al gedaan is.
-      //
-      // Is de planningsmail al verstuurd, dan houdt het ontbrekende nummer niets meer
-      // tegen, maar het moet er nog wel komen. Dan twee regels: het nummer bij "Actie
-      // nodig", en de opvolging van de mail gewoon in het blok waar die thuishoort. Een
-      // `continue` hier zou de akkoordbewaking verbergen: het onderzoek zou dan wekenlang
-      // op "CRM-nummer invullen" blijven staan terwijl de klant niet reageert -- zo stond
-      // OVB-01 op 10 september 2026 zonder dat er iets aan het akkoord herinnerde.
-      if (!p.clientProject?.projectnummer?.trim()) {
-        actie.push({ ...basis, toelichting: 'CRM-nummer invullen' });
-        if (!p.planningSent) continue;
-      }
+      // Het CRM-nummer is hier bewust géén stap. Het ontbreken ervan staat al op elke regel
+      // in de kolom CRM ("⚠ ontbreekt") en in de uitklapmelding bovenaan; een eigen regel
+      // bij "Actie nodig" zei hetzelfde nog een keer en verdrong de echte volgende stap.
+      // Van 2 tot 10 september 2026 was het wel een stap (bef2d39), en stond OVB-01 op
+      // "CRM-nummer invullen" terwijl de planningsmail allang de deur uit was.
       if (!p.planningSent) {
         actie.push({ ...basis, toelichting: 'planningsmail versturen' });
         continue;
@@ -363,14 +350,47 @@ export default async function AdminPage() {
   ].filter((b) => b.regels.length > 0);
 
   /**
-   * Onderzoeken die wel een CRM-project hebben, maar niet in de Dynamics-weergave
-   * "Mijn actieve projecten" staan.
+   * Wat er in het CRM nog niet klopt: onderzoeken zonder CRM-nummer, en onderzoeken die
+   * wel een CRM-project hebben maar niet in de Dynamics-weergave "Mijn actieve projecten"
+   * staan.
    *
-   * Als losse melding boven de blokken en niet als regel bij "Actie nodig": het is één
-   * handeling in een ander systeem, geen stap in de routekaart van een onderzoek. Tussen
-   * de andere regels zou het bovendien verdwijnen -- daar staan er al vijftien.
+   * Als één uitklapmelding boven de blokken en niet als regels bij "Actie nodig": het zijn
+   * handelingen in een ander systeem, geen stappen in de routekaart van een onderzoek. De
+   * dichtgeklapte regel zegt alleen hoeveel; wie wil weten welke, klapt hem open. Zo neemt
+   * het geen ruimte van de blokken die zeggen wat er vandaag te doen is.
    */
+  // Het nummer hoort bij het klantproject, dus een nulmeting en haar hertest missen het
+  // samen: één keer noemen, anders staat elk kenmerk er dubbel in.
+  const gezienKlantproject = new Set<string>();
+  const zonderCrmNummer = projects.filter((p) => {
+    if (p.clientProject?.projectnummer?.trim()) return false;
+    const sleutel = p.clientProjectId ?? p.id;
+    if (gezienKlantproject.has(sleutel)) return false;
+    gezienKlantproject.add(sleutel);
+    return true;
+  });
   const nietInCrmLijst = projects.filter((p) => !p.crmProjectActief);
+  const crmDelen = [
+    zonderCrmNummer.length > 0 &&
+      (zonderCrmNummer.length === 1 ? '1 zonder CRM-nummer' : `${zonderCrmNummer.length} zonder CRM-nummer`),
+    nietInCrmLijst.length > 0 &&
+      (nietInCrmLijst.length === 1
+        ? '1 niet in je actieve projecten'
+        : `${nietInCrmLijst.length} niet in je actieve projecten`),
+  ].filter(Boolean);
+
+  const Kenmerken = ({ lijst }: { lijst: typeof projects }) => (
+    <>
+      {lijst.map((p, i) => (
+        <span key={p.id}>
+          {i > 0 && ', '}
+          <Link href={`/admin/projects/${p.id}`} className="underline hover:no-underline">
+            {p.kenmerk ?? '(geen kenmerk)'}
+          </Link>
+        </span>
+      ))}
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -395,24 +415,24 @@ export default async function AdminPage() {
           </Link>
         </div>
 
-        {nietInCrmLijst.length > 0 && (
-          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-sm font-medium text-amber-900">
-              {nietInCrmLijst.length === 1
-                ? 'Eén onderzoek staat niet in je actieve projecten in het CRM'
-                : `${nietInCrmLijst.length} onderzoeken staan niet in je actieve projecten in het CRM`}
-            </p>
-            <p className="mt-1 text-sm text-amber-900">
-              {nietInCrmLijst.map((p, i) => (
-                <span key={p.id}>
-                  {i > 0 && ', '}
-                  <Link href={`/admin/projects/${p.id}`} className="underline hover:no-underline">
-                    {p.kenmerk ?? '(geen kenmerk)'}
-                  </Link>
-                </span>
-              ))}
-            </p>
-          </div>
+        {crmDelen.length > 0 && (
+          <details className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <summary className="cursor-pointer text-sm font-medium text-amber-900">
+              CRM: {crmDelen.join(', ')}
+            </summary>
+            <div className="mt-2 space-y-1 text-sm text-amber-900">
+              {zonderCrmNummer.length > 0 && (
+                <p>
+                  Zonder CRM-nummer: <Kenmerken lijst={zonderCrmNummer} />
+                </p>
+              )}
+              {nietInCrmLijst.length > 0 && (
+                <p>
+                  Niet in je actieve projecten: <Kenmerken lijst={nietInCrmLijst} />
+                </p>
+              )}
+            </div>
+          </details>
         )}
 
         {blokken.length === 0 ? (
