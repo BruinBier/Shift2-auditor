@@ -125,9 +125,9 @@ export default async function AdminPage() {
     // CRM en in de uitklapmelding bovenaan; de routekaart rekent er niet mee.
     include: {
       clientProject: { select: { projectnummer: true } },
-      // Open bespreekpunten: wat je de klant nog moet vragen. Staat bij de regel, want een
-      // gesprek dat eraan komt is het moment waarop je dat wilt zien.
-      _count: { select: { bespreekpunten: { where: { besprokenOp: null } } } },
+      // Open bespreekpunten: wat je de klant nog moet vragen. De tekst zelf gaat mee, want
+      // "1 bespreekpunt" zegt niet wát je moet bespreken; op de regel klapt hij uit.
+      bespreekpunten: { where: { besprokenOp: null }, select: { tekst: true }, orderBy: { createdAt: 'asc' } },
     },
   });
 
@@ -182,7 +182,7 @@ export default async function AdminPage() {
       uitvoerder: p.externalBureau || 'Shift2',
       uitvoerderUrl: p.cardanOnderzoekUrl,
       crmNummer: p.clientProject?.projectnummer ?? null,
-      openBespreekpunten: p._count.bespreekpunten,
+      bespreekpunten: p.bespreekpunten.map((b) => b.tekst),
     };
 
     if (p.isOngoing) {

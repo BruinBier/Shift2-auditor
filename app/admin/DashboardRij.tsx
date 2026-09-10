@@ -20,8 +20,8 @@ export type DashboardRegel = {
   /** Link naar het onderzoek in het portaal van het bureau, als die er is. */
   uitvoerderUrl?: string | null;
   crmNummer?: string | null;
-  /** Aantal bespreekpunten voor het klantgesprek dat nog niet is afgevinkt. */
-  openBespreekpunten?: number;
+  /** Bespreekpunten voor het klantgesprek die nog niet zijn afgevinkt, als tekst. */
+  bespreekpunten?: string[];
   /**
    * Wat er moet gebeuren of waar je op wacht. Een regeleinde scheidt het wat van het
    * wanneer: "uitnodiging nog niet geaccepteerd" op de eerste regel, "gisteren uitgenodigd
@@ -41,7 +41,9 @@ const TE_LANG = 100;
 
 export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
   const [open, setOpen] = useState(false);
+  const [puntenOpen, setPuntenOpen] = useState(false);
   const lang = regel.toelichting.length > TE_LANG;
+  const punten = regel.bespreekpunten ?? [];
 
   const cel = 'px-3 py-2 align-top text-sm';
 
@@ -119,20 +121,40 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
             })()
           )}
           {/* Los van de toelichting, want die gaat over de routekaart; dit is wat je in
-              het gesprek zelf niet mag vergeten. Klikt door naar het tabblad Details. */}
-          {regel.openBespreekpunten ? (
-            <Link
-              href={`/admin/projects/${regel.id}`}
+              het gesprek zelf niet mag vergeten. Klapt hier uit: doorklikken naar de
+              projectpagina bracht je bovenaan een lange pagina, ver van het blok. */}
+          {punten.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setPuntenOpen(!puntenOpen)}
+              aria-expanded={puntenOpen}
               className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-800 hover:underline"
             >
-              <span aria-hidden="true">●</span>
-              {regel.openBespreekpunten === 1
+              <span aria-hidden="true">{puntenOpen ? '▾' : '▸'}</span>
+              {punten.length === 1
                 ? '1 bespreekpunt voor het klantgesprek'
-                : `${regel.openBespreekpunten} bespreekpunten voor het klantgesprek`}
-            </Link>
-          ) : null}
+                : `${punten.length} bespreekpunten voor het klantgesprek`}
+            </button>
+          )}
         </td>
       </tr>
+      {punten.length > 0 && puntenOpen && (
+        <tr className="bg-amber-50">
+          <td colSpan={6} className="px-3 pb-3 pt-2 text-sm text-gray-800">
+            <ul className="list-disc pl-5 space-y-1">
+              {punten.map((tekst, i) => (
+                <li key={i} className="whitespace-pre-wrap">{tekst}</li>
+              ))}
+            </ul>
+            <Link
+              href={`/admin/projects/${regel.id}#bespreekpunten`}
+              className="mt-2 inline-block text-xs text-shift2-primary hover:underline"
+            >
+              Afvinken of toevoegen bij het onderzoek
+            </Link>
+          </td>
+        </tr>
+      )}
       {lang && open && (
         <tr className="bg-gray-50">
           <td colSpan={6} className="px-3 pb-3 pt-0 text-sm text-gray-600">
