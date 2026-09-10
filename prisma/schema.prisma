@@ -272,6 +272,7 @@ model Project {
   waarnemingen            Waarneming[]
   planningChanges         ProjectPlanningChange[]
   projectNotes            ProjectNote[]
+  bespreekpunten          Bespreekpunt[]
   crawlerRuns             CrawlerRun[]
   advices                 ProjectAdvice[]
 
@@ -310,6 +311,24 @@ model ProjectNote {
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("project_notes")
+}
+
+/// Bespreekpunt voor het klantgesprek. `besprokenOp` leeg is open; gevuld is afgehandeld,
+/// met de uitkomst erbij. Niets wordt verwijderd: zo is later terug te vinden wat er
+/// wanneer met de klant is afgestemd.
+model Bespreekpunt {
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  tekst       String    @db.Text
+  besprokenOp DateTime? @map("besproken_op")
+  uitkomst    String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("bespreekpunten")
 }
 
 model ProjectScopeUrl {

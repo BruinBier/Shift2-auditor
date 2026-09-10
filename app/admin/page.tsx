@@ -123,7 +123,12 @@ export default async function AdminPage() {
     // Het CRM-nummer staat op het klantproject en niet op het onderzoek: het hoort bij de
     // opdracht, dus een tweede onderzoek op dezelfde site erft het. Het staat in de kolom
     // CRM en in de uitklapmelding bovenaan; de routekaart rekent er niet mee.
-    include: { clientProject: { select: { projectnummer: true } } },
+    include: {
+      clientProject: { select: { projectnummer: true } },
+      // Open bespreekpunten: wat je de klant nog moet vragen. Staat bij de regel, want een
+      // gesprek dat eraan komt is het moment waarop je dat wilt zien.
+      _count: { select: { bespreekpunten: { where: { besprokenOp: null } } } },
+    },
   });
 
   const loopt: DashboardRegel[] = [];
@@ -177,6 +182,7 @@ export default async function AdminPage() {
       uitvoerder: p.externalBureau || 'Shift2',
       uitvoerderUrl: p.cardanOnderzoekUrl,
       crmNummer: p.clientProject?.projectnummer ?? null,
+      openBespreekpunten: p._count.bespreekpunten,
     };
 
     if (p.isOngoing) {

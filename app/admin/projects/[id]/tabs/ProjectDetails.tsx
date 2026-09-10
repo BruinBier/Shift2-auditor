@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import VoorbereidingStappen from './VoorbereidingStappen';
+import Bespreekpunten from './Bespreekpunten';
 import ContactpersoonVelden, { contactpersonenUit } from '@/app/components/ContactpersoonVelden';
 
 // Dezelfde editor als het bewerkvenster op /admin/projecten, zodat de projectdetails hier
@@ -1344,6 +1345,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             </table>
           </div>
         </div>
+
+        {/* Wat je de klant nog moet vragen; open punten tellen mee op het dashboard. */}
+        <Bespreekpunten projectId={project.id} />
 
         {/* Notities */}
         <div className="bg-white rounded-lg border border-gray-200">

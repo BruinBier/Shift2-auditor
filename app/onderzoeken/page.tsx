@@ -35,6 +35,7 @@ export default async function OnderzoekekenPage() {
   const projects = await prisma.project.findMany({
     include: {
       clientProject: true,
+      _count: { select: { bespreekpunten: { where: { besprokenOp: null } } } },
     },
     orderBy: { dateStart: 'desc' },
   });
@@ -52,6 +53,7 @@ export default async function OnderzoekekenPage() {
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     clientProject: project.clientProject,
+    openBespreekpunten: project._count.bespreekpunten,
     parentProjectId: project.parentProjectId,
     hasReinspection: project.hasReinspection,
     isOngoing: project.isOngoing,

@@ -52,6 +52,8 @@ interface Project {
    * op. Iets anders dan een ontbrekend CRM-nummer.
    */
   crmProjectActief?: boolean;
+  /** Bespreekpunten voor het klantgesprek die nog open staan; zie het tabblad Details. */
+  openBespreekpunten?: number;
 }
 
 interface Props {
@@ -1638,6 +1640,16 @@ export default function OnderzoekenTable({ projects }: Props) {
                             {rondeLabel(project)}
                           </span>
                           {bureauLabel(project)}
+                          {project.openBespreekpunten ? (
+                            <span
+                              className="inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-amber-100 text-amber-800"
+                              title="Bespreekpunten voor het klantgesprek, zie het tabblad Details"
+                            >
+                              {project.openBespreekpunten === 1
+                                ? '1 bespreekpunt'
+                                : `${project.openBespreekpunten} bespreekpunten`}
+                            </span>
+                          ) : null}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">

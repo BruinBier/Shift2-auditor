@@ -20,6 +20,8 @@ export type DashboardRegel = {
   /** Link naar het onderzoek in het portaal van het bureau, als die er is. */
   uitvoerderUrl?: string | null;
   crmNummer?: string | null;
+  /** Aantal bespreekpunten voor het klantgesprek dat nog niet is afgevinkt. */
+  openBespreekpunten?: number;
   /**
    * Wat er moet gebeuren of waar je op wacht. Een regeleinde scheidt het wat van het
    * wanneer: "uitnodiging nog niet geaccepteerd" op de eerste regel, "gisteren uitgenodigd
@@ -116,6 +118,19 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
               );
             })()
           )}
+          {/* Los van de toelichting, want die gaat over de routekaart; dit is wat je in
+              het gesprek zelf niet mag vergeten. Klikt door naar het tabblad Details. */}
+          {regel.openBespreekpunten ? (
+            <Link
+              href={`/admin/projects/${regel.id}`}
+              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-800 hover:underline"
+            >
+              <span aria-hidden="true">●</span>
+              {regel.openBespreekpunten === 1
+                ? '1 bespreekpunt voor het klantgesprek'
+                : `${regel.openBespreekpunten} bespreekpunten voor het klantgesprek`}
+            </Link>
+          ) : null}
         </td>
       </tr>
       {lang && open && (
