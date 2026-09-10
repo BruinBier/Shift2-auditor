@@ -327,6 +327,29 @@ telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel pro
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
+## Gespreksverslag uit een transcript (voor Claude Code)
+
+Na een gesprek met de klant plakt de onderzoeker het transcript in de tool: tabblad
+Details, veld "Transcript scopegesprek" (bij een Cardan-project heet het "Transcript
+klantgesprek"; zelfde veld, `Project.scopeCallTranscript`). Daarna vraagt hij hier om een
+gespreksverslag. Dat gaat zo:
+
+1. Lees het transcript uit de database (`scopeCallTranscript`; `get-project` stuurt het
+   niet mee) en de open bespreekpunten via `GET /api/projects/<id>/bespreekpunten`.
+2. Schrijf een **kort** verslag als notitie: `POST /api/projects/<id>/notes` met
+   `authorName` "Claude Code" en `content` in markdown. Eerste regel een kop met
+   "Gespreksverslag <soort gesprek> <datum>", daaronder wie erbij waren, dan per onderwerp
+   de afspraak in één of twee zinnen, en onderaan een lijstje "Acties" met wie wat doet.
+   Geen samenvatting van het hele gesprek: alleen wat er is afgesproken en wat er nog
+   moet gebeuren.
+3. Vul per open bespreekpunt de uitkomst in en vink het af:
+   `PATCH /api/projects/<id>/bespreekpunten/<puntId>` met `{ "besproken": true,
+   "uitkomst": "..." }`. Kwam een punt niet aan bod, laat het dan open en zeg dat.
+4. Staat er in het transcript iets dat naar een ander moet (bij een Cardan-project vaak
+   Cardan), zet dat dan als actie in het verslag; verstuur zelf niets.
+
+Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë.
+
 ## CRM-sync (Dynamics-nummers)
 
 Het CRM-nummer (P0xxxx) staat op het klantproject (`ClientProject.projectnummer`) en geldt voor alle onderzoeken eronder. Om te zien welke onderzoeken er nog geen hebben, of om nummers in bulk te zetten:

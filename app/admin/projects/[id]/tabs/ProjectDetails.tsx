@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { marked } from 'marked';
 import dynamic from 'next/dynamic';
 import VoorbereidingStappen from './VoorbereidingStappen';
 import Bespreekpunten from './Bespreekpunten';
@@ -24,6 +25,22 @@ const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor),
 
 /** Wie het werk binnenhaalt. Dezelfde lijst als in het intakeformulier. */
 const ACCOUNTMANAGERS = ['Katja', 'Guus', 'Nick van de Venn'];
+
+/**
+ * Een notitie komt uit de markdown-editor, maar werd als HTML in de pagina gezet: elke
+ * `**` en elk streepje stond er letterlijk. Oudere notities en het gespreksverslag dat
+ * Claude Code via de API schrijft zijn markdown; een notitie die al HTML is (met een tag
+ * erin) blijft zoals hij is.
+ */
+function notitieHtml(content: string | null | undefined): string {
+  if (!content) return '';
+  if (/<[a-z][\s\S]*>/i.test(content)) return content;
+  try {
+    return marked.parse(content, { breaks: true, gfm: true, async: false } as any) as unknown as string;
+  } catch {
+    return content;
+  }
+}
 
 export default function ProjectDetails({ project, relatedProjects = [] }: { project: any; relatedProjects?: any[] }) {
   const [newNoteContent, setNewNoteContent] = useState('');
@@ -1122,7 +1139,10 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             <div className="pt-2 border-t border-gray-200">
               <div className="flex items-center justify-between mb-1">
                 <label htmlFor="scope-transcript" className="block text-sm text-gray-500">
-                  Transcript scopegesprek
+                  {/* Bij een extern bureau voert dat bureau het scopegesprek; wat hier
+                      komt is het transcript van het eigen gesprek met de klant, de bron
+                      voor het gespreksverslag en de uitkomst van de bespreekpunten. */}
+                  {extern ? 'Transcript klantgesprek' : 'Transcript scopegesprek'}
                 </label>
                 <button
                   type="button"
@@ -1395,7 +1415,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                     </div>
                     <div
                       className="text-sm text-gray-700 prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: note.content }}
+                      dangerouslySetInnerHTML={{ __html: notitieHtml(note.content) }}
                     />
                   </div>
                 ))}
@@ -1830,7 +1850,9 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Transcript scopegesprek</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {extern ? 'Transcript klantgesprek' : 'Transcript scopegesprek'}
+              </h2>
               <button
                 onClick={() => setShowTranscriptModal(false)}
                 className="text-gray-400 hover:text-gray-600"
