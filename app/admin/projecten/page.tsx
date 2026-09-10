@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import ContactpersoonVelden, { contactpersonenUit } from '@/app/components/ContactpersoonVelden';
 
 const RichTextEditor = dynamic(() => import('../../admin/projects/[id]/tabs/RichTextEditor'), {
   ssr: false,
@@ -40,7 +41,9 @@ export default function ProjectenPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProject, setEditingProject] = useState<ClientProject | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [availableOpdrachtgevers, setAvailableOpdrachtgevers] = useState<Array<{ id: string; kenmerk: string; naam: string }>>([]);
+  const [availableOpdrachtgevers, setAvailableOpdrachtgevers] = useState<
+    Array<{ id: string; kenmerk: string; naam: string; contactnaam: string | null; contactEmail: string | null }>
+  >([]);
   const [projects, setProjects] = useState<ClientProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMigrationButton, setShowMigrationButton] = useState(false);
@@ -73,7 +76,10 @@ export default function ProjectenPage() {
           setAvailableOpdrachtgevers(opdrachtgeversData.map((o: any) => ({
             id: o.id,
             kenmerk: o.kenmerk,
-            naam: o.naam
+            naam: o.naam,
+            // Voor de keuzelijst bij Contactpersoon.
+            contactnaam: o.contactnaam ?? null,
+            contactEmail: o.contactEmail ?? null,
           })));
         }
 
@@ -869,33 +875,14 @@ export default function ProjectenPage() {
 
               {/* Contactpersoon voor dit project. Bij de opdrachtgever staat er
                   ook een, maar die geldt voor de organisatie; per project kan
-                  het iemand anders zijn. */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contactpersoon
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contactnaam}
-                    onChange={(e) => setFormData({ ...formData, contactnaam: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    placeholder="Voor- en achternaam"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    E-mail contactpersoon
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.contactEmail}
-                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    placeholder="naam@gemeente.nl"
-                  />
-                </div>
-              </div>
+                  het iemand anders zijn. De keuzelijst toont wie er al bekend is,
+                  de gekozen opdrachtgever bovenaan. */}
+              <ContactpersoonVelden
+                naam={formData.contactnaam}
+                email={formData.contactEmail}
+                contacten={contactpersonenUit(availableOpdrachtgevers, projects, formData.opdrachtgeverId)}
+                onChange={({ naam, email }) => setFormData({ ...formData, contactnaam: naam, contactEmail: email })}
+              />
 
               {/* Projectdetails with Tiptap Editor */}
               <div>

@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import VoorbereidingStappen from './VoorbereidingStappen';
+import ContactpersoonVelden, { contactpersonenUit } from '@/app/components/ContactpersoonVelden';
 
 // Dezelfde editor als het bewerkvenster op /admin/projecten, zodat de projectdetails hier
 // hetzelfde bewerkt worden als daar.
@@ -1719,28 +1720,16 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contactpersoon</label>
-                  <input
-                    type="text"
-                    value={projectFormData.contactnaam}
-                    onChange={(e) => setProjectFormData({ ...projectFormData, contactnaam: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    placeholder="Voor- en achternaam"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-mail contactpersoon</label>
-                  <input
-                    type="email"
-                    value={projectFormData.contactEmail}
-                    onChange={(e) => setProjectFormData({ ...projectFormData, contactEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-                    placeholder="naam@gemeente.nl"
-                  />
-                </div>
-              </div>
+              {/* Keuzelijst uit wat er al bij andere projecten en opdrachtgevers staat;
+                  de eigen opdrachtgever bovenaan. Vrij typen kan ook. */}
+              <ContactpersoonVelden
+                naam={projectFormData.contactnaam}
+                email={projectFormData.contactEmail}
+                contacten={contactpersonenUit(opdrachtgevers, clientProjects, project.clientProject.opdrachtgeverId)}
+                onChange={({ naam, email }) =>
+                  setProjectFormData({ ...projectFormData, contactnaam: naam, contactEmail: email })
+                }
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Projectdetails</label>
