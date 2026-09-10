@@ -44,6 +44,16 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
       .finally(() => setGeladen(true));
   }, [projectId]);
 
+  // Komt de bezoeker via de link op het dashboard (#bespreekpunten), zet het blok dan in
+  // beeld nadat de lijst er staat. De browser springt bij het laden al naar het anker,
+  // maar de notities en de gerelateerde onderzoeken erboven laden daarna nog in en
+  // duwen het blok weer uit beeld.
+  useEffect(() => {
+    if (geladen && window.location.hash === '#bespreekpunten') {
+      document.getElementById('bespreekpunten')?.scrollIntoView({ block: 'start' });
+    }
+  }, [geladen]);
+
   const open = punten.filter((p) => !p.besprokenOp);
   const afgehandeld = punten.filter((p) => p.besprokenOp);
 

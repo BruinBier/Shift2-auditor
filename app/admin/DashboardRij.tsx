@@ -150,7 +150,7 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
               href={`/admin/projects/${regel.id}#bespreekpunten`}
               className="mt-2 inline-block text-xs text-shift2-primary hover:underline"
             >
-              Afvinken of toevoegen bij het onderzoek
+              Naar het blok Bespreekpunten op de projectpagina, om af te vinken of een punt toe te voegen
             </Link>
           </td>
         </tr>
