@@ -44,6 +44,9 @@ function datumNl(d: Date): string {
  * Zeven kolommen, want een regel moet twee vragen beantwoorden zonder doorklikken: waar
  * gaat dit over (opdrachtgever, website, ronde, uitvoerder) en wat moet ermee (actie). Het
  * CRM-nummer staat erbij omdat een ontbrekend nummer straks de planningsmail blokkeert.
+ *
+ * Eén onderzoek kan in twee blokken staan (CRM-nummer invullen én wachten op het akkoord);
+ * elk blok is een eigen tabel, dus het id als sleutel botst niet.
  */
 function Blok({
   titel,
@@ -309,9 +312,16 @@ export default async function AdminPage() {
       // de planningsmail wordt de opdracht officieel: er gaan datums naar de klant, en dan
       // hoort de administratie compleet te zijn. Wachten tot het factureren betekent het
       // achteraf uitzoeken bij een onderzoek dat al gedaan is.
+      //
+      // Is de planningsmail al verstuurd, dan houdt het ontbrekende nummer niets meer
+      // tegen, maar het moet er nog wel komen. Dan twee regels: het nummer bij "Actie
+      // nodig", en de opvolging van de mail gewoon in het blok waar die thuishoort. Een
+      // `continue` hier zou de akkoordbewaking verbergen: het onderzoek zou dan wekenlang
+      // op "CRM-nummer invullen" blijven staan terwijl de klant niet reageert -- zo stond
+      // OVB-01 op 10 september 2026 zonder dat er iets aan het akkoord herinnerde.
       if (!p.clientProject?.projectnummer?.trim()) {
         actie.push({ ...basis, toelichting: 'CRM-nummer invullen' });
-        continue;
+        if (!p.planningSent) continue;
       }
       if (!p.planningSent) {
         actie.push({ ...basis, toelichting: 'planningsmail versturen' });
