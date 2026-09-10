@@ -25,7 +25,9 @@ type Bespreekpunt = {
   createdAt: string;
 };
 
-const CHECKLIST = ['Teams-transcript aanzetten', 'Open bespreekpunten doornemen'];
+// Alleen wat je anders vergeet. "Open bespreekpunten doornemen" stond er ook, maar die
+// staan direct hieronder; daar hoeft geen vinkje aan te herinneren.
+const CHECKLIST = ['Teams-transcript aanzetten'];
 
 export default function Bespreekpunten({ projectId }: { projectId: string }) {
   const [punten, setPunten] = useState<Bespreekpunt[]>([]);
