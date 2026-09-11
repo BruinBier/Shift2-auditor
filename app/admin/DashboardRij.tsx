@@ -22,6 +22,8 @@ export type DashboardRegel = {
   crmNummer?: string | null;
   /** Bespreekpunten voor het klantgesprek die nog niet zijn afgevinkt, als tekst. */
   bespreekpunten?: string[];
+  /** De dag waar de regel over gaat (gesprek of start); "Komt eraan" sorteert erop. */
+  wanneer?: Date;
   /**
    * Wat er moet gebeuren of waar je op wacht. Een regeleinde scheidt het wat van het
    * wanneer: "uitnodiging nog niet geaccepteerd" op de eerste regel, "gisteren uitgenodigd

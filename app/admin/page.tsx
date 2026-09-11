@@ -209,7 +209,7 @@ export default async function AdminPage() {
         if (p.adviceCallDate && dagenGeleden(p.adviceCallDate) > 0) {
           actie.push({ ...basis, toelichting: `afvinken als gevoerd\nadviesgesprek was op ${datumNl(p.adviceCallDate)}` });
         } else if (p.adviceCallDate) {
-          komtEraan.push({ ...basis, toelichting: `adviesgesprek op ${datumNl(p.adviceCallDate)}` });
+          komtEraan.push({ ...basis, toelichting: `adviesgesprek op ${datumNl(p.adviceCallDate)}`, wanneer: p.adviceCallDate });
         } else {
           wacht.push({ ...basis, toelichting: `gesprek nog te voeren\n${sinds(p.adviceCallAccepted)} uitnodiging adviesgesprek geaccepteerd` });
         }
@@ -259,6 +259,9 @@ export default async function AdminPage() {
       // zouden hem anders permanent op "transcript toevoegen" laten staan.
       const viaBureau = p.isExternalProject;
       const bureau = p.externalBureau || 'het bureau';
+      // Bij een bureau-project met de schakelaar "Scope zelf met de klant bespreken" aan
+      // gelden de scopestappen toch, plus "scope doorgeven aan het bureau" erna.
+      const scopeZelf = !viaBureau || p.scopeCallWanted;
 
       if (!p.invitationSent) {
         actie.push({
@@ -268,16 +271,20 @@ export default async function AdminPage() {
         continue;
       }
 
-      if (!viaBureau && !p.scopeCallHeld) {
+      if (scopeZelf && !p.scopeCallHeld) {
         // Zelfde drie situaties als bij het adviesgesprek: gepland met een dag die nog
         // komt, gepland met een dag die voorbij is, of gepland zonder dag. Niet gepland
         // is wachten op de klant, en na de rappeltermijn een herinnering.
         if (p.scopeCallPlanned && p.scopeCallDate && dagenGeleden(p.scopeCallDate) > 0) {
           actie.push({ ...basis, toelichting: `afvinken als gevoerd\nscopegesprek was op ${datumNl(p.scopeCallDate)}` });
         } else if (p.scopeCallPlanned && p.scopeCallDate) {
-          komtEraan.push({ ...basis, toelichting: `scopegesprek op ${datumNl(p.scopeCallDate)}` });
+          komtEraan.push({ ...basis, toelichting: `scopegesprek op ${datumNl(p.scopeCallDate)}`, wanneer: p.scopeCallDate });
         } else if (p.scopeCallPlanned) {
           wacht.push({ ...basis, toelichting: `gesprek nog te voeren\n${sinds(p.scopeCallPlanned)} scopegesprek gepland` });
+        } else if (viaBureau) {
+          // Bij een bureau-project is de uitnodiging aan de klant geen aparte stap; er is
+          // dus geen datum om vanaf te rappelleren. Het plannen zelf is de actie.
+          actie.push({ ...basis, toelichting: 'scopegesprek met de klant plannen' });
         } else if (dagenGeleden(p.invitationSent) >= RAPPELTERMIJN_DAGEN) {
           actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.invitationSent!)} uitgenodigd voor het scopegesprek` });
         } else {
@@ -285,12 +292,16 @@ export default async function AdminPage() {
         }
         continue;
       }
-      if (!viaBureau && !p.scopeCallTranscript?.trim()) {
+      if (scopeZelf && !p.scopeCallTranscript?.trim()) {
         actie.push({ ...basis, toelichting: 'transcript toevoegen' });
         continue;
       }
       if (!viaBureau && !p.scopeInfo?.trim()) {
         actie.push({ ...basis, toelichting: 'scope afmaken' });
+        continue;
+      }
+      if (viaBureau && scopeZelf && !p.scopeSentToBureau) {
+        actie.push({ ...basis, toelichting: `scope doorgeven aan ${bureau}` });
         continue;
       }
       // Een extern bureau geeft een startweek en geen deadline; het routekaartje telt de
@@ -299,12 +310,15 @@ export default async function AdminPage() {
       if (!p.dateStart || (!viaBureau && !p.dateEnd)) {
         if (viaBureau) {
           // De datum komt van het bureau, dus hier valt niets te bepalen -- alleen te
-          // wachten, en na de rappeltermijn te rappelleren.
-          const dagen = dagenGeleden(p.invitationSent);
+          // wachten, en na de rappeltermijn te rappelleren. Is de scope eerst nog aan het
+          // bureau doorgegeven, dan telt het wachten vanaf dát moment.
+          const gevraagd = p.scopeSentToBureau ?? p.invitationSent!;
+          const waarom = p.scopeSentToBureau ? `scope doorgegeven aan ${bureau}` : `om planning gevraagd bij ${bureau}`;
+          const dagen = dagenGeleden(gevraagd);
           if (dagen >= RAPPELTERMIJN_DAGEN) {
-            actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(p.invitationSent!)} om planning gevraagd bij ${bureau}` });
+            actie.push({ ...basis, toelichting: `herinnering sturen\n${sinds(gevraagd)} ${waarom}` });
           } else {
-            wacht.push({ ...basis, toelichting: `nog geen startdatum van ${bureau}\n${sinds(p.invitationSent!)} gevraagd` });
+            wacht.push({ ...basis, toelichting: `nog geen startdatum van ${bureau}\n${sinds(gevraagd)} ${waarom}` });
           }
         } else {
           actie.push({ ...basis, toelichting: 'planning bepalen' });
@@ -342,12 +356,17 @@ export default async function AdminPage() {
     }
 
     if (p.dateStart) {
-      komtEraan.push({ ...basis, toelichting: `start ${datumNl(p.dateStart)}` });
+      komtEraan.push({ ...basis, toelichting: `start ${datumNl(p.dateStart)}`, wanneer: p.dateStart });
     }
   }
 
   // De kleur zegt hoe dringend het blok is: groen loopt, rood vraagt actie,
   // amber ligt stil bij een ander, blauw is informatief.
+  // "Komt eraan" op de datum die in de regel staat: een gesprek van volgende week hoort
+  // boven een onderzoek dat in januari start. De query sorteert op startdatum van het
+  // onderzoek, en die zegt niets over wanneer het gesprek is.
+  komtEraan.sort((a, b) => (a.wanneer?.getTime() ?? 0) - (b.wanneer?.getTime() ?? 0));
+
   const blokken = [
     { titel: 'Loopt nu', regels: loopt, kleur: 'bg-green-600' },
     { titel: 'Actie nodig', regels: actie, kleur: 'bg-red-600' },

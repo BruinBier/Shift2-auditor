@@ -238,6 +238,11 @@ Wat er open staat aan bespreekpunten is in Shift2Auditor te zien, op het dashboa
 projectpagina. Vraagt de onderzoeker wat er nog met een klant besproken moet worden, kijk dan
 daar (of laat Codex kijken) in plaats van het uit de mails te reconstrueren.
 
+Voert Cardan het onderzoek uit, dan slaat de tool het scopegesprek, het transcript en de
+scope over: Cardan bepaalt de scope met de klant. Moet de onderzoeker toch zelf met de klant
+praten (een testomgeving, inloggegevens), dan zet hij in de tool "Scope zelf met de klant
+bespreken" aan en komen die stappen erbij, plus "Scope doorgegeven aan Cardan".
+
 **De mails aan de klant schrijf je niet.** De tool heeft er sjablonen voor, met de naam van de
 contactpersoon en de website er al in, en met een knop om ze te kopiëren. Dat geldt voor de
 uitnodiging voor het scopegesprek én voor de planningsmail. De onderzoeker geeft je die tekst;

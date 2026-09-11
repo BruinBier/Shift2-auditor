@@ -241,6 +241,22 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   // doorgeven aan de klant. Dezelfde velden, andere namen en drie stappen minder.
   const viaBureau = Boolean(project.isExternalProject);
   const bureau = project.externalBureau || 'het bureau';
+  // Soms moet de onderzoeker bij een bureau-project tóch zelf met de klant om tafel, bijvoorbeeld
+  // over een testomgeving (WAAL-02, DigiD). Dan gelden dezelfde scopestappen als bij een eigen
+  // onderzoek, plus één extra: de uitkomst doorgeven aan het bureau.
+  const scopeZelf = !viaBureau || Boolean(project.scopeCallWanted);
+
+  // Bij een bureau-project gaat de uitnodiging alleen over de scope: de planning komt van het
+  // bureau, dus die belofte hoort niet in de mail.
+  const uitnodigingScope = [
+    `Dag ${contactnaam || '[naam]'},`,
+    '',
+    `Voor het toegankelijkheidsonderzoek van ${scopeUrl || '[website]'} wil ik graag kort de scope met je doornemen: wat we wel en niet meenemen in het onderzoek, en wat er nodig is om de website te kunnen onderzoeken.`,
+    '',
+    `De planning krijg je daarna van mij, zodra ${bureau} die heeft doorgegeven.`,
+    '',
+    'Laat je me weten wanneer het jou uitkomt om hierover kort te overleggen?',
+  ].join('\n');
 
   // Welke stap welke mailtekst heeft. Een stap die er niet in staat krijgt geen
   // kopieerknop -- dat is het verschil tussen "hier gaat een mail uit" en "dit vink je af".
@@ -255,6 +271,18 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       tekst: uitnodiging,
       onderwerp: viaBureau ? undefined : `Afstemming scope en planning toegankelijkheidsonderzoek ${domein}`,
     },
+    // Bij een bureau-project met eigen scopegesprek: de uitnodiging hangt aan de stap
+    // "Scopegesprek gepland", want de stap "uitnodiging" is daar het planningsverzoek.
+    ...(viaBureau
+      ? {
+          scopeCallPlanned: {
+            knop: 'Kopieer uitnodiging',
+            naam: 'uitnodiging scopegesprek',
+            tekst: uitnodigingScope,
+            onderwerp: `Scope toegankelijkheidsonderzoek ${domein}`,
+          },
+        }
+      : {}),
     planningSent: {
       knop: 'Kopieer planningsmail',
       naam: 'planningsmail',
@@ -331,7 +359,8 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     // Scopegesprek, transcript en scope vallen weg bij een extern bureau: dat bepaalt de
     // scope zelf en voert het gesprek met de klant. Wat er voor ons overblijft is de
     // planning regelen -- verzoek indienen, wachten op een datum, die doorgeven aan de klant.
-    ...(viaBureau
+    // Tenzij de schakelaar "Scope zelf met de klant bespreken" aanstaat: dan staan ze er wel.
+    ...(!scopeZelf
       ? []
       : [
           {
@@ -358,17 +387,31 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
             datum: null,
             handmatig: false,
           },
-          {
-            // De website staat er al vanaf de intake; de scope is pas af als na het
-            // scopegesprek ook de overige informatie is ingevuld, met de wettelijke
-            // uitzonderingen. "Buiten scope" telt niet mee: dat mag leeg blijven als
-            // er niets specifieks is uitgesloten.
-            key: 'scope',
-            label: 'Scope ingevuld',
-            klaar: Boolean(project.scopeInScope?.trim() && project.scopeInfo?.trim()),
-            datum: null,
-            handmatig: false,
-          },
+          ...(viaBureau
+            ? [
+                {
+                  // Wat de klant heeft gezegd moet naar het bureau, want dat schrijft het
+                  // rapport en plant het werk. Pas daarna telt het wachten op een startdatum.
+                  key: 'scopeSentToBureau',
+                  label: `Scope doorgegeven aan ${bureau}`,
+                  klaar: Boolean(project.scopeSentToBureau),
+                  datum: project.scopeSentToBureau,
+                  handmatig: true,
+                },
+              ]
+            : [
+                {
+                  // De website staat er al vanaf de intake; de scope is pas af als na het
+                  // scopegesprek ook de overige informatie is ingevuld, met de wettelijke
+                  // uitzonderingen. "Buiten scope" telt niet mee: dat mag leeg blijven als
+                  // er niets specifieks is uitgesloten.
+                  key: 'scope',
+                  label: 'Scope ingevuld',
+                  klaar: Boolean(project.scopeInScope?.trim() && project.scopeInfo?.trim()),
+                  datum: null,
+                  handmatig: false,
+                },
+              ]),
         ]),
     {
       // Bij een extern bureau is er geen deadline: dat bureau levert op zijn eigen
@@ -455,7 +498,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
     // (bij twintig herinspecties is er één met een uitnodiging), en het dashboard slaat het
     // planningsakkoord er ook al over. Wat blijft is de eigen periode en de oplevering.
     if (!isHerinspectie) return true;
-    return !['invitationSent', 'scopeCallPlanned', 'scopeCallHeld', 'transcript', 'scope', 'planningSent', 'planningApproved'].includes(s.key);
+    return !['invitationSent', 'scopeCallPlanned', 'scopeCallHeld', 'transcript', 'scope', 'scopeSentToBureau', 'planningSent', 'planningApproved'].includes(s.key);
   });
 
   const gedaan = stappen.filter((s) => s.klaar).length;
@@ -484,6 +527,22 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   };
   const gespreksdatum = (veld: string) =>
     project[veld] ? format(new Date(project[veld]), 'yyyy-MM-dd') : '';
+
+  /** Een schakelaar op het onderzoek (boolean), met dezelfde herlaad als een stap. */
+  const zetSchakelaar = async (key: string, aan: boolean) => {
+    setBezig(key);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: aan }),
+      });
+      if (res.ok) window.location.reload();
+      else alert('Het bijwerken is niet gelukt.');
+    } finally {
+      setBezig(null);
+    }
+  };
 
   const zetStap = async (key: string, aan: boolean) => {
     setBezig(key);
@@ -544,6 +603,27 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
         </span>
       </button>
       <div className={`p-4 ${uitgeklapt ? '' : 'hidden'}`}>
+        {/* Alleen bij een bureau-project: normaal bepaalt dat bureau de scope met de klant.
+            Aan zetten voegt de vier scopestappen toe, met dezelfde bewaking als bij een eigen
+            onderzoek. Niet bij een hertest: die erft de voorbereiding van de nulmeting. */}
+        {viaBureau && !isHerinspectie && (
+          <label className="mb-3 flex items-start gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={Boolean(project.scopeCallWanted)}
+              disabled={bezig === 'scopeCallWanted'}
+              onChange={(e) => zetSchakelaar('scopeCallWanted', e.target.checked)}
+              className="mt-0.5 rounded border-gray-300 text-shift2-primary focus:ring-shift2-primary"
+            />
+            <span>
+              Scope zelf met de klant bespreken
+              <span className="block text-xs text-gray-500">
+                Normaal bepaalt {bureau} de scope met de klant. Zet dit aan als jij toch een gesprek
+                nodig hebt, bijvoorbeeld over een testomgeving of inloggegevens.
+              </span>
+            </span>
+          </label>
+        )}
         <ol className="space-y-2">
           {stappen.map((s, i) => (
             <li

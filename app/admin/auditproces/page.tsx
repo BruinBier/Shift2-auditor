@@ -96,6 +96,18 @@ export default function AuditprocesPage() {
               verstuurd.
             </p>
 
+            <h3 className="text-base font-semibold text-gray-900">Cardan-onderzoek met eigen scopegesprek</h3>
+            <p>
+              Bij een onderzoek dat Cardan uitvoert, bepaalt Cardan de scope met de klant; de
+              voorbereiding toont dan alleen het planningsverzoek, de startdatum, de planningsmail
+              en het akkoord. Moet je toch zelf met de klant om tafel, bijvoorbeeld over een
+              testomgeving of inloggegevens, zet dan in het blok Voorbereiding de schakelaar{' '}
+              <strong>"Scope zelf met de klant bespreken"</strong> aan. Dan verschijnen dezelfde
+              stappen als bij een eigen onderzoek (gesprek gepland met datum, gevoerd, transcript)
+              plus één extra: <strong>"Scope doorgegeven aan Cardan"</strong>. Pas na die stap gaat
+              het dashboard wachten op de startdatum van Cardan, geteld vanaf het doorgeven.
+            </p>
+
             <h3 className="text-base font-semibold text-gray-900">Klantgesprek: bespreekpunten en gespreksverslag</h3>
             <p>
               Alles wat je de klant nog moet vragen of vertellen zet je als <strong>bespreekpunt</strong> bij

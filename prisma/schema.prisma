@@ -190,6 +190,11 @@ model Project {
   /// rappelleert het dashboard, daarna niet meer.
   scopeCallPlanned        DateTime?      @map("scope_call_planned")
   scopeCallDate           DateTime?      @map("scope_call_date") @db.Date
+  /// Bij een extern bureau: de onderzoeker bespreekt de scope tóch zelf met de klant.
+  /// Zet de scopestappen aan die anders bij dat bureau liggen.
+  scopeCallWanted         Boolean        @default(false) @map("scope_call_wanted")
+  /// Bij een extern bureau: wanneer de uitkomst van dat gesprek aan het bureau is doorgegeven.
+  scopeSentToBureau       DateTime?      @map("scope_sent_to_bureau") @db.Timestamp(6)
   scopeCallHeld           DateTime?      @map("scope_call_held")
   /// Transcript van het scopegesprek; de bron voor de scope-afspraken.
   scopeCallTranscript     String?        @map("scope_call_transcript") @db.Text

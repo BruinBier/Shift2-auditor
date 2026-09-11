@@ -338,6 +338,8 @@ export async function PATCH(
       'scopeCallHeld',
       'scopeCallPlanned',
       'scopeCallTranscript',
+      'scopeCallWanted',
+      'scopeSentToBureau',
       'scopeInfo',
       'scopeInScope',
       'scopeOutOfScope',
