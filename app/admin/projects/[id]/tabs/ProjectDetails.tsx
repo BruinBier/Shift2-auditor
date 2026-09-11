@@ -1369,7 +1369,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         {/* Wat je de klant nog moet vragen; open punten tellen mee op het dashboard. */}
         <Bespreekpunten
           projectId={project.id}
-          heeftTranscript={Boolean(project.scopeCallTranscript?.trim())}
+          transcript={project.scopeCallTranscript ?? null}
           onNotitie={(notitie) => setProjectNotes((lijst) => [notitie, ...lijst])}
         />
 

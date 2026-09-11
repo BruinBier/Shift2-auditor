@@ -38,16 +38,25 @@ const CHECKLIST = ['Teams-transcript aanzetten'];
 
 export default function Bespreekpunten({
   projectId,
-  heeftTranscript,
+  transcript,
   onNotitie,
 }: {
   projectId: string;
-  /** Staat er een transcript bij het onderzoek? Zonder transcript valt er geen verslag te maken. */
-  heeftTranscript: boolean;
+  /**
+   * Het transcript van het gesprek (Project.scopeCallTranscript). Hier te plakken en te
+   * bewerken, want dit blok is waar je na het gesprek bent; het veld onder Planning is
+   * hetzelfde veld. Zonder transcript valt er geen verslag te maken.
+   */
+  transcript: string | null;
   /** Het verslag komt als notitie; de ouder zet hem in zijn lijst zodat hij meteen zichtbaar is. */
   onNotitie?: (notitie: any) => void;
 }) {
   const [punten, setPunten] = useState<Bespreekpunt[]>([]);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [transcriptTekst, setTranscriptTekst] = useState(transcript ?? '');
+  const [transcriptBezig, setTranscriptBezig] = useState(false);
+  const heeftTranscript = Boolean(transcript?.trim());
+  const woorden = heeftTranscript ? transcript!.trim().split(/\s+/).length : 0;
   const [verslagBezig, setVerslagBezig] = useState(false);
   const [verslagMelding, setVerslagMelding] = useState<string | null>(null);
   const [voorstellen, setVoorstellen] = useState<Record<string, Voorstel>>({});
@@ -137,6 +146,30 @@ export default function Bespreekpunten({
   const bewaarUitkomst = async (id: string) => {
     await werkBij(id, { uitkomst: uitkomstTekst });
     setUitkomstOpen(null);
+  };
+
+  /**
+   * Zelfde veld en zelfde route als "Transcript" onder Planning. Na het bewaren een
+   * volledige herlaad met het anker, want de projectpagina is een servercomponent en het
+   * woordental onder Planning komt van de server; het anker brengt je hier terug.
+   */
+  const bewaarTranscript = async () => {
+    setTranscriptBezig(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scopeCallTranscript: transcriptTekst.trim() || null }),
+      });
+      if (!res.ok) {
+        alert('Het bewaren van het transcript is niet gelukt.');
+        return;
+      }
+      window.location.hash = 'bespreekpunten';
+      window.location.reload();
+    } finally {
+      setTranscriptBezig(false);
+    }
   };
 
   const maakVerslag = async () => {
@@ -264,35 +297,97 @@ export default function Bespreekpunten({
               ))}
             </ul>
           )}
-          <form onSubmit={voegToe} className="flex items-start gap-2 mb-3">
-            <textarea
-              value={nieuw}
-              onChange={(e) => setNieuw(e.target.value)}
-              rows={2}
-              placeholder="Wat moet je de klant nog vragen of vertellen?"
-              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-            />
-            <button
-              type="submit"
-              disabled={!nieuw.trim() || bezig === 'nieuw'}
-              className="px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 disabled:opacity-50"
-            >
-              Toevoegen
-            </button>
+          {/* Het veld is voor een nieuw punt; zonder kop las het als een zoekveld of een
+              notitieveld. De placeholder geeft een voorbeeld in plaats van een vraag. */}
+          <form onSubmit={voegToe}>
+            <label htmlFor="nieuw-bespreekpunt" className="block text-sm font-medium text-gray-700 mb-1">
+              Nieuw bespreekpunt
+            </label>
+            <div className="flex items-start gap-2">
+              <textarea
+                id="nieuw-bespreekpunt"
+                value={nieuw}
+                onChange={(e) => setNieuw(e.target.value)}
+                rows={2}
+                placeholder="Bijvoorbeeld: Is er een testomgeving met DigiD-testaccounts, en wat is de URL?"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+              />
+              <button
+                type="submit"
+                disabled={!nieuw.trim() || bezig === 'nieuw'}
+                className="px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+              >
+                Bespreekpunt toevoegen
+              </button>
+            </div>
           </form>
-          {/* Na het gesprek. Zonder transcript is de knop uit, met uitleg in de title: de
-              knop verbergen zou de stap zelf verbergen. */}
+        </div>
+
+        <div>
+          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Na het gesprek</h4>
+          {/* Eerst het transcript, dan het verslag: de knop voor het verslag staat er altijd,
+              maar is uit zolang er geen transcript is. Verbergen zou de stap zelf verbergen. */}
+          {transcriptOpen ? (
+            <div className="mb-3">
+              <label htmlFor="transcript-tekst" className="block text-sm font-medium text-gray-700 mb-1">
+                Transcript van het gesprek
+              </label>
+              <textarea
+                id="transcript-tekst"
+                value={transcriptTekst}
+                onChange={(e) => setTranscriptTekst(e.target.value)}
+                rows={12}
+                autoFocus
+                placeholder="Plak hier het Teams-transcript."
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono"
+              />
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={bewaarTranscript}
+                  disabled={transcriptBezig}
+                  className="px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 disabled:opacity-50"
+                >
+                  {transcriptBezig ? 'Bewaren…' : 'Transcript bewaren'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTranscriptOpen(false);
+                    setTranscriptTekst(transcript ?? '');
+                  }}
+                  className="text-sm text-gray-600 hover:underline"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-3 flex items-center gap-3 text-sm">
+              {heeftTranscript ? (
+                <span className="text-gray-700">Transcript staat erbij ({woorden} woorden).</span>
+              ) : (
+                <span className="text-gray-500">Nog geen transcript.</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setTranscriptOpen(true)}
+                className="text-sm text-shift2-primary hover:underline"
+              >
+                {heeftTranscript ? 'Transcript bewerken' : 'Transcript toevoegen'}
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={maakVerslag}
               disabled={!heeftTranscript || verslagBezig}
-              title={heeftTranscript ? 'Maakt een kort verslag uit het transcript en stelt per punt de uitkomst voor' : 'Plak eerst het transcript van het gesprek, hierboven bij Transcript'}
+              title={heeftTranscript ? 'Maakt een kort verslag uit het transcript en stelt per punt de uitkomst voor' : 'Voeg eerst het transcript van het gesprek toe'}
               className="px-3 py-2 text-sm font-medium text-shift2-primary border border-shift2-primary rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {verslagBezig ? 'Verslag wordt gemaakt…' : 'Maak gespreksverslag uit het transcript'}
             </button>
-            {!heeftTranscript && <span className="text-xs text-gray-500">Plak eerst het transcript van het gesprek.</span>}
           </div>
           {verslagMelding && <p className="mt-2 text-sm text-gray-700">{verslagMelding}</p>}
         </div>

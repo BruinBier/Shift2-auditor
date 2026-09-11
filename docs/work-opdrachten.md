@@ -367,8 +367,8 @@ klantgesprek**. Vanaf dat moment staat hij op het dashboard onder het onderzoek,
 na het gesprek afvinkt.
 
 **Het gespreksverslag maakt Work niet.** Na het gesprek plak je het Teams-transcript in de
-tool (tabblad Details, "Transcript scopegesprek" of bij Cardan "Transcript klantgesprek") en
-klik je op "Maak gespreksverslag": de tool zet het verslag als notitie bij het onderzoek en
+tool (tabblad Details, blok Bespreekpunten, knop "Transcript toevoegen") en klik je op "Maak
+gespreksverslag": de tool zet het verslag als notitie bij het onderzoek en
 stelt per bespreekpunt de uitkomst voor. Zie de pagina Auditproces in de tool, fase 2.
 
 ---

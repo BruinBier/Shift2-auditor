@@ -110,8 +110,9 @@ export default function AuditprocesPage() {
                 staat boven de bespreekpunten.
               </li>
               <li>
-                <strong>Na het gesprek:</strong> plak het transcript op tabblad Details in het veld
-                "Transcript scopegesprek" (bij een Cardan-onderzoek heet het "Transcript
+                <strong>Na het gesprek:</strong> plak het transcript in het blok Bespreekpunten,
+                onder "Na het gesprek", met de knop "Transcript toevoegen". Het is hetzelfde veld
+                als "Transcript scopegesprek" onder Planning (bij een Cardan-onderzoek "Transcript
                 klantgesprek", want Cardan voert daar het scopegesprek).
               </li>
               <li>
