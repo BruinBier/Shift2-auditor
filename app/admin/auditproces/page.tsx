@@ -79,6 +79,39 @@ export default function AuditprocesPage() {
               je door, hoe stem je af met de klant) en hoe de planningsmail wordt opgesteld en
               verstuurd.
             </p>
+
+            <h3 className="text-base font-semibold text-gray-900">Klantgesprek: bespreekpunten en gespreksverslag</h3>
+            <p>
+              Alles wat je de klant nog moet vragen of vertellen zet je als <strong>bespreekpunt</strong> bij
+              het onderzoek: tabblad Details, blok "Bespreekpunten voor het klantgesprek". Niet in
+              Projectdetails en niet in een notitie, want die komen nergens als actie terug. Open
+              punten staan op het dashboard onder de actie van het onderzoek (klik erop en je leest
+              wat je moet bespreken) en als badge in de onderzoekenlijst.
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-gray-700">
+              <li>
+                <strong>Voor het gesprek:</strong> zet het Teams-transcript aan. Het vinkje daarvoor
+                staat boven de bespreekpunten.
+              </li>
+              <li>
+                <strong>Na het gesprek:</strong> plak het transcript op tabblad Details in het veld
+                "Transcript scopegesprek" (bij een Cardan-onderzoek heet het "Transcript
+                klantgesprek", want Cardan voert daar het scopegesprek).
+              </li>
+              <li>
+                <strong>Vraag Claude om het gespreksverslag</strong>, bijvoorbeeld "maak het
+                gespreksverslag van WAAL-02". Claude leest het transcript, schrijft een kort
+                verslag als notitie (wie erbij waren, per onderwerp de afspraak, onderaan de
+                acties met wie wat doet), vult per bespreekpunt de uitkomst in en vinkt het af.
+                Een punt dat niet aan bod kwam blijft open. Wat naar een ander moet, zoals een
+                terugkoppeling aan Cardan, staat als actie in het verslag; versturen doe je zelf.
+              </li>
+            </ol>
+            <p>
+              Afgevinkte punten blijven staan, met datum en uitkomst: zo vind je later terug wat er
+              wanneer met de klant is afgestemd. Per ongeluk afgevinkt? Het vinkje uitzetten zet het
+              punt weer open.
+            </p>
           </section>
 
           <section id="fase-3">
