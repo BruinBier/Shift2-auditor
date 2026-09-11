@@ -219,6 +219,25 @@ onderzoek aangemaakt -> uitnodiging verstuurd -> scopegesprek gehouden
    -> CRM-nummer ingevuld -> planningsmail verstuurd -> akkoord van de klant
 ```
 
+### Vragen voor de klant worden bespreekpunten
+
+Kom je in een mail of offerte iets tegen dat de onderzoeker nog met de klant moet bespreken
+(een testomgeving die er nog niet is, een vraag die de klant stelt en die een gesprek vraagt,
+iets dat naar Cardan terug moet), lever dat dan als **bespreekpunt**: één alinea, geschreven
+als vraag aan de klant, met erbij wat er na het antwoord moet gebeuren. De onderzoeker plakt
+het in Shift2Auditor onder "Bespreekpunten voor het klantgesprek" op de projectpagina. Daar
+staat het op het dashboard tot het is afgevinkt; in Projectdetails of in een notitie komt het
+nergens terug.
+
+Na het gesprek plakt de onderzoeker het Teams-transcript in de tool, en maakt Claude Code
+daar het gespreksverslag van: kort, met per onderwerp de afspraak en onderaan de acties. Dat
+verslag schrijf jij niet. Je hebt het transcript niet, en het verslag hoort bij het onderzoek
+in de tool. Krijg je toch de vraag, zeg dan dat het via de tool loopt.
+
+Wat er open staat aan bespreekpunten is in Shift2Auditor te zien, op het dashboard en op de
+projectpagina. Vraagt de onderzoeker wat er nog met een klant besproken moet worden, kijk dan
+daar (of laat Codex kijken) in plaats van het uit de mails te reconstrueren.
+
 **De mails aan de klant schrijf je niet.** De tool heeft er sjablonen voor, met de naam van de
 contactpersoon en de website er al in, en met een knop om ze te kopiëren. Dat geldt voor de
 uitnodiging voor het scopegesprek én voor de planningsmail. De onderzoeker geeft je die tekst;

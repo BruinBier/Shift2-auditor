@@ -319,6 +319,9 @@ De uitkomst gaat naar de velden **In scope**, **Buiten scope** en **Door klant a
 pagina's** op de projectpagina. Met de knop "Importeer naar scope & steekproef" worden daar
 scope-items en steekproefpagina's van gemaakt.
 
+Staat er in de mail iets dat nog een gesprek vraagt, dan levert Work dat als bespreekpunt;
+zie opdracht 11.
+
 ## 9. Het rapport op SIMcms zetten
 
 Als het onderzoek klaar is en het rapport eruit kan.
@@ -347,6 +350,26 @@ voor het rapport.
 Voor teksten die in het rapport terechtkomen gelden de schrijfregels uit `wcag-regels/`; die
 kent Work niet. Laat rapportteksten liever door Claude Code schrijven, of leg ze daarna
 daarlangs.
+
+## 11. Een bespreekpunt voor het klantgesprek klaarzetten
+
+Als er iets is dat je de klant nog moet vragen of vertellen, en er komt een gesprek aan.
+Bijvoorbeeld: de klant logt in met DigiD en je weet nog niet of er een testomgeving is.
+
+> Lees deze mail: [link naar de mail]. Wat moet ik hierover nog met de klant bespreken?
+>
+> Geef per punt één alinea, geschreven als vraag aan de klant, met erbij wat er na het
+> antwoord moet gebeuren (bijvoorbeeld: terugkoppelen aan Cardan). Ik plak het als
+> bespreekpunt in Shift2Auditor.
+
+De alinea gaat op de projectpagina, tabblad Details, in het blok **Bespreekpunten voor het
+klantgesprek**. Vanaf dat moment staat hij op het dashboard onder het onderzoek, tot je hem
+na het gesprek afvinkt.
+
+**Het gespreksverslag maakt Work niet.** Na het gesprek plak je het Teams-transcript in de
+tool (tabblad Details, "Transcript scopegesprek" of bij Cardan "Transcript klantgesprek") en
+vraag je Claude Code om het verslag: dat komt als notitie bij het onderzoek, en de
+bespreekpunten krijgen hun uitkomst. Zie de pagina Auditproces in de tool, fase 2.
 
 ---
 
