@@ -49,11 +49,51 @@ op dat de scan alleen tékst vindt en geen handelingen; zie `Shift2_Regels_SC_1_
 ## Regels
 
 - Altijd samen met 1.2.3 als er visuele informatie zonder hoorbaar alternatief is. Twee aparte bevindingen, want de eisen verschillen: 1.2.3 staat transcript OF audiodescriptie toe, 1.2.5 alleen audiodescriptie als er ruimte is.
-- Gebruik QuickFinding 50baed61-a658-4b18-8286-9b2104fdd43c. Zelfde beschrijvingsopzet als 1.2.3 (probleem, doelgroep, voorbeelden met tijdstip).
+- Gebruik QuickFinding 50baed61-a658-4b18-8286-9b2104fdd43c. Zelfde beschrijvingsopzet als 1.2.3 (probleem, doelgroep, voorbeelden met tijdstip). De volledige titel, beschrijving en het advies staan hieronder onder "Vaste tekst uit de QuickFinding-bibliotheek".
 - MENGVORM (video heeft deels wel en deels geen ruimte voor audiodescriptie): een 1.2.5-bevinding per pagina met een vierdelig advies. 1) audiodescriptie als algemene oplossing, 2) concreet tijdstip noemen waar WEL ruimte is ("audiodescriptie is dan verplicht"), 3) momenten zonder ruimte benoemen ("volstaat een transcript onder dit succescriterium"), 4) verwijzing naar 1.2.3 voor het transcript.
 - Video met VOLLEDIG ruimte voor audiodescriptie: kortere samenvatter-stijl die naar de 1.2.3-bevinding verwijst.
 - Video met HELEMAAL GEEN ruimte voor audiodescriptie: geen 1.2.5-bevinding nodig, het transcript onder 1.2.3 dekt het volledig.
 - Impact matig, responsibility redacteur, status open.
+
+## Vaste tekst uit de QuickFinding-bibliotheek
+
+Deze tekst is door Frits goedgekeurd en ligt vast. Neem hem letterlijk over en vul alleen de
+titel van de video en de voorbeelden in. Niet herformuleren en niet "verbeteren"; de
+woordkeuze die vastligt ("beschrijft", "is opgenomen", "onder de video", geen "namelijk")
+staat in `Shift2_Regels_SC_1_2_3.md` en geldt hier net zo.
+
+### QuickFinding 50baed61-a658-4b18-8286-9b2104fdd43c (1.2.5)
+
+Titel: **Video met visuele informatie zonder audiodescriptie**
+
+Beschrijving:
+
+> Op de pagina staat een video. In deze video komt visuele informatie voor die niet
+> beschikbaar is voor mensen die blind of slechtziend zijn.
+>
+> Voorbeelden:
+> - MM:SS "tekst in beeld"
+> - MM:SS "tekst in beeld"
+
+Advies:
+
+> Voeg een audiodescriptie toe om belangrijke visuele informatie hoorbaar te maken. Dit kan
+> door een tweede audiospoor aan de video toe te voegen dat zowel de originele audio als de
+> audiodescriptie bevat.
+>
+> Op momenten waar ruimte is in het audiospoor is een audiodescriptie verplicht. Is er in het
+> audiospoor écht geen ruimte? Neem de visuele informatie dan als alternatief op in een
+> teksttranscript.
+
+Bij toepassen: "een video" wordt "de video 'X'" met de titel van de video; dezelfde twee tot
+drie voorbeelden met tijdstip als in de 1.2.3-bevinding over dezelfde video; impact `matig`,
+verantwoordelijkheid `redacteur`, status `open`. Dit advies is de basis; bij een mengvorm
+(deels wel, deels geen ruimte) wordt het het vierdelige advies uit de regels hierboven, bij
+volledig ruimte de korte vorm die naar de 1.2.3-bevinding verwijst.
+
+De 1.2.3-tegenhanger (QuickFinding ed3a4d2a-ce67-4474-88a0-edba1c124624) staat in
+`Shift2_Regels_SC_1_2_3.md`. Het advies dáár bevat een zin over 1.2.5 die vanuit de
+W3C-tekst onjuist lijkt; die zin blijft staan, en waarom staat in dat bestand.
 
 ## Alleen ingesloten media telt mee
 

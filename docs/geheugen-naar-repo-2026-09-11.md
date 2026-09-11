@@ -165,3 +165,28 @@ achter op de repo. Die zijn in het geheugen gecorrigeerd; de repo is leidend.
 
 Voortgang van BEV-01, BEV-03 en UTHEU-01 staat in de database zelf. "Link plus
 F5-herinnering na een CLI-actie" is chatgedrag van Claude Code.
+
+## Uitgevoerd op 11 september 2026
+
+Alle 35 punten hierboven zijn dezelfde dag overgenomen, per bestand zoals aangegeven. Bij
+het overnemen is elk punt tegen de code gehouden; vijf keer bleek het geheugen niet (meer)
+te kloppen en is de werkelijkheid opgeschreven:
+
+- **Punt 9:** een opmerking is `type === 'opmerking'` via `isOpmerking()` in
+  `lib/finding-classification.ts`; `impact == null` is alleen de terugval.
+  `lib/generate-report-docx.ts` bestaat niet meer; het Word-rapport komt uit de HTML.
+- **Punt 21:** QuickFinding `de8bf36c` (het vaste 1.2.3-advies) staat niet meer in de
+  database. De tekst is uit `lib/quick-findings-data.ts` gehaald; als het verdwijnen
+  onbedoeld is, moet hij terug in de bibliotheek.
+- **Punt 29:** de twee kleppen op de kaart heten "Waar dit criterium over gaat" en "Hoe dit
+  is vastgesteld"; deelgebieden gelden voor elk regelbestand met `### Deelgebieden`, dat
+  zijn er negen, niet drie.
+- **Punt 30:** niets in de code blokkeert "Gereed" bij een open `niet_te_bepalen`.
+  `derive-assessments` berekent wel een blokkadelijst, maar Afronden kijkt er niet naar.
+  Opgeschreven als werkregel (tabblad Dekking nakijken vóór afronden); een echte blokkade
+  is een verbeterpunt aan de tool.
+- **Punt 34:** het kale blokje toont de toelichting van een mankerend gebied juist wél als
+  de bevindingenkoppeling leeg is, niet "geen toelichting" zoals hierboven staat.
+
+Gesignaleerd maar niet gewijzigd: stap 2 op de pagina `/admin/video-a2-gemeenten` noemt
+nog 4K Video Downloader, terwijl op 24 juli 2026 YouTube Studio is afgesproken.

@@ -21,6 +21,56 @@ technisch issue gemeld én als bevinding gerapporteerd, omdat de redacteur daar 
 kan doen (bijschrift aanpassen). Bij pure templatecode zonder redactionele ingang vervalt de
 bevinding.
 
+De vraag die beslist: kan een redacteur hier iets aan doen? Nee, dan alleen een technisch
+issue. Ja, dan ook een bevinding.
+
+### Zo maak je het technische issue aan
+
+Technische issues staan op de pagina `/technische-issues`, los van elk project: ze gelden voor
+het platform, niet voor één onderzoek. Aanmaken gaat met `POST /api/technical-issues`. De
+velden, zoals `app/api/technical-issues/route.ts` ze leest:
+
+| Veld | Verplicht | Wat erin staat |
+|---|---|---|
+| `title` | ja | Herkenbaar met de leverancier voorop: "SIMsite: knop 'Contrast verhogen' in toegankelijkheidsbalk geeft toestand niet door" |
+| `description` | ja | Wat er mis is. Vermeld hierin altijd **dat het templatecode is** en **op welke site je het hebt gezien**, met het element erbij. Zonder die twee is later niet na te gaan waar het vandaan kwam of waarom het geen bevinding werd. |
+| `request` | nee | Wat je de leverancier vraagt te doen (bij een bevinding zou dit het advies zijn) |
+| `wcagCriterionId` | nee | Het id van het criterium uit `npm run cli -- list-criteria`, dus de UUID en niet de code "4.1.2" |
+| `impact` | nee | `klein`, `matig`, `serieus`, `kritiek` of `onbekend` |
+| `supplier` | nee | De leverancier van de template, bijvoorbeeld "SIMgroep". Dit veld scheidt de issues op klantsites van verbeterpunten aan de tool zelf (`shift2-auditor`); vul het dus altijd in. |
+| `status` | nee | `open` (standaard) of `resolved` |
+| `githubIssueUrl` | nee | Alleen voor issues aan de tool zelf |
+
+Curl altijd met `charset=utf-8` en met `-w "HTTP %{http_code}\n"`, anders zie je een
+mislukte aanroep niet:
+
+```bash
+curl -s -X POST http://localhost:3000/api/technical-issues \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -w "HTTP %{http_code}\n" \
+  --data-binary @issue.json
+```
+
+met in `issue.json` bijvoorbeeld:
+
+```json
+{
+  "title": "SIMsite: knop 'Contrast verhogen' in toegankelijkheidsbalk geeft toestand niet door",
+  "description": "Templatecode van SIMsite, gezien op duurzaam.beverwijk.nl. De knop 'Contrast verhogen' in de toegankelijkheidsbalk is een aan/uit-knop, maar geeft niet door of hij aanstaat: er ontbreekt een aria-pressed. Wie een schermlezer gebruikt hoort na het drukken niet of het contrast nu hoger staat. De redacteur kan hier niets aan doen.",
+  "request": "Geef de knop aria-pressed mee en zet die op true zodra het hoge contrast aanstaat.",
+  "wcagCriterionId": "<id van 4.1.2 uit list-criteria>",
+  "impact": "matig",
+  "supplier": "SIMgroep",
+  "status": "open"
+}
+```
+
+Er is ook een route via de onderzoeker: een voorstel dat in "Waar sta ik" wordt doorgezet
+naar een technisch issue, maakt dat issue zelf aan (beschrijving wordt beschrijving, advies
+wordt verzoek) en zet het voorstel op afgewezen. Weet je bij het beoordelen al dat het
+templatecode is, maak dan geen voorstel om te laten doorzetten, maar het issue rechtstreeks;
+een voorstel dat nergens toe leidt kost de onderzoeker alleen aandacht.
+
 ## Altijd actief checken: de logo-link boven aan de pagina
 
 Het logo in de header is vrijwel altijd een link naar de homepage. Loop na of die link een

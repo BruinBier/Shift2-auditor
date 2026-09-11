@@ -108,8 +108,11 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - **Een steekproef die jij samenstelt is ook een voorstel.** Maak samples aan met `--voorgesteld=true`; ze staan dan in de steekproef, maar `audit-samples` weigert te starten zolang er nog een voorstel openstaat. Die workflow neemt ALLE sample-items mee, dus zonder die poort draait er een volledige audit op pagina's die niemand heeft gekozen — en wat niet in de steekproef zat, ontbreekt geruisloos in het rapport. De onderzoeker keurt **per pagina** goed, met een knop bij de rij; zelf een sample bewerken telt ook als bekeken. Bewust doordraaien kan met `args.ookVoorgesteld = true`.
 - Wat jij aanmaakt is een **voorstel**, geen bevinding. Het telt nergens mee — niet in het criteriumoordeel, niet in het rapport — tot de onderzoeker akkoord geeft in het tabblad "Waar sta ik". Zie `docs/adr/0001-akkoord-als-poort.md` en de woordenlijst in `CONTEXT.md`.
 - Finding codes worden toegekend: `V001` voor een voorstel, `B001` pas bij akkoord. Geef er zelf nooit een mee.
+- **Verwijs naar een bevinding met het `id`, nooit met de `findingCode`.** Bij akkoord wordt `V001` een `B00x` uit een andere reeks (`lib/finding-code.ts`), dus een verwijzing op de code breekt precies op het moment dat de onderzoeker akkoord geeft. Toon de code wel op het scherm; de koppeling eronder is het id.
+- `get-project` stuurt de scope-velden niet mee: `scopeInScope`, `scopeOutOfScope` en `scopeInfo` (Details > Planning) ontbreken in het antwoord, net als het transcript. Lees ze uit het volledige projectrecord (`GET /api/projects` geeft het per project terug), anders lijkt de scope leeg terwijl hij gevuld is.
 - Het criteriumoordeel volgt uit de bevindingen en wordt herberekend bij aanmaken, wijzigen en verwijderen (`lib/criterion-assessment.ts`). Zet het niet zelf met `set-assessment` tenzij je het echt handmatig wilt overrulen.
 - Een opmerking (`type=opmerking`, geen impact) keurt een criterium **niet** af.
+- **`niet_te_bepalen` is een open vraag, `niet_aanwezig` een afgerond oordeel.** Bij het afleiden van het criteriumoordeel uit de sample-checks (`app/api/projects/[id]/derive-assessments`) tellen `niet_te_bepalen`-samples niet mee; alleen als álle samples van een criterium erop staan, krijgt het geen oordeel en komt het als blokkade terug. Staat het overal op `niet_aanwezig`, dan is dat `not_present`: geen video op de site is een afgerond oordeel voor 1.2.x. Let op: de knop Afronden (`/api/projects/[id]/finalize`) controleert dit nu niet; het onderzoek gaat op "Gereed" ook als er nog open vragen staan.
 - **Een criterium met deelgebieden komt er niet in zonder die gebieden.** 1.1.1, 1.3.1, 1.4.3 en 2.4.4 bestaan uit meerdere losse vragen; die staan onder `### Deelgebieden` in hun regelbestand. Die lijst is de enige bron: zet er een gebied bij en de weigering geldt meteen, zonder dat er code verandert. Stuur ze mee in hetzelfde `save-checks`-bericht — `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking", "toelichting": "..." }]` — anders wordt het oordeel geweigerd met de namen erbij die nog ontbreken. Kon je een gebied niet beoordelen, dan is dat `nvt` met een toelichting: dát je het niet kon is precies de informatie die een lopende onderbouwing weglaat. Een agent die drie van de zes gebieden overslaat en over de andere drie netjes schrijft, levert iets op dat er hetzelfde uitziet als volledig werk.
 - **`reden` is één of twee zinnen** bij een criterium met deelgebieden: of de meting geldig was — kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Er is bijna nooit iets dat bij geen enkel gebied thuishoort.
 - Linking uses `SampleItem + FindingOccurrence` (the manual/UI path), not `ScopeUrl + FindingUrl` (crawler path).
@@ -127,6 +130,17 @@ gebiedenlijst een veld met "Aan de regels toevoegen"; dat schrijft naar het rege
 dat gebied aflopen, op elke pagina en in elk project — het is een regel, geen aantekening bij
 één oordeel. Bestaande oordelen krijgen er een open ring bij; hun akkoord blijft staan, want
 dat gold voor de tekst die er lag.
+
+**Toont een mankerend gebied op de kaart zijn toelichting tóch in het kale blokje?** Naast
+de uitklapper met alle gebieden staat een tweede blokje met alleen de gebieden die aandacht
+vragen plus hun bevinding, bewust zonder toelichting (`Stapel.tsx`, `gebiedenLijst` met
+`metToelichting=false`). Staat de toelichting daar wél, dan kon `verdeelBevindingen` geen
+bevinding aan dat gebied koppelen: de lijst `gebieden[...].bevindingen` van dat oordeel is
+leeg. De agent heeft de bevinding wel gemaakt, maar niet aan zijn gebied gekoppeld; een
+opmerking valt sowieso buiten de koppelbare set. Dat is geen weergavefout. Kijk niet in de
+kaartcode of het browserpaneel, maar controleer meteen die koppeling en repareer door
+`audit-criterium` voor dat criterium opnieuw te draaien: die schrijft de koppeling wél mee.
+Een verouderd of onvolledig oordeel repareer je door het opnieuw te laten schrijven.
 
 ### Eén criterium opnieuw laten beoordelen
 
@@ -198,6 +212,8 @@ doen.
 **Gebruik daarvoor nooit een ingebouwde browser-pane.** Daar hydrateert React niet: de HTML staat er, maar er hangt geen enkele klikafhandelaar aan. Een knop doet dan niets, een uitklapmenu klapt niet uit, zoeksuggesties verschijnen niet — en dat ziet er precies zo uit als een echte bevinding. Op 15 augustus 2026 leverde dat drie afkeuringen op heuvelrug.nl op die geen van drieën bestonden.
 
 `get-html` geeft een veld `gehydrateerd` terug. Staat dat op `false`, dan is er iets mis met de pagina zelf: trek dan geen conclusies over toetsenbord, menu's, schakelknoppen of zoeksuggesties.
+
+**Vraag de onderzoeker alleen om de URL en het criterium.** HTML en schermafdruk haal je zelf op; vraag nooit om die te plakken. Vraag wél, vóór de eerste `get-html` van een sessie, of de auditsessie draait en of in dat venster klaarstaat wat de pagina nodig heeft: cookies geaccepteerd, ingelogd, een formulier tot de juiste stap doorlopen. Anders haal je de versie van vóór de cookiemuur op, met banners die op de echte pagina al weg zijn, en mislukt een stap achter een sessie. Geeft de pagina 401, 403 of een timeout, val dan terug op HTML en schermafdruk die de onderzoeker aanlevert, en raad `npm run chrome:debug` aan om daar in te loggen.
 
 **Moet je klikken, typen of schakelen om iets te kunnen beoordelen?** Start dan `npm run chrome:debug`. Dat opent een Chrome met foutopsporing op poort 9222, waar de CLI op aansluit met behoud van cookies en sessies. Let op: wat een test daar aanzet (zoals een hoogcontrastmodus in `localStorage`) blijft staan en beïnvloedt de volgende meting — zet het na afloop terug.
 
@@ -344,7 +360,36 @@ voor nodig. Vraagt hij het verslag toch hier, volg dan hetzelfde bestand:
    De knop in de tool doet dat niet zelf; die levert voorstellen die de onderzoeker overneemt.
    Doe je het hier, zeg dan wat je hebt afgevinkt.
 
-Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë.
+Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë. Dat geldt voor
+elke mutatie met Nederlandse tekst: `-H "Content-Type: application/json; charset=utf-8"` en
+`--data-binary @- <<'EOF'`, geen `-d` met een inline string. Verifieer daarna met een GET dat
+er geen U+FFFD (�) in de opgeslagen tekst staat; zit die erin, dan is de call mislukt en doe
+je hem opnieuw. Levert een heredoc toch vraagtekens op, schrijf de JSON dan via Python
+(`open(..., encoding='utf-8')`, `json.dump(..., ensure_ascii=False)`) en stuur
+`--data-binary @bestand.json`.
+
+## Bij een nieuw onderzoek: Google Drive-map
+
+Bij elk nieuw onderzoek hoort een submap in de Drive-map "shift2 auditor"
+(id `11GekUWK6HGUvo68TTKlJvv2eQSv0zyyZ`). De naam is uitsluitend het domein in kleine
+letters, bijvoorbeeld `blaricum.nl`: geen kenmerk, geen projecttitel. De map wordt op verzoek
+aangemaakt via de Google Drive-koppeling van Claude Code; de tool doet het niet zelf bij het
+aanmaken van een project. Niet vragen welke naam, en de bovenmap niet opnieuw aanmaken.
+
+## Technische issues (geen WCAG-bevinding)
+
+Functionele fouten die geen WCAG-bevinding zijn maar wel naar de leverancier moeten, staan
+op de pagina `/technische-issues`, los van de projecten. Aanmaken met
+`POST /api/technical-issues` en `{ title, description, request?, wcagCriterionId?, impact?,
+supplier?, status?, githubIssueUrl? }`; `title` en `description` zijn verplicht, `status` is
+`open` of `resolved` (standaard `open`), `impact` kent dezelfde waarden als bij bevindingen.
+`supplier` is het filter: het domein van de klantsite (`beverwijk.nl`) voor fouten op de site,
+`shift2-auditor` voor verbeterpunten aan de tool zelf.
+
+De scheidingsregel: alles wat onder een succescriterium valt blijft een bevinding, ook als
+opmerking (een `strong` op een knoptekst is een 1.3.1-opmerking, geen technisch issue). Een
+kapotte `href` op een mail- of telefoonlink is het omgekeerde: een functioneel probleem dat
+hier hoort, niet onder 2.4.4 of 4.1.2.
 
 ## CRM-sync (Dynamics-nummers)
 
@@ -361,6 +406,7 @@ Het JSON-bestand is een lijst met `{ "kenmerk": "ECHT-01" | "WAAL", "projectnumm
 ## Database & Prisma Workflow
 
 ### Critical User Preferences
+- **Backup eerst** - `npm run backup` is de eerste stap van elk plan dat de database raakt, geen optie onderaan. Controleer dat de CSV's in `backups/` rijen bevatten. Beloof nooit "geen risico" op grond van wat een commando volgens de documentatie hoort te doen: op 1 september 2026 stond dat in een plan voor `prisma migrate resolve`, en daarna waren 40 projecten, 750 bevindingen en 521 samples weg. Herstel lukte alleen met Neon point-in-time restore; dat venster is op dit (Free) account zes uur, dus doe zulk werk aan het begin van een dag.
 - **User executes all migrations manually** - Never run `npx prisma migrate dev` or `npx prisma migrate deploy` automatically
 - **Use production commands** - Always suggest `npx prisma migrate deploy`, NOT `npx prisma migrate dev`
 - **Manual migration creation** - When schema changes:
@@ -467,6 +513,13 @@ Tests can be run on:
 - Groups results by WCAG principle (Perceivable, Operable, Understandable, Robust)
 - Used by report tabs for displaying metrics
 
+**Browser versions for "User agents"** (`lib/browser-versions.ts`)
+- Reads the ProductVersion of the installed chrome.exe / firefox.exe / msedge.exe via PowerShell (Windows only); only the major version ends up in the report
+- Hooks in at project creation (`app/api/projects/route.ts`, before the `default_user_agents` setting) and at finalize (`app/api/projects/[id]/finalize/route.ts`: the herinspectie gets the versions of that moment, not those of the nulmeting)
+- If detection yields nothing, the existing value stays; it is never emptied. Existing projects are not changed retroactively
+- Never copy user agents from another project: a report describes what was actually tested with, and nulmeting and herinspectie are months apart, so they are supposed to differ
+- Test: `npm run test:browser-versions`
+
 **AI Integration**
 - OpenAI used for generating management summaries and researcher feedback
 - Endpoints: `/api/projects/[id]/generate-summary` and `/api/projects/[id]/generate-feedback`
@@ -524,11 +577,13 @@ Findings can be created three ways:
 
 Finding codes follow pattern: `{PROJECT_CODE}-{VERSION}-F{NUMBER}` (e.g., "SHP-3-F5")
 
-### Print/PDF Export
+### Print/PDF/Word Export
 Report pages include print-specific CSS:
 - Hidden navigation/buttons in print mode
 - Page break controls
 - Optimized typography for PDF export via browser print (Cmd/Ctrl + P)
+
+The Word report is built from the HTML report: `/api/reports/[id]/word` calls `generateReportHtml()` (`lib/generate-report-html.ts`) and converts the result with `lib/html-to-docx-report.ts`. The same HTML feeds `/api/reports/[id]/html` and `/accessible-pdf`. Report text therefore lives in one place; never put it in a second file or a Word template. The older `/docx` (template-based) and `/html-word` routes were removed on 2026-08-05 because text changes did not reach them. The conversion has no table of contents yet. When checking a downloaded Word file, mind that Windows saves new downloads as `(1)`, `(2)`: a "nothing changed" report is often an older file still open.
 
 ## Common Gotchas
 
@@ -545,6 +600,12 @@ Report pages include print-specific CSS:
 6. **Router Refresh** - After API mutations, always call `router.refresh()` to update server components
 
 7. **Markdown Rendering** - Use `marked.parse()` but check if content is already HTML with regex test first
+
+8. **Findings-API: PUT, geen PATCH** - `/api/projects/<id>/findings/<findingId>` kent alleen PUT en DELETE; een PATCH geeft 405 zonder zichtbare fout, en de bevinding blijft stilletjes ongewijzigd. (`/api/findings/<id>` kent wel GET en PATCH.) Bevestig een mutatie met `-w "HTTP %{http_code}\n"` of haal de bevinding terug.
+
+9. **Opmerking = `type === 'opmerking'`** - Gebruik `isOpmerking()` uit `lib/finding-classification.ts`; die valt terug op `impact == null` als een query `type` niet meelaadt. Opmerkingen worden bewust met status `resolved` opgeslagen, dus filter nooit op status om ze te vinden of te verbergen. Het rapport bestaat uit losse implementaties die uit elkaar kunnen lopen: de rapporttabs (`app/report/[id]/tabs/`), `lib/generate-report-html.ts` (basis voor HTML, Word en toegankelijke PDF) en de Excel-route (`app/api/reports/[id]/xlsx`). Wijzig je een tekst of filter op de tab, check dan de generator. De rapporttab heet in de URL `?tab=findings`, niet `?tab=bevindingen`; met de Nederlandse naam blijf je op "about" hangen en lijkt een fix niet te werken.
+
+10. **Databasewijziging aan een project** - De projectpagina is een servercomponent die zijn gegevens bij het laden ophaalt; `router.refresh()` vernieuwt de doorgegeven project-props niet. Wijzig je iets rechtstreeks in de database of via curl terwijl de onderzoeker die pagina open heeft, zeg dan welk scherm ververst moet worden (F5); anders toont het oude gegevens en overschrijft een dialoog wat er al staat. Kan het net zo makkelijk in de UI, wijs dan de knop aan.
 
 ## Testing Approach
 

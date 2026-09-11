@@ -174,6 +174,8 @@ curl -X POST http://localhost:3000/api/projects/{projectId}/findings \
 ### Findings
 - `GET /api/projects/{id}/findings?status=&criterion=&sample=&search=` - Bevindingen met filters
 - `POST /api/projects/{id}/findings` - Bevinding toevoegen
+- `PUT /api/projects/{id}/findings/{findingId}` - Bevinding wijzigen (alleen PUT en DELETE; een PATCH op deze route geeft 405 zonder zichtbare fout, bevestig met `-w "HTTP %{http_code}\n"`)
+- `DELETE /api/projects/{id}/findings/{findingId}` - Bevinding verwijderen
 - `GET /api/findings/{id}` - Bevinding details
 - `PATCH /api/findings/{id}` - Bevinding wijzigen
 - `POST /api/findings/{id}/occurrences` - Locatie toevoegen
@@ -231,7 +233,7 @@ Shift2-auditor/
 
 - [ ] Collaboratie/review flows
 - [ ] Versiebeheer rapporten
-- [ ] DOCX export
+- [x] DOCX export: `GET /api/reports/{id}/word` bouwt het Word-bestand uit het HTML-rapport (`lib/generate-report-html.ts` via `lib/html-to-docx-report.ts`); nog zonder inhoudsopgave
 - [ ] Authentication (SSO)
 - [ ] Teams & permissies
 - [ ] Uitgebreide admin UI voor alle entiteiten

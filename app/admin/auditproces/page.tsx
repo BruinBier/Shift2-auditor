@@ -56,7 +56,23 @@ export default function AuditprocesPage() {
                 meerdere onderzoeken hebben (bijvoorbeeld nulmeting v1, herinspectie v1.1,
                 contentonderzoek v2).
               </li>
+              <li>
+                <strong>Google Drive-map aanmaken</strong> voor het onderzoek (zie hieronder).
+              </li>
             </ol>
+
+            <h3 className="text-base font-semibold text-gray-900">Google Drive-map per onderzoek</h3>
+            <p>
+              Elk onderzoek krijgt een eigen submap in de Drive-map <strong>"shift2 auditor"</strong>{' '}
+              (map-id <code>11GekUWK6HGUvo68TTKlJvv2eQSv0zyyZ</code>, eigenaar Frits). De naam van
+              de submap is <strong>uitsluitend het domein, in kleine letters</strong>: bijvoorbeeld{' '}
+              <code>blaricum.nl</code>, niet "Blaricum" en niet "BEL-03 blaricum.nl". Zo staat de
+              map altijd op dezelfde plek in de lijst als de site waar hij over gaat, ongeacht
+              kenmerk of projecttitel. De map wordt met de hand aangemaakt (op verzoek doet
+              Claude dat via de Drive-koppeling); de tool maakt hem niet zelf aan, want dat zou
+              een Google-API-koppeling met eigen inloggegevens vergen. De bovenmap bestaat al en
+              wordt nooit opnieuw aangemaakt.
+            </p>
 
             <h3 className="text-base font-semibold text-gray-900">Terminologie</h3>
             <ul className="list-disc list-inside space-y-1 text-gray-700">
@@ -301,6 +317,62 @@ export default function AuditprocesPage() {
               een herinspectie-child bestaat, worden alle findings, samples en assessments
               daarheen gekopieerd en start daar de tussencheck-fase.
             </p>
+
+            <h3 className="text-base font-semibold text-gray-900">Eerst: geen open vragen meer</h3>
+            <p>
+              Een onderzoek gaat niet op Gereed zolang ergens een oordeel per sample op{' '}
+              <strong>niet te bepalen</strong> staat. Zo'n oordeel is een vraag die nog beantwoord
+              moet worden, en een rapport met een onbeantwoorde vraag erin is niet af. De tool
+              dwingt dit nu niet af: de knop Afronden vraagt alleen om een bevestiging. Kijk daarom
+              vóór het afronden op tabblad <strong>Dekking</strong>: daar staan per criterium de
+              open vragen, met de sample erbij. Beantwoord ze en werk het oordeel bij (via de kaart
+              in "Waar sta ik" of met <code>save-checks</code>).
+            </p>
+            <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <li>
+                <strong>Niet aanwezig</strong> blokkeert niet. Geen video op de site betekent dat
+                1.2.1 tot en met 1.2.5 niet aanwezig zijn, en dat is een afgerond oordeel.
+              </li>
+              <li>
+                Een "niet te bepalen" dat een <strong>vaststelling</strong> is, telt niet als open
+                vraag. Bij een ongetagde PDF zijn 1.1.1, 1.3.2, 1.4.5 en 2.4.4 pas te beoordelen
+                als het document getagd is; daar valt niets uit te zoeken. Het tabblad Dekking
+                maakt dat onderscheid zelf.
+              </li>
+              <li>
+                Bij het afleiden van het criteriumoordeel uit de sampleoordelen tellen losse
+                "niet te bepalen"-samples niet mee; alleen als een criterium op géén enkel sample
+                een oordeel heeft, is er niets af te leiden.
+              </li>
+            </ul>
+
+            <h3 className="text-base font-semibold text-gray-900">User agents komen uit de geïnstalleerde browsers</h3>
+            <p>
+              De browserversies onder "User agents" in het rapport hoeven niet met de hand
+              bijgehouden te worden. Bij het aanmaken van een onderzoek en bij het afronden leest
+              de tool de versies van Chrome, Firefox en Edge uit de geïnstalleerde browsers
+              (<code>lib/browser-versions.ts</code>; alleen de hoofdversie komt in het rapport).
+              Een herinspectie erft dus niet de user agents van de nulmeting, maar krijgt de
+              versies van het moment waarop de nulmeting wordt afgerond. Nulmeting en herinspectie
+              horen te verschillen: daar zitten maanden tussen.
+            </p>
+            <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <li>
+                <strong>Neem user agents nooit over uit een ander onderzoek.</strong> Bij
+                Valkenswaard stond Chrome 148 in het rapport terwijl er met 151 was getest; die 148
+                kwam uit een ouder Heuvelrug-onderzoek. Een rapport beschrijft waarmee daadwerkelijk
+                is getest.
+              </li>
+              <li>
+                De detectie werkt alleen op Windows. Levert ze niets op, dan blijft de bestaande
+                waarde staan (herinspectie) of de standaard uit de instellingen (nieuw onderzoek).
+                De waarde wordt nooit leeggemaakt.
+              </li>
+              <li>
+                Bestaande onderzoeken worden niet met terugwerkende kracht aangepast. Controleer
+                bij een ouder onderzoek dus op tabblad Details of de versies kloppen.
+              </li>
+            </ul>
           </section>
         </div>
       </main>

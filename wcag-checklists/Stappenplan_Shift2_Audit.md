@@ -46,10 +46,12 @@ Dit is een generiek draaiboek, niet gebonden aan één specifiek project.
   curl -s -X POST http://localhost:3000/api/projects/<projectId>/scope-urls \
     -H "Content-Type: application/json; charset=utf-8" \
     --data-binary @- <<'EOF'
-  {"url":"<URL>","inScope":true}
+  {"url":"<URL>","inScope":true,"crawlerType":"Productieomgeving","title":""}
   EOF
   ```
-- De titel wordt automatisch opgehaald uit de `<title>` van de pagina; hoeft niet meegegeven te worden
+- Dit gaat via de API, niet via de CLI: `npm run cli` kent geen commando voor scope-URL's, alleen voor sample-items
+- `crawlerType` is `"Productieomgeving"`, dezelfde waarde die het Scope-tabblad zelf invult
+- De titel wordt automatisch opgehaald uit de `<title>` van de pagina; geef hem leeg mee
 - Bevestig per URL dat hij is toegevoegd (toon het terug-gegeven id en de opgehaalde titel)
 
 **Resultaat:**
@@ -86,9 +88,19 @@ Dit is een generiek draaiboek, niet gebonden aan één specifiek project.
 ## Stap 4 — Steekproef vastleggen (SampleItems)
 
 **Input van gebruiker:**
-- Lijst van pagina's en documenten die de steekproef vormen. Per item:
+- Lijst van pagina's en documenten die de steekproef vormen. Die komt in de praktijk **één voor
+  één** binnen, vaak door elkaar met URL's die juist buiten de scope vallen. Per item:
   - URL (bij PDF de directe link naar het document; mag in theorie leeg zijn voor offline PDF)
-  - Titel of korte aanduiding (mag uit context worden afgeleid als de gebruiker alleen URL's geeft)
+  - Titel: bij een **pagina** bepaalt Claude die zelf uit de paginanaam of de URL, daar hoeft
+    niet om gevraagd te worden; bij een **PDF** vraagt Claude de titel, want een bestandsnaam
+    als `2024-03_def_v2.pdf` zegt in het rapport niets
+- **Per URL vragen: steekproef of buiten scope?** Elke URL die de gebruiker doorgeeft is óf een
+  sample-item óf een buiten-scope URL. Dat bepaalt de gebruiker per URL; neem het nooit aan,
+  ook niet als het "logisch" lijkt. Vraag het alleen niet als hij het er zelf al bij zegt.
+  - Sample-item: type vragen (`structured`, `random`, `pdf`) en aanmaken zoals hieronder
+  - Buiten scope: geen titel nodig; toevoegen via `POST /api/projects/<id>/scope-urls` met
+    `"inScope":false` en `"crawlerType":"Productieomgeving"`, precies zoals in stap 3. De CLI
+    kan dit niet: `create-sample-item` maakt een sample-item, geen scope-URL
 - Een meerstapsformulier (bv. invoer → gegevens → controleren → bevestiging) wordt opgegeven als losse stappen; iedere stap is een eigen SampleItem
 - De steekproef is niet definitief: gedurende het onderzoek kunnen er pagina's bijkomen — telkens wanneer de gebruiker een extra pagina of document doorgeeft, maak ik er een nieuw SampleItem voor aan op dezelfde manier
 
@@ -323,18 +335,31 @@ Bij BEV-03 (2026-08-04) leverde deze controle drie tegenstrijdigheden op: 1.4.3 
 
 Bij BEV-03 (2026-08-04) stond in de feedback dat de standaardweergave te weinig contrast had en dat de hoogcontrastknop dat ondervangt. Na de metingen bleek het omgekeerde: de knop was prima (11,99:1), en het probleem zat juist ín de hoogcontrastweergave, waar het footer-logo zwart wordt. Die alinea moest volledig herschreven worden.
 
-**Schrijfregels (zie [[feedback_management_summary_style]]):**
+**Toon: positief, en beginnen met wat goed gaat.** De feedback is een constructieve samenvatting voor de opdrachtgever, geen opsomming van aantallen. Dus:
+- Eerste alinea: wat er **al goed** in elkaar zit ("op veel punten al goed in elkaar"). Beschrijf wat de pagina's inhoudelijk goed doen
+- Daarna de aandachtspunten, gegroepeerd **per plek of onderdeel** (de footer, de formulieren, het PDF-document), niet per criterium. Noem waar de grootste knelpunten zitten; vaak zijn dat de PDF-documenten
+- Geen kaal getal als "er zijn 14 bevindingen geconstateerd"; de aantallen staan al op het tabblad Resultaten
+- De tekst van `/api/projects/<id>/generate-feedback` is hooguit een vertrekpunt. Die is meestal te kaal en te negatief en moet naar deze opzet herschreven worden; neem hem niet over
+
+Voorbeeld van de toon (Heerlen-01): "Tijdens het onderzoek viel op dat de website op veel punten al goed in elkaar zit. De aandachtspunten zitten vooral in de footer. [...] De grootste knelpunten zitten in het PDF-document van de Stadskrant. Dit document is niet getagd [...]."
+
+**Schrijfregels:** de lezer is een manager zonder achtergrondkennis van toegankelijkheid of techniek; hij moet de tekst in één keer begrijpen.
 - Leek-taal, geen SC-codes (niet "1.3.1", maar "structuur van de pagina")
-- Geen jargon (geen "ARIA", "DOM"); "hulpsoftware" mag, want dat gebruiken de andere projecten ook
-- Korte zinnen
+- Geen jargon (geen "ARIA", "DOM", geen HTML-termen als strong, em of href); "hulpsoftware" mag, want dat gebruiken de andere projecten ook
+- Ook geen technische webtermen als "kruimelpad", "breadcrumbs", "viewport" of "responsive". Beschrijf het effect of laat het weg
+- Beschrijf het effect voor de gebruiker ("een voorleesprogramma slaat de structuur over"), niet de technische oorzaak
+- **Geen toegankelijkheidsvoorzieningen als pluspunt opvoeren**: niet "de site heeft een knop voor hoog contrast", "een voorleesknop" of "een skip-link". Die voorzieningen worden bij gemeentewebsites standaard meegeleverd en zeggen niets over hoe goed de inhoud in elkaar zit
+- **Geen aannames over het gedrag van de opdrachtgever.** De bevindingen zijn de waarneming van de onderzoeker, niet een reactie van de klant; schrijf dus niet "er wordt actief op gereageerd" of iets vergelijkbaars
+- **Wijs niet "de redactie" aan** als de plek waar het opgelost moet worden. Houd het neutraal: "bij het publiceren", "bij het plaatsen van documenten"
+- Korte zinnen, geen lange bijzinnen
 - Geen gedachtestreepjes (geen — of –)
-- "PDF-documenten" (niet "PDFs")
-- HTML met `<p>`-tags, twee korte alinea's (~500-900 tekens totaal). Eerste alinea = wat gaat goed, tweede alinea = wat kan beter. PDF-issues als afsluiting van de tweede alinea
+- "PDF-documenten" (niet "PDFs" en niet "PDF-bijlagen")
+- HTML met `<p>`-tags, twee korte alinea's (~500-900 tekens totaal). Eerste alinea = wat gaat goed, tweede alinea = wat kan beter. PDF-issues als afsluiting van de tweede alinea, en eindigen met een korte adviezin in gewone taal
 - Vergelijk de stijl met BEL-01 t/m BEL-04, GRJW-01, Heerlen-01 (allemaal status Gereed)
 
 **Actie van Claude:**
 - De duplicaat-check is al in stap 6a gedaan, samen met de dekkingscontrole. Kwam daar iets uit, dan moet dat opgelost zijn voordat je de feedback schrijft: de tekst hieronder beschrijft immers wat er gevonden is.
-- Eerste concept zelf schrijven op basis van de bevindingen
+- Eerste concept zelf schrijven op basis van de bevindingen, in de opzet hierboven
 - Concept aan gebruiker voorleggen voor akkoord en aanpassingen
 - Pas na akkoord opslaan via `PATCH /api/projects/<id>` met `{"researcherFeedback": "<p>...</p><p>...</p>"}`
 

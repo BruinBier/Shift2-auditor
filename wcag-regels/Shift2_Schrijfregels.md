@@ -129,6 +129,9 @@ dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 - **Bij contrast: "voldoende contrast hebben", niet "afsteken tegen".** Schrijf "zodat de
   witte tekst voldoende contrast heeft", niet "zodat de tekst er voldoende van afsteekt".
   Afsteken is beeldspraak vanuit het zien; contrast is de eis waar het om gaat.
+- **Kleurcodes altijd als #RRGGBB.** Schrijf "de rode tekst (#FF0000) op een witte achtergrond
+  (#FFFFFF)", niet "rood op wit" of een rgb-notatie. Zo kan de ontwikkelaar de kleur meteen
+  opzoeken in de stijl van de site en kan de onderzoeker de meting nadoen.
 - **Hulpsoftware leest voor, laat niets zien.** Schermlezers zijn auditief. Schrijf
   "hulpsoftware leest de linktekst voor" en "gebruikers horen alleen ...", nooit
   "hulpsoftware laat zien" of "gebruikers zien alleen".
@@ -172,6 +175,13 @@ communicatiemedewerkers.
 | whitespace | witruimte |
 | string | tekst |
 
+**Is een technische term toch nodig, geef dan eerst de uitleg in gewone taal en zet de term
+erachter tussen haakjes.** Niet andersom, en niet de term alleen: "een blok dat kan worden uit-
+en ingeklapt (accordion)", "een element voor nadruk binnen lopende tekst (strong-element)".
+De redacteur begrijpt de zin zonder de term, en de ontwikkelaar weet door de term precies
+waar hij moet zoeken. Zie ook "Attribuutnamen en waarden mogen ook" hieronder: daar geldt
+dezelfde volgorde.
+
 ### Namen voor onderdelen van de pagina
 
 Vaste woorden, zodat niet elke ronde een ander woord kiest voor hetzelfde onderdeel. Een
@@ -200,6 +210,26 @@ of "in de code" zonder meer, want dan is niet duidelijk of hij daarbij kan.
 Aanleiding (2026-08-18): Frits corrigeerde "list-item" naar "lijst item" en "voeg in de
 broncode" naar "voeg in het CMS in de broncode", en vroeg of zulke woorden ergens worden
 onthouden voor volgende bevindingen.
+
+### Opmaak-advies bij verantwoordelijkheid redacteur: via de CMS-stijl, niet via CSS
+
+Staat de verantwoordelijkheid op **redacteur** en gaat het advies over visuele opmaak, schrijf
+dan dat de opmaak via de stijl in het CMS geregeld moet worden:
+
+- cursief: "regel die opmaak dan via de stijl 'schuingedrukt' in het CMS"
+- vet: "regel die opmaak dan via de stijl 'vetgedrukt' in het CMS"
+
+Niet "via CSS" en niet "via de stijl van de website". Een verwijzing naar CSS legt het werk
+bij de ontwikkelaar, terwijl de redacteur het zelf kan oplossen; het advies is dan voor de
+persoon die het moet uitvoeren niet uitvoerbaar. Bij een bevinding voor de **ontwikkelaar**
+mag CSS wél genoemd worden.
+
+Dit gaat alleen over de visuele opmaak. Leg **niet** uit hoe de redacteur iets in het CMS
+aanmaakt ("gebruik de opsommingsknop in de teksteditor"): benoem wat er moet veranderen, niet
+welke knop daarvoor dient. Elk CMS heeft andere knoppen, en de redacteur kent het zijne.
+
+De snelle bevinding "Algemene problemen met strong en em" (`d6ecd972`) gebruikt deze
+verwoording al. Zie ook de regels over `em` en `strong` in `Shift2_Regels_SC_1_3_1.md`.
 
 ## Geen voorbehoud over criteria die niet in het onderzoek zitten
 
@@ -327,6 +357,35 @@ Loop **zowel de description als de advice** na voordat je wegschrijft:
 - Schrap of pas aan wat feitelijk niet klopt. Verwijst de QuickFinding naar "de kop Volg ons"
   terwijl de footer van deze site geen koppen heeft, haal die verwijzing dan weg.
 - Laat de placeholder in de bibliotheek zelf ongemoeid; alleen de bevinding wordt specifiek.
+
+### Komt er een correctie: alleen dit project, en de snelle bevinding ernaast leggen
+
+Corrigeert de onderzoeker een bevinding (een onjuiste zin in het advies, een aanscherping van
+de formulering), pas dan **alleen die bevinding in dit project** aan. Niet ongevraagd:
+
+- dezelfde formulering in andere projecten opzoeken en bijwerken
+- de bibliotheek met snelle bevindingen aanpassen
+- een correctie in één keer over de hele database uitrollen
+
+Reden: de onderzoeker beslist per geval of een correctie elders ook moet. Een brede uitrol
+kost meer tijd om na te kijken, en bevindingen in eerdere projecten zijn vaak al opgeleverd
+aan de opdrachtgever; die horen niet achteraf te veranderen. Vraag dus pas ná de correctie
+of hij ook in de bibliotheek of in andere projecten moet, en wacht op een expliciet ja **per
+niveau**: de bibliotheek is een ander niveau dan andere projecten, en dat is weer iets anders
+dan alle projecten.
+
+**Houd de correctie wél tegen de snelle bevinding.** Kwam de tekst uit de bibliotheek,
+controleer dan of de gecorrigeerde formulering daar ook in staat:
+
+- **Staat het erin**: meld dat, en vraag of de bibliotheek mee moet veranderen. Anders levert
+  het sjabloon bij het volgende project dezelfde fout op.
+- **Staat het er niet in**: dan kwam de zin uit een eigen formulering, en is de les dat de
+  tekst van de snelle bevinding gevolgd had moeten worden.
+
+Aanleiding (UTHEU-01, 2026-08-03): bij de 1.3.1-bevinding over de sociale-media-links stond
+een zelfgeschreven adviestekst terwijl er een snelle bevinding voor bestond. Frits vroeg waar
+die zin vandaan kwam: altijd naar de bibliotheek kijken, en een aanscherping altijd tegen de
+bibliotheek houden.
 
 ## Schrijf bevindingen via de API, niet rechtstreeks in de database
 

@@ -150,3 +150,27 @@ embed, object en source gaf zes keurige nullen — maar de gebruikte reguliere e
 was kapot, zodat alles nul gaf. De uitkomst klopte toevallig; het bewijs was waardeloos.
 Een tweede, werkende controle liet zien dat er zeven `source`-elementen zijn (in
 `picture`, voor responsieve afbeeldingen — geen media in de zin van 1.2.1).
+
+## Een signaal in de code is nog geen zichtbaar element
+
+Dat iets in de HTML staat, betekent niet dat het op de pagina te zien is. Sites die met een
+framework zijn gebouwd (SPA's, Next.js) dragen markup mee voor modals, verborgen dialogen en
+secties die niet worden getekend. Een `<form>` voor een nieuwsbrief met keurige `<input>`s kan
+volledig in de code staan zonder dat een bezoeker hem ooit ziet.
+
+Ken je een onderdeel alleen uit de HTML (een formulier, een banner, een modal), controleer dan
+eerst op de full-page schermafdruk (`get-screenshot --full-page`) of het er visueel staat,
+voordat je er een bevinding over aanmaakt. Staat het niet op de schermafdruk, dan rapporteer
+je het niet: stel de vraag aan de onderzoeker ("ik zie dit formulier in de code, staat het
+ergens op de pagina?"). Een modal of `<dialog>` in een verborgen container is geen bevinding
+op de pagina waar hij in de code staat. Is er interactie nodig om hem te openen, dan wordt de
+geopende toestand apart als sample opgenomen en daar beoordeeld.
+
+Dit is het spiegelbeeld van de vorige paragraaf. Daar zag "niet aanwezig" eruit als bewijs
+zonder dat er gezocht was; hier ziet een stuk code eruit als bewijs zonder dat er iets te zien
+is.
+
+Aanleiding: beverwijk.nl, homepage (2026-07-02). Er stond een 1.3.5-bevinding op een
+nieuwsbriefformulier dat wel in de HTML-dump zit, maar in de zichtbare footer niet bestaat (die
+heeft alleen Gemeente Beverwijk, Meer informatie, Blijf op de hoogte en Denk mee). Frits: "waar
+zie jij nieuwsbrief?"

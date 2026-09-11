@@ -47,6 +47,10 @@ Kort: op de homepage header, main en footer; op elk ander sample alleen de main-
 Lees dat bestand voordat je aan een criterium begint, anders rapporteer je sitebrede
 problemen bij elk sample opnieuw.
 
+Zit een sitebreed probleem in het SIMsite-sjabloon zelf (landmarks, ARIA, focus), dan hoort het
+niet in het klantrapport maar in het interne onderzoek "Template-monitoring SIMsite"; zie
+`docs/werkwijze/template-monitoring.md`.
+
 ## Wanneer is een steekproef compleet?
 
 `Shift2_Dekkingslijst_Steekproef.md` is het stopcriterium bij het samenstellen van een
@@ -125,6 +129,8 @@ meet Frits handmatig.
 - **Vaststelling** — de uitkomst staat vast. Bij een ongetagde PDF vervallen 1.1.1, 1.3.2, 1.4.5
   en 2.4.4 zolang de tags ontbreken; daar valt niets uit te zoeken. Schrijf dan geen vraagzin,
   en zeker niet "is er een getagde versie beschikbaar?" — die is er niet, en dat is de bevinding.
+
+Staat er een PDF in de steekproef, lees dan `Shift2_Werkwijze_PDF.md`: getagd of niet stel je zelf vast, de PAC-uitvoer vraag je aan de onderzoeker in een vaste volgorde, en Matterhorn-id's of tagnamen komen nooit in een bevinding.
 
 ## Onderhoud
 

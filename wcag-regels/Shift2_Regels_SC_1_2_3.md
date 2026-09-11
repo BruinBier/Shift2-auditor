@@ -89,11 +89,109 @@ het ook wordt verteld.
 ## Regels
 
 - Video met visuele informatie die niet hoorbaar wordt overgebracht (naam-in-beeld, lower thirds, locatie-labels, logos): rapporteer als TWEE aparte bevindingen, een onder 1.2.3 (niveau A) en een onder 1.2.5 (niveau AA). Beide impact matig, responsibility redacteur.
-- Gebruik de vaste QuickFinding-tekst ed3a4d2a-ce67-4474-88a0-edba1c124624. Beschrijving: "Op de pagina staat de video 'X'. In deze video komt visuele informatie voor die niet beschikbaar is voor mensen die blind of slechtziend zijn." Daarna "Voorbeelden:" met bullets in de vorm MM:SS "tekst in beeld".
-- Het advies bij 1.2.3 is VASTE standaardtekst uit de QuickFinding. Niet zelf herformuleren of "verbeteren", ook niet als de tekst feitelijk onjuist lijkt.
+- Gebruik de vaste QuickFinding-tekst ed3a4d2a-ce67-4474-88a0-edba1c124624. Beschrijving: "Op de pagina staat de video 'X'. In deze video komt visuele informatie voor die niet beschikbaar is voor mensen die blind of slechtziend zijn." Daarna "Voorbeelden:" met bullets in de vorm MM:SS "tekst in beeld". De volledige titel, beschrijving en het advies staan hieronder onder "Vaste teksten uit de QuickFinding-bibliotheek".
+- Het advies bij 1.2.3 is VASTE standaardtekst uit de QuickFinding. Niet zelf herformuleren of "verbeteren", ook niet als de tekst feitelijk onjuist lijkt. Dat geldt in het bijzonder voor de zin over 1.2.5 in het advies van de8bf36c-495a-4bad-90b9-63b3f8f833be; zie hieronder waarom die blijft staan.
 - Woordkeuze die vastligt: "beschrijft" niet "vertelt"; "is opgenomen" niet "wordt beschreven"; geen "namelijk" in de doelgroep-zin; "onder de video" niet "onder of naast de video".
 - Maximaal twee a drie voorbeelden met tijdstip. Geen lange opsomming.
 - Check eerst of de speler een transcript-knop heeft (zie 1.1.1). Is die er, dan is er een geldig alternatief.
+
+## Vaste teksten uit de QuickFinding-bibliotheek
+
+Deze teksten zijn door Frits goedgekeurd en liggen vast. Neem ze letterlijk over en vul
+alleen de titel van de video en de voorbeelden in. Niet herformuleren, niet "grammaticaal
+verbeteren", niet consistent maken met andere plekken. Vraagt Frits een vervanging op één
+plek, voer die dan alleen dáár door; en is de gevraagde tekst krom, laat hem dan zo: hij
+leest zelf mee.
+
+### QuickFinding ed3a4d2a-ce67-4474-88a0-edba1c124624 (1.2.3)
+
+Titel: **Video met visuele informatie zonder audiodescriptie of media-alternatief**
+
+Beschrijving:
+
+> Op de pagina staat een video. In deze video komt visuele informatie voor die niet
+> beschikbaar is voor mensen die blind of slechtziend zijn.
+>
+> Voorbeelden:
+> - MM:SS "tekst in beeld"
+> - MM:SS "tekst in beeld"
+
+Advies:
+
+> Kies één van deze twee oplossingen:
+>
+> 1. Voeg een audiodescriptie toe om belangrijke visuele informatie hoorbaar te maken. Dit
+> kan door een tweede audiospoor aan de video toe te voegen dat zowel de originele audio als
+> de audiodescriptie bevat. Is er in het audiospoor écht geen ruimte? Neem de visuele
+> informatie dan als alternatief op in een teksttranscript.
+>
+> 2. Of voeg onder de video een media-alternatief (transcript) toe: een tekst die zowel het
+> gesproken woord als de visuele informatie beschrijft. Dit transcript bevat alle hoorbare en
+> zichtbare informatie uit de video en wordt waar mogelijk voorzien van timestamps. Een
+> transcript biedt voordelen voor veel verschillende gebruikers. Voor mensen die informatie
+> in een video te snel vinden gaan, is een rustig naleesbare tekst een uitstekend
+> alternatief. Daarnaast stelt het doofblinde gebruikers in staat om de inhoud van de video
+> via een brailleleesregel volledig mee te krijgen.
+
+Bij toepassen: "een video" wordt "de video 'X'" met de titel van de video; twee, hooguit
+drie voorbeelden met tijdstip en de tekst die in beeld staat; impact `matig`,
+verantwoordelijkheid `redacteur`, status `open`. De tegenhanger voor 1.2.5 (QuickFinding
+50baed61-a658-4b18-8286-9b2104fdd43c) staat in `Shift2_Regels_SC_1_2_5.md`.
+
+### QuickFinding de8bf36c-495a-4bad-90b9-63b3f8f833be (1.2.3, oudere variant)
+
+Titel: **Transcript of audiodescriptie (genoeg ruimte)**. Deze staat in
+`lib/quick-findings-data.ts`; in de database is hij op 2026-09-11 niet meer aangetroffen.
+Bestaande bevindingen die erop gebaseerd zijn, dragen dit advies nog, en dat blijft zo.
+
+Beschrijving:
+
+> Op pagina URL staat een video waarin visuele informatie voorkomt. Deze informatie is niet
+> hoorbaar en daardoor niet beschikbaar voor mensen die blind of slechtziend zijn. Zorg ervoor
+> dat er een alternatief voor deze visuele informatie komt.
+>
+> Hierbij enkele voorbeelden van informatie die in beeld staat (visueel) en niet te horen is: X.
+>
+> Er is in deze video voldoende ruimte aanwezig om audiodescriptie toe te voegen.
+
+Advies:
+
+> Voor succescriterium 1.2.3 zijn er twee opties: een transcript of audiodescriptie. Voor
+> succescriterium 1.2.5 is een transcript echter niet meer toegestaan als er voldoende ruimte
+> is voor audiodescriptie. In dat geval moet er audiodescriptie zijn om te voldoen aan niveau
+> AA. Het is het beste om zowel een transcript als audiodescriptie aan te bieden.
+>
+> Het transcript moet alle informatie in de video bevatten, zowel hoorbaar als zichtbaar.
+> Waar mogelijk wordt het transcript ook voorzien van zogenaamde timestamps. Plaats het
+> transcript onder de video. Een transcript kan voor meerdere mensen voordelen hebben. Voor
+> sommige mensen kan informatie in een video te snel gaan, dan kan een transcript een goed
+> alternatief zijn. Mensen die niet kunnen zien en niet kunnen horen, kunnen een transcript
+> omzetten naar braille.
+>
+> Audiodescriptie zorgt ervoor dat alle visuele informatie ook hoorbaar wordt. Oftewel: hoor
+> alles wat je ziet. Dit kan door een tweede audiospoor toe te voegen aan de video dat zowel
+> de normale audio bevat als de audiodescriptie. Andere oplossingen zijn ook mogelijk.
+
+### Het 1.2.3-advies blijft ongewijzigd, ook als de zin over 1.2.5 onjuist lijkt
+
+De zin "Voor succescriterium 1.2.5 is een transcript echter niet meer toegestaan als er
+voldoende ruimte is voor audiodescriptie" ziet er vanuit de W3C-tekst uit als een fout:
+1.2.5 kent geen transcript-uitzondering. Toch is dit een vaste Shift2-formulering en hij
+blijft staan. Inhoudelijk klopt hij zoals Shift2 het leest: onder 1.2.3 (niveau A) is een
+transcript een geldig alternatief; onder 1.2.5 (niveau AA) eist Shift2 audiodescriptie zodra
+er ruimte voor is in de natuurlijke pauzes, en alleen op de momenten waar er géén ruimte is,
+mag de visuele informatie voor dát moment in het transcript. Zie de ruimte-tabel in
+`Shift2_Regels_SC_1_2_5.md`.
+
+Aanleiding: op 2026-05-26 markeerde Claude de zin als feitelijk onjuist, stelde voor hem te
+vervangen door "een transcript is nooit voldoende voor 1.2.5", en werkte vervolgens B008,
+B015 én de QuickFinding bij. Frits draaide alle drie de wijzigingen terug.
+
+Algemener: een advies dat rechtstreeks uit een QuickFinding komt, is standaardtekst. Ga er
+niet vanuit de eigen W3C-leeswijze kritisch op in en stel geen wijziging voor. Wil de
+onderzoeker zelf iets veranderen, dan is dat zijn beslissing; bespreek dan ook of de
+QuickFinding zelf mee moet veranderen, en pas nooit meer aan dan het project waar de vraag
+over gaat (zie `Shift2_Schrijfregels.md`).
 
 ## Op de kaart
 
