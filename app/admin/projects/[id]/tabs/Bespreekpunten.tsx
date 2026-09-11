@@ -15,7 +15,14 @@ import { nl } from 'date-fns/locale';
  *
  * Bovenaan een vaste checklist voor elk gesprek. Die vinkjes worden niet bewaard: ze zijn
  * per gesprek en staan weer leeg als je het blok opnieuw opent.
+ *
+ * Na het gesprek maakt de tool zelf het verslag: de knop "Maak gespreksverslag" stuurt het
+ * transcript en de open punten naar de AI (zie docs/werkwijze/gespreksverslag.md). Het
+ * verslag komt als notitie bij het onderzoek; de uitkomst per punt komt hier terug als
+ * voorstel, dat de onderzoeker per punt overneemt. Pas dan is het punt afgevinkt.
  */
+
+type Voorstel = { id: string; aanBodGekomen: boolean; uitkomst: string };
 
 type Bespreekpunt = {
   id: string;
@@ -29,8 +36,21 @@ type Bespreekpunt = {
 // staan direct hieronder; daar hoeft geen vinkje aan te herinneren.
 const CHECKLIST = ['Teams-transcript aanzetten'];
 
-export default function Bespreekpunten({ projectId }: { projectId: string }) {
+export default function Bespreekpunten({
+  projectId,
+  heeftTranscript,
+  onNotitie,
+}: {
+  projectId: string;
+  /** Staat er een transcript bij het onderzoek? Zonder transcript valt er geen verslag te maken. */
+  heeftTranscript: boolean;
+  /** Het verslag komt als notitie; de ouder zet hem in zijn lijst zodat hij meteen zichtbaar is. */
+  onNotitie?: (notitie: any) => void;
+}) {
   const [punten, setPunten] = useState<Bespreekpunt[]>([]);
+  const [verslagBezig, setVerslagBezig] = useState(false);
+  const [verslagMelding, setVerslagMelding] = useState<string | null>(null);
+  const [voorstellen, setVoorstellen] = useState<Record<string, Voorstel>>({});
   const [geladen, setGeladen] = useState(false);
   const [nieuw, setNieuw] = useState('');
   const [bezig, setBezig] = useState<string | null>(null);
@@ -119,6 +139,40 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
     setUitkomstOpen(null);
   };
 
+  const maakVerslag = async () => {
+    setVerslagBezig(true);
+    setVerslagMelding(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/gespreksverslag`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVerslagMelding(data.error || 'Het maken van het verslag is niet gelukt.');
+        return;
+      }
+      onNotitie?.(data.notitie);
+      const nieuw: Record<string, Voorstel> = {};
+      for (const v of data.voorstellen ?? []) nieuw[v.id] = v;
+      setVoorstellen(nieuw);
+      setVerslagMelding('Het verslag staat bij Notities, met als auteur "AI-verslag, nog na te kijken". Lees het na; de uitkomsten hieronder zijn voorstellen.');
+    } catch {
+      setVerslagMelding('Het maken van het verslag is niet gelukt.');
+    } finally {
+      setVerslagBezig(false);
+    }
+  };
+
+  /** Voorstel overnemen: uitkomst bewaren én afvinken, in één keer. */
+  const neemOver = async (punt: Bespreekpunt) => {
+    const v = voorstellen[punt.id];
+    if (!v) return;
+    await werkBij(punt.id, { besproken: true, uitkomst: v.uitkomst });
+    setVoorstellen((rest) => {
+      const { [punt.id]: _weg, ...over } = rest;
+      return over;
+    });
+    setAfgehandeldOpen(true);
+  };
+
   const datum = (iso: string) => format(new Date(iso), 'd MMMM yyyy', { locale: nl });
 
   return (
@@ -171,12 +225,46 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
                   <div className="flex-1 text-sm text-gray-900">
                     <div className="whitespace-pre-wrap">{punt.tekst}</div>
                     <div className="text-xs text-gray-400">toegevoegd {datum(punt.createdAt)}</div>
+                    {voorstellen[punt.id] && (
+                      <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm">
+                        {voorstellen[punt.id].aanBodGekomen ? (
+                          <>
+                            <div className="text-xs font-medium text-amber-800 mb-1">Voorgestelde uitkomst uit het transcript</div>
+                            <div className="whitespace-pre-wrap text-gray-900">{voorstellen[punt.id].uitkomst}</div>
+                            <div className="mt-2 flex gap-3">
+                              <button
+                                type="button"
+                                onClick={() => neemOver(punt)}
+                                disabled={bezig === punt.id}
+                                className="px-3 py-1 text-xs font-medium text-white bg-shift2-primary rounded hover:opacity-90 disabled:opacity-50"
+                              >
+                                Overnemen en afvinken
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setVoorstellen((rest) => {
+                                    const { [punt.id]: _weg, ...over } = rest;
+                                    return over;
+                                  })
+                                }
+                                className="text-xs text-gray-500 hover:underline"
+                              >
+                                Negeren
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-amber-800">Volgens het transcript niet aan bod gekomen; blijft open.</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
             </ul>
           )}
-          <form onSubmit={voegToe} className="flex items-start gap-2">
+          <form onSubmit={voegToe} className="flex items-start gap-2 mb-3">
             <textarea
               value={nieuw}
               onChange={(e) => setNieuw(e.target.value)}
@@ -192,6 +280,21 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
               Toevoegen
             </button>
           </form>
+          {/* Na het gesprek. Zonder transcript is de knop uit, met uitleg in de title: de
+              knop verbergen zou de stap zelf verbergen. */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={maakVerslag}
+              disabled={!heeftTranscript || verslagBezig}
+              title={heeftTranscript ? 'Maakt een kort verslag uit het transcript en stelt per punt de uitkomst voor' : 'Plak eerst het transcript van het gesprek, hierboven bij Transcript'}
+              className="px-3 py-2 text-sm font-medium text-shift2-primary border border-shift2-primary rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {verslagBezig ? 'Verslag wordt gemaakt…' : 'Maak gespreksverslag uit het transcript'}
+            </button>
+            {!heeftTranscript && <span className="text-xs text-gray-500">Plak eerst het transcript van het gesprek.</span>}
+          </div>
+          {verslagMelding && <p className="mt-2 text-sm text-gray-700">{verslagMelding}</p>}
         </div>
 
         {afgehandeld.length > 0 && (

@@ -327,26 +327,22 @@ telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel pro
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
-## Gespreksverslag uit een transcript (voor Claude Code)
+## Gespreksverslag uit een transcript
 
-Na een gesprek met de klant plakt de onderzoeker het transcript in de tool: tabblad
-Details, veld "Transcript scopegesprek" (bij een Cardan-project heet het "Transcript
-klantgesprek"; zelfde veld, `Project.scopeCallTranscript`). Daarna vraagt hij hier om een
-gespreksverslag. Dat gaat zo:
+Hoe een gespreksverslag eruitziet staat in **`docs/werkwijze/gespreksverslag.md`**, en
+nergens anders. De tool leest dat bestand als instructie voor de AI achter de knop "Maak
+gespreksverslag" (blok Bespreekpunten op het tabblad Details, route
+`app/api/projects/[id]/gespreksverslag`); de onderzoeker heeft er dus geen Claude Code-sessie
+voor nodig. Vraagt hij het verslag toch hier, volg dan hetzelfde bestand:
 
-1. Lees het transcript uit de database (`scopeCallTranscript`; `get-project` stuurt het
-   niet mee) en de open bespreekpunten via `GET /api/projects/<id>/bespreekpunten`.
-2. Schrijf een **kort** verslag als notitie: `POST /api/projects/<id>/notes` met
-   `authorName` "Claude Code" en `content` in markdown. Eerste regel een kop met
-   "Gespreksverslag <soort gesprek> <datum>", daaronder wie erbij waren, dan per onderwerp
-   de afspraak in één of twee zinnen, en onderaan een lijstje "Acties" met wie wat doet.
-   Geen samenvatting van het hele gesprek: alleen wat er is afgesproken en wat er nog
-   moet gebeuren.
-3. Vul per open bespreekpunt de uitkomst in en vink het af:
-   `PATCH /api/projects/<id>/bespreekpunten/<puntId>` met `{ "besproken": true,
-   "uitkomst": "..." }`. Kwam een punt niet aan bod, laat het dan open en zeg dat.
-4. Staat er in het transcript iets dat naar een ander moet (bij een Cardan-project vaak
-   Cardan), zet dat dan als actie in het verslag; verstuur zelf niets.
+1. Lees het transcript uit de database (`Project.scopeCallTranscript`; `get-project` stuurt
+   het niet mee) en de open punten via `GET /api/projects/<id>/bespreekpunten`.
+2. Schrijf het verslag als notitie: `POST /api/projects/<id>/notes`, `authorName`
+   "Claude Code", `content` in markdown.
+3. Zet de uitkomst per punt en vink af met `PATCH /api/projects/<id>/bespreekpunten/<puntId>`
+   en `{ "besproken": true, "uitkomst": "..." }`, maar alleen voor punten die aan bod kwamen.
+   De knop in de tool doet dat niet zelf; die levert voorstellen die de onderzoeker overneemt.
+   Doe je het hier, zeg dan wat je hebt afgevinkt.
 
 Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë.
 

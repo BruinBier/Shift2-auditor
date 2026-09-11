@@ -229,8 +229,8 @@ het in Shift2Auditor onder "Bespreekpunten voor het klantgesprek" op de projectp
 staat het op het dashboard tot het is afgevinkt; in Projectdetails of in een notitie komt het
 nergens terug.
 
-Na het gesprek plakt de onderzoeker het Teams-transcript in de tool, en maakt Claude Code
-daar het gespreksverslag van: kort, met per onderwerp de afspraak en onderaan de acties. Dat
+Na het gesprek plakt de onderzoeker het Teams-transcript in de tool, en maakt de tool daar
+zelf het gespreksverslag van: kort, met per onderwerp de afspraak en onderaan de acties. Dat
 verslag schrijf jij niet. Je hebt het transcript niet, en het verslag hoort bij het onderzoek
 in de tool. Krijg je toch de vraag, zeg dan dat het via de tool loopt.
 
