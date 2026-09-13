@@ -53,6 +53,47 @@ if (!fs.existsSync(PROFILE_DIR)) {
   fs.mkdirSync(PROFILE_DIR, { recursive: true });
 }
 
+/**
+ * De afbreekwoordenboeken overnemen uit het gewone Chrome-profiel.
+ *
+ * Chrome breekt woorden met `hyphens: auto` alleen af als het woordenboek van die taal in
+ * het profiel staat, onder `hyphen-data/<versie>/hyph-nl.hyb`. Dat onderdeel haalt Chrome
+ * op de achtergrond binnen, per profiel, en in het auditprofiel is dat sinds juni nooit
+ * gebeurd: de map stond leeg. Het gevolg is geen foutmelding maar een andere pagina. Op
+ * bo.zoetermeer.nl werd "Volkshuisvestingsprogramma" op 320 pixels afgekapt, omdat het
+ * woord voor deze Chrome onbreekbaar was en de kolom van het grid zo breed werd als het
+ * woord; in de gewone Chrome van Frits, mét woordenboek, breekt het af en past alles.
+ * Een afkeuring dus die alleen in de meet-browser bestond (2026-09-13, ZOET-01).
+ *
+ * Daarom: staat er in het auditprofiel geen versie-map, en heeft het gewone profiel er
+ * wel een, dan komt die hier. Chrome leest de map bij het opstarten, dus dit moet vóór
+ * het starten gebeuren. Een map die er al staat blijft met rust.
+ */
+function neemAfbreekwoordenboekenOver() {
+  const doel = path.join(PROFILE_DIR, 'hyphen-data');
+  const heeftVersie = (dir: string) =>
+    fs.existsSync(dir) && fs.readdirSync(dir).some((n) => /^\d+(\.\d+)+$/.test(n));
+  if (heeftVersie(doel)) return;
+
+  const bronnen =
+    process.platform === 'win32'
+      ? [path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'User Data', 'hyphen-data')]
+      : process.platform === 'darwin'
+      ? [path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome', 'hyphen-data')]
+      : [path.join(os.homedir(), '.config', 'google-chrome', 'hyphen-data')];
+  const bron = bronnen.find(heeftVersie);
+  if (!bron) {
+    console.log(
+      `  let op : geen afbreekwoordenboeken gevonden in het gewone Chrome-profiel; ` +
+        `woorden met hyphens: auto breken in deze Chrome niet af tot Chrome ze zelf ophaalt`,
+    );
+    return;
+  }
+  fs.cpSync(bron, doel, { recursive: true });
+  console.log(`  hyphen : afbreekwoordenboeken overgenomen uit ${bron}`);
+}
+neemAfbreekwoordenboekenOver();
+
 console.log(`Start Chrome met remote debugging:`);
 console.log(`  binary : ${chromePath}`);
 console.log(`  port   : ${PORT}`);

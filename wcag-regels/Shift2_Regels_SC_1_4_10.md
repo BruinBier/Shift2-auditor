@@ -76,6 +76,27 @@ inhoud wegvalt.
 Aanleiding: buitenspelen op heuvelrug.nl meldde 304 te brede elementen terwijl er op het
 scherm niets uitsteekt; die tabellen zitten in twee dichtgeklapte uitklapblokken.
 
+## De meet-browser moet Nederlandse woorden kunnen afbreken
+
+Chrome breekt woorden met `hyphens: auto` alleen af als het afbreekwoordenboek van die taal
+in het profiel staat (`hyphen-data/<versie>/hyph-nl.hyb`). Dat onderdeel haalt Chrome op de
+achtergrond binnen, per profiel, en in het auditprofiel was dat nooit gebeurd. Zonder
+woordenboek is een lang woord onbreekbaar, en in een grid of flexbox wordt de kolom dan zo
+breed als dat woord: `overflow-wrap: break-word` telt daar niet mee, alleen `anywhere`.
+Het gevolg ziet er precies uit als een reflow-fout: een titel die buiten beeld loopt.
+
+Aanleiding: bo.zoetermeer.nl (2026-09-12). "Volkshuisvestingsprogramma" leek in twee
+kaarten afgekapt op 320 pixels; de gridkolom was 361 pixels breed in een venster van 320.
+Frits zag het in zijn eigen Chrome niet, want die heeft het woordenboek. Met de woordenboeken
+in het auditprofiel breken de titels af en passen alle drie de kaarten. De afkeuring
+bestond alleen in de meet-browser.
+
+Sinds 2026-09-13 kopieert `npm run chrome:debug` de woordenboeken uit het gewone
+Chrome-profiel als het auditprofiel ze mist; dat geldt ook voor de Chrome die de workflow
+zelf start. Zie je toch een lang woord dat buiten een kaart loopt terwijl de titel
+`hyphens: auto` heeft, controleer dan eerst of `hyph-nl.hyb` in het auditprofiel staat
+voordat je afkeurt.
+
 ## Een pagina achter een formulier meet je niet met get-reflow
 
 Bij een formulier met stappen heeft elke stap een eigen adres, maar kom je er alleen als de
