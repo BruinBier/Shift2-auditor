@@ -82,3 +82,104 @@ Bij een grafiek: noem beide oplossingen als losse mogelijkheden, niet als één 
 De twee werken verschillend: arcering maakt de segmenten onderling te onderscheiden maar je moet
 nog steeds naar de legenda; percentages bij de segmenten maken die koppeling overbodig. Elk van
 beide lost het probleem op.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Kleur is nergens de enige drager van informatie
+
+### In het kort
+
+Overal waar kleur iets zegt — dit is een link, dit veld is verplicht, dit segment hoort bij
+die legenda — moet dat ook zonder kleur te zien zijn: onderstreping, een woord, een icoon,
+een vorm, een plek. Kleur als extra is prima; kleur alleen niet.
+
+De vraag die het vaakst misgaat: een link in lopende tekst die alleen blauw is. Een link in
+een menubalk, een kaart of een footerlijst hoeft niet onderstreept: daar is de plek het
+kenmerk, en dan schrijf je dát op.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Links
+
+1. [agent] Zoek elke link die in lopende tekst staat: in een alinea of lijstitem met gewone
+   tekst eromheen. Lees uit de opgemaakte pagina of hij onderstreept is of een ander verschil
+   heeft dan alleen de kleur. Alleen kleur is een afkeuring (F73), tenzij hij 3:1 tegen de
+   omringende tekst haalt én bij hover en focus iets anders krijgt dan een kleur (G183).
+2. [agent] Benoem apart de links buiten lopende tekst — menu, kaarten, footer, knoppen — en
+   schrijf op waaraan ze daar herkenbaar zijn: de menubalk, de kaart, de lijst, de knopvorm.
+3. [agent] Lees van de niet-onderstreepte links de hover- en focustoestand uit. Een focus die
+   alleen van kleur verandert is niet genoeg; een rand of onderstreping wel.
+
+#### Stap 2 — De rest van de pagina
+
+4. [agent] Formulieren: staan verplichte velden en foutmeldingen er ook in woorden of met een
+   teken, of alleen in rood?
+5. [agent] Statusaanduidingen en pictogrammen: groen/rood, aan/uit, open/gesloten — is er
+   tekst of een vorm naast de kleur?
+6. [agent] Geselecteerde toestand: het actieve menu-item, het open tabblad, de huidige
+   pagina in een paginering, de gekozen filterknop, de huidige stap in een formulier, de
+   gekozen datum in een kalender. Vergelijk de opmaak van het gekozen item met die van de
+   andere items in dezelfde groep. Verschilt alleen de kleur, en niet het lettergewicht, een
+   onderstreping, een rand, een pictogram of de tekst, dan is kleur de enige drager. Maak
+   een opname zonder kleur met `get-screenshot --zicht=grijs --voor=1.4.1`: is daarop nog
+   te zien welk item actief is, dan is het in orde. Staat er op de pagina niets met een
+   gekozen toestand, dan is dit gebied `nvt`; op een homepage is dat meestal zo.
+7. [jij] Grafieken, diagrammen en kaarten met een legenda: zijn de vlakken ook zonder de
+   legendakleur te herleiden (labels, arcering, letters)? De kaarten-uitzondering van 1.1.1
+   geldt hier niet. Dit geldt ook voor de PDF's uit de steekproef, tags of geen tags.
+
+#### Stap 3 — Vastleggen
+
+8. [agent] Stuur de zeven deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+Er is nog geen eigen meetcommando voor 1.4.1. Wat er wel is: `get-html` voor de links en de
+tekst eromheen, de full-page opname van `get-screenshot` om te zien wat onderstreept is en
+wat in een kaart of menu staat, en een uitsnede per element met `--selector` en `--voor=1.4.1`.
+De hover- en focustoestand leest de agent uit in de auditsessie.
+
+Met `get-screenshot <url> --zicht=grijs --voor=1.4.1` komt er een opname zonder kleur: de
+browser tekent de pagina zoals iemand met achromatopsie hem ziet. Dat is de proef die het
+criterium stelt. Alles wat op die opname nog te onderscheiden is, hangt niet van kleur af;
+wat erop wegvalt, wel. `rood`, `groen` en `blauw` geven de opname met protanopie,
+deuteranopie en tritanopie. Zet de hoogcontrastknop hier niet aan: die haalt de kleur weg
+en verbergt daarmee precies wat je zoekt.
+
+Wat hier niet uit blijkt: of een grafiek in een PDF zonder de legenda te lezen is. Dat kijkt
+de onderzoeker na.
+
+### Deelgebieden
+
+1. Links in lopende tekst: onderstreept of anders dan alleen door kleur te herkennen
+2. Links buiten lopende tekst: menu, kaarten, footer en knoppen
+3. Hover en focus: de verandering is niet alleen een andere kleur
+4. Formulieren: verplichte velden en foutmeldingen
+5. Statusaanduidingen en pictogrammen met kleurcodering
+6. Grafieken, diagrammen, kaarten en legenda's, ook in de PDF's uit de steekproef
+7. Geselecteerde toestand: actief menu-item, open tabblad, huidige pagina, gekozen filter of stap is niet alleen aan kleur te herkennen
+
+> Vastgelegd op 2026-09-12 bij ZOET-01: 1.4.1 had geen deelgebieden, en Frits miste ze op de
+> kaart. Zijn eerste voorbeeld was gebied 1. Zet uitleg bij deze lijst altijd als blokcitaat:
+> een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.
+>
+> Gebied 7 is van 2026-09-13. De checks uit de RAMP-video over 1.4.1 lagen naast deze lijst;
+> "selected states" ontbrak. Een actief menu-item dat alleen een andere kleur heeft, is het
+> geval dat het vaakst misgaat, en geen van de zes gebieden vroeg ernaar.

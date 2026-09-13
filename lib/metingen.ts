@@ -79,7 +79,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-screenshot',
     criteria: [],
-    toegestaneVlaggen: ['full-page', 'selector', 'breedte', 'klik', 'keep-cookie-banner'],
+    toegestaneVlaggen: ['full-page', 'selector', 'breedte', 'klik', 'keep-cookie-banner', 'zicht', 'voor'],
     vanafDeKaart: false,
     wat: 'Maakt een opname van de pagina of van één element.',
     waaromNiet: 'Een opname van één element hoort bij één criterium; welk element dat is, moet je aanwijzen.',

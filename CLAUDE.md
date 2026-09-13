@@ -68,6 +68,7 @@ npm run cli -- search-quick-findings <keyword>     # reuse finding templates
 # Pagina's bekijken — altijd via de CLI, nooit via een ingebouwde browser
 npm run cli -- get-html <url> [--text] [--full]
 npm run cli -- get-screenshot <url> [--full-page] [--selector=css] [--voor=1.1.1]  # --voor is verplicht bij --selector: een opname van één element hoort bij één criterium
+npm run cli -- get-screenshot <url> --zicht=grijs [--voor=1.4.1]   # 1.4.1: de pagina zoals iemand zonder kleurzien hem ziet; ook rood, groen, blauw voor de drie kleurzienstoornissen
 npm run cli -- get-leesvolgorde <url> [--zonder-css]   # voor 1.3.2: code-volgorde vs. kijkvolgorde
 npm run cli -- get-nietteksten <url> [--klik=...]      # voor 1.4.11: zoekt zelf op wat eronder valt en meet het
 npm run cli -- get-toetsenbordval <url> [--scope=pagina] [--typ-in=css --typ=woord] [--achteruit=true]  # 2.1.2

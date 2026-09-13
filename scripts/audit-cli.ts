@@ -14,7 +14,7 @@
  *   tsx scripts/audit-cli.ts create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]
  *   tsx scripts/audit-cli.ts set-assessment <projectId> --criterion=<id> --status=failed [--explanation=...]
  *   tsx scripts/audit-cli.ts get-html <url> [--full] [--text]
- *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...] [--breedte=320] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...] [--breedte=320] [--klik=...] [--zicht=grijs]
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
@@ -864,6 +864,43 @@ async function runTests(url: string, flags: Flags) {
   print(output);
 }
 
+type Zicht = {
+  naam: string;
+  browser: 'achromatopsia' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+  weergave: string;
+};
+
+/**
+ * Vertaalt `--zicht` naar wat de browser kent.
+ *
+ * De Nederlandse namen zijn de ingang: `grijs` is de proef voor 1.4.1, en wie een van de
+ * drie kleurzienstoornissen wil, hoeft niet te weten dat protanopie over rood gaat. De
+ * namen die de browser zelf gebruikt mogen ook, zodat een agent die de DevTools kent niet
+ * hoeft te raden.
+ */
+function zichtVanVlag(vlag: string): Zicht {
+  const tabel: Record<string, Zicht> = {
+    grijs: { naam: 'grijs', browser: 'achromatopsia', weergave: 'zonder kleur (achromatopsie)' },
+    rood: { naam: 'rood', browser: 'protanopia', weergave: 'zonder rood (protanopie)' },
+    groen: { naam: 'groen', browser: 'deuteranopia', weergave: 'zonder groen (deuteranopie)' },
+    blauw: { naam: 'blauw', browser: 'tritanopia', weergave: 'zonder blauw (tritanopie)' },
+  };
+  const alias: Record<string, string> = {
+    achromatopsie: 'grijs', achromatopsia: 'grijs',
+    protanopie: 'rood', protanopia: 'rood',
+    deuteranopie: 'groen', deuteranopia: 'groen',
+    tritanopie: 'blauw', tritanopia: 'blauw',
+  };
+  const sleutel = vlag.trim().toLowerCase();
+  const keuze = tabel[alias[sleutel] ?? sleutel];
+  if (!keuze) {
+    throw new Error(
+      `Onbekende waarde voor --zicht: "${vlag}". Kies grijs (achromatopsie), rood (protanopie), groen (deuteranopie) of blauw (tritanopie).`
+    );
+  }
+  return keuze;
+}
+
 async function getScreenshot(url: string, flags: Flags) {
   const fullPage = flags['full-page'] === 'true';
   const selector = flags.selector && flags.selector !== 'true' ? flags.selector : null;
@@ -877,10 +914,18 @@ async function getScreenshot(url: string, flags: Flags) {
   // of een uitklapmenu op 320 pixels nog opengaat hoort dus bij dat criterium, en
   // dat is alleen vast te stellen door op die breedte te klikken.
   const breedte = flags.breedte ? parseInt(flags.breedte, 10) : null;
+  // De pagina opnemen zoals iemand met een kleurzienstoornis hem ziet. Voor 1.4.1 is dat
+  // de proef die het criterium stelt: wat op de grijze opname nog te onderscheiden is,
+  // hangt niet van kleur af. Uit de code is dat maar half af te leiden -- een grafiek in
+  // een afbeelding of een gekleurd vlak in een kaart staat daar niet in. De browser
+  // rekent het zelf om (dezelfde functie als "Emulate vision deficiencies" in DevTools),
+  // dus de opname is geen bewerking achteraf maar wat de pagina tekent.
+  const zicht = flags.zicht && flags.zicht !== 'true' ? zichtVanVlag(flags.zicht) : null;
   const session = await getBrowser();
   try {
     const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid } = await openPage(session, url);
     try {
+      if (zicht) await page.emulateVisionDeficiency(zicht.browser);
       if (breedte) {
         // Eerst de breedte, dan opnieuw laden: mediaqueries en scripts die op de
         // beginbreedte reageren moeten de smalle versie zien.
@@ -893,7 +938,7 @@ async function getScreenshot(url: string, flags: Flags) {
       const dir = ensureOutputDir();
       const file = path.join(
         dir,
-        `${timestamp()}-${slugifyUrl(finalUrl)}${breedte ? `-${breedte}px` : ''}.png`
+        `${timestamp()}-${slugifyUrl(finalUrl)}${breedte ? `-${breedte}px` : ''}${zicht ? `-${zicht.naam}` : ''}.png`
       );
 
       if (!keepCookieBanner) {
@@ -959,27 +1004,35 @@ async function getScreenshot(url: string, flags: Flags) {
         await page.screenshot({ path: file as `${string}.png`, fullPage });
       }
 
+      // In de auditsessie blijft de pagina open; de emulatie mag daar niet in achterblijven,
+      // anders is de volgende meting op dezelfde pagina ook grijs.
+      if (zicht) await page.emulateVisionDeficiency('none').catch(() => {});
+
       const stat = fs.statSync(file);
+      // Een opname zonder kleur is geen algemeen bewijs: onder 2.4.4 zegt een grijze pagina
+      // niets. Zonder --voor hoort hij bij 1.4.1, het criterium waarvoor hij bestaat.
+      const voor = flags.voor && flags.voor !== 'true' ? flags.voor : zicht ? '1.4.1' : null;
       legVast({
         commando: 'get-screenshot',
         // Een opname van de hele pagina is algemeen bewijs en komt onder elk criterium.
         // Een opname van één element is dat niet: die hoort bij het criterium waarvoor je
         // hem maakt, en zonder --voor is niet vast te stellen welk dat was. Zonder deze
         // vlag stond een uitsnede van het logo als bewijs onder 2.1.4.
-        ...(flags.voor && flags.voor !== 'true'
-          ? { criteria: flags.voor.split(',').map((c) => c.trim()).filter(Boolean) }
-          : {}),
+        ...(voor ? { criteria: voor.split(',').map((c) => c.trim()).filter(Boolean) } : {}),
         argumenten: {
           ...(fullPage ? { 'full-page': 'true' } : {}),
           ...(selector ? { selector } : {}),
           ...(breedte ? { breedte: String(breedte) } : {}),
           ...(klik ? { klik } : {}),
-          ...(flags.voor && flags.voor !== 'true' ? { voor: flags.voor } : {}),
+          ...(zicht ? { zicht: zicht.naam } : {}),
+          ...(voor ? { voor } : {}),
         },
         url: url,
         eindUrl: finalUrl,
         browser: session.mode === 'cdp' ? 'auditsessie' : 'headless',
-        weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
+        weergave: [klik ? `na klikken op ${klik}` : 'standaardweergave', zicht ? zicht.weergave : null]
+          .filter(Boolean)
+          .join(', '),
         artefact: file,
         schermafdruk: file,
         uitkomst: { bytes: stat.size },
@@ -990,6 +1043,7 @@ async function getScreenshot(url: string, flags: Flags) {
         requestedUrl: url,
         title: pageTitle,
         mode: selector ? `selector:${selector}` : fullPage ? 'full-page' : 'viewport',
+        zicht: zicht ? zicht.weergave : undefined,
         bytes: stat.size,
         file,
         browser: session.mode,
@@ -8844,7 +8898,7 @@ async function main() {
       `  save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json    # wat er per deelgebied is nagelopen\n` +
         `  get-checks <projectId>                           # de opgeslagen sampleoordelen\n` +
         `  get-html <url> [--full] [--text]                # default: alleen <main>; homepage altijd volledig\n` +
-        `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner]\n` +
+        `  get-screenshot <url> [--full-page] [--selector=css] [--keep-cookie-banner] [--zicht=grijs|rood|groen|blauw]  # --zicht: de pagina zoals iemand met een kleurzienstoornis hem ziet; hoort bij 1.4.1\n` +
         `  get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]   # 2.2.2: kijkt of er iets uit zichzelf beweegt of bijwerkt\n` +
         `  capture-sample-evidence <projectId> <sampleId> [--full] [--keep-cookie-banner]  # legt DOM + volledige screenshot vast; maakt geen bevinding\n` +
         `  run-tests <url> [--verbose] [--only-found] [--with-browser]  # crawler-tests; --with-browser voegt contrast-test toe\n` +
