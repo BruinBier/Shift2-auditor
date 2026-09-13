@@ -1,7 +1,7 @@
 export const meta = {
   name: 'audit-samples',
   description: 'Per sample: audit alle succescriteria van het onderzoekstype met de Shift2-beoordelingsregels en de checklists, verifieer, match tegen bestaande QuickFindings, en schrijf de uitkomsten weg als voorstel',
-  whenToUse: 'Voor een WCAG-audit waarbij per sample elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Werkt op HTML-pagina\'s en op PDF-documenten (die krijgen een eigen beoordeling op documentstructuur). Schrijft het oordeel per sample per criterium weg en maakt de afkeuringen aan als voorstel — die tellen nergens mee tot de onderzoeker akkoord geeft. Levert daarnaast een lijst met vragen die handmatig in de browser beantwoord moeten worden. Draai met args.drooglopen = true om alleen te rapporteren.',
+  whenToUse: 'Voor een WCAG-audit waarbij per sample elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Werkt op HTML-pagina\'s en op PDF-documenten (die krijgen een eigen beoordeling op documentstructuur). Voor elk criterium met deelgebieden vult de auditor die verplicht in; zonder complete lijst weigert save-checks het oordeel. Schrijft het oordeel per sample per criterium weg en maakt de afkeuringen aan als voorstel — die tellen nergens mee tot de onderzoeker akkoord geeft. Levert daarnaast een lijst met vragen die handmatig in de browser beantwoord moeten worden. Draai met args.drooglopen = true om alleen te rapporteren.',
   phases: [
     { title: 'Voorbereiden', detail: 'Project, samples, SC-set en QuickFindings ophalen' },
     { title: 'Auditen', detail: 'Eén auditor-agent per sample gaat alle SC\'s af (Shift2-regels + wcag-checklists)' },
@@ -36,7 +36,7 @@ phase('Voorbereiden')
 const CONTEXT_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['researchTypeName', 'samples', 'criteria', 'quickFindingsPad', 'aantalQuickFindings', 'existingFindings'],
+  required: ['researchTypeName', 'samples', 'criteria', 'quickFindingsPad', 'aantalQuickFindings', 'existingFindings', 'deelgebieden'],
   properties: {
     researchTypeName: { type: 'string' },
     samples: {
@@ -87,6 +87,18 @@ const CONTEXT_SCHEMA = {
     // plaats van vast in dit script, zodat een nieuwe regel meteen meetelt.
     regelbestanden: { type: 'array', items: { type: 'string' } },
     grensgevallen: { type: 'array', items: { type: 'string' } },
+    /**
+     * De deelgebieden per criterium, woordelijk uit `### Deelgebieden` in het regelbestand.
+     *
+     * Sinds 2026-09-13 heeft vrijwel elk criterium zo'n lijst, en save-checks weigert een
+     * oordeel zonder complete lijst. Op de eerste run daarna werden 24 van de 30 oordelen
+     * van een sample geweigerd: de auditor had ze in lopende tekst genoemd, niet als lijst.
+     * De scout leest ze uit; het script zelf heeft geen bestandssysteem.
+     */
+    deelgebieden: {
+      type: 'object',
+      additionalProperties: { type: 'array', items: { type: 'string' } },
+    },
     // Bestaande bevindingen in het project — puur om in het eindrapport
     // afkeuringen te labelen als 'nieuw' of 'bestaat_al'. De auditors zien
     // deze NIET (verse audit).
@@ -172,6 +184,12 @@ Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het sche
    ls wcag-checklists/ | grep '^Richtlijnen_Grensgevallen_SC_'
    \`\`\`
    Zet de SC-codes in \`regelbestanden\` respectievelijk \`grensgevallen\`, met punten in plaats van underscores: \`Shift2_Regels_SC_3_3_2.md\` wordt "3.3.2". Neem ALLE gevonden bestanden op — deze lijst bepaalt waar de auditors naar verwezen worden, en een regel die hier ontbreekt wordt door niemand gelezen.
+
+6. De deelgebieden per criterium. Elk regelbestand kan een kop \`### Deelgebieden\` hebben met een genummerde lijst eronder. Lees die voor ALLE regelbestanden in één keer uit:
+   \`\`\`
+   for f in wcag-regels/Shift2_Regels_SC_*.md; do echo "== $f"; awk '/^### Deelgebieden/{p=1;next} /^#{1,3} /{if(p)exit} p' "$f" | grep -E '^[0-9]+\\.' ; done
+   \`\`\`
+   Geef in \`deelgebieden\` een object met per criteriumcode (met punten, bv. "1.3.1") de lijst met gebieden, WOORDELIJK zoals ze er staan, zonder het nummer en de punt ervoor, in de volgorde van het bestand. Die namen worden straks letterlijk weggeschreven; een naam die één teken afwijkt wordt geweigerd. Heeft een bestand geen kop Deelgebieden, laat die code dan weg. Blokcitaten (regels die met > beginnen) horen er niet bij.
 
 Geef puur de verzamelde data terug. Verzin niets; laat een lege array als iets niet bestaat.`,
   { label: 'scout:context', phase: 'Voorbereiden', schema: CONTEXT_SCHEMA },
@@ -455,6 +473,50 @@ log(`${requiredCodes.filter((c) => SC_MET_REGELBESTAND.includes(c)).length} van 
 // ---------------------------------------------------------------------------
 const STATUS_ENUM = ['voldoet', 'afgekeurd', 'opmerking', 'niet_aanwezig', 'niet_te_bepalen']
 
+/**
+ * De deelgebieden per criterium, zoals de scout ze uit de regelbestanden las.
+ *
+ * Alleen de criteria van dit onderzoekstype. Een criterium zonder lijst krijgt een lege
+ * array: dan hoeft de auditor niets mee te sturen en weigert save-checks ook niets.
+ */
+const DEELGEBIEDEN = Object.fromEntries(
+  requiredCodes.map((code) => [
+    code,
+    Array.isArray(context.deelgebieden?.[code]) ? context.deelgebieden[code] : [],
+  ]),
+)
+const codesMetGebieden = requiredCodes.filter((c) => DEELGEBIEDEN[c].length)
+log(`${codesMetGebieden.length} van ${requiredCodes.length} criteria hebben deelgebieden; die gaan verplicht mee met het oordeel.`)
+
+const deelgebiedenSectie = codesMetGebieden.length
+  ? `\n\nDE DEELGEBIEDEN — PER CRITERIUM ALLE GEBIEDEN LANGSLOPEN
+${codesMetGebieden.length} criteria bestaan uit meerdere losse vragen. Een oordeel op zo'n criterium wordt GEWEIGERD als je niet elk gebied beantwoordt; dat is geen formaliteit maar de enige manier waarop de onderzoeker kan zien dat je niets hebt overgeslagen. Een verhaal dat een gebied weglaat leest hetzelfde als een verhaal dat er niets over te melden had.
+
+Geef per gebied in \`gebieden\` een uitkomst:
+  ok        — nagelopen, in orde
+  nvt       — komt op deze pagina niet voor (zeg in de toelichting waaróp je hebt gezocht)
+  fout      — hier zit een afkeuring; toelichting VERPLICHT
+  opmerking — geen afkeuring, wel iets te melden; toelichting VERPLICHT
+
+Kun je een gebied niet beoordelen, gebruik dan \`nvt\` met een toelichting die zegt waarom.
+Dát je het niet kon is de informatie die een lopende onderbouwing weglaat — verzin geen 'ok'.
+Bij een PDF-sample: gebieden die over webpagina's gaan zijn \`nvt\` met die reden; de gebieden
+over het document zelf beantwoord je gewoon.
+
+Al het inhoudelijke gaat naar de gebieden: waaróp je hebt gezocht schrijf je bij het gebied
+waar je zocht. 'reden' is dan één of twee zinnen over of de meting geldig was — kwam je op de
+gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en verder niets.
+
+Zet bij elk voorstel in \`gebieden\` bij welk deelgebied het hoort, met de naam woordelijk. Dan
+staat het op de kaart onder het gebied waar het over gaat. Elk gebied dat je op \`fout\` of
+\`opmerking\` zet, hoort in minstens één voorstel terug te komen.
+
+Neem de namen WOORDELIJK over. Criteria zonder lijst hieronder krijgen een lege \`gebieden\`.
+${codesMetGebieden
+  .map((code) => `  ${code}:\n${DEELGEBIEDEN[code].map((g) => `    - ${g}`).join('\n')}`)
+  .join('\n')}`
+  : ''
+
 const AUDIT_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -469,11 +531,29 @@ const AUDIT_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['code', 'status', 'reden'],
+        required: ['code', 'status', 'reden', 'gebieden'],
         properties: {
           code: { type: 'string', enum: requiredCodes },
           status: { type: 'string', enum: STATUS_ENUM },
           reden: { type: 'string' },
+          /**
+           * De deelgebieden van dit criterium, elk met een uitkomst. Verplicht, ook als
+           * leeg: een optioneel veld laat een agent graag weg, en dan weigert save-checks
+           * het oordeel. Heeft het criterium geen deelgebieden, dan is dit een lege lijst.
+           */
+          gebieden: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['gebied', 'uitkomst'],
+              properties: {
+                gebied: { type: 'string' },
+                uitkomst: { type: 'string', enum: ['ok', 'nvt', 'fout', 'opmerking'] },
+                toelichting: { type: 'string' },
+              },
+            },
+          },
           /**
            * Alleen invullen bij 'afgekeurd' of 'opmerking'. Een lijst, want één
            * criterium kan op één pagina meerdere losse punten opleveren — de
@@ -495,6 +575,8 @@ const AUDIT_SCHEMA = {
                 advice: { type: 'string' },
                 impact: { type: 'string' },
                 responsibility: { type: 'string' },
+                /** Bij welk deelgebied dit voorstel hoort, woordelijk. Meestal één. */
+                gebieden: { type: 'array', items: { type: 'string' } },
               },
             },
           },
@@ -742,6 +824,8 @@ SCHRIJFREGELS voor voorstelBevinding.description:
 Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar|ontwerper.
 Bij opmerking: laat impact en responsibility leeg.
 
+${deelgebiedenSectie}
+
 Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requiredCodes.length} assessments, één per code.`
 
 // ---------------------------------------------------------------------------
@@ -967,6 +1051,8 @@ SCHRIJFREGELS voor elke voorstellen[].description (belangrijk):
 Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar|ontwerper.
 Bij opmerking: laat impact en responsibility leeg.
 
+${deelgebiedenSectie}
+
 Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requiredCodes.length} assessments, één per code.`,
       { label: `audit:${sample.title}`, phase: 'Auditen', schema: AUDIT_SCHEMA },
     ),
@@ -1154,6 +1240,7 @@ const rapport = clean.map((row) => {
         ? { bevestigd: v.bevestigd, punten: v.bewijsvoering }
         : null,
       voorstellen: a.voorstellen || [],
+      gebieden: a.gebieden || [],
       bestaandeQuickFinding: qf?.bestaatAl ? { id: qf.quickFindingId, title: qf.quickFindingTitle } : null,
       quickFindingToelichting: qf?.toelichting || null,
     }
@@ -1169,6 +1256,24 @@ const rapport = clean.map((row) => {
     assessments,
   }
 })
+
+/**
+ * Ontbrekende deelgebieden nu al melden, niet pas bij het wegschrijven.
+ *
+ * save-checks weigert zo'n oordeel, en dan staat er verderop een foutmelding zonder dat
+ * iemand weet welke auditor zijn werk niet afmaakte.
+ */
+for (const row of rapport) {
+  for (const a of row.assessments) {
+    const verwacht = DEELGEBIEDEN[a.code] || []
+    if (!verwacht.length) continue
+    const gedaan = new Set((a.gebieden || []).map((g) => g.gebied))
+    const open = verwacht.filter((g) => !gedaan.has(g))
+    if (open.length) {
+      log(`LET OP: "${row.sampleTitle}" ${a.code} mist ${open.length} van de ${verwacht.length} deelgebieden (${open.join(', ')}). Dat oordeel wordt geweigerd.`)
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // FASE 4 — WEGSCHRIJVEN. Tot nu toe eindigde deze workflow bij een rapport en
@@ -1214,8 +1319,24 @@ if (!drooglopen) {
             impact: v.type === 'opmerking' ? null : v.impact,
             responsibility: v.type === 'opmerking' ? null : v.responsibility,
             bestaandeQuickFinding: a.bestaandeQuickFinding?.title || null,
+            gebieden: v.gebieden || [],
           })),
         )
+
+      /**
+       * Welk voorstel bij welk gebied hoort, als plaatshouder.
+       *
+       * De koppeling loopt via het id van de bevinding, en dat bestaat pas nadat het
+       * voorstel is aangemaakt. Daarom staat hier `@1` voor het eerste punt uit de lijst,
+       * `@2` voor het tweede; de schrijf-agent vervangt ze door de id's die hij terugkrijgt.
+       * Zonder koppeling toont de kaart de bevinding los onder het oordeel, en dan moet de
+       * onderzoeker zelf verbinden wat bij elkaar hoort.
+       */
+      const plaatshouders = (code, gebied) =>
+        nieuweVoorstellen
+          .map((v, i) => ({ v, plaats: `@${i + 1}` }))
+          .filter(({ v }) => v.code === code && (v.gebieden || []).includes(gebied))
+          .map(({ plaats }) => plaats)
 
       const oordelen = row.assessments.map((a) => ({
         sampleItemId: sampleId,
@@ -1226,30 +1347,27 @@ if (!drooglopen) {
         // werd die weggegooid zodra de workflow klaar was: de onderzoeker zag in de
         // stapel nooit of iemand ernaar had gekeken.
         controle: a.controle || undefined,
+        // De deelgebieden, met de plaatshouder van het voorstel dat erbij hoort. Zonder
+        // deze lijst weigert save-checks het oordeel bij elk criterium dat er een heeft.
+        ...((DEELGEBIEDEN[a.code] || []).length
+          ? {
+              gebieden: (a.gebieden || []).map((g) => {
+                const bev = plaatshouders(a.code, g.gebied)
+                return {
+                  gebied: g.gebied,
+                  uitkomst: g.uitkomst,
+                  ...(g.toelichting ? { toelichting: g.toelichting } : {}),
+                  ...(bev.length ? { bevindingen: bev } : {}),
+                }
+              }),
+            }
+          : {}),
       }))
 
       return agent(
         `Schrijf de uitkomsten van sample "${row.sampleTitle}" weg met de audit-CLI. De dev-server draait; werkdirectory is de repo-root.
 
-STAP 1 — de oordelen per criterium.
-Schrijf onderstaande JSON naar een tijdelijk bestand en pijp het naar de CLI:
-
-  npm run cli -- save-checks ${projectId} --bron=workflow < <jouw-bestand>.json
-
-Controleer het antwoord: "geschreven" hoort ${oordelen.length} te zijn en "overgeslagen" 0. Is dat niet zo, meld dan wat er misging; verzin geen tweede poging met andere codes.
-
-DE OORDELEN:
-${JSON.stringify(oordelen, null, 1)}
-
-STAP 1B — koppel het logboek aan de oordelen.
-
-  npm run cli -- koppel-logboek ${projectId}
-
-Dit leest wat de CLI tijdens de audit heeft weggeschreven en zet per oordeel vast waarop het rust: welke metingen er zijn gedraaid, met welke argumenten en welke uitkomst. TYP DAT NIET ZELF OVER en verzin geen regels. Het commando leest het logboek en de onderzoeker kan het naast jouw antwoord leggen; een regel die jij toevoegt en die niet gedraaid is, valt daarmee door de mand.
-
-Meld in je antwoord het getal bij "gekoppeld". Is dat 0 terwijl je wel metingen hebt gedraaid, dan is er iets mis met de koppeling van adres naar sample; meld dat.
-
-STAP 2 — de afkeuringen als voorstel.
+STAP 1 — de afkeuringen als voorstel. Dit gaat VÓÓR de oordelen, want de oordelen verwijzen naar de id's die je hier terugkrijgt.
 ${
   nieuweVoorstellen.length === 0
     ? 'Er zijn geen nieuwe afkeuringen of opmerkingen op dit sample. Sla deze stap over.'
@@ -1264,10 +1382,30 @@ Let op:
   - Bij type 'opmerking' laat je --impact en --responsibility allebei weg; die heeft geen ernst en geen adressant.
   - Het criteriumId haal je uit \`npm run cli -- list-criteria\` (niet de code, de id).
   - Gebruik --skip-lint NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens wcag-regels/Shift2_Schrijfregels.md en probeer opnieuw.
+  - Noteer per punt het \`id\` (de uuid) uit het antwoord van create-finding. Punt 1 in de lijst is \`@1\`, punt 2 is \`@2\`, enzovoort.
 
 DE PUNTEN:
 ${JSON.stringify(nieuweVoorstellen, null, 1)}`
 }
+
+STAP 2 — de oordelen per criterium.
+In de JSON hieronder staan bij sommige gebieden plaatshouders in \`bevindingen\`: \`@1\`, \`@2\`. Vervang elke plaatshouder door het id (de uuid, NIET de code V00x) van het voorstel dat je bij dat punt hebt aangemaakt. Is een voorstel niet aangemaakt, haal de plaatshouder dan weg en meld het.
+Schrijf de JSON daarna naar een tijdelijk bestand en pijp het naar de CLI:
+
+  npm run cli -- save-checks ${projectId} --bron=workflow < <jouw-bestand>.json
+
+Controleer het antwoord: "geschreven" hoort ${oordelen.length} te zijn en "overgeslagen" 0. Is dat niet zo, meld dan wat er misging; verzin geen tweede poging met andere codes. Laat de lijsten \`gebieden\` intact: ze zijn verplicht en de namen moeten woordelijk zo blijven.
+
+DE OORDELEN:
+${JSON.stringify(oordelen, null, 1)}
+
+STAP 3 — koppel het logboek aan de oordelen.
+
+  npm run cli -- koppel-logboek ${projectId}
+
+Dit leest wat de CLI tijdens de audit heeft weggeschreven en zet per oordeel vast waarop het rust: welke metingen er zijn gedraaid, met welke argumenten en welke uitkomst. TYP DAT NIET ZELF OVER en verzin geen regels. Het commando leest het logboek en de onderzoeker kan het naast jouw antwoord leggen; een regel die jij toevoegt en die niet gedraaid is, valt daarmee door de mand.
+
+Meld in je antwoord het getal bij "gekoppeld". Is dat 0 terwijl je wel metingen hebt gedraaid, dan is er iets mis met de koppeling van adres naar sample; meld dat.
 
 Geef terug hoeveel oordelen zijn weggeschreven, hoeveel voorstellen zijn aangemaakt met welke codes, en wat er eventueel misging.`,
         {
