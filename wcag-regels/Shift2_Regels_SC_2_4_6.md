@@ -85,3 +85,81 @@ Let op: er zijn geen QuickFindings onder 2.4.6, dus je schrijft deze bevindingen
 
 - Bestandsnaam als bijschrift in een vergrote galerij-weergave (SIMsite-patroon): eigen bevinding onder 2.4.6, klein en redacteur, los van de 1.1.1-bevinding over de ontbrekende tekstalternatieven. Spreek hier over "onderschrift", bij 1.1.1 over "tekstalternatief".
 - NIET-GETAGDE PDF: 2.4.6 WEL gewoon beoordelen. Dit criterium gaat over de inhoudelijke kwaliteit van de koptekst, en die staat er ook zonder tags. Kijk naar de pagina: staan er koppen boven de paragrafen, en dekt die tekst de lading van wat eronder staat? Geef een echt oordeel (voldoet of afkeuring); zet het niet op niet_te_bepalen met "geen tags" als reden. Dat de kop technisch niet als kop is vastgelegd, is een 1.3.1-kwestie, niet een 2.4.6-kwestie. Vastgelegd door Frits op 2026-08-02 bij UTHEU-01.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Elke kop zegt waar het stuk eronder over gaat
+
+### In het kort
+
+Wie met een schermlezer door de koppenlijst navigeert hoort alleen de koppen. "TIP!",
+"Let op!" of "Meer informatie" zegt dan niets. Loop élke kop na, ook h3 tot en met h6,
+want juist de lagere koppen zijn vaak de nietszeggende. Beoordeel een kop in zijn
+hiërarchie: "Wat betekent dit?" onder "Woningen van het gas af" is in orde.
+
+Het niveau van een kop is 1.3.1, de tekst is 2.4.6; op dezelfde kop kunnen dat twee
+bevindingen zijn. Een PDF zonder tags beoordeel je hier gewoon: de tekst staat er ook
+zonder tags.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-html`: alle koppen h1 tot en met h6 in de main-content met hun niveau en
+   tekst, plus de labels van invoervelden en knoppen. Op de homepage het hele document.
+
+#### Stap 2 — Beoordelen
+
+2. [agent] Per kop, in zijn hiërarchie: weet wie alleen deze kop en de koppen erboven hoort,
+   waar het stuk over gaat? Zo nee, afkeuring, met een concreet voorbeeld van een betere kop
+   uit de werkelijke tekst.
+3. [agent] Staat een nietszeggende kop op hetzelfde niveau als de kop erboven, dan is de
+   context weg, maar dat is een 1.3.1-bevinding over het niveau, geen 2.4.6.
+4. [agent] Reeksen: heten de stappen van een formulier elk naar wat je er doet? Een
+   bestandsnaam als bijschrift in een galerij is een eigen 2.4.6-bevinding.
+5. [agent] Labels: zegt het label van een veld of knop wat er wordt gevraagd of wat er
+   gebeurt? Of het label er überhaupt staat, is 3.3.2.
+6. [jij] Vervolgstappen van een formulier zijn niet los op te halen. Wat staat er op stap 2
+   en 3?
+
+#### Stap 3 — Vastleggen
+
+7. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+8. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-html` geeft alle koppen met niveau en tekst, en de labels, na JavaScript. Of een kop
+beschrijvend is, weegt de agent tegen de tekst eronder en de koppen erboven; daar is geen
+meting voor.
+
+Wat hier niet uit blijkt: de koppen van formulierstappen achter een sessie. Die vraagt de
+agent aan de onderzoeker.
+
+### Deelgebieden
+
+1. Hoofdkoppen (h1 en h2): beschrijven het stuk eronder
+2. Lagere koppen (h3 tot en met h6), beoordeeld in hun hiërarchie
+3. Labels van invoervelden en knoppen: zeggen wat er wordt gevraagd of gebeurt
+4. Reeksen: formulierstappen, galerij-bijschriften en koppen in PDF's
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

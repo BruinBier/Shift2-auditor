@@ -144,3 +144,78 @@ laten omdat de reparatie dezelfde is; Frits: "ik denk wel het zijn 2 verschillen
 - Bij een deelonderzoek content: beperk je tot de main-content. Hoofdmenu, hoofdnavigatie en
   toegankelijkheidsbalk vallen buiten de scope.
 - Bij PDF-samples is 2.5.3 niet van toepassing.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+De zichtbare tekst zit in de toegankelijke naam
+
+### In het kort
+
+Wie met spraak bedient, zegt wat er op de knop staat: "klik Zoeken". Dat werkt alleen als
+die zichtbare tekst ook in de toegankelijke naam zit. Een `aria-label` dat de zichtbare
+tekst overschrijft is de klassieke afkeuring. Een element zonder zichtbare tekst valt
+erbuiten; dat is 4.1.2.
+
+Het logo: staat de organisatienaam zichtbaar in het logo en niet in de naam van de link,
+dan is dat een 2.5.3-afkeuring naast de 1.1.1. Een slogan hoeft niet in de naam.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-labelinnaam <url>`, `--scope=main` op een vervolgpagina: per
+   bedieningselement de zichtbare tekst en de toegankelijke naam, genormaliseerd
+   vergeleken, met de mismatches en de niet te vergelijken gevallen in het overzicht.
+
+#### Stap 2 — Beoordelen
+
+2. [agent] Per mismatch: zit de zichtbare tekst volledig in de naam? "Zoeken" in "Zoeken op
+   deze website" is goed; "Zoek" in "Zoeken" niet.
+3. [agent] Het logo, op de homepage: welke tekst toont het, en komt de organisatienaam terug
+   in de naam van de link? Een lege alt met alleen een title is een afkeuring hier én onder
+   1.1.1; een ontbrekende slogan niet.
+4. [jij] Tekst die in een afbeelding staat, en een samengestelde `aria-labelledby`: die kan
+   het commando niet vergelijken. Kijk in de toegankelijkheidsboom van de browser.
+
+#### Stap 3 — Vastleggen
+
+5. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+6. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-labelinnaam` bepaalt in de browser per element de zichtbare tekst (zonder
+`aria-hidden` en zonder verborgen tekst) en de toegankelijke naam in de volgorde
+`aria-labelledby`, `aria-label`, gekoppeld label, inhoud met alt, `title`, en vergelijkt
+ze genormaliseerd.
+
+Wat hier niet uit blijkt: zichtbare tekst in een afbeelding en een samengestelde
+`aria-labelledby`. Die staan apart in het overzicht en zijn met de hand na te kijken.
+
+### Deelgebieden
+
+1. Knoppen en links met zichtbare tekst: de tekst komt volledig voor in de naam
+2. Formuliervelden: het zichtbare label komt voor in de naam
+3. Het logo op de homepage: de organisatienaam zit in de naam van de link, een slogan hoeft niet
+4. Niet te vergelijken gevallen: tekst in een afbeelding en samengestelde aria-labelledby, gemeld
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

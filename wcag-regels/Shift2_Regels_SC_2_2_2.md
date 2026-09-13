@@ -111,3 +111,81 @@ Gemeten met het nieuwe commando: venster van 5,5 s, 0 van de 3658 vakjes op het 
 veranderd, 0 elementen verplaatst, 0 bijwerkingen in de weergave (wel 3 attribuutwissels op
 het zoekveld, die niet meetellen), geen CSS-animaties, geen mediaspelers. Oordeel blijft
 `niet_aanwezig`, nu met een meting eronder in plaats van een geloofwaardige zin.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Wat uit zichzelf beweegt, is te pauzeren, te stoppen of te verbergen
+
+### In het kort
+
+Een carrousel die doorschuift, een teller die bijwerkt, een animatie die doorloopt: begint
+het uit zichzelf, duurt het langer dan vijf seconden en staat het naast andere inhoud, dan
+moet de bezoeker het kunnen pauzeren, stoppen of verbergen. Of er iets beweegt is uit de
+code niet te lezen; je laat tijd verstrijken en kijkt.
+
+Beweegt er niets, dan is dit criterium niet aanwezig, geen "voldoet". Beweegt er wel
+iets, dan is dat nog geen afkeuring: dan volgen drie vragen. Bij een PDF is het niet van
+toepassing.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-beweging <url>`: drie opnamen, bij binnenkomst, na drie seconden en vijf
+   seconden daarna; alleen het venster ná die drie seconden telt. Met
+   `--klik="tekst:Accepteren"` als een melding de pagina afdekt.
+2. [meting] Bij `beslist: false` (een speler met autoplay die niet gespeeld heeft): opnieuw
+   in de auditsessie, want de browser houdt geluid dat uit zichzelf begint tegen.
+
+#### Stap 2 — Beoordelen
+
+3. [agent] Leg per veranderd gebied de uitsnede vóór en ná naast elkaar. Een lui geladen
+   foto is geen beweging; een doorgeschoven carrousel wel. Loop de lijst `telt`/`niet` na.
+4. [agent] Beweegt er iets: begon het uit zichzelf, staat het naast andere inhoud, duurt het
+   langer dan vijf seconden? Alleen dan geldt de eis.
+5. [agent] Zoek de pauze-, stop- of verbergknop en probeer hem in de auditsessie. Een knop
+   die "pauze" heet hoeft niet te werken; `prefers-reduced-motion` telt niet als knop.
+
+#### Stap 3 — Vastleggen
+
+6. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+7. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-beweging` kijkt met vier zintuigen: de beeldpunten (ook een canvas en een kader van
+een ander domein), de bijwerkingen in de code, de verplaatsingen van elementen, en wat de
+pagina zelf opgeeft aan CSS-animaties en spelende media. Van elk veranderd gebied komt een
+uitsnede vóór en ná.
+
+Wat hier niet uit blijkt: of een beweging uit zichzelf begon of na een handeling, en of een
+gevonden pauzeknop werkt en bij die beweging hoort. Dat loopt de agent na. Geluid is 1.4.2,
+flitsen is 2.3.1.
+
+### Deelgebieden
+
+1. Beeldvergelijking: veranderde gebieden na de eerste drie seconden, uitsnedes bekeken
+2. Bijwerkingen in de code en verplaatsingen die de bezoeker merkt, geschift op telt/niet
+3. CSS-animaties en spelende media die de pagina zelf opgeeft
+4. Bediening bij beweging: pauze, stop of verberg, nagelopen en geprobeerd
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

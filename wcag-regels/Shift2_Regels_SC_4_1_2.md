@@ -264,3 +264,82 @@ Vastgelegd door Frits op 2026-08-26.
 - Link met wel tekst maar niet-beschrijvend ("klik hier", "lees meer"): dat is ALLEEN 2.4.4, niet 4.1.2, want de link heeft wel een naam.
 - Link, knop of formulierveld zonder enige naam: wel 4.1.2. Bij een afbeelding-link zonder alt gelden 2.4.4 en 4.1.2 allebei, als twee aparte bevindingen.
 - Schrijf dat de link of knop GEEN naam heeft, niet "geen duidelijke naam". Niet beweren dat de schermlezer het webadres voorleest.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Elk bedienbaar element heeft een naam, een rol en een toestand
+
+### In het kort
+
+Hulpsoftware moet van elke link, knop en elk veld kunnen zeggen wat het is, hoe het heet en
+in welke stand het staat. Een link zonder naam, een link die als knop is gecodeerd, een
+schakelknop die niet meldt of hij aanstaat: dat zijn de drie vragen. Kijk altijd naar de
+logolink bovenaan; een naam die alleen uit `title` komt is er wel, en dan weeg je of hij zijn
+werk doet.
+
+Een nietszeggende naam is 2.4.4, niet 4.1.2. Templatecode van de leverancier zonder
+redactionele ingang is een technisch issue, geen bevinding. Een PDF zonder tags vervalt.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-links <url>`: per link de toegankelijke naam in de juiste volgorde, en de
+   ankers met een andere rol apart onder `ankers_met_een_andere_rol`.
+2. [meting] `get-html`: knoppen, velden en eigen widgets met hun naam, rol en
+   toestandsattributen (`aria-pressed`, `aria-expanded`, `aria-selected`, `aria-current`).
+
+#### Stap 2 — Beoordelen
+
+3. [agent] De logolink: welke naam heeft hij, en waar komt die vandaan? Geen naam is een
+   afkeuring; alleen een `title` is te wegen op of hij de bestemming dekt.
+4. [agent] Per anker met een rol: doet het wat de rol belooft, hoort het gedrag erbij, en
+   verdwijnt het uit een lijst waar de gebruiker het zoekt?
+5. [agent] Per schakel- en uitklapknop: wordt de toestand gemeld en verandert hij mee? Zit
+   de knop in de toegankelijkheidsbalk van de leverancier, dan technisch issue.
+6. [agent] Een PDF zonder tags: `niet_te_bepalen`, behalve bij een echt invulbaar formulier.
+7. [jij] Een rol is pas te beoordelen als je het element bedient: doet de "knop" wat een knop
+   doet, werkt het menu met de pijltjestoetsen?
+
+#### Stap 3 — Vastleggen
+
+8. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-links` rekent per link de toegankelijke naam uit in de volgorde uit de regels van 2.4.4
+en zet ankers met een andere rol apart. `get-html` na JavaScript geeft de knoppen, velden
+en toestandsattributen.
+
+Wat hier niet uit blijkt: of een rol klopt met wat het element doet, en of een toestand
+meebeweegt. Dat vergt bedienen in de auditsessie.
+
+### Deelgebieden
+
+1. Naam: links, knoppen en velden hebben een toegankelijke naam, de logolink voorop
+2. Rol: elementen met een rol doen wat die rol belooft, en horen in de bijbehorende constructie
+3. Toestand: schakelknoppen, uitklapknoppen en tabbladen melden hun stand en veranderen mee
+4. Eigen widgets: zoeksuggesties, dialoogvensters en accordeons hebben naam, rol en toestand
+5. Templatecode van de leverancier: als technisch issue gemeld, niet als bevinding
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

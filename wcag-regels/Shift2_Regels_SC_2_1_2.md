@@ -89,3 +89,82 @@ Frits: "de hele pagina moet telkens worden getoetst."
 - NOOIT concluderen uit statische HTML alleen. "Geen verdachte elementen dus OK" is geen
   geldige onderbouwing zonder de daadwerkelijke tabtest.
 - Bij PDF-samples is 2.1.2 niet van toepassing.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Met Tab kom je overal in en overal weer uit
+
+### In het kort
+
+Ga in de adresbalk staan, tab door de hele pagina tot onderaan, langs "Terug naar boven",
+en weer de adresbalk in. Blijft de focus ergens hangen, dan is dat een val, en wie daar vast
+komt te zitten bereikt de rest van de pagina nooit. Een val kan één kant op zitten, en een
+suggestielijst bestaat pas na typen; daarom vier rondes.
+
+De hele pagina is de norm, ook header en footer. Uit de code alleen is dit niet te
+bepalen; het is een meting. Bij een PDF is dit criterium niet van toepassing.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-toetsenbordval <url> --scope=pagina`: vooruit vanaf de bovenkant, tot de
+   focus het document verlaat.
+2. [meting] `get-toetsenbordval <url> --achteruit=true`: met Shift+Tab vanaf de onderkant.
+3. [meting] `get-toetsenbordval <url> --typ-in=<css> --typ=<woord>`: met een suggestielijst
+   of ander widget open, want die bestaat pas na typen.
+4. [meting] Ter controle `--scope=main`: de main-content apart, als je wilt zien waar de
+   focus de inhoud verlaat.
+
+#### Stap 2 — Beoordelen
+
+5. [agent] Controleer in het tabvolgorde-bestand het startpunt bovenaan en of de laatste
+   regel `(buiten de pagina)` is. Staat er iets dat je niet verwachtte, dan meet je iets
+   anders dan je denkt.
+6. [agent] Loop de risicoconstructies na die het commando opsomt: kaders, mediaspelers met
+   bediening, positieve tabindex, dialoogvensters. Is elk ervan in een ronde doorlopen?
+7. [jij] Een pagina achter een login, of een val die zich alleen in een schermlezermodus
+   voordoet: dat meet het commando niet.
+
+#### Stap 3 — Vastleggen
+
+8. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-toetsenbordval` zet een merkteken op elk focusbaar element, drukt Tab, leest na elke
+druk uit welk element focus heeft, en herkent een val doordat de focus het gebied niet
+verlaat terwijl een korte reeks zich herhaalt. Het schrijft de volgorde weg en drukt Escape
+zodra de focus in een dialoog belandt.
+
+Wat hier niet uit blijkt: of de focus zichtbaar is (2.4.7), en een val die alleen in een
+schermlezer optreedt. Een pagina achter een login is alleen in de auditsessie te meten.
+
+### Deelgebieden
+
+1. Vooruit door de hele pagina, van de adresbalk tot buiten het document
+2. Achteruit met Shift+Tab vanaf de onderkant
+3. Met een widget open: zoeksuggesties, dialoog, uitklapmenu
+4. Risicoconstructies nagelopen: kaders, mediaspelers, positieve tabindex, dialoogvensters
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

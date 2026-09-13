@@ -248,3 +248,84 @@ stond `disablekb=1`. De poster laat zien dát er een speler is; alleen het adres
 sneltoetsen aanstaan.
 
 Vastgelegd door Frits op 2026-08-19.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Sneltoetsen van één teken zijn uit te zetten
+
+### In het kort
+
+Een sneltoets van één letter zit op een gemeentesite vrijwel nooit in de eigen code, maar
+komt mee met een ingesloten videospeler: bij YouTube pauzeert de k en dempt de m zodra de
+focus in de speler staat. Dat is te lezen in het insluitadres: `disablekb=1` bij YouTube,
+`keyboard=0` bij Vimeo. Ontbreekt de parameter, dan is de pagina afgekeurd.
+
+Geen video op de pagina is niet aanwezig, geen "voldoet". Een speler die geen YouTube of
+Vimeo is, is niet te bepalen en wordt gemeld. Bij een PDF is dit criterium niet van
+toepassing.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-videos <url>` op de homepage, `--scope=main` op elk ander sample: elke
+   speler met zijn insluitadres, ook achter een afgeschermde wortel. Altijd in de
+   auditsessie, anders staat een speler achter een toestemmingsscherm en is het adres niet
+   leesbaar.
+2. [meting] `get-videos <stap1-url> --doorloop=2` voor een latere formulierstap: die bestaat
+   niet als los adres.
+
+#### Stap 2 — Beoordelen
+
+3. [agent] Per YouTube-speler: staat `disablekb=1` ergens in de querystring? Per
+   Vimeo-speler: `keyboard=0`? Eén speler zonder de parameter keurt de pagina af; de goede
+   blijven in de opsomming staan.
+4. [agent] Een andere speler: niet gokken, `niet_te_bepalen` met de melding dat deze
+   werkwijze hem niet dekt. Een adres dat niet leesbaar was (`beslist: false`): ook
+   `niet_te_bepalen`.
+5. [agent] Eén voorstel per spelertype voor de hele steekproef, aan het eind, met alle
+   samples in `--sample-items`. Advies woordelijk uit het sjabloon.
+6. [jij] Toetsen indrukken alleen met aanleiding: een eigen sneltoets van de site is de
+   uitzondering, en die staat in de code als toetsafhandelaar.
+
+#### Stap 3 — Vastleggen
+
+7. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+8. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-videos` leest van elke speler het insluitadres, ook in afgeschermde wortels, en
+`--doorloop` vult formulierstappen met testmateriaal om bij een latere stap te komen. De
+reden is een opsomming: het aantal video's, en per video platform, titel, adres en uitkomst.
+
+Wat hier niet uit blijkt: een speler die geen YouTube of Vimeo is, een adres achter een
+toestemmingsscherm, en een eigen sneltoets van de site. Die staan apart in het overzicht.
+
+### Deelgebieden
+
+1. YouTube-spelers: disablekb=1 in het insluitadres, per video nagelopen
+2. Vimeo-spelers: keyboard=0 in het insluitadres, per video nagelopen
+3. Andere spelers en onleesbare adressen: gemeld, niet te bepalen
+4. Eigen sneltoetsen van de site: alleen met aanleiding, anders niet van toepassing
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

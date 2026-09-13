@@ -104,3 +104,82 @@ velden met een vaste breedte, knoppen naast elkaar, en een voortgangsbalk met st
 - "Waarschijnlijk OK" of "lijkt responsive" is geen geldige onderbouwing.
 - Bij PDF-samples is 1.4.10 niet van toepassing.
 - Bij PDF-samples is 1.4.10 niet van toepassing.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+De pagina past op 320 pixels zonder schuiven en zonder verlies
+
+### In het kort
+
+Wie ver inzoomt krijgt de pagina op 320 pixels breed te zien. Dan moet alles nog passen
+zonder horizontaal te schuiven, en er mag geen inhoud of functie wegvallen: een menu dat
+niet meer opengaat is verlies van functionaliteit. Een brede tabel in een vak dat zelf
+schuift is toegestaan.
+
+Dit is een meting, geen inschatting. "Lijkt responsive" is geen onderbouwing, en de meting
+moet echt op 320 staan, niet op 305 door een schuifbalk. Bij een PDF is dit criterium niet
+van toepassing.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-reflow <url>`: het venster op 320 CSS-pixels, de pagina opnieuw geladen, en
+   gemeld of er iets breder wordt dan het venster. Controleer `vensterbreedte`: 320, niet
+   minder. Een eerdere hoogcontrastinstelling eerst uitzetten.
+2. [meting] `get-screenshot <url> --breedte=320 --klik="tekst:MENU"`: klapt het hoofdmenu
+   samen tot een knop, dan hoort dit erbij. Gaat het open en staan alle items erin?
+
+#### Stap 2 — Beoordelen
+
+3. [agent] Bekijk de opname, ook als de meting nul te brede elementen meldt. Het getal vindt
+   overschrijding, het beeld vindt verlies: overlappende of afgeknipte tekst.
+4. [agent] Vergelijk met de brede weergave: is er inhoud verdwenen door een mediaquery?
+5. [agent] Wat in `in_een_schuivend_of_afgeknipt_vak` staat: een brede tabel in een schuivend
+   vak is toegestaan, inhoud in een dichtgeklapt blok staat niet in beeld. Geen afkeuring.
+6. [jij] Een formulierstap achter een sessie: `get-reflow` komt op stap 1 uit. Vul het
+   formulier tot die stap in de auditsessie en zet dan het venster op 320.
+
+#### Stap 3 — Vastleggen
+
+7. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+8. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-reflow` zet het venster op 320 CSS-pixels, laadt de pagina opnieuw en meldt welke
+elementen breder zijn dan het venster, met een schermafdruk. `get-screenshot --breedte=320
+--klik` toont of het uitklapmenu op die breedte werkt.
+
+Wat hier niet uit blijkt: inhoud die wegvalt zonder overloop, overlappende tekst en een
+menu dat niet opengaat. Daarvoor kijkt de agent naar de opname en klikt hij. Een
+formulierstap achter een sessie blijft werk voor de onderzoeker.
+
+### Deelgebieden
+
+1. Geen horizontaal schuiven op 320 pixels, gemeten met vensterbreedte 320
+2. Geen inhoud weggevallen ten opzichte van de brede weergave
+3. Functionaliteit werkt op 320 pixels: het uitklapmenu gaat open en bevat alle items
+4. Geen overlappende of afgeknipte tekst op de opname
+5. Tweedimensionale inhoud zoals tabellen in een schuivend vak: toegestaan, wel bekeken
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

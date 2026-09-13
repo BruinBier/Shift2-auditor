@@ -167,3 +167,86 @@ knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
 
 - Zelfde hoogcontrast-werkwijze als 1.4.3: heeft de site een hoogcontrast-knop met voldoende eigen contrast, dan een opmerking op het homepage-sample (status resolved, impact en responsibility leeg), QuickFinding 0a811ca3-e7b3-4909-846a-68525eb55948, en daarna HTML-paginas niet meer inhoudelijk checken.
 - Bij PDF-content is 1.4.11 meestal niet relevant.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Bedieningselementen en betekenisvolle graphics halen 3:1
+
+### In het kort
+
+Een pictogramknop, de rand van een invulveld, een grafieksegment, een statuspijl: alles wat
+je nodig hebt om iets te begrijpen of te bedienen moet 3:1 halen tegen wat eromheen ligt.
+Wat je kunt wegdenken zonder iets te missen, zoals de rand van een knop met tekst erin of
+een opsommingsbolletje, valt erbuiten.
+
+Eerst opzoeken wat eronder valt, dan meten. Heeft de site een hoogcontrastknop die zelf
+voldoet, dan telt de weergave mét die knop. Een verhouding is een getal met twee kleuren en
+een uitsnede, geen "ruim boven 3:1".
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [meting] `get-nietteksten <url>`, met `--klik="tekst:Contrast verhogen"` als de site een
+   geldige hoogcontrastknop heeft: loopt alle bedienbare elementen af, bepaalt welke eronder
+   vallen en meet die in ruststand én met de muis erop.
+2. [meting] `get-pixelcontrast <url> --selector=<css>` voor elk element dat op een foto, een
+   verloop of een halfdoorzichtige laag staat: de werkelijke beeldpunten, per zijde, met een
+   uitsnede.
+3. [meting] De hoogcontrastknop zelf, één keer op de homepage: als icoon zonder tekst geldt
+   3:1 onder dit criterium; met zichtbare tekst is het 1.4.3.
+
+#### Stap 2 — Beoordelen
+
+4. [agent] Loop `overgeslagen_met_reden` na en tel: bekeken = onzichtbaar + overgeslagen +
+   eronder. Staat er iets tussen dat betekenis draagt, meet dat alsnog.
+5. [agent] Per element onder de eis: leg de uitsnede ernaast. Precies 1:1 is eerst een
+   verdachte meting, daarna pas een afkeuring. Bij een pictogram telt de tekening, bij een
+   veld de rand.
+6. [agent] Decoratief of nodig? Denk het element weg; verdwijnt er geen informatie, dan valt
+   het erbuiten.
+7. [jij] Focustoestanden zitten nog niet in de meting. Tab in de auditsessie langs de
+   bedienbare elementen en kijk of de focusrand 3:1 haalt.
+
+#### Stap 3 — Vastleggen
+
+8. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+`get-nietteksten` inventariseert in de browser wat onder 1.4.11 valt, met de lijst van wat
+is overgeslagen en waarom, en meet rust en hover. `get-pixelcontrast` meet op de
+beeldpunten waar stijlwaarden niets zeggen, per zijde en met hoekronding overgeslagen.
+
+Wat hier niet uit blijkt: de focustoestand, en of een gemeten element werkelijk nodig is om
+iets te begrijpen. Dat weegt de agent, en de uitsnede beslist bij twijfel over het getal.
+
+### Deelgebieden
+
+1. Pictogramknoppen zonder zichtbare tekst: de tekening tegen de omgeving
+2. Randen van invoervelden en andere bedieningselementen zonder andere markering
+3. Betekenisvolle graphics: grafieksegmenten, legendasymbolen, statuspijlen en -strepen
+4. Toestanden: met de muis erop gemeten; focus nog niet gemeten, dus nagelopen in de auditsessie
+5. De hoogcontrastknop zelf, één keer op de homepage, en welke weergave daarna telt
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.

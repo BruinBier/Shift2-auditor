@@ -79,3 +79,80 @@ onderbouwing ontbrak. Frits vroeg hoe dit getest wordt.
 - Bij een deelonderzoek content: beperk je tot de main-content. Hoofdmenu, hoofdnavigatie en
   toegankelijkheidsbalk vallen buiten de scope.
 - Bij PDF-samples is 2.5.8 niet van toepassing.
+
+## Op de kaart
+
+> Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
+> bestand: wat je hier verandert, staat bij de volgende keer verversen op de kaart. Er is
+> geen tussenstap en geen kopie. Houd het kort — een kaart is geen naslagwerk. Wat langer
+> is hoort in de secties hierboven.
+
+### Titel
+
+Klikgebieden zijn minstens 24 bij 24 pixels, of hebben ruimte om zich heen
+
+### In het kort
+
+Een link of knop die kleiner is dan 24 bij 24 CSS-pixels is voor wie trilt of een dikke
+vinger heeft niet te raken. De maat is het klikbare gebied, inclusief padding, niet het
+pictogram. Te klein is nog geen afkeuring: een link midden in een zin, een element met
+genoeg ruimte om zich heen, een gelijkwaardig alternatief of een standaardelement van de
+browser is uitgezonderd.
+
+Meet het; vul geen "voldoet" in op het oog. En zet de gemeten maten in de bevinding, anders
+is hij aanvechtbaar. Bij een PDF is dit criterium niet van toepassing.
+
+### Audit-instructies
+
+> Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er
+> een mens voor nodig is. De kaart toont dat met een vinkje of een open rondje, zodat er niet
+> als opdracht staat wat allang gedaan is.
+
+#### Stap 1 — Meten
+
+1. [agent] Meet in de auditsessie per bedienbaar element in de main-content de breedte en
+   hoogte van het klikbare gebied: links, knoppen, velden, en alles met een rol als knop,
+   link, selectievakje, keuzerondje of tabblad. Alleen zichtbare elementen.
+2. [agent] Noteer het aantal gemeten elementen en het kleinste, ook als niets te klein is.
+
+#### Stap 2 — Beoordelen
+
+3. [agent] Per element onder 24 aan een van beide kanten: staat het in lopende tekst, of is
+   de afstand tot het midden van het dichtstbijzijnde andere element minstens 24 pixels? Dan
+   voldoet het.
+4. [agent] Is het een kaal browserelement zonder eigen opmaak? Dan uitgezonderd.
+5. [jij] Gelijkwaardig of essentieel: doet een grotere knop elders hetzelfde, of is de
+   vormgeving noodzakelijk? Dat is een weging; het element blijft als open vraag staan met
+   zijn maten erbij.
+
+#### Stap 3 — Vastleggen
+
+6. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+   `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
+   "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
+   gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
+7. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+   kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
+   verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+
+### Zo is het vastgesteld
+
+Er is nog geen eigen meetcommando voor 2.5.8. De agent leest in de auditsessie per element
+het klikbare gebied uit de opgemaakte pagina, inclusief padding; CSS-pixels veranderen niet
+bij zoom.
+
+Wat hier niet uit blijkt: of een te klein element een gelijkwaardig alternatief heeft en of
+de vormgeving essentieel is. Bedekte elementen, zoals onder een cookiebalk, vallen buiten
+het criterium.
+
+### Deelgebieden
+
+1. Alle bedienbare elementen in de main-content gemeten: aantal en kleinste maat genoteerd
+2. Elementen onder 24 pixels: uitzondering voor lopende tekst en voor ruimte getoetst
+3. Gelijkwaardig en essentieel: als open vraag gemeld met de gemeten maten
+4. De gemeten waarden staan in de onderbouwing en in elke bevinding
+
+> Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
+> kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
+> regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
+> als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.
