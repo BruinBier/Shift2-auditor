@@ -57,6 +57,11 @@ export const HERKOMST: Record<string, string> = {
   workflow: 'vastgelegd door de workflow',
   gesprek: 'vastgelegd in een gesprek',
   handmatig: 'met de hand ingevoerd',
+  // Hier staat wél waar het oordeel op rust, anders dan bij de drie hierboven: er
+  // is geen agent geweest en er is niets gemeten. Dat moet zichtbaar zijn, want
+  // "er staat geen video" ziet er hetzelfde uit als niet-gekeken-hebben. Het
+  // akkoord blijft een aparte handeling; deze kaart komt gewoon in de werklijst.
+  steekproef: 'door jou vastgesteld bij de steekproef',
 };
 
 /**

@@ -20,7 +20,7 @@ const GELDIGE_STATUS = new Set([
   'niet_te_bepalen',
 ]);
 
-const GELDIGE_BRON = new Set(['workflow', 'gesprek', 'handmatig']);
+const GELDIGE_BRON = new Set(['workflow', 'gesprek', 'handmatig', 'steekproef']);
 
 const GELDIG_AKKOORD = new Set(['voorgesteld', 'akkoord', 'afgewezen']);
 

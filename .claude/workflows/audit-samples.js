@@ -440,6 +440,64 @@ Het Shift2-regelbestand bevat precies de correcties die eerder op audits zijn ge
 // Eerder afgewezen voorstellen, gegroepeerd per criterium. Dit is het enige wat
 // de auditors van vorige rondes te zien krijgen: geen bevindingen (die zouden ze
 // napraten in plaats van opnieuw kijken), wel de oordelen die de onderzoeker
+/**
+ * De criterialijst zoals deze sample hem krijgt: zonder wat de vinkjes hebben
+ * afgesloten. Een agent die 1.2.3 niet in zijn lijst ziet, kan er ook geen oordeel
+ * over verzinnen.
+ */
+const scListVoor = (sample) => {
+  const codes = new Set(teBeoordelenCodes(sample))
+  return context.criteria
+    .filter((c) => codes.has(c.code))
+    .map((c) => `${c.code} (niveau ${c.level}) — ${c.titleNl}`)
+    .join('
+')
+}
+
+/**
+ * Wat er NIET beoordeeld wordt, en waarom. Bewust in de prompt en niet weggelaten:
+ * een agent die ziet dat 1.2.x er bewust af is, gaat er niet alsnog naar zoeken en
+ * meldt het wel als hij toch een speler tegenkomt.
+ */
+const vervallenSectie = (sample) => {
+  const weg = vervallenDoorVinkjes(sample)
+  if (!weg.length) return ''
+  return `
+
+NIET BEOORDELEN — de onderzoeker heeft dit al vastgesteld
+${weg.map((v) => `  ${v.code}`).join('
+')}
+Deze criteria staan NIET in je lijst hierboven en je geeft er GEEN assessment voor terug.
+De onderzoeker heeft bij het samenstellen van de steekproef vastgesteld dat wat ze
+beoordelen niet op deze pagina staat; ze zijn al weggeschreven als 'niet_aanwezig'.
+
+Kom je tijdens je werk tóch tegen wat hier volgens de onderzoeker niet staat — een speler
+die pas na een klik laadt, een formulier achter een uitklapblok — schrijf er dan GEEN
+oordeel over. Zet het in \`opmerkingenVoorOnderzoeker\` met de vindplaats erbij. Het vinkje
+is van de onderzoeker; jij mag aanbellen, niet opendoen.`
+}
+
+/** De bronnen voor de criteria die deze sample nog wél krijgt. */
+const bronnenSectieVoor = (sample) => {
+  const codes = new Set(teBeoordelenCodes(sample))
+  const lijst = requiredCodes
+    .filter((code) => codes.has(code))
+    .map((code) => {
+      const regels = SC_MET_REGELBESTAND.includes(code)
+        ? `wcag-regels/Shift2_Regels_SC_${slug(code)}.md`
+        : '(geen Shift2-regelbestand)'
+      const grens = GRENSGEVALLEN.includes(code)
+        ? `, wcag-checklists/Richtlijnen_Grensgevallen_SC_${slug(code)}.md`
+        : ''
+      return `  ${code}
+      wcag-checklists/Checklist_SC_${slug(code)}.md${grens}
+      ${regels}`
+    })
+    .join('
+')
+  return bronnenSectie.replace(bronnenLijst, lijst)
+}
+
 // heeft verworpen en waarom.
 const afwijzingenPerCode = new Map()
 for (const a of context.afwijzingen || []) {
@@ -517,7 +575,63 @@ ${codesMetGebieden
   .join('\n')}`
   : ''
 
-const AUDIT_SCHEMA = {
+/**
+ * Wat de onderzoeker per pagina heeft vastgesteld, en welke criteria daarmee vervallen.
+ *
+ * Op het tabblad Steekproef staan twee vinkjes per pagina: bewegend beeld en formulier.
+ * Staat er een op "niet aanwezig", dan zijn de bijbehorende criteria niet van toepassing
+ * en schrijven we ze hier weg zonder agent. Zes criteria (1.2.1 t/m 1.2.5 en 2.1.4)
+ * stelden tot nu toe dezelfde vraag en beantwoordden hem elk apart: op 13 september 2026
+ * leverde dat zes woordelijk bijna gelijke redenen op voor één vaststelling.
+ *
+ * De koppeling staat in lib/metingen.ts, net als die tussen meting en criterium, en om
+ * dezelfde reden: hij moet niet in een prompt verzonnen kunnen worden. Hier staat een
+ * kopie omdat een workflowscript niets kan importeren — verandert de lijst daar, dan
+ * moet hij hier mee. Dat is de prijs van een script dat in een afgeschermde omgeving
+ * draait; zie ook de opmerking over fetch naar localhost in CLAUDE.md.
+ *
+ * null betekent NIET vastgesteld en is iets anders dan false. Alleen false sluit af.
+ */
+const PAGINAVINKJES = [
+  {
+    veld: 'heeftBewegendBeeld',
+    wat: 'bewegend beeld: geen video, geen audio, geen animatie',
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4'],
+  },
+  {
+    veld: 'heeftFormulier',
+    wat: 'formulier',
+    criteria: ['3.3.1', '3.3.2', '3.3.3', '3.3.7'],
+  },
+]
+
+/** De criteria die voor deze sample vervallen, met de reden erbij. */
+const vervallenDoorVinkjes = (sample) => {
+  const uit = []
+  for (const vinkje of PAGINAVINKJES) {
+    if (sample[vinkje.veld] !== false) continue
+    for (const code of vinkje.criteria) {
+      if (!requiredCodes.includes(code)) continue
+      uit.push({
+        code,
+        reden: `Op deze pagina staat geen ${vinkje.wat}. Vastgesteld door de onderzoeker bij het samenstellen van de steekproef; het criterium is daarmee niet van toepassing.`,
+      })
+    }
+  }
+  return uit
+}
+
+/** De criteria die deze sample-agent nog wél moet beoordelen. */
+const teBeoordelenCodes = (sample) => {
+  const weg = new Set(vervallenDoorVinkjes(sample).map((v) => v.code))
+  return requiredCodes.filter((c) => !weg.has(c))
+}
+
+/**
+ * Het schema hangt af van de sample: een pagina zonder video krijgt zes criteria
+ * minder, en dan mag `minItems` er niet meer zoveel eisen.
+ */
+const auditSchemaVoor = (codes) => ({
   type: 'object',
   additionalProperties: false,
   required: ['sampleId', 'assessments'],
@@ -527,13 +641,13 @@ const AUDIT_SCHEMA = {
       type: 'array',
       // Verplicht: precies zoveel entries als er criteria zijn. Zo kan geen SC
       // stilletjes worden overgeslagen — te weinig entries → schema-fail → retry.
-      minItems: requiredCodes.length,
+      minItems: codes.length,
       items: {
         type: 'object',
         additionalProperties: false,
         required: ['code', 'status', 'reden', 'gebieden'],
         properties: {
-          code: { type: 'string', enum: requiredCodes },
+          code: { type: 'string', enum: codes },
           status: { type: 'string', enum: STATUS_ENUM },
           reden: { type: 'string' },
           /**
@@ -584,7 +698,7 @@ const AUDIT_SCHEMA = {
       },
     },
   },
-}
+})
 
 const VERIFY_SCHEMA = {
   type: 'object',
@@ -843,7 +957,9 @@ const results = await pipeline(
       ? agent(pdfPrompt(sample), {
           label: `audit-pdf:${sample.title}`,
           phase: 'Auditen',
-          schema: AUDIT_SCHEMA,
+          // Een PDF heeft geen vinkjes: die krijgt een eigen beoordeling op
+          // documentstructuur en loopt langs alle criteria.
+          schema: auditSchemaVoor(requiredCodes),
         })
       : agent(
       `Je bent WCAG-auditor. Beoordeel ÉÉN sample-pagina tegen ELK van de onderstaande succescriteria. Sla NIETS over: geef voor elk criterium een status.
@@ -941,8 +1057,8 @@ BEKIJK DE SCREENSHOT ECHT — de HTML alleen is niet genoeg.
 Een leeg tekstalternatief (alt="") betekent NIET dat een afbeelding decoratief is; dat kun je alleen zien door ernaar te kijken. Loop elke afbeelding met alt="" na op de screenshot en stel vast of er leesbare tekst in staat (merknaam, embleem, slogan, banner, poster, infographic). Staat die tekst er wel en staat hij niet elders als echte tekst op de pagina, dan is dat een 1.1.1-bevinding. Leid "decoratief" nooit af uit de bestandsnaam of uit het ontbreken van alt-tekst.
 Gebruik de screenshot ook om te toetsen of wat je in de HTML ziet daadwerkelijk zichtbaar is, en of visuele volgorde en codevolgorde overeenkomen.
 
-TE BEOORDELEN SUCCESCRITERIA (${requiredCodes.length} stuks — geef exact één assessment per code terug):
-${scList}${bronnenSectie}${afwijzingenSectie}${interactieveSectie}
+TE BEOORDELEN SUCCESCRITERIA (${teBeoordelenCodes(sample).length} stuks — geef exact één assessment per code terug):
+${scListVoor(sample)}${vervallenSectie(sample)}${bronnenSectieVoor(sample)}${afwijzingenSectie}${interactieveSectie}
 CONTROLEER EERST HET VELD \`omgeleid\`. Staat dat op true, dan heeft de server je naar een
 andere pagina gestuurd dan je vroeg en beoordeel je dus niet het sample dat je denkt te
 beoordelen. Zet in dat geval ALLE criteria op 'niet_te_bepalen' met als reden dat de pagina
@@ -1054,7 +1170,7 @@ Bij opmerking: laat impact en responsibility leeg.
 ${deelgebiedenSectie}
 
 Geef het resultaat terug in het schema. sampleId = ${sample.id}. Precies ${requiredCodes.length} assessments, één per code.`,
-      { label: `audit:${sample.title}`, phase: 'Auditen', schema: AUDIT_SCHEMA },
+      { label: `audit:${sample.title}`, phase: 'Auditen', schema: auditSchemaVoor(teBeoordelenCodes(sample)) },
     ),
 
   // Stage 2 — VERIFIEER: aparte agent controleert alleen de afkeuringen/opmerkingen.
@@ -1249,6 +1365,10 @@ const rapport = clean.map((row) => {
     sampleId: row.sample?.id || row.audit?.sampleId,
     sampleTitle: row.sample?.title,
     url: row.sample?.url,
+    // De vaststellingen van de onderzoeker, zodat de wegschrijf-fase de criteria
+    // kan aanvullen die nooit bij een agent zijn geweest.
+    heeftBewegendBeeld: row.sample?.heeftBewegendBeeld ?? null,
+    heeftFormulier: row.sample?.heeftFormulier ?? null,
     // Alleen de interessante regels vooraan; volledige lijst zit in assessments.
     afkeuringen: assessments.filter((a) => a.status === 'afgekeurd'),
     opmerkingen: assessments.filter((a) => a.status === 'opmerking'),
@@ -1363,6 +1483,42 @@ if (!drooglopen) {
             }
           : {}),
       }))
+
+      /**
+       * De criteria die de onderzoeker met een vinkje heeft afgesloten.
+       *
+       * Die zijn nooit bij een agent geweest, dus ze staan niet in row.assessments.
+       * Zonder deze stap zouden ze helemaal ontbreken op de kaart -- en dan ziet
+       * "er staat geen video" er precies zo uit als niet-gekeken-hebben, wat dit
+       * hele mechanisme juist moet voorkomen.
+       *
+       * Bron 'steekproef' en niet 'workflow': er is geen agent geweest en er is niets
+       * gemeten. De kaart toont dat als "door jou vastgesteld bij de steekproef".
+       *
+       * De deelgebieden gaan mee op 'nvt' met dezelfde toelichting, want save-checks
+       * weigert een oordeel zonder complete lijst. Dat is hier geen formaliteit: bij
+       * 1.2.2 staat dan bij elk van de vier gebieden waarom er niets te beoordelen
+       * viel, in plaats van één regel bovenaan.
+       */
+      const vinkjeOordelen = vervallenDoorVinkjes(row).map((v) => ({
+        sampleItemId: sampleId,
+        criterionCode: v.code,
+        status: 'niet_aanwezig',
+        reden: v.reden,
+        // Per oordeel, want --bron=workflow geldt voor het hele bestand en hier is
+        // geen workflow geweest. De route accepteert bron per regel.
+        bron: 'steekproef',
+        ...((DEELGEBIEDEN[v.code] || []).length
+          ? {
+              gebieden: DEELGEBIEDEN[v.code].map((gebied) => ({
+                gebied,
+                uitkomst: 'nvt',
+                toelichting: v.reden,
+              })),
+            }
+          : {}),
+      }))
+      if (vinkjeOordelen.length) oordelen.push(...vinkjeOordelen)
 
       return agent(
         `Schrijf de uitkomsten van sample "${row.sampleTitle}" weg met de audit-CLI. De dev-server draait; werkdirectory is de repo-root.

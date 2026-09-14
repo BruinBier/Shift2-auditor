@@ -522,6 +522,15 @@ enum SampleCheckBron {
   workflow
   gesprek
   handmatig
+  /// Volgt uit een vinkje op het tabblad Steekproef: de onderzoeker heeft
+  /// vastgesteld dat er geen bewegend beeld of geen formulier op deze pagina staat,
+  /// en daarmee zijn de bijbehorende criteria niet van toepassing. Er is geen agent
+  /// aan te pas gekomen.
+  ///
+  /// Eigen waarde en niet 'handmatig', want de kaart moet dit kunnen tonen: "er
+  /// staat geen video" ziet er anders hetzelfde uit als niet-gekeken-hebben.
+  /// Zie docs/plannen/meetdossier-per-pagina.md.
+  steekproef
 }
 
 enum SampleCheckAkkoord {

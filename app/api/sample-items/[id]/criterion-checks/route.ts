@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 const STATUSSEN = ['voldoet', 'afgekeurd', 'opmerking', 'niet_aanwezig', 'niet_te_bepalen'] as const;
-const BRONNEN = ['workflow', 'gesprek', 'handmatig'] as const;
+const BRONNEN = ['workflow', 'gesprek', 'handmatig', 'steekproef'] as const;
 const AKKOORD = ['voorgesteld', 'akkoord', 'afgewezen'] as const;
 
 type Status = (typeof STATUSSEN)[number];

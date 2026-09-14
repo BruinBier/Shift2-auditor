@@ -233,6 +233,73 @@ export const CRITERIA_PER_COMMANDO: Record<string, string[]> = Object.fromEntrie
   METINGEN.filter((m) => m.criteria.length).map((m) => [m.commando, m.criteria])
 );
 
+/**
+ * Wat de onderzoeker per pagina vaststelt, en welke criteria daarmee vervallen.
+ *
+ * Op het tabblad Steekproef staan twee vinkjes per pagina met drie standen. Staat er
+ * een op "niet aanwezig" (`false`), dan zijn de criteria hieronder niet van toepassing
+ * en worden ze zonder agent weggeschreven.
+ *
+ * Zes criteria stelden tot nu toe dezelfde vraag -- staat er video op deze pagina --
+ * en beantwoordden hem elk apart. Op 13 september 2026 leverde dat zes woordelijk
+ * bijna gelijke redenen op voor één vaststelling, op één pagina.
+ *
+ * Deze lijst staat hier en niet in de workflow, om dezelfde reden als de metingen
+ * erboven: hij moet niet verzonnen of verkeerd opgegeven kunnen worden. Wie een
+ * criterium toevoegt of weghaalt, doet dat hier en nergens anders.
+ *
+ * `null` betekent niet vastgesteld en is iets ANDERS dan `false`. Alleen `false`
+ * sluit af; `null` en `true` laten de audit ongemoeid. Zonder dat onderscheid zou
+ * elke sample die niemand heeft aangeraakt tien criteria overslaan.
+ */
+export interface Paginavinkje {
+  /** Het veld op SampleItem. */
+  veld: 'heeftBewegendBeeld' | 'heeftFormulier';
+  /** Wat er niet op de pagina staat als het vinkje uit staat, voor in de reden. */
+  wat: string;
+  /** De criteria die daarmee niet van toepassing zijn. */
+  criteria: string[];
+}
+
+export const PAGINAVINKJES: Paginavinkje[] = [
+  {
+    veld: 'heeftBewegendBeeld',
+    // Breed: niet "een video-element", maar alles wat beweegt of klinkt. Een
+    // informatiedragende GIF zit in geen enkel video-element en wordt door
+    // `get-videos` niet gevonden, maar valt hier wel onder.
+    wat: 'bewegend beeld: geen video, geen audio, geen animatie',
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4'],
+  },
+  {
+    veld: 'heeftFormulier',
+    wat: 'formulier',
+    criteria: ['3.3.1', '3.3.2', '3.3.3', '3.3.7'],
+  },
+];
+
+/**
+ * De criteria die voor deze sample vervallen, met de reden erbij.
+ *
+ * Geeft een lege lijst terug als er niets is vastgesteld -- dan verandert er niets
+ * aan de audit.
+ */
+export function vervallenDoorVinkjes(sample: {
+  heeftBewegendBeeld?: boolean | null;
+  heeftFormulier?: boolean | null;
+}): { code: string; reden: string }[] {
+  const uit: { code: string; reden: string }[] = [];
+  for (const vinkje of PAGINAVINKJES) {
+    if (sample[vinkje.veld] !== false) continue;
+    for (const code of vinkje.criteria) {
+      uit.push({
+        code,
+        reden: `Op deze pagina staat geen ${vinkje.wat}. Vastgesteld door de onderzoeker bij het samenstellen van de steekproef; het criterium is daarmee niet van toepassing.`,
+      });
+    }
+  }
+  return uit;
+}
+
 /** De metingen die dit criterium bedienen, in de volgorde van de lijst hierboven. */
 export function metingenVoorCriterium(code: string): Meetopdracht[] {
   return METINGEN.filter((m) => m.criteria.includes(code));

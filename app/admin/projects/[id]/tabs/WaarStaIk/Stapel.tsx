@@ -4731,8 +4731,14 @@ export default function Stapel({
         <div className="rounded-lg border border-gray-300 bg-white p-6">
           {criteriumRegel(huidig.cel)}
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+            {/*
+              Bij bron 'steekproef' is er geen agent geweest: de onderzoeker heeft bij
+              het samenstellen vastgesteld dat er geen video of geen formulier op deze
+              pagina staat. "Oordeel van de agent" zou daar een bewerking suggereren
+              die niet heeft plaatsgevonden.
+            */}
             <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
-              Oordeel van de agent
+              {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
             </span>
             <span
               className={`rounded px-2 py-0.5 font-medium ${
@@ -4996,7 +5002,9 @@ export default function Stapel({
                     ? '✗ Door jou afgewezen.'
                     : huidig.cel.akkoord === 'akkoord'
                       ? 'Er staat nog een voorstel open.'
-                      : 'De agent heeft dit criterium beoordeeld. Dat oordeel telt pas mee als jij het bevestigt.'}
+                      : huidig.cel.bron === 'steekproef'
+                        ? 'Dit volgt uit wat jij bij de steekproef hebt vastgesteld. Bevestig het hier, dan telt het mee.'
+                        : 'De agent heeft dit criterium beoordeeld. Dat oordeel telt pas mee als jij het bevestigt.'}
               </p>
             )}
             {/* Heb je al akkoord gegeven, dan is er niets meer te kiezen: de drie knoppen
@@ -5246,7 +5254,7 @@ export default function Stapel({
             {kaarttekst ? (
               <>
                 <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
-                  Oordeel van de agent
+                  {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
                 </span>
                 <span
                   className={`rounded px-2 py-0.5 font-medium ${
