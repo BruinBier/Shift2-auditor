@@ -41,6 +41,17 @@ antwoord geven — en dat valt niet op, want er staat een geloofwaardige zin.
 - `for`, `id`, `aria-labelledby`, `aria-describedby` → 1.3.1
 - `autocomplete` op naam-, adres- en contactvelden → 1.3.5
 - De foutmelding die verschijnt ná een verkeerde invoer → 3.3.1 en 3.3.3
+- **Het zoekveld in de header, altijd en op elke pagina.** Dat is templatecode: het staat er
+  op elke pagina van het sitesjabloon en een redacteur kan er niets aan veranderen. Net als
+  de voorleesknop, de knop "Eenvoudige tekst" en de hoogcontrastknop valt het buiten de
+  beoordeling. Mankeert er iets aan, dan is het een technisch issue voor de leverancier en
+  geen bevinding; zie `/technische-issues` en de scheidingsregel in CLAUDE.md.
+
+  Gevolg voor het formulier-vinkje op het tabblad Steekproef: een pagina waar alleen het
+  zoekveld op staat, heeft **geen** formulier. Zet dat vinkje dus op "niet aanwezig", dan
+  vervallen 3.3.1, 3.3.2, 3.3.3 en 3.3.7 voor die pagina.
+
+Vastgelegd door Frits op 2026-09-14.
 
 Vastgelegd door Frits op 2026-08-15, naar aanleiding van heuvelrug.nl. Daar onderbouwde de
 auditor 3.3.2 op twee pagina's met "een zichtbaar label met een for-koppeling" — het bewijs

@@ -440,6 +440,8 @@ Het Shift2-regelbestand bevat precies de correcties die eerder op audits zijn ge
 // Eerder afgewezen voorstellen, gegroepeerd per criterium. Dit is het enige wat
 // de auditors van vorige rondes te zien krijgen: geen bevindingen (die zouden ze
 // napraten in plaats van opnieuw kijken), wel de oordelen die de onderzoeker
+// heeft verworpen en waarom.
+
 /**
  * De criterialijst zoals deze sample hem krijgt: zonder wat de vinkjes hebben
  * afgesloten. Een agent die 1.2.3 niet in zijn lijst ziet, kan er ook geen oordeel
@@ -450,8 +452,7 @@ const scListVoor = (sample) => {
   return context.criteria
     .filter((c) => codes.has(c.code))
     .map((c) => `${c.code} (niveau ${c.level}) — ${c.titleNl}`)
-    .join('
-')
+    .join('\n')
 }
 
 /**
@@ -465,8 +466,7 @@ const vervallenSectie = (sample) => {
   return `
 
 NIET BEOORDELEN — de onderzoeker heeft dit al vastgesteld
-${weg.map((v) => `  ${v.code}`).join('
-')}
+${weg.map((v) => `  ${v.code}`).join('\n')}
 Deze criteria staan NIET in je lijst hierboven en je geeft er GEEN assessment voor terug.
 De onderzoeker heeft bij het samenstellen van de steekproef vastgesteld dat wat ze
 beoordelen niet op deze pagina staat; ze zijn al weggeschreven als 'niet_aanwezig'.
@@ -493,12 +493,10 @@ const bronnenSectieVoor = (sample) => {
       wcag-checklists/Checklist_SC_${slug(code)}.md${grens}
       ${regels}`
     })
-    .join('
-')
+    .join('\n')
   return bronnenSectie.replace(bronnenLijst, lijst)
 }
 
-// heeft verworpen en waarom.
 const afwijzingenPerCode = new Map()
 for (const a of context.afwijzingen || []) {
   if (!a.criterion || !a.reden) continue
@@ -697,6 +695,19 @@ const auditSchemaVoor = (codes) => ({
         },
       },
     },
+    /**
+     * Wat je tegenkwam dat niet in een oordeel past.
+     *
+     * Hier hoort in elk geval in wat de onderzoeker met een vinkje heeft
+     * uitgesloten maar wat jij toch ziet: een speler die pas na een klik laadt,
+     * een formulier achter een uitklapblok. Schrijf daar GEEN oordeel over -- het
+     * vinkje is van de onderzoeker -- maar laat het hier staan met de vindplaats,
+     * zodat hij het vinkje kan omzetten.
+     */
+    opmerkingenVoorOnderzoeker: {
+      type: 'array',
+      items: { type: 'string' },
+    },
   },
 })
 
@@ -745,21 +756,8 @@ const VERIFY_SCHEMA = {
         },
       },
     },
-    /**
-     * Wat je tegenkwam dat niet in een oordeel past.
-     *
-     * Hier hoort in elk geval in wat de onderzoeker met een vinkje heeft
-     * uitgesloten maar wat jij toch ziet: een speler die pas na een klik laadt,
-     * een formulier achter een uitklapblok. Schrijf daar GEEN oordeel over -- het
-     * vinkje is van de onderzoeker -- maar laat het hier staan met de vindplaats,
-     * zodat hij het vinkje kan omzetten.
-     */
-    opmerkingenVoorOnderzoeker: {
-      type: 'array',
-      items: { type: 'string' },
-    },
   },
-})
+}
 
 const QF_MATCH_SCHEMA = {
   type: 'object',
