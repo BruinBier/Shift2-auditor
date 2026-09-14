@@ -1,6 +1,6 @@
 # Twee vinkjes per pagina: wat er niet is, stelt de onderzoeker vast
 
-**Status:** plan, uitgewerkt na grilling op 14 september 2026
+**Status:** GEBOUWD op 14 september 2026 (commits 6960a72, d2600fc, ee51bac, 85ac797)
 **Aanleiding:** de audit van één pagina kostte op 13 september 856.000 tokens
 **Vervangt:** het eerste voorstel (uittreksels + agent per criterium), dat op twee punten
 niet klopte
@@ -204,3 +204,22 @@ Afgevallen tijdens het grillen, met de reden:
 
 Stap 1 tot en met 4 zijn de besparing. 5 en 6 zijn wat het verantwoord maakt; zonder die
 twee is het een stille versmalling van het onderzoek.
+
+## Wat er is gebouwd
+
+Alle zeven, op 14 september 2026. Wat er in de praktijk anders bleek dan hier beschreven:
+
+- **De PATCH-route zette `voorgesteld` onvoorwaardelijk op false.** Bedoeld voor de
+  bewerkdialoog, maar een vinkje zetten is geen goedkeuring van de pagina. Gaat een bericht
+  alleen over de vinkjes, dan blijft `voorgesteld` staan.
+- **`get-project` stuurde de velden niet mee.** Nu wel, zonder `Boolean()` eromheen: null
+  en false moeten verschillend blijven.
+- **Er was een vierde bron nodig.** `steekproef`, naast workflow, gesprek en handmatig.
+  Zonder die waarde zou de kaart "vastgelegd door de workflow" tonen bij een oordeel waar
+  geen workflow aan te pas kwam.
+- **De kaart zei "Oordeel van de agent".** Dat staat er nu alleen als er een agent is
+  geweest; bij bron steekproef staat er "Volgt uit je steekproef".
+
+Getest op Omgevingsprogramma's: zes oordelen weggeschreven met 25 deelgebieden, alle op
+`akkoord=null` — geen enkele kaart vinkt zichzelf af. En getest dat een vergeten vlag op
+`create-sample-item` het veld leeg laat in plaats van op false te zetten.

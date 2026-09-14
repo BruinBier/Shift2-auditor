@@ -83,7 +83,7 @@ npm run cli -- get-consistentie <projectId|url> [--max=12]  # 3.2.4: legt de pag
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
 
 # Write
-npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured [--voorgesteld=true]
+npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured [--voorgesteld=true] [--heeft-video=true|false] [--heeft-formulier=true|false]
 npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --responsibility=redacteur --sample-items=<sampleItemId1>,<sampleItemId2>
 npm run cli -- create-finding-from-quick <projectId> <quickFindingId> --sample-items=<sampleItemId>
 npm run cli -- save-checks <projectId> --bron=workflow < oordelen.json   # oordeel per sample per criterium
@@ -106,6 +106,22 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - `--bron` (save-checks): `workflow` | `gesprek` | `handmatig`
 
 **Notes:**
+- **Twee vinkjes per pagina sluiten tien criteria af.** Op het tabblad Steekproef staat per
+  pagina een vinkje voor video en een voor formulier, met drie standen. Zet de onderzoeker
+  er een op "niet aanwezig", dan krijgen 1.2.1 t/m 1.2.5 en 2.1.4 (video) of 3.3.1 t/m
+  3.3.7 (formulier) het oordeel `niet_aanwezig` zonder dat er een agent aan te pas komt, met
+  bron `steekproef`. De audit-agent krijgt die criteria niet eens in zijn lijst en leest hun
+  regelbestanden niet. Zes criteria stelden tot dan toe dezelfde vraag en beantwoordden hem
+  elk apart: op 13 september 2026 leverde dat zes woordelijk bijna gelijke redenen op voor
+  één vaststelling, op één pagina. De koppeling vinkje-naar-criteria staat in
+  `lib/metingen.ts` (`PAGINAVINKJES`), met een kopie in `audit-samples.js` omdat een
+  workflowscript niets kan importeren.
+  **Leeg is niet hetzelfde als nee.** `null` betekent niet vastgesteld en laat de audit
+  ongemoeid; alleen `false` sluit af. Laat `--heeft-video` dus weg bij twijfel, bij een
+  pagina die niet gehydrateerd was of achter een cookiemuur zat. Een vlag weglaten kost
+  niets; een verkeerde `false` laat tien criteria stil overslaan.
+  **Het vinkje bepaalt het oordeel en niet het akkoord.** De kaarten komen gewoon in de
+  werklijst van "Waar sta ik". Zie `docs/plannen/meetdossier-per-pagina.md`.
 - **Een steekproef die jij samenstelt is ook een voorstel.** Maak samples aan met `--voorgesteld=true`; ze staan dan in de steekproef, maar `audit-samples` weigert te starten zolang er nog een voorstel openstaat. Die workflow neemt ALLE sample-items mee, dus zonder die poort draait er een volledige audit op pagina's die niemand heeft gekozen — en wat niet in de steekproef zat, ontbreekt geruisloos in het rapport. De onderzoeker keurt **per pagina** goed, met een knop bij de rij; zelf een sample bewerken telt ook als bekeken. Bewust doordraaien kan met `args.ookVoorgesteld = true`.
 - Wat jij aanmaakt is een **voorstel**, geen bevinding. Het telt nergens mee — niet in het criteriumoordeel, niet in het rapport — tot de onderzoeker akkoord geeft in het tabblad "Waar sta ik". Zie `docs/adr/0001-akkoord-als-poort.md` en de woordenlijst in `CONTEXT.md`.
 - Finding codes worden toegekend: `V001` voor een voorstel, `B001` pas bij akkoord. Geef er zelf nooit een mee.
