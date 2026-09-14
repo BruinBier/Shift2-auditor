@@ -239,7 +239,7 @@ export function SortableSampleRow({
               veld="heeftFormulier"
               waarde={item.heeftFormulier ?? null}
               wat="een formulier"
-              criteria="3.3.1, 3.3.2, 3.3.3 en 3.3.7"
+              criteria="1.3.5, 3.3.1, 3.3.2, 3.3.3 en 3.3.7"
             />
           </div>
         )}

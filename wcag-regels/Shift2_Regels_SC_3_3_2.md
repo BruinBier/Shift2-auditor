@@ -49,7 +49,7 @@ antwoord geven — en dat valt niet op, want er staat een geloofwaardige zin.
 
   Gevolg voor het formulier-vinkje op het tabblad Steekproef: een pagina waar alleen het
   zoekveld op staat, heeft **geen** formulier. Zet dat vinkje dus op "niet aanwezig", dan
-  vervallen 3.3.1, 3.3.2, 3.3.3 en 3.3.7 voor die pagina.
+  vervallen 1.3.5, 3.3.1, 3.3.2, 3.3.3 en 3.3.7 voor die pagina.
 
 Vastgelegd door Frits op 2026-09-14.
 

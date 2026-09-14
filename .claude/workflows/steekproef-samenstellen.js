@@ -451,7 +451,7 @@ Let op:
     --heeft-formulier=true als er een gebied "Formulier" bij staat, anders false
 
   Wat je op false zet, wordt straks NIET door een agent beoordeeld: 1.2.1 t/m 1.2.5 en
-  2.1.4 bij video, 3.3.1 t/m 3.3.7 bij formulier. Ze krijgen 'niet aanwezig' met jouw
+  2.1.4 bij video, 1.3.5 en 3.3.1 t/m 3.3.7 bij formulier. Ze krijgen 'niet aanwezig' met jouw
   vaststelling als reden. Twijfel je of heb je de pagina niet goed kunnen bekijken
   (gehydrateerd stond op false, een cookiemuur, een uitklapblok dat niet openging), LAAT
   DE VLAG DAN WEG. Dan blijft het veld leeg en beoordeelt de agent het gewoon. Een vlag

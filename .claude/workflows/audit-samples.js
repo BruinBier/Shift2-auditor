@@ -617,7 +617,8 @@ const PAGINAVINKJES = [
   {
     veld: 'heeftFormulier',
     wat: 'formulier',
-    criteria: ['3.3.1', '3.3.2', '3.3.3', '3.3.7'],
+    // 1.3.5 gaat over `autocomplete` op invoervelden: geen formulier, geen invoervelden.
+    criteria: ['1.3.5', '3.3.1', '3.3.2', '3.3.3', '3.3.7'],
   },
 ]
 

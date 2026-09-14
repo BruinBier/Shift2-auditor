@@ -273,7 +273,11 @@ export const PAGINAVINKJES: Paginavinkje[] = [
   {
     veld: 'heeftFormulier',
     wat: 'formulier',
-    criteria: ['3.3.1', '3.3.2', '3.3.3', '3.3.7'],
+    // 1.3.5 hoort hier ook bij: dat gaat over `autocomplete` op invoervelden, en zonder
+    // formulier zijn er geen invoervelden. Stond er eerst niet in, waardoor een agent
+    // dezelfde zoekopdracht (form, input, select, textarea) vijf keer deed in plaats van
+    // vier.
+    criteria: ['1.3.5', '3.3.1', '3.3.2', '3.3.3', '3.3.7'],
   },
 ];
 
