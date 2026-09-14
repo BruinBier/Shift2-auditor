@@ -665,6 +665,17 @@ export default function SampleItems({ project }: { project: any }) {
                           <th className="pb-3 pl-6 pr-2 text-left text-xs font-medium text-gray-500 uppercase w-8"></th>
                           <th className="pb-3 pr-4 text-left text-xs font-medium text-gray-500 uppercase w-32">Type</th>
                           <th className="pb-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">Pagina</th>
+                          {/*
+                            Twee vinkjes per pagina: bewegend beeld en formulier. Staat
+                            er een op "niet aanwezig", dan worden de bijbehorende
+                            criteria zonder agent afgesloten. Zie PaginaVinkje.tsx.
+                          */}
+                          <th
+                            className="pb-3 pr-2 text-left text-xs font-medium text-gray-500 uppercase w-24"
+                            title="Staat er op deze pagina bewegend beeld (video, audio, animatie) en een formulier? Wat je hier op 'niet aanwezig' zet, wordt niet door een agent beoordeeld."
+                          >
+                            Beeld / form.
+                          </th>
                           <th className="pb-3 pr-6 w-16"></th>
                         </tr>
                       </thead>

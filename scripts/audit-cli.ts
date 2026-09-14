@@ -172,6 +172,12 @@ async function getProject(projectId: string) {
       // starten zolang dit ergens true is: die workflow neemt ALLE samples mee, dus
       // anders draait er een audit op pagina's die niemand heeft gekozen.
       voorgesteld: Boolean(s.voorgesteld),
+      // Wat de onderzoeker over deze pagina heeft vastgesteld. Bewust GEEN Boolean()
+      // eromheen: null betekent "niet vastgesteld" en is iets anders dan false.
+      // Zou null hier false worden, dan sluit `audit-samples` tien criteria af op
+      // elke sample waar niemand iets heeft aangevinkt.
+      heeftBewegendBeeld: s.heeftBewegendBeeld ?? null,
+      heeftFormulier: s.heeftFormulier ?? null,
     })),
     findings: (Array.isArray(findings) ? findings : []).map((f: any) => ({
       id: f.id,

@@ -8,8 +8,25 @@ export async function PATCH(
   try {
     const body = await request.json();
 
+    /**
+     * Een vinkje zetten is geen goedkeuring van de pagina.
+     *
+     * Hieronder staat `voorgesteld: false` onvoorwaardelijk: wie een sample bewerkt,
+     * heeft hem gezien. Dat klopt voor de bewerkdialoog, maar niet voor de twee
+     * vinkjes op de rij. "Op deze pagina staat geen video" is iets anders dan "deze
+     * pagina hoort in de steekproef", en anders keurt één klik op een vinkje stil
+     * een voorgestelde pagina goed -- precies de poort die `voorgesteld` moet zijn.
+     *
+     * Gaat het bericht ALLEEN over de vinkjes, dan blijft `voorgesteld` dus staan.
+     */
+    const alleenVinkjes =
+      Object.keys(body).length > 0 &&
+      Object.keys(body).every((k) => k === 'heeftBewegendBeeld' || k === 'heeftFormulier');
+
     // Prepare the update data
     const updateData: any = {
+      ...(body.heeftBewegendBeeld !== undefined && { heeftBewegendBeeld: body.heeftBewegendBeeld }),
+      ...(body.heeftFormulier !== undefined && { heeftFormulier: body.heeftFormulier }),
       ...(body.title && { title: body.title }),
       ...(body.url !== undefined && { url: body.url }),
       ...(body.description !== undefined && { description: body.description }),
@@ -33,8 +50,11 @@ export async function PATCH(
        * Het herordenen loopt via een eigen route (sample-items/reorder), dus
        * slepen laat de vlag terecht staan: dat is de lijst schikken, niet de
        * inhoud beoordelen.
+       *
+       * Uitzondering: een bericht dat alleen de twee vinkjes zet. Zie `alleenVinkjes`
+       * hierboven.
        */
-      voorgesteld: false,
+      ...(alleenVinkjes ? {} : { voorgesteld: false }),
     };
 
     // If makeScreenshot is true and URL is provided, create/update screenshot

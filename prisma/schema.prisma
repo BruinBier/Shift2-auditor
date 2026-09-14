@@ -394,6 +394,34 @@ model SampleItem {
   /// niets meer. Nu wel: een vinkje betekent dat er een voorstel lag en dat je het
   /// hebt nagekeken.
   vanAgent       Boolean      @default(false) @map("van_agent")
+  /// Staat er bewegend beeld op deze pagina: video, audio, animatie, GIF?
+  ///
+  /// Breed bedoeld: niet "is er een video-element", maar "beweegt er iets". Een
+  /// informatiedragende GIF zit in geen enkel video-element en wordt door
+  /// `get-videos` niet gevonden; die valt hier wel onder.
+  ///
+  /// Staat dit op false, dan zijn 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.5 en 2.1.4 niet
+  /// van toepassing op deze pagina en worden ze zonder agent weggeschreven. Dat
+  /// scheelt zes keer dezelfde ontdekking: op 13 september 2026 schreven zes agents
+  /// zes woordelijk bijna gelijke redenen voor één vaststelling.
+  ///
+  /// null betekent NIET vastgesteld, en dat is bewust de standaard. Leeg mag nooit
+  /// als "nee" gelden: een sample die met de hand is ingevoerd en waar niemand iets
+  /// heeft aangevinkt, moet de gewone audit krijgen. Anders sluit je criteria af
+  /// door niets te doen.
+  ///
+  /// De ONDERZOEKER zet dit, niet een agent -- die heeft de pagina met eigen ogen
+  /// gezien waar een agent het uit code afleidt. Het vinkje bepaalt het oordeel en
+  /// NIET het akkoord: de kaart komt gewoon in de werklijst van "Waar sta ik" en
+  /// wordt nooit automatisch op akkoord gezet. Zie docs/adr/0001-akkoord-als-poort.md
+  /// en docs/plannen/meetdossier-per-pagina.md.
+  heeftBewegendBeeld Boolean?  @map("heeft_bewegend_beeld")
+  /// Staat er een formulier op deze pagina?
+  ///
+  /// Staat dit op false, dan zijn 3.3.1, 3.3.2, 3.3.3 en 3.3.7 niet van toepassing.
+  /// Zelfde regels als bij `heeftBewegendBeeld`: null is niet vastgesteld, de
+  /// onderzoeker zet het, en het akkoord blijft een aparte handeling.
+  heeftFormulier     Boolean?  @map("heeft_formulier")
   notes          String?      @db.Text
   crawledAt      DateTime?    @map("crawled_at")
 

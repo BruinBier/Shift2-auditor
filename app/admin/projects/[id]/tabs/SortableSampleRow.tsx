@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
+import { PaginaVinkje } from './PaginaVinkje';
 
 interface SortableSampleRowProps {
   item: any;
@@ -211,6 +212,37 @@ export function SortableSampleRow({
             </>
           )}
         </div>
+      </td>
+
+      {/*
+        Wat er op deze pagina staat, vastgesteld door de onderzoeker.
+
+        Twee vinkjes met drie standen. Staat er een op "niet aanwezig", dan worden
+        de bijbehorende criteria zonder agent afgesloten -- dat scheelt zes keer
+        dezelfde ontdekking. Leeg blijft "niet vastgesteld" en verandert niets.
+
+        Bij een PDF-sample hebben ze geen betekenis: die krijgt een eigen
+        beoordeling op documentstructuur en komt langs een andere prompt.
+      */}
+      <td className="py-4 pr-2 align-top w-24">
+        {item.sampleType !== 'pdf' && (
+          <div className="flex items-center gap-2">
+            <PaginaVinkje
+              sampleId={item.id}
+              veld="heeftBewegendBeeld"
+              waarde={item.heeftBewegendBeeld ?? null}
+              wat="bewegend beeld"
+              criteria="1.2.1 t/m 1.2.5 en 2.1.4"
+            />
+            <PaginaVinkje
+              sampleId={item.id}
+              veld="heeftFormulier"
+              waarde={item.heeftFormulier ?? null}
+              wat="een formulier"
+              criteria="3.3.1, 3.3.2, 3.3.3 en 3.3.7"
+            />
+          </div>
+        )}
       </td>
 
       {/* Actions column */}
