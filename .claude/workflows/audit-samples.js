@@ -1637,12 +1637,27 @@ Geef terug hoeveel oordelen zijn weggeschreven, hoeveel voorstellen zijn aangema
   }
 }
 
-// Volledigheids-check: welke sample×SC-combinaties ontbreken? (zou 0 moeten zijn)
+/**
+ * Volledigheids-check: welke sample×SC-combinaties ontbreken? (zou 0 moeten zijn)
+ *
+ * Meet tegen wat DEZE sample moest krijgen, niet tegen alle criteria van het
+ * onderzoekstype. Wat de onderzoeker met een vinkje heeft afgesloten hoort de agent
+ * juist NIET te leveren; dat in de gatenlijst zetten maakt van de bedoeling een
+ * foutmelding, en dan leest een geslaagde run als een mislukte.
+ *
+ * De afgesloten criteria worden apart gemeld, als uitkomst en niet als tekort. Ze
+ * staan wel degelijk in de database -- weggeschreven met bron 'steekproef' -- dus
+ * er ontbreekt niets aan de dekking.
+ */
 const gaten = []
+const afgeslotenPerSample = []
 for (const row of rapport) {
   const gedekt = new Set(row.assessments.map((a) => a.code))
-  const mist = requiredCodes.filter((c) => !gedekt.has(c))
+  const moet = teBeoordelenCodes(row)
+  const mist = moet.filter((c) => !gedekt.has(c))
   if (mist.length) gaten.push({ sample: row.sampleTitle, ontbrekendeCriteria: mist })
+  const weg = vervallenDoorVinkjes(row).map((v) => v.code)
+  if (weg.length) afgeslotenPerSample.push({ sample: row.sampleTitle, criteria: weg })
 }
 
 // Tellingen voor het overzicht.
@@ -1686,7 +1701,7 @@ const openVragenPerCriterium = [...new Set(handmatigeChecks.flatMap((h) => h.teC
   }))
 
 const aantalVragen = handmatigeChecks.reduce((n, h) => n + h.vragen.length, 0)
-log(`Klaar. ${rapport.length} samples verwerkt (waarvan ${aantalPdfTeAuditen} PDF). ${nieuweAfk.length} nieuwe afkeuringen, ${bestaandeAfk.length} overlappen met bestaande bevindingen. ${aantalVragen} vragen voor handmatige controle (${openVragenPerCriterium.length} criteria). ${gaten.length ? gaten.length + ' sample(s) met ontbrekende criteria!' : 'Geen enkel criterium overgeslagen.'}`)
+log(`Klaar. ${rapport.length} samples verwerkt (waarvan ${aantalPdfTeAuditen} PDF). ${nieuweAfk.length} nieuwe afkeuringen, ${bestaandeAfk.length} overlappen met bestaande bevindingen. ${aantalVragen} vragen voor handmatige controle (${openVragenPerCriterium.length} criteria). ${gaten.length ? gaten.length + ' sample(s) met ontbrekende criteria!' : 'Geen enkel criterium overgeslagen.'}${afgeslotenPerSample.length ? ` Door de vinkjes van de onderzoeker gingen ${afgeslotenPerSample.reduce((n, a) => n + a.criteria.length, 0)} criterium-oordelen buiten de agent om.` : ''}`)
 
 /**
  * Wat de agents zagen dat de onderzoeker met een vinkje had uitgesloten.
@@ -1716,6 +1731,9 @@ return {
   afkeuringenNieuw: nieuweAfk.length,
   afkeuringenBestaatAl: bestaandeAfk.length,
   volledigheidsGaten: gaten,
+  // Wat de onderzoeker met een vinkje heeft afgesloten. Uitkomst, geen tekort:
+  // deze oordelen staan in de database met bron 'steekproef'.
+  afgeslotenDoorVinkjes: afgeslotenPerSample,
   handmatigeChecks,
   openVragenPerCriterium,
   rapport,
