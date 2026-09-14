@@ -297,10 +297,9 @@ export const PAGINAVINKJES: Paginavinkje[] = [
  * toepassing: dat criterium eist ondertiteling bij een LIVE uitzending, en een opgenomen
  * film is geen uitzending.
  *
- * Blijkt een site tóch live uit te zenden -- een raadsvergadering, een webcam -- dan hoort
- * dit criterium hier weg voor dat onderzoek. Het regelbestand van 1.2.4 schrijft daarom
- * ook voor dat je het bewust op `niet_aanwezig` zet en niet automatisch; deze lijst maakt
- * die keuze één keer, zichtbaar, in plaats van dertig keer in een agent.
+ * Het regelbestand van 1.2.4 schrijft voor dat je het bewust op `niet_aanwezig` zet en
+ * niet met een zoektocht die niets kan vinden. Deze lijst maakt die keuze één keer, op
+ * één plek, in plaats van dertig keer in een agent.
  */
 export const ALTIJD_NIET_AANWEZIG: { code: string; reden: string }[] = [
   {

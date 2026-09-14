@@ -76,10 +76,6 @@ een agent: 1.2.4 staat in `ALTIJD_NIET_AANWEZIG` (`lib/metingen.ts`) en krijgt o
 Steekproef: die gelden per pagina, dit geldt altijd. **Ook met het video-vinkje AAN blijft
 1.2.4 vervallen**, want een opgenomen film op de pagina is geen live uitzending.
 
-Zendt een site tóch live uit -- een raadsvergadering, een webcam -- haal het criterium dan
-voor dat onderzoek uit die lijst. Dat is een bewuste ingreep en precies wat deze regel
-hierboven vraagt.
-
 Het onderscheid met 1.2.2 is scherp: alleen de uitzending op het moment zelf telt hier. Een
 raadsvergadering die je terugkijkt is vooraf opgenomen media.
 
