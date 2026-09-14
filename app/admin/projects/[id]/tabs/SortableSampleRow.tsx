@@ -232,7 +232,7 @@ export function SortableSampleRow({
               veld="heeftBewegendBeeld"
               waarde={item.heeftBewegendBeeld ?? null}
               wat="bewegend beeld"
-              criteria="1.2.1 t/m 1.2.5, 1.4.2 en 2.1.4"
+              criteria="1.2.1, 1.2.2, 1.2.3, 1.2.5, 1.4.2 en 2.1.4"
             />
             <PaginaVinkje
               sampleId={item.id}

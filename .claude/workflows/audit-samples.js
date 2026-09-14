@@ -613,7 +613,9 @@ const PAGINAVINKJES = [
     veld: 'heeftBewegendBeeld',
     wat: 'bewegend beeld: geen video, geen audio, geen animatie',
     // 1.4.2 gaat over geluid dat uit zichzelf begint; zonder media is er niets dat kan starten.
-    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2', '2.1.4'],
+    // 1.2.4 staat hier NIET in: dat gaat over LIVE uitzendingen en vervalt onafhankelijk
+    // van dit vinkje. Zie ALTIJD_NIET_AANWEZIG hieronder.
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.5', '1.4.2', '2.1.4'],
   },
   {
     veld: 'heeftFormulier',
@@ -623,9 +625,33 @@ const PAGINAVINKJES = [
   },
 ]
 
+/**
+ * Criteria die op dit soort websites nooit van toepassing zijn, ongeacht de vinkjes.
+ *
+ * Een vinkje is een vaststelling over één pagina; dit gaat over wat een gemeentelijke
+ * informatiesite naar zijn aard niet doet. 1.2.4 eist ondertiteling bij een LIVE
+ * uitzending, en een opgenomen film op de pagina is geen uitzending -- dus ook met het
+ * video-vinkje AAN blijft het niet van toepassing.
+ *
+ * Kopie van ALTIJD_NIET_AANWEZIG in lib/metingen.ts; een workflowscript kan niets
+ * importeren. Verandert de lijst daar, dan moet hij hier mee.
+ */
+const ALTIJD_NIET_AANWEZIG = [
+  {
+    code: '1.2.4',
+    reden:
+      'Dit criterium gaat over ondertiteling bij een LIVE uitzending. Deze website zendt ' +
+      'niet live uit: er is geen raadsvergadering, livestream of webcam. Een opgenomen ' +
+      'video maakt 1.2.4 niet van toepassing. Vastgelegd voor dit soort websites, niet ' +
+      'per pagina vastgesteld.',
+  },
+]
+
 /** De criteria die voor deze sample vervallen, met de reden erbij. */
 const vervallenDoorVinkjes = (sample) => {
-  const uit = []
+  const uit = ALTIJD_NIET_AANWEZIG.filter((v) => requiredCodes.includes(v.code)).map((v) => ({
+    ...v,
+  }))
   for (const vinkje of PAGINAVINKJES) {
     if (sample[vinkje.veld] !== false) continue
     for (const code of vinkje.criteria) {

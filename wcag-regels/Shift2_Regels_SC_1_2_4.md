@@ -70,6 +70,16 @@ Op de meeste gemeentesites komt dit niet voor: een raadsvergadering, livestream 
 zeldzaam, en een formulierstap heeft naar zijn aard nooit video. Zet het criterium dan bewust
 op `niet_aanwezig` -- niet automatisch, maar ook niet met een zoektocht die niets kan vinden.
 
+Sinds 2026-09-14 doet `audit-samples` dat één keer, zichtbaar, in plaats van dertig keer in
+een agent: 1.2.4 staat in `ALTIJD_NIET_AANWEZIG` (`lib/metingen.ts`) en krijgt op elke pagina
+`niet_aanwezig` met bron `steekproef`. Let op het verschil met de vinkjes op het tabblad
+Steekproef: die gelden per pagina, dit geldt altijd. **Ook met het video-vinkje AAN blijft
+1.2.4 vervallen**, want een opgenomen film op de pagina is geen live uitzending.
+
+Zendt een site tóch live uit -- een raadsvergadering, een webcam -- haal het criterium dan
+voor dat onderzoek uit die lijst. Dat is een bewuste ingreep en precies wat deze regel
+hierboven vraagt.
+
 Het onderscheid met 1.2.2 is scherp: alleen de uitzending op het moment zelf telt hier. Een
 raadsvergadering die je terugkijkt is vooraf opgenomen media.
 

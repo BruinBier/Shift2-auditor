@@ -400,7 +400,9 @@ model SampleItem {
   /// informatiedragende GIF zit in geen enkel video-element en wordt door
   /// `get-videos` niet gevonden; die valt hier wel onder.
   ///
-  /// Staat dit op false, dan zijn 1.2.1 t/m 1.2.5, 1.4.2 en 2.1.4 niet
+  /// Staat dit op false, dan zijn 1.2.1, 1.2.2, 1.2.3, 1.2.5, 1.4.2 en 2.1.4 niet
+  /// van toepassing. 1.2.4 hoort er NIET bij: dat gaat over live uitzendingen en
+  /// vervalt sowieso, ook met dit vinkje aan (ALTIJD_NIET_AANWEZIG in lib/metingen.ts).
   /// van toepassing op deze pagina en worden ze zonder agent weggeschreven. Dat
   /// scheelt zes keer dezelfde ontdekking: op 13 september 2026 schreven zes agents
   /// zes woordelijk bijna gelijke redenen voor één vaststelling.

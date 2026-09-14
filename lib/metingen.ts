@@ -272,7 +272,10 @@ export const PAGINAVINKJES: Paginavinkje[] = [
     // zijn deelgebieden veronderstellen een media-element, een ingesloten speler of een
     // script dat geluid start. Geen bewegend beeld en geen audio betekent dat er niets is
     // dat vanzelf kan gaan spelen.
-    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2', '2.1.4'],
+    // 1.2.4 staat hier NIET in en hoort er ook niet in: dat criterium gaat over LIVE
+    // uitzendingen, en een opgenomen video op de pagina maakt het nog steeds niet van
+    // toepassing. Het vervalt onafhankelijk van dit vinkje; zie ALTIJD_NIET_AANWEZIG.
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.5', '1.4.2', '2.1.4'],
   },
   {
     veld: 'heeftFormulier',
@@ -286,6 +289,31 @@ export const PAGINAVINKJES: Paginavinkje[] = [
 ];
 
 /**
+ * Criteria die op dit soort websites nooit van toepassing zijn, ongeacht de vinkjes.
+ *
+ * Dit is iets anders dan een vinkje. Een vinkje is een vaststelling van de onderzoeker
+ * over ÉÉN pagina; deze lijst gaat over wat een gemeentelijke informatiesite naar zijn
+ * aard niet doet. Staat er wél video op de pagina, dan blijft 1.2.4 toch niet van
+ * toepassing: dat criterium eist ondertiteling bij een LIVE uitzending, en een opgenomen
+ * film is geen uitzending.
+ *
+ * Blijkt een site tóch live uit te zenden -- een raadsvergadering, een webcam -- dan hoort
+ * dit criterium hier weg voor dat onderzoek. Het regelbestand van 1.2.4 schrijft daarom
+ * ook voor dat je het bewust op `niet_aanwezig` zet en niet automatisch; deze lijst maakt
+ * die keuze één keer, zichtbaar, in plaats van dertig keer in een agent.
+ */
+export const ALTIJD_NIET_AANWEZIG: { code: string; reden: string }[] = [
+  {
+    code: '1.2.4',
+    reden:
+      'Dit criterium gaat over ondertiteling bij een LIVE uitzending. Deze website zendt ' +
+      'niet live uit: er is geen raadsvergadering, livestream of webcam. Een opgenomen ' +
+      'video maakt 1.2.4 niet van toepassing. Vastgelegd voor dit soort websites, niet ' +
+      'per pagina vastgesteld.',
+  },
+]
+
+/**
  * De criteria die voor deze sample vervallen, met de reden erbij.
  *
  * Geeft een lege lijst terug als er niets is vastgesteld -- dan verandert er niets
@@ -295,7 +323,7 @@ export function vervallenDoorVinkjes(sample: {
   heeftBewegendBeeld?: boolean | null;
   heeftFormulier?: boolean | null;
 }): { code: string; reden: string }[] {
-  const uit: { code: string; reden: string }[] = [];
+  const uit: { code: string; reden: string }[] = [...ALTIJD_NIET_AANWEZIG];
   for (const vinkje of PAGINAVINKJES) {
     if (sample[vinkje.veld] !== false) continue;
     for (const code of vinkje.criteria) {
