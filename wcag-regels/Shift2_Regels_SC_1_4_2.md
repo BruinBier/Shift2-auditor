@@ -70,6 +70,9 @@ Start er niets uit zichzelf, dan is dit criterium niet aanwezig. Dat is geen "vo
 was niets om te bedienen. Een voorleesknop of een afspeelknop telt niet; die zet de
 bezoeker zelf aan.
 
+Sinds 2026-09-14 wordt dit niet meer per pagina uitgezocht. 1.4.2 staat in `ALTIJD_NIET_AANWEZIG` (`lib/metingen.ts`) en krijgt op elke pagina `niet_aanwezig` met bron `steekproef`. Op deze websites start er nooit geluid vanzelf, ook niet als er een video op de pagina staat: een ingesloten speler begint pas als de bezoeker erop klikt. Het vervalt dus ook met het video-vinkje AAN.
+
+
 ### Audit-instructies
 
 > Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er

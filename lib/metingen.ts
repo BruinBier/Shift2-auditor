@@ -268,14 +268,9 @@ export const PAGINAVINKJES: Paginavinkje[] = [
     // informatiedragende GIF zit in geen enkel video-element en wordt door
     // `get-videos` niet gevonden, maar valt hier wel onder.
     wat: 'bewegend beeld: geen video, geen audio, geen animatie',
-    // 1.4.2 hoort hier ook bij: dat gaat over geluid dat uit zichzelf begint, en alle vier
-    // zijn deelgebieden veronderstellen een media-element, een ingesloten speler of een
-    // script dat geluid start. Geen bewegend beeld en geen audio betekent dat er niets is
-    // dat vanzelf kan gaan spelen.
-    // 1.2.4 staat hier NIET in en hoort er ook niet in: dat criterium gaat over LIVE
-    // uitzendingen, en een opgenomen video op de pagina maakt het nog steeds niet van
-    // toepassing. Het vervalt onafhankelijk van dit vinkje; zie ALTIJD_NIET_AANWEZIG.
-    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.5', '1.4.2', '2.1.4'],
+    // 1.2.4 en 1.4.2 staan hier NIET in: die vervallen sowieso, ook met dit vinkje aan.
+    // Zie ALTIJD_NIET_AANWEZIG.
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.5', '2.1.4'],
   },
   {
     veld: 'heeftFormulier',
@@ -302,6 +297,15 @@ export const PAGINAVINKJES: Paginavinkje[] = [
  * één plek, in plaats van dertig keer in een agent.
  */
 export const ALTIJD_NIET_AANWEZIG: { code: string; reden: string }[] = [
+  {
+    code: '1.4.2',
+    reden:
+      'Dit criterium gaat over geluid dat uit zichzelf begint en langer dan drie seconden ' +
+      'doorgaat. Op deze websites start er nooit geluid vanzelf: er is geen media-element ' +
+      'met autoplay, geen ingesloten speler die zichzelf start en geen geluidsscript. Ook ' +
+      'een video op de pagina begint pas als de bezoeker erop klikt. Vastgelegd voor dit ' +
+      'soort websites, niet per pagina vastgesteld.',
+  },
   {
     code: '1.2.4',
     reden:

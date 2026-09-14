@@ -612,10 +612,8 @@ const PAGINAVINKJES = [
   {
     veld: 'heeftBewegendBeeld',
     wat: 'bewegend beeld: geen video, geen audio, geen animatie',
-    // 1.4.2 gaat over geluid dat uit zichzelf begint; zonder media is er niets dat kan starten.
-    // 1.2.4 staat hier NIET in: dat gaat over LIVE uitzendingen en vervalt onafhankelijk
-    // van dit vinkje. Zie ALTIJD_NIET_AANWEZIG hieronder.
-    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.5', '1.4.2', '2.1.4'],
+    // 1.2.4 en 1.4.2 staan hier NIET in: die vervallen sowieso. Zie ALTIJD_NIET_AANWEZIG.
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.5', '2.1.4'],
   },
   {
     veld: 'heeftFormulier',
@@ -637,6 +635,15 @@ const PAGINAVINKJES = [
  * importeren. Verandert de lijst daar, dan moet hij hier mee.
  */
 const ALTIJD_NIET_AANWEZIG = [
+  {
+    code: '1.4.2',
+    reden:
+      'Dit criterium gaat over geluid dat uit zichzelf begint en langer dan drie seconden ' +
+      'doorgaat. Op deze websites start er nooit geluid vanzelf: er is geen media-element ' +
+      'met autoplay, geen ingesloten speler die zichzelf start en geen geluidsscript. Ook ' +
+      'een video op de pagina begint pas als de bezoeker erop klikt. Vastgelegd voor dit ' +
+      'soort websites, niet per pagina vastgesteld.',
+  },
   {
     code: '1.2.4',
     reden:
