@@ -670,11 +670,18 @@ export default function SampleItems({ project }: { project: any }) {
                             er een op "niet aanwezig", dan worden de bijbehorende
                             criteria zonder agent afgesloten. Zie PaginaVinkje.tsx.
                           */}
+                          {/*
+                            "Video" en niet "beeld": een gewone foto is ook beeld en valt
+                            er juist niet onder. Het vinkje dekt alles wat beweegt of
+                            klinkt -- video, audio, animatie, GIF -- maar in de praktijk
+                            gaat het bijna altijd om video, en dat woord herkent iedereen
+                            meteen. De rest staat in de tooltip en op de knop zelf.
+                          */}
                           <th
                             className="pb-3 pr-2 text-left text-xs font-medium text-gray-500 uppercase w-24"
-                            title="Staat er op deze pagina bewegend beeld (video, audio, animatie) en een formulier? Wat je hier op 'niet aanwezig' zet, wordt niet door een agent beoordeeld."
+                            title="Staat er op deze pagina bewegend beeld (video, audio, animatie, GIF) en staat er een formulier? Wat je hier op 'niet aanwezig' zet, wordt niet door een agent beoordeeld."
                           >
-                            Beeld / form.
+                            Video / form.
                           </th>
                           <th className="pb-3 pr-6 w-16"></th>
                         </tr>
