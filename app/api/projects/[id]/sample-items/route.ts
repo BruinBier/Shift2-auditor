@@ -88,6 +88,17 @@ export async function POST(
         // Blijft staan waar `voorgesteld` vervalt, zodat een goedgekeurd voorstel te
         // onderscheiden is van een sample die de onderzoeker zelf heeft ingevoerd.
         vanAgent: body.voorgesteld === true,
+        /**
+         * Wat er op deze pagina staat, voorgevuld door de steekproef-workflow.
+         *
+         * Ontbreekt het veld, dan blijft het null: niet vastgesteld, en de agent
+         * beoordeelt zoals altijd. Alleen `false` sluit criteria af, en de
+         * onderzoeker ziet het staan bij het goedkeuren van de steekproef.
+         */
+        ...(body.heeftBewegendBeeld !== undefined
+          ? { heeftBewegendBeeld: body.heeftBewegendBeeld }
+          : {}),
+        ...(body.heeftFormulier !== undefined ? { heeftFormulier: body.heeftFormulier } : {}),
       },
     });
     return NextResponse.json(sampleItem, { status: 201 });

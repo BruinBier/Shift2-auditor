@@ -437,10 +437,27 @@ ${JSON.stringify(keuze.samples, null, 1)}
 
 Per sample:
 
-  npm run cli -- create-sample-item ${projectId} --title="<titel>" --url="<url>" --type=<type> --voorgesteld=true --description="<gebieden, komma-gescheiden>"
+  npm run cli -- create-sample-item ${projectId} --title="<titel>" --url="<url>" --type=<type> --voorgesteld=true --description="<gebieden, komma-gescheiden>" --heeft-video=<true|false> --heeft-formulier=<true|false>
 
 Let op:
-- **--voorgesteld=true is verplicht.** Zonder die vlag komt de steekproef er als goedgekeurd in, en dan draait audit-samples straks op pagina's die de onderzoeker niet heeft gezien.
+- **--voorgesteld=true is verplicht.**
+- **--heeft-video en --heeft-formulier volgen uit de gebieden die je bij deze pagina hebt
+  genoteerd.** Ze vullen twee vinkjes voor die de onderzoeker op het tabblad Steekproef
+  ziet staan en kan bijstellen.
+
+    --heeft-video=true    als er een gebied bij staat uit "Video met geluid", "Video zonder
+                          geluid, of een animerende GIF", of "Audio of podcast"
+    --heeft-video=false   als geen van die drie erbij staat
+    --heeft-formulier=true als er een gebied "Formulier" bij staat, anders false
+
+  Wat je op false zet, wordt straks NIET door een agent beoordeeld: 1.2.1 t/m 1.2.5 en
+  2.1.4 bij video, 3.3.1 t/m 3.3.7 bij formulier. Ze krijgen 'niet aanwezig' met jouw
+  vaststelling als reden. Twijfel je of heb je de pagina niet goed kunnen bekijken
+  (gehydrateerd stond op false, een cookiemuur, een uitklapblok dat niet openging), LAAT
+  DE VLAG DAN WEG. Dan blijft het veld leeg en beoordeelt de agent het gewoon. Een vlag
+  weglaten kost niets; een verkeerde false laat tien criteria stil overslaan.
+
+  Bij een PDF-sample laat je beide weg: die krijgt een eigen beoordeling. Zonder die vlag komt de steekproef er als goedgekeurd in, en dan draait audit-samples straks op pagina's die de onderzoeker niet heeft gezien.
 - De beschrijving is een KALE OPSOMMING van de contenttypen, geen zin. Dus: "overzicht met doorklikkers, twee kopniveaus" en niet "Deze pagina is gekozen omdat er een overzicht op staat". Die opsomming wordt door de auditagent meegelezen; een verantwoording van jouw keuze zou hem sturen.
 - Is de pagina door de klant aangedragen, zet dat er dan voor: "Door klant aangedragen. <gebieden>".
 - Maak ze aan in de volgorde waarin ze hierboven staan. De route zet zelf het volgnummer, dus de volgorde van aanmaken IS de volgorde in de steekproef.

@@ -242,6 +242,20 @@ async function createSampleItem(projectId: string, flags: Flags) {
     // `audit-samples` weigert te starten tot de onderzoeker de lijst heeft
     // goedgekeurd. Voer je zelf een sample in via de UI, dan blijft dit false.
     voorgesteld: flags.voorgesteld === 'true',
+    /**
+     * Wat er op deze pagina staat, voorgevuld door de steekproef-workflow.
+     *
+     * Drie standen, en de vlag weglaten is er één: dan blijft het null en
+     * beoordeelt de agent zoals altijd. Alleen `=false` sluit criteria af, en dat
+     * moet een bewuste uitspraak zijn -- vandaar de vergelijking met de string en
+     * niet `!== 'true'`, want dan zou een vergeten vlag tien criteria overslaan.
+     */
+    ...(flags['heeft-video'] !== undefined
+      ? { heeftBewegendBeeld: flags['heeft-video'] === 'true' }
+      : {}),
+    ...(flags['heeft-formulier'] !== undefined
+      ? { heeftFormulier: flags['heeft-formulier'] === 'true' }
+      : {}),
   };
   const result = await api(`/api/projects/${projectId}/sample-items`, {
     method: 'POST',

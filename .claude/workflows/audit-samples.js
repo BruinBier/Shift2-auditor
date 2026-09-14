@@ -745,8 +745,21 @@ const VERIFY_SCHEMA = {
         },
       },
     },
+    /**
+     * Wat je tegenkwam dat niet in een oordeel past.
+     *
+     * Hier hoort in elk geval in wat de onderzoeker met een vinkje heeft
+     * uitgesloten maar wat jij toch ziet: een speler die pas na een klik laadt,
+     * een formulier achter een uitklapblok. Schrijf daar GEEN oordeel over -- het
+     * vinkje is van de onderzoeker -- maar laat het hier staan met de vindplaats,
+     * zodat hij het vinkje kan omzetten.
+     */
+    opmerkingenVoorOnderzoeker: {
+      type: 'array',
+      items: { type: 'string' },
+    },
   },
-}
+})
 
 const QF_MATCH_SCHEMA = {
   type: 'object',
@@ -971,7 +984,13 @@ SAMPLE
   type:  ${sample.sampleType}${sample.description ? `
 
 WAT ER OVER DEZE PAGINA IS VASTGELEGD — lees dit voordat je begint:
-  ${sample.description}` : ''}
+  ${sample.description}
+
+Dat is genoteerd bij het samenstellen van de steekproef: wat er op deze pagina is gezien.
+Gebruik het als startpunt, NIET als uitkomst. Het zegt waar je zeker moet kijken; het zegt
+niet dat er verder niets is. Staat "tabel" er niet bij, dan loop je het deelgebied Tabellen
+nog steeds af en schrijf je er zelf nvt bij met wat je hebt gezocht. Een lijst die iemand
+anders heeft gemaakt is geen onderbouwing van jouw oordeel.` : ''}
 
 WAT JE VAN DEZE PAGINA BEOORDEELT — ${homepageSample && sample.id === homepageSample.id ? 'HEADER, MAIN-CONTENT EN FOOTER' : 'ALLEEN DE MAIN-CONTENT'}
 ${
@@ -1369,6 +1388,8 @@ const rapport = clean.map((row) => {
     // kan aanvullen die nooit bij een agent zijn geweest.
     heeftBewegendBeeld: row.sample?.heeftBewegendBeeld ?? null,
     heeftFormulier: row.sample?.heeftFormulier ?? null,
+    // Wat de agent zag maar niet in een oordeel mocht gieten. Zie het schema.
+    opmerkingenVoorOnderzoeker: row.audit?.opmerkingenVoorOnderzoeker || [],
     // Alleen de interessante regels vooraan; volledige lijst zit in assessments.
     afkeuringen: assessments.filter((a) => a.status === 'afgekeurd'),
     opmerkingen: assessments.filter((a) => a.status === 'opmerking'),
@@ -1651,9 +1672,25 @@ const openVragenPerCriterium = [...new Set(handmatigeChecks.flatMap((h) => h.teC
 const aantalVragen = handmatigeChecks.reduce((n, h) => n + h.vragen.length, 0)
 log(`Klaar. ${rapport.length} samples verwerkt (waarvan ${aantalPdfTeAuditen} PDF). ${nieuweAfk.length} nieuwe afkeuringen, ${bestaandeAfk.length} overlappen met bestaande bevindingen. ${aantalVragen} vragen voor handmatige controle (${openVragenPerCriterium.length} criteria). ${gaten.length ? gaten.length + ' sample(s) met ontbrekende criteria!' : 'Geen enkel criterium overgeslagen.'}`)
 
+/**
+ * Wat de agents zagen dat de onderzoeker met een vinkje had uitgesloten.
+ *
+ * Dit is de andere helft van de poort: het vinkje sluit criteria af, en dit is de
+ * weg terug als de vaststelling niet blijkt te kloppen. Staat het niet bovenaan in
+ * de terugmelding, dan verdwijnt het in het rapport per sample en leest niemand het.
+ */
+const terugmeldingen = rapport
+  .filter((r) => (r.opmerkingenVoorOnderzoeker || []).length)
+  .map((r) => ({ sampleTitle: r.sampleTitle, punten: r.opmerkingenVoorOnderzoeker }))
+if (terugmeldingen.length) {
+  const n = terugmeldingen.reduce((a, t) => a + t.punten.length, 0)
+  log(`LET OP: ${n} terugmelding(en) van de agents over ${terugmeldingen.length} pagina('s). Kijk of een vinkje op het tabblad Steekproef bijgesteld moet worden.`)
+}
+
 return {
   onderzoekstype: context.researchTypeName,
   wegschrijven: schrijfResultaat,
+  terugmeldingen,
   aantalHtmlSamples: rapport.length,
   aantalSamples: rapport.length,
   aantalPdfSamples: aantalPdfTeAuditen,
