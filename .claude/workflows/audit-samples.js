@@ -612,7 +612,8 @@ const PAGINAVINKJES = [
   {
     veld: 'heeftBewegendBeeld',
     wat: 'bewegend beeld: geen video, geen audio, geen animatie',
-    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4'],
+    // 1.4.2 gaat over geluid dat uit zichzelf begint; zonder media is er niets dat kan starten.
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2', '2.1.4'],
   },
   {
     veld: 'heeftFormulier',

@@ -60,7 +60,8 @@ Wat is BO?                        x               -
 
 **Bewegend beeld** is breed bedoeld: geen video, geen audio, geen animatie, geen GIF, geen
 bewegend beeld in welke vorm dan ook. Staat het uit, dan zijn 1.2.1, 1.2.2, 1.2.3, 1.2.4,
-1.2.5 en 2.1.4 niet van toepassing.
+1.2.5, 1.4.2 en 2.1.4 niet van toepassing. 1.4.2 gaat over geluid dat uit zichzelf
+begint; zonder media is er niets dat kan starten.
 
 **Formulier** sluit 1.3.5, 3.3.1, 3.3.2, 3.3.3 en 3.3.7 af. 1.3.5 hoort erbij omdat dat
 over `autocomplete` op invoervelden gaat: geen formulier, geen invoervelden.

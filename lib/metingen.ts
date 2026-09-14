@@ -268,7 +268,11 @@ export const PAGINAVINKJES: Paginavinkje[] = [
     // informatiedragende GIF zit in geen enkel video-element en wordt door
     // `get-videos` niet gevonden, maar valt hier wel onder.
     wat: 'bewegend beeld: geen video, geen audio, geen animatie',
-    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4'],
+    // 1.4.2 hoort hier ook bij: dat gaat over geluid dat uit zichzelf begint, en alle vier
+    // zijn deelgebieden veronderstellen een media-element, een ingesloten speler of een
+    // script dat geluid start. Geen bewegend beeld en geen audio betekent dat er niets is
+    // dat vanzelf kan gaan spelen.
+    criteria: ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2', '2.1.4'],
   },
   {
     veld: 'heeftFormulier',
