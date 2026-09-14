@@ -52,7 +52,22 @@ const CONTEXT_SCHEMA = {
         // `voorgesteld` staat er om dezelfde reden verplicht in: laat een agent hem
         // weg, dan lijkt elke sample goedgekeurd en valt de blokkade hieronder stil
         // weg. Precies het geval dat de vlag moet afvangen.
-        required: ['id', 'title', 'url', 'sampleType', 'description', 'voorgesteld'],
+        // `heeftBewegendBeeld` en `heeftFormulier` staan er om dezelfde reden
+        // verplicht in. Ze stonden er eerst niet in, en met additionalProperties:
+        // false gooide de scout ze weg: de vinkjes stonden op false in de database
+        // en kwamen als null in de workflow binnen, waarna de poort niets deed en
+        // de agent alsnog dertig criteria kreeg. Dat is niet te zien aan de
+        // uitkomst -- de audit draait gewoon door, alleen duurder.
+        required: [
+          'id',
+          'title',
+          'url',
+          'sampleType',
+          'description',
+          'voorgesteld',
+          'heeftBewegendBeeld',
+          'heeftFormulier',
+        ],
         properties: {
           id: { type: 'string' },
           title: { type: 'string' },
@@ -60,6 +75,9 @@ const CONTEXT_SCHEMA = {
           sampleType: { type: 'string' },
           description: { type: ['string', 'null'] },
           voorgesteld: { type: 'boolean' },
+          // null betekent niet vastgesteld; alleen false sluit criteria af.
+          heeftBewegendBeeld: { type: ['boolean', 'null'] },
+          heeftFormulier: { type: ['boolean', 'null'] },
         },
       },
     },
@@ -148,7 +166,7 @@ Project-id: ${projectId}
 
 Doe het volgende, in deze volgorde, en geef ALLE gevonden data terug in het schema:
 
-1. \`npm run cli -- get-project ${projectId}\` — noteer project.researchType (de naam van het onderzoekstype) en de volledige lijst sampleItems (id, title, url, sampleType, description, voorgesteld). Neem ALLE sample-items op, en neem de description letterlijk over — daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.
+1. \`npm run cli -- get-project ${projectId}\` — noteer project.researchType (de naam van het onderzoekstype) en de volledige lijst sampleItems (id, title, url, sampleType, description, voorgesteld, heeftBewegendBeeld, heeftFormulier). Neem die laatste twee LETTERLIJK over uit de uitvoer, ook als ze null zijn: dat zijn de vaststellingen van de onderzoeker over wat er op de pagina staat, en false betekent dat een reeks criteria vervalt. Maak er zelf nooit true of false van. Neem ALLE sample-items op, en neem de description letterlijk over — daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.
 
 2. Haal de SC-set van het onderzoekstype op met een GET naar de API. De research-type-route accepteert de NAAM:
    \`curl -s "http://localhost:3000/api/research-types/<researchTypeName-url-encoded>"\`
