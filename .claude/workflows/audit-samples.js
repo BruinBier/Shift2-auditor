@@ -1018,7 +1018,9 @@ Sla header, sitebrede navigatie, toegankelijkheidsbalk en footer volledig over: 
 
 Afbakening: neem het <main>-element, of als dat ontbreekt het gebied tussen de sitebrede navigatie en de footer. Twijfel je of een blok bij de main-content hoort? Komt het ook op de homepage voor, dan is het template en sla je het over.
 
-Zit een criterium volledig in header of footer en heeft de main-content er niets van, zet het dan op 'niet_aanwezig' met als reden dat het buiten de main-content valt.`
+Zit een criterium volledig in header of footer en heeft de main-content er niets van, zet het dan op 'niet_aanwezig' met als reden dat het buiten de main-content valt.
+
+3.2.4 (consistente identificatie) hoort NOOIT op deze pagina beoordeeld te worden. Dat criterium vergelijkt onderdelen TUSSEN pagina's, en aan een enkele pagina is consistentie niet te zien; een oordeel hier is volgens Shift2_Regels_SC_3_2_4.md geen onnauwkeurigheid maar een categoriefout. Zet het op 'niet_aanwezig' met als reden dat het sitebreed op het homepage-sample is beoordeeld, en ga niet zelf pagina's naast elkaar leggen.`
 }
 
 HTML/screenshot ophalen (dev server draait):
