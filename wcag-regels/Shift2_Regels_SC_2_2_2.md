@@ -134,6 +134,9 @@ Beweegt er niets, dan is dit criterium niet aanwezig, geen "voldoet". Beweegt er
 iets, dan is dat nog geen afkeuring: dan volgen drie vragen. Bij een PDF is het niet van
 toepassing.
 
+Sinds 2026-09-14 wordt dit niet meer per pagina uitgezocht. 2.2.2 staat in `ALTIJD_NIET_AANWEZIG` (`lib/metingen.ts`) en krijgt op elke pagina `niet_aanwezig` met bron `steekproef`. Op deze websites staan geen carrousels, tellers of doorlopende animaties; de pagina staat stil tot de bezoeker iets doet. `get-beweging` blijft bestaan en is vanaf de kaart te draaien als je het wilt nameten.
+
+
 ### Audit-instructies
 
 > Zet voor elke stap wie hem uitvoert: `[meting]` als een commando het al doet, `[jij]` als er

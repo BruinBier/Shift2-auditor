@@ -298,6 +298,14 @@ export const PAGINAVINKJES: Paginavinkje[] = [
  */
 export const ALTIJD_NIET_AANWEZIG: { code: string; reden: string }[] = [
   {
+    code: '2.2.2',
+    reden:
+      'Dit criterium gaat over inhoud die uit zichzelf beweegt, schuift of bijwerkt en '+
+      'langer dan vijf seconden doorgaat. Op deze websites staan geen carrousels, '+
+      'tellers of doorlopende animaties: de pagina staat stil tot de bezoeker iets '+
+      'doet. Vastgelegd voor dit soort websites, niet per pagina vastgesteld.',
+  },
+  {
     code: '1.4.2',
     reden:
       'Dit criterium gaat over geluid dat uit zichzelf begint en langer dan drie seconden ' +
