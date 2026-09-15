@@ -297,10 +297,13 @@ export default async function AdminPage() {
       // dus een leeg veld is geen ontbrekende stap. Het hield een onderzoek bovendien
       // eindeloos op deze regel als het Teams-transcript niet had aangestaan: er viel dan
       // niets toe te voegen, en de enige uitweg was iets verzinnen.
-      if (!viaBureau && !p.scopeInfo?.trim()) {
-        actie.push({ ...basis, toelichting: 'scope afmaken' });
-        continue;
-      }
+      // Hier stond "scope afmaken", op een controle of scopeInfo gevuld was. Die tekst is
+      // bij 38 van de 39 gevulde onderzoeken woordelijk gelijk: het zijn de wettelijke
+      // uitzonderingen die de tool zelf neerzet zodra het tabblad Scope wordt geopend. De
+      // kaart vroeg dus om een handeling die niemand hoefde te verrichten. De website staat
+      // er al vanaf de intake, en wat het scopegesprek werkelijk oplevert staat in
+      // scopeOutOfScope en sampleClientPages -- allebei velden die leeg mogen blijven, dus
+      // er valt niets aan af te lezen. Na het gesprek is de planning de volgende stap.
       if (viaBureau && scopeZelf && !p.scopeSentToBureau) {
         actie.push({ ...basis, toelichting: `scope doorgeven aan ${bureau}` });
         continue;

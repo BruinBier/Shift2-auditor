@@ -395,6 +395,13 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
             datum: project.scopeCallHeld,
             handmatig: true,
           },
+          // Bij een eigen onderzoek stond hier "Scope ingevuld". Die stap keek of de te
+          // onderzoeken website en de overige informatie gevuld waren, maar mat daarmee
+          // niets: de website staat er al vanaf de intake, en de overige informatie is bij
+          // 38 van de 39 gevulde onderzoeken woordelijk dezelfde wettelijke uitzonderingen,
+          // die de tool zelf neerzet zodra het tabblad Scope wordt geopend. Wat het
+          // scopegesprek werkelijk oplevert staat in scopeOutOfScope en sampleClientPages,
+          // en die mogen allebei leeg blijven.
           ...(viaBureau
             ? [
                 {
@@ -407,19 +414,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
                   handmatig: true,
                 },
               ]
-            : [
-                {
-                  // De website staat er al vanaf de intake; de scope is pas af als na het
-                  // scopegesprek ook de overige informatie is ingevuld, met de wettelijke
-                  // uitzonderingen. "Buiten scope" telt niet mee: dat mag leeg blijven als
-                  // er niets specifieks is uitgesloten.
-                  key: 'scope',
-                  label: 'Scope ingevuld',
-                  klaar: Boolean(project.scopeInScope?.trim() && project.scopeInfo?.trim()),
-                  datum: null,
-                  handmatig: false,
-                },
-              ]),
+            : []),
         ]),
     {
       // Bij een extern bureau is er geen deadline: dat bureau levert op zijn eigen
