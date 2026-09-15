@@ -376,13 +376,14 @@ plakken". Vraagt hij het verslag hier, volg dan dat bestand:
 3. Zet de uitkomst per punt en vink af met `PATCH /api/projects/<id>/bespreekpunten/<puntId>`
    en `{ "besproken": true, "uitkomst": "..." }`, maar alleen voor punten die aan bod kwamen.
    Zeg welke je hebt afgevinkt.
-4. Vul de scopevelden die uit het gesprek volgen, met `PATCH /api/projects/<id>`: pagina's
-   die de klant aandraagt in `sampleClientPages`, wat is uitgesloten in `scopeOutOfScope`.
-   Niet `scopeInfo`: dat zijn de wettelijke uitzonderingen en die vult de tool zelf zodra
-   het tabblad Scope wordt geopend. Leg beide voor voordat je ze wegschrijft, raad nooit een
-   URL uit een verbasterd transcript, en overschrijf niet wat er al staat. Daarna worden het
-   pas echte records op het tabblad Scope met `POST /api/projects/<id>/import-planning`
-   (scope-URL's en sample-items; bestaande URL's worden overgeslagen). Zeg of dat nog moet.
+4. Leg **opties** voor scope en steekproef voor, en schrijf ze niet zelf weg: welke
+   pagina's de klant noemde (kandidaten voor `sampleClientPages`) en wat er is uitgesloten
+   (`scopeOutOfScope`). De onderzoeker kiest; hij weet welke pagina's de contenttypes
+   dekken en dat staat niet in het transcript. Niet `scopeInfo`: dat zijn de wettelijke
+   uitzonderingen en die vult de tool zelf zodra het tabblad Scope wordt geopend. Na zijn
+   keuze wegschrijven met `PATCH /api/projects/<id>`, en zeggen of
+   `POST /api/projects/<id>/import-planning` nog moet draaien om er scope-URL's en
+   sample-items van te maken (bestaande URL's worden overgeslagen).
 
 Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë. Dat geldt voor
 elke mutatie met Nederlandse tekst: `-H "Content-Type: application/json; charset=utf-8"` en
