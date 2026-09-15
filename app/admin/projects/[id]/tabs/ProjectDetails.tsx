@@ -155,6 +155,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     planningApproved: project.planningApproved ? new Date(project.planningApproved).toISOString().split('T')[0] : '',
     scopeInScope: project.scopeInScope || '',
     scopeOutOfScope: project.scopeOutOfScope || '',
+    scopeInfo: project.scopeInfo || '',
     sampleClientPages: project.sampleClientPages || '',
     cardanIntakeUrl: project.cardanIntakeUrl || '',
     cardanOnderzoekUrl: project.cardanOnderzoekUrl || '',
@@ -456,14 +457,20 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             ? {}
             : {
                 hasReinspection: planningFormData.hasReinspection,
-                // Bij een extern bureau geeft dat bureau een datum door; de weken
-                // gelden alleen als wij de hertest zelf inplannen.
+                // Bij een extern bureau geeft dat bureau een datum door. Bij een eigen
+                // hertest rekenen we normaal vanaf de deadline, maar een vaste datum
+                // moet ook daar kunnen: spreek je met de klant een opleverdatum af
+                // (NIS-01: hertest uiterlijk 19 november, daarna gaat de contactpersoon
+                // met vakantie), dan wint die afspraak van "twaalf weken na de deadline".
+                // Eerder gooide dit formulier zo'n datum bij elke keer opslaan weg, en
+                // viel de hertest stil terug op een datum ná het verlopen van de
+                // toegankelijkheidsverklaring.
                 reinspectionWeeks:
-                  planningFormData.hasReinspection && !extern
+                  planningFormData.hasReinspection && !extern && !planningFormData.reinspectionDate
                     ? Number(planningFormData.reinspectionWeeks) || null
                     : null,
                 reinspectionDate:
-                  planningFormData.hasReinspection && extern && planningFormData.reinspectionDate
+                  planningFormData.hasReinspection && planningFormData.reinspectionDate
                     ? new Date(planningFormData.reinspectionDate).toISOString()
                     : null,
               }),
@@ -471,6 +478,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
           planningApproved: planningFormData.planningApproved ? new Date(planningFormData.planningApproved).toISOString() : null,
           scopeInScope: planningFormData.scopeInScope || null,
           scopeOutOfScope: planningFormData.scopeOutOfScope || null,
+          scopeInfo: planningFormData.scopeInfo || null,
           sampleClientPages: planningFormData.sampleClientPages || null,
           cardanIntakeUrl: planningFormData.cardanIntakeUrl.trim() || null,
           cardanOnderzoekUrl: planningFormData.cardanOnderzoekUrl.trim() || null,
@@ -522,9 +530,11 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     }));
   };
 
+  // Een vaste datum gaat voor op "weken na de deadline", ook bij een eigen hertest.
+  // Zelfde voorrang als syncReinspectionChild in app/api/projects/[id]/route.ts.
   const herinspectieStart = !planningFormData.hasReinspection
     ? ''
-    : extern
+    : extern || planningFormData.reinspectionDate
       ? planningFormData.reinspectionDate
       : plusDagen(planningFormData.dateEnd, Number(planningFormData.reinspectionWeeks || 0) * 7);
 
@@ -2103,13 +2113,46 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                       }
                       className="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm"
                     />
-                    {herinspectieStart && (
+                    {herinspectieStart && !planningFormData.reinspectionDate && (
                       <p className="text-xs text-gray-500 mt-1">
                         Hertest start op{' '}
                         {format(new Date(`${herinspectieStart}T00:00:00`), 'd MMMM yyyy', { locale: nl })}
                         , en duurt een week.
                       </p>
                     )}
+
+                    {/* Spreek je met de klant een vaste opleverdatum af, dan telt die en
+                        niet de weken hierboven. Zonder dit veld was een afgesproken datum
+                        alleen via de database te zetten, en wiste dit formulier hem weer. */}
+                    <div className="mt-3">
+                      <label htmlFor="pl-hertest-vast" className="block text-sm text-gray-700 mb-1">
+                        Of een vaste startdatum
+                      </label>
+                      <input
+                        id="pl-hertest-vast"
+                        type="date"
+                        value={planningFormData.reinspectionDate}
+                        onChange={(e) =>
+                          setPlanningFormData({ ...planningFormData, reinspectionDate: e.target.value })
+                        }
+                        className="w-44 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {planningFormData.reinspectionDate ? (
+                          <>
+                            De hertest start op{' '}
+                            {format(
+                              new Date(`${planningFormData.reinspectionDate}T00:00:00`),
+                              'd MMMM yyyy',
+                              { locale: nl }
+                            )}{' '}
+                            en is een week later opgeleverd. De weken hierboven tellen niet mee.
+                          </>
+                        ) : (
+                          'Leeg laten als de hertest gewoon zoveel weken na de deadline volgt.'
+                        )}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -2183,6 +2226,28 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                     setPlanningFormData({ ...planningFormData, sampleClientPages: v })
                   )}
                   placeholder={'- /contact\n- /producten/aanvragen'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
+                />
+              </div>
+
+              {/* Hoort niet bij de planningsmail maar wel bij de scope, en stond alleen op
+                  het tabblad Scope. Drie velden die bij elkaar horen stonden zo over twee
+                  schermen verdeeld, terwijl de stap "Scope ingevuld" in de voorbereiding
+                  naar scopeInScope én scopeInfo kijkt: één veld van elk scherm. Beide
+                  plekken schrijven naar hetzelfde veld, dus ze blijven gelijk. */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Overige scope informatie</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  De wettelijke uitzonderingen en andere afspraken over de scope. Komt in het
+                  rapport, niet in de planningsmail. Ook te bewerken op het tabblad Scope.
+                </p>
+                <textarea
+                  rows={8}
+                  value={planningFormData.scopeInfo}
+                  onChange={(e) =>
+                    setPlanningFormData({ ...planningFormData, scopeInfo: e.target.value })
+                  }
+                  placeholder={'- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono text-sm"
                 />
               </div>
