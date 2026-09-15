@@ -369,8 +369,11 @@ erachter, omdat een gesprek met een klant niet naar een externe dienst hoort te 
 onderzoeker plakt het verslag in het blok Bespreekpunten met de knop "Gespreksverslag
 plakken". Vraagt hij het verslag hier, volg dan dat bestand:
 
-1. Lees het transcript uit de database (`Project.scopeCallTranscript`; `get-project` stuurt
-   het niet mee) en de open punten via `GET /api/projects/<id>/bespreekpunten`.
+1. Het transcript krijg je in de chat: de onderzoeker kopieert de opdracht uit het blok
+   Bespreekpunten en plakt hem met het transcript eronder. Er staat een projectId in; haal
+   daarmee de open punten op via `GET /api/projects/<id>/bespreekpunten`. Is er geen
+   transcript omdat het opnemen niet aanstond, dan vertelt hij wat er is besproken en maak
+   je daar het verslag van; vraag niet alsnog om een transcript.
 2. Schrijf het verslag als notitie: `POST /api/projects/<id>/notes`, `authorName`
    "Claude Code", `content` in markdown.
 3. Zet de uitkomst per punt en vink af met `PATCH /api/projects/<id>/bespreekpunten/<puntId>`

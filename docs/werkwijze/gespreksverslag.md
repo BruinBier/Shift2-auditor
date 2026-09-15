@@ -9,13 +9,25 @@ Het verslag wordt buiten de tool gemaakt en geplakt in het blok Bespreekpunten, 
 15 september 2026 weggehaald, samen met de route erachter. Een gesprek met een klant gaat
 niet naar een externe dienst omdat het verslag dan sneller klaar is.
 
+Het transcript komt de tool niet in. In het blok Bespreekpunten staat een opdracht met het
+projectId erin; die kopieert de onderzoeker en plakt hij met zijn transcript in de chat.
+Het transcriptveld op Details > Planning is op 15 september 2026 weggehaald: een leeg veld
+telde als ontbrekende stap en hield een onderzoek eindeloos op "transcript toevoegen", ook
+als er niets te plakken viel omdat het Teams-transcript niet had aangestaan.
+
 ## Wat je krijgt
 
 - Het **transcript** van een gesprek tussen de onderzoeker van Shift2 en de klant, meestal
   een gemeente. Automatisch gemaakt door Teams: met versprekingen, herhalingen en soms een
-  verkeerd verstane naam.
+  verkeerd verstane naam. Het staat in de chat, achter de opdracht, en niet in de database.
+
+  Soms is er geen transcript, omdat het opnemen niet aanstond. Dan vertelt de onderzoeker
+  wat er is besproken en maak je daar het verslag van. Zeg niet dat het transcript
+  ontbreekt en vraag er niet om: wat hij vertelt is wat er is. Vraag wel door als een
+  bespreekpunt onbeantwoord blijft, en laat het punt open als hij het niet meer weet.
 - De **open bespreekpunten**: wat de onderzoeker vóór het gesprek had opgeschreven om te
-  vragen of te vertellen.
+  vragen of te vertellen. Haal ze zelf op met het projectId uit de opdracht
+  (`GET /api/projects/<id>/bespreekpunten`); ze worden niet meegestuurd.
 - Wat er over het onderzoek bekend is: kenmerk, website, opdrachtgever, of een extern
   bureau (Cardan) het onderzoek uitvoert.
 

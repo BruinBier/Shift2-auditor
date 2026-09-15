@@ -138,9 +138,6 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   );
   const [isSavingAccountmanager, setIsSavingAccountmanager] = useState(false);
   const [isSavingOngoing, setIsSavingOngoing] = useState(false);
-  const [showTranscriptModal, setShowTranscriptModal] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
   const [planningChanges, setPlanningChanges] = useState<any[]>([]);
   const [postponeWeeks, setPostponeWeeks] = useState('2');
   const [postponeReason, setPostponeReason] = useState('');
@@ -578,27 +575,6 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
     },
   });
 
-  const handleTranscriptSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingTranscript(true);
-    try {
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scopeCallTranscript: transcript.trim() || null }),
-      });
-      if (response.ok) {
-        window.location.reload();
-      } else {
-        alert('Het opslaan van het transcript is niet gelukt.');
-      }
-    } catch (error) {
-      console.error('Error saving transcript:', error);
-      alert('Het opslaan van het transcript is niet gelukt.');
-    } finally {
-      setIsSavingTranscript(false);
-    }
-  };
 
   const handlePostponeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1144,40 +1120,10 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             {!project.parentProject && (
               <div className="pt-2 border-t border-gray-200 space-y-3">{planningAfspraken}</div>
             )}
-            {/* Transcript van het scopegesprek: de bron voor de scope-afspraken
-                hierboven. Hoort bij dit onderzoek, niet bij de nulmeting. */}
-            <div className="pt-2 border-t border-gray-200">
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="scope-transcript" className="block text-sm text-gray-500">
-                  {/* Bij een extern bureau voert dat bureau het scopegesprek; wat hier
-                      komt is het transcript van het eigen gesprek met de klant, de bron
-                      voor het gespreksverslag en de uitkomst van de bespreekpunten. */}
-                  {extern ? 'Transcript klantgesprek' : 'Transcript scopegesprek'}
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTranscript(project.scopeCallTranscript || '');
-                    setShowTranscriptModal(true);
-                  }}
-                  className="text-sm text-shift2-primary hover:underline"
-                >
-                  {project.scopeCallTranscript ? 'Bewerken' : 'Toevoegen'}
-                </button>
-              </div>
-              {project.scopeCallTranscript ? (
-                <details>
-                  <summary className="text-sm text-gray-900 cursor-pointer">
-                    {project.scopeCallTranscript.trim().split(/\s+/).length} woorden
-                  </summary>
-                  <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded p-3 max-h-64 overflow-y-auto">
-                    {project.scopeCallTranscript}
-                  </div>
-                </details>
-              ) : (
-                <div className="text-sm text-gray-900">-</div>
-              )}
-            </div>
+            {/* Hier stond het transcript van het scopegesprek. Dat komt de tool niet meer
+                in: je plakt het met de opdracht uit het blok Bespreekpunten rechtstreeks in
+                een Claude Code-sessie. Een leeg veld telde als gebrek, ook als er niets te
+                plakken viel omdat het opnemen niet aanstond. */}
           </div>
         </div>
 
@@ -1379,7 +1325,6 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         {/* Wat je de klant nog moet vragen; open punten tellen mee op het dashboard. */}
         <Bespreekpunten
           projectId={project.id}
-          transcript={project.scopeCallTranscript ?? null}
           onNotitie={(notitie) => setProjectNotes((lijst) => [notitie, ...lijst])}
         />
 
@@ -1860,60 +1805,6 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
       )}
 
       {/* Edit Planning Modal */}
-      {showTranscriptModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {extern ? 'Transcript klantgesprek' : 'Transcript scopegesprek'}
-              </h2>
-              <button
-                onClick={() => setShowTranscriptModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="Sluiten"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleTranscriptSubmit} className="flex flex-col flex-1 min-h-0">
-              <div className="p-6 flex-1 min-h-0 overflow-y-auto">
-                <p className="text-sm text-gray-600 mb-3">
-                  Plak hier het transcript van het Teams-gesprek. Daaruit volgen de
-                  afspraken over de scope en de pagina&apos;s die de klant wil laten
-                  meenemen.
-                </p>
-                <textarea
-                  id="scope-transcript"
-                  value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  rows={16}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
-                  placeholder="Plak het transcript..."
-                />
-              </div>
-              <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setShowTranscriptModal(false)}
-                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
-                >
-                  Annuleren
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingTranscript}
-                  className="px-4 py-2 text-sm bg-shift2-primary text-white rounded-lg hover:bg-shift2-accent disabled:opacity-50"
-                >
-                  {isSavingTranscript ? 'Bezig...' : 'Opslaan'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {showPostponeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">

@@ -23,6 +23,12 @@ import { nl } from 'date-fns/locale';
  * docs/werkwijze/gespreksverslag.md blijft gelden; die is nu een instructie voor wie het
  * verslag schrijft.
  *
+ * Het transcript zelf komt de tool niet meer in. Het ging hier in een veld, en een leeg
+ * veld was daarmee een ontbrekende stap -- ook als er niets te plakken viel omdat het
+ * Teams-transcript niet aanstond. Dat hield een onderzoek eindeloos op "transcript
+ * toevoegen". Nu staat hier alleen de opdracht om te kopiëren; die plak je met het
+ * transcript in de chat, en het transcript blijft waar het al was.
+ *
  * De uitkomst per punt vult de onderzoeker zelf in.
  */
 
@@ -36,29 +42,21 @@ type Bespreekpunt = {
 
 // Alleen wat je anders vergeet. "Open bespreekpunten doornemen" stond er ook, maar die
 // staan direct hieronder; daar hoeft geen vinkje aan te herinneren.
+//
+// Het vinkje blijft een herinnering vooraf, maar is geen voorwaarde meer: vergeet je het,
+// dan vertel je na afloop wat er is besproken en maak je daar het verslag van.
 const CHECKLIST = ['Teams-transcript aanzetten'];
 
 export default function Bespreekpunten({
   projectId,
-  transcript,
   onNotitie,
 }: {
   projectId: string;
-  /**
-   * Het transcript van het gesprek (Project.scopeCallTranscript). Hier te plakken en te
-   * bewerken, want dit blok is waar je na het gesprek bent; het veld onder Planning is
-   * hetzelfde veld. Zonder transcript valt er geen verslag te maken.
-   */
-  transcript: string | null;
   /** Het verslag komt als notitie; de ouder zet hem in zijn lijst zodat hij meteen zichtbaar is. */
   onNotitie?: (notitie: any) => void;
 }) {
   const [punten, setPunten] = useState<Bespreekpunt[]>([]);
-  const [transcriptOpen, setTranscriptOpen] = useState(false);
-  const [transcriptTekst, setTranscriptTekst] = useState(transcript ?? '');
-  const [transcriptBezig, setTranscriptBezig] = useState(false);
-  const heeftTranscript = Boolean(transcript?.trim());
-  const woorden = heeftTranscript ? transcript!.trim().split(/\s+/).length : 0;
+  const [gekopieerd, setGekopieerd] = useState(false);
   const [verslagBezig, setVerslagBezig] = useState(false);
   const [verslagMelding, setVerslagMelding] = useState<string | null>(null);
   const [verslagOpen, setVerslagOpen] = useState(false);
@@ -152,30 +150,6 @@ export default function Bespreekpunten({
   };
 
   /**
-   * Zelfde veld en zelfde route als "Transcript" onder Planning. Na het bewaren een
-   * volledige herlaad met het anker, want de projectpagina is een servercomponent en het
-   * woordental onder Planning komt van de server; het anker brengt je hier terug.
-   */
-  const bewaarTranscript = async () => {
-    setTranscriptBezig(true);
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scopeCallTranscript: transcriptTekst.trim() || null }),
-      });
-      if (!res.ok) {
-        alert('Het bewaren van het transcript is niet gelukt.');
-        return;
-      }
-      window.location.hash = 'bespreekpunten';
-      window.location.reload();
-    } finally {
-      setTranscriptBezig(false);
-    }
-  };
-
-  /**
    * Het verslag komt van buiten: geplakt uit een Claude Code-sessie, of zelf geschreven.
    *
    * Hier stond een knop die het transcript naar OpenAI stuurde. Dat willen we niet meer:
@@ -207,6 +181,38 @@ export default function Bespreekpunten({
       setVerslagMelding('Het bewaren van het verslag is niet gelukt.');
     } finally {
       setVerslagBezig(false);
+    }
+  };
+
+  /**
+   * De opdracht die de onderzoeker kopieert en met zijn transcript in een Claude Code-sessie
+   * plakt. Het projectId staat erin, want daarmee zijn de bespreekpunten, de scopevelden en
+   * de projectgegevens op te halen; zonder dat moet de sessie eerst gaan zoeken welk
+   * onderzoek bedoeld wordt. De werkwijze staat in het doc en niet hier: twee plekken met
+   * dezelfde regels lopen uit elkaar.
+   */
+  const opdracht = [
+    'Maak een gespreksverslag van het transcript hieronder.',
+    '',
+    `Onderzoek: ${projectId}`,
+    '',
+    'Volg docs/werkwijze/gespreksverslag.md. Haal de open bespreekpunten en de',
+    'projectgegevens zelf op met dat id. Leg de opties voor scope en steekproef aan mij',
+    'voor voordat je iets wegschrijft.',
+    '',
+    '--- transcript ---',
+  ].join('\n');
+
+  const kopieerOpdracht = async () => {
+    try {
+      await navigator.clipboard.writeText(opdracht);
+      setGekopieerd(true);
+      setTimeout(() => setGekopieerd(false), 3000);
+    } catch {
+      // Kopiëren kan geweigerd worden (geen https, of de browser vraagt erom). Het blok
+      // staat zichtbaar op het scherm, dus met de hand selecteren werkt dan nog.
+      setGekopieerd(false);
+      alert('Kopiëren is niet gelukt. Selecteer de tekst hierboven en kopieer hem met Ctrl+C.');
     }
   };
 
@@ -295,59 +301,30 @@ export default function Bespreekpunten({
 
         <div>
           <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Na het gesprek</h4>
-          {/* Eerst het transcript, dan het verslag: de knop voor het verslag staat er altijd,
-              maar is uit zolang er geen transcript is. Verbergen zou de stap zelf verbergen. */}
-          {transcriptOpen ? (
-            <div className="mb-3">
-              <label htmlFor="transcript-tekst" className="block text-sm font-medium text-gray-700 mb-1">
-                Transcript van het gesprek
-              </label>
-              <textarea
-                id="transcript-tekst"
-                value={transcriptTekst}
-                onChange={(e) => setTranscriptTekst(e.target.value)}
-                rows={12}
-                autoFocus
-                placeholder="Plak hier het Teams-transcript."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary font-mono"
-              />
-              <div className="mt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={bewaarTranscript}
-                  disabled={transcriptBezig}
-                  className="px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 disabled:opacity-50"
-                >
-                  {transcriptBezig ? 'Bewaren…' : 'Transcript bewaren'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTranscriptOpen(false);
-                    setTranscriptTekst(transcript ?? '');
-                  }}
-                  className="text-sm text-gray-600 hover:underline"
-                >
-                  Annuleren
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-3 flex items-center gap-3 text-sm">
-              {heeftTranscript ? (
-                <span className="text-gray-700">Transcript staat erbij ({woorden} woorden).</span>
-              ) : (
-                <span className="text-gray-500">Nog geen transcript.</span>
-              )}
-              <button
-                type="button"
-                onClick={() => setTranscriptOpen(true)}
-                className="text-sm text-shift2-primary hover:underline"
-              >
-                {heeftTranscript ? 'Transcript bewerken' : 'Transcript toevoegen'}
-              </button>
-            </div>
-          )}
+          {/* Het transcript komt de tool niet in: je plakt het met deze opdracht in een
+              Claude Code-sessie. Daarom staat hier geen veld meer voor, en blokkeert een
+              vergeten Teams-transcript het onderzoek niet langer. */}
+          <div className="mb-3 rounded-md bg-gray-50 border border-gray-200 p-3">
+            <p className="text-sm text-gray-700">
+              <strong className="font-medium">Gespreksverslag maken.</strong> Kopieer de
+              opdracht hieronder, plak hem in een Claude Code-sessie en zet je transcript
+              eronder. Je krijgt het verslag terug, plus de uitkomst per bespreekpunt.
+            </p>
+            <pre className="mt-2 p-2 bg-white border border-gray-200 rounded text-xs text-gray-700 whitespace-pre-wrap font-mono">
+{opdracht}
+            </pre>
+            <button
+              type="button"
+              onClick={kopieerOpdracht}
+              className="mt-2 px-3 py-2 text-sm font-medium text-shift2-primary border border-shift2-primary rounded-lg hover:bg-white"
+            >
+              {gekopieerd ? 'Gekopieerd' : 'Opdracht kopiëren'}
+            </button>
+            <p className="mt-2 text-sm text-gray-500">
+              Geen transcript, omdat het opnemen niet aanstond? Vertel in de sessie wat er is
+              besproken; daar is net zo goed een verslag van te maken.
+            </p>
+          </div>
           {/* Het verslag maak je buiten de tool en plak je hier. Zie de uitleg hieronder. */}
           {verslagOpen ? (
             <div>
@@ -387,10 +364,8 @@ export default function Bespreekpunten({
           ) : (
             <div className="rounded-md bg-gray-50 border border-gray-200 p-3">
               <p className="text-sm text-gray-700">
-                <strong className="font-medium">Gespreksverslag maken.</strong> Vraag het in een
-                Claude Code-sessie: geef het transcript mee en vraag om een gespreksverslag. De
-                werkwijze staat in <code className="text-xs">docs/werkwijze/gespreksverslag.md</code>.
-                Plak het verslag daarna hier; het komt bij Notities te staan.
+                <strong className="font-medium">Verslag terug?</strong> Plak het hier; het komt
+                bij Notities te staan.
               </p>
               <p className="mt-1 text-sm text-gray-500">
                 Vink de punten hieronder zelf af met de uitkomst: wat er met de klant is

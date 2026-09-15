@@ -395,13 +395,6 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
             datum: project.scopeCallHeld,
             handmatig: true,
           },
-          {
-            key: 'transcript',
-            label: 'Transcript toegevoegd',
-            klaar: Boolean(project.scopeCallTranscript?.trim()),
-            datum: null,
-            handmatig: false,
-          },
           ...(viaBureau
             ? [
                 {

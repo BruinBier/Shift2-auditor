@@ -292,10 +292,11 @@ export default async function AdminPage() {
         }
         continue;
       }
-      if (scopeZelf && !p.scopeCallTranscript?.trim()) {
-        actie.push({ ...basis, toelichting: 'transcript toevoegen' });
-        continue;
-      }
+      // Hier stond "transcript toevoegen". Het transcript komt de tool niet meer in -- je
+      // plakt het met de opdracht uit het blok Bespreekpunten in een Claude Code-sessie --
+      // dus een leeg veld is geen ontbrekende stap. Het hield een onderzoek bovendien
+      // eindeloos op deze regel als het Teams-transcript niet had aangestaan: er viel dan
+      // niets toe te voegen, en de enige uitweg was iets verzinnen.
       if (!viaBureau && !p.scopeInfo?.trim()) {
         actie.push({ ...basis, toelichting: 'scope afmaken' });
         continue;
