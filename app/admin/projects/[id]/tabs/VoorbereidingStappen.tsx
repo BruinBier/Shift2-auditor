@@ -91,6 +91,21 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
   };
 
   /**
+   * Wanneer de hertest wordt opgeleverd: een week na de start.
+   *
+   * Zelfde rekensom als `syncReinspectionChild` in app/api/projects/[id]/route.ts,
+   * die het tussencheck-project op start + 7 dagen zet. Die datum staat dus al in
+   * de database, maar op het kindproject -- en dat krijgt deze component niet mee.
+   * Hier opnieuw uitrekenen houdt de mail gelijk aan wat er op de projectpagina
+   * staat; verandert die termijn daar, verander hem dan ook hier.
+   */
+  const opleverdatum = (d: Date) => {
+    const eindHertest = new Date(d);
+    eindHertest.setDate(eindHertest.getDate() + 7);
+    return eindHertest;
+  };
+
+  /**
    * Zo geeft een extern bureau (Cardan) een planning door: geen periode met een
    * deadline, maar de week waarin het werk begint, met datum en weeknummer.
    * Bijvoorbeeld "start in de week van 21-09-2026 (week 39)".
@@ -167,7 +182,7 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
         extern
           ? `De herinspectie: ${hertest ? startInWeek(hertest) : 'start in de week van [datum herinspectie]'}.`
           : hertest
-            ? `De hertest staat gepland in week ${weeknummer(hertest)}, dat is in de week van ${datumNl(hertest)}.`
+            ? `De hertest start in de week van ${datumNl(maandagVan(hertest))} (week ${weeknummer(hertest)}) en wordt uiterlijk ${datumNl(opleverdatum(hertest))} opgeleverd.`
             : `De hertest volgt ${project.reinspectionWeeks || '[aantal]'} weken na de deadline van de nulmeting.`
       );
       regels.push('');
