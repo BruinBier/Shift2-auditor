@@ -514,10 +514,10 @@ export default function ScopeManagement({ project }: { project: any }) {
               <tbody className="divide-y divide-gray-200">
                 {inScopePages.map((page) => (
                   <tr key={page.id}>
-                    <td className="py-4">
+                    <td className="py-4 w-full">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">{page.url}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-gray-900 break-all">{page.url}</span>
                           {page.crawledAt && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -680,12 +680,15 @@ export default function ScopeManagement({ project }: { project: any }) {
               <tbody className="divide-y divide-gray-200">
                 {outScopePages.map((page) => (
                   <tr key={page.id}>
-                    <td className="py-4">
+                    {/* break-all, want een lange URL zonder spaties (een Google
+                        Forms-adres bijvoorbeeld) duwt de tabel anders breder dan het
+                        blok, en dan valt het menu hiernaast buiten beeld. */}
+                    <td className="py-4 w-full">
                       <div>
-                        <div className="font-medium text-gray-900">{page.url}</div>
+                        <div className="font-medium text-gray-900 break-all">{page.url}</div>
                       </div>
                     </td>
-                    <td className="py-4">
+                    <td className="py-4 align-top whitespace-nowrap">
                       <div className="flex items-center gap-2 relative justify-end">
                         {/* 3-puntjes menu */}
                         <button
