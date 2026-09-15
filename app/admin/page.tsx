@@ -128,6 +128,9 @@ export default async function AdminPage() {
       // Open bespreekpunten: wat je de klant nog moet vragen. De tekst zelf gaat mee, want
       // "1 bespreekpunt" zegt niet wát je moet bespreken; op de regel klapt hij uit.
       bespreekpunten: { where: { besprokenOp: null }, select: { tekst: true }, orderBy: { createdAt: 'asc' } },
+      // Alleen of het gespreksverslag er is. De knop "Gespreksverslag plakken" zet de
+      // notitie op deze auteursnaam; de inhoud hoeft hier niet mee.
+      _count: { select: { projectNotes: { where: { authorName: 'Gespreksverslag' } } } },
     },
   });
 
@@ -297,6 +300,15 @@ export default async function AdminPage() {
       // dus een leeg veld is geen ontbrekende stap. Het hield een onderzoek bovendien
       // eindeloos op deze regel als het Teams-transcript niet had aangestaan: er viel dan
       // niets toe te voegen, en de enige uitweg was iets verzinnen.
+      // Na het gesprek hoort vast te liggen wat er is besproken, anders zit dat alleen in
+      // je hoofd: het transcript wordt hier niet bewaard. Het verslag is het enige dat er
+      // na elk gesprek hoort te zijn -- bespreekpunten en scopevelden mogen leeg blijven.
+      // Met de hand afgevinkt telt ook, voor een verslag dat anders is vastgelegd.
+      if (scopeZelf && p._count.projectNotes === 0 && !p.gespreksverslagGemaakt) {
+        actie.push({ ...basis, toelichting: 'gespreksverslag maken' });
+        continue;
+      }
+
       // Hier stond "scope afmaken", op een controle of scopeInfo gevuld was. Die tekst is
       // bij 38 van de 39 gevulde onderzoeken woordelijk gelijk: het zijn de wettelijke
       // uitzonderingen die de tool zelf neerzet zodra het tabblad Scope wordt geopend. De

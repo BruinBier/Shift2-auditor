@@ -332,6 +332,7 @@ export async function PATCH(
       'reportDate',
       'reportSentAt',
       'researcherFeedback',
+      'gespreksverslagGemaakt',
       'sampleClientPages',
       'sampleInfo',
       'scopeCallDate',

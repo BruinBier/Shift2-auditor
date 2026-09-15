@@ -196,6 +196,10 @@ model Project {
   /// Bij een extern bureau: wanneer de uitkomst van dat gesprek aan het bureau is doorgegeven.
   scopeSentToBureau       DateTime?      @map("scope_sent_to_bureau") @db.Timestamp(6)
   scopeCallHeld           DateTime?      @map("scope_call_held")
+  /// Met de hand afgevinkt dat het gespreksverslag er is. De stap vinkt zichzelf af zodra
+  /// er een notitie met auteur "Gespreksverslag" staat; dit veld is de overrule voor een
+  /// verslag dat op een andere manier is vastgelegd.
+  gespreksverslagGemaakt  DateTime?      @map("gespreksverslag_gemaakt")
   /// Transcript van het scopegesprek; de bron voor de scope-afspraken.
   scopeCallTranscript     String?        @map("scope_call_transcript") @db.Text
   // @db.Timestamp(6) volgt de kolommen zoals ze in de database staan. Deze twee

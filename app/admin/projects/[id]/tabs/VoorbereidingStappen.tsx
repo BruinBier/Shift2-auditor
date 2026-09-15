@@ -13,7 +13,14 @@ import { isExternBureau } from '@/lib/onderzoekers';
  * stappen die buiten de tool gebeuren (mail versturen, gesprek voeren) zet je
  * met de hand aan.
  */
-export default function VoorbereidingStappen({ project }: { project: any }) {
+export default function VoorbereidingStappen({
+  project,
+  heeftGespreksverslag = false,
+}: {
+  project: any;
+  /** Of er een notitie met auteur "Gespreksverslag" bij dit onderzoek staat. */
+  heeftGespreksverslag?: boolean;
+}) {
   const [bezig, setBezig] = useState<string | null>(null);
   /**
    * Dicht zodra alles af is, maar wel zichtbaar.
@@ -394,6 +401,24 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
             klaar: Boolean(project.scopeCallHeld),
             datum: project.scopeCallHeld,
             handmatig: true,
+          },
+          {
+            // Wat er in het gesprek is besproken hoort in het systeem te staan, anders zit
+            // het alleen in je hoofd en in een transcript dat hier niet bewaard wordt.
+            //
+            // Het verslag is het enige dat er na élk gesprek hoort te zijn. De uitkomst per
+            // bespreekpunt kan niet als maatstaf dienen (er hoeven geen bespreekpunten te
+            // zijn) en de scopevelden ook niet (die mogen leeg blijven) -- op die laatste
+            // ging "Scope ingevuld" juist mis.
+            //
+            // Vinkt vanzelf af als het verslag als notitie is geplakt, en is met de hand te
+            // zetten als je het anders hebt vastgelegd. Zonder die overrule zou de stap
+            // blijven staan op iets dat al gedaan is, net als bij het transcript.
+            key: 'gespreksverslagGemaakt',
+            label: 'Gespreksverslag in het systeem',
+            klaar: heeftGespreksverslag || Boolean(project.gespreksverslagGemaakt),
+            datum: project.gespreksverslagGemaakt,
+            handmatig: !heeftGespreksverslag,
           },
           // Bij een eigen onderzoek stond hier "Scope ingevuld". Die stap keek of de te
           // onderzoeken website en de overige informatie gevuld waren, maar mat daarmee

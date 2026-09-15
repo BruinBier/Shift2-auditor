@@ -1420,7 +1420,13 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               de kop toont "8 van 8". Alleen een geannuleerd onderzoek krijgt het
               niet: daar is de voorbereiding niet afgemaakt maar afgebroken. */}
           {projectStatus !== 'Geannuleerd' && (
-            <VoorbereidingStappen project={project} />
+            <VoorbereidingStappen
+              project={project}
+              /* De knop "Gespreksverslag plakken" zet de notitie op deze auteursnaam; zo
+                 weet het routekaartje dat het verslag er is zonder de notities nog eens
+                 op te halen. */
+              heeftGespreksverslag={projectNotes.some((n: any) => n.authorName === 'Gespreksverslag')}
+            />
           )}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">

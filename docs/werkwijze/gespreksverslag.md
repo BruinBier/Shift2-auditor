@@ -117,7 +117,11 @@ is overgeslagen omdat het er al stond of geen URL bevatte.
 
 ## Wat er daarna gebeurt
 
-Het verslag komt als notitie bij het onderzoek te staan. De uitkomst per bespreekpunt
+Het verslag komt als notitie bij het onderzoek te staan, met "Gespreksverslag" als auteur.
+Die naam is niet vrijblijvend: de voorbereidingslijst en het dashboard lezen eraan af dat
+het verslag er is, en vinken daarop de stap "Gespreksverslag in het systeem" af. Plak het
+verslag dus met de knop in het blok Bespreekpunten en niet als gewone notitie. Heb je het
+toch anders vastgelegd, vink de stap dan met de hand af. De uitkomst per bespreekpunt
 levert dit verslag als voorstel: de onderzoeker vult hem zelf in bij het punt en vinkt het
 af. Zo blijft de onderzoeker degene die zegt wat er met de klant is afgesproken.
 
