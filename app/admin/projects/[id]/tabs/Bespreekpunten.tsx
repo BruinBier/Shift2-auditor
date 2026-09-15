@@ -23,12 +23,8 @@ import { nl } from 'date-fns/locale';
  * docs/werkwijze/gespreksverslag.md blijft gelden; die is nu een instructie voor wie het
  * verslag schrijft.
  *
- * De uitkomst per punt vult de onderzoeker zelf in. Het voorstellen-blok hieronder werd
- * door die knop gevuld en staat nu leeg; het blijft staan voor als voorstellen ooit uit
- * een andere bron komen.
+ * De uitkomst per punt vult de onderzoeker zelf in.
  */
-
-type Voorstel = { id: string; aanBodGekomen: boolean; uitkomst: string };
 
 type Bespreekpunt = {
   id: string;
@@ -67,7 +63,6 @@ export default function Bespreekpunten({
   const [verslagMelding, setVerslagMelding] = useState<string | null>(null);
   const [verslagOpen, setVerslagOpen] = useState(false);
   const [verslagTekst, setVerslagTekst] = useState('');
-  const [voorstellen, setVoorstellen] = useState<Record<string, Voorstel>>({});
   const [geladen, setGeladen] = useState(false);
   const [nieuw, setNieuw] = useState('');
   const [bezig, setBezig] = useState<string | null>(null);
@@ -215,18 +210,6 @@ export default function Bespreekpunten({
     }
   };
 
-  /** Voorstel overnemen: uitkomst bewaren én afvinken, in één keer. */
-  const neemOver = async (punt: Bespreekpunt) => {
-    const v = voorstellen[punt.id];
-    if (!v) return;
-    await werkBij(punt.id, { besproken: true, uitkomst: v.uitkomst });
-    setVoorstellen((rest) => {
-      const { [punt.id]: _weg, ...over } = rest;
-      return over;
-    });
-    setAfgehandeldOpen(true);
-  };
-
   const datum = (iso: string) => format(new Date(iso), 'd MMMM yyyy', { locale: nl });
 
   return (
@@ -279,40 +262,6 @@ export default function Bespreekpunten({
                   <div className="flex-1 text-sm text-gray-900">
                     <div className="whitespace-pre-wrap">{punt.tekst}</div>
                     <div className="text-xs text-gray-400">toegevoegd {datum(punt.createdAt)}</div>
-                    {voorstellen[punt.id] && (
-                      <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm">
-                        {voorstellen[punt.id].aanBodGekomen ? (
-                          <>
-                            <div className="text-xs font-medium text-amber-800 mb-1">Voorgestelde uitkomst uit het transcript</div>
-                            <div className="whitespace-pre-wrap text-gray-900">{voorstellen[punt.id].uitkomst}</div>
-                            <div className="mt-2 flex gap-3">
-                              <button
-                                type="button"
-                                onClick={() => neemOver(punt)}
-                                disabled={bezig === punt.id}
-                                className="px-3 py-1 text-xs font-medium text-white bg-shift2-primary rounded hover:opacity-90 disabled:opacity-50"
-                              >
-                                Overnemen en afvinken
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setVoorstellen((rest) => {
-                                    const { [punt.id]: _weg, ...over } = rest;
-                                    return over;
-                                  })
-                                }
-                                className="text-xs text-gray-500 hover:underline"
-                              >
-                                Negeren
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-amber-800">Volgens het transcript niet aan bod gekomen; blijft open.</div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </li>
               ))}
