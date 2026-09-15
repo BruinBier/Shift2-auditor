@@ -363,10 +363,11 @@ telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel pro
 ## Gespreksverslag uit een transcript
 
 Hoe een gespreksverslag eruitziet staat in **`docs/werkwijze/gespreksverslag.md`**, en
-nergens anders. De tool leest dat bestand als instructie voor de AI achter de knop "Maak
-gespreksverslag" (blok Bespreekpunten op het tabblad Details, route
-`app/api/projects/[id]/gespreksverslag`); de onderzoeker heeft er dus geen Claude Code-sessie
-voor nodig. Vraagt hij het verslag toch hier, volg dan hetzelfde bestand:
+nergens anders. Het verslag wordt hier gemaakt: de tool heeft er geen knop meer voor. Die
+stuurde het transcript naar OpenAI en is op 15 september 2026 weggehaald, met de route
+erachter, omdat een gesprek met een klant niet naar een externe dienst hoort te gaan. De
+onderzoeker plakt het verslag in het blok Bespreekpunten met de knop "Gespreksverslag
+plakken". Vraagt hij het verslag hier, volg dan dat bestand:
 
 1. Lees het transcript uit de database (`Project.scopeCallTranscript`; `get-project` stuurt
    het niet mee) en de open punten via `GET /api/projects/<id>/bespreekpunten`.
@@ -374,8 +375,14 @@ voor nodig. Vraagt hij het verslag toch hier, volg dan hetzelfde bestand:
    "Claude Code", `content` in markdown.
 3. Zet de uitkomst per punt en vink af met `PATCH /api/projects/<id>/bespreekpunten/<puntId>`
    en `{ "besproken": true, "uitkomst": "..." }`, maar alleen voor punten die aan bod kwamen.
-   De knop in de tool doet dat niet zelf; die levert voorstellen die de onderzoeker overneemt.
-   Doe je het hier, zeg dan wat je hebt afgevinkt.
+   Zeg welke je hebt afgevinkt.
+4. Vul de scopevelden die uit het gesprek volgen, met `PATCH /api/projects/<id>`: pagina's
+   die de klant aandraagt in `sampleClientPages`, wat is uitgesloten in `scopeOutOfScope`.
+   Niet `scopeInfo`: dat zijn de wettelijke uitzonderingen en die vult de tool zelf zodra
+   het tabblad Scope wordt geopend. Leg beide voor voordat je ze wegschrijft, raad nooit een
+   URL uit een verbasterd transcript, en overschrijf niet wat er al staat. Daarna worden het
+   pas echte records op het tabblad Scope met `POST /api/projects/<id>/import-planning`
+   (scope-URL's en sample-items; bestaande URL's worden overgeslagen). Zeg of dat nog moet.
 
 Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë. Dat geldt voor
 elke mutatie met Nederlandse tekst: `-H "Content-Type: application/json; charset=utf-8"` en

@@ -16,10 +16,16 @@ import { nl } from 'date-fns/locale';
  * Bovenaan een vaste checklist voor elk gesprek. Die vinkjes worden niet bewaard: ze zijn
  * per gesprek en staan weer leeg als je het blok opnieuw opent.
  *
- * Na het gesprek maakt de tool zelf het verslag: de knop "Maak gespreksverslag" stuurt het
- * transcript en de open punten naar de AI (zie docs/werkwijze/gespreksverslag.md). Het
- * verslag komt als notitie bij het onderzoek; de uitkomst per punt komt hier terug als
- * voorstel, dat de onderzoeker per punt overneemt. Pas dan is het punt afgevinkt.
+ * Het gespreksverslag maakt de onderzoeker buiten de tool, in een Claude Code-sessie, en
+ * plakt hij hier; het komt als notitie bij het onderzoek. Hier zat een knop die het
+ * transcript naar OpenAI stuurde, maar een gesprek met een klant gaat niet naar een
+ * externe dienst omdat het verslag dan sneller klaar is. De werkwijze in
+ * docs/werkwijze/gespreksverslag.md blijft gelden; die is nu een instructie voor wie het
+ * verslag schrijft.
+ *
+ * De uitkomst per punt vult de onderzoeker zelf in. Het voorstellen-blok hieronder werd
+ * door die knop gevuld en staat nu leeg; het blijft staan voor als voorstellen ooit uit
+ * een andere bron komen.
  */
 
 type Voorstel = { id: string; aanBodGekomen: boolean; uitkomst: string };
@@ -59,6 +65,8 @@ export default function Bespreekpunten({
   const woorden = heeftTranscript ? transcript!.trim().split(/\s+/).length : 0;
   const [verslagBezig, setVerslagBezig] = useState(false);
   const [verslagMelding, setVerslagMelding] = useState<string | null>(null);
+  const [verslagOpen, setVerslagOpen] = useState(false);
+  const [verslagTekst, setVerslagTekst] = useState('');
   const [voorstellen, setVoorstellen] = useState<Record<string, Voorstel>>({});
   const [geladen, setGeladen] = useState(false);
   const [nieuw, setNieuw] = useState('');
@@ -172,23 +180,36 @@ export default function Bespreekpunten({
     }
   };
 
-  const maakVerslag = async () => {
+  /**
+   * Het verslag komt van buiten: geplakt uit een Claude Code-sessie, of zelf geschreven.
+   *
+   * Hier stond een knop die het transcript naar OpenAI stuurde. Dat willen we niet meer:
+   * een gesprek met een klant gaat niet naar een externe dienst omdat het verslag dan
+   * sneller klaar is. De werkwijze in docs/werkwijze/gespreksverslag.md blijft gelden --
+   * die is nu alleen een instructie voor wie het verslag maakt, niet meer voor een knop.
+   */
+  const bewaarVerslag = async () => {
+    const tekst = verslagTekst.trim();
+    if (!tekst) return;
     setVerslagBezig(true);
     setVerslagMelding(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}/gespreksverslag`, { method: 'POST' });
+      const res = await fetch(`/api/projects/${projectId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ authorName: 'Gespreksverslag', content: tekst }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setVerslagMelding(data.error || 'Het maken van het verslag is niet gelukt.');
+        setVerslagMelding('Het bewaren van het verslag is niet gelukt.');
         return;
       }
-      onNotitie?.(data.notitie);
-      const nieuw: Record<string, Voorstel> = {};
-      for (const v of data.voorstellen ?? []) nieuw[v.id] = v;
-      setVoorstellen(nieuw);
-      setVerslagMelding('Het verslag staat bij Notities, met als auteur "AI-verslag, nog na te kijken". Lees het na; de uitkomsten hieronder zijn voorstellen.');
+      onNotitie?.(data);
+      setVerslagTekst('');
+      setVerslagOpen(false);
+      setVerslagMelding('Het verslag staat bij Notities. Vink de punten hieronder zelf af met de uitkomst.');
     } catch {
-      setVerslagMelding('Het maken van het verslag is niet gelukt.');
+      setVerslagMelding('Het bewaren van het verslag is niet gelukt.');
     } finally {
       setVerslagBezig(false);
     }
@@ -378,17 +399,63 @@ export default function Bespreekpunten({
               </button>
             </div>
           )}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={maakVerslag}
-              disabled={!heeftTranscript || verslagBezig}
-              title={heeftTranscript ? 'Maakt een kort verslag uit het transcript en stelt per punt de uitkomst voor' : 'Voeg eerst het transcript van het gesprek toe'}
-              className="px-3 py-2 text-sm font-medium text-shift2-primary border border-shift2-primary rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {verslagBezig ? 'Verslag wordt gemaakt…' : 'Maak gespreksverslag uit het transcript'}
-            </button>
-          </div>
+          {/* Het verslag maak je buiten de tool en plak je hier. Zie de uitleg hieronder. */}
+          {verslagOpen ? (
+            <div>
+              <label htmlFor="verslag-plak" className="block text-sm font-medium text-gray-700 mb-1">
+                Gespreksverslag
+              </label>
+              <textarea
+                id="verslag-plak"
+                rows={12}
+                value={verslagTekst}
+                onChange={(e) => setVerslagTekst(e.target.value)}
+                autoFocus
+                placeholder="Plak hier het gespreksverslag. Markdown mag: ## voor een kop, ** ** voor vet."
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+              />
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={bewaarVerslag}
+                  disabled={verslagBezig || !verslagTekst.trim()}
+                  className="px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {verslagBezig ? 'Bewaren…' : 'Verslag bewaren'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVerslagOpen(false);
+                    setVerslagTekst('');
+                  }}
+                  className="text-sm text-gray-600 hover:underline"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-md bg-gray-50 border border-gray-200 p-3">
+              <p className="text-sm text-gray-700">
+                <strong className="font-medium">Gespreksverslag maken.</strong> Vraag het in een
+                Claude Code-sessie: geef het transcript mee en vraag om een gespreksverslag. De
+                werkwijze staat in <code className="text-xs">docs/werkwijze/gespreksverslag.md</code>.
+                Plak het verslag daarna hier; het komt bij Notities te staan.
+              </p>
+              <p className="mt-1 text-sm text-gray-500">
+                Vink de punten hieronder zelf af met de uitkomst: wat er met de klant is
+                afgesproken, bepaal je zelf.
+              </p>
+              <button
+                type="button"
+                onClick={() => setVerslagOpen(true)}
+                className="mt-2 px-3 py-2 text-sm font-medium text-shift2-primary border border-shift2-primary rounded-lg hover:bg-white"
+              >
+                Gespreksverslag plakken
+              </button>
+            </div>
+          )}
           {verslagMelding && <p className="mt-2 text-sm text-gray-700">{verslagMelding}</p>}
         </div>
 

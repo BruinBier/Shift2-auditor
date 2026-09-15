@@ -1,10 +1,13 @@
 # Werkwijze: gespreksverslag uit een transcript
 
-Dit bestand is de enige plek waar staat hoe een gespreksverslag eruitziet. De tool leest het
-als instructie voor de AI achter de knop "Maak gespreksverslag" (route
-`app/api/projects/[id]/gespreksverslag`), Claude Code volgt het als het verslag met de hand
-wordt gevraagd, en de onderzoeker leest het om te weten wat hij kan verwachten. Verander je
-iets aan het verslag, verander het dan hier en nergens anders.
+Dit bestand is de enige plek waar staat hoe een gespreksverslag eruitziet. Claude Code volgt
+het als het verslag wordt gevraagd, en de onderzoeker leest het om te weten wat hij kan
+verwachten. Verander je iets aan het verslag, verander het dan hier en nergens anders.
+
+Het verslag wordt buiten de tool gemaakt en geplakt in het blok Bespreekpunten, met de knop
+"Gespreksverslag plakken". Er was een knop die het transcript naar OpenAI stuurde; die is op
+15 september 2026 weggehaald, samen met de route erachter. Een gesprek met een klant gaat
+niet naar een externe dienst omdat het verslag dan sneller klaar is.
 
 ## Wat je krijgt
 
@@ -18,7 +21,8 @@ iets aan het verslag, verander het dan hier en nergens anders.
 
 ## Wat je maakt
 
-Een **kort** gespreksverslag, en per bespreekpunt de uitkomst.
+Een **kort** gespreksverslag, per bespreekpunt de uitkomst, en de scopevelden die uit het
+gesprek volgen.
 
 ### Het verslag
 
@@ -58,8 +62,37 @@ Voor elk open bespreekpunt: is het aan bod gekomen, en wat is het antwoord?
 - Twijfel: dan is het niet aan bod gekomen. Een gok in een uitkomst ziet er hetzelfde uit
   als een antwoord, en dat is precies wat er mis kan gaan.
 
+### De scopevelden
+
+Een scopegesprek levert bijna altijd twee dingen op die de klant zelf noemt. Vul ze, want ze
+staan nergens anders: het transcript verdwijnt uit beeld zodra het verslag er is, en wie
+later de steekproef samenstelt weet dan niet meer dat de klant om een bepaalde pagina vroeg.
+
+- **Door de klant aangedragen pagina's** (`sampleClientPages`): pagina's waarvan de klant
+  vraagt of zegt dat ze in de steekproef moeten. Ook als ze al voor de hand liggen.
+- **Buiten scope** (`scopeOutOfScope`): wat in het gesprek is uitgesloten. Alleen wat er
+  echt is gezegd; de wettelijke uitzonderingen horen hier niet, die staan in
+  `scopeInfo` en vult de tool zelf.
+
+Allebei één URL of omschrijving per regel, met een streepje ervoor. Beide velden staan op
+**Details > Planning**, niet op het tabblad Scope. Ze gaan de planningsmail in, en met
+`POST /api/projects/<id>/import-planning` worden er echte records van: `scopeInScope` en
+`scopeOutOfScope` worden scope-URL's, `sampleClientPages` wordt een sample-item. Pas daarna
+staan ze op het tabblad Scope en in de steekproef. Die route slaat bestaande URL's over, dus
+hij mag meer dan eens draaien.
+
+Twee dingen om niet te doen. **Niet raden**: een pagina die je uit een verbasterd transcript
+moet afleiden leg je voor in plaats van in te vullen, want een verkeerde URL in de steekproef
+ziet er hetzelfde uit als een goede. En **niet overschrijven**: staat er al iets, vul dan aan
+en zeg wat er stond.
+
 ## Wat er daarna gebeurt
 
-Het verslag komt als notitie bij het onderzoek te staan. De uitkomsten per bespreekpunt
-zijn een **voorstel**: de onderzoeker neemt ze per punt over, en pas dan is het punt
-afgevinkt. Zo blijft de onderzoeker degene die zegt wat er met de klant is afgesproken.
+Het verslag komt als notitie bij het onderzoek te staan. De uitkomst per bespreekpunt
+levert dit verslag als voorstel: de onderzoeker vult hem zelf in bij het punt en vinkt het
+af. Zo blijft de onderzoeker degene die zegt wat er met de klant is afgesproken.
+
+Hetzelfde geldt voor de scopevelden: leg ze voor voordat je ze wegschrijft, en zeg na het
+wegschrijven of `import-planning` nog moet draaien om ze op het tabblad Scope te krijgen.
+Meld ook dat de projectpagina met F5 ververst moet worden; die haalt zijn gegevens op bij
+het laden en ziet een wijziging via de API niet vanzelf.

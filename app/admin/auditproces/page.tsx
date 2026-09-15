@@ -128,14 +128,17 @@ export default function AuditprocesPage() {
                 klantgesprek", want Cardan voert daar het scopegesprek).
               </li>
               <li>
-                <strong>Klik op "Maak gespreksverslag uit het transcript"</strong> in het blok
-                Bespreekpunten. De tool schrijft een kort verslag als notitie (wie erbij waren,
-                per onderwerp de afspraak, onderaan de acties met wie wat doet) en stelt per
-                bespreekpunt de uitkomst voor. Lees het verslag na en neem de uitkomsten per punt
-                over; pas dan is het punt afgevinkt. Een punt dat niet aan bod kwam blijft open.
-                Wat naar een ander moet, zoals een terugkoppeling aan Cardan, staat als actie in
-                het verslag; versturen doe je zelf. Hoe het verslag is opgebouwd staat in
+                <strong>Maak het gespreksverslag in een Claude Code-sessie:</strong> geef het
+                transcript mee en vraag om een gespreksverslag. Je krijgt een kort verslag (wie
+                erbij waren, per onderwerp de afspraak, onderaan de acties met wie wat doet).
+                Plak dat in het blok Bespreekpunten met de knop "Gespreksverslag plakken"; het
+                komt bij Notities te staan. Hoe het verslag is opgebouwd staat in
                 <code>docs/werkwijze/gespreksverslag.md</code>.
+              </li>
+              <li>
+                <strong>Vink de punten af met de uitkomst.</strong> Een punt dat niet aan bod kwam
+                blijft open. Wat naar een ander moet, zoals een terugkoppeling aan Cardan, staat
+                als actie in het verslag; versturen doe je zelf.
               </li>
             </ol>
             <p>
