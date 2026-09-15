@@ -87,13 +87,21 @@ Raad nooit een URL uit een verbasterd transcript; een verkeerde pagina in de ste
 er hetzelfde uit als een goede. Staat er al iets in een veld, noem dat dan, en stel voor om
 aan te vullen in plaats van te overschrijven.
 
-Na de keuze van de onderzoeker: wegschrijven met `PATCH /api/projects/<id>` (één regel per
-pagina, met een streepje ervoor). Beide velden staan op **Details > Planning**, niet op het
-tabblad Scope, en ze gaan de planningsmail in. Met
-`POST /api/projects/<id>/import-planning` worden het echte records: `scopeInScope` en
-`scopeOutOfScope` worden scope-URL's, `sampleClientPages` wordt een sample-item. Pas daarna
-staan ze op het tabblad Scope en in de steekproef. Die route slaat bestaande URL's over, dus
-hij mag meer dan eens draaien. Zeg of hij nog moet draaien.
+Na de keuze van de onderzoeker doe je beide stappen zelf, zonder dat hij ergens hoeft te
+klikken:
+
+1. `PATCH /api/projects/<id>` met de gekozen regels (één pagina per regel, met een streepje
+   ervoor). Beide velden staan op **Details > Planning**, niet op het tabblad Scope, en ze
+   gaan de planningsmail in.
+2. `POST /api/projects/<id>/import-planning` maakt er echte records van: `scopeInScope` en
+   `scopeOutOfScope` worden scope-URL's, `sampleClientPages` wordt een sample-item. Pas
+   daarna staan ze op het tabblad Scope en in de steekproef. De route slaat bestaande URL's
+   over, dus hij mag meer dan eens draaien.
+
+De knop "Importeer naar scope & steekproef" op de projectpagina doet dezelfde tweede stap;
+die is voor als de onderzoeker de velden zelf heeft bewerkt. Doe je het hier, gebruik dan de
+route en zeg wat eruit kwam: hoeveel scope-URL's en sample-items erbij zijn gekomen, en wat
+is overgeslagen omdat het er al stond of geen URL bevatte.
 
 ## Wat er daarna gebeurt
 

@@ -381,9 +381,10 @@ plakken". Vraagt hij het verslag hier, volg dan dat bestand:
    (`scopeOutOfScope`). De onderzoeker kiest; hij weet welke pagina's de contenttypes
    dekken en dat staat niet in het transcript. Niet `scopeInfo`: dat zijn de wettelijke
    uitzonderingen en die vult de tool zelf zodra het tabblad Scope wordt geopend. Na zijn
-   keuze wegschrijven met `PATCH /api/projects/<id>`, en zeggen of
-   `POST /api/projects/<id>/import-planning` nog moet draaien om er scope-URL's en
-   sample-items van te maken (bestaande URL's worden overgeslagen).
+   keuze doe je beide stappen zelf: wegschrijven met `PATCH /api/projects/<id>`, en dan
+   `POST /api/projects/<id>/import-planning` om er scope-URL's en sample-items van te maken
+   (bestaande URL's worden overgeslagen). De onderzoeker hoeft de knop "Importeer naar
+   scope & steekproef" dan niet aan te raken; zeg wel wat de import heeft opgeleverd.
 
 Curl altijd met `charset=utf-8`, anders staan er vraagtekens op de é en de ë. Dat geldt voor
 elke mutatie met Nederlandse tekst: `-H "Content-Type: application/json; charset=utf-8"` en
