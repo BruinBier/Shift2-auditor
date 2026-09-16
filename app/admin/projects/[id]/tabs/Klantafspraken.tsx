@@ -30,7 +30,6 @@ type Afspraak = {
 
 export default function Klantafspraken({ projectId }: { projectId: string }) {
   const [afspraken, setAfspraken] = useState<Afspraak[]>([]);
-  const [geladen, setGeladen] = useState(false);
   const [nieuw, setNieuw] = useState('');
   const [nieuwWie, setNieuwWie] = useState('');
   const [nieuwUiterlijk, setNieuwUiterlijk] = useState('');
@@ -43,8 +42,7 @@ export default function Klantafspraken({ projectId }: { projectId: string }) {
     fetch(`/api/projects/${projectId}/klantafspraken`)
       .then((r) => (r.ok ? r.json() : []))
       .then((lijst) => setAfspraken(Array.isArray(lijst) ? lijst : []))
-      .catch(() => setAfspraken([]))
-      .finally(() => setGeladen(true));
+      .catch(() => setAfspraken([]));
   }, [projectId]);
 
   const lopend = afspraken.filter((a) => !a.nagekomenOp);
@@ -154,9 +152,9 @@ export default function Klantafspraken({ projectId }: { projectId: string }) {
 
       <div className="p-4 space-y-5">
         <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-            Loopt nog{geladen && lopend.length === 0 ? ': niets' : ''}
-          </h4>
+          {/* Geen kopje boven de lijst: de badge rechtsboven zegt al hoeveel er lopen, en
+              er is maar één lijst. Bij de bespreekpunten staat er wel een kopje, want daar
+              zegt "Te bespreken" iets over wat je ermee doet. */}
           {lopend.length > 0 && (
             <ul className="space-y-2 mb-3">
               {lopend.map((afspraak) => (
