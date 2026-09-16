@@ -111,7 +111,7 @@ export default function AuditprocesPage() {
             <h3 className="text-base font-semibold text-gray-900">Klantgesprek: bespreekpunten en gespreksverslag</h3>
             <p>
               Alles wat je de klant nog moet vragen of vertellen zet je als <strong>bespreekpunt</strong> bij
-              het onderzoek: tabblad Details, blok "Bespreekpunten voor het klantgesprek". Niet in
+              het onderzoek: tabblad Details, blok "Scopegesprek". Niet in
               Projectdetails en niet in een notitie, want die komen nergens als actie terug. Open
               punten staan op het dashboard onder de actie van het onderzoek (klik erop en je leest
               wat je moet bespreken) en als badge in de onderzoekenlijst.

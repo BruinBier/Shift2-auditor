@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 /**
- * Bespreekpunten voor het klantgesprek: open punten eerst, daarbinnen oudste bovenaan
+ * Bespreekpunten voor het scopegesprek: open punten eerst, daarbinnen oudste bovenaan
  * (de volgorde waarin ze zijn opgekomen is de volgorde waarin je ze bespreekt);
  * afgehandelde punten daaronder, laatst besproken bovenaan.
  */

@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 
 /**
- * Bespreekpunten voor het klantgesprek, op het tabblad Details.
+ * Bespreekpunten voor het scopegesprek, op het tabblad Details.
  *
  * Een vraag die je de klant nog moet stellen stond tot nu toe in Projectdetails of in een
  * notitie, en geen van beide komt ergens als actie terug. Hier staat hij met een vinkje:
@@ -213,7 +213,7 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
-          <h3 className="font-semibold text-gray-900">Bespreekpunten voor het klantgesprek</h3>
+          <h3 className="font-semibold text-gray-900">Scopegesprek</h3>
         </div>
         {open.length > 0 && (
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">

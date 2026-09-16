@@ -14,6 +14,11 @@ import { nl } from 'date-fns/locale';
  * telde het dashboard lopende afspraken mee als openstaande vragen, en dan lijkt een
  * onderzoek waarin alles loopt zoals afgesproken een onderzoek met achterstallige vragen.
  *
+ * Een afspraak hangt niet aan een gesprek. Hij komt vaak uit het scopegesprek, maar net zo
+ * goed uit een mail, een telefoontje of iets dat je vooraf vastlegt. Daarom staat de datum
+ * waarop hij is gemaakt in het formulier en niet stilzwijgend op vandaag: leg je iets vast
+ * dat vorige week is afgesproken, dan hoort die datum erbij.
+ *
  * Verwijderen kan zolang een afspraak loopt. Is hij nagekomen, dan blijft hij staan: dan
  * legt hij vast wat er is afgesproken én wat ervan kwam.
  */
@@ -33,6 +38,12 @@ export default function Klantafspraken({ projectId }: { projectId: string }) {
   const [nieuw, setNieuw] = useState('');
   const [nieuwWie, setNieuwWie] = useState('');
   const [nieuwUiterlijk, setNieuwUiterlijk] = useState('');
+  // Standaard vandaag, maar aanpasbaar: een afspraak hoeft niet uit een gesprek te komen
+  // en niet van vandaag te zijn. Soms leg je iets vast dat vorige week per mail is
+  // afgesproken, en dan is "vandaag" de verkeerde datum.
+  const [nieuwAfgesproken, setNieuwAfgesproken] = useState(
+    () => new Date().toISOString().slice(0, 10),
+  );
   const [bezig, setBezig] = useState<string | null>(null);
   const [uitkomstOpen, setUitkomstOpen] = useState<string | null>(null);
   const [uitkomstTekst, setUitkomstTekst] = useState('');
@@ -80,6 +91,7 @@ export default function Klantafspraken({ projectId }: { projectId: string }) {
           tekst,
           wie: nieuwWie || null,
           uiterlijk: nieuwUiterlijk || null,
+          afgesprokenOp: nieuwAfgesproken || null,
         }),
       });
       if (!res.ok) {
@@ -91,6 +103,7 @@ export default function Klantafspraken({ projectId }: { projectId: string }) {
       setNieuw('');
       setNieuwWie('');
       setNieuwUiterlijk('');
+      setNieuwAfgesproken(new Date().toISOString().slice(0, 10));
     } finally {
       setBezig(null);
     }
@@ -212,6 +225,18 @@ export default function Klantafspraken({ projectId }: { projectId: string }) {
                   value={nieuwWie}
                   onChange={(e) => setNieuwWie(e.target.value)}
                   placeholder="klant"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
+                />
+              </div>
+              <div>
+                <label htmlFor="afspraak-afgesproken" className="block text-xs font-medium text-gray-500 mb-1">
+                  Afgesproken op
+                </label>
+                <input
+                  id="afspraak-afgesproken"
+                  type="date"
+                  value={nieuwAfgesproken}
+                  onChange={(e) => setNieuwAfgesproken(e.target.value)}
                   className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
                 />
               </div>

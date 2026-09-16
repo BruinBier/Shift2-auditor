@@ -69,6 +69,11 @@ uitkomsten van een bespreekpunt maar **afspraken**: dingen waar iemand mee aan d
 en waar je later op terugkomt. Ze horen in het blok "Afgesproken met de klant" op de
 projectpagina, niet bij de bespreekpunten.
 
+Een afspraak hangt niet aan dit gesprek. De onderzoeker maakt er ook een buiten een
+transcript om -- uit een mail, een telefoontje, of vooruitlopend op het scopegesprek. Wat
+jij aanlevert is dus een deel van die lijst en niet de lijst zelf; kijk wat er al staat
+voor je iets voorstelt dat er in andere woorden al in staat.
+
 Zet ze onder een kopje **Afgesproken** in de chat, per afspraak:
 
 - **Wat er is afgesproken**, in één of twee zinnen. Beschrijf de afspraak zelf, niet de

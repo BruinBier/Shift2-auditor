@@ -20,7 +20,7 @@ export type DashboardRegel = {
   /** Link naar het onderzoek in het portaal van het bureau, als die er is. */
   uitvoerderUrl?: string | null;
   crmNummer?: string | null;
-  /** Bespreekpunten voor het klantgesprek die nog niet zijn afgevinkt, als tekst. */
+  /** Bespreekpunten voor het scopegesprek die nog niet zijn afgevinkt, als tekst. */
   bespreekpunten?: string[];
   /**
    * Afspraken met de klant waarvan de datum nadert of verstreken is.
@@ -160,8 +160,8 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
             >
               <span aria-hidden="true">{puntenOpen ? '▾' : '▸'}</span>
               {punten.length === 1
-                ? '1 bespreekpunt voor het klantgesprek'
-                : `${punten.length} bespreekpunten voor het klantgesprek`}
+                ? '1 bespreekpunt voor het scopegesprek'
+                : `${punten.length} bespreekpunten voor het scopegesprek`}
             </button>
           )}
           {afspraken.length > 0 && (
