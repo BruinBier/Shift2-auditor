@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -35,7 +35,13 @@ function ensureDir(dir: string) {
 
 function escapeCSV(value: any): string {
   if (value === null || value === undefined) return '';
-  const str = String(value);
+  // Datums als ISO, niet als `String(date)`.
+  //
+  // Die laatste schrijft "Tue Sep 15 2026 13:10:52 GMT+0200 (Midden-Europese zomertijd)":
+  // de milliseconden vallen weg en de naam van de tijdzone staat er in de taal van de
+  // machine. Bij een herstel werd 10:03:10.366 dus 10:03:10.000, en dat is precies het
+  // verschil waarop records uit dezelfde seconde gesorteerd staan.
+  const str = value instanceof Date ? value.toISOString() : String(value);
   // Escape quotes and wrap in quotes if contains comma, newline, or quote
   if (str.includes(',') || str.includes('\n') || str.includes('"')) {
     return `"${str.replace(/"/g, '""')}"`;
@@ -51,11 +57,32 @@ function arrayToCSV(data: any[], headers: string[]): string {
   return [headerRow, ...rows].join('\n');
 }
 
-async function exportTable(tableName: string, data: any[], headers: string[]) {
+/**
+ * De kolommen van een tabel, afgeleid uit het schema.
+ *
+ * Ze stonden hier met de hand onder elk `exportTable`. Dat liep achter: op 16 september
+ * 2026 exporteerde `projects` 19 van de 76 velden, en alles wat er sindsdien bij was
+ * gekomen -- de scopevelden, de voorbereidingsstappen, de rapportteksten -- stond niet in
+ * de backup. Niemand merkt zoiets, want het bestand is er en heeft rijen.
+ *
+ * Nu leest hij het schema. Een veld dat erbij komt gaat vanzelf mee, en een veld dat
+ * verdwijnt kan geen dode kolom meer achterlaten.
+ *
+ * Relaties (`kind: 'object'`) slaan we over: die staan als losse tabel in de backup, en de
+ * vreemde sleutel (`scalar`) gaat gewoon mee.
+ */
+function kolommenVan(model: string): string[] {
+  const dmmf = Prisma.dmmf.datamodel.models.find((m) => m.name === model);
+  if (!dmmf) throw new Error(`Model ${model} staat niet in het schema`);
+  return dmmf.fields.filter((f) => f.kind !== 'object').map((f) => f.name);
+}
+
+async function exportTable(tableName: string, data: any[], model: string) {
+  const headers = kolommenVan(model);
   const csv = arrayToCSV(data, headers);
   const filePath = path.join(backupDir, `${tableName}.csv`);
   fs.writeFileSync(filePath, csv, 'utf-8');
-  console.log(`  ✅ ${tableName}.csv (${data.length} records)`);
+  console.log(`  ✅ ${tableName}.csv (${data.length} records, ${headers.length} kolommen)`);
 }
 
 async function exportAllData() {
@@ -65,127 +92,84 @@ async function exportAllData() {
   try {
     // 1. Opdrachtgevers
     const opdrachtgevers = await prisma.opdrachtgever.findMany();
-    await exportTable('opdrachtgevers', opdrachtgevers, [
-      'id', 'name', 'address', 'zipcode', 'city', 'country', 'phone', 'email',
-      'contactPerson', 'notes', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('opdrachtgevers', opdrachtgevers, 'Opdrachtgever');
 
     // 2. Projects
     const projects = await prisma.project.findMany();
-    await exportTable('projects', projects, [
-      'id', 'kenmerk', 'title', 'description', 'opdrachtgeverId', 'researchType',
-      'scope', 'sampleExplanation', 'browserInfo', 'assistiveTechnologyInfo',
-      'startDate', 'endDate', 'teamId', 'conclusionScope', 'conclusionSample',
-      'conclusionConformity', 'conclusionDiligence', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('projects', projects, 'Project');
 
     // 3. Project Notes
     const projectNotes = await prisma.projectNote.findMany();
-    await exportTable('project_notes', projectNotes, [
-      'id', 'projectId', 'content', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('project_notes', projectNotes, 'ProjectNote');
 
     // 4. Findings
     const findings = await prisma.finding.findMany();
-    await exportTable('findings', findings, [
-      'id', 'projectId', 'findingCode', 'wcagCriterionId', 'quickFindingId',
-      'status', 'impact', 'responsibility', 'description', 'advice', 'evidence',
-      'notes', 'sortOrder', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('findings', findings, 'Finding');
 
     // 5. Finding URLs
     const findingUrls = await prisma.findingUrl.findMany();
-    await exportTable('finding_urls', findingUrls, [
-      'id', 'findingId', 'scopeUrlId', 'createdAt'
-    ]);
+    await exportTable('finding_urls', findingUrls, 'FindingUrl');
 
     // 6. Finding Occurrences (for backward compatibility)
     const findingOccurrences = await prisma.findingOccurrence.findMany();
-    await exportTable('finding_occurrences', findingOccurrences, [
-      'id', 'findingId', 'sampleItemId', 'url', 'context'
-    ]);
+    await exportTable('finding_occurrences', findingOccurrences, 'FindingOccurrence');
 
     // 7. Sample Items
     const sampleItems = await prisma.sampleItem.findMany();
-    await exportTable('sample_items', sampleItems, [
-      'id', 'projectId', 'sampleType', 'title', 'url', 'description',
-      'orderIndex', 'makeScreenshot', 'screenshotPath', 'screenshotAlt', 'auditHtmlPath', 'auditCapturedAt', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('sample_items', sampleItems, 'SampleItem');
 
     // 8. Project Scope URLs
     const scopeUrls = await prisma.projectScopeUrl.findMany();
-    await exportTable('project_scope_urls', scopeUrls, [
-      'id', 'projectId', 'url', 'title', 'crawlerType', 'inScope', 'note',
-      'crawledAt', 'parentUrlId'
-    ]);
+    await exportTable('project_scope_urls', scopeUrls, 'ProjectScopeUrl');
 
     // 9. Crawler Results
     const crawlerResults = await prisma.crawlerResult.findMany();
-    await exportTable('crawler_results', crawlerResults, [
-      'id', 'scopeUrlId', 'testId', 'testName', 'found', 'count', 'details', 'createdAt'
-    ]);
+    await exportTable('crawler_results', crawlerResults, 'CrawlerResult');
 
     // 10. Crawler Runs
     const crawlerRuns = await prisma.crawlerRun.findMany();
-    await exportTable('crawler_runs', crawlerRuns, [
-      'id', 'projectId', 'status', 'totalUrls', 'urlsProcessed', 'testsFound',
-      'startedAt', 'completedAt', 'error'
-    ]);
+    await exportTable('crawler_runs', crawlerRuns, 'CrawlerRun');
 
     // 11. Criterion Assessments
     const criterionAssessments = await prisma.criterionAssessment.findMany();
-    await exportTable('criterion_assessments', criterionAssessments, [
-      'id', 'projectId', 'wcagCriterionId', 'status', 'notes', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('criterion_assessments', criterionAssessments, 'CriterionAssessment');
 
     // 12. QuickFindings (templates)
     const quickFindings = await prisma.quickFinding.findMany();
-    await exportTable('quick_findings', quickFindings, [
-      'id', 'title', 'description', 'advice', 'criterionCode', 'keywords',
-      'crawler', 'crawlerTestId', 'status', 'impact', 'responsibility',
-      'createdAt', 'updatedAt'
-    ]);
+    await exportTable('quick_findings', quickFindings, 'QuickFinding');
 
     // 13. Teams
     const teams = await prisma.team.findMany();
-    await exportTable('teams', teams, [
-      'id', 'name', 'description', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('teams', teams, 'Team');
 
     // 14. Client Projects
     const clientProjects = await prisma.clientProject.findMany();
-    await exportTable('client_projects', clientProjects, [
-      'id', 'opdrachtgeverId', 'projectId'
-    ]);
+    await exportTable('client_projects', clientProjects, 'ClientProject');
 
     const technicalIssues = await prisma.technicalIssue.findMany();
-    await exportTable('technical_issues', technicalIssues, [
-      'id', 'title', 'description', 'request', 'wcagCriterionId', 'impact',
-      'supplier', 'status', 'githubIssueUrl', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('technical_issues', technicalIssues, 'TechnicalIssue');
 
     // 16. Sampleoordelen — het oordeel per sample per criterium.
     // Ontbrak in deze export zolang de tabel niet in schema.prisma stond, terwijl
     // het de grootste verzameling onderzoeksresultaten van het hele systeem is.
     const criterionChecks = await prisma.sampleCriterionCheck.findMany();
-    await exportTable('sample_criterion_checks', criterionChecks, [
-      'id', 'sampleItemId', 'wcagCriterionId', 'status', 'reden', 'bron',
-      'akkoord', 'checkedAt', 'updatedAt'
-    ]);
+    await exportTable('sample_criterion_checks', criterionChecks, 'SampleCriterionCheck');
 
     // 17. Waarnemingen — de ruwe observaties van de onderzoeker.
     const waarnemingen = await prisma.waarneming.findMany();
-    await exportTable('waarnemingen', waarnemingen, [
-      'id', 'projectId', 'sampleItemId', 'url', 'tekst', 'screenshotPath',
-      'status', 'findingId', 'createdAt', 'updatedAt'
-    ]);
+    await exportTable('waarnemingen', waarnemingen, 'Waarneming');
 
     // 18. Planningswijzigingen — stond evenmin in het schema, dus evenmin hierin.
     const planningChanges = await prisma.projectPlanningChange.findMany();
-    await exportTable('project_planning_changes', planningChanges, [
-      'id', 'projectId', 'oldDateStart', 'oldDateEnd', 'newDateStart',
-      'newDateEnd', 'reason', 'authorName', 'createdAt'
-    ]);
+    await exportTable('project_planning_changes', planningChanges, 'ProjectPlanningChange');
+
+    // 19. Bespreekpunten -- wat je de klant nog moet vragen, en wat eruit kwam.
+    //
+    // Stond hier niet in, terwijl een afgevinkt punt de vastlegging is van wat er wanneer
+    // met de klant is afgestemd. Sinds 16 september 2026 zit er bovendien een
+    // verwijderknop op de open punten, dus er kan nu ook iets weg.
+    const bespreekpunten = await prisma.bespreekpunt.findMany();
+    await exportTable('bespreekpunten', bespreekpunten, 'Bespreekpunt');
 
     // Create metadata file
     const metadata = {
@@ -211,6 +195,7 @@ async function exportAllData() {
         sample_criterion_checks: criterionChecks.length,
         waarnemingen: waarnemingen.length,
         project_planning_changes: planningChanges.length,
+        bespreekpunten: bespreekpunten.length,
       }
     };
 

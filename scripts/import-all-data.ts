@@ -1,10 +1,26 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const prisma = new PrismaClient();
 
-function parseCSV(content: string): any[] {
+/**
+ * Per model: welk veld welk type heeft, uit het schema.
+ *
+ * De omzetting ging op de naam van de kolom: alles op `At` of `Date` werd een datum.
+ * Negentien van de 33 datumvelden vielen daarbuiten -- `besprokenOp`, `akkoordOp`,
+ * `scopeCallHeld`, `dateStart` -- en kwamen als tekst binnen, waarop Prisma het record
+ * weigerde. Andersom werd een kenmerk als "02" een getal.
+ *
+ * Nu leest hij het schema, net als de export.
+ */
+function typenVan(model: string): Map<string, string> {
+  const dmmf = Prisma.dmmf.datamodel.models.find((m) => m.name === model);
+  if (!dmmf) throw new Error(`Model ${model} staat niet in het schema`);
+  return new Map(dmmf.fields.filter((f) => f.kind !== 'object').map((f) => [f.name, f.type]));
+}
+
+function parseCSV(content: string, typen?: Map<string, string>): any[] {
   const lines = content.split('\n').filter(line => line.trim());
   if (lines.length === 0) return [];
 
@@ -38,16 +54,29 @@ function parseCSV(content: string): any[] {
     const record: any = {};
     headers.forEach((header, index) => {
       const value = values[index]?.trim() || '';
-      // Convert empty strings to null, parse dates
+      const type = typen?.get(header);
       if (value === '') {
         record[header] = null;
+      } else if (type === 'DateTime') {
+        record[header] = new Date(value);
+      } else if (type === 'Boolean') {
+        record[header] = value === 'true';
+      } else if (type === 'Int') {
+        record[header] = parseInt(value, 10);
+      } else if (type === 'Float' || type === 'Decimal') {
+        record[header] = Number(value);
+      } else if (type) {
+        // String, enum, Json: laat staan zoals het er staat. Een kenmerk als "02" of een
+        // postcode mag geen getal worden.
+        record[header] = value;
       } else if (header.endsWith('At') || header.endsWith('Date')) {
+        // Kolom die niet in het schema staat: oude backup. Zelfde gok als vroeger.
         record[header] = new Date(value);
       } else if (value === 'true') {
         record[header] = true;
       } else if (value === 'false') {
         record[header] = false;
-      } else if (!isNaN(Number(value)) && value !== '') {
+      } else if (!isNaN(Number(value))) {
         record[header] = Number(value);
       } else {
         record[header] = value;
@@ -59,7 +88,7 @@ function parseCSV(content: string): any[] {
   return records;
 }
 
-async function importTable(backupDir: string, tableName: string, prismaModel: any) {
+async function importTable(backupDir: string, tableName: string, prismaModel: any, model: string) {
   const filePath = path.join(backupDir, `${tableName}.csv`);
 
   if (!fs.existsSync(filePath)) {
@@ -67,8 +96,18 @@ async function importTable(backupDir: string, tableName: string, prismaModel: an
     return 0;
   }
 
+  const typen = typenVan(model);
   const content = fs.readFileSync(filePath, 'utf-8');
-  const records = parseCSV(content);
+  const records = parseCSV(content, typen);
+
+  // Een oudere backup kan kolommen bevatten die het schema niet meer kent. Die lieten
+  // Prisma het hele record weigeren; nu vallen ze weg, met één melding in plaats van
+  // één per rij.
+  const onbekend = Object.keys(records[0] ?? {}).filter((k) => !typen.has(k));
+  if (onbekend.length) {
+    console.log(`  ℹ️  ${tableName}: kolommen niet meer in het schema, overgeslagen: ${onbekend.join(', ')}`);
+    for (const r of records) for (const k of onbekend) delete r[k];
+  }
 
   if (records.length === 0) {
     console.log(`  ℹ️  ${tableName}.csv is empty, skipping...`);
@@ -118,30 +157,46 @@ async function importAllData(backupDir: string) {
     let totalImported = 0;
 
     // 1. Independent tables first
-    totalImported += await importTable(backupDir, 'teams', prisma.team);
-    totalImported += await importTable(backupDir, 'opdrachtgevers', prisma.opdrachtgever);
-    totalImported += await importTable(backupDir, 'quick_findings', prisma.quickFinding);
+    totalImported += await importTable(backupDir, 'teams', prisma.team, 'Team');
+    totalImported += await importTable(backupDir, 'opdrachtgevers', prisma.opdrachtgever, 'Opdrachtgever');
+    totalImported += await importTable(backupDir, 'quick_findings', prisma.quickFinding, 'QuickFinding');
+    // Hangt alleen aan de WCAG-criteria, en die zijn geseed. Staat los van de projecten:
+    // het zijn functionele fouten die naar de leverancier moeten.
+    totalImported += await importTable(backupDir, 'technical_issues', prisma.technicalIssue, 'TechnicalIssue');
 
     // 2. Projects (depends on opdrachtgevers, teams)
-    totalImported += await importTable(backupDir, 'projects', prisma.project);
+    totalImported += await importTable(backupDir, 'projects', prisma.project, 'Project');
 
     // 3. Project-related tables
-    totalImported += await importTable(backupDir, 'client_projects', prisma.clientProject);
-    totalImported += await importTable(backupDir, 'project_notes', prisma.projectNote);
-    totalImported += await importTable(backupDir, 'sample_items', prisma.sampleItem);
-    totalImported += await importTable(backupDir, 'project_scope_urls', prisma.projectScopeUrl);
-    totalImported += await importTable(backupDir, 'criterion_assessments', prisma.criterionAssessment);
-    totalImported += await importTable(backupDir, 'crawler_runs', prisma.crawlerRun);
+    totalImported += await importTable(backupDir, 'client_projects', prisma.clientProject, 'ClientProject');
+    totalImported += await importTable(backupDir, 'project_notes', prisma.projectNote, 'ProjectNote');
+    totalImported += await importTable(backupDir, 'sample_items', prisma.sampleItem, 'SampleItem');
+    totalImported += await importTable(backupDir, 'project_scope_urls', prisma.projectScopeUrl, 'ProjectScopeUrl');
+    totalImported += await importTable(backupDir, 'criterion_assessments', prisma.criterionAssessment, 'CriterionAssessment');
+    totalImported += await importTable(backupDir, 'crawler_runs', prisma.crawlerRun, 'CrawlerRun');
+    // Hangt alleen aan het project, dus hij kan hier meteen mee. Sinds 16 september 2026
+    // kan een open bespreekpunt verwijderd worden; dan wil je hem ook terug kunnen zetten.
+    totalImported += await importTable(backupDir, 'bespreekpunten', prisma.bespreekpunt, 'Bespreekpunt');
+    totalImported += await importTable(backupDir, 'project_planning_changes', prisma.projectPlanningChange, 'ProjectPlanningChange');
 
     // 4. Findings (depends on projects, quick_findings)
-    totalImported += await importTable(backupDir, 'findings', prisma.finding);
+    totalImported += await importTable(backupDir, 'findings', prisma.finding, 'Finding');
 
     // 5. Finding-related tables (depends on findings)
-    totalImported += await importTable(backupDir, 'finding_urls', prisma.findingUrl);
-    totalImported += await importTable(backupDir, 'finding_occurrences', prisma.findingOccurrence);
+    totalImported += await importTable(backupDir, 'finding_urls', prisma.findingUrl, 'FindingUrl');
+    totalImported += await importTable(backupDir, 'finding_occurrences', prisma.findingOccurrence, 'FindingOccurrence');
 
     // 6. Crawler results (depends on scope_urls)
-    totalImported += await importTable(backupDir, 'crawler_results', prisma.crawlerResult);
+    totalImported += await importTable(backupDir, 'crawler_results', prisma.crawlerResult, 'CrawlerResult');
+
+    // 7. Het oordeel per sample per criterium, en de losse waarnemingen.
+    //
+    // Deze vier tabellen werden wel geëxporteerd maar niet teruggezet: een herstel liet
+    // ze zonder melding weg, en bij sample_criterion_checks gaat het om het hele
+    // dekkingsoverzicht. Ze staan hier onderaan omdat ze aan sample items en findings
+    // hangen, en die moeten er eerst zijn.
+    totalImported += await importTable(backupDir, 'sample_criterion_checks', prisma.sampleCriterionCheck, 'SampleCriterionCheck');
+    totalImported += await importTable(backupDir, 'waarnemingen', prisma.waarneming, 'Waarneming');
 
     console.log(`\n✅ Import complete! Total records imported: ${totalImported}\n`);
 
