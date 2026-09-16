@@ -1324,7 +1324,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         </div>
 
         {/* Wat je de klant nog moet vragen; open punten tellen mee op het dashboard. */}
-        <Bespreekpunten projectId={project.id} />
+        <Bespreekpunten projectId={project.id} scopeCallHeld={project.scopeCallHeld} />
 
         {/* Wat eruit kwam en waar je op terugkomt. Los van de bespreekpunten hierboven:
             dat zijn de vragen die je nog moet stellen. */}

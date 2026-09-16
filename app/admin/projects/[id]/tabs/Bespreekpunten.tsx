@@ -50,7 +50,14 @@ type Bespreekpunt = {
 // dan vertel je na afloop wat er is besproken en stel je daar de uitkomsten uit op.
 const CHECKLIST = ['Teams-transcript aanzetten'];
 
-export default function Bespreekpunten({ projectId }: { projectId: string }) {
+export default function Bespreekpunten({
+  projectId,
+  scopeCallHeld,
+}: {
+  projectId: string;
+  /** Wanneer het scopegesprek is gevoerd; leeg als het nog moet komen. */
+  scopeCallHeld?: Date | string | null;
+}) {
   const [punten, setPunten] = useState<Bespreekpunt[]>([]);
   const [gekopieerd, setGekopieerd] = useState(false);
   const [geladen, setGeladen] = useState(false);
@@ -59,6 +66,14 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
   const [uitkomstOpen, setUitkomstOpen] = useState<string | null>(null);
   const [uitkomstTekst, setUitkomstTekst] = useState('');
   const [afgehandeldOpen, setAfgehandeldOpen] = useState(false);
+  /**
+   * Is het gesprek gevoerd en staat er niets meer open, dan klapt het blok dicht tot één
+   * regel. Anders staat er een invulveld voor een gesprek dat geweest is, met een kopje
+   * "Te bespreken: niets open" erboven.
+   *
+   * Uitklappen kan altijd: er komt een tussencheck, en soms een tweede gesprek.
+   */
+  const [blokOpen, setBlokOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/projects/${projectId}/bespreekpunten`)
@@ -204,16 +219,36 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
     }
   };
 
-  const datum = (iso: string) => format(new Date(iso), 'd MMMM yyyy', { locale: nl });
+  const datum = (iso: string | Date) => format(new Date(iso), 'd MMMM yyyy', { locale: nl });
+
+  // Klaar: het gesprek is gevoerd en er staat niets meer open. Dan is dit blok een
+  // afgesloten hoofdstuk en hoeft het niet open te staan.
+  const klaar = Boolean(scopeCallHeld) && geladen && open.length === 0;
+  const toon = !klaar || blokOpen;
 
   return (
     <div id="bespreekpunten" className="bg-white rounded-lg border border-gray-200 scroll-mt-4">
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className={`p-4 flex items-center justify-between ${toon ? 'border-b border-gray-200' : ''}`}>
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
-          <h3 className="font-semibold text-gray-900">Scopegesprek</h3>
+          {klaar ? (
+            <button
+              type="button"
+              onClick={() => setBlokOpen(!blokOpen)}
+              aria-expanded={blokOpen}
+              className="flex items-baseline gap-2 text-left hover:underline"
+            >
+              <h3 className="font-semibold text-gray-900">Scopegesprek</h3>
+              <span className="text-sm text-gray-500">
+                gevoerd op {datum(scopeCallHeld!)}
+              </span>
+              <span aria-hidden="true" className="text-gray-400">{blokOpen ? '▾' : '▸'}</span>
+            </button>
+          ) : (
+            <h3 className="font-semibold text-gray-900">Scopegesprek</h3>
+          )}
         </div>
         {open.length > 0 && (
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
@@ -222,6 +257,7 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
         )}
       </div>
 
+      {toon && (
       <div className="p-4 space-y-5">
         <div>
           <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Voor elk gesprek</h4>
@@ -238,9 +274,8 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
         </div>
 
         <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-            Te bespreken{geladen && open.length === 0 ? ': niets open' : ''}
-          </h4>
+          {/* Geen kopje boven de lijst: het formulier eronder zegt al waar deze lijst voor
+              is, en dat er niets openstaat zie je aan de lege lijst. */}
           {open.length > 0 && (
             <ul className="space-y-2 mb-3">
               {open.map((punt) => (
@@ -400,6 +435,7 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
