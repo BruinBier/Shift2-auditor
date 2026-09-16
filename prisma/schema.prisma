@@ -282,6 +282,7 @@ model Project {
   planningChanges         ProjectPlanningChange[]
   projectNotes            ProjectNote[]
   bespreekpunten          Bespreekpunt[]
+  klantafspraken          Klantafspraak[]
   crawlerRuns             CrawlerRun[]
   advices                 ProjectAdvice[]
 
@@ -338,6 +339,37 @@ model Bespreekpunt {
 
   @@index([projectId])
   @@map("bespreekpunten")
+}
+
+/// Wat er uit een gesprek met de klant kwam en waar je later op terugkomt: de video
+/// wordt aangepast, de geteste pagina's blijven staan, de verklaring wordt vervangen.
+///
+/// Stond eerst als bespreekpunt in dezelfde lijst, maar dat is iets anders: een
+/// bespreekpunt is een vraag die je nog moet stéllen, een afspraak is het antwoord waar
+/// iemand mee aan de slag gaat. Door ze op één hoop te gooien telde het dashboard
+/// lopende afspraken mee als openstaande vragen.
+model Klantafspraak {
+  id            String    @id @default(uuid())
+  projectId     String    @map("project_id")
+  tekst         String    @db.Text
+  /// Bij wie het ligt: "klant" of "shift2". Vrij tekstveld, want soms is het allebei.
+  wie           String?
+  /// Wanneer het af moet zijn, als dat is gezegd. Leeg is geen datum, geen "zo snel
+  /// mogelijk".
+  uiterlijk     DateTime?
+  /// De datum van het gesprek waarin het is afgesproken.
+  afgesprokenOp DateTime  @default(now()) @map("afgesproken_op")
+  /// Leeg zolang het loopt; een datum zodra het rond is.
+  nagekomenOp   DateTime? @map("nagekomen_op")
+  /// Wat er uiteindelijk van kwam.
+  uitkomst      String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("klantafspraken")
 }
 
 model ProjectScopeUrl {

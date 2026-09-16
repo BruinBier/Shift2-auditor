@@ -88,6 +88,10 @@ function Blok({
 }
 
 export default async function AdminPage() {
+  // Een afspraak komt op het dashboard zodra zijn datum binnen twee weken ligt. Daarvoor
+  // is er niets te doen; daarna wil je hem elke dag zien tot hij is nagekomen.
+  const overTweeWeken = new Date(Date.now() + 14 * 86400000);
+
   const projects = await prisma.project.findMany({
     /**
      * Een proeftuin hoort hier niet: dit scherm zegt wat er vandaag te doen is, en intern
@@ -133,6 +137,17 @@ export default async function AdminPage() {
       bespreekpunten: {
         select: { tekst: true, besprokenOp: true, uitkomst: true },
         orderBy: { createdAt: 'asc' },
+      },
+      // Afspraken waar een datum aan zit die nadert of al verstreken is.
+      //
+      // Niet alle lopende afspraken: dit is een werklijst, en hij hoort te tonen waar jij
+      // achteraan moet. Vijf afspraken die netjes bij de klant liggen vragen niets van je
+      // tot er een moment is; die staan op de projectpagina en niet hier. Een afspraak
+      // zonder uiterlijke datum komt dus nooit in beeld.
+      klantafspraken: {
+        where: { nagekomenOp: null, uiterlijk: { not: null, lte: overTweeWeken } },
+        select: { tekst: true, uiterlijk: true },
+        orderBy: { uiterlijk: 'asc' },
       },
     },
   });
@@ -192,6 +207,12 @@ export default async function AdminPage() {
       // haalt ze allemaal op, want de afgevinkte punten zijn hieronder nodig om te zien of
       // het gesprek verwerkt is.
       bespreekpunten: p.bespreekpunten.filter((b) => !b.besprokenOp).map((b) => b.tekst),
+      // Met de datum erbij: op het dashboard telt wanneer iets af moet zijn, niet wat er
+      // precies is afgesproken. De hele tekst staat in de uitklapper.
+      klantafspraken: p.klantafspraken.map((a) => ({
+        tekst: a.tekst,
+        uiterlijk: a.uiterlijk!,
+      })),
     };
 
     if (p.isOngoing) {

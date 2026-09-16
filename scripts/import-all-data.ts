@@ -177,6 +177,7 @@ async function importAllData(backupDir: string) {
     // Hangt alleen aan het project, dus hij kan hier meteen mee. Sinds 16 september 2026
     // kan een open bespreekpunt verwijderd worden; dan wil je hem ook terug kunnen zetten.
     totalImported += await importTable(backupDir, 'bespreekpunten', prisma.bespreekpunt, 'Bespreekpunt');
+    totalImported += await importTable(backupDir, 'klantafspraken', prisma.klantafspraak, 'Klantafspraak');
     totalImported += await importTable(backupDir, 'project_planning_changes', prisma.projectPlanningChange, 'ProjectPlanningChange');
 
     // 4. Findings (depends on projects, quick_findings)

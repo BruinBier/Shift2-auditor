@@ -127,16 +127,23 @@ export default function AuditprocesPage() {
                 Het transcript komt de tool niet in.
               </li>
               <li>
-                <strong>Je krijgt de uitkomst per bespreekpunt terug in de chat,</strong> plus wat
-                bij geen enkel punt hoorde en de acties met wie wat doet. Schaaf ze daar bij; de
-                sessie schrijft niets weg. Hoe dat werkt staat in{' '}
-                <code>docs/werkwijze/gespreksverslag.md</code>.
+                <strong>Je krijgt de uitkomst per bespreekpunt terug in de chat,</strong> plus de
+                afspraken die uit het gesprek volgen: wat er is afgesproken, bij wie het ligt en
+                wanneer het af moet. Schaaf ze daar bij; de sessie schrijft niets weg. Hoe dat
+                werkt staat in <code>docs/werkwijze/gespreksverslag.md</code>.
               </li>
               <li>
                 <strong>Vink de punten af met de uitkomst.</strong> Plak per punt de uitkomst; een
                 punt dat niet aan bod kwam blijft open. Wat naar een ander moet, zoals een
                 terugkoppeling aan Cardan, versturen doe je zelf. Zodra elk punt een uitkomst
                 heeft, staat de stap "Gesprek verwerkt" op groen.
+              </li>
+              <li>
+                <strong>Zet de afspraken in het blok "Afgesproken met de klant".</strong> Dat is
+                iets anders dan een bespreekpunt: een bespreekpunt is een vraag die je nog moet
+                stellen, een afspraak is het antwoord waar iemand mee aan de slag gaat. Een
+                afspraak met een datum komt op het dashboard zodra die binnen twee weken ligt, en
+                kleurt rood als hij verloopt; zonder datum staat hij alleen hier.
               </li>
             </ol>
             <p>

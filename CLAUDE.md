@@ -367,9 +367,16 @@ hier: de tool heeft er geen knop meer voor. Die stuurde het transcript naar Open
 15 september 2026 weggehaald, met de route erachter, omdat een gesprek met een klant niet
 naar een externe dienst hoort te gaan.
 
-**Wat eruit komt is de uitkomst per bespreekpunt, in de chat.** Schrijf die niet weg: de
-onderzoeker schaaft hem bij en plakt hem zelf bij het punt, want wat er met de klant is
-afgesproken bepaalt hij. Maak ook geen notitie met het hele verslag. Die knop was er wel en
+**Wat eruit komt staat in de chat: de uitkomst per bespreekpunt, en de afspraken die uit
+het gesprek volgen.** Schrijf ze niet weg: de onderzoeker schaaft ze bij en plakt ze zelf
+-- de uitkomsten bij het punt, de afspraken in het blok "Afgesproken met de klant" -- want
+wat er met de klant is afgesproken bepaalt hij.
+
+Een bespreekpunt en een afspraak zijn niet hetzelfde. Een bespreekpunt is een vraag die
+nog gestéld moet worden; een afspraak is het antwoord waar iemand mee aan de slag gaat, met
+bij wie het ligt en wanneer het af moet. Ze hebben elk hun eigen blok en hun eigen tabel
+(`Bespreekpunt`, `Klantafspraak`). Een afspraak met een datum verschijnt op het dashboard
+zodra die binnen twee weken ligt; zonder datum komt hij daar nooit. Maak ook geen notitie met het hele verslag. Die knop was er wel en
 is op 16 september 2026 weggehaald: het verslag herhaalde grotendeels de uitkomsten die al
 bij de punten stonden, en van twee plekken met dezelfde afspraken wordt er één niet meer
 gelezen. Vraagt de onderzoeker het hier, volg dan dat bestand:
@@ -379,9 +386,11 @@ gelezen. Vraagt de onderzoeker het hier, volg dan dat bestand:
    daarmee de open punten op via `GET /api/projects/<id>/bespreekpunten`. Is er geen
    transcript omdat het opnemen niet aanstond, dan vertelt hij wat er is besproken en stel
    je daar de uitkomsten uit op; vraag niet alsnog om een transcript.
-2. Geef per punt de uitkomst in de chat, en daaronder wat bij geen enkel punt hoorde
-   (kopje "Verder besproken") plus de acties. Gebruik `PATCH` op de bespreekpunten alleen
-   als de onderzoeker er expliciet om vraagt; standaard plakt hij zelf.
+2. Geef per punt de uitkomst in de chat, en daaronder onder het kopje "Afgesproken" wat
+   er uit het gesprek volgt: per afspraak wat er is afgesproken, bij wie het ligt en
+   wanneer het af moet. Splits een afspraak als er twee dingen los van elkaar af kunnen
+   komen. Gebruik `PATCH` of `POST` alleen als de onderzoeker er expliciet om vraagt;
+   standaard plakt hij zelf.
 3. Leg **opties** voor scope en steekproef voor, en schrijf ze niet zelf weg: welke
    pagina's de klant noemde (kandidaten voor `sampleClientPages`) en wat er is uitgesloten
    (`scopeOutOfScope`). De onderzoeker kiest; hij weet welke pagina's de contenttypes

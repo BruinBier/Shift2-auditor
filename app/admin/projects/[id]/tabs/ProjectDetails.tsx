@@ -7,6 +7,7 @@ import { marked } from 'marked';
 import dynamic from 'next/dynamic';
 import VoorbereidingStappen from './VoorbereidingStappen';
 import Bespreekpunten from './Bespreekpunten';
+import Klantafspraken from './Klantafspraken';
 import ContactpersoonVelden, { contactpersonenUit } from '@/app/components/ContactpersoonVelden';
 
 // Dezelfde editor als het bewerkvenster op /admin/projecten, zodat de projectdetails hier
@@ -1324,6 +1325,10 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
 
         {/* Wat je de klant nog moet vragen; open punten tellen mee op het dashboard. */}
         <Bespreekpunten projectId={project.id} />
+
+        {/* Wat eruit kwam en waar je op terugkomt. Los van de bespreekpunten hierboven:
+            dat zijn de vragen die je nog moet stellen. */}
+        <Klantafspraken projectId={project.id} />
 
         {/* Notities */}
         <div className="bg-white rounded-lg border border-gray-200">

@@ -41,8 +41,10 @@ als er niets te plakken viel omdat het Teams-transcript niet had aangestaan.
 
 ## Wat je maakt
 
-Per bespreekpunt de uitkomst, en opties voor scope en steekproef waaruit de onderzoeker
-kiest. Geen lopend verslag: wat er is afgesproken hoort bij het punt waar het over ging.
+Drie dingen, alledrie in de chat: per bespreekpunt de uitkomst, de afspraken die uit het
+gesprek komen, en opties voor scope en steekproef waaruit de onderzoeker kiest. Geen lopend
+verslag: wat er is besproken hoort bij het punt waar het over ging, en wat er is
+afgesproken hoort bij de afspraak.
 
 ### De uitkomst per bespreekpunt
 
@@ -59,16 +61,36 @@ Voor elk open bespreekpunt: is het aan bod gekomen, en wat is het antwoord?
 Taal: Nederlands, zakelijk, in de tegenwoordige of voltooide tijd ("De gemeente levert...",
 "Er is afgesproken dat..."). Geen gedachtestreepjes. Geen citaten uit het transcript.
 
-### Wat bij geen enkel punt hoort
+### De afspraken
 
-Een gesprek levert bijna altijd meer op dan er punten stonden: een video die opvalt, een
-afspraak om pagina's niet te wijzigen, een verouderde toegankelijkheidsverklaring. Zet dat
-onder een kopje **Verder besproken** in de chat, met per onderwerp de afspraak in één of
-twee zinnen, en daaronder **Acties**: wie doet wat, en wanneer als dat is gezegd.
+Een gesprek levert bijna altijd meer op dan er punten stonden: de video wordt aangepast, de
+geteste pagina's blijven staan tot de hertest, de verklaring wordt vervangen. Dat zijn geen
+uitkomsten van een bespreekpunt maar **afspraken**: dingen waar iemand mee aan de slag gaat
+en waar je later op terugkomt. Ze horen in het blok "Afgesproken met de klant" op de
+projectpagina, niet bij de bespreekpunten.
 
-De onderzoeker beslist wat daarmee gebeurt. Meestal wordt het een nieuw bespreekpunt, of
-het staat al ergens anders in de tool thuis (een technisch issue, een aantekening bij de
-scope). Maak zelf geen bespreekpunt aan en schrijf niets weg; leg het voor.
+Zet ze onder een kopje **Afgesproken** in de chat, per afspraak:
+
+- **Wat er is afgesproken**, in één of twee zinnen. Beschrijf de afspraak zelf, niet de
+  vraag erachter: "De video wordt opnieuw ingesproken met de beeldtekst erbij", niet "is
+  de video al aangepast?".
+- **Bij wie het ligt**: de klant of Shift2. Ligt het bij een derde (een videobureau, een
+  leverancier), zeg dat er dan bij; het veld is vrije tekst.
+- **Wanneer het af moet**, als dat is gezegd. Alleen een datum die in het gesprek is
+  genoemd of eruit volgt -- de hertest wordt op 19 november opgeleverd, dus daar hangt de
+  afspraak over de pagina's aan. Is er niets over gezegd, laat het dan leeg: dat dwingt
+  niets af en is eerlijker dan een verzonnen termijn.
+
+Splits een afspraak als er twee dingen los van elkaar af kunnen komen. "De video wordt
+aangepast" en "de gemeente vraagt intern na of de partners genoemd moeten blijven" zijn
+twee afspraken, ook al gingen ze in het gesprek over hetzelfde.
+
+De onderzoeker beslist. Schrijf ze niet zelf weg; hij plakt ze in het blok, en pas dan
+gelden ze.
+
+Een datum telt: zodra hij binnen twee weken ligt, verschijnt de afspraak op het dashboard,
+en na het verstrijken kleurt hij rood. Een afspraak zonder datum komt daar nooit -- die
+staat alleen op de projectpagina.
 
 Is een naam in het transcript duidelijk verkeerd verstaan, gebruik dan de naam van de
 contactpersoon uit de projectgegevens. Kun je hem niet thuisbrengen, laat hem dan weg en
@@ -117,8 +139,15 @@ is overgeslagen omdat het er al stond of geen URL bevatte.
 
 ## Wat er daarna gebeurt
 
-De onderzoeker plakt de uitkomst bij het punt en vinkt het af. Zo blijft hij degene die
-zegt wat er met de klant is afgesproken.
+De onderzoeker plakt de uitkomst bij het punt en vinkt het af, en zet de afspraken in het
+blok "Afgesproken met de klant". Zo blijft hij degene die zegt wat er met de klant is
+afgesproken.
+
+Die twee blokken staan onder elkaar op het tabblad Details, en het verschil is de moeite
+waard: een bespreekpunt is een vraag die je nog moet stéllen, een afspraak is het antwoord
+waar iemand mee aan de slag gaat. Tot 16 september 2026 stonden ze in één lijst, en dan
+las een onderzoek waarin alles loopt zoals afgesproken als een onderzoek met vijf
+achterstallige vragen.
 
 De voorbereidingsstap **"Gesprek verwerkt"** leest daaraan af of het gesprek is verwerkt:
 hij staat op groen zodra elk bespreekpunt is afgevinkt én een uitkomst heeft. Een afgevinkt

@@ -22,6 +22,15 @@ export type DashboardRegel = {
   crmNummer?: string | null;
   /** Bespreekpunten voor het klantgesprek die nog niet zijn afgevinkt, als tekst. */
   bespreekpunten?: string[];
+  /**
+   * Afspraken met de klant waarvan de datum nadert of verstreken is.
+   *
+   * Niet alle lopende afspraken. Dit scherm is een werklijst en toont waar je achteraan
+   * moet; een afspraak die netjes bij de klant ligt zonder datum vraagt niets van je, en
+   * stond hier eerst wel -- dan las een onderzoek waarin alles loopt zoals afgesproken
+   * als een onderzoek met vijf achterstallige punten. Die staan op de projectpagina.
+   */
+  klantafspraken?: { tekst: string; uiterlijk: Date | string }[];
   /** De dag waar de regel over gaat (gesprek of start); "Komt eraan" sorteert erop. */
   wanneer?: Date;
   /**
@@ -44,8 +53,25 @@ const TE_LANG = 100;
 export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
   const [open, setOpen] = useState(false);
   const [puntenOpen, setPuntenOpen] = useState(false);
+  const [afsprakenOpen, setAfsprakenOpen] = useState(false);
   const lang = regel.toelichting.length > TE_LANG;
   const punten = regel.bespreekpunten ?? [];
+  const afspraken = regel.klantafspraken ?? [];
+
+  /**
+   * "verlopen", "vandaag", "over 3 dagen". De rij zegt elders ook "gisteren"; een datum
+   * in cijfers dwingt je om zelf te rekenen hoe dringend het is.
+   */
+  const termijn = (datum: Date | string) => {
+    const dagen = Math.ceil((new Date(datum).getTime() - Date.now()) / 86400000);
+    if (dagen < 0) return 'verlopen';
+    if (dagen === 0) return 'vandaag';
+    if (dagen === 1) return 'morgen';
+    return `over ${dagen} dagen`;
+  };
+
+  /** Het eerste wat verloopt bepaalt de toon van de melding. */
+  const isVerlopen = afspraken.some((a) => new Date(a.uiterlijk).getTime() < Date.now());
 
   const cel = 'px-3 py-2 align-top text-sm';
 
@@ -138,6 +164,21 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
                 : `${punten.length} bespreekpunten voor het klantgesprek`}
             </button>
           )}
+          {afspraken.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAfsprakenOpen(!afsprakenOpen)}
+              aria-expanded={afsprakenOpen}
+              className={`mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline ${
+                isVerlopen ? 'text-red-800' : 'text-blue-800'
+              }`}
+            >
+              <span aria-hidden="true">{afsprakenOpen ? '▾' : '▸'}</span>
+              {afspraken.length === 1
+                ? `Afspraak met de klant: ${termijn(afspraken[0].uiterlijk)}`
+                : `${afspraken.length} afspraken met de klant, eerste ${termijn(afspraken[0].uiterlijk)}`}
+            </button>
+          )}
         </td>
       </tr>
       {punten.length > 0 && puntenOpen && (
@@ -153,6 +194,27 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
               className="mt-2 inline-block text-xs text-shift2-primary hover:underline"
             >
               Naar het blok Bespreekpunten op de projectpagina, om af te vinken of een punt toe te voegen
+            </Link>
+          </td>
+        </tr>
+      )}
+      {afspraken.length > 0 && afsprakenOpen && (
+        <tr className={isVerlopen ? 'bg-red-50' : 'bg-blue-50'}>
+          <td colSpan={6} className="px-3 pb-3 pt-2 text-sm text-gray-800">
+            <ul className="list-disc pl-5 space-y-1">
+              {afspraken.map((a, i) => (
+                <li key={i} className="whitespace-pre-wrap">
+                  <span className="text-xs font-medium text-gray-500">{termijn(a.uiterlijk)}</span>
+                  {' — '}
+                  {a.tekst}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href={`/admin/projects/${regel.id}#klantafspraken`}
+              className="mt-2 inline-block text-xs text-shift2-primary hover:underline"
+            >
+              Naar het blok Afgesproken met de klant op de projectpagina, om af te vinken of een afspraak toe te voegen
             </Link>
           </td>
         </tr>

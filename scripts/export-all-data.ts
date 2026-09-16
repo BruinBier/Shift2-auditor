@@ -171,6 +171,10 @@ async function exportAllData() {
     const bespreekpunten = await prisma.bespreekpunt.findMany();
     await exportTable('bespreekpunten', bespreekpunten, 'Bespreekpunt');
 
+    // 20. Klantafspraken -- wat er uit een gesprek kwam en waar je op terugkomt.
+    const klantafspraken = await prisma.klantafspraak.findMany();
+    await exportTable('klantafspraken', klantafspraken, 'Klantafspraak');
+
     // Create metadata file
     const metadata = {
       exportDate: new Date().toISOString(),
@@ -196,6 +200,7 @@ async function exportAllData() {
         waarnemingen: waarnemingen.length,
         project_planning_changes: planningChanges.length,
         bespreekpunten: bespreekpunten.length,
+        klantafspraken: klantafspraken.length,
       }
     };
 

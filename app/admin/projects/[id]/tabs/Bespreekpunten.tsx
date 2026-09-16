@@ -173,18 +173,20 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
    * onderzoek bedoeld wordt. De werkwijze staat in het doc en niet hier: twee plekken met
    * dezelfde regels lopen uit elkaar.
    *
-   * Wat eruit komt is de uitkomst per punt, in de chat. Die schaaf je daar bij en plak je
-   * hieronder bij het punt; de sessie schrijft niets weg, want wat er met de klant is
-   * afgesproken bepaal jij.
+   * Wat eruit komt staat in de chat: de uitkomst per punt, en de afspraken die uit het
+   * gesprek volgen. Die schaaf je daar bij en plak je zelf -- de uitkomsten hieronder bij
+   * het punt, de afspraken in het blok "Afgesproken met de klant". De sessie schrijft
+   * niets weg, want wat er met de klant is afgesproken bepaal jij.
    */
   const opdracht = [
-    'Geef de uitkomst per bespreekpunt op basis van het transcript hieronder.',
+    'Verwerk het gesprek in het transcript hieronder.',
     '',
     `Onderzoek: ${projectId}`,
     '',
     'Volg docs/werkwijze/gespreksverslag.md. Haal de open bespreekpunten en de',
-    'projectgegevens zelf op met dat id. Geef de uitkomsten in de chat; schrijf ze niet',
-    'weg. Leg de opties voor scope en steekproef aan mij voor voordat je iets wegschrijft.',
+    'projectgegevens zelf op met dat id. Geef in de chat: de uitkomst per bespreekpunt,',
+    'de afspraken die eruit komen (met bij wie het ligt en wanneer het af moet), en de',
+    'opties voor scope en steekproef. Schrijf niets weg.',
     '',
     '--- transcript ---',
   ].join('\n');
@@ -303,10 +305,11 @@ export default function Bespreekpunten({ projectId }: { projectId: string }) {
               vergeten Teams-transcript het onderzoek niet langer. */}
           <div className="mb-3 rounded-md bg-gray-50 border border-gray-200 p-3">
             <p className="text-sm text-gray-700">
-              <strong className="font-medium">Uitkomsten ophalen.</strong> Kopieer de
+              <strong className="font-medium">Gesprek verwerken.</strong> Kopieer de
               opdracht hieronder, plak hem in een Claude Code-sessie en zet je transcript
-              eronder. Je krijgt de uitkomst per bespreekpunt terug in de chat; die plak je
-              hieronder bij het punt.
+              eronder. Je krijgt de uitkomst per bespreekpunt terug, plus de afspraken die
+              eruit komen. De uitkomsten plak je hieronder bij het punt, de afspraken in
+              het blok Afgesproken met de klant.
             </p>
             <pre className="mt-2 p-2 bg-white border border-gray-200 rounded text-xs text-gray-700 whitespace-pre-wrap font-mono">
 {opdracht}
