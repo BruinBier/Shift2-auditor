@@ -360,26 +360,29 @@ telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel pro
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
-## Gespreksverslag uit een transcript
+## Een gesprek verwerken
 
-Hoe een gespreksverslag eruitziet staat in **`docs/werkwijze/gespreksverslag.md`**, en
-nergens anders. Het verslag wordt hier gemaakt: de tool heeft er geen knop meer voor. Die
-stuurde het transcript naar OpenAI en is op 15 september 2026 weggehaald, met de route
-erachter, omdat een gesprek met een klant niet naar een externe dienst hoort te gaan. De
-onderzoeker plakt het verslag in het blok Bespreekpunten met de knop "Gespreksverslag
-plakken". Vraagt hij het verslag hier, volg dan dat bestand:
+Hoe dat gaat staat in **`docs/werkwijze/gespreksverslag.md`**, en nergens anders. Het gebeurt
+hier: de tool heeft er geen knop meer voor. Die stuurde het transcript naar OpenAI en is op
+15 september 2026 weggehaald, met de route erachter, omdat een gesprek met een klant niet
+naar een externe dienst hoort te gaan.
+
+**Wat eruit komt is de uitkomst per bespreekpunt, in de chat.** Schrijf die niet weg: de
+onderzoeker schaaft hem bij en plakt hem zelf bij het punt, want wat er met de klant is
+afgesproken bepaalt hij. Maak ook geen notitie met het hele verslag. Die knop was er wel en
+is op 16 september 2026 weggehaald: het verslag herhaalde grotendeels de uitkomsten die al
+bij de punten stonden, en van twee plekken met dezelfde afspraken wordt er één niet meer
+gelezen. Vraagt de onderzoeker het hier, volg dan dat bestand:
 
 1. Het transcript krijg je in de chat: de onderzoeker kopieert de opdracht uit het blok
    Bespreekpunten en plakt hem met het transcript eronder. Er staat een projectId in; haal
    daarmee de open punten op via `GET /api/projects/<id>/bespreekpunten`. Is er geen
-   transcript omdat het opnemen niet aanstond, dan vertelt hij wat er is besproken en maak
-   je daar het verslag van; vraag niet alsnog om een transcript.
-2. Schrijf het verslag als notitie: `POST /api/projects/<id>/notes`, `authorName`
-   "Claude Code", `content` in markdown.
-3. Zet de uitkomst per punt en vink af met `PATCH /api/projects/<id>/bespreekpunten/<puntId>`
-   en `{ "besproken": true, "uitkomst": "..." }`, maar alleen voor punten die aan bod kwamen.
-   Zeg welke je hebt afgevinkt.
-4. Leg **opties** voor scope en steekproef voor, en schrijf ze niet zelf weg: welke
+   transcript omdat het opnemen niet aanstond, dan vertelt hij wat er is besproken en stel
+   je daar de uitkomsten uit op; vraag niet alsnog om een transcript.
+2. Geef per punt de uitkomst in de chat, en daaronder wat bij geen enkel punt hoorde
+   (kopje "Verder besproken") plus de acties. Gebruik `PATCH` op de bespreekpunten alleen
+   als de onderzoeker er expliciet om vraagt; standaard plakt hij zelf.
+3. Leg **opties** voor scope en steekproef voor, en schrijf ze niet zelf weg: welke
    pagina's de klant noemde (kandidaten voor `sampleClientPages`) en wat er is uitgesloten
    (`scopeOutOfScope`). De onderzoeker kiest; hij weet welke pagina's de contenttypes
    dekken en dat staat niet in het transcript. Niet `scopeInfo`: dat zijn de wettelijke

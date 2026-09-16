@@ -13,14 +13,19 @@ import { isExternBureau } from '@/lib/onderzoekers';
  * stappen die buiten de tool gebeuren (mail versturen, gesprek voeren) zet je
  * met de hand aan.
  */
-export default function VoorbereidingStappen({
-  project,
-  heeftGespreksverslag = false,
-}: {
-  project: any;
-  /** Of er een notitie met auteur "Gespreksverslag" bij dit onderzoek staat. */
-  heeftGespreksverslag?: boolean;
-}) {
+export default function VoorbereidingStappen({ project }: { project: any }) {
+  /**
+   * Is elk bespreekpunt afgevinkt mét uitkomst?
+   *
+   * Een afgevinkt punt zonder uitkomst telt niet: dan staat er wel dat het langskwam, maar
+   * niet wat eruit kwam, en dat laatste is waar de stap over gaat. Zijn er geen punten, dan
+   * valt de stap terug op handmatig afvinken -- er is dan niets te meten.
+   */
+  const punten: { besprokenOp: string | Date | null; uitkomst: string | null }[] =
+    project.bespreekpunten ?? [];
+  const puntenVerwerkt =
+    punten.length > 0 && punten.every((p) => p.besprokenOp && p.uitkomst?.trim());
+
   const [bezig, setBezig] = useState<string | null>(null);
   /**
    * Dicht zodra alles af is, maar wel zichtbaar.
@@ -406,19 +411,20 @@ export default function VoorbereidingStappen({
             // Wat er in het gesprek is besproken hoort in het systeem te staan, anders zit
             // het alleen in je hoofd en in een transcript dat hier niet bewaard wordt.
             //
-            // Het verslag is het enige dat er na élk gesprek hoort te zijn. De uitkomst per
-            // bespreekpunt kan niet als maatstaf dienen (er hoeven geen bespreekpunten te
-            // zijn) en de scopevelden ook niet (die mogen leeg blijven) -- op die laatste
-            // ging "Scope ingevuld" juist mis.
+            // De maatstaf was een notitie met het hele gespreksverslag. Die is op
+            // 16 september 2026 weggehaald: hij herhaalde de uitkomsten die al bij de punten
+            // stonden, en van twee plekken met dezelfde afspraken wordt er één niet meer
+            // gelezen. Nu telt wat je toch al invult -- de uitkomst per bespreekpunt.
             //
-            // Vinkt vanzelf af als het verslag als notitie is geplakt, en is met de hand te
-            // zetten als je het anders hebt vastgelegd. Zonder die overrule zou de stap
-            // blijven staan op iets dat al gedaan is, net als bij het transcript.
+            // Zijn er geen bespreekpunten, dan valt de stap terug op handmatig afvinken,
+            // net als "Scopegesprek gevoerd" erboven. Dat is iets anders dan waar
+            // "Scope ingevuld" op sneuvelde: die stond altijd op groen zonder iets te
+            // meten, deze staat op grijs tot je hem zet.
             key: 'gespreksverslagGemaakt',
-            label: 'Gespreksverslag in het systeem',
-            klaar: heeftGespreksverslag || Boolean(project.gespreksverslagGemaakt),
+            label: 'Gesprek verwerkt',
+            klaar: puntenVerwerkt || Boolean(project.gespreksverslagGemaakt),
             datum: project.gespreksverslagGemaakt,
-            handmatig: !heeftGespreksverslag,
+            handmatig: !puntenVerwerkt,
           },
           // Bij een eigen onderzoek stond hier "Scope ingevuld". Die stap keek of de te
           // onderzoeken website en de overige informatie gevuld waren, maar mat daarmee

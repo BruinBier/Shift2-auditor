@@ -1323,10 +1323,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
         </div>
 
         {/* Wat je de klant nog moet vragen; open punten tellen mee op het dashboard. */}
-        <Bespreekpunten
-          projectId={project.id}
-          onNotitie={(notitie) => setProjectNotes((lijst) => [notitie, ...lijst])}
-        />
+        <Bespreekpunten projectId={project.id} />
 
         {/* Notities */}
         <div className="bg-white rounded-lg border border-gray-200">
@@ -1420,13 +1417,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               de kop toont "8 van 8". Alleen een geannuleerd onderzoek krijgt het
               niet: daar is de voorbereiding niet afgemaakt maar afgebroken. */}
           {projectStatus !== 'Geannuleerd' && (
-            <VoorbereidingStappen
-              project={project}
-              /* De knop "Gespreksverslag plakken" zet de notitie op deze auteursnaam; zo
-                 weet het routekaartje dat het verslag er is zonder de notities nog eens
-                 op te halen. */
-              heeftGespreksverslag={projectNotes.some((n: any) => n.authorName === 'Gespreksverslag')}
-            />
+            <VoorbereidingStappen project={project} />
           )}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">

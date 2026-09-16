@@ -125,12 +125,15 @@ export default async function AdminPage() {
     // CRM en in de uitklapmelding bovenaan; de routekaart rekent er niet mee.
     include: {
       clientProject: { select: { projectnummer: true } },
-      // Open bespreekpunten: wat je de klant nog moet vragen. De tekst zelf gaat mee, want
-      // "1 bespreekpunt" zegt niet wát je moet bespreken; op de regel klapt hij uit.
-      bespreekpunten: { where: { besprokenOp: null }, select: { tekst: true }, orderBy: { createdAt: 'asc' } },
-      // Alleen of het gespreksverslag er is. De knop "Gespreksverslag plakken" zet de
-      // notitie op deze auteursnaam; de inhoud hoeft hier niet mee.
-      _count: { select: { projectNotes: { where: { authorName: 'Gespreksverslag' } } } },
+      // Alle bespreekpunten, want er worden er twee dingen aan afgelezen. De open punten
+      // zijn wat je de klant nog moet vragen; de tekst gaat mee, want "1 bespreekpunt" zegt
+      // niet wát je moet bespreken en op de regel klapt hij uit. De afgevinkte punten
+      // bepalen of het gesprek verwerkt is: heeft elk punt een uitkomst? Dat is dezelfde
+      // maatstaf als de voorbereidingsstap "Gesprek verwerkt" op de projectpagina.
+      bespreekpunten: {
+        select: { tekst: true, besprokenOp: true, uitkomst: true },
+        orderBy: { createdAt: 'asc' },
+      },
     },
   });
 
@@ -185,7 +188,10 @@ export default async function AdminPage() {
       uitvoerder: p.externalBureau || 'Shift2',
       uitvoerderUrl: p.cardanOnderzoekUrl,
       crmNummer: p.clientProject?.projectnummer ?? null,
-      bespreekpunten: p.bespreekpunten.map((b) => b.tekst),
+      // Alleen de open punten: dit is de uitklapper "wat moet je nog vragen". De query
+      // haalt ze allemaal op, want de afgevinkte punten zijn hieronder nodig om te zien of
+      // het gesprek verwerkt is.
+      bespreekpunten: p.bespreekpunten.filter((b) => !b.besprokenOp).map((b) => b.tekst),
     };
 
     if (p.isOngoing) {
@@ -301,11 +307,15 @@ export default async function AdminPage() {
       // eindeloos op deze regel als het Teams-transcript niet had aangestaan: er viel dan
       // niets toe te voegen, en de enige uitweg was iets verzinnen.
       // Na het gesprek hoort vast te liggen wat er is besproken, anders zit dat alleen in
-      // je hoofd: het transcript wordt hier niet bewaard. Het verslag is het enige dat er
-      // na elk gesprek hoort te zijn -- bespreekpunten en scopevelden mogen leeg blijven.
-      // Met de hand afgevinkt telt ook, voor een verslag dat anders is vastgelegd.
-      if (scopeZelf && p._count.projectNotes === 0 && !p.gespreksverslagGemaakt) {
-        actie.push({ ...basis, toelichting: 'gespreksverslag maken' });
+      // je hoofd: het transcript wordt hier niet bewaard. Dat lees je af aan de uitkomst per
+      // bespreekpunt -- een afgevinkt punt zonder uitkomst zegt dat het langskwam, niet wat
+      // eruit kwam. Zijn er geen punten, dan valt er niets te meten en blijft de melding
+      // weg; met de hand afgevinkt telt ook.
+      const puntenOnverwerkt =
+        p.bespreekpunten.length > 0 &&
+        p.bespreekpunten.some((punt) => !punt.besprokenOp || !punt.uitkomst?.trim());
+      if (scopeZelf && puntenOnverwerkt && !p.gespreksverslagGemaakt) {
+        actie.push({ ...basis, toelichting: 'gesprek verwerken' });
         continue;
       }
 

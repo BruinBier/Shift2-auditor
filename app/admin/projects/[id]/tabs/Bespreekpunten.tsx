@@ -16,12 +16,15 @@ import { nl } from 'date-fns/locale';
  * Bovenaan een vaste checklist voor elk gesprek. Die vinkjes worden niet bewaard: ze zijn
  * per gesprek en staan weer leeg als je het blok opnieuw opent.
  *
- * Het gespreksverslag maakt de onderzoeker buiten de tool, in een Claude Code-sessie, en
- * plakt hij hier; het komt als notitie bij het onderzoek. Hier zat een knop die het
- * transcript naar OpenAI stuurde, maar een gesprek met een klant gaat niet naar een
- * externe dienst omdat het verslag dan sneller klaar is. De werkwijze in
- * docs/werkwijze/gespreksverslag.md blijft gelden; die is nu een instructie voor wie het
- * verslag schrijft.
+ * Wat er met de klant is afgesproken staat hier, bij de punten zelf, en nergens anders.
+ * Er stond een knop die het hele gespreksverslag als notitie bewaarde; die is op
+ * 16 september 2026 weggehaald. Dat verslag herhaalde grotendeels de uitkomsten die hier
+ * al stonden, en van twee plekken met dezelfde afspraken wordt er één niet meer gelezen.
+ * De uitkomst bij het punt is de plek die je bij een volgend gesprek terugpakt.
+ *
+ * Eerder zat hier een knop die het transcript naar OpenAI stuurde; die ging weg omdat een
+ * gesprek met een klant niet naar een externe dienst hoort. De werkwijze staat in
+ * docs/werkwijze/gespreksverslag.md en is een instructie voor wie de uitkomsten opstelt.
  *
  * Het transcript zelf komt de tool niet meer in. Het ging hier in een veld, en een leeg
  * veld was daarmee een ontbrekende stap -- ook als er niets te plakken viel omdat het
@@ -44,23 +47,12 @@ type Bespreekpunt = {
 // staan direct hieronder; daar hoeft geen vinkje aan te herinneren.
 //
 // Het vinkje blijft een herinnering vooraf, maar is geen voorwaarde meer: vergeet je het,
-// dan vertel je na afloop wat er is besproken en maak je daar het verslag van.
+// dan vertel je na afloop wat er is besproken en stel je daar de uitkomsten uit op.
 const CHECKLIST = ['Teams-transcript aanzetten'];
 
-export default function Bespreekpunten({
-  projectId,
-  onNotitie,
-}: {
-  projectId: string;
-  /** Het verslag komt als notitie; de ouder zet hem in zijn lijst zodat hij meteen zichtbaar is. */
-  onNotitie?: (notitie: any) => void;
-}) {
+export default function Bespreekpunten({ projectId }: { projectId: string }) {
   const [punten, setPunten] = useState<Bespreekpunt[]>([]);
   const [gekopieerd, setGekopieerd] = useState(false);
-  const [verslagBezig, setVerslagBezig] = useState(false);
-  const [verslagMelding, setVerslagMelding] = useState<string | null>(null);
-  const [verslagOpen, setVerslagOpen] = useState(false);
-  const [verslagTekst, setVerslagTekst] = useState('');
   const [geladen, setGeladen] = useState(false);
   const [nieuw, setNieuw] = useState('');
   const [bezig, setBezig] = useState<string | null>(null);
@@ -108,6 +100,31 @@ export default function Bespreekpunten({
     }
   };
 
+  /**
+   * Een open punt weghalen. Alleen open: de route weigert een afgevinkt punt, want dat
+   * legt vast wat er met de klant is afgestemd.
+   *
+   * Voor een punt dat er niet had moeten staan -- verkeerd geformuleerd, dubbel, of door
+   * een agent aangemaakt zonder dat erom gevraagd was. Bevestigen hoeft niet: een open
+   * punt is een aantekening vooraf, en opnieuw typen kost één regel.
+   */
+  const verwijder = async (punt: Bespreekpunt) => {
+    setBezig(punt.id);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/bespreekpunten/${punt.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Het verwijderen van het bespreekpunt is niet gelukt.');
+        return;
+      }
+      setPunten((lijst) => lijst.filter((p) => p.id !== punt.id));
+    } finally {
+      setBezig(null);
+    }
+  };
+
   const voegToe = async (e: React.FormEvent) => {
     e.preventDefault();
     const tekst = nieuw.trim();
@@ -150,55 +167,24 @@ export default function Bespreekpunten({
   };
 
   /**
-   * Het verslag komt van buiten: geplakt uit een Claude Code-sessie, of zelf geschreven.
-   *
-   * Hier stond een knop die het transcript naar OpenAI stuurde. Dat willen we niet meer:
-   * een gesprek met een klant gaat niet naar een externe dienst omdat het verslag dan
-   * sneller klaar is. De werkwijze in docs/werkwijze/gespreksverslag.md blijft gelden --
-   * die is nu alleen een instructie voor wie het verslag maakt, niet meer voor een knop.
-   */
-  const bewaarVerslag = async () => {
-    const tekst = verslagTekst.trim();
-    if (!tekst) return;
-    setVerslagBezig(true);
-    setVerslagMelding(null);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({ authorName: 'Gespreksverslag', content: tekst }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setVerslagMelding('Het bewaren van het verslag is niet gelukt.');
-        return;
-      }
-      onNotitie?.(data);
-      setVerslagTekst('');
-      setVerslagOpen(false);
-      setVerslagMelding('Het verslag staat bij Notities. Vink de punten hieronder zelf af met de uitkomst.');
-    } catch {
-      setVerslagMelding('Het bewaren van het verslag is niet gelukt.');
-    } finally {
-      setVerslagBezig(false);
-    }
-  };
-
-  /**
    * De opdracht die de onderzoeker kopieert en met zijn transcript in een Claude Code-sessie
    * plakt. Het projectId staat erin, want daarmee zijn de bespreekpunten, de scopevelden en
    * de projectgegevens op te halen; zonder dat moet de sessie eerst gaan zoeken welk
    * onderzoek bedoeld wordt. De werkwijze staat in het doc en niet hier: twee plekken met
    * dezelfde regels lopen uit elkaar.
+   *
+   * Wat eruit komt is de uitkomst per punt, in de chat. Die schaaf je daar bij en plak je
+   * hieronder bij het punt; de sessie schrijft niets weg, want wat er met de klant is
+   * afgesproken bepaal jij.
    */
   const opdracht = [
-    'Maak een gespreksverslag van het transcript hieronder.',
+    'Geef de uitkomst per bespreekpunt op basis van het transcript hieronder.',
     '',
     `Onderzoek: ${projectId}`,
     '',
     'Volg docs/werkwijze/gespreksverslag.md. Haal de open bespreekpunten en de',
-    'projectgegevens zelf op met dat id. Leg de opties voor scope en steekproef aan mij',
-    'voor voordat je iets wegschrijft.',
+    'projectgegevens zelf op met dat id. Geef de uitkomsten in de chat; schrijf ze niet',
+    'weg. Leg de opties voor scope en steekproef aan mij voor voordat je iets wegschrijft.',
     '',
     '--- transcript ---',
   ].join('\n');
@@ -267,7 +253,18 @@ export default function Bespreekpunten({
                   />
                   <div className="flex-1 text-sm text-gray-900">
                     <div className="whitespace-pre-wrap">{punt.tekst}</div>
-                    <div className="text-xs text-gray-400">toegevoegd {datum(punt.createdAt)}</div>
+                    <div className="text-xs text-gray-400">
+                      toegevoegd {datum(punt.createdAt)}
+                      {' · '}
+                      <button
+                        type="button"
+                        onClick={() => verwijder(punt)}
+                        disabled={bezig === punt.id}
+                        className="text-gray-400 hover:text-red-700 hover:underline disabled:opacity-50"
+                      >
+                        verwijderen
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}
@@ -306,9 +303,10 @@ export default function Bespreekpunten({
               vergeten Teams-transcript het onderzoek niet langer. */}
           <div className="mb-3 rounded-md bg-gray-50 border border-gray-200 p-3">
             <p className="text-sm text-gray-700">
-              <strong className="font-medium">Gespreksverslag maken.</strong> Kopieer de
+              <strong className="font-medium">Uitkomsten ophalen.</strong> Kopieer de
               opdracht hieronder, plak hem in een Claude Code-sessie en zet je transcript
-              eronder. Je krijgt het verslag terug, plus de uitkomst per bespreekpunt.
+              eronder. Je krijgt de uitkomst per bespreekpunt terug in de chat; die plak je
+              hieronder bij het punt.
             </p>
             <pre className="mt-2 p-2 bg-white border border-gray-200 rounded text-xs text-gray-700 whitespace-pre-wrap font-mono">
 {opdracht}
@@ -322,65 +320,9 @@ export default function Bespreekpunten({
             </button>
             <p className="mt-2 text-sm text-gray-500">
               Geen transcript, omdat het opnemen niet aanstond? Vertel in de sessie wat er is
-              besproken; daar is net zo goed een verslag van te maken.
+              besproken; daar zijn de uitkomsten net zo goed uit op te stellen.
             </p>
           </div>
-          {/* Het verslag maak je buiten de tool en plak je hier. Zie de uitleg hieronder. */}
-          {verslagOpen ? (
-            <div>
-              <label htmlFor="verslag-plak" className="block text-sm font-medium text-gray-700 mb-1">
-                Gespreksverslag
-              </label>
-              <textarea
-                id="verslag-plak"
-                rows={12}
-                value={verslagTekst}
-                onChange={(e) => setVerslagTekst(e.target.value)}
-                autoFocus
-                placeholder="Plak hier het gespreksverslag. Markdown mag: ## voor een kop, ** ** voor vet."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
-              />
-              <div className="mt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={bewaarVerslag}
-                  disabled={verslagBezig || !verslagTekst.trim()}
-                  className="px-3 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {verslagBezig ? 'Bewaren…' : 'Verslag bewaren'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVerslagOpen(false);
-                    setVerslagTekst('');
-                  }}
-                  className="text-sm text-gray-600 hover:underline"
-                >
-                  Annuleren
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-md bg-gray-50 border border-gray-200 p-3">
-              <p className="text-sm text-gray-700">
-                <strong className="font-medium">Verslag terug?</strong> Plak het hier; het komt
-                bij Notities te staan.
-              </p>
-              <p className="mt-1 text-sm text-gray-500">
-                Vink de punten hieronder zelf af met de uitkomst: wat er met de klant is
-                afgesproken, bepaal je zelf.
-              </p>
-              <button
-                type="button"
-                onClick={() => setVerslagOpen(true)}
-                className="mt-2 px-3 py-2 text-sm font-medium text-shift2-primary border border-shift2-primary rounded-lg hover:bg-white"
-              >
-                Gespreksverslag plakken
-              </button>
-            </div>
-          )}
-          {verslagMelding && <p className="mt-2 text-sm text-gray-700">{verslagMelding}</p>}
         </div>
 
         {afgehandeld.length > 0 && (

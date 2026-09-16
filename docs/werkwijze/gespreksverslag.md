@@ -1,13 +1,21 @@
-# Werkwijze: gespreksverslag uit een transcript
+# Werkwijze: het gesprek verwerken
 
-Dit bestand is de enige plek waar staat hoe een gespreksverslag eruitziet. Claude Code volgt
-het als het verslag wordt gevraagd, en de onderzoeker leest het om te weten wat hij kan
-verwachten. Verander je iets aan het verslag, verander het dan hier en nergens anders.
+Dit bestand is de enige plek waar staat hoe een gesprek wordt verwerkt. Claude Code volgt
+het als de onderzoeker erom vraagt, en de onderzoeker leest het om te weten wat hij kan
+verwachten. Verander je iets, verander het dan hier en nergens anders.
 
-Het verslag wordt buiten de tool gemaakt en geplakt in het blok Bespreekpunten, met de knop
-"Gespreksverslag plakken". Er was een knop die het transcript naar OpenAI stuurde; die is op
-15 september 2026 weggehaald, samen met de route erachter. Een gesprek met een klant gaat
-niet naar een externe dienst omdat het verslag dan sneller klaar is.
+Wat er uit het gesprek komt, komt als **uitkomst bij het bespreekpunt** te staan, en nergens
+anders. Er was een knop die het hele gespreksverslag als notitie bewaarde; die is op
+16 september 2026 weggehaald. Dat verslag herhaalde grotendeels de uitkomsten die al bij de
+punten stonden, en van twee plekken met dezelfde afspraken wordt er één niet meer gelezen.
+De uitkomst bij het punt is de plek die je bij een volgend gesprek terugpakt.
+
+Eerder zat hier een knop die het transcript naar OpenAI stuurde; die ging op 15 september
+2026 weg, samen met de route erachter. Een gesprek met een klant gaat niet naar een externe
+dienst omdat het verslag dan sneller klaar is.
+
+**Claude Code schrijft de uitkomsten niet weg.** Ze komen in de chat, de onderzoeker schaaft
+ze bij en plakt ze zelf bij het punt. Wat er met de klant is afgesproken bepaalt hij.
 
 Het transcript komt de tool niet in. In het blok Bespreekpunten staat een opdracht met het
 projectId erin; die kopieert de onderzoeker en plakt hij met zijn transcript in de chat.
@@ -22,7 +30,7 @@ als er niets te plakken viel omdat het Teams-transcript niet had aangestaan.
   verkeerd verstane naam. Het staat in de chat, achter de opdracht, en niet in de database.
 
   Soms is er geen transcript, omdat het opnemen niet aanstond. Dan vertelt de onderzoeker
-  wat er is besproken en maak je daar het verslag van. Zeg niet dat het transcript
+  wat er is besproken en stel je daar de uitkomsten uit op. Zeg niet dat het transcript
   ontbreekt en vraag er niet om: wat hij vertelt is wat er is. Vraag wel door als een
   bespreekpunt onbeantwoord blijft, en laat het punt open als hij het niet meer weet.
 - De **open bespreekpunten**: wat de onderzoeker vóór het gesprek had opgeschreven om te
@@ -33,46 +41,38 @@ als er niets te plakken viel omdat het Teams-transcript niet had aangestaan.
 
 ## Wat je maakt
 
-Een **kort** gespreksverslag, per bespreekpunt de uitkomst, en opties voor scope en
-steekproef waaruit de onderzoeker kiest.
-
-### Het verslag
-
-Geen samenvatting van het gesprek. Alleen wat er is afgesproken en wat er nog moet
-gebeuren. Wie later alleen dit verslag leest, moet weten wat er is besloten zonder het
-transcript erbij te pakken.
-
-Opbouw, in markdown:
-
-1. Een kop: `## Gespreksverslag <soort gesprek> <datum>`. De soort haal je uit de inhoud
-   (scopegesprek, klantgesprek, adviesgesprek); de datum uit het transcript, en als die er
-   niet in staat de datum van vandaag.
-2. Eén regel met wie erbij waren, met organisatie erachter. Namen zoals ze in het
-   transcript staan; is een naam duidelijk verkeerd verstaan, gebruik dan de naam van de
-   contactpersoon uit de projectgegevens.
-3. Per onderwerp een vetgedrukt kopje en daaronder de afspraak in één of twee zinnen. Geen
-   verloop van het gesprek ("eerst werd besproken..."), alleen het resultaat.
-4. Onderaan een kop `**Acties**` met een lijstje: wie doet wat, en wanneer als dat is
-   gezegd. Iets dat naar een ander moet (bij een Cardan-onderzoek vaak: terugkoppelen aan
-   Cardan) staat hier als actie voor de onderzoeker. Het verslag verstuurt niets.
-
-Lengte: bij een gesprek van een halfuur ongeveer tien tot vijftien regels. Liever te kort
-dan te lang; wat er niet is afgesproken, staat er niet in.
-
-Taal: Nederlands, zakelijk, in de tegenwoordige of voltooide tijd ("De gemeente levert...",
-"Er is afgesproken dat..."). Geen gedachtestreepjes. Geen citaten uit het transcript.
+Per bespreekpunt de uitkomst, en opties voor scope en steekproef waaruit de onderzoeker
+kiest. Geen lopend verslag: wat er is afgesproken hoort bij het punt waar het over ging.
 
 ### De uitkomst per bespreekpunt
 
 Voor elk open bespreekpunt: is het aan bod gekomen, en wat is het antwoord?
 
 - Aan bod gekomen: de uitkomst in één of twee zinnen, als antwoord op de vraag die in het
-  punt stond. Staat er in het punt ook een vervolgstap ("moet terug naar Cardan"), dan
-  noem je die niet in de uitkomst maar in de acties van het verslag.
+  punt stond. Begin met "Besproken." en dan de afspraak. Staat er in het punt ook een
+  vervolgstap ("moet terug naar Cardan"), noem die dan bij de acties en niet in de uitkomst.
 - Niet aan bod gekomen: zeg dat, en verzin geen antwoord. Het punt blijft dan open voor
   een volgend gesprek.
 - Twijfel: dan is het niet aan bod gekomen. Een gok in een uitkomst ziet er hetzelfde uit
   als een antwoord, en dat is precies wat er mis kan gaan.
+
+Taal: Nederlands, zakelijk, in de tegenwoordige of voltooide tijd ("De gemeente levert...",
+"Er is afgesproken dat..."). Geen gedachtestreepjes. Geen citaten uit het transcript.
+
+### Wat bij geen enkel punt hoort
+
+Een gesprek levert bijna altijd meer op dan er punten stonden: een video die opvalt, een
+afspraak om pagina's niet te wijzigen, een verouderde toegankelijkheidsverklaring. Zet dat
+onder een kopje **Verder besproken** in de chat, met per onderwerp de afspraak in één of
+twee zinnen, en daaronder **Acties**: wie doet wat, en wanneer als dat is gezegd.
+
+De onderzoeker beslist wat daarmee gebeurt. Meestal wordt het een nieuw bespreekpunt, of
+het staat al ergens anders in de tool thuis (een technisch issue, een aantekening bij de
+scope). Maak zelf geen bespreekpunt aan en schrijf niets weg; leg het voor.
+
+Is een naam in het transcript duidelijk verkeerd verstaan, gebruik dan de naam van de
+contactpersoon uit de projectgegevens. Kun je hem niet thuisbrengen, laat hem dan weg en
+zeg dat erbij.
 
 ### Opties voor scope en steekproef
 
@@ -87,7 +87,7 @@ Loop het gesprek na op twee dingen en zet per veld de kandidaten op een rij:
   maar dat verschil bepaalt het antwoord, dus zeg erbij welke van de twee het is.
 - **Buiten scope** (`scopeOutOfScope`): wat in het gesprek wordt uitgesloten. Alleen een
   echte afspraak. Een constatering over de site ("er staan geen PDF's op") is geen
-  uitsluiting; zet die in het verslag en niet in dit veld. De wettelijke uitzonderingen
+  uitsluiting; zet die onder "Verder besproken" en niet in dit veld. De wettelijke uitzonderingen
   horen er ook niet in: die staan in `scopeInfo` en vult de tool zelf.
 
 Zeg per kandidaat waar hij vandaan komt, met het tijdstip of een korte aanduiding uit het
@@ -117,13 +117,14 @@ is overgeslagen omdat het er al stond of geen URL bevatte.
 
 ## Wat er daarna gebeurt
 
-Het verslag komt als notitie bij het onderzoek te staan, met "Gespreksverslag" als auteur.
-Die naam is niet vrijblijvend: de voorbereidingslijst en het dashboard lezen eraan af dat
-het verslag er is, en vinken daarop de stap "Gespreksverslag in het systeem" af. Plak het
-verslag dus met de knop in het blok Bespreekpunten en niet als gewone notitie. Heb je het
-toch anders vastgelegd, vink de stap dan met de hand af. De uitkomst per bespreekpunt
-levert dit verslag als voorstel: de onderzoeker vult hem zelf in bij het punt en vinkt het
-af. Zo blijft de onderzoeker degene die zegt wat er met de klant is afgesproken.
+De onderzoeker plakt de uitkomst bij het punt en vinkt het af. Zo blijft hij degene die
+zegt wat er met de klant is afgesproken.
+
+De voorbereidingsstap **"Gesprek verwerkt"** leest daaraan af of het gesprek is verwerkt:
+hij staat op groen zodra elk bespreekpunt is afgevinkt én een uitkomst heeft. Een afgevinkt
+punt zonder uitkomst telt niet -- dan staat er wel dat het langskwam, maar niet wat eruit
+kwam, en dat laatste is waar de stap over gaat. Zijn er geen bespreekpunten, dan valt er
+niets te meten en vink je de stap met de hand af.
 
 De scopevelden blijven tot dan leeg: die schrijf je pas weg als de onderzoeker uit de
 voorgelegde opties heeft gekozen. Meld daarna dat de projectpagina met F5 ververst moet

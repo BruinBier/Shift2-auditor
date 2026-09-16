@@ -122,23 +122,21 @@ export default function AuditprocesPage() {
                 staat boven de bespreekpunten.
               </li>
               <li>
-                <strong>Na het gesprek:</strong> plak het transcript in het blok Bespreekpunten,
-                onder "Na het gesprek", met de knop "Transcript toevoegen". Het is hetzelfde veld
-                als "Transcript scopegesprek" onder Planning (bij een Cardan-onderzoek "Transcript
-                klantgesprek", want Cardan voert daar het scopegesprek).
+                <strong>Na het gesprek:</strong> kopieer de opdracht uit het blok Bespreekpunten,
+                onder "Na het gesprek", en plak hem met je transcript in een Claude Code-sessie.
+                Het transcript komt de tool niet in.
               </li>
               <li>
-                <strong>Maak het gespreksverslag in een Claude Code-sessie:</strong> geef het
-                transcript mee en vraag om een gespreksverslag. Je krijgt een kort verslag (wie
-                erbij waren, per onderwerp de afspraak, onderaan de acties met wie wat doet).
-                Plak dat in het blok Bespreekpunten met de knop "Gespreksverslag plakken"; het
-                komt bij Notities te staan. Hoe het verslag is opgebouwd staat in
+                <strong>Je krijgt de uitkomst per bespreekpunt terug in de chat,</strong> plus wat
+                bij geen enkel punt hoorde en de acties met wie wat doet. Schaaf ze daar bij; de
+                sessie schrijft niets weg. Hoe dat werkt staat in{' '}
                 <code>docs/werkwijze/gespreksverslag.md</code>.
               </li>
               <li>
-                <strong>Vink de punten af met de uitkomst.</strong> Een punt dat niet aan bod kwam
-                blijft open. Wat naar een ander moet, zoals een terugkoppeling aan Cardan, staat
-                als actie in het verslag; versturen doe je zelf.
+                <strong>Vink de punten af met de uitkomst.</strong> Plak per punt de uitkomst; een
+                punt dat niet aan bod kwam blijft open. Wat naar een ander moet, zoals een
+                terugkoppeling aan Cardan, versturen doe je zelf. Zodra elk punt een uitkomst
+                heeft, staat de stap "Gesprek verwerkt" op groen.
               </li>
             </ol>
             <p>

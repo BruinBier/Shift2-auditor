@@ -99,6 +99,10 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
         },
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
       },
+      // De voorbereidingsstap "Gesprek verwerkt" leest hieraan af of elk punt een uitkomst
+      // heeft. Het blok Bespreekpunten haalt zijn eigen lijst op, maar dat is een client
+      // component; de stap staat elders op de pagina en kan daar niet bij.
+      bespreekpunten: { select: { besprokenOp: true, uitkomst: true } },
     },
   });
 
