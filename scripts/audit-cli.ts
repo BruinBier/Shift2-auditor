@@ -17,6 +17,7 @@
  *   tsx scripts/audit-cli.ts get-screenshot <url> [--full-page] [--selector=...] [--breedte=320] [--klik=...] [--zicht=grijs]
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
+ *   tsx scripts/audit-cli.ts get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
  *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
@@ -178,6 +179,14 @@ async function getProject(projectId: string) {
       // elke sample waar niemand iets heeft aangevinkt.
       heeftBewegendBeeld: s.heeftBewegendBeeld ?? null,
       heeftFormulier: s.heeftFormulier ?? null,
+      heeftTags: s.heeftTags ?? null,
+      // De opgeborgen PAC-uitvoer. Staat hier iets, dan is de tagkwaliteit te beoordelen
+      // en hoeft de agent er niet opnieuw om te vragen -- zie Shift2_Werkwijze_PDF.md.
+      pacRapporten: (s.pacRapporten ?? []).map((r: any) => ({
+        label: r.label ?? null,
+        pad: r.filePath,
+        op: r.createdAt,
+      })),
     })),
     findings: (Array.isArray(findings) ? findings : []).map((f: any) => ({
       id: f.id,
@@ -255,6 +264,18 @@ async function createSampleItem(projectId: string, flags: Flags) {
       : {}),
     ...(flags['heeft-formulier'] !== undefined
       ? { heeftFormulier: flags['heeft-formulier'] === 'true' }
+      : {}),
+    /**
+     * Alleen bij een PDF van betekenis, en anders dan de twee hierboven sluit dit
+     * niets af: het stuurt de route. `=false` betekent geen tagstructuur, en dan
+     * vervalt een reeks criteria via Shift2_Regels_SC_1_3_1.md.
+     *
+     * De vraag is of de tagboom er is (/StructTreeRoot), NIET of het document
+     * zichzelf als Tagged PDF markeert (/MarkInfo /Marked). Die twee kunnen uit
+     * elkaar lopen; een uitstaande /Marked is een bevinding onder 1.3.1.
+     */
+    ...(flags['heeft-tags'] !== undefined
+      ? { heeftTags: flags['heeft-tags'] === 'true' }
       : {}),
   };
   const result = await api(`/api/projects/${projectId}/sample-items`, {
@@ -3959,6 +3980,97 @@ async function meetOmtrek(
  * in een foto is genoeg om een witte begrenzing te laten wegvallen, en juist daar gaat
  * het om.
  */
+/**
+ * Contrast van tekst in een PDF, gemeten op de beeldpunten.
+ *
+ * Tot 2026-09-17 stond in de regels dat dit niet kon en dat de onderzoeker het met de hand
+ * deed. Dat gold voor de methode die toen voorlag -- raden welke beeldpunten op een
+ * gerenderde pagina tekst zijn -- en niet voor deze. Het verschil is dat de TEKST uit het
+ * document zelf komt: PyMuPDF geeft per fragment de exacte kleur, grootte en plek. Alleen de
+ * ACHTERGROND moet van het beeld komen, want die bestaat in een PDF niet als eigenschap.
+ *
+ * Staat de tekst op een foto of een verloop, dan bestaat er geen enkele verhouding en geeft
+ * het commando een band ("loopt van 1,46:1 tot 6,23:1"). Toets aan het slechtste punt.
+ *
+ * Het rekenwerk staat in scripts/pdf-contrast.py: numpy en PyMuPDF zitten niet in deze
+ * Node-omgeving, en de tagstructuur werd hiernaast al met PyMuPDF uitgelezen.
+ *
+ * Pagina's zonder tekstlaag komen apart terug. Daar valt niets te meten -- dat is een scan --
+ * en alleen dáár is een schermafdruk van de onderzoeker nodig.
+ */
+async function getPdfContrast(doel: string, flags: Flags) {
+  const { spawnSync } = await import('child_process');
+
+  // Een URL halen we eerst binnen; een lokaal pad gebruiken we zoals het is.
+  let bestand = doel;
+  let opgehaald: string | null = null;
+  if (/^https?:\/\//i.test(doel)) {
+    const res = await fetch(doel);
+    if (!res.ok) {
+      throw new Error(`PDF ophalen mislukte: HTTP ${res.status} voor ${doel}`);
+    }
+    const map = path.join(process.cwd(), 'tmp', 'pdf');
+    fs.mkdirSync(map, { recursive: true });
+    const naam = (decodeURIComponent(doel.split('/').pop() || 'document.pdf') || 'document.pdf')
+      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .slice(-120);
+    bestand = path.join(map, naam.endsWith('.pdf') ? naam : `${naam}.pdf`);
+    fs.writeFileSync(bestand, Buffer.from(await res.arrayBuffer()));
+    opgehaald = bestand;
+  }
+  if (!fs.existsSync(bestand)) {
+    throw new Error(`Bestand niet gevonden: ${bestand}`);
+  }
+
+  const script = path.join(process.cwd(), 'scripts', 'pdf-contrast.py');
+  const argumenten = [script, bestand, '--json'];
+  if (flags.paginas) argumenten.push(`--paginas=${flags.paginas}`);
+
+  const uit = spawnSync('python', argumenten, {
+    encoding: 'utf-8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (uit.error || uit.status !== 0) {
+    throw new Error(
+      `pdf-contrast.py mislukte: ${uit.error?.message || uit.stderr || `exitcode ${uit.status}`}`,
+    );
+  }
+
+  const meting = JSON.parse(uit.stdout);
+
+  legVast({
+    commando: 'get-pdfcontrast',
+    argumenten: { ...(flags.paginas ? { paginas: flags.paginas } : {}) },
+    url: doel,
+    eindUrl: doel,
+    browser: 'geen',
+    weergave: 'document',
+    criteria: ['1.4.3', '1.4.11'],
+    uitkomst: {
+      paginas: meting.paginas,
+      tekstfragmentenGemeten: meting.tekstfragmentenGemeten,
+      combinatiesOnvoldoende: (meting.gebundeld || []).length,
+      paginasZonderTekstlaag: meting.paginasZonderTekstlaag,
+      paginasLeeg: meting.paginasLeeg,
+    },
+  });
+
+  print({
+    ...meting,
+    ...(opgehaald ? { opgehaaldNaar: opgehaald } : {}),
+    let_op: [
+      'Keur nooit af op het getal alleen: maak een uitsnede en leg die ernaast.',
+      'Bij "achtergrondVlak": false staat de tekst op een foto of verloop. Neem dan de band over in de bevinding, niet een enkel getal, en toets aan het slechtste punt.',
+      ...(meting.paginasZonderTekstlaag?.length
+        ? ['Paginas onder paginasZonderTekstlaag hebben wel beeld maar geen tekstlaag: dat zijn scans, met tekst als foto. Die kan dit commando niet meten; vraag daarvoor een schermafdruk met een contrastmeting als ze ertoe doen.']
+        : []),
+      ...(meting.paginasLeeg?.length
+        ? ['Paginas onder paginasLeeg zijn blanco: geen tekst en geen beeld. Daar valt niets te meten en er is niets aan de hand. Vraag daar GEEN afdruk voor.']
+        : []),
+    ],
+  });
+}
+
 async function getPixelContrast(url: string, flags: Flags) {
   const doel = requireFlag(flags, 'selector');
   const marge = parseInt(flags.marge || '6', 10);
@@ -8879,6 +8991,8 @@ async function main() {
       return getNietTeksten(requirePositional(positional, 0, 'url'), flags);
     case 'get-pixelcontrast':
       return getPixelContrast(requirePositional(positional, 0, 'url'), flags);
+    case 'get-pdfcontrast':
+      return getPdfContrast(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-beweging':
       return getBeweging(requirePositional(positional, 0, 'url'), flags);
     case 'get-flitsen':

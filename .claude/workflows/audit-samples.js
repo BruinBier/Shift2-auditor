@@ -861,9 +861,36 @@ SAMPLE
 
 STAP 1 — HAAL HET DOCUMENT OP EN LEES DE STRUCTUUR UIT
 Download het bestand naar tmp/pdf/ en bepaal machinaal:
-  - Is het document GETAGD? Kijk of de catalog een /StructTreeRoot heeft en of /MarkInfo met
-    /Marked true aanwezig is. Controleer ter bevestiging of die sleutels überhaupt in het
-    bestand voorkomen.
+  - Is het document GETAGD? Dit is TWEE controles, en de tweede is de belangrijkste:
+      (a) heeft de catalog een /StructTreeRoot?
+      (b) STAAT ER IETS IN? Volg de verwijzing en kijk of de wortel /K heeft (de kinderen
+          van de boom):
+            m = re.search(r'/StructTreeRoot\s+(\d+)\s+\d+\s+R', cat)
+            getagd = bool(m) and '/K' in doc.xref_object(int(m.group(1)))
+          Ontbreekt /K, dan is het document functioneel ONGETAGD, ook al verwijst de catalog
+          naar een tagboom en ook al staat /Marked op true. Een lege /StructTreeRoot is een
+          inhoudsopgave zonder regels erop.
+          TEL NIET de losse /StructElem-objecten: die zitten in gecomprimeerde objectstromen
+          en geven nul voor ELK document, ook een perfect getagd document.
+    Volg dan de ongetagde route hieronder, en vraag GEEN PAC-uitvoer: er valt niets te keuren.
+    Schrijf in de 1.3.1-bevinding NIET dat het document zichzelf als getagd aanmerkt. Dat is
+    de PAC-melding "Markering voor getagde documenten" en die negeren we: /MarkInfo /Marked is
+    een administratieve vlag, geen obstakel voor wie het document gebruikt.
+    /MarkInfo /Marked doet NIET mee: niet in de routekeuze en niet in een bevinding. Het is
+    een administratieve vlag die niets zegt over wat er voor de gebruiker te halen valt.
+      (c) IS HET OVERAL GETAGD? Tel de pagina's met /StructParents en leg dat naast het totaal:
+            met = sum(1 for i in range(doc.page_count)
+                      if '/StructParents' in doc.xref_object(doc.page_xref(i)))
+          Loopt dat uiteen, dan MOET je dat melden als 1.3.1-bevinding. Dat is geen afweging:
+          zonder die melding valt het ongetagde deel stilzwijgend buiten het onderzoek, want
+          het document volgt de route "wel tags" en jij beoordeelt de kwaliteit van tags die
+          daar niet bestaan.
+          Schrijf het als EEN bevinding over EEN document: het document is getagd, maar niet op
+          alle pagina's, met de paginanummers erbij. Niet "er zitten twee documenten in" en niet
+          "de bijlage is ongetagd" -- hoe het zo gekomen is, is een verklaring en geen bevinding.
+          Het advies wijst naar het ongetagde deel: het hoofddocument opnieuw exporteren lost
+          niets op. Op ZOET-01 was Bijlage 2 getagd tot pagina 99 van de 166; vanaf 100 stond er
+          een extern rapport zonder tags, 40% van het document.
   - Documenttitel: staat er een /Title in de Info-dictionary? En staat /DisplayDocTitle op
     true in /ViewerPreferences? Ontbreekt dat laatste, dan toont de viewer de bestandsnaam.
   - Taal: staat /Lang in de catalog?
@@ -899,6 +926,10 @@ IS HET DOCUMENT NIET GETAGD, dan geldt dit dwingend (zie Shift2_Regels_SC_1_3_1.
 MAAR: deze criteria beoordeel je bij een ongetagd document WEL gewoon. Ze gaan over wat je ZIET
 en LEEST, en dat staat er ook zonder tags. Geef er een echt oordeel over (voldoet of afgekeurd);
 zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
+  - 1.4.3 contrast en 1.4.11 contrast van graphics → tags hebben hier niets mee te maken:
+    lichtblauwe tekst op wit is even onleesbaar zonder tagstructuur. Meet het met
+    `npm run cli -- get-pdfcontrast <pdf-url>`; dat werkt onafhankelijk van de tagstructuur.
+    PAC vraag je bij een ongetagd document niet.
   - 2.4.4 linkdoel → lees of de tekst van een link of webadres duidelijk maakt waar hij heen
     leidt. "Klik hier" of "lees meer" zonder context is ook in een PDF een afkeuring. Wat je
     hier NIET beoordeelt: dat de link niet klikbaar is; dat valt onder 1.3.1.
@@ -924,20 +955,74 @@ ALTIJD, ook bij een niet-getagd document:
     waardoor de viewer de bestandsnaam toont, dan is dat een AFKEURING.
   - 3.1.1 taal → ontbreekt /Lang, dan een AFKEURING. Staat het er, dan 'voldoet'.
 
-NIET ZELF BEOORDELEN:
-  - 1.4.3 contrast → ALTIJD 'niet_te_bepalen' bij een PDF. De onderzoeker controleert het
-    contrast in PDF-documenten handmatig. Meet het niet uit en schrijf er geen voorstel voor.
-    Zet in 'reden': "Contrast in PDF-documenten wordt handmatig door de onderzoeker
-    gecontroleerd."
+CONTRAST (1.4.3 en 1.4.11) — MEET HET, MET EEN EIGEN COMMANDO:
+
+  npm run cli -- get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
+
+  Draai dit ALTIJD bij een PDF. Het loopt het document af en geeft per kleurcombinatie de
+  uitkomst, de pagina's en drie voorbeelden. Het werkt door twee bronnen te combineren: de
+  TEKSTKLEUR komt uit het document zelf (exact, inclusief grootte en plek) en alleen de
+  ACHTERGROND van de beeldpunten. Er valt dus niets te raden, en het werkt onafhankelijk van
+  de tagstructuur.
+
+  - Elke combinatie onder de eis is een AFKEURING: 1.4.3 voor tekst, 1.4.11 als het om een
+    grafiek, diagram, kaart of betekenisvol pictogram gaat.
+  - Het veld 'formulering' geeft de uitkomst in de juiste vorm. Staat 'achtergrondVlak' op
+    false, dan ligt de tekst op een foto of een verloop en is de uitkomst een BAND ("loopt van
+    1,46:1 tot 6,23:1"). Neem die band over in de bevinding en toets aan het SLECHTSTE punt;
+    schrijf daar nooit één getal op, want het contrast loopt over de tekst heen.
+  - KEUR NIET AF OP HET GETAL ALLEEN. Maak een uitsnede van de plek en leg die ernaast: een
+    bijschrift over een foto kan op het slechtste punt zakken en als geheel toch leesbaar zijn.
+  - Ligt er PAC-uitvoer met contrastmeldingen, dan bevestigt die de meting; PAC zegt DÁT het
+    tekortschiet, dit commando zegt hoeveel en waar. Ze spreken elkaar niet tegen.
+  - Geen enkele combinatie onder de eis, en zie je zelf ook niets? Dan 'voldoet'.
+  - Bevat het document geen grafieken, diagrammen, kaarten of betekenisvolle pictogrammen,
+    dan is 1.4.11 'niet_aanwezig'. Schrijf wel waaróp je hebt gekeken.
+  - 'niet_te_bepalen' is bij contrast nog maar één geval: een SCAN, oftewel een pagina met
+    beeld maar zonder tekstlaag. Die komen terug onder 'paginasZonderTekstlaag'; doen ze ertoe,
+    vraag dan een schermafdruk met een contrastmeting. Dat is de enige plek waar dat nog nodig
+    is.
+  - LET OP het verschil met 'paginasLeeg': dat zijn blanco pagina's, zonder tekst en zonder
+    beeld. Daar valt niets te meten en er is niets aan de hand. Vraag daar GEEN afdruk voor en
+    noem ze niet in een bevinding.
+
+  Zie Shift2_Regels_SC_1_4_3.md en Shift2_Regels_SC_1_4_11.md, sectie Regels.
 
 NIET VAN TOEPASSING op een PDF: 1.4.10 reflow, 2.1.2 toetsenbordval, 2.5.3 label in naam,
 2.5.8 grootte aanwijsgebied. Zet die op 'niet_aanwezig'.
 
 IS HET DOCUMENT WEL GETAGD, dan gaat het om de KWALITEIT van de tags: leesvolgorde,
-koppenniveaus, tekstalternatieven, lijststructuur, tabelkoppen. Die kwaliteit kun je zonder
-PAC-output (PDF Accessibility Checker) niet betrouwbaar beoordelen. Zet de criteria die
-daarvan afhangen op 'niet_te_bepalen' met als reden dat de onderzoeker PAC-output moet
-aanleveren, en meld dat expliciet.
+koppenniveaus, tekstalternatieven, lijststructuur, tabelkoppen.
+
+DE SCREEN READER PREVIEW IS DAARVOOR DE BRON. Kijk of er bij de sample een PAC-opname ligt met
+"Screen reader" of "preview" in het label (pacRapporten). Die toont de HELE tagstructuur,
+element voor element, in de volgorde waarin hulpsoftware hem doorloopt, met de tagnaam ernaast.
+Daaruit lees je in één keer af:
+  - 1.3.1 -> staan er H1/H2/H3 bij de koppen? L/LI/Lbl/LBody bij de lijsten? Klopt TH/TD in de
+    tabellen? LET OP een veelvoorkomende fout: niet alleen de koprij maar de hele eerste kolom
+    als TH. Dat is een afkeuring (verkeerde kolomverwijzing), geen ontbrekende kop.
+  - 1.3.2 -> klopt de volgorde van de elementen?
+  - 1.1.1 -> wat staat er IN de Alt-balken? Automatische teksten als "Afbeelding met tekst,
+    kaart, diagram" of "Door AI gegenereerde inhoud is mogelijk onjuist" zijn een AFKEURING:
+    er staat iets en het brengt niets over. Een lege Alt bij een informatieve afbeelding ook.
+  - 2.4.6 -> dekken de koppen de lading van wat eronder staat?
+
+Het werkt twee kanten op: je ziet er fouten in, maar ook dat iets deugt. Schrijf 'voldoet'
+alleen als je het in de preview hebt gezien.
+
+Ligt die opname er NIET, zet de criteria die van de tagkwaliteit afhangen dan op
+'niet_te_bepalen' met als reden dat de Screen reader preview van dit document nodig is. Vraag
+er expliciet om, en noem hem bij naam: "de PAC-uitvoer" is te vaag.
+
+VRAAG DAARBIJ NOOIT om deze vier PAC-tabbladen, ook niet als ze rood zijn:
+  - Lettertypen -> nooit nodig; PDF/UA-eisen zonder WCAG-criterium erachter. Wat er wel toe
+    doet (komt de tekst als leesbare Unicode terug) stel je zelf vast: lees de tekst uit en
+    tel de vervangingstekens (U+FFFD). Nul betekent goed.
+  - Natuurlijke taal -> dat is /Lang, zelf uit de catalog te lezen. Valt onder 3.1.1.
+  - Metadata -> de documenttitel, zelf uit te lezen. Valt onder 2.4.2.
+  - Documentinstellingen -> /DisplayDocTitle, zelf uit te lezen. Valt ook onder 2.4.2.
+Vraag een detailscherm alleen als er een WCAG-criterium achter zit dat je er niet zelf uit
+kunt halen.
 
 DAT GELDT OOK VOOR EEN GOEDKEURING. De verleiding is groot om te concluderen dat iets wél goed
 staat — "de tabel heeft TH-cellen met Scope", "de afbeelding heeft een Alt". Zulke markeringen
@@ -981,9 +1066,11 @@ status 'niet_aanwezig' te zijn; met 'voldoet' spreken status en onderbouwing elk
 
   (b) De uitkomst staat al vast en er valt niets meer uit te zoeken. Zet dan de VASTSTELLING
       in 'reden', ZONDER vraagzin. Dit geldt vooral bij een ongetagde PDF: 1.1.1, 1.3.2, 1.4.5
-      en 2.4.4 zijn daar niet te beoordelen omdat de structuur ontbreekt, en dat verandert pas
+      en 3.2.4 zijn daar niet te beoordelen omdat de structuur ontbreekt, en dat verandert pas
       als het document getagd wordt. Schrijf dus niet "is er een getagde versie beschikbaar?"
       — die is er niet, en dat IS de bevinding, geen vraag.
+      LET OP: 2.4.4, 2.4.6, 1.4.1, 1.4.3 en 1.4.11 horen hier NIET bij. Die beoordeel je bij
+      een ongetagd document gewoon; zie het blok hierboven.
 
 Verzin geen vraag om een 'niet_te_bepalen' te rechtvaardigen. Een vraag die de onderzoeker niet
 kan beantwoorden, of waarvan het antwoord al vaststaat, kost alleen aandacht die naar de echte
@@ -1342,10 +1429,10 @@ LET OP bij een niet-getagde PDF: weerleg een afkeuring van 1.3.2 (leesvolgorde).
 LET OP bij een telefoonnummer- of e-maillink onder 2.4.4: weerleg die alleen als de link BEDOELD IS OM TE BELLEN of te mailen, ook bij een defecte of ontbrekende tel:-koppeling. Wijst de href naar een volledig andere bestemming (een webpagina of een document), dan is de afkeuring juist TERECHT en laat je hem staan: de linktekst voorspelt het doel dan onjuist. Zie Shift2_Regels_SC_2_4_4.md.
 
 LET OP bij een niet-getagde PDF: de ontbrekende tagstructuur wordt al onder 1.3.1 afgekeurd. Weerleg elke afkeuring die een GEVOLG is van diezelfde oorzaak en zet gecorrigeerdeStatus op 'niet_te_bepalen': 1.3.2 (geen programmatische leesvolgorde), 1.4.5 (zonder tags geen onderscheid tussen tekst en afbeelding) en 3.2.4 (geen programmatisch herkenbare onderdelen om te vergelijken). Weerleg ook een AFKEURING onder 1.1.1: die hoort bij een ongetagde PDF een opmerking te zijn.
-Maar 2.4.4, 2.4.6 en 1.4.1 horen bij een ongetagd document WEL beoordeeld te worden: die gaan over wat je ziet en leest, en dat staat er ook zonder tags. Weerleg een afkeuring daar dus NIET met het argument "het document is niet getagd". Weerleg wel een 2.4.4-afkeuring die erover gaat dat de link niet klikbaar is; dat valt onder 1.3.1.
+Maar 2.4.4, 2.4.6, 1.4.1, 1.4.3 en 1.4.11 horen bij een ongetagd document WEL beoordeeld te worden: die gaan over wat je ziet en leest, en dat staat er ook zonder tags. Weerleg een afkeuring daar dus NIET met het argument "het document is niet getagd" — zeker niet bij contrast, want tags hebben daar niets mee te maken. Weerleg wel een 2.4.4-afkeuring die erover gaat dat de link niet klikbaar is; dat valt onder 1.3.1.
 
 Het onderscheid: 1.4.5 heeft tags nodig omdat de vraag is wat er als afbeelding is AANGEMERKT, een eigenschap van de code. 1.4.1 heeft ze niet nodig omdat de vraag is of kleur de enige drager van informatie is; wie kleurenblind is loopt daar visueel tegenaan, los van wat een schermlezer met het document kan.
-Weerleg bij een PDF verder elke 1.4.3-bevinding over contrast: dat controleert de onderzoeker handmatig, dus dat hoort 'niet_te_bepalen' te zijn.
+Bij een PDF is een 1.4.3- of 1.4.11-bevinding over contrast GELDIG, of hij nu steunt op de PAC-uitvoer bij die sample of op een eigen pixelmeting van de gerenderde pagina. Weerleg zo'n bevinding dus NIET op de meetmethode. Weerleg wel: (a) een bevinding die één contrastverhouding noemt terwijl de tekst op een foto, een verloop of een gedeeltelijk gekleurd vlak staat — daar hoort een band ("van 1,9:1 tot 6,4:1") met het slechtste punt als toets, dus laat die corrigeren; (b) een bevinding die een verhouding noemt die niet in de PAC-uitvoer staat én niet als eigen meting is aangemerkt, want dan is de herkomst onduidelijk; (c) een bevinding zonder pagina of plek, want die kan de leverancier niet terugvinden.
 
 Haal zo nodig zelf de pagina op:
   npm run cli -- get-html ${sample.url || '<url>'} --text

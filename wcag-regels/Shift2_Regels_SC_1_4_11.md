@@ -166,7 +166,26 @@ knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
 ## Regels
 
 - Zelfde hoogcontrast-werkwijze als 1.4.3: heeft de site een hoogcontrast-knop met voldoende eigen contrast, dan een opmerking op het homepage-sample (status resolved, impact en responsibility leeg), QuickFinding 0a811ca3-e7b3-4909-846a-68525eb55948, en daarna HTML-paginas niet meer inhoudelijk checken.
-- Bij PDF-content is 1.4.11 meestal niet relevant.
+- Bij een PDF gaat 1.4.11 over de niet-tekstuele dragers in het document: de lijnen en
+  vlakken van een grafiek of diagram, de zones van een kaart, een pictogram dat betekenis
+  draagt. Een PDF heeft geen bedieningselementen, dus die helft van het criterium vervalt;
+  wat overblijft is "betekenisvolle graphics".
+- PAC GAAT VOOR, JE EIGEN METING VULT AAN, net als bij 1.4.3. Ligt er PAC-uitvoer met
+  contrastmeldingen die over een afbeelding of grafisch element gaan in plaats van over tekst,
+  dan is dat een afkeuring onder 1.4.11. Gaan de meldingen over tekst, dan horen ze onder
+  1.4.3; PAC benoemt dat zelf ("Tekst met onvoldoende contrast").
+- Meet het met `npm run cli -- get-pdfcontrast <pdf-url>`. Dat geeft per kleurcombinatie de
+  uitkomst en de pagina's, en werkt onafhankelijk van de tagstructuur. Loopt het element over
+  een foto of een verloop, dan staat `achtergrondVlak` op false en geeft `formulering` de band
+  — "loopt van 1,70:1 tot 4,20:1". Toets aan het slechtste punt; één getal bestaat daar niet.
+- Bevat het document geen grafieken, diagrammen, kaarten of betekenisvolle pictogrammen, dan
+  is 1.4.11 `niet_aanwezig`. Dat is een afgerond oordeel en vraagt geen PAC-uitvoer: dát er
+  niets van die soort in staat, zie je aan de gerenderde pagina's. Schrijf wel waaróp je hebt
+  gekeken.
+- `niet_te_bepalen` is bij contrast nog maar één geval: een SCAN, een pagina met beeld maar
+  zonder tekstlaag. Die komt terug onder `paginasZonderTekstlaag`; doet hij ertoe, vraag dan
+  een schermafdruk met een contrastmeting. Een LEGE pagina (`paginasLeeg`) is iets anders: daar
+  staat niets op en er is niets aan de hand.
 
 ## Op de kaart
 

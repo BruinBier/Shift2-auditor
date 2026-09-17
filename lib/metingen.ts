@@ -118,6 +118,25 @@ export const METINGEN: Meetopdracht[] = [
     waaromNiet: 'Vraagt welk element je meet.',
   },
   {
+    /**
+     * Contrast in een PDF, op de beeldpunten.
+     *
+     * Hoort hier omdat 1.4.3 bij een PDF jarenlang op `niet_te_bepalen` bleef staan: de regel
+     * zei dat het niet te meten viel. Dat gold voor de methode die toen voorlag -- raden welke
+     * beeldpunten tekst zijn -- en niet voor deze: de tekstkleur komt uit het document zelf,
+     * alleen de achtergrond komt van het beeld.
+     *
+     * `vanafDeKaart` staat aan: er valt niets aan te wijzen vooraf, het commando loopt het
+     * document zelf af.
+     */
+    commando: 'get-pdfcontrast',
+    criteria: ['1.4.3', '1.4.11'],
+    toegestaneVlaggen: ['paginas'],
+    vanafDeKaart: true,
+    wat: 'Meet het contrast van alle tekst in een PDF en geeft een band waar de tekst op een foto of verloop staat.',
+    duurt: 'ongeveer een halve minuut per honderd paginas',
+  },
+  {
     commando: 'get-nietteksten',
     criteria: ['1.4.11'],
     toegestaneVlaggen: ['klik', 'max', 'marge'],

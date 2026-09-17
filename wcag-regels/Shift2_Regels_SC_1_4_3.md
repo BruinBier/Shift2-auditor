@@ -27,8 +27,9 @@ samples leveren dus één knop-oordeel op, niet twaalf.
 Wat op een vervolgpagina wél onder 1.4.3 valt: tekst in een afbeelding in de main-content,
 want die schakelt niet mee met de knop. Zie de uitzondering onderaan.
 
-**Uitzondering voor PDF's:** die volgen een eigen route (`niet_te_bepalen`, Frits meet het
-handmatig). Zie de regels onderaan.
+**Uitzondering voor PDF's:** die volgen een eigen route. `get-contrast` werkt er niet; je
+meet op de beeldpunten van de gerenderde pagina, en PAC-uitvoer bij de sample gaat voor je
+eigen meting. Zie de regels onderaan.
 
 ## Testvolgorde met een hoogcontrast-knop
 
@@ -150,7 +151,54 @@ Bevinding B006 in BEV-03.
 - UITZONDERING: tekst IN een afbeelding (poster, infographic, banner) schakelt NIET mee met de hoogcontrast-knop. Die toets je WEL op 1.4.3, ook op paginas waar je de reguliere contrastcheck overslaat. Toets aan 4,5:1 (niet 3:1), want bij een afbeelding is de font-size niet uitleesbaar en kun je niet vaststellen of het als grote tekst telt.
 - Staat de informatie van de afbeelding VOLLEDIG als echte tekst op de pagina, dan is de afbeelding niet meer de enige drager en valt de tekst-in-afbeelding onder een 1.4.3-uitzondering. Is het alternatief incompleet, dan blijft de contrasteis gelden.
 - PDF-documenten: 1.4.3 wel per stuk inhoudelijk checken. De hoogcontrast-knop op de website geldt niet voor PDFs.
-- CONTRAST IN PDF'S DOET FRITS HANDMATIG. Meet het niet zelf uit en schrijf er geen bevinding voor. Zet 1.4.3 bij een PDF-sample op `niet_te_bepalen` met als reden dat de onderzoeker het contrast handmatig controleert. Reden: een pixelmeting rond de tekst is niet betrouwbaar genoeg bij tekst over een foto, een verloop of een gedeeltelijk gekleurd vlak, en bij een bevinding die naar de opdrachtgever gaat weegt een eigen meting zwaarder. Vastgelegd door Frits op 2026-08-02 bij UTHEU-01.
+- CONTRAST IN EEN PDF MEET JE MET `npm run cli -- get-pdfcontrast <pdf-url of pad>`. Dat
+  commando loopt het hele document af en geeft per kleurcombinatie de uitkomst, de pagina's en
+  drie voorbeelden. Met `--paginas=1,38` beperk je het tot bepaalde pagina's.
+  Het werkt omdat het twee bronnen combineert: de TEKSTKLEUR komt uit het document zelf
+  (PyMuPDF geeft per fragment de exacte kleur, grootte en plek), en alleen de ACHTERGROND komt
+  van de beeldpunten van de gerenderde pagina. Er valt dus niets te raden over welke
+  beeldpunten tekst zijn — dat was het bezwaar tegen de oude methode, en het geldt hier niet.
+- STAAT DE TEKST OP EEN FOTO, EEN VERLOOP OF EEN GEDEELTELIJK GEKLEURD VLAK, MEET DAN MEERDERE
+  PLEKKEN EN GEEF DE BAND. Er is daar geen enkele contrastverhouding: hij loopt over de tekst
+  heen. Schrijf hem dus ook zo op — "het contrast loopt van 1,9:1 linksboven tot 6,4:1
+  rechtsonder" — en toets aan het **slechtste** punt, niet aan het gemiddelde. Eerder stond
+  hier dat zo'n meting daarom onbetrouwbaar was; dat was het verkeerde gevolg. Onbetrouwbaar is
+  het één getal, niet de meting.
+  Noem bij een verloop waar je gemeten hebt, zodat de leverancier de plek terugvindt: de
+  pagina, en waar op die pagina. Zonder dat is een band net zo goed een bewering als een getal.
+  Vastgelegd door Frits op 2026-08-02 bij UTHEU-01; herzien op 2026-09-17.
+- MAAR: PAC MEET HET WEL, EN DAT IS EEN GELDIGE MEETUITKOMST. Ligt er PAC-uitvoer bij de
+  sample (`pacRapporten`, zie `Shift2_Werkwijze_PDF.md`) met meldingen "Tekst met onvoldoende
+  contrast", dan is dat een AFKEURING onder 1.4.3. Je leest dan een meting af die een ander
+  heeft gedaan — hetzelfde als wat de onderzoeker met de hand zou doen, en precies niet de
+  eigen pixelmeting die hierboven verboden is. Neem over wat er staat: de aard van de fout,
+  de pagina's die PAC noemt en de kleuren als je ze ziet. Reken niets na en verzin geen
+  verhouding die er niet staat.
+- PAC GAAT VOOR, JE EIGEN METING VULT AAN. Ligt er PAC-uitvoer, neem die over. Zwijgt PAC
+  over een plek waar jij ziet dat het misgaat — lichte tekst over een foto bijvoorbeeld, waar
+  PAC vaak niets meldt — meet die dan zelf en zet erbij dát het een eigen meting op een
+  gerenderde pagina is. De herkomst hoort zichtbaar te blijven: PAC's meting en die van jou
+  wegen niet hetzelfde bij een leverancier die tegensputtert.
+- Geen PAC-uitvoer en niets bijzonders aan de achtergrond? Dan meet je zelf en is dat genoeg.
+  `niet_te_bepalen` is er voor wat je niet kunt vaststellen, niet voor wat je niet hebt
+  geprobeerd.
+- Toont PAC géén contrastmeldingen terwijl het tabblad wél is doorlopen, dan is dat `voldoet`.
+  Zie je alleen het Summary en staat daar een telling zonder detailscherm, vraag dan om dát
+  detailscherm en houd het criterium tot die tijd op `niet_te_bepalen`.
+- BIJ EEN ONGETAGD DOCUMENT GELDT 1.4.3 GEWOON. Contrast heeft niets met tags te maken:
+  lichtblauwe tekst op wit is even onleesbaar zonder tagstructuur. Het hoort dus NIET in de
+  vervalroute van `Shift2_Regels_SC_1_3_1.md`, en `niet_te_bepalen` met "geen tags" als reden
+  is fout. `get-pdfcontrast` werkt onafhankelijk van de tags.
+- EEN SCHERMAFDRUK VAN DE ONDERZOEKER IS NOG MAAR OP ÉÉN PLEK NODIG: een SCAN. Dat is een
+  pagina met beeld maar zonder tekstlaag — de tekst staat er als foto, dus er zijn geen
+  tekstfragmenten met kleurinformatie. `get-pdfcontrast` meldt die apart onder
+  `paginasZonderTekstlaag`. Doen ze er voor het oordeel toe, vraag dan een afdruk met een
+  contrastmeting erop.
+- VERWAR EEN SCAN NIET MET EEN LEGE PAGINA. Een blanco pagina heeft ook geen tekstfragmenten,
+  maar er staat niets op en er valt niets te meten. Die komen apart terug onder `paginasLeeg`;
+  vraag daar nooit een afdruk voor. In ZOET-01 Bijlage 2 stonden twee zulke pagina's (101 en
+  103), en een eerdere versie van dit commando vroeg daar een afdruk voor die nergens over
+  ging.
 - Noteer gemeten kleuren als #RRGGBB met de contrastverhouding erbij.
 
 ## Op de kaart
@@ -175,7 +223,8 @@ erachter deugt. Meet die knop één keer, op het homepage-sample. Twaalf samples
 knop-oordeel op, niet twaalf.
 
 Twee dingen schakelen niet mee met die knop en blijven dus altijd apart te beoordelen: tekst
-ín een afbeelding, en de PDF's in de steekproef.
+ín een afbeelding, en de PDF's in de steekproef. Bij een PDF gaat de PAC-uitvoer voor; waar die
+zwijgt meet je op de beeldpunten, en op een foto of verloop geef je de band.
 
 ### Audit-instructies
 
@@ -215,8 +264,11 @@ Twee dingen schakelen niet mee met die knop en blijven dus altijd apart te beoor
 8. [agent] Staat de informatie van die afbeelding volledig als echte tekst op de pagina, dan
    is het beeld niet meer de enige drager en vervalt de contrasteis. Is dat alternatief
    incompleet, dan geldt hij gewoon.
-9. [jij] PDF's meet je hier niet. Zet 1.4.3 bij een PDF-sample op `niet te bepalen`, met als
-   reden dat de onderzoeker het contrast handmatig controleert.
+9. [agent] Bij een PDF: kijk eerst of er PAC-uitvoer bij de sample ligt. Meldingen "Tekst met
+   onvoldoende contrast" zijn een afkeuring onder 1.4.3, met de pagina's die PAC noemt. Zwijgt
+   PAC over een plek waar je zelf ziet dat het misgaat, meet die dan op de beeldpunten van de
+   gerenderde pagina. Staat de tekst op een foto of een verloop, geef dan de band van slechtste
+   tot beste punt en toets aan het slechtste.
 
 #### Stap 4 — Vastleggen
 
@@ -255,8 +307,9 @@ Voor een openbare pagina heeft headless zelfs een voordeel: de hoogcontrastweerg
 login of een cookiemuur heb je de auditsessie juist nodig.
 
 Wat hier niet uit blijkt: of de hoogcontrastweergave inhoudelijk deugt op de hele site, en of
-een afbeelding met tekst er naar het oordeel van een mens nog leesbaar in is. En het contrast
-in PDF's — dat doet de onderzoeker met de hand.
+een afbeelding met tekst er naar het oordeel van een mens nog leesbaar in is. Het contrast in
+PDF's komt uit de PAC-uitvoer bij de sample, aangevuld met een eigen pixelmeting waar PAC
+zwijgt; bij tekst op een foto of een verloop is de uitkomst een band en geen enkel getal.
 
 Aanleiding: op heuvelrug.nl stond 1.4.3 klaar als vraag aan de onderzoeker terwijl het te meten
 was. Gemeten: de knop wit op #007373 is 5,68:1 waar 4,5:1 nodig is, in hoogcontrast wit op
