@@ -576,9 +576,50 @@ menu's, schakelknoppen of zoeksuggesties — meld dat in \`openVragen\`.${
         isPdf(sample)
           ? `
 
-DIT IS EEN PDF. Beoordeel de documentstructuur, niet de DOM. Getagd of niet is machinaal vast
-te stellen. Is het document niet getagd, dan vervallen 1.3.2, 1.4.5 en 3.2.4, en wordt 1.1.1
-een opmerking; 2.4.4 en 2.4.6 beoordeel je juist wél visueel.`
+DIT IS EEN PDF. Beoordeel de documentstructuur, niet de DOM. Lees eerst
+\`wcag-regels/Shift2_Werkwijze_PDF.md\`; hieronder staat alleen wat je niet mag missen.
+
+GETAGD OF NIET — DIT IS TWEE CONTROLES:
+  (a) heeft de catalog een /StructTreeRoot?
+  (b) STAAT ER IETS IN? Volg de verwijzing en kijk of de wortel /K heeft:
+        m = re.search(r'/StructTreeRoot\s+(\d+)\s+\d+\s+R', cat)
+        getagd = bool(m) and '/K' in doc.xref_object(int(m.group(1)))
+      Geen /K = functioneel ONGETAGD, ook al staat /Marked op true. Tel NIET de losse
+      /StructElem-objecten: die zitten in gecomprimeerde objectstromen en geven nul voor
+      elk document, ook een perfect getagd document.
+  /MarkInfo /Marked doet NIET mee: niet in de routekeuze en niet in een bevinding. Het is
+  een administratieve vlag. In PAC is dat de melding "Markering voor getagde documenten".
+
+IS HET OVERAL GETAGD? Tel de pagina's met /StructParents naast het totaal:
+    met = sum(1 for i in range(doc.page_count)
+              if '/StructParents' in doc.xref_object(doc.page_xref(i)))
+  Loopt dat uiteen, dan MOET je dat melden onder 1.3.1: het document is getagd maar niet op
+  alle pagina's, met de paginanummers erbij. Zonder die melding valt het ongetagde deel
+  stilzwijgend buiten het onderzoek.
+
+NIET GETAGD (of lege tagboom): 1.3.2, 1.4.5 en 3.2.4 vervallen en 1.1.1 wordt een opmerking;
+2.4.4, 2.4.6, 1.4.1, 2.4.2 en 3.1.1 beoordeel je juist wél. Vraag dan geen PAC-uitvoer.
+
+CONTRAST (1.4.3, 1.4.11) MEET JE ZELF:
+    npm run cli -- get-pdfcontrast <pdf-url> [--paginas=1,38]
+  Dat werkt onafhankelijk van de tagstructuur, dus ook bij een ongetagd document. Staat
+  'achtergrondVlak' op false, dan ligt de tekst op een foto of verloop en is de uitkomst een
+  BAND ("loopt van 1,46:1 tot 6,23:1"); neem die over en toets het slechtste punt. Keur nooit
+  af op het getal alleen. 'niet_te_bepalen' is hier nog maar één geval: een scan zonder
+  tekstlaag (paginasZonderTekstlaag).
+
+WEL GETAGD — DE SCREEN READER PREVIEW IS DE BRON. Kijk of er bij de sample een PAC-opname
+ligt met "Screen reader" of "preview" in het label (pacRapporten). Die toont de HELE
+tagstructuur met de tagnaam per element, in de volgorde waarin hulpsoftware hem doorloopt:
+  - 1.3.1 -> H1/H2/H3 bij de koppen? L/LI/Lbl/LBody bij de lijsten? TH/TD in de tabellen?
+    LET OP: niet alleen de koprij maar de hele eerste kolom als TH is een AFKEURING.
+  - 1.3.2 -> klopt de volgorde?
+  - 1.1.1 -> wat staat er IN de Alt-balken? "Afbeelding met tekst, kaart, diagram" of "Door AI
+    gegenereerde inhoud is mogelijk onjuist" is een AFKEURING, geen opmerking: er staat iets
+    en het brengt niets over.
+  - 2.4.6 -> dekken de koppen de lading?
+Het werkt twee kanten op: schrijf 'voldoet' alleen als je het in de preview hebt gezien.
+Ligt die opname er niet, vraag er dan bij naam om; "de PAC-uitvoer" is te vaag.`
           : ''
       }${gebiedenSectie}
 
