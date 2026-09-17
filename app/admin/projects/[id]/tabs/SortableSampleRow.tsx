@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 import { PaginaVinkje } from './PaginaVinkje';
+import { PacKnop } from './PacKnop';
 
 interface SortableSampleRowProps {
   item: any;
@@ -240,6 +241,31 @@ export function SortableSampleRow({
               waarde={item.heeftFormulier ?? null}
               wat="een formulier"
               criteria="1.3.5, 3.3.1, 3.3.2, 3.3.3 en 3.3.7"
+            />
+          </div>
+        )}
+
+        {/* Precies andersom dan de twee hierboven: alleen bij een PDF.
+
+            Dit vinkje sluit geen criteria af maar stuurt de route. Zonder tagstructuur
+            bestaat er voor hulpsoftware niets om te toetsen en vervalt een reeks criteria
+            via de vervalroute in Shift2_Regels_SC_1_3_1.md; mét tags gaat het om de
+            kwaliteit ervan, en daar komt PAC bij. */}
+        {item.sampleType === 'pdf' && (
+          <div className="flex items-center gap-2">
+            <PaginaVinkje
+              sampleId={item.id}
+              veld="heeftTags"
+              waarde={item.heeftTags ?? null}
+              wat="een tagstructuur"
+              uitTekst="Dit document heeft geen tagstructuur; de ontbrekende structuur wordt afgekeurd onder 1.3.1 en de criteria die daarvan afhangen vervallen."
+            />
+            {/* Het PAC-rapport hoort naast het tags-vinkje: hier komt de vraag op of dit
+                document tags heeft, en zo ja wat PAC over de kwaliteit ervan zegt. */}
+            <PacKnop
+              sampleId={item.id}
+              sampleTitel={item.title}
+              rapporten={item.pacRapporten ?? []}
             />
           </div>
         )}

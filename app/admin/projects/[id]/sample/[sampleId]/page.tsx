@@ -8,6 +8,7 @@ import NotesSection from './NotesSection';
 import TestResults from './TestResults';
 import BeheerMenu from '@/app/components/BeheerMenu';
 import CriterionChecks from './CriterionChecks';
+import { PacKnop } from '../../tabs/PacKnop';
 
 export default async function SampleItemPage({
   params,
@@ -27,6 +28,8 @@ export default async function SampleItemPage({
   const sampleItem = await prisma.sampleItem.findUnique({
     where: { id: params.sampleId },
     include: {
+      // De PAC-uitvoer bij een PDF-sample; zie Shift2_Werkwijze_PDF.md.
+      pacRapporten: { orderBy: { createdAt: 'asc' } },
       occurrences: {
         include: {
           finding: {
@@ -365,6 +368,21 @@ export default async function SampleItemPage({
                         <p className="text-sm text-gray-500">Nog geen auditbewijs vastgelegd</p>
                       )}
                     </div>
+
+                    {/* Alleen bij een PDF: PAC toetst PDF-tagkwaliteit en zegt niets over
+                        een webpagina. */}
+                    {sampleItem.sampleType === 'pdf' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500 mb-1">
+                          PAC-uitvoer
+                        </label>
+                        <PacKnop
+                          sampleId={params.sampleId}
+                          sampleTitel={sampleItem.title}
+                          rapporten={sampleItem.pacRapporten ?? []}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

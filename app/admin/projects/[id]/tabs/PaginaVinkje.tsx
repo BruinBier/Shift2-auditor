@@ -32,15 +32,28 @@ const VOLGENDE: Record<string, Stand> = {
 
 interface Props {
   sampleId: string;
-  veld: 'heeftBewegendBeeld' | 'heeftFormulier';
+  veld: 'heeftBewegendBeeld' | 'heeftFormulier' | 'heeftTags';
   waarde: Stand;
   /** Wat er staat als het vinkje aan staat, voor de titel. Bijv. "bewegend beeld". */
   wat: string;
-  /** Welke criteria vervallen als het uit staat. Bijv. "1.2.1 t/m 1.2.5 en 2.1.4". */
-  criteria: string;
+  /**
+   * Welke criteria vervallen als het uit staat. Bijv. "1.2.1 t/m 1.2.5 en 2.1.4".
+   *
+   * Leeg laten bij een vinkje dat niets afsluit maar de route stuurt, zoals `heeftTags`:
+   * daar betekent `false` juist dat er méér te melden valt (de ontbrekende structuur is
+   * een afkeuring onder 1.3.1), niet dat er criteria wegvallen.
+   */
+  criteria?: string;
+  /**
+   * De tekst bij `false`, als "er staat geen ..." niet klopt.
+   *
+   * Bij bewegend beeld en formulieren is `false` een afwezigheid. Bij tags is het een
+   * gebrek: het document hoort structuur te hebben en heeft die niet.
+   */
+  uitTekst?: string;
 }
 
-export function PaginaVinkje({ sampleId, veld, waarde, wat, criteria }: Props) {
+export function PaginaVinkje({ sampleId, veld, waarde, wat, criteria, uitTekst }: Props) {
   const router = useRouter();
   const [bezig, setBezig] = useState(false);
   // Meteen tonen wat je klikt; de server bevestigt daarna.
@@ -73,7 +86,9 @@ export function PaginaVinkje({ sampleId, veld, waarde, wat, criteria }: Props) {
       ? `Niet vastgesteld of hier ${wat} staat. Klik om vast te leggen dat het er wel is.`
       : getoond === true
         ? `Op deze pagina staat ${wat}. Klik om vast te leggen dat het er niet is.`
-        : `Op deze pagina staat geen ${wat}; ${criteria} worden niet beoordeeld. Klik om dit terug te zetten op niet vastgesteld.`;
+        : uitTekst
+          ? `${uitTekst} Klik om dit terug te zetten op niet vastgesteld.`
+          : `Op deze pagina staat geen ${wat}; ${criteria} worden niet beoordeeld. Klik om dit terug te zetten op niet vastgesteld.`;
 
   const stijl =
     getoond === true

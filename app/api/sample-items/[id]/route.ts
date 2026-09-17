@@ -21,12 +21,15 @@ export async function PATCH(
      */
     const alleenVinkjes =
       Object.keys(body).length > 0 &&
-      Object.keys(body).every((k) => k === 'heeftBewegendBeeld' || k === 'heeftFormulier');
+      Object.keys(body).every(
+        (k) => k === 'heeftBewegendBeeld' || k === 'heeftFormulier' || k === 'heeftTags'
+      );
 
     // Prepare the update data
     const updateData: any = {
       ...(body.heeftBewegendBeeld !== undefined && { heeftBewegendBeeld: body.heeftBewegendBeeld }),
       ...(body.heeftFormulier !== undefined && { heeftFormulier: body.heeftFormulier }),
+      ...(body.heeftTags !== undefined && { heeftTags: body.heeftTags }),
       ...(body.title && { title: body.title }),
       ...(body.url !== undefined && { url: body.url }),
       ...(body.description !== undefined && { description: body.description }),

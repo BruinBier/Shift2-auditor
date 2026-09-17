@@ -41,6 +41,8 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
         orderBy: { orderIndex: 'asc' },
         include: {
           crawlerResults: true,
+          // De PAC-uitvoer bij een PDF-sample. Voedt het PAC-knopje op de steekproefrij.
+          pacRapporten: { orderBy: { createdAt: 'asc' } },
           // Het oordeel per criterium op dit sample. Voedt het "Waar sta ik"-scherm.
           criterionChecks: {
             select: {

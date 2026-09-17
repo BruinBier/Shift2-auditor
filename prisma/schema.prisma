@@ -461,6 +461,34 @@ model SampleItem {
   /// Zelfde regels als bij `heeftBewegendBeeld`: null is niet vastgesteld, de
   /// onderzoeker zet het, en het akkoord blijft een aparte handeling.
   heeftFormulier     Boolean?  @map("heeft_formulier")
+  /// Zit er een tagstructuur in dit PDF-document?
+  ///
+  /// Anders dan de twee vinkjes hierboven sluit dit GEEN criteria af. Het stuurt de
+  /// route: zonder tags bestaat er voor hulpsoftware geen structuur om te toetsen, en
+  /// dan vervalt een reeks criteria via `Shift2_Regels_SC_1_3_1.md`. Mét tags gaat het
+  /// juist om de kwaliteit ervan, en daar komt PAC bij. Zou dit als gewoon paginavinkje
+  /// werken, dan zette `false` tien criteria op `niet_aanwezig` -- precies verkeerd, want
+  /// er is structuur nodig, ze ontbreekt alleen. Daarom staat het NIET in PAGINAVINKJES.
+  ///
+  /// De vraag is alleen of de tagboom er is (`/StructTreeRoot`), niet of het document
+  /// zichzelf als Tagged PDF markeert (`/MarkInfo /Marked`). Die twee kunnen uit elkaar
+  /// lopen: Bijlage 2 van ZOET-01 heeft tags op 99 van de 166 pagina's terwijl `/Marked`
+  /// op false staat. Een agent las dat als "niet getagd", volgde de vervalroute en keurde
+  /// vier criteria af als `niet_te_bepalen` die met de hand wel te beoordelen waren. Een
+  /// uitstaande `/Marked` is een BEVINDING onder 1.3.1, geen routekeuze.
+  ///
+  /// null betekent niet vastgesteld, net als bij de andere vinkjes, en laat de audit
+  /// ongemoeid. Alleen bij een PDF-sample van betekenis.
+  heeftTags          Boolean?  @map("heeft_tags")
+  /// De PAC-uitvoer van dit PDF-document; zie `PacRapport`.
+  ///
+  /// Meervoud, want één bestand was te weinig. De werkafspraak in
+  /// `Shift2_Werkwijze_PDF.md` vraagt om het Summary report PLUS een Detailed report per
+  /// tabblad met Failed of Warning. Het Summary geeft alleen tellingen ("158 fout"), en
+  /// daaruit volgt geen bevinding: 158 ontbrekende tekstalternatieven vragen een ander
+  /// advies dan 158 verkeerd getagde decoratieve afbeeldingen. Met één veld verving de
+  /// tweede afdruk de eerste en raakte juist het detailscherm kwijt.
+  pacRapporten       PacRapport[]
   notes          String?      @db.Text
   crawledAt      DateTime?    @map("crawled_at")
 
@@ -817,6 +845,37 @@ model FindingUrl {
 
   @@unique([findingId, scopeUrlId])
   @@map("finding_urls")
+}
+
+/// Eén schermafdruk of PDF uit PAC, bij een PDF-sample.
+///
+/// PAC toetst de KWALITEIT van de tags -- leesvolgorde, kopniveaus, lijst- en
+/// tabelstructuur -- en dat is niet uit de ruwe bytes te lezen. Zonder die uitvoer gaan
+/// de criteria die ervan afhangen op `niet_te_bepalen`; zie stap 2 in
+/// `Shift2_Werkwijze_PDF.md`.
+///
+/// Het staat hier en niet in de chat omdat het daar per gesprek opnieuw gevraagd werd. De
+/// werkafspraak zegt uitdrukkelijk dat de onderzoeker een bestand maar één keer door PAC
+/// hoeft te halen; zonder bewaarplek was dat niet waar te maken.
+model PacRapport {
+  id             String     @id @default(uuid())
+  sampleItemId   String     @map("sample_item_id")
+  fileName       String     @map("file_name")
+  fileType       String     @map("file_type")
+  fileSize       Int        @map("file_size")
+  filePath       String     @map("file_path")
+  /// Welk PAC-scherm dit is: "Summary", "Alternatieve beschrijvingen", enzovoort.
+  ///
+  /// Vrije tekst en geen lijst: PAC's tabbladen verschillen per versie, en een agent moet
+  /// kunnen lezen wát hij voor zich heeft zonder de afbeelding te hoeven duiden. Leeg mag,
+  /// want een afdruk zonder label is nog altijd beter dan geen afdruk.
+  label          String?
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  sampleItem     SampleItem @relation(fields: [sampleItemId], references: [id], onDelete: Cascade)
+
+  @@index([sampleItemId])
+  @@map("pac_rapporten")
 }
 
 model FindingAttachment {

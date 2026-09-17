@@ -99,6 +99,7 @@ export async function POST(
           ? { heeftBewegendBeeld: body.heeftBewegendBeeld }
           : {}),
         ...(body.heeftFormulier !== undefined ? { heeftFormulier: body.heeftFormulier } : {}),
+        ...(body.heeftTags !== undefined ? { heeftTags: body.heeftTags } : {}),
       },
     });
     return NextResponse.json(sampleItem, { status: 201 });

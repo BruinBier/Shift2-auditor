@@ -3792,14 +3792,71 @@ export default function Stapel({
     setGepositioneerdVoor(focus);
   }, [focus, stapel, gepositioneerdVoor]);
 
-  // De voorstellen die op deze cel wachten. Die staan op de oordeelkaart en gaan
+  // De voorstellen die op deze cel wachten. Die staan op de kaart van die cel en gaan
   // mee met "Akkoord" — een losse kaart zou hetzelfde nog eens vragen.
+  //
+  // Elke kaart mét een cel, niet alleen `soort === 'oordeel'`. De werklijst haalt een
+  // voorstel weg uit de losse voorstelkaarten zodra er een onbevestigd oordeel boven
+  // hangt (zie `opOordeelkaart` hierboven), in de verwachting dat de kaart van die cel
+  // het toont. Stond die cel op een andere kaartsoort, dan was deze lijst leeg en liet
+  // geen enkele kaart het voorstel zien: op ZOET-01 wachtte V013 (1.1.1, opmerking op
+  // een PDF-sample) zo op akkoord terwijl de kaart "er is niets aan de hand" meldde.
   const wachtendeVoorstellen =
-    huidig?.soort === 'oordeel'
+    huidig && huidig.soort !== 'voorstel'
       ? stand.voorstellen.filter(
           (v) => v.sampleId === huidig.cel.sampleId && v.code === huidig.cel.code
         )
       : [];
+
+  /**
+   * De voorstellen op deze cel die nergens anders op de kaart staan, met hun volledige
+   * tekst en advies.
+   *
+   * Wat al bij een deelgebied staat hoort hier niet nog eens: dan lees je dezelfde tekst
+   * twee keer op één kaart. De melding dat het op akkoord wacht blijft wel — die staat
+   * bij de knoppen onderaan.
+   *
+   * Dit blok stond eerst alleen op de oordeelkaart. Een opmerking die aan geen enkel
+   * deelgebied hangt viel daardoor van de kaart af: `afkeuringenBlok` toont bij een
+   * criterium mét deelgebieden alleen `verdeelBevindingen().losse`, en een opmerking zit
+   * niet in de koppelbare set. Zo bleef er één kaart over die meldde dat alle gebieden
+   * waren nagelopen en er niets aan de hand was, terwijl er een voorstel op akkoord
+   * wachtte dat nergens te lezen was.
+   */
+  const losseVoorstellenBlok = (cel: Cel) => {
+    /**
+     * Alleen een gebied dat ook echt op de kaart staat, telt als vindplaats.
+     *
+     * De kaart toont buiten de uitklapper de gebieden die aandacht vragen — `fout`,
+     * `opmerking`, of nog niet nagelopen. Hangt een voorstel alleen aan gebieden op `nvt`
+     * of `ok`, dan staat het nergens zichtbaar en hoort het hier, als losse regel: V013 op
+     * ZOET-01 hing aan twee `nvt`-gebieden en verdween daardoor volledig van de kaart.
+     *
+     * De uitklapper laat het voorstel bij zo'n gebied niet nog eens zien; dat zou dezelfde
+     * regel twee keer op één kaart zetten. Zie `gebiedenLijst`.
+     */
+    const bijGebied = new Set(
+      (cel.gebieden ?? [])
+        .filter((g) => g.uitkomst === 'fout' || g.uitkomst === 'opmerking')
+        .flatMap((g) => g.bevindingen ?? []),
+    );
+    const losseVoorstellen = wachtendeVoorstellen.filter((v) => !bijGebied.has(v.id));
+    if (!losseVoorstellen.length) return null;
+    /**
+     * Dezelfde regel als elke andere bevinding op de kaart: `bevindingRegel`.
+     *
+     * Er stond eerst een paars kader omheen met "Dit voorstel is aan geen deelgebied
+     * gekoppeld. Het wordt meegenomen als je hieronder op ... klikt". Dat gaat over onze
+     * administratie en niet over de bevinding, en bij een voorstel dat wél aan een
+     * (onzichtbaar) gebied hangt was het bovendien onjuist. Dat het met "Akkoord" meegaat,
+     * staat al bij de knoppen eronder.
+     *
+     * Eén vorm voor alle bevindingen op de kaart: ingeklapt op de eerste zin, met de
+     * V-code in paars omdat hij nog op akkoord wacht. Wie de hele tekst en het advies wil,
+     * klapt hem open — net als bij de bevindingen eronder.
+     */
+    return <ul className="mb-4 space-y-2">{losseVoorstellen.map((v) => bevindingRegel(v, cel))}</ul>;
+  };
 
   const huidigeCode = huidig
     ? huidig.soort === 'voorstel'
@@ -3994,6 +4051,9 @@ export default function Stapel({
                   : u.uitkomst === 'opmerking'
                     ? 'text-amber-700'
                     : 'text-red-700';
+            // Staat dit gebied ook buiten de uitklapper op de kaart? Zo niet, dan hoort zijn
+            // bevinding daar als losse regel en niet hier nog eens. Zie `losseVoorstellenBlok`.
+            const toonBevindingHier = !u || u.uitkomst === 'fout' || u.uitkomst === 'opmerking';
             return (
               <li key={gebied} className="flex gap-2 text-sm leading-relaxed">
                 <span className={kleur} aria-hidden="true">
@@ -4025,8 +4085,13 @@ export default function Stapel({
 
                       Zonder dit staat een gebied op `fout` los van de afkeuring die erover
                       gaat, en moet je zelf verbinden wat bij elkaar hoort. En je ziet niet
-                      wat je hier wél ziet: een gebied op `fout` zónder bevinding eronder. */}
-                  {!!verdeeld.perGebied.get(gebied)?.length && (
+                      wat je hier wél ziet: een gebied op `fout` zónder bevinding eronder.
+
+                      Bij een gebied op `nvt` of `ok` niet: dat gebied staat alleen in deze
+                      uitklapper, dus zijn voorstel staat al als losse regel boven de knoppen
+                      (zie `losseVoorstellenBlok`). Beide tonen zette dezelfde regel twee keer
+                      op één kaart. */}
+                  {toonBevindingHier && !!verdeeld.perGebied.get(gebied)?.length && (
                     <ul className="mt-2 space-y-2">
                       {verdeeld.perGebied.get(gebied)!.map((b) => bevindingRegel(b, cel))}
                     </ul>
@@ -4034,7 +4099,7 @@ export default function Stapel({
                   {(() => {
                     // Een bevinding die al bij een eerder gebied staat: hier alleen noemen,
                     // anders staat dezelfde tekst er twee keer.
-                    const ook = verdeeld.elders(gebied);
+                    const ook = toonBevindingHier ? verdeeld.elders(gebied) : [];
                     return ook.length ? (
                       <p className="mt-1 text-xs text-gray-500">
                         Zie ook {ook.join(', ')}, hierboven.
@@ -4112,12 +4177,32 @@ export default function Stapel({
               </div>
             </details>
           ) : (
-            <details className="text-green-800">
-              <summary className="cursor-pointer">
-                ✓ Alle {lijst.length} deelgebieden zijn nagelopen, en er is niets aan de hand.
-              </summary>
-              <div className="mt-2 text-gray-900">{gebiedenLijst(cel, 'alles', true)}</div>
-            </details>
+            (() => {
+              /**
+               * "Niets aan de hand" mag alleen staan als er iets vást is gesteld.
+               *
+               * Staat élk gebied op `nvt`, dan is er niets in orde bevonden: er viel niets
+               * te beoordelen. Dat is een wezenlijk ander bericht, en het groene vinkje
+               * maakte er de verkeerde geruststelling van. Op ZOET-01 stond 1.1.1 op een
+               * PDF zonder geldige tagstatus zo op "er is niets aan de hand", terwijl de
+               * omslagcollage, het logo en de dwarsprofielen er wel degelijk waren —
+               * alleen viel er zonder tags niets over te zeggen.
+               */
+              const alleNvt = lijst.every((g) => per.get(g)?.uitkomst === 'nvt');
+              // Zwart als er niets vast te stellen viel: dat is een feitelijke vaststelling
+              // en geen waarschuwing. Amber las als een alarm, groen als een geruststelling,
+              // en het is geen van beide.
+              return (
+                <details className={alleNvt ? 'text-gray-900' : 'text-green-800'}>
+                  <summary className="cursor-pointer">
+                    {alleNvt
+                      ? `Alle ${lijst.length} deelgebieden zijn nagelopen; geen enkel gebied was vast te stellen.`
+                      : `✓ Alle ${lijst.length} deelgebieden zijn nagelopen, en er is niets aan de hand.`}
+                  </summary>
+                  <div className="mt-2 text-gray-900">{gebiedenLijst(cel, 'alles', true)}</div>
+                </details>
+              );
+            })()
           )}
 
           {/* Wat aandacht vraagt, met de bevinding eronder — zonder de toelichting, want
@@ -4559,6 +4644,12 @@ export default function Stapel({
     <>
       {gebiedenMelding(cel)}
 
+      {/* De wachtende voorstellen staan direct onder de gebiedenregel: die regel zegt wat
+          er is nagelopen, dit zegt wat daaruit volgt. Daarna pas de knoppen. Ze stonden
+          eerst ONDER "Ik zie hier nog iets", en dan lees je de knop voordat je weet waar
+          hij over gaat. */}
+      {losseVoorstellenBlok(cel)}
+
       {/* De onderbouwing van de agent staat niet hier maar onder "Hoe dit is vastgesteld",
           als "Wat de agent noteerde" — bij elk criterium, met of zonder deelgebieden.
 
@@ -4838,47 +4929,10 @@ export default function Stapel({
             </>
           )}
 
-          {/* Wat al bij een deelgebied staat, hoort hier niet nog eens: dan lees je dezelfde
-              tekst twee keer op één kaart. De melding dat het op akkoord wacht blijft wel —
-              die staat bij de knoppen onderaan. */}
-          {(() => {
-            const bijGebied = new Set(
-              (huidig.cel.gebieden ?? []).flatMap((g) => g.bevindingen ?? []),
-            );
-            const losseVoorstellen = wachtendeVoorstellen.filter((v) => !bijGebied.has(v.id));
-            return losseVoorstellen.length > 0 ? (
-            <div className="mb-4 space-y-2 rounded border border-purple-200 bg-purple-50 p-3">
-              <p className="text-xs font-medium text-purple-900">
-                {/* Bij deelgebieden: "niet gekoppeld", want er staan hier ook voorstellen
-                    die WEL bij een gebied getoond worden — die hebben daar hun eigen
-                    Akkoord-knop en gaan dus niet via de knop hieronder. Zonder deelgebieden
-                    bestaat dat onderscheid niet en heet de knop gewoon "Akkoord". */}
-                {kaarttekst
-                  ? losseVoorstellen.length === 1
-                    ? `Dit voorstel is aan geen deelgebied gekoppeld. Het wordt meegenomen als je hieronder op "Pagina akkoord voor ${huidig.cel.code}" klikt:`
-                    : `Deze ${losseVoorstellen.length} voorstellen zijn aan geen deelgebied gekoppeld. Ze worden meegenomen als je hieronder op "Pagina akkoord voor ${huidig.cel.code}" klikt:`
-                  : losseVoorstellen.length === 1
-                    ? `Dit voorstel wacht op akkoord en wordt goedgekeurd als je hieronder op "Pagina akkoord voor ${huidig.cel.code}" klikt:`
-                    : `Deze ${losseVoorstellen.length} voorstellen wachten op akkoord en worden goedgekeurd als je hieronder op "Pagina akkoord voor ${huidig.cel.code}" klikt:`}
-              </p>
-              {losseVoorstellen.map((v) => (
-                <div key={v.id} className="rounded bg-white p-3 text-sm">
-                  <p className="mb-1 text-xs text-gray-500">
-                    {v.findingCode} · {v.type}
-                    {v.impact ? ` · ${v.impact}` : ''}
-                  </p>
-                  <p className="whitespace-pre-line text-gray-800">{v.description}</p>
-                  {v.advice && (
-                    <div className="mt-2 border-t border-gray-200 pt-2">
-                      <p className="mb-0.5 text-xs font-medium text-gray-500">Advies</p>
-                      <p className="whitespace-pre-line text-gray-700">{v.advice}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            ) : null;
-          })()}
+          {/* Bij een auditkaart staat dit al in `auditkaartLijf`, onder de gebiedenregel en
+              boven de knoppen. Alleen de kaart zonder `## Op de kaart` heeft het hier nog
+              nodig. */}
+          {!kaarttekst && losseVoorstellenBlok(huidig.cel)}
 
           {!kaarttekst && huidig.cel.bevindingen.length > 0 && (
             <div className="mb-4 space-y-2">
@@ -5287,6 +5341,12 @@ export default function Stapel({
               Dezelfde indeling als op de nakijkkaart — één vorm om aan te wennen, ook al
               ligt er hier nog geen bevestigd oordeel. Alleen staat de achtergrond open:
               zolang er niets ligt zijn de instructies geen verslag maar een opdracht. */}
+          {/* Ook hier de wachtende voorstellen die nergens anders op deze kaart staan.
+              Deze kaart heeft een eigen "Pagina akkoord voor ..."-knop die ze meeneemt, dus
+              zonder dit blok keur je iets goed waarvan de tekst niet op het scherm staat.
+              Bij een auditkaart staat het al in `auditkaartLijf`, op zijn eigen plek. */}
+          {!kaarttekst && losseVoorstellenBlok(huidig.cel)}
+
           {kaarttekst ? (
             <>
               {auditkaartLijf(huidig.cel)}
