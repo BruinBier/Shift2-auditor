@@ -4688,11 +4688,13 @@ export default function Stapel({
     <>
       {gebiedenMelding(cel)}
 
-      {/* De wachtende voorstellen staan direct onder de gebiedenregel: die regel zegt wat
-          er is nagelopen, dit zegt wat daaruit volgt. Daarna pas de knoppen. Ze stonden
-          eerst ONDER "Ik zie hier nog iets", en dan lees je de knop voordat je weet waar
-          hij over gaat. */}
-      {losseVoorstellenBlok(cel)}
+      {/* Hier stonden de wachtende voorstellen die aan geen deelgebied hangen, direct
+          onder de gebiedenregel. Dat had zin toen de lijst onder "Bevindingen" alleen
+          toonde wat er al akkoord was.
+
+          Sinds die lijst compleet is (zie `afkeuringenBlok`) staat zo'n voorstel er twee
+          keer: hier en daar. Op de 1.4.1-kaart van ZOET-01 Bijlage 2 waren dat V005 en
+          V006, allebei dubbel. Vastgelegd door Frits op 2026-09-18. */}
 
       {/* De onderbouwing van de agent staat niet hier maar onder "Hoe dit is vastgesteld",
           als "Wat de agent noteerde" — bij elk criterium, met of zonder deelgebieden.
@@ -4973,9 +4975,8 @@ export default function Stapel({
             </>
           )}
 
-          {/* Bij een auditkaart staat dit al in `auditkaartLijf`, onder de gebiedenregel en
-              boven de knoppen. Alleen de kaart zonder `## Op de kaart` heeft het hier nog
-              nodig. */}
+          {/* Alleen voor een kaart zonder `## Op de kaart`: die heeft geen deelgebieden en
+              dus ook geen complete bevindingenlijst, waar zo'n voorstel anders al staat. */}
           {!kaarttekst && losseVoorstellenBlok(huidig.cel)}
 
           {!kaarttekst && huidig.cel.bevindingen.length > 0 && (
