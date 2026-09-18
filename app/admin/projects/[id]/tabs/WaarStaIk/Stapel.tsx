@@ -2862,7 +2862,17 @@ export default function Stapel({
     );
   };
 
-  const bevindingRegel = (b: Bevinding, cel?: Cel) => (
+  /**
+   * Eén bevinding op de kaart.
+   *
+   * `gebieden`: onder welk deelgebied deze bevinding valt. Dat stond eerst andersom -- de
+   * CODE bij het gebied ("Koppen ✗ (V023)") -- maar dan moet je van boven naar beneden
+   * heen en weer om te weten waar een bevinding over gaat. Het gebied hoort bij de
+   * bevinding, niet de bevinding bij het gebied. Leeg laten als hij nergens onder valt:
+   * B010 gaat over het document als geheel en heeft geen gebied. Vastgelegd door Frits op
+   * 2026-09-18.
+   */
+  const bevindingRegel = (b: Bevinding, cel?: Cel, gebieden?: string[]) => (
     <li key={b.id} className="rounded bg-blue-50 text-sm text-blue-950">
       {/* Openklappen deed eerst ook meteen aanwijzen in de browser. Dat leek handig -- lezen
           en zien in één klik -- maar het is ook een bijeffect dat je niet koos: je klapt de
@@ -2897,6 +2907,11 @@ export default function Stapel({
             ) : b.type === 'opmerking' ? (
               <span className="rounded bg-white/70 px-1.5 py-0.5">opmerking</span>
             ) : null}
+            {!!gebieden?.length && (
+              <span className="rounded bg-white/70 px-1.5 py-0.5 italic text-blue-900">
+                {gebieden.join(', ')}
+              </span>
+            )}
           </span>
           <span className="leading-relaxed">{eersteZin(b.description)}</span>
         </summary>
@@ -3158,8 +3173,19 @@ export default function Stapel({
       if (hier.length) perGebied.set(g.gebied, hier);
     }
 
+    // Omgekeerde koppeling: per bevinding de gebieden waar hij onder valt. De kaart toont
+    // dat bij de bevinding zelf, niet als code bij het gebied.
+    const gebiedenVan = new Map<string, string[]>();
+    for (const g of cel.gebieden ?? []) {
+      for (const id of g.bevindingen ?? []) {
+        if (!alle.some((b) => b.id === id)) continue;
+        gebiedenVan.set(id, [...(gebiedenVan.get(id) ?? []), g.gebied]);
+      }
+    }
+
     return {
       perGebied,
+      gebiedenVan,
       // Wat aan geen enkel gebied hangt: alles bij een oordeel van vóór deze koppeling, en
       // een bevinding die de agent niet aan een gebied hing.
       losse: alle.filter((b) => !genoemd.has(b.id)),
@@ -3230,7 +3256,7 @@ export default function Stapel({
             Je hebt nog geen bevindingen toegevoegd.
           </p>
         ) : (
-          <ul className="space-y-2">{afkeuringen.map((b) => bevindingRegel(b, cel))}</ul>
+          <ul className="space-y-2">{afkeuringen.map((b) => bevindingRegel(b, cel, verdeeldHier.gebiedenVan.get(b.id)))}</ul>
         )}
 
         {/* De knop staat onder de lijst en niet naast de kop: je voegt iets toe nadat je
@@ -4109,15 +4135,7 @@ export default function Stapel({
                       Sinds de lijst onderaan compleet is (zie `afkeuringenBlok`) stond de
                       tekst twee keer op de kaart: hier en daar. Wat dit gebied moet zeggen
                       is WELKE bevinding eronder valt; de tekst staat een scherm lager. */}
-                  {toonBevindingHier && !!verdeeld.perGebied.get(gebied)?.length && (
-                    <span className="text-xs text-gray-600">
-                      {' '}
-                      ({[
-                        ...verdeeld.perGebied.get(gebied)!.map((b) => b.findingCode),
-                        ...verdeeld.elders(gebied),
-                      ].join(', ')})
-                    </span>
-                  )}
+
                   {/* "Zie ook X, hierboven" stond hier voor een bevinding die al bij een
                       eerder gebied getoond werd. Sinds een gebied alleen nog de code toont,
                       is die verwijzing overbodig: de codes staan gewoon in de haakjes
