@@ -3189,8 +3189,22 @@ export default function Stapel({
    */
   const afkeuringenBlok = (cel: Cel) => {
     const heeftGebieden = !!kaarttekst?.gebieden?.length;
+    /**
+     * ALLE bevindingen, ook die al bij hun deelgebied staan.
+     *
+     * Dit toonde eerst alleen `verdeelBevindingen(cel).losse` — wat aan geen enkel gebied
+     * hing — om te voorkomen dat dezelfde tekst twee keer op de kaart stond. Het gevolg was
+     * erger dan de dubbeling: op de 1.3.1-kaart van ZOET-01 Bijlage 2 stonden drie
+     * bevindingen bij hun gebied en één eronder, en dan lijkt die ene de enige bevinding op
+     * dit criterium. Wie de kaart van onderaf leest ziet er één waar er vier zijn.
+     *
+     * De gebiedenlijst is een afvinklijst: hij zegt wát er is nagelopen. Dit blok is de
+     * opsomming van wat het heeft opgeleverd, en die hoort compleet te zijn. Vastgelegd door
+     * Frits op 2026-09-18.
+     */
+    const verdeeldHier = verdeelBevindingen(cel);
     const afkeuringen = heeftGebieden
-      ? verdeelBevindingen(cel).losse
+      ? [...verdeeldHier.losse, ...Array.from(verdeeldHier.perGebied.values()).flat()]
       : cel.bevindingen.filter((b) => b.type !== 'opmerking');
     // Staan alle bevindingen al bij hun gebied en valt er niets toe te voegen, dan is dit
     // blok een kop met een lege lijst eronder. Dan alleen de knop.
