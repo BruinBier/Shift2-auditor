@@ -616,6 +616,14 @@ tagstructuur met de tagnaam per element, in de volgorde waarin hulpsoftware hem 
     rest van de rij bij hoort, zodat een schermlezer "Meerpolder, IMRO-nummer
     BP00037-0003" zegt. De juiste opbouw is THead met TH's, en per TR in TBody een TH
     gevolgd door TD's. Keur dat NIET af. Vastgesteld door Frits op 2026-09-18.
+  - LET OP: de tagboom is de HELFT van het antwoord. Render de pagina's ook en leg de twee
+    naast elkaar. Een opsomming die in de tagboom vlak is, kan op het scherm twee niveaus
+    hebben: de inspringing zit dan in de opmaak en niet in de structuur, en wie het document
+    laat voorlezen hoort gelijkwaardige punten waar er een uitwerking staat. Dat is een
+    afkeuring. Hetzelfde geldt andersom en voor de andere deelgebieden: "Geneste lijsten" is
+    pas nagelopen als je hebt gekeken of er VISUEEL nesting is, niet alleen of er in de tags
+    een tweede niveau staat. Op ZOET-01 Bijlage 2 pagina 7 stonden vier streepjes waarvan de
+    laatste twee ingesprongen, terwijl de tagboom ze alle vier op hetzelfde niveau had.
   - 1.3.2 -> klopt de volgorde?
   - 1.1.1 -> wat staat er IN de Alt-balken? "Afbeelding met tekst, kaart, diagram" of "Door AI
     gegenereerde inhoud is mogelijk onjuist" is een AFKEURING, geen opmerking: er staat iets
