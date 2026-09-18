@@ -456,6 +456,16 @@ Geef per gebied een uitkomst:
   opmerking — geen afkeuring, wel iets te melden; toelichting VERPLICHT
 
 Kun je een gebied niet beoordelen, gebruik dan \`nvt\` met een toelichting die zegt waarom.
+MAXIMAAL TWEE VOORBEELDEN PER TOELICHTING, elk met het paginanummer of de vindplaats erbij.
+Vind je er dertien, noem er dan twee en zeg hoe wijdverspreid het is ("op de pagina's 10, 11,
+23, 25, 32 en 36"). Een toelichting die alle vindplaatsen opsomt is niet leesbaar en verhoudt
+zich slecht tot de bevinding, die er om dezelfde reden ook maar twee mag noemen.
+
+HANGT HET GEBIED AAN EEN BEVINDING, ZET DIE ERIN. Schrijf je in de toelichting "dat staat bij
+Koppen" of "zie de bevinding hierover", zet dan het id van die bevinding in `bevindingen` van
+DIT gebied. Anders staat er op de kaart een kruis zonder bevinding eronder, met de melding dat
+er een bevinding zoek is -- terwijl hij gewoon aan een ander gebied hangt. Dezelfde bevinding
+mag aan meerdere gebieden hangen.
 Dát je het niet kon is de informatie die een lopende onderbouwing weglaat — verzin geen 'ok'.
 
 Neem de namen WOORDELIJK over:
