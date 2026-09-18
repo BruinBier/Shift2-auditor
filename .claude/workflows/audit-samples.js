@@ -583,6 +583,22 @@ Koppen" of "zie de bevinding hierover", zet dan het id van die bevinding in `bev
 DIT gebied. Anders staat er op de kaart een kruis zonder bevinding eronder, met de melding dat
 er een bevinding zoek is -- terwijl hij gewoon aan een ander gebied hangt. Dezelfde bevinding
 mag aan meerdere gebieden hangen.
+
+EEN OORZAAK, EEN KRUISJE. Raakt een probleem meerdere gebieden, geef dan alleen het gebied
+waar de OORZAAK ligt een `fout`. De andere gebieden krijgen `ok` met een zin die zegt waar
+het staat. Drie kruisjes voor hetzelfde lezen als drie problemen.
+Op ZOET-01 Bijlage 2 waren vetgedrukte tussenkopjes geen kop. Dat raakte Koppen (er ontbreekt
+een kop), Lijsten (die kopjes staan in een opsomming van een punt) en Visuele relaties (de
+tekst eronder hoort er niet bij). Een oorzaak, en een advies dat alle drie oplost.
+UITZONDERING: heeft het symptoom op zichzelf betekenis voor de redacteur, dan mag het een
+eigen voorstel worden. Een opsomming van een punt is ook los te zien, dus die kreeg een eigen
+opmerking en hield zijn `!`.
+
+EEN `fout` OF `opmerking` VRAAGT OM EEN BEVINDING. De uitkomst van een gebied is een teken op
+de kaart, geen voorstel. Zonder bevinding staat er een kruis of uitroepteken met een
+toelichting die nergens in het rapport komt, en waar de onderzoeker geen akkoord op kan geven.
+Bij een opmerking is dat een bevinding met type `opmerking`, impact en verantwoordelijkheid
+leeg, en een advies dat eindigt met "Dit is een best practice.".
 Dát je het niet kon is de informatie die een lopende onderbouwing weglaat — verzin geen 'ok'.
 Bij een PDF-sample: gebieden die over webpagina's gaan zijn \`nvt\` met die reden; de gebieden
 over het document zelf beantwoord je gewoon.
