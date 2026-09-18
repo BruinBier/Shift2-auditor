@@ -4105,21 +4105,23 @@ export default function Stapel({
                       uitklapper, dus zijn voorstel staat al als losse regel boven de knoppen
                       (zie `losseVoorstellenBlok`). Beide tonen zette dezelfde regel twee keer
                       op één kaart. */}
+                  {/* Alleen de CODE, niet de hele bevinding.
+                      Sinds de lijst onderaan compleet is (zie `afkeuringenBlok`) stond de
+                      tekst twee keer op de kaart: hier en daar. Wat dit gebied moet zeggen
+                      is WELKE bevinding eronder valt; de tekst staat een scherm lager. */}
                   {toonBevindingHier && !!verdeeld.perGebied.get(gebied)?.length && (
-                    <ul className="mt-2 space-y-2">
-                      {verdeeld.perGebied.get(gebied)!.map((b) => bevindingRegel(b, cel))}
-                    </ul>
+                    <span className="text-xs text-gray-600">
+                      {' '}
+                      ({[
+                        ...verdeeld.perGebied.get(gebied)!.map((b) => b.findingCode),
+                        ...verdeeld.elders(gebied),
+                      ].join(', ')})
+                    </span>
                   )}
-                  {(() => {
-                    // Een bevinding die al bij een eerder gebied staat: hier alleen noemen,
-                    // anders staat dezelfde tekst er twee keer.
-                    const ook = toonBevindingHier ? verdeeld.elders(gebied) : [];
-                    return ook.length ? (
-                      <p className="mt-1 text-xs text-gray-500">
-                        Zie ook {ook.join(', ')}, hierboven.
-                      </p>
-                    ) : null;
-                  })()}
+                  {/* "Zie ook X, hierboven" stond hier voor een bevinding die al bij een
+                      eerder gebied getoond werd. Sinds een gebied alleen nog de code toont,
+                      is die verwijzing overbodig: de codes staan gewoon in de haakjes
+                      hierboven en de tekst staat één keer, in de lijst onderaan. */}
                   {u && (u.uitkomst === 'fout' || u.uitkomst === 'opmerking') &&
                     !verdeeld.perGebied.get(gebied)?.length &&
                     !verdeeld.elders(gebied).length &&
