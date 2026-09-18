@@ -4246,11 +4246,14 @@ export default function Stapel({
             })()
           )}
 
-          {/* Wat aandacht vraagt, met de bevinding eronder — zonder de toelichting, want
-              die staat in de uitklapper hierboven. */}
-          {!!mankeert.length && (
-            <div className="mb-2 text-gray-900">{gebiedenLijst(cel, 'mankeert', false)}</div>
-          )}
+          {/* Hier stond een tweede lijstje met alleen de gebieden die aandacht vragen, met
+              de bevinding eronder en zonder toelichting. Dat had zin toen de bevinding
+              onder het gebied stond: dan zag je in één blik wat er mankeerde.
+
+              Sinds het gebied als label bij de bevinding staat (zie `bevindingRegel`) bleef
+              er een kaal rijtje over: "✗ Koppen", "! Lijsten", zonder tekst en zonder code.
+              Dezelfde namen staan een paar regels lager al bij hun bevinding. Weg dus.
+              Vastgelegd door Frits op 2026-09-18. */}
           <p className="mt-1">
             {!gebiedOpen && (
               <button
