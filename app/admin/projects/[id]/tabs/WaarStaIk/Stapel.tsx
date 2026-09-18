@@ -4111,7 +4111,14 @@ export default function Stapel({
                     !verdeeld.elders(gebied).length &&
                     !!(cel.gebieden ?? []).find((g) => g.gebied === gebied)?.bevindingen && (
                       <p className="mt-1 text-xs text-amber-800">
-                        Hier hoort een bevinding bij, maar die is niet gevonden.
+                        {/* Sinds 2026-09-18 ruimen afwijzen en verwijderen de koppeling zelf
+                            op (lib/gebied-koppeling.ts), dus dit hoort alleen nog te staan
+                            bij oordelen van vóór die datum. Zeg daarom wat er te doen valt:
+                            "niet gevonden" liet de onderzoeker in het ongewisse of het gebied
+                            fout was of de koppeling. */}
+                        De bevinding die hier hoorde, bestaat niet meer. Waarschijnlijk is hij
+                        afgewezen of samengevoegd. Laat dit criterium opnieuw beoordelen, of
+                        voeg de bevinding hieronder zelf toe.
                       </p>
                     )}
                 </span>

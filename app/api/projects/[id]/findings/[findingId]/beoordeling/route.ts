@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { herberekenCriteriumOordeel } from '@/lib/criterion-assessment';
+import { haalBevindingUitGebieden } from '@/lib/gebied-koppeling';
 import { kenBevindingCodeToe } from '@/lib/finding-code';
 
 /**
@@ -115,6 +116,10 @@ export async function POST(
         data: { status: 'afgewezen', afwijzingsreden: reden },
         include: { wcagCriterion: true, occurrences: true },
       });
+      // De koppeling bij de deelgebieden wijst nu naar een bevinding die er niet meer
+      // onder hoort. Zonder opruimen staat er op de kaart "Hier hoort een bevinding bij,
+      // maar die is niet gevonden" bij een gebied waar wél iets aan de hand is.
+      await haalBevindingUitGebieden(finding.id, params.id, finding.wcagCriterionId);
       // Ook na een afwijzing herberekenen: het voorstel telde niet mee, maar de
       // regel hoort op één plek te blijven en is hier goedkoop.
       const oordeel = await herberekenCriteriumOordeel(params.id, finding.wcagCriterionId);

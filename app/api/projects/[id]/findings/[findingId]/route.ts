@@ -6,6 +6,7 @@ import {
   herberekenCriteriumOordeel,
   herberekenCriteriumOordelen,
 } from '@/lib/criterion-assessment';
+import { haalBevindingUitGebieden } from '@/lib/gebied-koppeling';
 
 export async function PUT(
   request: NextRequest,
@@ -195,6 +196,11 @@ export async function DELETE(
     if (!existingFinding) {
       return NextResponse.json({ error: 'Finding not found' }, { status: 404 });
     }
+
+    // Eerst de koppeling bij de deelgebieden opruimen, dan pas verwijderen: daarna is
+    // niet meer te achterhalen onder welk criterium deze bevinding viel. Blijft het id
+    // staan, dan meldt de kaart "Hier hoort een bevinding bij, maar die is niet gevonden".
+    await haalBevindingUitGebieden(params.findingId, params.id, existingFinding.wcagCriterionId);
 
     // Delete the finding
     await prisma.finding.delete({
