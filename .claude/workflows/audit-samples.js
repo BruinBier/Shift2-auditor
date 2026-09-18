@@ -999,8 +999,10 @@ DE SCREEN READER PREVIEW IS DAARVOOR DE BRON. Kijk of er bij de sample een PAC-o
 element voor element, in de volgorde waarin hulpsoftware hem doorloopt, met de tagnaam ernaast.
 Daaruit lees je in één keer af:
   - 1.3.1 -> staan er H1/H2/H3 bij de koppen? L/LI/Lbl/LBody bij de lijsten? Klopt TH/TD in de
-    tabellen? LET OP een veelvoorkomende fout: niet alleen de koprij maar de hele eerste kolom
-    als TH. Dat is een afkeuring (verkeerde kolomverwijzing), geen ontbrekende kop.
+    tabellen? LET OP: een TH in een DATARIJ is meestal GOED. Dat is een rijkop -- de naam
+    waar de rest van de rij bij hoort, zodat een schermlezer "Meerpolder, IMRO-nummer
+    BP00037-0003" zegt. De juiste opbouw is THead met TH's, en per TR in TBody een TH gevolgd
+    door TD's. Keur dat NIET af. Vastgesteld door Frits op 2026-09-18.
   - 1.3.2 -> klopt de volgorde van de elementen?
   - 1.1.1 -> wat staat er IN de Alt-balken? Automatische teksten als "Afbeelding met tekst,
     kaart, diagram" of "Door AI gegenereerde inhoud is mogelijk onjuist" zijn een AFKEURING:

@@ -612,7 +612,10 @@ WEL GETAGD — DE SCREEN READER PREVIEW IS DE BRON. Kijk of er bij de sample een
 ligt met "Screen reader" of "preview" in het label (pacRapporten). Die toont de HELE
 tagstructuur met de tagnaam per element, in de volgorde waarin hulpsoftware hem doorloopt:
   - 1.3.1 -> H1/H2/H3 bij de koppen? L/LI/Lbl/LBody bij de lijsten? TH/TD in de tabellen?
-    LET OP: niet alleen de koprij maar de hele eerste kolom als TH is een AFKEURING.
+    LET OP: een TH in een DATARIJ is meestal GOED. Dat is een rijkop -- de naam waar de
+    rest van de rij bij hoort, zodat een schermlezer "Meerpolder, IMRO-nummer
+    BP00037-0003" zegt. De juiste opbouw is THead met TH's, en per TR in TBody een TH
+    gevolgd door TD's. Keur dat NIET af. Vastgesteld door Frits op 2026-09-18.
   - 1.3.2 -> klopt de volgorde?
   - 1.1.1 -> wat staat er IN de Alt-balken? "Afbeelding met tekst, kaart, diagram" of "Door AI
     gegenereerde inhoud is mogelijk onjuist" is een AFKEURING, geen opmerking: er staat iets
