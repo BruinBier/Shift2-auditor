@@ -23,7 +23,15 @@ npm run db:seed            # Seed WCAG 2.2 criteria and research types
 # Backup & Restore
 npm run backup             # Export all data to JSON
 npm run restore            # Import data from JSON backup
+
+# Meetscripts (Python) -- eenmalig, en op elke nieuwe computer
+pip install -r requirements.txt
 ```
+
+De meetscripts in `scripts/` draaien op Python: `pdf-contrast.py` voor het contrast in een
+PDF, `psb-naar-stukken.py` voor een scrollopname van PAC's Screen reader preview. Ontbreken
+die modules, dan geeft het bijbehorende commando een foutmelding over een ontbrekende
+module -- de tool blijft werken, maar die ene meting niet.
 
 ## Wie wat doet: Claude Code, ChatGPT Work en Codex
 

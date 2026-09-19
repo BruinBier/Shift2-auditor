@@ -1,0 +1,26 @@
+# Python-modules voor de meetscripts in scripts/.
+#
+# De tool zelf draait op Node; deze modules zijn voor het werk waarvoor in Node
+# geen gelijkwaardig alternatief bestaat: een PDF uitlezen tot op de beeldpunten,
+# en een scrollopname van PAC openen die boven de maten van elke gewone
+# afbeeldingsbibliotheek uit gaat.
+#
+# Installeren:  pip install -r requirements.txt
+#
+# Zonder deze modules blijven de betreffende commando's staan maar geven ze een
+# foutmelding over een ontbrekende module -- ze falen niet stil, maar op een
+# tweede computer is niet vanzelf duidelijk wat er mist. Vandaar dit bestand.
+
+# scripts/pdf-contrast.py -- tekst en beeldpunten uit een PDF halen
+PyMuPDF>=1.28
+numpy>=2.0
+
+# scripts/pdf-contrast.py en scripts/psb-naar-stukken.py -- beeldbewerking
+Pillow>=11.0
+
+# scripts/pdf-contrast.py -- de tagstructuur van een PDF lezen
+pikepdf>=10.0
+
+# scripts/psb-naar-stukken.py -- een PSB/PSD-scrollopname van PAC's
+# Screen reader preview in leesbare stukken snijden
+psd-tools>=1.19
