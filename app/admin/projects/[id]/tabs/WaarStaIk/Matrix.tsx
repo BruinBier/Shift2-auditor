@@ -268,11 +268,15 @@ export default function Matrix({
                       </td>
                     );
                   })}
-                  {/* De kolom "alle pagina's": het oordeel over de héle website, bij élk
-                      criterium. Het verschil tussen 1.1.1 en 3.2.4 zit niet hier maar in de
-                      paginakolommen — bij 1.1.1 is elke pagina afzonderlijk getoetst en
-                      volgt dit oordeel daaruit, bij 3.2.4 zijn de pagina's als geheel
-                      beoordeeld en staan daar streepjes.
+                  {/* De kolom "alle pagina's" draagt alleen de criteria waarvan het
+                      oordeel écht over de hele set gaat -- op dit moment 3.2.4.
+
+                      Bij elk ander criterium stond hier een vakje dat het oordeel van de
+                      paginakolommen samenvatte, en dat voegde niets toe: bij 1.3.1 stonden
+                      vijf pagina's op rood en herhaalde deze kolom datzelfde rood. Van de
+                      dertig rijen deden er zevenentwintig dat. Een kolom die in negen van
+                      de tien gevallen naast zich kijkt, leert je niet meer te lezen dan hij
+                      wegneemt. Frits, 2026-09-19.
 
                       Dezelfde kleuren als de legenda, geen nieuwe kleurtaal erbij.
 
@@ -286,6 +290,7 @@ export default function Matrix({
                     className="sticky right-0 z-10 bg-white px-1 py-1.5"
                     style={{ boxShadow: 'inset 1px 0 0 0 #f3f4f6' }}
                   >
+                    {!sitebreed ? null : (
                     <button
                       type="button"
                       onClick={() => openStapel(`rij:${crit.code}`)}
@@ -301,6 +306,7 @@ export default function Matrix({
                         {siteWaarschuwing ? ` — ${siteWaarschuwing}` : ''}
                       </span>
                     </button>
+                    )}
                   </td>
                 </tr>
               );
