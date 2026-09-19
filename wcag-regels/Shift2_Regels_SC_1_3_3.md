@@ -77,3 +77,16 @@ na. Op de homepage horen header en footer erbij, op andere pagina's alleen de ho
 Wat daarbuiten valt: tekst die pas na een klik verschijnt, zoals een uitklapblok of een
 volgende formulierstap. Daarvoor moet de agent in de auditsessie zelf klikken en opnieuw
 kijken.
+
+### Deelgebieden
+
+1. Instructies en verwijzingen in de tekst, ook bij formuliervelden en foutmeldingen
+2. Verwijzingen die alleen op vorm, kleur, grootte of plek leunen, zonder naam of label erbij
+3. Richtingsaanduidingen: staat de bedoelde inhoud direct voor of na de verwijzing?
+4. Symbolen die informatie dragen zonder tekst: vinkje, kruisje, pijl, woordgrootte
+5. Verwijzingen via geluid
+
+> Aangemaakt op 2026-09-19 bij ZOET-01. Deze vier criteria waren de enige zonder
+> deelgebieden; hun kaarten in "Waar sta ik" misten daardoor het blok dat de andere
+> 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
+> hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.

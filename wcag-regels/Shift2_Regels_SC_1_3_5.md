@@ -145,3 +145,16 @@ pagina zoals die na de JavaScript in de browser staat, met hun `autocomplete`-at
 legt die naast de WCAG-lijst met invoerdoelen en naast de schermafdruk. Velden die pas na
 een klik verschijnen, zoals een volgende formulierstap, ziet hij alleen als hij die in de
 auditsessie zelf heeft geopend.
+
+### Deelgebieden
+
+1. Alle invoervelden gevonden, ook in uitklapblokken en volgende formulierstappen
+2. Velden die om een gegeven van de bezoeker zelf vragen, afgezet tegen de WCAG-lijst
+3. De `autocomplete`-waarde per veld: aanwezig, en klopt hij met het gevraagde gegeven?
+4. `off` alleen bij gevoelige gegevens zoals een wachtwoord of een eenmalige code
+5. Op de schermafdruk gecontroleerd dat het veld ook zichtbaar is
+
+> Aangemaakt op 2026-09-19 bij ZOET-01. Deze vier criteria waren de enige zonder
+> deelgebieden; hun kaarten in "Waar sta ik" misten daardoor het blok dat de andere
+> 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
+> hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.

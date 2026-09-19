@@ -139,3 +139,17 @@ hulpsoftware de pagina doorloopt.
 Wat het gereedschap niet ziet: verplaatsingen die pas na een klik ontstaan, en of een
 gevonden omkering betekenis draagt. Dat eerste is werk voor de agent in de auditsessie, het
 tweede is een weging en staat in de onderbouwing.
+
+### Deelgebieden
+
+1. De voorleesvolgorde gemeten met `get-leesvolgorde`, en de gemelde omkeringen nagelopen
+2. De pagina zonder opmaak van boven naar beneden gelezen: koppen bij hun tekst, labels bij hun velden
+3. Wat het gereedschap overslaat: elementen buiten beeld, kolommen naast elkaar, links over twee regels
+4. Wat pas na een klik verschuift: uitklapblokken, menu's, formulierstappen
+5. Opmaak die de volgorde omkeert: `order`, `row-reverse`, absolute positionering, negatieve marges
+6. Per omkering gewogen of het verplaatste element betekenis draagt
+
+> Aangemaakt op 2026-09-19 bij ZOET-01. Deze vier criteria waren de enige zonder
+> deelgebieden; hun kaarten in "Waar sta ik" misten daardoor het blok dat de andere
+> 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
+> hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.

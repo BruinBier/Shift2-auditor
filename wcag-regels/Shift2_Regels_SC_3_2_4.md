@@ -229,6 +229,21 @@ Wat het commando niet ziet: onderdelen die pas na een klik verschijnen, zoals ee
 of een stap in een formulier, en afbeeldingen met een functie die niet in een link of knop
 zitten. Die loop ik zelf na in de auditsessie; dat zijn stap 3 en 4 hierboven.
 
+
+### Deelgebieden
+
+1. Onderdelen die op meerdere pagina's terugkomen: navigatie, zoekvelden, sjabloonknoppen, iconen
+2. Per onderdeel de zichtbare tekst naast de toegankelijke naam gelegd
+3. Gewogen of het werkelijk een herhaald onderdeel is en geen redactionele link in de lopende tekst
+4. Verschillen die uit een apart sjabloon komen, zoals een formulier of portaal, apart gehouden
+5. Onderdelen die pas na een klik verschijnen: uitklapmenu's, zoeksuggesties, formulierstappen
+6. PDF's: per document apart beoordeeld met `get-pdfconsistentie`
+
+> Aangemaakt op 2026-09-19 bij ZOET-01. Deze vier criteria waren de enige zonder
+> deelgebieden; hun kaarten in "Waar sta ik" misten daardoor het blok dat de andere
+> 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
+> hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.
+
 ## Werkwijze — het lijstje dat afgelopen wordt
 
 > Dit staat hier en niet in een apart bestand. Twee bestanden die dezelfde procedure
