@@ -2420,9 +2420,22 @@ export default function Stapel({
         )}
 
         {gemeten.length === 0 && eigen.length === 0 ? (
-          <p className="mb-2 text-sm text-gray-600">
-            Geen onderdeel heet op de ene pagina anders dan op de andere.
-          </p>
+          /*
+            Twee dingen die op hetzelfde leken: niets GEVONDEN en niets GEMETEN.
+            Zonder meting is "geen onderdeel heet ergens anders" geen uitkomst maar een
+            conclusie die niemand heeft getrokken. Op het Collegebesluit stond 3.2.4 op
+            niet_te_bepalen -- er valt zonder tags niets te vergelijken -- en daaronder
+            stond diezelfde geruststellende zin.
+          */
+          !u ? (
+            <p className="mb-2 text-sm text-gray-600">
+              Er is niets vergeleken, dus hierover valt nog niets te zeggen.
+            </p>
+          ) : (
+            <p className="mb-2 text-sm text-gray-600">
+              Geen onderdeel heet op de ene pagina anders dan op de andere.
+            </p>
+          )
         ) : (
           <ul className="mb-3 space-y-3">
             {gemeten.map((o: any) => {
@@ -5664,10 +5677,19 @@ export default function Stapel({
               {/* Ruim boven de afsluiting. Wat je hierboven doet is materiaal verzamelen;
                   hieronder sluit je de stap af. Zonder die ruimte lijkt "Bevinding toevoegen"
                   een van de drie antwoordknoppen. */}
+              {/*
+                Bij niet_te_bepalen staat er geen oordeel dat je kunt afronden: de agent kon
+                het niet vaststellen. "Deze stap staat nog open" las daar als werk dat blijft
+                liggen, terwijl er een vraag ligt die eerst beantwoord moet worden. Op het
+                Collegebesluit ging het om een PDF zonder tagstructuur -- pas als die er is,
+                valt er iets te vergelijken.
+              */}
               <p className="mb-2 mt-12 text-center text-sm font-medium text-gray-700">
-                {huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
-                  ? 'Je hebt een afkeuring toegevoegd. Markeer de stap als klaar om dat vast te leggen.'
-                  : 'Deze stap staat nog open.'}
+                {huidig.cel.status === 'niet_te_bepalen'
+                  ? 'De agent kon dit niet vaststellen. Kun jij het alsnog beoordelen, of is het hier niet van toepassing?'
+                  : huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                    ? 'Je hebt een afkeuring toegevoegd. Markeer de stap als klaar om dat vast te leggen.'
+                    : 'Deze stap staat nog open.'}
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button
