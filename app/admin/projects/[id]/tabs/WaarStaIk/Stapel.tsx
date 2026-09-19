@@ -2383,7 +2383,7 @@ export default function Stapel({
 
     if (deel === 1) {
       return (
-        <div className="mb-4 ml-5 mt-4 rounded bg-gray-50 px-3 py-2">
+        <div className={`mb-4 ml-5 mt-4 ${u ? 'rounded bg-gray-50 px-3 py-2' : ''}`}>
           {u ? (
             <p className="text-sm leading-relaxed text-gray-900">
               {u.onderdelenOpMeerderePaginas} onderdelen komen op meer dan één pagina voor,
@@ -2402,8 +2402,14 @@ export default function Stapel({
               ) : null}
             </p>
           ) : (
+            /*
+              Zonder meting stond hier een grijs kader met "nog niet gemeten", en daaronder
+              in deel 2 een tweede regel die hetzelfde zei. Twee blokken met scheidingslijn
+              voor één mededeling; bij 3.1.2, dat deelgebieden heeft, staat er op diezelfde
+              plek één samenvattende regel. Nu ook hier: één zin, geen kader.
+            */
             <p className="text-sm text-gray-600">
-              Er is nog niet gemeten met een commando dat de gevonden onderdelen vastlegt.
+              Niet gemeten, dus hierover valt nog niets te zeggen.
             </p>
           )}
         </div>
@@ -2427,11 +2433,7 @@ export default function Stapel({
             niet_te_bepalen -- er valt zonder tags niets te vergelijken -- en daaronder
             stond diezelfde geruststellende zin.
           */
-          !u ? (
-            <p className="mb-2 text-sm text-gray-600">
-              Er is niets vergeleken, dus hierover valt nog niets te zeggen.
-            </p>
-          ) : (
+          !u ? null : (
             <p className="mb-2 text-sm text-gray-600">
               Geen onderdeel heet op de ene pagina anders dan op de andere.
             </p>
