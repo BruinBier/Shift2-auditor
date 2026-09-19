@@ -1942,14 +1942,27 @@ export default function Stapel({
       );
     }
     if (soort === 'ongemeten') {
+      /*
+       * Stond eerst als "afweging, meting mogelijk". Dat las als een aanbod -- je zóú
+       * kunnen meten -- terwijl het een constatering is: dit criterium heeft een
+       * meetcommando en er is niets vastgelegd.
+       *
+       * Let op wat dit label niet weet. Bij 1.4.3 op Bijlage 2 (ZOET-01) zegt de reden
+       * "volledig gemeten met get-pdfcontrast, 9247 tekstfragmenten" terwijl
+       * verantwoording leeg is: de agent heeft de meting gedraaid en niet weggeschreven.
+       * Het label gaat over wat er is vastgelegd, niet over wat er is gedaan. In de hele
+       * database gold dat op 19 september 2026 voor 10 van de 1637 ongemeten oordelen.
+       */
       return (
         <span
           className="rounded bg-amber-50 px-2 py-0.5 font-medium text-amber-900"
-          title={`Dit criterium is te meten (${metingenVoorCriterium(cel.code)
+          title={`Er is geen meting vastgelegd bij dit oordeel, terwijl dit criterium te meten is met ${metingenVoorCriterium(
+            cel.code
+          )
             .map((m) => m.commando)
-            .join(', ')}), maar er staat geen meting onder dit oordeel.`}
+            .join(', ')}. Noemt de onderbouwing wel een meting, dan heeft de agent hem gedraaid zonder hem vast te leggen.`}
         >
-          afweging, meting mogelijk
+          niet gemeten
         </span>
       );
     }
