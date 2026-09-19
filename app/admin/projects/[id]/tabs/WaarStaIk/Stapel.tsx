@@ -3229,9 +3229,23 @@ export default function Stapel({
      * Frits op 2026-09-18.
      */
     const verdeeldHier = verdeelBevindingen(cel);
+    /**
+     * Ook zonder deelgebieden horen de WACHTENDE VOORSTELLEN hier.
+     *
+     * `cel.bevindingen` bevat alleen wat akkoord is; een voorstel zit in
+     * `stand.voorstellen`. Bij een criterium mét gebieden komt dat via
+     * `verdeelBevindingen` binnen, maar de tak eronder keek alleen naar `cel.bevindingen`.
+     * Zolang een apart blok de voorstellen toonde viel dat niet op; sinds dat blok weg is
+     * (het stond dubbel) stond er bij 1.3.2 op ZOET-01 Bijlage 2 "Je hebt nog geen
+     * bevindingen toegevoegd" terwijl V025 er gewoon was. Vastgelegd door Frits op
+     * 2026-09-19.
+     */
     const afkeuringen = heeftGebieden
       ? [...verdeeldHier.losse, ...Array.from(verdeeldHier.perGebied.values()).flat()]
-      : cel.bevindingen.filter((b) => b.type !== 'opmerking');
+      : [
+          ...cel.bevindingen,
+          ...stand.voorstellen.filter((v) => v.sampleId === cel.sampleId && v.code === cel.code),
+        ];
     // Staan alle bevindingen al bij hun gebied en valt er niets toe te voegen, dan is dit
     // blok een kop met een lege lijst eronder. Dan alleen de knop.
     const alleenDeKnop = heeftGebieden && afkeuringen.length === 0;
