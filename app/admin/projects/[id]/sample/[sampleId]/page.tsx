@@ -400,6 +400,7 @@ export default async function SampleItemPage({
                   checks={criterionChecks}
                   totaalCriteria={totaalCriteria}
                   projectId={params.id}
+                  sampleType={sampleItem.sampleType}
                 />
 
                 {/* Bevindingen section */}

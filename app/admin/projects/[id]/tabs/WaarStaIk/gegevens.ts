@@ -330,7 +330,12 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
    * terwijl je bezig bent één pagina af te werken. Het is te bereiken via het vakje in de
    * kolom "alle pagina’s" in de matrix, en dat is de enige plek waar het thuishoort.
    */
-  const perPagina = (c: Cel) => !isSitebreed(c.code);
+  const typeVanSample = (id: string | null) =>
+    id ? samples.find((s) => s.id === id)?.type ?? null : null;
+
+  // Een PDF is geen pagina van de website maar een document op zichzelf: daar krijgt 3.2.4
+  // een eigen oordeel en hoort het dus wél in de werklijst van dat sample.
+  const perPagina = (c: Cel) => !isSitebreed(c.code, typeVanSample(c.sampleId));
 
   const openVragenVoorSample = (sampleId: string) =>
     cellen.filter(

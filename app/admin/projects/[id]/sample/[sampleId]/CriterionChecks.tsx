@@ -32,10 +32,13 @@ export default function CriterionChecks({
   checks,
   totaalCriteria,
   projectId,
+  sampleType,
 }: {
   checks: Check[];
   totaalCriteria: number;
   projectId: string;
+  /** Een PDF krijgt een eigen 3.2.4-oordeel; alleen de HTML-samples delen er een. */
+  sampleType?: string | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -56,7 +59,8 @@ export default function CriterionChecks({
    * daar niet te beoordelen is, niet omdat het er niet is. Zie lib/metingen.ts. Het
    * telt hier dus niet mee als "niet aanwezig", maar krijgt een eigen regel.
    */
-  const opSiteniveau = (c: Check) => isSitebreed(c.code) && c.status === 'niet_aanwezig';
+  const opSiteniveau = (c: Check) =>
+    isSitebreed(c.code, sampleType) && c.status === 'niet_aanwezig';
   const siteniveau = checks.filter(opSiteniveau);
   const tel = (s: string) =>
     checks.filter((c) => c.status === s && !opSiteniveau(c)).length;

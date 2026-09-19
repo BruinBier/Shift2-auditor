@@ -282,9 +282,24 @@ export const METINGEN: Meetopdracht[] = [
  */
 export const SITEBREED_BEOORDEELD = ['3.2.4'];
 
-/** Wordt dit criterium over de hele steekproef beoordeeld? */
-export function isSitebreed(code: string): boolean {
-  return SITEBREED_BEOORDEELD.includes(code);
+/**
+ * Wordt dit criterium over de hele steekproef beoordeeld?
+ *
+ * `sampleType` hoort erbij, want "de hele steekproef" is niet één set. De HTML-pagina's
+ * vormen samen een website: daar gaat 3.2.4 over de vraag of de zoekknop op elke pagina
+ * hetzelfde heet, en dat is één oordeel voor alle pagina's samen. Een PDF is geen pagina
+ * van die website maar een document op zichzelf, met zijn eigen interne consistentie. Of
+ * dezelfde koppeling in een rapport van 166 pagina's overal hetzelfde heet, staat los van
+ * wat er op de site gebeurt -- en een tweede PDF staat daar weer los van.
+ *
+ * Zonder dat onderscheid verdween 3.2.4 voor elke PDF uit de werklijst, met het oordeel van
+ * de homepage als stilzwijgend antwoord. Dat is geen verwijzing maar een andere vraag.
+ * Vastgesteld door Frits op 2026-09-19 bij ZOET-01.
+ */
+export function isSitebreed(code: string, sampleType?: string | null): boolean {
+  if (!SITEBREED_BEOORDEELD.includes(code)) return false;
+  // Een PDF krijgt zijn eigen oordeel; alleen de HTML-samples delen er één.
+  return sampleType !== 'pdf';
 }
 
 /** De meting bij een commando, of niets als het commando niet bestaat. */

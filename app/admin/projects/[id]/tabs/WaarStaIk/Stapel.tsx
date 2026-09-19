@@ -1391,6 +1391,17 @@ export default function Stapel({
     }
   };
 
+  /**
+   * Geldt dit criterium hier als sitebreed?
+   *
+   * Alleen voor de HTML-samples. Die vormen samen een website, en 3.2.4 vraagt of hetzelfde
+   * onderdeel daar overal hetzelfde heet -- één oordeel voor alle pagina's. Een PDF is geen
+   * pagina van die website maar een document op zichzelf, met zijn eigen interne
+   * consistentie, en krijgt dus een eigen oordeel én een eigen kaart.
+   */
+  const sitebreedHier = (code: string, sampleId: string | null) =>
+    isSitebreed(code, sampleId ? stand.samples.find((s) => s.id === sampleId)?.type : null);
+
   const stapel: Taak[] = useMemo(() => {
     const [soort, a, b] = focus.split(':');
 
@@ -1399,13 +1410,14 @@ export default function Stapel({
         // Bij een sitebreed criterium is er één oordeel, niet twintig. De andere samples
         // staan op 'niet aanwezig' met een verwijzing; die als losse kaarten voorleggen
         // maakt van één beslissing twintig keer bladeren.
-        if (isSitebreed(a)) return c.code === a && !!c.status && c.status !== 'niet_aanwezig';
+        if (sitebreedHier(a, c.sampleId))
+          return c.code === a && !!c.status && c.status !== 'niet_aanwezig';
         return c.code === a;
       }
       if (soort === 'kolom') {
         // Een sitebreed criterium hoort niet in de werklijst van één pagina: het gaat over
         // de hele set. Je bereikt het via het vakje in de kolom "alle pagina’s" in de matrix.
-        return c.sampleId === a && !isSitebreed(c.code);
+        return c.sampleId === a && !sitebreedHier(c.code, c.sampleId);
       }
       if (soort === 'cel') return c.sampleId === a && c.code === b;
       return true;
@@ -3859,9 +3871,9 @@ export default function Stapel({
     <>
       <p className="mb-1 text-sm text-gray-500">
         {cel.code} — {critTitel(cel.code)} ·{' '}
-        {isSitebreed(cel.code) ? 'hele website' : sampleTitel(cel.sampleId)}
+        {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : sampleTitel(cel.sampleId)}
       </p>
-      {isSitebreed(cel.code) && (
+      {sitebreedHier(cel.code, cel.sampleId) && (
         <p className="mb-3 text-xs text-gray-500">
           Vastgelegd op {sampleTitel(cel.sampleId)}; op de andere pagina&apos;s staat een
           verwijzing hierheen.
@@ -3872,7 +3884,7 @@ export default function Stapel({
 
   /** Boven de knoppen, zodat duidelijk is waarover je beslist. */
   const sitebreedMelding = (cel: Cel) => {
-    if (!isSitebreed(cel.code)) return null;
+    if (!sitebreedHier(cel.code, cel.sampleId)) return null;
     // Het aantal pagina's komt uit de meting zelf, niet uit een aanname.
     const meting = (cel.verantwoording ?? []).find(
       (m) => typeof (m.uitkomst as any)?.paginas === 'number'
@@ -4099,7 +4111,7 @@ export default function Stapel({
           </span>
         )}
         <span className="text-sm text-gray-500">
-          {isSitebreed(cel.code) ? 'hele website' : sampleTitel(cel.sampleId)}
+          {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : sampleTitel(cel.sampleId)}
         </span>
       </div>
     ) : null;
@@ -4707,7 +4719,7 @@ export default function Stapel({
             WCAG {critNiveau(cel.code)}
           </span>
         )}
-        {isSitebreed(cel.code) && (
+        {sitebreedHier(cel.code, cel.sampleId) && (
           <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700">
             hele website
           </span>

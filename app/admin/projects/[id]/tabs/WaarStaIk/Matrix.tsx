@@ -135,6 +135,10 @@ export default function Matrix({
               const oordeelCode = stand.criteriumOordeel(crit.code);
               const oordeel = OORDEEL_LABEL[oordeelCode];
               const werk = stand.werkVoorRij(crit.code);
+              // Sitebreed geldt alleen voor de HTML-samples: die vormen samen een website.
+              // Een PDF is een document op zichzelf en draagt een eigen 3.2.4-oordeel, dus
+              // die telt hier niet mee als drager -- anders leest de rij twee dragers als
+              // een fout in de gegevens terwijl er twee legitieme oordelen staan.
               const sitebreed = isSitebreed(crit.code);
               /*
                * Welk vakje draagt het sitebrede oordeel? Niet "dat van Home": die afspraak
@@ -145,6 +149,7 @@ export default function Matrix({
                */
               const rijCellen = sitebreed
                 ? (stand.samples
+                    .filter((s) => isSitebreed(crit.code, s.type))
                     .map((s) => stand.celVoor(s.id, crit.code))
                     .filter(Boolean) as Cel[])
                 : [];
