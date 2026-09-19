@@ -118,6 +118,25 @@ categoriefout: aan één pagina is consistentie niet te zien.
   nooit "voldoet" in. De wortel-oorzaak wordt al onder 1.3.1 afgekeurd. Zie
   `Shift2_Regels_SC_1_3_1.md` voor de volledige vervallijst. Vastgelegd door Frits op
   2026-08-02 bij UTHEU-01.
+- GETAGDE PDF: zet 3.2.4 op `niet_aanwezig`, niet op `niet_te_bepalen`. De regel hierboven
+  geldt voor een document zonder tags: daar valt niets te vergelijken omdat er geen
+  programmatisch herkenbare onderdelen zijn, en dat is een open vraag. Is het document wel
+  getagd, dan is er wel wat te vergelijken en luidt het antwoord dat er niets herhaald
+  wordt. Een enkel document kent geen onderdelen die op meerdere pagina's terugkomen en
+  daar anders worden aangeduid; consistentie is aan één document niet te zien. Dat is
+  een afgerond oordeel en geen open vraag.
+
+  Loop wel eerst de koppelingen na: hetzelfde webadres met twee verschillende linkteksten
+  is precies de 3.2.4-vraag, ook binnen één document. **Let daarbij op links die over
+  twee regels afbreken.** De tekstextractie levert die als twee stukken op, en dan lijkt er
+  één doel met twee namen te zijn. Op Bijlage 2 van ZOET-01 gebeurde dat twee keer
+  (pagina 38 en 39); allebei waren het één link. Zet in de reden wát je hebt
+  nagegaan, niet alleen de uitkomst.
+
+  Gedeeltelijk getagd telt hier als getagd: Bijlage 2 heeft 99 van de 166 pagina's met
+  structuur. Dat het achterste deel geen tags heeft, is een 1.3.1-bevinding en verandert
+  niets aan de vraag of er iets herhaald wordt. Vastgelegd door Frits op 2026-09-19 bij
+  ZOET-01.
 - Bij webpagina's gaat 3.2.4 over dezelfde functie die op verschillende pagina's anders wordt
   aangeduid (een zoekknop die op de ene pagina "Zoeken" heet en op de andere "Vind"). Beoordeel
   dat over de samples heen, niet binnen één pagina.
@@ -369,3 +388,4 @@ Dan:
 - wel afkeuringen → klaar, en het criterium voldoet niet
 - geen enkel onderdeel dat op meerdere pagina's voorkomt → niet van toepassing
 - PDF zonder tags → `niet_te_bepalen`, nooit "voldoet"
+- PDF mét tags, niets herhaald → `niet_aanwezig`; dat is een afgerond oordeel
