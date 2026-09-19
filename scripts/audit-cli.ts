@@ -8614,6 +8614,11 @@ async function getConsistentie(doel: string, flags: Flags) {
     kentDrieTweeDrie = true;
   }
 
+  // PDF's blijven hier buiten: die vormen geen set met de webpagina's. Elk document is
+  // een eigen set en heeft zijn eigen 3.2.4-oordeel, te meten met get-pdfconsistentie.
+  // Zonder deze telling zegt de kaart "4 van de 4 pagina's" zonder erbij te vertellen dat
+  // de steekproef er zes had -- en dan lijkt het alsof er twee zijn vergeten.
+  const pdfs = samples.filter((s) => s.sampleType === 'pdf');
   const bruikbaar = samples.filter((s) => s.url && s.sampleType !== 'pdf');
   const teDoen = bruikbaar.slice(0, max);
   const overgeslagen = bruikbaar.length - teDoen.length;
@@ -9040,6 +9045,8 @@ async function getConsistentie(doel: string, flags: Flags) {
       paginas: bruikbarePaginas.length,
       omgeleid: omgeleid.length,
       vanDeSteekproef: bruikbaar.length,
+      // Hoeveel PDF's er niet meededen, en waarom. De kaart toont dit erbij.
+      pdfsOvergeslagen: pdfs.length,
       onderdelenOpMeerderePaginas: opMeerderePaginas.length,
       andersBenoemd: verschillend.length,
       anderIcoon: anderIcoon.length,

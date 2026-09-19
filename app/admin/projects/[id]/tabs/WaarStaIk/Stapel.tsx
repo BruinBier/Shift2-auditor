@@ -2381,6 +2381,17 @@ export default function Stapel({
               {u.onderdelenOpMeerderePaginas} onderdelen komen op meer dan één pagina voor,
               vergeleken over {u.paginas} van de {u.vanDeSteekproef} pagina&apos;s
               {u.omgeleid ? ' (' + u.omgeleid + ' omgeleid)' : ''}.
+              {/* Zonder deze zin leest "4 van de 4" alsof de steekproef vier items had,
+                  terwijl er zes waren. De twee PDF's zijn niet vergeten: die vormen geen
+                  set met de webpagina's en hebben elk hun eigen 3.2.4-oordeel. */}
+              {u.pdfsOvergeslagen ? (
+                <>
+                  {' '}
+                  De {u.pdfsOvergeslagen} PDF
+                  {u.pdfsOvergeslagen === 1 ? '' : "'s"} in de steekproef {u.pdfsOvergeslagen === 1 ? 'doet' : 'doen'}{' '}
+                  hier niet mee: een document is een eigen set en krijgt een eigen oordeel.
+                </>
+              ) : null}
             </p>
           ) : (
             <p className="text-sm text-gray-600">
