@@ -38,6 +38,11 @@ const OORDEEL_KLEUR: Record<CriteriumOordeel, string> = {
   failed: CEL_KLEUR.afgekeurd,
   passed: CEL_KLEUR.voldoet,
   not_present: CEL_KLEUR.niet_aanwezig,
+  // Een wachtend voorstel krijgt het amber van een opmerking: er ligt iets klaar dat jouw
+  // blik vraagt. Een openstaande vraag het blauw van `niet_te_bepalen`, want dat ís de
+  // celstatus die hem veroorzaakt. Zo blijft de rij dezelfde taal spreken als de vakjes.
+  wacht_op_akkoord: CEL_KLEUR.opmerking,
+  vraag_open: CEL_KLEUR.niet_te_bepalen,
   not_tested: CEL_KLEUR.onbeoordeeld,
 };
 

@@ -17,7 +17,28 @@ export type SampleOordeel =
   | 'niet_aanwezig'
   | 'niet_te_bepalen';
 
-export type CriteriumOordeel = 'failed' | 'passed' | 'not_present' | 'not_tested';
+/**
+ * Het oordeel over een criterium, zoals de matrix het toont.
+ *
+ * `not_tested` was hier lang de verzamelbak voor alles wat nog niet rond was, en dat
+ * leverde een verwijt op dat niet klopte: bij 1.4.3 op ZOET-01 stond "Nog niet getoetst"
+ * terwijl alle zes de pagina's beoordeeld waren. Er stonden alleen nog twee voorstellen te
+ * wachten en één pagina leverde geen oordeel op. Drie verschillende dingen, één woord.
+ *
+ * Nu apart, want ze vragen ander werk van de onderzoeker:
+ *   wacht_op_akkoord  jij moet iets beslissen -- er ligt een voorstel
+ *   vraag_open        jij moet iets uitzoeken -- een pagina was niet vast te stellen
+ *   not_tested        er is werkelijk nog niets beoordeeld
+ *
+ * Vastgesteld door Frits op 2026-09-19.
+ */
+export type CriteriumOordeel =
+  | 'failed'
+  | 'passed'
+  | 'not_present'
+  | 'wacht_op_akkoord'
+  | 'vraag_open'
+  | 'not_tested';
 
 export interface Sample {
   id: string;
@@ -377,10 +398,14 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     if (!rij.length) return 'not_tested';
     if (rij.some((c) => c.bevindingen.some((b) => b.type === 'bevinding'))) return 'failed';
 
-    const nogOpen =
-      rij.some((c) => c.status === 'niet_te_bepalen' || c.status === null) ||
-      voorstellen.some((v) => v.code === code);
-    if (nogOpen) return 'not_tested';
+    // Drie soorten "nog niet rond", in volgorde van wat er van je gevraagd wordt.
+    //
+    // Een pagina zonder enig oordeel eerst: daar is nog niets gebeurd. Dan een openstaande
+    // vraag -- die moet je uitzoeken voordat een voorstel erover zin heeft. Een wachtend
+    // voorstel is het lichtst: het werk is gedaan, jij hoeft alleen ja of nee te zeggen.
+    if (rij.some((c) => c.status === null)) return 'not_tested';
+    if (rij.some((c) => c.status === 'niet_te_bepalen')) return 'vraag_open';
+    if (voorstellen.some((v) => v.code === code)) return 'wacht_op_akkoord';
 
     if (rij.every((c) => c.status === 'niet_aanwezig')) return 'not_present';
     return 'passed';
@@ -415,6 +440,10 @@ export const OORDEEL_LABEL: Record<CriteriumOordeel, { tekst: string; klasse: st
   failed: { tekst: 'Voldoet niet', klasse: 'bg-red-100 text-red-800' },
   passed: { tekst: 'Voldoet', klasse: 'bg-green-100 text-green-800' },
   not_present: { tekst: 'Niet aanwezig', klasse: 'bg-gray-100 text-gray-600' },
+  // Amber: jij moet iets beslissen. Het werk is gedaan, er ligt een voorstel.
+  wacht_op_akkoord: { tekst: 'Wacht op akkoord', klasse: 'bg-amber-100 text-amber-800' },
+  // Paars: jij moet iets uitzoeken. Een pagina was niet vast te stellen.
+  vraag_open: { tekst: 'Vraag open', klasse: 'bg-purple-100 text-purple-800' },
   not_tested: { tekst: 'Nog niet getoetst', klasse: 'bg-blue-100 text-blue-800' },
 };
 
