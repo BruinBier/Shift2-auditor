@@ -1423,6 +1423,14 @@ export default function Stapel({
         return c.sampleId === a;
       }
       if (soort === 'cel') return c.sampleId === a && c.code === b;
+      // De kolom "alle pagina's": de criteria waarvan het oordeel over de héle set gaat.
+      // Alleen het vakje dat het oordeel draagt, niet de verwijzingen op de andere
+      // pagina's -- daar valt niets te beslissen, dus die als kaart voorleggen maakt van
+      // één beslissing vijf keer bladeren.
+      if (soort === 'sitebreed')
+        return (
+          sitebreedHier(c.code, c.sampleId) && !!c.status && c.status !== 'niet_aanwezig'
+        );
       return true;
     };
 
@@ -3955,6 +3963,7 @@ export default function Stapel({
     if (soort === 'rij') return `${a} — ${critTitel(a)}, over alle pagina's`;
     if (soort === 'kolom') return sampleTitel(a);
     if (soort === 'cel') return `${b} op ${sampleTitel(a)}`;
+    if (soort === 'sitebreed') return "Criteria over alle pagina's samen";
     return focus;
   })();
 

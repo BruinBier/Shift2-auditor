@@ -109,8 +109,12 @@ export default function Matrix({
                 );
               })}
               {/* De laatste kolom draagt de criteria waarvan het oordeel over de héle
-                  set gaat. Zie lib/metingen.ts. Geen knop: de kolom staat voor de
-                  steekproef als geheel, niet voor een pagina die je kunt afwerken.
+                  set gaat. Zie lib/metingen.ts. De kop is klikbaar en opent die criteria
+                  in de stapel -- alleen de vakjes die het oordeel dragen, niet de
+                  verwijzingen op de andere pagina's. Stond hier eerst geen knop, met als
+                  reden dat de kolom geen pagina is die je kunt afwerken; dat klopt, maar
+                  er valt wel iets te openen, en zonder die knop waren dit de enige
+                  kaarten in het raster die je niet kon bereiken.
 
                   sticky right-0, spiegelbeeld van de criteriumkolom links: anders moet
                   je langs twintig paginakolommen slepen om het enige vakje te zien dat
@@ -126,12 +130,19 @@ export default function Matrix({
                 className="sticky right-0 z-10 bg-gray-50 px-1 py-2 align-bottom font-normal text-gray-700"
                 style={{ boxShadow: 'inset 1px 0 0 0 #f3f4f6' }}
               >
-                <span
-                  className="mx-auto block max-h-40 overflow-hidden whitespace-nowrap text-xs font-medium"
-                  style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                <button
+                  type="button"
+                  onClick={() => openStapel('sitebreed')}
+                  title="De criteria waarvan het oordeel over alle pagina's samen gaat. Klik om ze af te werken."
+                  className="block rounded hover:bg-gray-200"
                 >
-                  alle pagina&apos;s
-                </span>
+                  <span
+                    className="mx-auto block max-h-40 overflow-hidden whitespace-nowrap text-xs font-medium"
+                    style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                  >
+                    alle pagina&apos;s
+                  </span>
+                </button>
               </th>
             </tr>
           </thead>
