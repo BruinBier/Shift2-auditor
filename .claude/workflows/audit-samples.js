@@ -961,9 +961,11 @@ IS HET DOCUMENT NIET GETAGD, dan geldt dit dwingend (zie Shift2_Regels_SC_1_3_1.
   - 1.1.1 → OPMERKING (status 'opmerking'), geen afkeuring. Zonder tags kun je niet
     vaststellen wat er aan tekstalternatieven ontbreekt.
   - 1.3.2 leesvolgorde → 'niet_te_bepalen'. Er is geen programmatische leesvolgorde.
-  - 1.4.5 afbeeldingen van tekst → 'niet_te_bepalen'. Zonder tags is er voor hulptechnologie
-    geen onderscheid tussen tekst en afbeelding. Dat jij de tekst in een afbeelding kunt
-    uitsnijden en lezen, maakt het nog geen zelfstandig oordeel.
+  - 1.4.5 afbeeldingen van tekst → WEL beoordelen, ook zonder tags. De vraag is of de tekst
+    er als tekst staat: lees de tekstlaag uit en zoek er een woord in dat zichtbaar op de
+    pagina staat. Komt dat terug, dan is de tekst selecteerbaar en doorzoekbaar en voldoet
+    het -- ook bij een gescande pagina met OCR eroverheen. Komt er niets terug, dan is de
+    hele pagina beeld en is dat een afkeuring.
   - 3.2.4 consistente identificatie → 'niet_te_bepalen'. Zonder tags zijn er geen
     programmatisch herkenbare onderdelen waarvan de identificatie te vergelijken valt.
   Keur deze vier dus NIET apart af als gevolg van dezelfde oorzaak, en vul er ook nooit
@@ -1369,8 +1371,8 @@ UITZONDERING — niet-getagde PDF (alleen als de sample een PDF is die geen tags
   Criteria die je alléén kunt beoordelen wanneer er tags zijn, keur je NIET apart af als gevolg van diezelfde
   oorzaak. Je stelt geen fout vast op iets dat zonder tags niet bestaat om te checken. Concreet:
     - 1.3.2 (leesvolgorde): 'niet_te_bepalen' — zonder tags is er geen programmatische leesvolgorde
-    - 1.4.5 (afbeeldingen van tekst): 'niet_te_bepalen' — zonder tags is niet vast te stellen wat als
-      afbeelding en wat als tekst is aangemerkt
+    - 1.4.5 (afbeeldingen van tekst): NIET weerleggen, dit criterium vervalt niet. Of tekst als
+      beeld wordt getoond is te meten: selecteerbaar en doorzoekbaar = voldoet, ook zonder tags
     - 4.1.2 (naam, rol, waarde): 'niet_te_bepalen' — zonder tags is er geen structuur waarin naam en
       rol kunnen zitten. Alleen bij een ECHT invulbaar formulier (invulvelden, keuzerondjes,
       selectievakjes) is het zonder tags te beoordelen; de toegankelijke naam zit dan in de
@@ -1484,7 +1486,7 @@ ${[...afwijzingenPerCode.entries()]
 LET OP bij een niet-getagde PDF: weerleg een afkeuring van 1.3.2 (leesvolgorde). Zonder tags is er geen programmatische leesvolgorde om te toetsen, dus dat hoort 'niet_te_bepalen' te zijn, niet afgekeurd. De ontbrekende tag-structuur wordt al onder 1.3.1 afgekeurd; keur het gevolg niet apart af.
 LET OP bij een telefoonnummer- of e-maillink onder 2.4.4: weerleg die alleen als de link BEDOELD IS OM TE BELLEN of te mailen, ook bij een defecte of ontbrekende tel:-koppeling. Wijst de href naar een volledig andere bestemming (een webpagina of een document), dan is de afkeuring juist TERECHT en laat je hem staan: de linktekst voorspelt het doel dan onjuist. Zie Shift2_Regels_SC_2_4_4.md.
 
-LET OP bij een niet-getagde PDF: de ontbrekende tagstructuur wordt al onder 1.3.1 afgekeurd. Weerleg elke afkeuring die een GEVOLG is van diezelfde oorzaak en zet gecorrigeerdeStatus op 'niet_te_bepalen': 1.3.2 (geen programmatische leesvolgorde), 1.4.5 (zonder tags geen onderscheid tussen tekst en afbeelding) en 3.2.4 (geen programmatisch herkenbare onderdelen om te vergelijken). Weerleg ook een AFKEURING onder 1.1.1: die hoort bij een ongetagde PDF een opmerking te zijn.
+LET OP bij een niet-getagde PDF: de ontbrekende tagstructuur wordt al onder 1.3.1 afgekeurd. Weerleg elke afkeuring die een GEVOLG is van diezelfde oorzaak en zet gecorrigeerdeStatus op 'niet_te_bepalen': 1.3.2 (geen programmatische leesvolgorde) en 3.2.4 (geen programmatisch herkenbare onderdelen om te vergelijken). LET OP: 1.4.5 hoort hier NIET bij -- dat is ook zonder tags te meten. Weerleg ook een AFKEURING onder 1.1.1: die hoort bij een ongetagde PDF een opmerking te zijn.
 Maar 2.4.4, 2.4.6, 1.4.1, 1.4.3 en 1.4.11 horen bij een ongetagd document WEL beoordeeld te worden: die gaan over wat je ziet en leest, en dat staat er ook zonder tags. Weerleg een afkeuring daar dus NIET met het argument "het document is niet getagd" — zeker niet bij contrast, want tags hebben daar niets mee te maken. Weerleg wel een 2.4.4-afkeuring die erover gaat dat de link niet klikbaar is; dat valt onder 1.3.1.
 
 Het onderscheid: 1.4.5 heeft tags nodig omdat de vraag is wat er als afbeelding is AANGEMERKT, een eigenschap van de code. 1.4.1 heeft ze niet nodig omdat de vraag is of kleur de enige drager van informatie is; wie kleurenblind is loopt daar visueel tegenaan, los van wat een schermlezer met het document kan.

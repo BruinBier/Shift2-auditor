@@ -15,7 +15,7 @@ kan; dat loopt via 1.1.1 en 1.3.1.
 
 ## Ook toetsbaar bij een ONGETAGDE PDF
 
-Anders dan 1.1.1, 1.3.2, 1.4.5 en 2.4.4 vervalt 1.4.1 **niet** bij een PDF zonder tags. De reden
+Anders dan 1.1.1, 1.3.2 en 2.4.4 vervalt 1.4.1 **niet** bij een PDF zonder tags. De reden
 staat in `Shift2_Regels_SC_1_3_1.md`:
 
 - **1.4.5** heeft tags nodig, want de vraag is wat er als afbeelding is *aangemerkt* — een

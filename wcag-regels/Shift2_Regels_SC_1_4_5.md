@@ -11,37 +11,48 @@
 - Het toegankelijkheidsprobleem van zon poster loopt via 1.1.1 (tekstalternatief) en het aanvullen van ontbrekende info als echte tekst.
 - Let op het verschil: een uitgetypt tekstblok dat zonder reden als screenshot is geplaatst valt NIET onder de uitzondering en kan wel een 1.4.5-bevinding zijn.
 - 1.4.5 en 1.4.3 zijn aparte toetsingen. Dat een poster onder de 1.4.5-uitzondering valt, maakt hem niet immuun voor 1.4.3.
-- NIET-GETAGDE PDF: zet 1.4.5 op niet_te_bepalen. Zonder tags is er voor hulptechnologie geen onderscheid tussen tekst en afbeelding: de hele opbouw van het document is onzichtbaar. Je kunt dan niet over één afbeelding zeggen dat díe het probleem is, want geen enkele tekst in het document is als tekst beschikbaar. De wortel-oorzaak wordt al onder 1.3.1 afgekeurd.
-  Zie `Shift2_Regels_SC_1_3_1.md` voor de volledige lijst criteria die bij een ongetagde PDF vervallen (1.1.1, 1.3.2, 1.4.5, 2.4.4). Vastgelegd door Frits op 2026-08-02 bij UTHEU-01; Claude stelde eerst voor 1.4.5 wél per geval te beoordelen, Frits corrigeerde dat.
+- PDF: DE VRAAG IS OF DE TEKST ER ALS TEKST STAAT, NIET OF HIJ GETAGD IS.
 
-## Ongetagde PDF: twee valkuilen, en GEEN vraag aan de onderzoeker
+  **Afkeuren**: het document bestaat uit gescande pagina's -- paginabeelden waarin tekst te
+  zien is -- zonder dat die is omgezet naar echte tekst. Dat zijn letterlijk afbeeldingen van
+  tekst.
 
-Twee dingen die lijken te bewijzen dat je 1.4.5 wél kunt beoordelen, maar dat niet doen:
+  **Voldoet**: de tekst is selecteerbaar en doorzoekbaar. Dan is het echte digitale tekst, ook
+  als de pagina zelf een scan is met OCR eroverheen. Het ontbreken van tags verandert daar
+  niets aan.
 
-1. **Je kunt de tekst uitsnijden en lezen.** Dat je als auditor met een uitsnede kunt vaststellen
-   dat er tekst in een afbeelding staat, betekent niet dat er een zelfstandig oordeel te vellen
-   is. Wat jij kunt meten is iets anders dan wat er te beoordelen valt.
-2. **De tekst is selecteerbaar.** In een ongetagde PDF is tekst vaak gewoon te selecteren, omdat
-   de lettertypen zijn ingebed. Dat levert alleen visuele karaktercoördinaten op; het zegt niets
-   over de vraag of die tekst voor een schermlezer als lopende tekst beschikbaar is. Selecteerbaar
-   is dus geen bewijs dat iets géén afbeelding van tekst is.
+  Te meten zonder afweging: lees de tekstlaag uit en zoek er een woord in dat zichtbaar op de
+  pagina staat. Komt er niets terug, dan is er geen tekstlaag.
 
-Zonder structuur valt niet vast te stellen of een element door de maker bedoeld is als afbeelding
-van tekst of als mislukte platte tekst. Dat onderscheid ontstaat pas bij het taggen.
+  Vervangt de regel van 2026-08-02 bij UTHEU-01, die 1.4.5 bij een ongetagde PDF op
+  `niet_te_bepalen` zette omdat er zonder tags geen onderscheid tussen tekst en afbeelding zou
+  zijn. Dat onderscheid gaat over wat hulptechnologie kan bereiken, en dat is 1.3.1; 1.4.5
+  vraagt of tekst als beeld wordt gepresenteerd. Aanleiding: het Collegebesluit van ZOET-01,
+  acht gescande pagina's met een doorzoekbare OCR-laag van 18.755 tekens. Dat stond op
+  `niet_te_bepalen` terwijl het gewoon voldoet. Vastgelegd door Frits op 2026-09-19.
 
-**Formuleer dit niet als openstaande vraag.** De uitkomst staat vast: niet te beoordelen, met de
-wortel-oorzaak al afgekeurd onder 1.3.1. Er is niets dat de onderzoeker nog kan uitzoeken, en
-"is er een getagde versie beschikbaar?" is geen vraag maar de bevinding zelf. Zet in `reden` de
-vaststelling, zonder vraagzin:
+## PDF: scan met of zonder tekstlaag
 
-> Het document is niet getagd (geen /StructTreeRoot, geen /MarkInfo). Zonder tags bestaat er voor
-> hulptechnologie geen onderscheid tussen tekst en afbeelding, dus valt over geen enkel onderdeel
-> zelfstandig vast te stellen dat juist dát een afbeelding van tekst is. Dat de tekst
-> selecteerbaar of uit te snijden is, maakt dat niet anders. De wortel-oorzaak is afgekeurd
-> onder 1.3.1; dit criterium is opnieuw te beoordelen zodra het document getagd is.
+De toets is er een die je uitvoert, niet weegt:
 
-Hetzelfde geldt voor de andere criteria die bij een ongetagde PDF vervallen (1.1.1, 1.3.2,
-2.4.4): vaststelling, geen vraag.
+1. **Lees de tekstlaag uit.** Staat er tekst, en is die doorzoekbaar? Zoek er een woord in dat
+   je zichtbaar op de pagina ziet staan. Komt dat woord terug, dan is de tekst er als tekst en
+   voldoet 1.4.5.
+2. **Komt er niets terug**, dan bestaat de pagina alleen uit beeld. Dat is een afkeuring: alle
+   tekst in het document is een afbeelding van tekst.
+
+Een pagina die als één groot paginabeeld is opgebouwd is dus niet vanzelf een afkeuring. Ligt
+er een OCR-laag overheen, dan is de tekst selecteerbaar en doorzoekbaar en voldoet het. Dat de
+OCR fouten kan bevatten is een kwestie voor 1.3.1 en voor de kwaliteit van het document, niet
+voor dit criterium.
+
+**Formuleer dit niet als openstaande vraag.** De uitkomst is te meten, dus er is niets dat de
+onderzoeker nog moet uitzoeken. Zet in `reden` wat je hebt gemeten:
+
+> De pagina's 1 tot en met 8 zijn elk één paginabeeld met een tekstlaag eroverheen. Die tekst
+> is selecteerbaar en doorzoekbaar: 18.755 tekens, en zoeken op een zichtbaar woord geeft
+> treffers. De tekst staat er dus als echte tekst en niet als afbeelding van tekst.
+
 
 ## Op de kaart
 
@@ -62,8 +73,9 @@ Uitzonderingen: een logo of woordmerk, en een poster of banner waarin de vormgev
 tekst het punt is. Een uitgetypt tekstblok dat als schermafdruk is geplaatst valt daar niet
 onder.
 
-Kaarten met labels erin zijn hier geen bevinding: dat loopt via 1.1.1. Een PDF zonder tags is
-niet te beoordelen, en dat is een vaststelling, geen vraag.
+Kaarten met labels erin zijn hier geen bevinding: dat loopt via 1.1.1. Bij een PDF telt of de
+tekst selecteerbaar en doorzoekbaar is; een scan met OCR voldoet, een scan zonder tekstlaag
+niet. Of het document getagd is, doet hier niet ter zake.
 
 ### Audit-instructies
 
@@ -86,8 +98,10 @@ niet te beoordelen, en dat is een vaststelling, geen vraag.
 4. [agent] Blijft er een afbeelding over met gewone tekst die net zo goed als tekst had kunnen
    staan, dan is dat een afkeuring. Noem wat erin staat en of die tekst elders op de pagina
    als tekst staat.
-5. [agent] Bij een PDF zonder tags: `niet_te_bepalen` met de vaste vaststelling uit dit
-   bestand, zonder vraagzin. Bij een getagde PDF: beoordelen als een pagina.
+5. [agent] Bij een PDF: lees de tekstlaag uit en zoek er een woord in dat zichtbaar op de
+   pagina staat. Komt dat terug, dan staat de tekst er als tekst en voldoet 1.4.5 -- ook bij
+   een scan met OCR, en ongeacht of het document getagd is. Komt er niets terug, dan is de
+   hele pagina beeld en is dat een afkeuring.
 
 #### Stap 3 — Vastleggen
 

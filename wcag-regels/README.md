@@ -126,7 +126,7 @@ meet Frits handmatig.
 
 - **Open vraag** — de onderzoeker kan het uitzoeken. Zet de concrete vraag erin, met alles wat
   je zelf al hebt vastgesteld, zodat er zo min mogelijk werk overblijft.
-- **Vaststelling** — de uitkomst staat vast. Bij een ongetagde PDF vervallen 1.1.1, 1.3.2, 1.4.5
+- **Vaststelling** — de uitkomst staat vast. Bij een ongetagde PDF vervallen 1.1.1, 1.3.2
   en 2.4.4 zolang de tags ontbreken; daar valt niets uit te zoeken. Schrijf dan geen vraagzin,
   en zeker niet "is er een getagde versie beschikbaar?" — die is er niet, en dat is de bevinding.
 

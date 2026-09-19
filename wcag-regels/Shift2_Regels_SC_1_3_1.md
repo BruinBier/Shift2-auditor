@@ -89,7 +89,6 @@ per criterium: gaat het over iets **programmatisch** (dat bestaat zonder tags ni
 |---|---|---|
 | **1.1.1** | opmerking | niet vast te stellen wat aan tekstalternatieven ontbreekt |
 | **1.3.2** | `niet_te_bepalen` | geen programmatische leesvolgorde |
-| **1.4.5** | `niet_te_bepalen` | geen onderscheid tussen tekst en afbeelding voor hulptechnologie |
 | **3.2.4** | `niet_te_bepalen` | geen herkenbare onderdelen om de identificatie van te vergelijken |
 | **4.1.2** | `niet_te_bepalen` | geen structuur waarin naam, rol en waarde kunnen zitten. Alleen bij een écht invulbaar formulier (invulvelden, keuzerondjes, selectievakjes) is het zonder tags te beoordelen. Een knop die als link werkt valt hier gewoon onder, ook als hij intern als AcroForm-pushbutton is opgeslagen: ga af op de functie, niet op de techniek. Zie `Shift2_Regels_SC_4_1_2.md`. |
 
@@ -102,8 +101,9 @@ per criterium: gaat het over iets **programmatisch** (dat bestaat zonder tags ni
 | **1.4.1** | Is kleur de enige manier waarop informatie wordt overgedragen? Denk aan een grafiek waarvan de segmenten alleen via de legendakleur te herleiden zijn, of een link die alleen rood is zonder onderstreping. |
 | **1.4.3** | Contrast. Tags hebben er niets mee te maken: lichtblauwe tekst op wit is even onleesbaar zonder tagstructuur. Meet het op de beeldpunten van de gerenderde pagina. Zie `Shift2_Regels_SC_1_4_3.md`. |
 | **1.4.11** | Contrast van grafieken, diagrammen, kaarten en betekenisvolle pictogrammen. Om dezelfde reden als 1.4.3: het gaat om wat je ziet. Staan ze er niet, dan `niet_aanwezig`. |
+| **1.4.5** | Staat de tekst er als echte tekst, of als beeld? Is de tekst selecteerbaar en doorzoekbaar, dan voldoet het -- ook bij een gescande pagina met OCR eroverheen, en ook zonder tags. Bestaat het document uit paginabeelden zonder tekstlaag, dan is dat letterlijk een afbeelding van tekst en dus een afkeuring. Zie `Shift2_Regels_SC_1_4_5.md`. |
 
-Bij 2.4.4, 2.4.6, 1.4.1, 1.4.3 en 1.4.11 geef je dus een echt oordeel: voldoet, of een
+Bij 2.4.4, 2.4.6, 1.4.1, 1.4.3, 1.4.11 en 1.4.5 geef je dus een echt oordeel: voldoet, of een
 afkeuring als het niet deugt. Zet ze niet op `niet_te_bepalen` met "geen tags" als reden.
 
 Voor 1.4.3 en 1.4.11 betekent dat wel dat er bewijs moet liggen. Meet het met

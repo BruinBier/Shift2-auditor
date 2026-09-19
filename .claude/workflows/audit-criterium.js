@@ -630,7 +630,7 @@ IS HET OVERAL GETAGD? Tel de pagina's met /StructParents naast het totaal:
   alle pagina's, met de paginanummers erbij. Zonder die melding valt het ongetagde deel
   stilzwijgend buiten het onderzoek.
 
-NIET GETAGD (of lege tagboom): 1.3.2, 1.4.5 en 3.2.4 vervallen en 1.1.1 wordt een opmerking;
+NIET GETAGD (of lege tagboom): 1.3.2 en 3.2.4 vervallen en 1.1.1 wordt een opmerking; 1.4.5 vervalt NIET (selecteerbare tekst = voldoet, ook zonder tags);
 2.4.4, 2.4.6, 1.4.1, 2.4.2 en 3.1.1 beoordeel je juist wél. Vraag dan geen PAC-uitvoer.
 
 CONTRAST (1.4.3, 1.4.11) MEET JE ZELF:
