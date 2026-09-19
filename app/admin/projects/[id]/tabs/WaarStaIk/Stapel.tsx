@@ -1899,6 +1899,70 @@ export default function Stapel({
    * Alleen wat er nog niet staat. Een meting die er al is, heeft haar eigen knop ("Nog
    * eens meten") en hoort niet twee keer aangeboden te worden.
    */
+  /**
+   * Waarop rust dit oordeel: op een meting, of op de afweging van de agent?
+   *
+   * Op de kaart zagen die twee er hetzelfde uit. 1.4.3 "afgekeurd" en 3.1.2 "voldoet"
+   * kregen allebei hetzelfde blauwe kaartje "Oordeel van de agent", met eronder een even
+   * nette onderbouwing. Maar onder de eerste zit `get-pdfcontrast` met 9247 doorgerekende
+   * tekstfragmenten -- draai het morgen opnieuw en er komt weer 2,03:1 uit -- en onder de
+   * tweede zit de vraag of een Latijnse soortnaam een eigennaam is of een anderstalig
+   * woord. Op 19 september 2026 liepen drie agents op datzelfde document uiteen bij zeven
+   * criteria, allemaal van het tweede soort; bij de criteria met een meting waren ze het
+   * eens.
+   *
+   * Dat verschil bepaalt hoe streng de onderzoeker moet nakijken, en het stond nergens.
+   *
+   * Bewust op `verantwoording` en niet op `metingenVoorCriterium`: dat een criterium
+   * meetbaar IS zegt niet dat er gemeten is. Staat er "gemeten" boven een oordeel waar de
+   * agent het commando nooit heeft aangeraakt, dan is het label erger dan geen label.
+   */
+  const rustOp = (cel: Cel): 'gemeten' | 'ongemeten' | 'afweging' => {
+    if ((cel.verantwoording ?? []).length > 0) return 'gemeten';
+    return metingenVoorCriterium(cel.code).length > 0 ? 'ongemeten' : 'afweging';
+  };
+
+  /** Het kaartje naast "Oordeel van de agent". */
+  const grondslagLabel = (cel: Cel) => {
+    // Bij een vinkje van de onderzoeker is er geen agent geweest, en dus ook niets om
+    // over te zeggen waar zijn oordeel op rust.
+    if (cel.bron === 'steekproef') return null;
+
+    const soort = rustOp(cel);
+    if (soort === 'gemeten') {
+      return (
+        <span
+          className="rounded bg-emerald-50 px-2 py-0.5 font-medium text-emerald-900"
+          title={`Onder dit oordeel staat een meting: ${(cel.verantwoording ?? [])
+            .map((m) => m.commando)
+            .join(', ')}`}
+        >
+          gemeten
+        </span>
+      );
+    }
+    if (soort === 'ongemeten') {
+      return (
+        <span
+          className="rounded bg-amber-50 px-2 py-0.5 font-medium text-amber-900"
+          title={`Dit criterium is te meten (${metingenVoorCriterium(cel.code)
+            .map((m) => m.commando)
+            .join(', ')}), maar er staat geen meting onder dit oordeel.`}
+        >
+          afweging, meting mogelijk
+        </span>
+      );
+    }
+    return (
+      <span
+        className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
+        title="Voor dit criterium bestaat geen meetcommando; het oordeel is een afweging van de agent."
+      >
+        afweging van de agent
+      </span>
+    );
+  };
+
   const meetAanbod = (cel: Cel) => {
     const gedaan = new Set((cel.verantwoording ?? []).map((m) => m.commando));
     const teDoen = meetbaarVanafDeKaart(cel.code).filter((m) => !gedaan.has(m.commando));
@@ -4891,6 +4955,7 @@ export default function Stapel({
             <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
               {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
             </span>
+            {grondslagLabel(huidig.cel)}
             <span
               className={`rounded px-2 py-0.5 font-medium ${
                 OORDEEL_KLEUR[huidig.cel.status ?? ''] ?? 'bg-gray-100 text-gray-700'
@@ -5369,6 +5434,7 @@ export default function Stapel({
                 <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
                   {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
                 </span>
+                {grondslagLabel(huidig.cel)}
                 <span
                   className={`rounded px-2 py-0.5 font-medium ${
                     huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
