@@ -152,6 +152,23 @@ export const METINGEN: Meetopdracht[] = [
      * dienen 1.1.1, 1.3.1, 1.3.2 en 2.4.4, maar vellen daar geen oordeel -- die zou een
      * knop "gemeten" geven aan een vraag die een mens moet wegen.
      */
+    /**
+     * De leesvolgorde van een PDF, uit de tagboom.
+     *
+     * `get-leesvolgorde` staat hierboven ook voor 1.3.2, maar dat opent een pagina in een
+     * browser en legt de CSS-positie naast de code-volgorde. Een PDF heeft geen van beide.
+     * Daardoor stond 1.3.2 op een PDF op "niet gemeten" met een knop die niets kon
+     * opleveren. Twee commando's voor hetzelfde criterium dus, elk voor een ander soort
+     * document; de kaart biedt ze allebei aan en de agent kiest wat past.
+     */
+    commando: 'get-pdfleesvolgorde',
+    criteria: ['1.3.2'],
+    toegestaneVlaggen: [],
+    vanafDeKaart: true,
+    wat: 'Loopt de tagboom in leesvolgorde af en meldt waar hulpsoftware terugspringt naar een eerdere pagina.',
+    duurt: 'enkele seconden',
+  },
+  {
     commando: 'get-pdfstructuur',
     criteria: [
       '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4',

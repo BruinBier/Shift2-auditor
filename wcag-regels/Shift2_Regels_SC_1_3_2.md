@@ -31,6 +31,31 @@ code eronder; dan koppelt hulpsoftware die gegevens aan het verkeerde item.
 Alleen een screenshot-vergelijking is niet genoeg: dat toont de uitkomst, niet de oorzaak.
 Doe minstens stap 1 of stap 2 erbij en meld in `reden` welke test je hebt gedaan.
 
+## In een PDF: `get-pdfleesvolgorde`
+
+`get-leesvolgorde` werkt hier niet. Dat opent een pagina in een browser en legt de
+CSS-positie naast de code-volgorde; een PDF heeft geen van beide. Gebruik:
+
+```bash
+npm run cli -- get-pdfleesvolgorde <pdf-url of pad>
+```
+
+De tagboom **is** de leesvolgorde: hulpsoftware loopt hem van voor naar achter af, ongeacht
+waar de tekst op de pagina staat. Het commando noteert per element de pagina en meldt waar de
+volgorde terugspringt.
+
+**Kijk naar de blokken, niet naar het aantal.** Op Bijlage 2 van ZOET-01 zijn 78 losse
+terugsprongen samen 10 verschijnselen: een lijst die over een paginagrens loopt levert er
+tientallen op die allemaal hetzelfde ene ding zijn. Wie op 78 afgaat, keurt af op ruis.
+
+**Eén pagina terug is normaal.** Dat is vrijwel altijd een alinea of lijst die over de
+paginagrens doorloopt, met `/Pg` naar de eindpagina. Vanaf twee of drie pagina's terug is het
+het bekijken waard: op Bijlage 2 waren dat `p36 → p32` en `p61 → p58`, en dat bleken twee
+opsommingen te zijn die in de structuur onder een punt drie tot vier pagina's eerder hangen.
+
+**Zonder tagstructuur is 1.3.2 niet vast te stellen**, niet "voldoet". Er is dan geen
+vastgelegde leesvolgorde om te controleren; dat is een 1.3.1-kwestie.
+
 ## Regels
 
 - 1.3.2 IS NIET TE BEOORDELEN OP OPGEHAALDE HTML. De volgorde in de code is de ene helft van het antwoord, de opmaak de andere. Een kaart met de afbeelding in de code na de titel kan hem op het scherm erboven zetten met `order`, `row-reverse`, `grid-area` of absolute positionering — en dat staat in externe stylesheets die je niet ophaalt. Op heuvelrug.nl zijn dat er vijftien. Schrijf dus nooit "er is geen CSS-positionering die de leesvolgorde omkeert" op grond van de opgehaalde pagina: dat is een afwezigheid vaststellen in materiaal waar het niet in kán staan.

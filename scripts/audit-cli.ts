@@ -19,6 +19,7 @@
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
  *   tsx scripts/audit-cli.ts get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
  *   tsx scripts/audit-cli.ts get-pdfstructuur <pdf-url of pad>
+ *   tsx scripts/audit-cli.ts get-pdfleesvolgorde <pdf-url of pad>
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
  *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
@@ -4156,6 +4157,61 @@ async function getPdfStructuur(doel: string, _flags: Flags) {
       paginasGetagd: v.tagstructuur?.paginasGetagd,
       figurenZonderAlt: v.afbeeldingen?.zonderAlt,
       koppelingen: v.koppelingen?.aantal,
+    },
+  });
+
+  print({
+    ...meting,
+    ...(opgehaald ? { opgehaaldNaar: opgehaald } : {}),
+  });
+}
+
+/**
+ * De leesvolgorde van een PDF: wat hulpsoftware achter elkaar doorloopt.
+ *
+ * `get-leesvolgorde` kan dit niet: dat opent een pagina in een browser en legt de
+ * CSS-positie naast de code-volgorde. Een PDF heeft geen van beide, dus 1.3.2 bleef op
+ * "niet gemeten" staan terwijl de vraag hier net zo goed te beantwoorden is -- alleen uit
+ * de tagboom. Die IS de leesvolgorde: hulpsoftware loopt hem van voor naar achter af,
+ * ongeacht waar de tekst op de pagina staat.
+ *
+ * Het commando groepeert bewust. Op Bijlage 2 van ZOET-01 zijn 78 losse terugsprongen
+ * samen 10 verschijnselen; een lijst die over een paginagrens loopt levert er tientallen
+ * op die allemaal hetzelfde ene ding zijn. Wie op 78 afgaat keurt af op ruis.
+ */
+async function getPdfLeesvolgorde(doel: string, _flags: Flags) {
+  const { spawnSync } = await import('child_process');
+  const { bestand, opgehaald } = await haalPdfBinnen(doel);
+
+  const script = path.join(process.cwd(), 'scripts', 'pdf-leesvolgorde.py');
+  const uit = spawnSync('python', [script, bestand], {
+    encoding: 'utf-8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (uit.error || uit.status !== 0) {
+    throw new Error(
+      `pdf-leesvolgorde.py mislukte: ${uit.error?.message || uit.stderr || `exitcode ${uit.status}`}`,
+    );
+  }
+
+  const meting = JSON.parse(uit.stdout);
+  if (meting.fout) throw new Error(`pdf-leesvolgorde.py: ${meting.fout}`);
+
+  legVast({
+    commando: 'get-pdfleesvolgorde',
+    argumenten: {},
+    url: doel,
+    eindUrl: doel,
+    browser: 'geen',
+    weergave: 'document',
+    criteria: ['1.3.2'],
+    uitkomst: {
+      tagboom: meting.tagboom,
+      paginasGetagd: meting.paginasGetagd,
+      elementenInLeesvolgorde: meting.elementenInLeesvolgorde,
+      terugsprongen: meting.terugsprongen,
+      blokken: meting.blokken,
+      opvallend: (meting.opvallend || []).length,
     },
   });
 
@@ -9089,6 +9145,8 @@ async function main() {
       return getPdfContrast(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-pdfstructuur':
       return getPdfStructuur(requirePositional(positional, 0, 'pdf-url of pad'), flags);
+    case 'get-pdfleesvolgorde':
+      return getPdfLeesvolgorde(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-beweging':
       return getBeweging(requirePositional(positional, 0, 'url'), flags);
     case 'get-flitsen':
