@@ -194,6 +194,19 @@ andere pagina's net zo staat, en zonder die stap komt hetzelfde tien keer in het
 Aanroepen met `scriptPath`, niet met `name`: dat laatste laadt een oudere geregistreerde kopie
 en negeert wijzigingen.
 
+**Ontsnap elke backtick in de regeltekst, en controleer met een echte import.** De
+huisregels in een workflowscript staan in een template literal, dus een losse backtick in de
+tekst — `npm run cli -- ...` in een instructie, bijvoorbeeld — sluit die literal af en breekt
+het script. `node --check` merkt dat niet: de literal sluit verderop alsnog, dus het bestand
+parseert. Alleen een echte import vangt het. Wikkel de body in een functie (een workflowscript
+heeft een `return` op topniveau, wat ESM verbiedt) en importeer dat:
+
+```bash
+node -e "import('./wrap.mjs').catch(e => console.log('FOUT:', e.message))" --input-type=module
+```
+
+Dit ging op 2026-09-18 mis en op 2026-09-19 opnieuw, in tekst die er net bij was gezet.
+
 **Een workflowscript kan niet zelf naar localhost.** `fetch('http://localhost:...')` in het
 script mislukt: het draait in een afgeschermde omgeving zonder verbinding met de eigen machine.
 Ook `process.env` bestaat er niet. Alles wat met de dev-server, de auditsessie of een lokale

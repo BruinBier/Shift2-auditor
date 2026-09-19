@@ -688,10 +688,23 @@ const ALTIJD_NIET_AANWEZIG = [
   },
 ]
 
-/** De criteria die voor deze sample vervallen, met de reden erbij. */
+/**
+ * De criteria die voor deze sample vervallen, met de reden en de HERKOMST erbij.
+ *
+ * Twee soorten, en die mogen niet op een hoop. Een VINKJE is een vaststelling van de
+ * onderzoeker over deze ene pagina ("hier staat geen video"); ALTIJD_NIET_AANWEZIG gaat
+ * over wat een gemeentelijke informatiesite naar zijn aard niet doet, en dat heeft
+ * niemand bij deze steekproef vastgesteld.
+ *
+ * Stond eerst allebei op bron 'steekproef'. Op de 1.4.2-kaart van ZOET-01 Bijlage 2 zei
+ * de kaart daardoor "Volgt uit je steekproef · door jou vastgesteld bij de steekproef",
+ * terwijl de reden eronder zelf zei: "Vastgelegd voor dit soort websites, niet per pagina
+ * vastgesteld." Vastgesteld door Frits op 2026-09-19.
+ */
 const vervallenDoorVinkjes = (sample) => {
   const uit = ALTIJD_NIET_AANWEZIG.filter((v) => requiredCodes.includes(v.code)).map((v) => ({
     ...v,
+    bron: 'workflow',
   }))
   for (const vinkje of PAGINAVINKJES) {
     if (sample[vinkje.veld] !== false) continue
@@ -700,6 +713,7 @@ const vervallenDoorVinkjes = (sample) => {
       uit.push({
         code,
         reden: `Op deze pagina staat geen ${vinkje.wat}. Vastgesteld door de onderzoeker bij het samenstellen van de steekproef; het criterium is daarmee niet van toepassing.`,
+        bron: 'steekproef',
       })
     }
   }
@@ -960,7 +974,7 @@ en LEEST, en dat staat er ook zonder tags. Geef er een echt oordeel over (voldoe
 zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
   - 1.4.3 contrast en 1.4.11 contrast van graphics → tags hebben hier niets mee te maken:
     lichtblauwe tekst op wit is even onleesbaar zonder tagstructuur. Meet het met
-    `npm run cli -- get-pdfcontrast <pdf-url>`; dat werkt onafhankelijk van de tagstructuur.
+    \`npm run cli -- get-pdfcontrast <pdf-url>\`; dat werkt onafhankelijk van de tagstructuur.
     PAC vraag je bij een ongetagd document niet.
   - 2.4.4 linkdoel → lees of de tekst van een link of webadres duidelijk maakt waar hij heen
     leidt. "Klik hier" of "lees meer" zonder context is ook in een PDF een afkeuring. Wat je
@@ -1716,9 +1730,10 @@ if (!drooglopen) {
         criterionCode: v.code,
         status: 'niet_aanwezig',
         reden: v.reden,
-        // Per oordeel, want --bron=workflow geldt voor het hele bestand en hier is
-        // geen workflow geweest. De route accepteert bron per regel.
-        bron: 'steekproef',
+        // Per oordeel, want --bron geldt voor het hele bestand. De route accepteert
+        // bron per regel. 'steekproef' alleen waar een vinkje van de onderzoeker het
+        // criterium afsluit; de sitebrede lijst is 'workflow'.
+        bron: v.bron,
         ...((DEELGEBIEDEN[v.code] || []).length
           ? {
               gebieden: DEELGEBIEDEN[v.code].map((gebied) => ({

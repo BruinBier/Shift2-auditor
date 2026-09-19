@@ -314,6 +314,10 @@ export const PAGINAVINKJES: Paginavinkje[] = [
  * Het regelbestand van 1.2.4 schrijft voor dat je het bewust op `niet_aanwezig` zet en
  * niet met een zoektocht die niets kan vinden. Deze lijst maakt die keuze één keer, op
  * één plek, in plaats van dertig keer in een agent.
+ *
+ * Daarom krijgt deze lijst nooit `bron: 'steekproef'` maar `bron: 'workflow'`. Gooi je ze
+ * op één hoop, dan zegt de kaart "door jou vastgesteld bij de steekproef" bij een oordeel
+ * dat de onderzoeker nooit heeft gezien. Zo stond 1.4.2 op ZOET-01 tot 19 september 2026.
  */
 export const ALTIJD_NIET_AANWEZIG: { code: string; reden: string }[] = [
   {
