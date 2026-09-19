@@ -885,6 +885,12 @@ SAMPLE
   url:   ${sample.url}
   type:  PDF-document
 
+PAGINANUMMERS ZIJN DIE VAN DE PDF-LEZER, niet het gedrukte nummer onderaan de pagina. Een
+rapport begint vaak met een omslag en een inhoudsopgave die niet meetellen in die nummering;
+dan staat er "4" op het blad dat in de lezer pagina 8 is. Gebruik het nummer dat de lezer
+toont -- doc[i] met i+1 in PyMuPDF -- want de redacteur opent het bestand en springt naar een
+pagina. Op ZOET-01 Bijlage 2 scheelde dat vier pagina's.
+
 STAP 1 — HAAL HET DOCUMENT OP EN LEES DE STRUCTUUR UIT
 Download het bestand naar tmp/pdf/ en bepaal machinaal:
   - Is het document GETAGD? Dit is TWEE controles, en de tweede is de belangrijkste:

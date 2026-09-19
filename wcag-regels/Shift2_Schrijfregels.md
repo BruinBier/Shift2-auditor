@@ -282,6 +282,13 @@ of boodschap door die de afbeelding overbrengt, niet hoe de afbeelding eruitziet
 
 ### PDF-bevindingen
 
+- **Paginanummers zijn die van de PDF-lezer, niet het gedrukte nummer.** Een rapport begint
+  vaak met een omslag en een inhoudsopgave die niet meetellen in de nummering onderaan de
+  pagina; dan staat er "4" op het blad dat in de lezer pagina 8 is. Neem het nummer dat de
+  lezer toont: de redacteur opent het bestand en springt naar een pagina, hij telt niet mee
+  vanaf het eerste genummerde blad. Bij ZOET-01 Bijlage 2 scheelde dat vier pagina's, en in
+  één bevinding stonden beide nummers door elkaar. Vastgesteld door Frits op 2026-09-19.
+
 - Geen interne tagnamen: niet `<Figure>`, `ImageData`, `src`, `Alt-attribuut`, `<L>`,
   `<LBody>`, `<Lbl>`. Schrijf "als afbeelding aangemerkt", "geen tekstalternatief".
 - Geen toolnamen in het advies: niet Canva, Word of InDesign. Spreek over "het

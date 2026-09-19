@@ -605,6 +605,13 @@ menu's, schakelknoppen of zoeksuggesties — meld dat in \`openVragen\`.${
 DIT IS EEN PDF. Beoordeel de documentstructuur, niet de DOM. Lees eerst
 \`wcag-regels/Shift2_Werkwijze_PDF.md\`; hieronder staat alleen wat je niet mag missen.
 
+PAGINANUMMERS ZIJN DIE VAN DE PDF-LEZER, niet het gedrukte nummer onderaan de pagina. Een
+rapport begint vaak met een omslag en een inhoudsopgave die niet meetellen in die nummering;
+dan staat er "4" op het blad dat in de lezer pagina 8 is. Gebruik het nummer dat de lezer
+toont -- doc[i] met i+1 in PyMuPDF -- want de redacteur opent het bestand en springt naar een
+pagina. Op ZOET-01 Bijlage 2 scheelde dat vier pagina's, en in één bevinding stonden beide
+nummers door elkaar.
+
 GETAGD OF NIET — DIT IS TWEE CONTROLES:
   (a) heeft de catalog een /StructTreeRoot?
   (b) STAAT ER IETS IN? Volg de verwijzing en kijk of de wortel /K heeft:
