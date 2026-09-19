@@ -69,10 +69,21 @@ logo in de header.
 
 ## Waar het oordeel thuishoort
 
-Op het homepage-sample, net als de andere sitebrede onderdelen (zie `Shift2_Scope_Per_Sample.md`).
-Op de overige samples komt 3.2.4 op `niet_aanwezig` met als reden dat het sitebreed is
-beoordeeld. Een oordeel per pagina is bij dit criterium geen onnauwkeurigheid maar een
-categoriefout: aan één pagina is consistentie niet te zien.
+**Voor de webpagina's**: op het homepage-sample, net als de andere sitebrede onderdelen (zie
+`Shift2_Scope_Per_Sample.md`). Op de overige HTML-samples komt 3.2.4 op `niet_aanwezig` met
+als reden dat het sitebreed is beoordeeld. Een oordeel per pagina is daar geen
+onnauwkeurigheid maar een categoriefout: aan één pagina is consistentie niet te zien.
+
+**Voor een PDF: een eigen oordeel per document.** Een PDF is geen pagina van de website maar
+een document op zichzelf, met zijn eigen interne consistentie. Of dezelfde koppeling in een
+rapport van 166 pagina's overal hetzelfde heet, staat los van wat er op de site gebeurt -- en
+een tweede PDF staat daar weer los van. De verwijzing naar de homepage zou hier een antwoord
+geven op een andere vraag.
+
+De tool kent dit onderscheid: `isSitebreed(code, sampleType)` in `lib/metingen.ts` laat 3.2.4
+alleen voor de HTML-samples samenvallen. Elk PDF-sample krijgt een eigen kaart in de
+werklijst. Vastgesteld door Frits op 2026-09-19 bij ZOET-01, nadat de kaart voor Bijlage 2
+ontbrak.
 
 ## Regels
 
