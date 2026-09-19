@@ -81,7 +81,7 @@ export function SortableSampleRow({
       </td>
 
       {/* Type column */}
-      <td className="py-4 pr-4 align-top w-32">
+      <td className="py-4 pl-4 pr-4 align-top w-32">
         <span className="text-sm text-gray-600">
           {item.sampleType === 'structured' ? 'structured' : item.sampleType === 'random' ? 'willekeurig' : 'pdf'}
         </span>
