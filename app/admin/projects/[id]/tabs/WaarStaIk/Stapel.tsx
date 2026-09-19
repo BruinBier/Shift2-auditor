@@ -2402,12 +2402,6 @@ export default function Stapel({
               ) : null}
             </p>
           ) : (
-            /*
-              Zonder meting stond hier een grijs kader met "nog niet gemeten", en daaronder
-              in deel 2 een tweede regel die hetzelfde zei. Twee blokken met scheidingslijn
-              voor één mededeling; bij 3.1.2, dat deelgebieden heeft, staat er op diezelfde
-              plek één samenvattende regel. Nu ook hier: één zin, geen kader.
-            */
             <p className="text-sm text-gray-600">
               Niet gemeten, dus hierover valt nog niets te zeggen.
             </p>
@@ -2415,6 +2409,11 @@ export default function Stapel({
         </div>
       );
     }
+
+    // Zonder meting en zonder eigen waarneming valt er in dit deel niets te tonen. Gaf het
+    // dan een lege <section> terug, dan telde die mee als inhoud en bleef de kop
+    // "Bevindingen" staan boven een blok dat niets zei.
+    if (!u && alleGemeten.length === 0 && alleEigen.length === 0) return null;
 
     return (
       <section className="mb-4 ml-5 mt-4">
@@ -3372,9 +3371,22 @@ export default function Stapel({
           ...cel.bevindingen,
           ...stand.voorstellen.filter((v) => v.sampleId === cel.sampleId && v.code === cel.code),
         ];
-    // Staan alle bevindingen al bij hun gebied en valt er niets toe te voegen, dan is dit
-    // blok een kop met een lege lijst eronder. Dan alleen de knop.
-    const alleenDeKnop = heeftGebieden && afkeuringen.length === 0;
+    /*
+     * Wanneer is dit blok een kop met niets eronder?
+     *
+     * Bij een criterium MET gebieden: als alle bevindingen al bij hun gebied staan.
+     * Bij een criterium ZONDER gebieden gold dat niet, en dan kreeg een kaart zonder
+     * bevindingen de kop "Bevindingen" met daaronder "Je hebt nog geen bevindingen
+     * toegevoegd" -- terwijl 3.1.2, dat wél gebieden heeft, op diezelfde plek één
+     * samenvattende regel toont. Dat verschil zat niet in de criteria maar hier.
+     *
+     * Nu voor allebei hetzelfde: is er niets te tonen, dan alleen de knop. De regel
+     * "Je hebt nog geen bevindingen toegevoegd" verdwijnt daarmee van elke kaart waar hij
+     * niets toevoegt; de knop "Ik zie hier nog iets" blijft staan.
+     */
+    const metingDeel1 = metingVondBlok(cel, 1);
+    const metingDeel2 = metingVondBlok(cel, 2);
+    const alleenDeKnop = afkeuringen.length === 0 && !metingDeel1 && !metingDeel2;
     return (
       <section className="mb-4 border-t border-gray-200 pt-3">
         {/* Gewoon "Bevindingen", ook als er hierboven al een paar bij hun gebied staan.
@@ -3388,10 +3400,16 @@ export default function Stapel({
         {/* Wat de meting vond en wat de agent ervan maakte. Stond eerst tussen de
             instructies; daar maakte het de kaart drie keer zo lang als een auditkaart hoort
             te zijn. Hier hoort het: het is het materiaal waaruit een bevinding volgt. */}
-        {metingVondBlok(cel, 1)}
-        {metingVondBlok(cel, 2)}
+        {metingDeel1}
+        {metingDeel2}
 
-        {alleenDeKnop ? null : afkeuringen.length === 0 ? (
+        {/*
+          "Je hebt nog geen bevindingen toegevoegd" nodigt uit om er een toe te voegen, en
+          dat is zinnig zolang er iets te beoordelen valt. Staat er "Niet gemeten, dus
+          hierover valt nog niets te zeggen" boven, dan is het de tweede regel op rij die
+          zegt dat er niets is -- met een scheidingslijn ertussen. Dan alleen de knop.
+        */}
+        {alleenDeKnop || (afkeuringen.length === 0 && !metingDeel2) ? null : afkeuringen.length === 0 ? (
           <p className="border-y border-gray-100 py-3 text-center text-sm text-gray-500">
             Je hebt nog geen bevindingen toegevoegd.
           </p>
