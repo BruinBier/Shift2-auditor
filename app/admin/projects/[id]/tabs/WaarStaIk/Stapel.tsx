@@ -1415,9 +1415,12 @@ export default function Stapel({
         return c.code === a;
       }
       if (soort === 'kolom') {
-        // Een sitebreed criterium hoort niet in de werklijst van één pagina: het gaat over
-        // de hele set. Je bereikt het via het vakje in de kolom "alle pagina’s" in de matrix.
-        return c.sampleId === a && !sitebreedHier(c.code, c.sampleId);
+        // Een sitebreed criterium staat wél in de werklijst van één pagina, maar als
+        // verwijzing: de kaart zegt dat het oordeel op het dragende sample ligt en vraagt
+        // hier niets. Zou het ontbreken, dan loop je een pagina af en mist er een
+        // criterium zonder dat iets zegt waarom — precies wat er bij Bijlage 2 gebeurde.
+        // Er valt hier niets te beslissen, dus de knoppen blijven weg (zie verwijskaart).
+        return c.sampleId === a;
       }
       if (soort === 'cel') return c.sampleId === a && c.code === b;
       return true;
@@ -3873,18 +3876,50 @@ export default function Stapel({
         {cel.code} — {critTitel(cel.code)} ·{' '}
         {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : sampleTitel(cel.sampleId)}
       </p>
-      {sitebreedHier(cel.code, cel.sampleId) && (
-        <p className="mb-3 text-xs text-gray-500">
-          Vastgelegd op {sampleTitel(cel.sampleId)}; op de andere pagina&apos;s staat een
-          verwijzing hierheen.
-        </p>
-      )}
+      {sitebreedHier(cel.code, cel.sampleId) &&
+        (verwijstNaar(cel) ? (
+          <p className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+            Dit criterium gaat over de hele website, niet over deze pagina. Het oordeel is
+            vastgelegd op <strong>{verwijstNaar(cel)}</strong>; hier valt niets te
+            beslissen.
+          </p>
+        ) : (
+          <p className="mb-3 text-xs text-gray-500">
+            Vastgelegd op {sampleTitel(cel.sampleId)}; op de andere pagina&apos;s staat een
+            verwijzing hierheen.
+          </p>
+        ))}
     </>
   );
+
+  /**
+   * Is dit een verwijzing naar het oordeel op een ander sample?
+   *
+   * Een sitebreed criterium wordt op één sample vastgelegd (in de praktijk de homepage) en
+   * staat op de andere HTML-samples op `niet_aanwezig`. Die kaarten staan wél in de
+   * werklijst -- anders loop je een pagina af en ontbreekt er een criterium zonder dat
+   * iets zegt waarom -- maar er valt niets te beslissen. Ze wijzen naar de drager.
+   *
+   * Welk sample de drager is, leiden we af uit de gegevens en niet uit de aanname "dat is
+   * Home": een steekproef zonder homepage breekt die afspraak. De drager is het sample met
+   * een écht oordeel, dus alles behalve `niet_aanwezig`.
+   */
+  const verwijstNaar = (cel: Cel): string | null => {
+    if (!sitebreedHier(cel.code, cel.sampleId)) return null;
+    if (cel.status !== 'niet_aanwezig') return null;
+    const drager = stand.samples.find((s) => {
+      if (s.id === cel.sampleId || !isSitebreed(cel.code, s.type)) return false;
+      const c = stand.cellen.find((x) => x.sampleId === s.id && x.code === cel.code);
+      return !!c?.status && c.status !== 'niet_aanwezig';
+    });
+    return drager ? drager.title : null;
+  };
 
   /** Boven de knoppen, zodat duidelijk is waarover je beslist. */
   const sitebreedMelding = (cel: Cel) => {
     if (!sitebreedHier(cel.code, cel.sampleId)) return null;
+    // Een verwijskaart vraagt niets: daar hoort de melding van de drager, niet deze.
+    if (verwijstNaar(cel)) return null;
     // Het aantal pagina's komt uit de meting zelf, niet uit een aanname.
     const meting = (cel.verantwoording ?? []).find(
       (m) => typeof (m.uitkomst as any)?.paginas === 'number'
@@ -4970,6 +5005,16 @@ export default function Stapel({
       {huidig.soort === 'oordeel' ? (
         <div className="rounded-lg border border-gray-300 bg-white p-6">
           {criteriumRegel(huidig.cel)}
+          {/* Een sitebreed criterium op een pagina die het oordeel niet draagt: de kaart
+              staat er zodat je bij het aflopen van een pagina niets mist, maar er valt
+              niets te beslissen. Waar het oordeel wél ligt, hoort er dan bij te staan. */}
+          {verwijstNaar(huidig.cel) && (
+            <p className="mb-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+              Dit criterium gaat over de hele website, niet over deze pagina. Het oordeel is
+              vastgelegd op <strong>{verwijstNaar(huidig.cel)}</strong>; hier valt niets te
+              beslissen.
+            </p>
+          )}
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
             {/*
               Bij bron 'steekproef' is er geen agent geweest: de onderzoeker heeft bij
@@ -5175,6 +5220,10 @@ export default function Stapel({
           ) : (
             <>
             {sitebreedMelding(huidig.cel)}
+            {/* Een verwijskaart vraagt niets: het oordeel ligt op een ander sample.
+                Knoppen zouden hier een beslissing suggereren die niet bestaat. */}
+            {!verwijstNaar(huidig.cel) && (
+              <>
             {/* Ruim boven de afsluiting, en gecentreerd — net als op de kaart van een
                 criterium dat nog openstaat. Wat je hierboven doet is het materiaal lezen;
                 hier zeg je of het oordeel klopt. Zonder die ruimte lezen de drie knoppen als
@@ -5260,6 +5309,8 @@ export default function Stapel({
                   Wat blijft: "Ik zie hier nog iets" hierboven, want daar schrijft de agent
                   wél de tekst, volgens de huisregels die dan meegaan. */}
             </div>
+              </>
+            )}
             </>
           )}
 
