@@ -21,21 +21,36 @@ import { prisma } from '@/lib/prisma';
  * GET  = alleen berekenen en tonen (droogloop)
  * POST = berekenen en wegschrijven naar CriterionAssessment
  */
-async function bereken(projectId: string) {
-  const checks = await prisma.sampleCriterionCheck.findMany({
+/**
+ * Eén beoordeling met de velden die hier gebruikt worden.
+ *
+ * Zonder dit type kwam elke `c` in de filters hieronder als impliciet `any` binnen: tien
+ * meldingen van de typecontrole op één plek. Erger dan de melding is wat je kwijt was --
+ * `c.status` werd niet meer vergeleken met de echte statuswaarden, dus een typefout in
+ * 'afgekeurd' zou hier stilletjes nooit meer aanslaan en een criterium ten onrechte op
+ * `passed` zetten. Dat is precies de berekening waar de oordelen van afhangen.
+ */
+type Beoordeling = Awaited<ReturnType<typeof haalChecks>>[number];
+
+function haalChecks(projectId: string) {
+  return prisma.sampleCriterionCheck.findMany({
     where: { sampleItem: { projectId } },
     include: {
       wcagCriterion: { select: { id: true, code: true, titleNl: true } },
       sampleItem: { select: { title: true } },
     },
   });
+}
+
+async function bereken(projectId: string) {
+  const checks = await haalChecks(projectId);
 
   if (!checks.length) {
     return { leeg: true, criteria: [], blokkades: [] };
   }
 
   // Groeperen per criterium.
-  const perCriterium = new Map<string, typeof checks>();
+  const perCriterium = new Map<string, Beoordeling[]>();
   for (const c of checks) {
     const lijst = perCriterium.get(c.wcagCriterionId) ?? [];
     lijst.push(c);
@@ -45,7 +60,9 @@ async function bereken(projectId: string) {
   const criteria: any[] = [];
   const blokkades: any[] = [];
 
-  for (const [criterionId, lijst] of perCriterium) {
+  // Via Array.from, want het compileerdoel van dit project laat het aflopen van een Map
+  // niet rechtstreeks toe (TS2802). Dezelfde volgorde, dezelfde inhoud.
+  for (const [criterionId, lijst] of Array.from(perCriterium.entries())) {
     const code = lijst[0].wcagCriterion.code;
     const tel = (s: string) => lijst.filter((c) => c.status === s).length;
 
