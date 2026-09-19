@@ -137,6 +137,34 @@ export const METINGEN: Meetopdracht[] = [
     duurt: 'ongeveer een halve minuut per honderd paginas',
   },
   {
+    /**
+     * Wat in een PDF exact vast te stellen is, in één keer.
+     *
+     * De criterialijst is lang omdat één zoekactie ze allemaal bedient: geen /Sound,
+     * /Movie, /RichMedia of /Screen betekent geen video én geen geluid én niets dat kan
+     * flitsen; een lege /AcroForm /Fields betekent geen invoervelden én geen
+     * toetsenbordval én geen aanwijsgebied. Dat zijn geen aannames over "dit soort
+     * documenten" maar uitputtende zoekacties: de verzameling manieren waarop een PDF dit
+     * kan doen is eindig.
+     *
+     * Hier staan alleen de criteria waarvan het commando het antwoord HARD geeft. De
+     * tellingen die het daarnaast levert (getagde pagina's, figuren zonder alt, links)
+     * dienen 1.1.1, 1.3.1, 1.3.2 en 2.4.4, maar vellen daar geen oordeel -- die zou een
+     * knop "gemeten" geven aan een vraag die een mens moet wegen.
+     */
+    commando: 'get-pdfstructuur',
+    criteria: [
+      '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4',
+      '1.4.2', '2.2.2', '2.3.1',
+      '1.3.5', '3.3.1', '3.3.2', '3.3.3', '3.3.7', '2.1.2', '2.5.3', '2.5.8',
+      '3.1.1', '2.4.2', '1.4.10',
+    ],
+    toegestaneVlaggen: [],
+    vanafDeKaart: true,
+    wat: 'Leest in één keer uit wat in een PDF exact vast te stellen is: media, scripts, formuliervelden, taal, titel en tagstructuur.',
+    duurt: 'enkele seconden',
+  },
+  {
     commando: 'get-nietteksten',
     criteria: ['1.4.11'],
     toegestaneVlaggen: ['klik', 'max', 'marge'],

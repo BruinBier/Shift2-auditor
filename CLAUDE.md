@@ -89,6 +89,7 @@ npm run cli -- get-links <url> [--scope=pagina|main] [--klik=...]  # 2.4.4: reke
 npm run cli -- get-labelinnaam <url> [--scope=pagina|main] [--klik=...]  # 2.5.3: zichtbare tekst tegen de toegankelijke naam
 npm run cli -- get-consistentie <projectId|url> [--max=12]  # 3.2.4: legt de paginas van de steekproef naast elkaar
 npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast verhogen"]  # 1.4.11: randcontrast op de beeldpunten
+npm run cli -- get-pdfstructuur <pdf-url of pad>   # PDF: media, scripts, formuliervelden, taal, titel, tagstructuur in een keer
 
 # Write
 npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured [--voorgesteld=true] [--heeft-video=true|false] [--heeft-formulier=true|false]

@@ -18,6 +18,7 @@
  *   tsx scripts/audit-cli.ts get-leesvolgorde <url> [--zonder-css]
  *   tsx scripts/audit-cli.ts get-contrast <url> [--selector=...] [--klik=...]
  *   tsx scripts/audit-cli.ts get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
+ *   tsx scripts/audit-cli.ts get-pdfstructuur <pdf-url of pad>
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
  *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
@@ -4068,6 +4069,99 @@ async function getPdfContrast(doel: string, flags: Flags) {
         ? ['Paginas onder paginasLeeg zijn blanco: geen tekst en geen beeld. Daar valt niets te meten en er is niets aan de hand. Vraag daar GEEN afdruk voor.']
         : []),
     ],
+  });
+}
+
+/**
+ * Een PDF binnenhalen als het een URL is; een lokaal pad blijft zoals het is.
+ *
+ * Stond eerst alleen in getPdfContrast. Zodra een tweede PDF-commando hetzelfde moest doen,
+ * hoorde het eruit: twee kopieen van "haal op, verzin een bestandsnaam, schrijf weg" lopen
+ * uit elkaar zodra er één wordt aangepast.
+ */
+async function haalPdfBinnen(doel: string): Promise<{ bestand: string; opgehaald: string | null }> {
+  if (!/^https?:\/\//i.test(doel)) {
+    if (!fs.existsSync(doel)) throw new Error(`Bestand niet gevonden: ${doel}`);
+    return { bestand: doel, opgehaald: null };
+  }
+  const res = await fetch(doel);
+  if (!res.ok) throw new Error(`PDF ophalen mislukte: HTTP ${res.status} voor ${doel}`);
+  const map = path.join(process.cwd(), 'tmp', 'pdf');
+  fs.mkdirSync(map, { recursive: true });
+  const naam = (decodeURIComponent(doel.split('/').pop() || 'document.pdf') || 'document.pdf')
+    .replace(/[^a-zA-Z0-9.-]/g, '_')
+    .slice(-120);
+  const bestand = path.join(map, naam.endsWith('.pdf') ? naam : `${naam}.pdf`);
+  fs.writeFileSync(bestand, Buffer.from(await res.arrayBuffer()));
+  return { bestand, opgehaald: bestand };
+}
+
+/**
+ * Wat in een PDF exact vast te stellen is, in één keer uitgelezen.
+ *
+ * Tien criteria stelden dezelfde vragen aan hetzelfde document -- staat er video in, is er
+ * een formulier, start er geluid, is de taal vastgelegd -- elk apart en elk met de hand. Op
+ * ZOET-01 stonden daardoor dertien criteria op "afweging van de agent" terwijl het antwoord
+ * hard uit het bestand te lezen was.
+ *
+ * Het onderscheid dat dit commando maakt is belangrijker dan de getallen. `hard` betekent:
+ * de verzameling manieren waarop een PDF dit kan doen is eindig en volledig afgelopen. Een
+ * document zonder /Sound, /Movie, /RichMedia, /Screen en zonder scriptsleutels kán geen
+ * geluid starten. `telling` betekent: het gebrek staat vast, de weging niet -- 27 figuren
+ * zonder alt is hard, of de 20 aanwezige alts deugen niet.
+ *
+ * Zes criteria staan er bewust niet in (1.3.3, 1.4.1, 1.4.5, 2.4.6, 3.1.2, 3.2.4). Dat zijn
+ * betekenisvragen, en die leest niemand uit een bestand.
+ */
+async function getPdfStructuur(doel: string, _flags: Flags) {
+  const { spawnSync } = await import('child_process');
+  const { bestand, opgehaald } = await haalPdfBinnen(doel);
+
+  const script = path.join(process.cwd(), 'scripts', 'pdf-structuur.py');
+  const uit = spawnSync('python', [script, bestand], {
+    encoding: 'utf-8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (uit.error || uit.status !== 0) {
+    throw new Error(
+      `pdf-structuur.py mislukte: ${uit.error?.message || uit.stderr || `exitcode ${uit.status}`}`,
+    );
+  }
+
+  const meting = JSON.parse(uit.stdout);
+  if (meting.fout) throw new Error(`pdf-structuur.py: ${meting.fout}`);
+
+  const v = meting.vaststellingen || {};
+  // Alleen de criteria waarvan dit commando het antwoord hard geeft, komen in het logboek
+  // als bediend criterium. De tellingen dienen een oordeel, maar vellen het niet.
+  const hardeCriteria = Object.values(v)
+    .filter((b: any) => b?.hard)
+    .flatMap((b: any) => b.criteria || []);
+
+  legVast({
+    commando: 'get-pdfstructuur',
+    argumenten: {},
+    url: doel,
+    eindUrl: doel,
+    browser: 'geen',
+    weergave: 'document',
+    criteria: Array.from(new Set(hardeCriteria)) as string[],
+    uitkomst: {
+      paginas: meting.paginas,
+      media: v.media?.aanwezig,
+      startVanzelf: v.geluid_en_beweging?.startVanzelf,
+      formuliervelden: v.formuliervelden?.aantal,
+      lang: v.taal?.lang,
+      titel: v.titel?.titel,
+      paginasGetagd: v.tagstructuur?.paginasGetagd,
+      figurenZonderAlt: v.afbeeldingen?.zonderAlt,
+      koppelingen: v.koppelingen?.aantal,
+    },
+  });
+
+  print({
+    ...meting,
+    ...(opgehaald ? { opgehaaldNaar: opgehaald } : {}),
   });
 }
 
@@ -8993,6 +9087,8 @@ async function main() {
       return getPixelContrast(requirePositional(positional, 0, 'url'), flags);
     case 'get-pdfcontrast':
       return getPdfContrast(requirePositional(positional, 0, 'pdf-url of pad'), flags);
+    case 'get-pdfstructuur':
+      return getPdfStructuur(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-beweging':
       return getBeweging(requirePositional(positional, 0, 'url'), flags);
     case 'get-flitsen':

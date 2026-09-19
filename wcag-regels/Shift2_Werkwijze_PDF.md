@@ -147,6 +147,43 @@ uit wat er geïnstalleerd staat; vraag het, of vraag om een schermafdruk van het
 te halen en de uitvoer in ÉÉN keer te delen, vóórdat de audit draait. Er is later geen moment
 om iets na te vragen: de audit loopt in één keer door en zet af wat hij niet kan beoordelen.
 
+## Begin met `get-pdfstructuur`
+
+Eén commando leest uit wat in een PDF exact vast te stellen is, en legt het vast bij de
+criteria die eruit volgen:
+
+```bash
+npm run cli -- get-pdfstructuur <pdf-url of pad>
+```
+
+**Twintig criteria krijgen daarmee een hard antwoord.** Niet "waarschijnlijk", maar
+uitputtend: de verzameling manieren waarop een PDF geluid kan starten, een formulier kan
+bevatten of zijn taal kan vastleggen is eindig, en die wordt helemaal afgelopen.
+
+| Wat het uitleest | Criteria |
+|---|---|
+| `/Movie` `/Sound` `/RichMedia` `/Screen` `/Rendition` -- geen enkele = geen media | 1.2.1 t/m 1.2.5, 2.1.4 |
+| diezelfde plus `/JS` `/AA` `/OpenAction` -- geen enkele = niets start vanzelf | 1.4.2, 2.2.2, 2.3.1 |
+| `/AcroForm /Fields` leeg = geen bedienbare elementen | 1.3.5, 3.3.1, 3.3.2, 3.3.3, 3.3.7, 2.1.2, 2.5.3, 2.5.8 |
+| `/Lang` op de catalogus | 3.1.1 |
+| `dc:title` plus `DisplayDocTitle` | 2.4.2 |
+| een PDF herschaalt niet mee | 1.4.10 |
+
+**Daarnaast telt het, zonder te oordelen.** Getagde pagina's, `Figure`-elementen zonder
+`/Alt`, koppelingen zonder zichtbare tekst. Dat is de helft van 1.1.1, 1.3.1, 1.3.2 en
+2.4.4: het gebrek staat vast, de weging niet. 27 figuren zonder alt is hard; of de twintig
+aanwezige alts deugen -- op Bijlage 2 kwamen er zeventien uit Word en zei er één
+"Afbeelding invoegen..." -- moet je lezen.
+
+**Zes criteria staan er bewust niet in**: 1.3.3, 1.4.1, 1.4.5, 2.4.6, 3.1.2 en 3.2.4. Is
+kleur de enige drager, staat er tekst in een afbeelding, dekt de kop de lading, is dit
+woord een eigennaam. Die leest niemand uit een bestand, en een meetcommando dat doet alsof
+levert een oordeel op dat er hard uitziet en het niet is. Op 19 september 2026 liepen drie
+agents op hetzelfde document uiteen bij zeven criteria; vijf daarvan staan in dit rijtje.
+
+Draai daarna `get-pdfcontrast` voor 1.4.3 en 1.4.11, en vraag de PAC-uitvoer voor de
+tagstructuur.
+
 1. Een scrollopname van de **Screen reader preview**. Dit is de belangrijkste van de drie, en
    dat was eerder andersom: hij stond hier als "bij twijfel over de leesvolgorde". Hij doet
    veel meer dan dat.
