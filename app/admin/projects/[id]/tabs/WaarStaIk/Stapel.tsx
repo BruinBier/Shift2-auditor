@@ -4368,9 +4368,93 @@ export default function Stapel({
    * Ontbreekt er iets, dan wil je die namen zien zonder te klikken, want dat is precies
    * waar je zelf moet gaan kijken.
    */
+  /**
+   * "Een nieuw gebied toevoegen", met het invoerveld dat eronder openklapt.
+   *
+   * Stond inline in de tak waar alle gebieden zijn nagelopen. Zodra de kaart zonder
+   * deelgebieden dezelfde knop moest tonen, hoorde hij hier: twee kopieën van een formulier
+   * met een eigen open/dicht-toestand lopen uiteen zodra er een wordt aangepast.
+   */
+  const gebiedToevoegenKnop = (cel: Cel) => (
+    <>
+          <p className="mt-1">
+            {!gebiedOpen && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNieuwGebied('');
+                  setNieuwGebiedFout(null);
+                  setGebiedOpen(true);
+                }}
+                className="text-xs font-medium text-gray-600 underline hover:text-gray-900"
+              >
+                Een nieuw gebied toevoegen
+              </button>
+            )}
+          </p>
+          {gebiedOpen && (
+            <div className="mt-2 rounded border border-gray-300 bg-white p-3 text-gray-900">
+              <p className="mb-1 text-xs text-gray-600">
+                Voeg het toe aan de regels van {cel.code} — dan loopt elke volgende beoordeling
+                het ook na, op elke pagina en in elk project.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  value={nieuwGebied}
+                  onChange={(e) => {
+                    setNieuwGebied(e.target.value);
+                    setNieuwGebiedFout(null);
+                  }}
+                  placeholder="Bijvoorbeeld: Posters in nieuwsberichten"
+                  className="min-w-[16rem] flex-1 rounded border border-gray-300 p-1.5 text-xs"
+                />
+                <button
+                  type="button"
+                  disabled={nieuwGebiedBezig || !nieuwGebied.trim()}
+                  onClick={() => voegGebiedToeAanRegels(cel)}
+                  className="rounded border border-gray-400 px-3 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Aan de regels toevoegen
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGebiedOpen(false);
+                    setNieuwGebiedFout(null);
+                  }}
+                  className="rounded px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-50"
+                >
+                  Annuleren
+                </button>
+              </div>
+              {nieuwGebiedFout && (
+                <p className="mt-1 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                  {nieuwGebiedFout}
+                </p>
+              )}
+            </div>
+          )}
+    </>
+  );
+
   const gebiedenMelding = (cel: Cel) => {
     const lijst = kaarttekst?.gebieden ?? [];
-    if (!lijst.length) return null;
+    /*
+     * Geen deelgebieden in het regelbestand: zeg dat, laat het blok niet weg.
+     *
+     * Vier criteria hebben er geen (1.3.2, 1.3.3, 1.3.5, 3.2.4), de andere 29 wel. Hun
+     * kaarten misten daardoor het hele blok, inclusief de weg naar "Een nieuw gebied
+     * toevoegen" -- en dan lijkt de kaart onaf in plaats van anders. Nu staat er wat er aan
+     * de hand is, met dezelfde knop eronder. Frits, 2026-09-19.
+     */
+    if (!lijst.length) {
+      return (
+        <div className="mb-4 text-sm text-gray-600">
+          <p>Voor dit criterium staan geen deelgebieden in de regels.</p>
+          {gebiedToevoegenKnop(cel)}
+        </div>
+      );
+    }
     const per = new Map((cel.gebieden ?? []).map((g) => [g.gebied, g]));
     const ontbreekt = lijst.filter((g) => !per.has(g));
     if (!ontbreekt.length) {
@@ -4445,63 +4529,7 @@ export default function Stapel({
               er een kaal rijtje over: "✗ Koppen", "! Lijsten", zonder tekst en zonder code.
               Dezelfde namen staan een paar regels lager al bij hun bevinding. Weg dus.
               Vastgelegd door Frits op 2026-09-18. */}
-          <p className="mt-1">
-            {!gebiedOpen && (
-              <button
-                type="button"
-                onClick={() => {
-                  setNieuwGebied('');
-                  setNieuwGebiedFout(null);
-                  setGebiedOpen(true);
-                }}
-                className="text-xs font-medium text-gray-600 underline hover:text-gray-900"
-              >
-                Een nieuw gebied toevoegen
-              </button>
-            )}
-          </p>
-          {gebiedOpen && (
-            <div className="mt-2 rounded border border-gray-300 bg-white p-3 text-gray-900">
-              <p className="mb-1 text-xs text-gray-600">
-                Voeg het toe aan de regels van {cel.code} — dan loopt elke volgende beoordeling
-                het ook na, op elke pagina en in elk project.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  value={nieuwGebied}
-                  onChange={(e) => {
-                    setNieuwGebied(e.target.value);
-                    setNieuwGebiedFout(null);
-                  }}
-                  placeholder="Bijvoorbeeld: Posters in nieuwsberichten"
-                  className="min-w-[16rem] flex-1 rounded border border-gray-300 p-1.5 text-xs"
-                />
-                <button
-                  type="button"
-                  disabled={nieuwGebiedBezig || !nieuwGebied.trim()}
-                  onClick={() => voegGebiedToeAanRegels(cel)}
-                  className="rounded border border-gray-400 px-3 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
-                >
-                  Aan de regels toevoegen
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setGebiedOpen(false);
-                    setNieuwGebiedFout(null);
-                  }}
-                  className="rounded px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-50"
-                >
-                  Annuleren
-                </button>
-              </div>
-              {nieuwGebiedFout && (
-                <p className="mt-1 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
-                  {nieuwGebiedFout}
-                </p>
-              )}
-            </div>
-          )}
+          {gebiedToevoegenKnop(cel)}
         </div>
       );
     }
@@ -5711,15 +5739,17 @@ export default function Stapel({
                     ? 'Je hebt een afkeuring toegevoegd. Markeer de stap als klaar om dat vast te leggen.'
                     : 'Deze stap staat nog open.'}
               </p>
+              {/*
+                Dezelfde knoppen als op elke andere kaart: groen gevuld voor de bevestigende
+                keuze, omlijnd voor de andere, met de criteriumcode erop. Ze stonden hier als
+                ronde omlijnde knoppen zonder code ("Niet van toepassing" / "Klaar"), en dan
+                ziet dezelfde handeling er per kaart anders uit -- terwijl het steeds om
+                hetzelfde gaat: vastleggen wat er voor deze pagina geldt. Frits, 2026-09-19.
+
+                Wat de knoppen dóen blijft verschillen, want dat verschilt echt: hier vel je
+                een oordeel, op een auditkaart bevestig je er een.
+              */}
               <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  type="button"
-                  disabled={bezig}
-                  onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-                >
-                  Niet van toepassing
-                </button>
                 <button
                   type="button"
                   disabled={bezig}
@@ -5731,9 +5761,17 @@ export default function Stapel({
                         : 'voldoet'
                     )
                   }
-                  className="rounded-full border border-green-700 px-4 py-2 text-sm font-medium text-green-800 hover:bg-green-50 disabled:opacity-40"
+                  className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
                 >
-                  Klaar
+                  {`Pagina akkoord voor ${huidig.cel.code}`}
+                </button>
+                <button
+                  type="button"
+                  disabled={bezig}
+                  onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
+                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Niet van toepassing
                 </button>
               </div>
             </>
@@ -5745,7 +5783,9 @@ export default function Stapel({
                 onClick={() => beantwoord(huidig.cel, 'voldoet')}
                 className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
               >
-                In orde
+                {/* Zelfde opschrift als op de andere kaarten: "In orde" zei hetzelfde maar
+                    met andere woorden, en zonder de code was onduidelijk waarvoor. */}
+                {`Pagina akkoord voor ${huidig.cel.code}`}
               </button>
               <button
                 type="button"
@@ -5770,9 +5810,15 @@ export default function Stapel({
           {/* Stap 5: de verantwoording. Belangrijk dat het er staat, niet belangrijk dat je
               het als eerste leest — vandaar ingeklapt. Hier zit ook "Meet dit nu".
 
-              `false`: er ligt hier nog geen bevestigd oordeel, dus "Waar dit criterium over
-              gaat" staat open. Daar zijn de instructies geen verslag maar een opdracht. */}
-          {vastgesteldDetails(huidig.cel, false)}
+              Normaal `false`: er ligt nog geen bevestigd oordeel, dus "Waar dit criterium
+              over gaat" staat open. Daar zijn de instructies geen verslag maar een opdracht.
+
+              Behalve op een PDF-sample. Die instructies gaan over een website ("Loop de site
+              door", "Klik erop"), en juist bij een document is de reden van niet_te_bepalen
+              dát die stappen hier niet gelden. Opengeklapt vulden ze de halve kaart met werk
+              dat niet bestaat, terwijl diezelfde kaart bij 3.1.2 één dichtgeklapte regel is.
+              Frits, 2026-09-19. */}
+          {vastgesteldDetails(huidig.cel, sampleVoor(huidig.cel.sampleId)?.type === 'pdf')}
           {/* Alleen op de oude kaarten. Deze zin gaat over de knop "Ik zie iets — noteren",
               die je wegstuurde naar het waarnemingenscherm, en over het veld "Wat zag je?".
               Op een kaart met eigen instructies bestaan die geen van beide: je schrijft een
