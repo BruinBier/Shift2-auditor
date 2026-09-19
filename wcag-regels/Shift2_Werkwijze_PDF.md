@@ -151,6 +151,15 @@ om iets na te vragen: de audit loopt in één keer door en zet af wat hij niet k
    dat was eerder andersom: hij stond hier als "bij twijfel over de leesvolgorde". Hij doet
    veel meer dan dat.
 
+   **Een scrollopname mag als PSB of PSD.** Een opname van de hele preview wordt al snel
+   tienduizenden beeldpunten hoog -- het voorbeeld waarop dit is gebouwd was 1914 x 96207
+   en 118 MB -- en dat is als een geheel onbruikbaar: te groot om te bewaren, te groot om
+   te bekijken, en te groot om aan een agent te geven. De tool snijdt hem bij het toevoegen
+   in stukken van schermhoogte, met honderd beeldpunten overlap zodat er geen regel op een
+   naad wegvalt. Die 118 MB wordt zo 74 leesbare afbeeldingen van samen 11 MB. Het
+   bronbestand wordt daarna weggegooid: niemand kan een PSB lezen, en bewaren wat nooit
+   geopend wordt is geen bewijs. Losse schermafdrukken blijven ook gewoon goed.
+
    De preview toont de **hele tagstructuur**, element voor element, in de volgorde waarin
    hulpsoftware hem doorloopt, met de tagnaam ernaast. Daarmee beoordeel je in één bron:
 
