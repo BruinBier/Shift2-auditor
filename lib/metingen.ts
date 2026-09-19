@@ -138,20 +138,20 @@ export const METINGEN: Meetopdracht[] = [
   },
   {
     /**
-     * Wat in een PDF exact vast te stellen is, in één keer.
+     * Consistente identificatie binnen één PDF (SC 3.2.4).
      *
-     * De criterialijst is lang omdat één zoekactie ze allemaal bedient: geen /Sound,
-     * /Movie, /RichMedia of /Screen betekent geen video én geen geluid én niets dat kan
-     * flitsen; een lege /AcroForm /Fields betekent geen invoervelden én geen
-     * toetsenbordval én geen aanwijsgebied. Dat zijn geen aannames over "dit soort
-     * documenten" maar uitputtende zoekacties: de verzameling manieren waarop een PDF dit
-     * kan doen is eindig.
-     *
-     * Hier staan alleen de criteria waarvan het commando het antwoord HARD geeft. De
-     * tellingen die het daarnaast levert (getagde pagina's, figuren zonder alt, links)
-     * dienen 1.1.1, 1.3.1, 1.3.2 en 2.4.4, maar vellen daar geen oordeel -- die zou een
-     * knop "gemeten" geven aan een vraag die een mens moet wegen.
+     * `get-consistentie` staat hierboven ook voor 3.2.4, maar dat legt de pagina's van de
+     * STEEKPROEF naast elkaar: de vraag van de website. Een PDF is een eigen set, en de
+     * knop op een PDF-kaart hoorde dus iets anders te doen dan de knop op een webkaart.
      */
+    commando: 'get-pdfconsistentie',
+    criteria: ['3.2.4'],
+    toegestaneVlaggen: [],
+    vanafDeKaart: true,
+    wat: 'Vergelijkt binnen het document: koppelingen met hetzelfde doel maar een andere tekst, en of dezelfde soort kop steeds hetzelfde niveau krijgt.',
+    duurt: 'enkele seconden',
+  },
+  {
     /**
      * De leesvolgorde van een PDF, uit de tagboom.
      *
@@ -169,6 +169,21 @@ export const METINGEN: Meetopdracht[] = [
     duurt: 'enkele seconden',
   },
   {
+    /**
+     * Wat in een PDF exact vast te stellen is, in één keer.
+     *
+     * De criterialijst is lang omdat één zoekactie ze allemaal bedient: geen /Sound,
+     * /Movie, /RichMedia of /Screen betekent geen video én geen geluid én niets dat kan
+     * flitsen; een lege /AcroForm /Fields betekent geen invoervelden én geen
+     * toetsenbordval én geen aanwijsgebied. Dat zijn geen aannames over "dit soort
+     * documenten" maar uitputtende zoekacties: de verzameling manieren waarop een PDF dit
+     * kan doen is eindig.
+     *
+     * Hier staan alleen de criteria waarvan het commando het antwoord HARD geeft. De
+     * tellingen die het daarnaast levert (getagde pagina's, figuren zonder alt, links)
+     * dienen 1.1.1, 1.3.1, 1.3.2 en 2.4.4, maar vellen daar geen oordeel -- die zou een
+     * knop "gemeten" geven aan een vraag die een mens moet wegen.
+     */
     commando: 'get-pdfstructuur',
     criteria: [
       '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4',

@@ -20,6 +20,7 @@
  *   tsx scripts/audit-cli.ts get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
  *   tsx scripts/audit-cli.ts get-pdfstructuur <pdf-url of pad>
  *   tsx scripts/audit-cli.ts get-pdfleesvolgorde <pdf-url of pad>
+ *   tsx scripts/audit-cli.ts get-pdfconsistentie <pdf-url of pad>
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
  *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
@@ -4212,6 +4213,61 @@ async function getPdfLeesvolgorde(doel: string, _flags: Flags) {
       terugsprongen: meting.terugsprongen,
       blokken: meting.blokken,
       opvallend: (meting.opvallend || []).length,
+    },
+  });
+
+  print({
+    ...meting,
+    ...(opgehaald ? { opgehaaldNaar: opgehaald } : {}),
+  });
+}
+
+/**
+ * Consistente identificatie binnen één PDF-document (SC 3.2.4).
+ *
+ * `get-consistentie` kan dit niet: dat haalt de sample-items van het project op en legt de
+ * PAGINA'S VAN DE STEEKPROEF naast elkaar. Op een PDF-kaart bood het dus een knop aan die
+ * de vraag van de website beantwoordt, niet die van het document.
+ *
+ * Een PDF is een eigen set. Vergeleken wordt wat binnen dit document herhaald wordt:
+ * koppelingen met hetzelfde doel maar een andere tekst, en of dezelfde soort kop
+ * consequent hetzelfde niveau krijgt.
+ *
+ * Het Python-script voegt stukken van een link die over twee regels afbreekt samen. Zonder
+ * dat lijkt er één doel met twee namen te zijn; op Bijlage 2 van ZOET-01 gebeurde dat twee
+ * keer en allebei waren het één link.
+ */
+async function getPdfConsistentie(doel: string, _flags: Flags) {
+  const { spawnSync } = await import('child_process');
+  const { bestand, opgehaald } = await haalPdfBinnen(doel);
+
+  const script = path.join(process.cwd(), 'scripts', 'pdf-consistentie.py');
+  const uit = spawnSync('python', [script, bestand], {
+    encoding: 'utf-8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (uit.error || uit.status !== 0) {
+    throw new Error(
+      `pdf-consistentie.py mislukte: ${uit.error?.message || uit.stderr || `exitcode ${uit.status}`}`,
+    );
+  }
+
+  const meting = JSON.parse(uit.stdout);
+  if (meting.fout) throw new Error(`pdf-consistentie.py: ${meting.fout}`);
+
+  legVast({
+    commando: 'get-pdfconsistentie',
+    argumenten: {},
+    url: doel,
+    eindUrl: doel,
+    browser: 'geen',
+    weergave: 'document',
+    criteria: ['3.2.4'],
+    uitkomst: {
+      paginas: meting.paginas,
+      uniekeDoelen: meting.koppelingen?.uniekeDoelen,
+      doelenMetMeerDanEenNaam: meting.koppelingen?.doelenMetMeerDanEenNaam,
+      niveausOvergeslagen: meting.koppen?.niveausOvergeslagen,
     },
   });
 
@@ -9147,6 +9203,8 @@ async function main() {
       return getPdfStructuur(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-pdfleesvolgorde':
       return getPdfLeesvolgorde(requirePositional(positional, 0, 'pdf-url of pad'), flags);
+    case 'get-pdfconsistentie':
+      return getPdfConsistentie(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-beweging':
       return getBeweging(requirePositional(positional, 0, 'url'), flags);
     case 'get-flitsen':

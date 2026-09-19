@@ -85,6 +85,19 @@ alleen voor de HTML-samples samenvallen. Elk PDF-sample krijgt een eigen kaart i
 werklijst. Vastgesteld door Frits op 2026-09-19 bij ZOET-01, nadat de kaart voor Bijlage 2
 ontbrak.
 
+Meet een PDF met **`get-pdfconsistentie`**, niet met `get-consistentie`. Dat laatste legt de
+pagina's van de stéékproef naast elkaar -- de vraag van de website. Het PDF-commando
+vergelijkt binnen het document: koppelingen met hetzelfde doel maar een andere tekst, en of
+dezelfde soort kop steeds hetzelfde niveau krijgt.
+
+```bash
+npm run cli -- get-pdfconsistentie <pdf-url of pad>
+```
+
+Het voegt stukken van een link die over twee regels afbreekt zelf samen; kijk bij
+`samengevoegdUit` hoeveel stukken het waren. Zonder die correctie lijkt er één doel met twee
+namen te zijn, en dat is precies de valse melding waar je niet op moet afkeuren.
+
 ## Regels
 
 - REDACTIONELE LINKS IN DE LOPENDE TEKST VALLEN NIET ONDER 3.2.4. Het criterium gaat over
