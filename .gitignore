@@ -57,6 +57,14 @@ nul
 # Claude Code local settings (per developer)
 .claude/settings.json
 
+# Werkkopieen van het project die een agentsessie met isolation: worktree aanmaakt.
+# Git ziet daar een eigen .git in en registreert de map anders als gitlink (mode
+# 160000), alsof het een submodule is -- terwijl er geen .gitmodules bestaat. Er
+# stonden er twee in de index, en die meldden zich bij elke sessie als "modified"
+# zodra een andere sessie daar verderwerkte. Dat vervuilt `git status`, en juist
+# daarop leunt de controle na een Work-sessie waarin Codex meedeed.
+.claude/worktrees/
+
 # private files (blijven lokaal op schijf)
 Instructie_Toegankelijke_Videos.docx
 tmp_proj.json
