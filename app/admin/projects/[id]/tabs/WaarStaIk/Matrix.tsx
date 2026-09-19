@@ -280,9 +280,11 @@ export default function Matrix({
 
                       Dezelfde kleuren als de legenda, geen nieuwe kleurtaal erbij.
 
-                      Klikken opent het criterium in de stapel, net als klikken op de naam
-                      links: dit vakje gaat over de hele rij en niet over één pagina, dus
-                      het paneel van één cel zou hier het verkeerde openen.
+                      Klikken opent de sitebrede criteria, dezelfde lijst als de kop van
+                      deze kolom. Niet `rij:` zoals de criteriumnaam links: die lijst bevat
+                      ook de PDF's met hun eigen oordeel, en dit vakje gaat juist over het
+                      oordeel dat de HTML-pagina's delen. Je klikte op het gedeelde oordeel
+                      en landde bij het Collegebesluit.
 
                       Een oranje rand betekent dat er iets mis is met de drager van een
                       sitebreed oordeel — zie hierboven. */}
@@ -293,7 +295,7 @@ export default function Matrix({
                     {!sitebreed ? null : (
                     <button
                       type="button"
-                      onClick={() => openStapel(`rij:${crit.code}`)}
+                      onClick={() => openStapel('sitebreed')}
                       title={`alle pagina's — ${oordeel.tekst}${
                         siteWaarschuwing ? ` — ${siteWaarschuwing}` : ''
                       }`}
