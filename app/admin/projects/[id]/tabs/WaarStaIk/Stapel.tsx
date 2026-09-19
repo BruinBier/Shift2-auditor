@@ -4816,6 +4816,20 @@ export default function Stapel({
       {kaarttekst!.vastgesteld?.length ? (
         <section className="mb-4 border-t border-gray-200 pt-3">
           <h3 className="mb-2 text-lg font-semibold text-gray-900">Hoe dit gemeten wordt</h3>
+          {/*
+            De tekst hieronder komt uit het regelbestand en is per criterium dezelfde, ook
+            op een PDF-sample. Voor 3.2.4 beschrijft hij `get-consistentie`, dat de
+            pagina's van de steekproef in een browser opent -- op een document slaat dat
+            nergens op, en het noemt een commando dat daar niets kan. Zeg dat erbij in
+            plaats van de lezer een werkwijze voor te schotelen die hier niet geldt.
+          */}
+          {sampleVoor(cel.sampleId)?.type === 'pdf' && metingenVoorCriterium(cel.code).length ? (
+            <p className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Let op: dit is een PDF-document. De uitleg hieronder beschrijft hoe dit
+              criterium op een webpagina wordt gemeten; op een document gelden andere
+              stappen en andere commando&apos;s.
+            </p>
+          ) : null}
           <div className="space-y-2">
             {kaarttekst!.vastgesteld.map((alinea, i) => (
               <p key={i} className="text-sm leading-relaxed text-gray-700">
@@ -5531,17 +5545,38 @@ export default function Stapel({
                   {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
                 </span>
                 {grondslagLabel(huidig.cel)}
-                <span
-                  className={`rounded px-2 py-0.5 font-medium ${
-                    huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-green-100 text-green-800'
-                  }`}
-                >
-                  {huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
-                    ? 'voldoet niet'
-                    : 'voldoet'}
-                </span>
+                {/*
+                  De uitkomst volgde alleen uit de bevindingen: geen afkeuring betekende
+                  "voldoet". Dat klopt niet bij een oordeel dat nog geen uitspraak IS.
+                  Op het Collegebesluit stond 3.2.4 op niet_te_bepalen -- zonder tags valt
+                  er niets te vergelijken -- en de kaart maakte daar "voldoet" van. Een
+                  openstaande vraag las als goedgekeurd, en dat is het gevaarlijkste soort
+                  fout op deze kaart: je bevestigt iets dat niemand heeft vastgesteld.
+
+                  Vandaar eerst de werkelijke status, en pas daarna de rekensom uit de
+                  bevindingen.
+                */}
+                {huidig.cel.status === 'niet_te_bepalen' ? (
+                  <span className="rounded bg-blue-100 px-2 py-0.5 font-medium text-blue-800">
+                    niet te bepalen
+                  </span>
+                ) : huidig.cel.status === 'niet_aanwezig' ? (
+                  <span className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700">
+                    niet aanwezig
+                  </span>
+                ) : (
+                  <span
+                    className={`rounded px-2 py-0.5 font-medium ${
+                      huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                      ? 'voldoet niet'
+                      : 'voldoet'}
+                  </span>
+                )}
               </>
             ) : (
               <span className="rounded bg-blue-100 px-2 py-0.5 font-medium text-blue-800">
