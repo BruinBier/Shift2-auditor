@@ -217,7 +217,11 @@ export default function Matrix({
                     // aria-hidden: twintig keer "niet hier beoordeeld" voorlezen is ruis.
                     // Wat er te weten valt staat in de kolom "alle pagina's", waar de
                     // sr-only tekst het oordeel voluit noemt.
-                    if (sitebreed) {
+                    // Per sample, niet per rij: een PDF is geen pagina van de website maar
+                    // een document op zichzelf en heeft wél een eigen 3.2.4-oordeel. Stond
+                    // hier `sitebreed`, dan kreeg ook die kolom een streepje en was dat
+                    // oordeel in de matrix onzichtbaar.
+                    if (isSitebreed(crit.code, s.type)) {
                       return (
                         <td key={s.id} className="px-1 py-1.5">
                           <span
