@@ -2133,7 +2133,23 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     const gerichteOpname = r.commando === 'get-screenshot' && !!r.argumenten?.selector;
     if (!r.criteria.length && ALGEMEEN.has(r.commando) && !gerichteOpname) {
       if (!algemeenPerSample.has(sample.id)) algemeenPerSample.set(sample.id, new Map());
-      algemeenPerSample.get(sample.id)!.set(r.commando, meting);
+      /*
+       * Op de VORM en niet op de commandonaam.
+       *
+       * Op de naam deelden alle get-screenshot-regels één plek en won de laatste. Op Home
+       * was dat een opname van het menu op 320 pixels, die daarmee de full-page opname van
+       * twee minuten eerder verdrong -- terwijl juist die laatste het algemene bewijs is
+       * waar elk oordeel op rust. Voor 1.4.5 is dat geen detail: tekst die in een
+       * afbeelding gebakken zit staat niet in de HTML, dus zonder de opname van de hele
+       * pagina is dat criterium niet vast te stellen. Het regelbestand vraagt er met zoveel
+       * woorden om. Frits, 2026-09-20.
+       *
+       * `vormVanMeting` scheidt ze: --breedte telt mee, dus 320 en de volle breedte zijn
+       * twee metingen en staan allebei onder het oordeel.
+       */
+      algemeenPerSample
+        .get(sample.id)!
+        .set(vormVanMeting(r.commando, r.argumenten ?? {}), meting);
       continue;
     }
     if (!r.criteria.length) continue;
