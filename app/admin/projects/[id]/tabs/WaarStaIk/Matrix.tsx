@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import {
   CEL_KLEUR,
-  HERKOMST,
   ONBEOORDEELD_LABEL,
   OORDEEL_LABEL,
   STATUS_LABEL,
@@ -16,9 +14,9 @@ import {
 import { isSitebreed } from '@/lib/metingen';
 
 /**
- * De legenda voert dezelfde woorden als de zweefteksten en het paneel, doordat
- * ze alle vier uit STATUS_LABEL komen. Stond die lijst hier apart, dan drijft hij af:
- * zo heette één toestand hier "Jij moet kijken" en in het paneel "Niet te bepalen".
+ * De legenda voert dezelfde woorden als de zweefteksten en de kaart, doordat ze alle
+ * drie uit STATUS_LABEL komen. Stond die lijst hier apart, dan drijft hij af: zo heette
+ * één toestand hier "Jij moet kijken" en op de kaart "Niet te bepalen".
  */
 const LEGENDA: { sleutel: string; label: string }[] = [
   ...(Object.keys(STATUS_LABEL) as SampleOordeel[]).map((s) => ({
@@ -53,11 +51,6 @@ export default function Matrix({
   stand: Stand;
   openStapel: (focus: string) => void;
 }) {
-  const [gekozen, setGekozen] = useState<Cel | null>(null);
-
-  const critTitel = (code: string) => stand.criteria.find((c) => c.code === code)?.titleNl ?? '';
-  const sampleTitel = (id: string) => stand.samples.find((s) => s.id === id)?.title ?? id;
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 text-xs text-gray-600">
@@ -248,18 +241,20 @@ export default function Matrix({
                     const cel = stand.celVoor(s.id, crit.code);
                     if (!cel) return <td key={s.id} />;
                     const sleutel = cel.status ?? 'onbeoordeeld';
-                    const actief =
-                      gekozen?.sampleId === cel.sampleId && gekozen?.code === cel.code;
                     const label = celLabel(cel.status);
                     return (
                       <td key={s.id} className="px-1 py-1.5">
+                        {/* Rechtstreeks naar de kaart. Hier stond een paneel rechtsonder dat
+                            het oordeel samenvatte, met onderin een knop "Afwerken in de
+                            stapel" — maar alleen als er op dat vakje nog werk lag. Bij een
+                            bevestigd oordeel las je dus een uittreksel zonder weg naar de
+                            kaart waar de onderbouwing, de metingen en de deelgebieden staan.
+                            Twee plekken die hetzelfde vertellen, en de kleinste won. */}
                         <button
                           type="button"
-                          onClick={() => setGekozen(actief ? null : cel)}
-                          title={`${s.title} — ${label}`}
-                          className={`block h-5 w-5 rounded-sm ${CEL_KLEUR[sleutel]} ${
-                            actief ? 'ring-2 ring-gray-900 ring-offset-1' : ''
-                          }`}
+                          onClick={() => openStapel(`cel:${cel.sampleId}:${cel.code}`)}
+                          title={`${s.title} — ${label}. Klik om de kaart te openen.`}
+                          className={`block h-5 w-5 rounded-sm ${CEL_KLEUR[sleutel]} hover:ring-2 hover:ring-gray-900 hover:ring-offset-1`}
                         >
                           <span className="sr-only">
                             {s.title} — {label}
@@ -316,110 +311,6 @@ export default function Matrix({
           </tbody>
         </table>
       </div>
-
-      {/* Vast in beeld: de tabel is ruim duizend pixels hoog, dus een paneel
-          eronder valt buiten het scherm en lijkt de klik niets te doen. */}
-      {gekozen && (
-        <div className="fixed bottom-6 right-6 z-40 max-h-[70vh] w-[28rem] max-w-[calc(100vw-3rem)] overflow-y-auto rounded-lg border border-gray-300 bg-white p-4 shadow-xl">
-          <div className="mb-3 flex items-start justify-between gap-4">
-            <div>
-              <p className="font-medium text-gray-900">
-                {gekozen.code} — {critTitel(gekozen.code)}
-              </p>
-              <p className="text-sm text-gray-500">
-                {isSitebreed(gekozen.code) ? 'hele website' : sampleTitel(gekozen.sampleId)} ·{' '}
-                {celLabel(gekozen.status)}
-                {gekozen.bron && ` · ${HERKOMST[gekozen.bron] ?? gekozen.bron}`}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setGekozen(null)}
-              className="shrink-0 text-sm text-gray-400 hover:text-gray-600"
-            >
-              Sluiten
-            </button>
-          </div>
-
-          {/* Alleen als er op DIT vakje werk ligt. Eerder keek dit naar de hele
-              kolom, waardoor de knop ook verscheen bij een criterium dat allang
-              was afgehandeld — dan suggereert hij werk dat er niet is. */}
-          {(gekozen.status === 'niet_te_bepalen' ||
-            stand.voorstellen.some(
-              (v) => v.sampleId === gekozen.sampleId && v.code === gekozen.code,
-            )) && (
-            <button
-              type="button"
-              onClick={() => openStapel(`cel:${gekozen.sampleId}:${gekozen.code}`)}
-              className="mb-3 w-full rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
-            >
-              Afwerken in de stapel
-            </button>
-          )}
-
-          {gekozen.status === 'niet_te_bepalen' && gekozen.reden && (
-            <div className="mb-3 rounded bg-blue-50 p-3 text-sm text-blue-900">
-              <p className="mb-1 font-medium">Te beantwoorden in de browser</p>
-              <p>{gekozen.reden}</p>
-            </div>
-          )}
-
-          {/* De onderbouwing van de auditor, niet de rapporttekst. Die staat
-              hieronder bij de bevinding. Zonder dit onderscheid lijkt het alsof
-              dit de tekst is die de opdrachtgever straks leest. */}
-          {gekozen.status !== 'niet_te_bepalen' && gekozen.reden && (
-            <div className="mb-3">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-                Onderbouwing van het oordeel
-              </p>
-              <p className="whitespace-pre-line text-sm text-gray-700">{gekozen.reden}</p>
-            </div>
-          )}
-
-          {gekozen.status === null && (
-            <p className="mb-3 text-sm text-gray-500">
-              Dit criterium is op deze pagina nog niet beoordeeld.
-            </p>
-          )}
-
-          {gekozen.bevindingen.length > 0 && (
-            <div className="space-y-2">
-              {gekozen.bevindingen.length > 1 && (
-                <p className="text-xs text-gray-500">
-                  {gekozen.bevindingen.length} bevindingen op deze pagina
-                </p>
-              )}
-              {gekozen.bevindingen.map((b) => (
-                <div
-                  key={b.id}
-                  className={`rounded p-3 text-sm ${
-                    b.type === 'opmerking' ? 'bg-amber-50 text-amber-950' : 'bg-red-50 text-red-950'
-                  }`}
-                >
-                  <p className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
-                    {b.findingCode && (
-                      <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono font-medium">
-                        {b.findingCode}
-                      </span>
-                    )}
-                    <span className="rounded bg-white/70 px-1.5 py-0.5">
-                      {b.type === 'opmerking' ? 'Opmerking' : 'Bevinding'}
-                    </span>
-                    {b.impact && <span className="rounded bg-white/70 px-1.5 py-0.5">{b.impact}</span>}
-                  </p>
-                  <p className="whitespace-pre-line leading-relaxed">{b.description}</p>
-                  {b.advice && (
-                    <div className="mt-2 border-t border-black/10 pt-2">
-                      <p className="mb-0.5 text-xs font-medium opacity-70">Advies</p>
-                      <p className="whitespace-pre-line leading-relaxed">{b.advice}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -127,8 +127,8 @@ export default function WaarStaIk({
         <>
           {teDoen > 0 && (
             <p className="mb-4 text-sm text-gray-500">
-              Klik op een criterium om dat over alle pagina&apos;s af te lopen, of op een pagina om
-              die af te werken.
+              Klik op een criterium om dat over alle pagina&apos;s af te lopen, op een pagina om
+              die af te werken, of op een vakje om meteen die ene kaart te openen.
             </p>
           )}
           <Matrix stand={stand} openStapel={zetFocus} />
