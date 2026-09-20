@@ -83,12 +83,22 @@ test('het regelbestand beschrijft waar het criterium op rust', () => {
   }
 });
 
-test('een criterium met een eigen meting staat niet in de lijst', () => {
+test('een criterium met een eigen meting voor HTML staat niet in de lijst', () => {
+  /**
+   * `get-pdfstructuur` telt niet mee. Dat commando bestaat alleen voor een PDF, dus een
+   * criterium dat verder niets heeft, heeft op een HTML-pagina geen dragende meting -- en
+   * dan valt de badge terug op alles wat er toevallig onder ligt. 2.4.2, 3.1.1 en 2.5.8
+   * stonden daardoor met een melding over de HTML terwijl hun regelbestand precies zegt
+   * waar ze op rusten.
+   */
+  const ALLEEN_PDF = new Set(['get-pdfstructuur', 'get-pdfcontrast', 'get-pdfconsistentie', 'get-pdfleesvolgorde']);
   for (const code of Object.keys(DRAGENDE_ALGEMENE_METING)) {
+    const voorHtml = metingenVoorCriterium(code).filter((m) => !ALLEEN_PDF.has(m.commando));
     assert.equal(
-      metingenVoorCriterium(code).length,
+      voorHtml.length,
       0,
-      `${code} heeft een eigen meetcommando; dan is deze lijst overbodig en misleidend`
+      `${code} heeft met ${voorHtml.map((m) => m.commando).join(', ')} een eigen ` +
+        `meetcommando voor HTML; dan is deze lijst overbodig en misleidend`
     );
   }
 });
@@ -118,9 +128,11 @@ test('elk criterium zonder eigen meting staat in de lijst, of is bewust weggelat
     .filter((f) => /^Shift2_Regels_SC_\d+_\d+_\d+\.md$/.test(f))
     .map((f) => f.replace('Shift2_Regels_SC_', '').replace('.md', '').replace(/_/g, '.'));
 
+  const ALLEEN_PDF = new Set(['get-pdfstructuur', 'get-pdfcontrast', 'get-pdfconsistentie', 'get-pdfleesvolgorde']);
   const vergeten = uitRegels.filter(
     (code) =>
-      metingenVoorCriterium(code).length === 0 &&
+      // Alleen een PDF-commando telt niet: op een HTML-pagina draagt dat niets.
+      metingenVoorCriterium(code).filter((m) => !ALLEEN_PDF.has(m.commando)).length === 0 &&
       !DRAGENDE_ALGEMENE_METING[code] &&
       !GEEN_DRAGER.includes(code)
   );

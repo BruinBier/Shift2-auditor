@@ -4245,19 +4245,10 @@ export default function Stapel({
     const eigen = new Set(dragendeCommandos(cel.code));
     const dragend = metBrowser.filter((m) => eigen.has(m.commando));
     /*
-     * Twee verschillende vragen, twee verzamelingen.
-     *
-     * `toon` is alles wat onder dit oordeel ligt: de kaart vertelt waarmee er is
-     * vastgesteld, en dan hoort de HTML erbij ook als een eigen commando het zware werk
-     * deed. Bij 1.3.2 legt `get-leesvolgorde` code en scherm zelf naast elkaar, maar de
-     * pagina is óók opgehaald en dat is deel van het bewijs.
-     *
-     * `weegMee` is waar de aantekening over gaat: alleen de dragende meting. Een headless
-     * `get-html` onder 1.3.2 is geen tekortkoming -- het criterium rust op de
-     * leesvolgordemeting, en die zat in de sessie. Zou die HTML wél meewegen, dan stond
-     * er een aantekening bij een oordeel waar niets aan mankeert. Frits, 2026-09-20.
+     * `weegMee` is de meting waar de aantekening over gaat: alleen de dragende. Een
+     * headless `get-html` onder 1.3.2 is geen tekortkoming -- dat criterium rust op de
+     * leesvolgordemeting, en die zat in de sessie.
      */
-    const toon = metBrowser;
     const weegMee = dragend.length ? dragend : metBrowser;
 
     /*
@@ -4319,7 +4310,9 @@ export default function Stapel({
      * meting van het zoekveld zijn twee dingen, ook al heten ze hetzelfde.
      */
     const paartMetKlik = (m: any) =>
-      toon.some(
+      // Over álle metingen, niet alleen de dragende: de hoogcontrastmeting verklaart zijn
+      // tegenhanger ook als hij zelf buiten de dragende set valt.
+      metBrowser.some(
         (a) =>
           a !== m &&
           a.commando === m.commando &&
@@ -4394,7 +4387,21 @@ export default function Stapel({
      * onder "Hoe dit is vastgesteld", met per meting de browsermodus erbij. Frits,
      * 2026-09-20.
      */
-    const headless = uniek(toon.filter((m) => !inSessie(m) && !verklaard(m)));
+    /*
+     * Alleen de DRAGENDE meting, niet elke headless ophaling.
+     *
+     * De pagina-ophaling hangt onder alle criteria van die pagina. Voor 1.4.5 is dat het
+     * bewijs -- tekst in een afbeelding staat niet in de code, dus daar tellen de HTML en
+     * de opname samen. Voor 3.2.4 niet: dat rust op `get-consistentie`, die de pagina's
+     * van de steekproef naast elkaar legt, en die zat in de auditsessie. Een melding over
+     * de HTML zegt daar niets over het oordeel.
+     *
+     * `buiten` is de dragende meting die headless ging; `toon` was alles wat er onder
+     * ligt. Op dat laatste filteren gaf een kaartje bij 3.2.4, 2.1.2 en 1.4.11, terwijl
+     * het oordeel daar op iets anders rust dat wél in de sessie is gedaan. Frits,
+     * 2026-09-20.
+     */
+    const headless = uniek(buiten);
     if (!headless.length) return null;
 
     return (
@@ -4407,11 +4414,8 @@ export default function Stapel({
               `${m.commando} draaide headless: in een onzichtbare browser, zonder de ` +
               'auditsessie waarin jij cookies hebt weggeklikt en menus hebt geopend. Wat ' +
               'pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is ' +
-              'daarin niet te zien. ' +
-              (buiten.some((b) => b.commando === m.commando)
-                ? 'Dit criterium rust op deze meting, dus kijk er eventueel nog naar.'
-                : 'Dit criterium rust op een andere meting; het staat er zodat je weet ' +
-                  'waarmee is vastgesteld.')
+              'daarin niet te zien. Dit criterium rust op deze meting, dus kijk er ' +
+              'eventueel nog naar.'
             }
           >
             {naamVan(m)} headless {meetopdracht(m.commando)?.handeling ?? 'gemeten'}

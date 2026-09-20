@@ -570,6 +570,47 @@ export const DRAGENDE_ALGEMENE_METING: Record<string, string[]> = {
   '2.4.6': ['get-html'],
   '3.1.2': ['get-html'],
   '4.1.2': ['get-html'],
+  /*
+   * Deze drie hebben wél `get-pdfstructuur` in hun `criteria`, maar dat commando bestaat
+   * alleen voor een PDF. Op een HTML-pagina hebben ze dus geen dragende meting, en dan
+   * viel de badge terug op álles wat eronder lag.
+   *
+   *   2.4.2  "get-html geeft de titel terug zoals de browser hem na JavaScript toont"
+   *   3.1.1  "get-html --full geeft het hele document na JavaScript, met het
+   *          html-element en zijn lang-attribuut bovenaan"
+   *   2.5.8  geen commando: "de agent leest in de auditsessie per element het klikbare
+   *          gebied uit de opgemaakte pagina". De opname is daarvoor het bewijs, niet de
+   *          code -- een klikgebied staat niet in de HTML.
+   */
+  '2.4.2': ['get-html'],
+  '3.1.1': ['get-html'],
+  '2.5.8': ['get-screenshot'],
+  /*
+   * De video- en formuliercriteria. Meestal vervallen ze via een paginavinkje, maar staat
+   * er wél video of een formulier op de pagina, dan worden ze gewoon beoordeeld -- en dan
+   * moet de kaart weten waarop.
+   *
+   *   1.2.1  "geen eigen meetcommando"; get-videos is op 2.1.4 geregistreerd
+   *   1.2.2  idem; get-videosporen staat op 1.2.3 en 1.2.5
+   *   1.2.4  "loopt via get-html en get-screenshot: zoek naar een ingesloten speler"
+   *   1.3.5  "de agent leest de invoervelden uit de code (...) en legt die naast de
+   *          WCAG-lijst en naast de schermafdruk"
+   *   1.4.2  "get-html leest de media-elementen en kaders uit de code"
+   *   3.3.1  "get-html geeft de velden en hun regels; get-screenshot --klik verstuurt"
+   *   3.3.2  "get-html geeft per veld wat er in de code staat; de opname wat er zichtbaar
+   *          bij staat. Het oordeel gaat over dat tweede."
+   *   3.3.3  "dezelfde handelingen als bij 3.3.1"
+   *   3.3.7  "get-html per stap in de auditsessie"
+   */
+  '1.2.1': ['get-html', 'get-screenshot'],
+  '1.2.2': ['get-html', 'get-screenshot'],
+  '1.2.4': ['get-html', 'get-screenshot'],
+  '1.3.5': ['get-html', 'get-screenshot'],
+  '1.4.2': ['get-html'],
+  '3.3.1': ['get-html', 'get-screenshot'],
+  '3.3.2': ['get-html', 'get-screenshot'],
+  '3.3.3': ['get-html', 'get-screenshot'],
+  '3.3.7': ['get-html'],
 };
 
 /**
