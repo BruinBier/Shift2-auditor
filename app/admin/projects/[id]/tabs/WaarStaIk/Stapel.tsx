@@ -4155,26 +4155,65 @@ export default function Stapel({
    * Geen metingen betekent geen badge: er valt dan niets te kwalificeren, en een rood kruis
    * op zeshonderd kaarten leert je alleen om het niet meer te zien.
    */
+  /**
+   * Waarborg over de metingen onder dit oordeel: zijn ze in een auditsessie gedaan?
+   *
+   * Drie standen en niet twee. Dit keek of ÉÉN meting uit een sessie kwam, en dat is
+   * precies waar de waarborg omvalt: op Home zat `get-screenshot` in de sessie en
+   * `get-html` niet, en juist die tweede draagt het oordeel — daarin is naar video
+   * gezocht. De kaart zette groen op grond van de schermafdruk. In dit onderzoek stonden
+   * zo 37 oordelen op groen met headless metingen eronder, waaronder 1.4.11 op Home waar
+   * drie van de vier headless waren. Frits, 2026-09-20.
+   *
+   * Groen is nu een uitspraak over álle metingen. Gemengd krijgt oranje en zegt welke
+   * headless waren, want dát is wat je moet weten om te besluiten of je het nakijkt.
+   *
+   * Het logboek schrijft 'auditsessie' of 'headless' (scripts/lib/audit-log.ts), niet de
+   * ruwe browsermodus 'cdp'. Op die verkeerde vergelijking zette de badge ooit een kruis
+   * bij een meting die wél in een auditsessie was gedaan — een waarborg die het
+   * omgekeerde beweert is erger dan geen waarborg.
+   */
   const auditsessieBadge = (cel: Cel) => {
     const metingen = cel.verantwoording ?? [];
     if (!metingen.length) return null;
-    // Het logboek schrijft 'auditsessie' of 'headless' (scripts/lib/audit-log.ts), niet de
-    // ruwe browsermodus 'cdp'. Op die verkeerde vergelijking zette de badge een kruis bij
-    // een meting die wél in een auditsessie was gedaan — een waarborg die het omgekeerde
-    // beweert is erger dan geen waarborg.
-    const inSessie = metingen.some((m) => m.browser === 'auditsessie' || m.browser === 'cdp');
+    const inSessie = (m: any) => m.browser === 'auditsessie' || m.browser === 'cdp';
+    /*
+     * Een PDF-meting leest het bestand en start geen browser; het logboek schrijft daar
+     * `browser: 'geen'`. Die telt niet mee aan beide kanten: als headless zou de kaart
+     * waarschuwen dat uitklapblokken niet beoordeeld zijn, en een PDF heeft die niet. En
+     * als auditsessie zou hij een waarborg geven die nergens op slaat. Blijft er niets
+     * over, dan is er niets te waarborgen en valt de badge weg.
+     */
+    const metBrowser = metingen.filter((m) => m.browser !== 'geen');
+    if (!metBrowser.length) return null;
+    const buiten = metBrowser.filter((m) => !inSessie(m));
+
+    if (!buiten.length) {
+      return (
+        <span
+          className="rounded bg-green-100 px-2 py-0.5 font-medium text-green-800"
+          title="Alle metingen onder dit oordeel zijn gedaan in een auditsessie (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen."
+        >
+          ✓ auditsessie
+        </span>
+      );
+    }
+
+    // Eén keer per commando: drie keer get-toetsenbordval in de lijst zegt niet meer dan
+    // één keer, en maakt de zweeftekst onleesbaar.
+    const namen = Array.from(new Set(buiten.map((m) => m.commando))).join(', ');
+    const deels = buiten.length < metBrowser.length;
     return (
       <span
-        className={`rounded px-2 py-0.5 font-medium ${
-          inSessie ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-900'
-        }`}
+        className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900"
         title={
-          inSessie
-            ? 'Ten minste één meting is gedaan in een auditsessie (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen.'
-            : 'Alle metingen zijn headless gedaan. Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is dan niet beoordeeld.'
+          (deels
+            ? `${buiten.length} van de ${metBrowser.length} metingen is headless gedaan: ${namen}. `
+            : `Alle metingen zijn headless gedaan: ${namen}. `) +
+          'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te zien.'
         }
       >
-        {inSessie ? '✓ auditsessie' : '✗ zonder auditsessie'}
+        {deels ? '✗ deels zonder auditsessie' : '✗ zonder auditsessie'}
       </span>
     );
   };
