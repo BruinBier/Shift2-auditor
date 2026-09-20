@@ -4374,46 +4374,32 @@ export default function Stapel({
       });
     };
 
+    /*
+     * Alleen melden wat afwijkt.
+     *
+     * Dat er een HTML en een schermafdruk zijn opgehaald is geen nieuws: dat gebeurt bij
+     * elke pagina, en die twee komen onder alle criteria van die pagina te staan. Een
+     * kaartje "in auditsessie vastgelegd en opgehaald" zei dus alleen dat alles normaal
+     * verliep -- op 24 van de 81 kaarten in ZOET-01. En omdat er meerdere get-html-regels
+     * kunnen zijn (met --full, met --text), stonden op 12 kaarten allebei de kaartjes:
+     * "in auditsessie opgehaald" naast "de HTML headless opgehaald", wat leest als een
+     * tegenspraak over hetzelfde ding.
+     *
+     * Wat wél gemeld moet worden is een meting die zonder de auditsessie is gedaan. Daar
+     * mist de pagina wat pas na een klik verschijnt, en dat ziet er niet uit als een fout
+     * maar als een pagina waar het niet op staat -- op heuvelrug.nl leverde dat op
+     * 15 augustus 2026 drie afkeuringen op die geen van drieën bestonden.
+     *
+     * Ging alles in de sessie, dan geen kaartje. Waarmee er is vastgesteld staat volledig
+     * onder "Hoe dit is vastgesteld", met per meting de browsermodus erbij. Frits,
+     * 2026-09-20.
+     */
+    const headless = uniek(toon.filter((m) => !inSessie(m) && !verklaard(m)));
+    if (!headless.length) return null;
+
     return (
       <>
-        {uniek(toon.filter((m) => inSessie(m) || verklaard(m))).length >
-          0 && (
-          <span
-            className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
-            title={
-              'Gemeten in een auditsessie (npm run chrome:debug), dus met werkende cookies, ' +
-              'sessies en klikbare onderdelen: ' +
-              uniek(toon.filter((m) => inSessie(m)))
-                .map((m) => m.commando)
-                .join(', ') +
-              '.'
-            }
-          >
-            {/*
-                De handeling, niet de naam. "in auditsessie de toetsenbordval getabd" is
-                krom -- je tabt niet een toetsenbordval -- en bij twee metingen werd het
-                "de niet-tekstuele onderdelen gemeten, het randcontrast gemeten": twee keer
-                hetzelfde woord. De handeling alleen leest als een zin en zegt wat er is
-                gedaan; wélk commando dat was staat in de zweeftekst en in het meetlogboek
-                onder "Zo is het vastgesteld".
-            */}
-            in auditsessie{' '}
-            {Array.from(
-              new Set(
-                uniek(toon.filter((m) => inSessie(m) || verklaard(m))).map(
-                  (m) => meetopdracht(m.commando)?.handeling ?? 'gemeten'
-                )
-              )
-            ).join(' en ')}
-          </span>
-        )}
-        {/*
-            Elke headless meting krijgt zijn kaartje, ook een die het oordeel niet draagt:
-            de kaart vertelt waarmee er is vastgesteld. Wat het oordeel wél draagt en
-            headless ging, staat in de zweeftekst als aandachtspunt; de rest is alleen
-            een vermelding.
-        */}
-        {uniek(toon.filter((m) => !inSessie(m) && !verklaard(m))).map((m) => (
+        {headless.map((m) => (
           <span
             key={m.commando}
             className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
