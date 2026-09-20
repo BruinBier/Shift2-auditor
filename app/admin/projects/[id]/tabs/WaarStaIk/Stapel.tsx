@@ -4201,281 +4201,98 @@ export default function Stapel({
    * bij een meting die wél in een auditsessie was gedaan — een waarborg die het
    * omgekeerde beweert is erger dan geen waarborg.
    */
+  /**
+   * Waarmee is dit oordeel vastgesteld?
+   *
+   * Dat is de vraag die de onderzoeker stelt als hij naar een kaart kijkt, en het antwoord
+   * is een opsomming van meetmiddelen: bij 1.1.1 de HTML en de schermafdruk, bij 1.3.2 de
+   * leesvolgorde, bij 2.1.2 de toetsenbordtest.
+   *
+   * Dit kaartje heeft een lange omweg gemaakt. Het begon als waarborg ("✓ auditsessie"),
+   * werd een waarschuwing ("✗ de HTML zonder auditsessie") en toen een aantekening over de
+   * werkwijze. Al die versies gingen over hóé er is opgehaald, terwijl de vraag is wáármee
+   * er is getest. Dat hoe hoort in de zweeftekst en in het meetlogboek, niet in het label.
+   * Frits, 2026-09-20.
+   */
   const auditsessieBadge = (cel: Cel) => {
     const metingen = cel.verantwoording ?? [];
     if (!metingen.length) return null;
-    /*
-     * `ooitInSessie` telt mee: een herhaalde meting vervangt de vorige uitkomst, maar niet
-     * de waarborg. De hoogcontrastknop op Home is op 8 september in de sessie gemeten en
-     * op 17 september headless overgedaan met dezelfde uitkomst (11,99:1); de badge meldde
-     * daarna "zonder auditsessie" over een meting die er wel degelijk een had gehad.
-     * Zie lib/verantwoording.ts.
-     */
+
     const inSessie = (m: any) =>
       m.browser === 'auditsessie' || m.browser === 'cdp' || m.ooitInSessie === true;
-    /*
-     * Een PDF-meting leest het bestand en start geen browser; het logboek schrijft daar
-     * `browser: 'geen'`. Die telt niet mee aan beide kanten: als headless zou de kaart
-     * waarschuwen dat uitklapblokken niet beoordeeld zijn, en een PDF heeft die niet. En
-     * als auditsessie zou hij een waarborg geven die nergens op slaat. Blijft er niets
-     * over, dan is er niets te waarborgen en valt de badge weg.
-     */
-    const metBrowser = metingen.filter((m) => m.browser !== 'geen');
-    if (!metBrowser.length) return null;
 
     /*
-     * Kijk naar de meting die dit oordeel DRAAGT, niet naar alle metingen.
-     *
-     * `get-html` en `get-screenshot` staan onder elk oordeel van een pagina: ze halen de
-     * pagina op, meer niet. Een criterium met een eigen meetcommando rust daar niet op.
-     * Bij 1.3.2 op Home was `get-leesvolgorde` in een auditsessie gedaan -- dat commando
-     * legt de plek op het scherm naast de plek in de code, precies de vraag van 1.3.2 --
-     * terwijl de badge oranje stond om een headless `get-html` die er niets mee te maken
-     * had. Frits, 2026-09-20.
-     *
-     * Heeft het criterium geen eigen meting, dan zegt DRAGENDE_ALGEMENE_METING welke
-     * algemene meting het draagt: bij 1.4.5 de opname (tekst in een afbeelding staat niet
-     * in de code), bij 2.4.6 juist alleen de code (koppen met niveau en tekst). Staat het
-     * daar ook niet in, dan weegt de badge alles -- het oude gedrag.
-     *
-     * Op wat er gemeten IS, niet op wat meetbaar is: `metingenVoorCriterium` zegt alleen
-     * dat een commando bestaat. Staat het er niet onder, dan valt de badge terug op de
-     * volle lijst en blijft het oordeel van "niet gemeten" aan `grondslagLabel`.
+     * Alleen de metingen die dit criterium dragen. `get-html` staat onder elk oordeel van
+     * een pagina, maar draagt lang niet elk criterium: 1.3.2 rust op de leesvolgordemeting
+     * en 2.1.2 op de toetsenbordtest. Zie DRAGENDE_ALGEMENE_METING in lib/metingen.ts.
      */
     const eigen = new Set(dragendeCommandos(cel.code));
-    const dragend = metBrowser.filter((m) => eigen.has(m.commando));
-    /*
-     * `weegMee` is de meting waar de aantekening over gaat: alleen de dragende. Een
-     * headless `get-html` onder 1.3.2 is geen tekortkoming -- dat criterium rust op de
-     * leesvolgordemeting, en die zat in de sessie.
-     */
-    const weegMee = dragend.length ? dragend : metBrowser;
+    const dragend = metingen.filter((m) => eigen.has(m.commando));
+    const lijst = dragend.length ? dragend : metingen;
+
+    const namen: string[] = [];
+    const gezien = new Set<string>();
+    for (const m of lijst) {
+      if (gezien.has(m.commando)) continue;
+      gezien.add(m.commando);
+      namen.push(meetopdracht(m.commando)?.naam ?? m.commando);
+    }
+    if (!namen.length) return null;
 
     /*
-     * Een meting die met een klik is gedaan, telt niet als "zonder auditsessie".
-     *
-     * De waarschuwing gaat over wat pas ná een klik verschijnt. Draaide de meting mét
-     * `--klik`, dan is die klik juist gedaan en slaat de waarschuwing nergens op.
-     *
-     * Dit is geen randgeval maar voorgeschreven werk: `Shift2_Regels_SC_1_4_3.md` wil de
-     * hoogcontrastweergave gemeten hebben, en CLAUDE.md waarschuwt dat een auditsessie
-     * die instelling vasthoudt en de vólgende meting vervuilt. De agent doet die ene
-     * meting daarom bewust headless. Op 1.4.3 van Home stond daardoor "het contrast
-     * zonder auditsessie" bij een oordeel waarin het contrast in beide weergaven was
-     * gemeten -- de standaardweergave in de sessie, de hoogcontrastweergave met
-     * --klik erbuiten. Frits, 2026-09-20.
+     * Twee namen is nog een label, drie wordt een zin. Bij 1.4.11 stond er "meting van de
+     * niet-tekstuele onderdelen en contrastmeting op de beeldpunten" -- waar, en te lang
+     * voor een kaartje. Vanaf drie het aantal, met de namen in de zweeftekst.
      */
-    const metKlik = (m: any) => !!m.argumenten?.klik;
-    /*
-     * Nul dichtgeklapte blokken: dan viel er niets te missen.
-     *
-     * De waarschuwing gaat over wat pas na een klik verschijnt. `get-html` telt bij elke
-     * ophaling hoeveel blokken er dichtgeklapt staan, en nul is een uitkomst en geen
-     * leegte -- dan is vastgesteld dát er niets verborgen was. Waarschuwen dat
-     * uitklapblokken niet beoordeeld zijn terwijl de meting zegt dat ze er niet waren, is
-     * een waarborg die het tegenovergestelde beweert van wat er gemeten is.
-     *
-     * Alleen bij een meting die het getal meebrengt. Ophalingen van vóór 20 september 2026
-     * hebben het niet; daar blijft de badge doen wat hij deed.
-     */
-    const nietsVerborgen = (m: any) =>
-      typeof m.uitkomst?.dichtgeklapt === 'number' &&
-      m.uitkomst.dichtgeklapt === 0 &&
-      m.uitkomst?.gehydrateerd !== false;
-    /*
-     * Elke dragende meting hoort in de auditsessie.
-     *
-     * Hier stond een regel die een headless meting goedpraatte zodra een ándere dragende
-     * meting wél in de sessie zat. Dat is niet wat een waarborg hoort te doen: bij 1.4.5
-     * wil je de HTML én de opname in de sessie, niet één van beide. Bovendien sleepte die
-     * regel 1.4.11 mee, waar drie van de vier metingen headless waren en de badge toch op
-     * groen sprong. Frits, 2026-09-20.
-     *
-     * Twee uitzonderingen blijven, en die zijn allebei een uitspraak van de meting zelf:
-     * een `--klik` is de klik waarvoor de sessie nodig was, en nul dichtgeklapte blokken
-     * is de vaststelling dat er niets te missen viel.
-     */
-    /*
-     * Een meting die hoort bij een klik-meting van hetzelfde commando op hetzelfde
-     * element, telt mee als bewust headless.
-     *
-     * De hoogcontrastweergave meet je met `--klik`, en om die instelling niet in de
-     * auditsessie achter te laten doe je dat headless (zie CLAUDE.md). Maar dan moet de
-     * standaardweergave er ook buiten: je kunt hem niet in de sessie meten als je net de
-     * knop hebt aangezet. Op Home draaide `get-pixelcontrast` op 8 september twee keer
-     * binnen vier seconden -- met knop en zonder -- en de kaart meldde alleen die tweede
-     * als headless, terwijl het één meetsessie in twee weergaven was. Frits, 2026-09-20.
-     *
-     * Op commando én element, niet op commando alleen: een uitsnede van het logo en een
-     * meting van het zoekveld zijn twee dingen, ook al heten ze hetzelfde.
-     */
-    const paartMetKlik = (m: any) =>
-      // Over álle metingen, niet alleen de dragende: de hoogcontrastmeting verklaart zijn
-      // tegenhanger ook als hij zelf buiten de dragende set valt.
-      metBrowser.some(
-        (a) =>
-          a !== m &&
-          a.commando === m.commando &&
-          a.argumenten?.klik &&
-          (a.argumenten?.selector ?? null) === (m.argumenten?.selector ?? null)
-      );
-
-    const verklaard = (m: any) => metKlik(m) || nietsVerborgen(m) || paartMetKlik(m);
-    const bewustHeadless = weegMee.filter((m) => !inSessie(m) && verklaard(m));
-    const buiten = weegMee.filter((m) => !inSessie(m) && !verklaard(m));
-
+    const opsomming =
+      namen.length === 1
+        ? namen[0]
+        : namen.length === 2
+          ? `${namen[0]} en ${namen[1]}`
+          : `${namen.length} metingen`;
 
     /*
-     * De badge noemt WELKE meting headless is gedaan, niet hoeveel.
-     *
-     * "Deels zonder auditsessie" was waar en onbruikbaar: het telt metingen, terwijl de
-     * vraag is of de meting die het oordeel dráágt betrouwbaar was. Bij 1.3.1 op Home
-     * stonden er twee — de HTML (headless) en een schermafdruk van het menu op 320 pixels
-     * (auditsessie) — en 1.3.1 gaat over koppen en lijsten in de code, dus over die eerste.
-     * Het "deels" was te danken aan de meting die er niet toe deed. Frits, 2026-09-20.
-     *
-     * Eén keer per commando: drie keer get-toetsenbordval zegt niet meer dan één keer, en
-     * maakt de badge onleesbaar. Bij meer dan twee valt de opsomming terug op een aantal,
-     * anders wordt het een zin in plaats van een label; de namen staan dan in de zweeftekst.
+     * Het hoe staat in de zweeftekst. Een meting buiten de auditsessie is niet fout, maar
+     * de pagina is dan opgehaald zonder dat er op geklikt was -- wat pas na een klik
+     * verschijnt zit er niet in.
      */
     /*
-     * Eén badge per meting, niet één zin over alles.
-     *
-     * Hier stond achtereenvolgens "✗ de HTML zonder auditsessie", "○ de HTML headless
-     * opgehaald" en "auditsessie: de schermafdruk, niet de HTML". Alle drie lieten ze
-     * je puzzelen: wat er goed ging stond in de zweeftekst of in een bijzin, en een
-     * waarborg die je moet uitpluizen is er geen.
-     *
-     * Nu draagt elke meting zijn eigen kaartje, met de HANDELING erin: "in auditsessie
-     * getabt" zegt wat er gedaan is, waar "auditsessie" alleen zei wáár het gebeurde. De
-     * handeling staat per commando in lib/metingen.ts. Dit is een verslag van hóé er
-     * getest is, geen beoordeling daarvan. Bij 1.4.5 op Home staat er "auditsessie" naast "de HTML
-     * headless" -- allebei dingen die zijn gebruikt. Allebei grijs: een kleur maakt er
-     * een oordeel van, en dat is het niet. Hier stond eerst groen voor de sessie, maar
-     * dan leest de ene manier van meten als beter dan de andere terwijl de kaart alleen
-     * verslag doet. Frits, 2026-09-20.
-     *
-     * Eén kaartje per commando: drie keer get-toetsenbordval zegt niet meer dan één keer.
+     * `browser: 'geen'` is een PDF-meting: die leest het bestand en start geen browser.
+     * "Zonder auditsessie opgehaald" slaat daar nergens op -- er valt niets te klikken in
+     * een PDF.
      */
-    const naamVan = (m: any) => meetopdracht(m.commando)?.naam ?? m.commando;
-    const uniek = (lijst: any[]) => {
-      const gezien = new Set<string>();
-      return lijst.filter((m) => {
-        if (gezien.has(m.commando)) return false;
-        gezien.add(m.commando);
-        return true;
-      });
-    };
+    const buitenSessie = lijst.filter((m) => !inSessie(m) && m.browser !== 'geen');
+    const uitleg =
+      'Waarmee dit oordeel is vastgesteld: ' +
+      namen.join(', ') +
+      ' (' +
+      Array.from(new Set(lijst.map((m) => m.commando))).join(', ') +
+      ').' +
+      (buitenSessie.length
+        ? ' ' +
+          (() => {
+            const c = Array.from(new Set(buitenSessie.map((m) => m.commando)));
+            return (
+              c.join(', ') +
+              (c.length === 1 ? ' draaide' : ' draaiden') +
+              ' zonder auditsessie, dus zonder dat er op de pagina geklikt was;' +
+              ' wat pas na een klik verschijnt zit er niet in.'
+            );
+          })()
+        : // Bij een PDF is er geen browser en dus ook geen sessie om over te melden.
+          lijst.every((m) => m.browser === 'geen')
+          ? ''
+          : ' Alles in een auditsessie, dus met weggeklikte cookies en open menus.');
 
-    /*
-     * Alleen melden wat afwijkt.
-     *
-     * Dat er een HTML en een schermafdruk zijn opgehaald is geen nieuws: dat gebeurt bij
-     * elke pagina, en die twee komen onder alle criteria van die pagina te staan. Een
-     * kaartje "in auditsessie vastgelegd en opgehaald" zei dus alleen dat alles normaal
-     * verliep -- op 24 van de 81 kaarten in ZOET-01. En omdat er meerdere get-html-regels
-     * kunnen zijn (met --full, met --text), stonden op 12 kaarten allebei de kaartjes:
-     * "in auditsessie opgehaald" naast "de HTML headless opgehaald", wat leest als een
-     * tegenspraak over hetzelfde ding.
-     *
-     * Wat wél gemeld moet worden is een meting die zonder de auditsessie is gedaan. Daar
-     * mist de pagina wat pas na een klik verschijnt, en dat ziet er niet uit als een fout
-     * maar als een pagina waar het niet op staat -- op heuvelrug.nl leverde dat op
-     * 15 augustus 2026 drie afkeuringen op die geen van drieën bestonden.
-     *
-     * Ging alles in de sessie, dan geen kaartje. Waarmee er is vastgesteld staat volledig
-     * onder "Hoe dit is vastgesteld", met per meting de browsermodus erbij. Frits,
-     * 2026-09-20.
-     */
-    /*
-     * Alleen de DRAGENDE meting, niet elke headless ophaling.
-     *
-     * De pagina-ophaling hangt onder alle criteria van die pagina. Voor 1.4.5 is dat het
-     * bewijs -- tekst in een afbeelding staat niet in de code, dus daar tellen de HTML en
-     * de opname samen. Voor 3.2.4 niet: dat rust op `get-consistentie`, die de pagina's
-     * van de steekproef naast elkaar legt, en die zat in de auditsessie. Een melding over
-     * de HTML zegt daar niets over het oordeel.
-     *
-     * `buiten` is de dragende meting die headless ging; `toon` was alles wat er onder
-     * ligt. Op dat laatste filteren gaf een kaartje bij 3.2.4, 2.1.2 en 1.4.11, terwijl
-     * het oordeel daar op iets anders rust dat wél in de sessie is gedaan. Frits,
-     * 2026-09-20.
-     */
-    const headless = uniek(buiten);
-    if (!headless.length) return null;
-
-    /*
-     * Uitklapbaar, want de uitleg past niet in een zweeftekst.
-     *
-     * "de HTML headless opgehaald" zegt niets als je niet weet wat headless is, en een
-     * `title` lees je alleen als je weet dat er iets te zweven valt -- op een aanraakscherm
-     * helemaal niet. De uitleg staat nu in de kaart zelf, achter een klik. Frits,
-     * 2026-09-20.
-     *
-     * `<details>` en niet een eigen open/dicht-state: de kaart doet dat elders ook zo, het
-     * werkt zonder JavaScript en het onthoudt zichzelf per kaartje.
-     */
     return (
-      <>
-        {headless.map((m) => (
-          /*
-           * `w-fit`: dicht is dit een kaartje ter breedte van zijn tekst, open groeit het
-           * mee met de uitleg erin. Geen `inline-block` -- in een flex-rij krijgt dat
-           * geen ruimte voor zijn inhoud en blijft de uitleg op nul hoogte staan.
-           *
-           * Het open/dicht-zijn houdt de <details> zelf bij. Een eigen state met
-           * `onToggle` werkte niet: React vuurt dat event pas vanaf versie 19.
-           */
-          <details key={m.commando} className="w-fit">
-            {/* Het driehoekje is dat van de browser zelf: die draait mee met open en
-                dicht, zonder state en zonder CSS-variant die binnen een <summary> toch
-                niet aanslaat. `marker:text-gray-400` maakt hem even grijs als de tekst. */}
-            <summary className="cursor-pointer rounded bg-gray-100 py-0.5 pl-6 pr-2 font-medium text-gray-700 marker:text-gray-400 hover:bg-gray-200">
-              {naamVan(m)} headless {meetopdracht(m.commando)?.handeling ?? 'gemeten'}
-
-            </summary>
-            {/* max-w: zonder grens loopt de uitleg door tot de rand van de kaart en
-                leest hij als een regel van honderdvijftig tekens. */}
-            {/*
-                Schrijf over wat de onderzoeker moet doen, niet over hoe het gereedschap
-                werkt. De eerste versie begon met "get-html draaide in een onzichtbare
-                browser die zichzelf startte" -- waar en compleet, en niemand weet wat
-                hij ermee aan moet. Wat hij wil weten is: wat is er niet bekeken, en moet
-                ik er zelf nog naar kijken? Frits, 2026-09-20.
-            */}
-            <div className="max-w-xl rounded-b rounded-tr bg-gray-50 px-3 py-2 text-sm font-normal leading-relaxed text-gray-700">
-              <p className="mb-2">
-                De pagina is opgehaald <strong className="font-medium text-gray-900">zonder
-                dat er iemand op geklikt had</strong>. Alles wat pas verschijnt ná een klik
-                is dus niet meegenomen: inhoud in een dichtgeklapt blok, een menu dat nog
-                open moet, de volgende stap van een formulier, en alles wat achter de
-                cookiemelding zit.
-              </p>
-              {/* De titel op een eigen regel, niet in de zin. Die titels zijn hele
-                  zinnen ("Elke kop zegt waar het stuk eronder over gaat"), en in een
-                  lopende zin wordt dat "Dit oordeel gaat over elke kop zegt waar...". */}
-              <p className="mb-2">
-                Het oordeel hieronder is op die pagina gebaseerd:
-                <br />
-                <em className="text-gray-900">
-                  {cel.code} {kaartteksten[cel.code]?.titel ?? critTitel(cel.code)}
-                </em>
-              </p>
-              {/* Geen opdracht aan de onderzoeker: die heeft dit niet gemeten en kan er
-                  ook niets aan veranderen. Het oordeel is in de audit tot stand gekomen;
-                  dit kaartje zegt alleen onder welke omstandigheid. Wat er te doen valt
-                  is het opnieuw laten meten, en dat is een keuze, geen huiswerk. */}
-              <p>
-                Of dat hier uitmaakt hangt van de pagina af. Staat er niets achter een
-                klik dat onder dit criterium valt, dan is het oordeel gewoon compleet. Wil
-                je het zeker weten, dan moet deze meting opnieuw met een auditsessie
-                open. Daar is geen knop voor: {m.commando} hoort bij het begin van een
-                audit en niet bij één kaart.
-              </p>
-            </div>
-          </details>
-        ))}
-      </>
+      <span
+        className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
+        title={uitleg}
+      >
+        {/* Geen "getest met": bij `de toetsenbordtest` werd dat "getest met de
+            toetsenbordtest". De dubbele punt leest als een opsomming en blijft kort. */}
+        vastgesteld met: {opsomming}
+      </span>
     );
   };
 
