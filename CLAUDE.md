@@ -239,6 +239,19 @@ eerst iets aangewezen moet worden — `get-pixelcontrast` moet weten wélk eleme
 een knop die dat zelf verzint meet het verkeerde. Zonder registratie werkt het commando wel
 op de opdrachtregel, maar verschijnt het nergens in het scherm.
 
+**Heeft een criterium geen eigen meetcommando, leg dan vast wat het wél draagt.** Acht
+criteria rusten rechtstreeks op de algemene metingen: 1.1.1, 1.3.1, 1.3.3, 1.4.1 en 1.4.5 op
+de code én de opname, 2.4.6, 3.1.2 en 4.1.2 alleen op de code. Dat staat in
+`DRAGENDE_ALGEMENE_METING` in hetzelfde bestand, met per criterium de zin uit zijn
+`### Zo is het vastgesteld` erbij. De auditsessie-badge op de kaart weegt die meting: bij
+1.4.5 telt de opname mee, want tekst die in een afbeelding gebakken zit staat niet in de
+code. Zonder die lijst weegt de badge alles wat er toevallig onder ligt, en dan kleurt één
+headless ophaling een oordeel oranje dat op een zorgvuldige opname rust.
+
+`npm run test:metingen` bewaakt de lijst: elk criterium zonder eigen meting moet erin staan
+(of bewust in `GEEN_DRAGER` in de test), de genoemde commando's moeten bestaan, en een
+criterium met een eigen commando hoort er juist niet in.
+
 **De onderzoeker kan metingen zelf starten.** Op elke kaart in "Waar sta ik" staat onder "Zo
 is het vastgesteld" wat er voor dat criterium te meten valt, met een knop "Meet dit nu". Ook
 op de kaarten "Jij moet kijken" — juist daar, want dat is de kaart waarop staat dat iets niet

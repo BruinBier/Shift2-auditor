@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Bevinding, Cel, Meting, Stand, Voorstel } from './gegevens';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
-import { ALTIJD_NIET_AANWEZIG, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
+import { ALTIJD_NIET_AANWEZIG, dragendeCommandos, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -4233,14 +4233,16 @@ export default function Stapel({
      * terwijl de badge oranje stond om een headless `get-html` die er niets mee te maken
      * had. Frits, 2026-09-20.
      *
-     * Heeft het criterium geen eigen meting (1.1.1, 1.3.1, 4.1.2), dan is `get-html` wél
-     * de dragende meting en blijft alles bij het oude.
+     * Heeft het criterium geen eigen meting, dan zegt DRAGENDE_ALGEMENE_METING welke
+     * algemene meting het draagt: bij 1.4.5 de opname (tekst in een afbeelding staat niet
+     * in de code), bij 2.4.6 juist alleen de code (koppen met niveau en tekst). Staat het
+     * daar ook niet in, dan weegt de badge alles -- het oude gedrag.
      *
      * Op wat er gemeten IS, niet op wat meetbaar is: `metingenVoorCriterium` zegt alleen
      * dat een commando bestaat. Staat het er niet onder, dan valt de badge terug op de
      * volle lijst en blijft het oordeel van "niet gemeten" aan `grondslagLabel`.
      */
-    const eigen = new Set(metingenVoorCriterium(cel.code).map((m) => m.commando));
+    const eigen = new Set(dragendeCommandos(cel.code));
     const dragend = metBrowser.filter((m) => eigen.has(m.commando));
     const weegMee = dragend.length ? dragend : metBrowser;
 

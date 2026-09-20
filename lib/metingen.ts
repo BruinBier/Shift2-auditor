@@ -504,6 +504,57 @@ export function vervaltDoorVinkje(sample: {
   return uit;
 }
 
+/**
+ * Welke algemene meting een criterium DRAAGT, als het geen eigen meetcommando heeft.
+ *
+ * `get-html` en `get-screenshot` staan onder elk oordeel van een pagina: je haalt de pagina
+ * één keer op, en daar rust alles op. Voor de meeste criteria is dat achtergrond. Maar acht
+ * criteria hebben geen eigen commando en rusten er wél rechtstreeks op, en dan maakt het uit
+ * hóé die meting is gedaan.
+ *
+ * Dit is geen dubbeling van `criteria` hierboven. Daar staat welke meting een criterium
+ * bedient, en dat veld stuurt ook de meetknop op de kaart; `get-html` zou daar bij acht
+ * criteria in de lijst komen te staan alsof hij bij de andere 25 niet hoort, terwijl hij
+ * juist overal onder ligt. Hier staat alleen: als de badge moet wegen of er zorgvuldig is
+ * gemeten, welke meting telt dan?
+ *
+ * De bron is telkens `### Zo is het vastgesteld` in het regelbestand:
+ *
+ *   1.1.1  "twee bronnen naast elkaar" — de code en de opname
+ *   1.3.1  "die twee naast elkaar zijn precies de vergelijking die dit criterium vraagt"
+ *   1.3.3  "de tekst van de pagina (...) en met de schermafdruk"
+ *   1.4.1  de full-page opname, ook met `--zicht=grijs`
+ *   1.4.5  "de opname van de hele pagina laat zien waar leesbare tekst in een afbeelding staat"
+ *   2.4.6  alleen de code: koppen met niveau en tekst
+ *   3.1.2  alleen de code: de taalmarkering per passage
+ *   4.1.2  `get-links` staat al in `criteria`; de code geeft de knoppen en toestanden
+ *
+ * Verandert zo'n regelbestand, dan hoort deze lijst mee te veranderen. Staat een criterium
+ * er niet in en heeft het ook geen eigen commando, dan weegt de badge alles wat eronder
+ * ligt -- het oude gedrag.
+ */
+export const DRAGENDE_ALGEMENE_METING: Record<string, string[]> = {
+  '1.1.1': ['get-html', 'get-screenshot'],
+  '1.3.1': ['get-html', 'get-screenshot'],
+  '1.3.3': ['get-html', 'get-screenshot'],
+  '1.4.1': ['get-html', 'get-screenshot'],
+  '1.4.5': ['get-html', 'get-screenshot'],
+  '2.4.6': ['get-html'],
+  '3.1.2': ['get-html'],
+  '4.1.2': ['get-html'],
+};
+
+/**
+ * De commando's waar dit criterium op rust: zijn eigen meting, of anders de algemene
+ * meting uit de lijst hierboven. Leeg betekent: weeg alles wat eronder ligt.
+ */
+export function dragendeCommandos(code: string): string[] {
+  const eigen = metingenVoorCriterium(code).map((m) => m.commando);
+  const algemeen = DRAGENDE_ALGEMENE_METING[code] ?? [];
+  // Geen Set-spread: dit bestand wordt ook gelezen met een oudere target.
+  return eigen.concat(algemeen).filter((c, i, lijst) => lijst.indexOf(c) === i);
+}
+
 /** De metingen die dit criterium bedienen, in de volgorde van de lijst hierboven. */
 export function metingenVoorCriterium(code: string): Meetopdracht[] {
   return METINGEN.filter((m) => m.criteria.includes(code));
