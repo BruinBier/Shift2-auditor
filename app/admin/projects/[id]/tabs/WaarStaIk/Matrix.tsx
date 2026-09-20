@@ -228,13 +228,28 @@ export default function Matrix({
                     if (isSitebreed(crit.code, s.type)) {
                       return (
                         <td key={s.id} className="px-1 py-1.5">
-                          <span
-                            aria-hidden="true"
-                            title={`${s.title} — hier niet beoordeeld; ${crit.code} geldt voor alle pagina's samen`}
-                            className="mx-auto block h-5 w-5 select-none text-center text-sm leading-5 text-gray-400"
+                          {/* Klikbaar, net als elk ander vakje. Het streepje zegt "hier
+                              niet beoordeeld", maar het oordeel bestáát wel -- het gaat
+                              alleen over alle pagina's samen. Zonder deze knop was dit het
+                              enige vakje in het raster waar je op klikte en niets gebeurde,
+                              terwijl er een kaart achter zit. Frits, 2026-09-20.
+
+                              Naar `sitebreed` en niet naar `cel:`: de kaart van deze ene
+                              pagina toont alleen een verwijzing, en daar valt niets te
+                              beslissen. Het oordeel staat in de werklijst "alle pagina's". */}
+                          <button
+                            type="button"
+                            onClick={() => openStapel('sitebreed')}
+                            title={`${s.title} — hier niet beoordeeld; ${crit.code} geldt voor alle pagina's samen. Klik om het oordeel te openen.`}
+                            className="mx-auto block h-5 w-5 select-none rounded-sm text-center text-sm leading-5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                           >
-                            –
-                          </span>
+                            <span aria-hidden="true">–</span>
+                            {/* Eén keer per rij zou genoeg zijn, maar een knop zonder naam
+                                is voor een schermlezer onbruikbaar. Kort houden dus. */}
+                            <span className="sr-only">
+                              {crit.code} geldt voor alle pagina&apos;s samen
+                            </span>
+                          </button>
                         </td>
                       );
                     }
