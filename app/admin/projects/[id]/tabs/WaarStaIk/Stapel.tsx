@@ -4199,21 +4199,42 @@ export default function Stapel({
       );
     }
 
-    // Eén keer per commando: drie keer get-toetsenbordval in de lijst zegt niet meer dan
-    // één keer, en maakt de zweeftekst onleesbaar.
-    const namen = Array.from(new Set(buiten.map((m) => m.commando))).join(', ');
+    /*
+     * De badge noemt WELKE meting headless is gedaan, niet hoeveel.
+     *
+     * "Deels zonder auditsessie" was waar en onbruikbaar: het telt metingen, terwijl de
+     * vraag is of de meting die het oordeel dráágt betrouwbaar was. Bij 1.3.1 op Home
+     * stonden er twee — de HTML (headless) en een schermafdruk van het menu op 320 pixels
+     * (auditsessie) — en 1.3.1 gaat over koppen en lijsten in de code, dus over die eerste.
+     * Het "deels" was te danken aan de meting die er niet toe deed. Frits, 2026-09-20.
+     *
+     * Eén keer per commando: drie keer get-toetsenbordval zegt niet meer dan één keer, en
+     * maakt de badge onleesbaar. Bij meer dan twee valt de opsomming terug op een aantal,
+     * anders wordt het een zin in plaats van een label; de namen staan dan in de zweeftekst.
+     */
+    const commandos = Array.from(new Set(buiten.map((m) => m.commando)));
+    const namen = commandos.map((c) => meetopdracht(c)?.naam ?? c);
+    const opsomming =
+      namen.length === 1
+        ? namen[0]
+        : namen.length === 2
+          ? `${namen[0]} en ${namen[1]}`
+          : `${namen.length} metingen`;
     const deels = buiten.length < metBrowser.length;
     return (
       <span
         className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900"
         title={
+          `Zonder auditsessie opgehaald: ${commandos.join(', ')}. ` +
           (deels
-            ? `${buiten.length} van de ${metBrowser.length} metingen is headless gedaan: ${namen}. `
-            : `Alle metingen zijn headless gedaan: ${namen}. `) +
+            ? metBrowser.length - buiten.length === 1
+              ? 'De andere meting wel. '
+              : `De andere ${metBrowser.length - buiten.length} metingen wel. `
+            : '') +
           'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te zien.'
         }
       >
-        {deels ? '✗ deels zonder auditsessie' : '✗ zonder auditsessie'}
+        ✗ {opsomming} zonder auditsessie
       </span>
     );
   };
