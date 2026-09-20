@@ -4261,8 +4261,38 @@ export default function Stapel({
      * --klik erbuiten. Frits, 2026-09-20.
      */
     const metKlik = (m: any) => !!m.argumenten?.klik;
-    const bewustHeadless = weegMee.filter((m) => !inSessie(m) && metKlik(m));
-    const buiten = weegMee.filter((m) => !inSessie(m) && !metKlik(m));
+    /*
+     * Nul dichtgeklapte blokken: dan viel er niets te missen.
+     *
+     * De waarschuwing gaat over wat pas na een klik verschijnt. `get-html` telt bij elke
+     * ophaling hoeveel blokken er dichtgeklapt staan, en nul is een uitkomst en geen
+     * leegte -- dan is vastgesteld dát er niets verborgen was. Waarschuwen dat
+     * uitklapblokken niet beoordeeld zijn terwijl de meting zegt dat ze er niet waren, is
+     * een waarborg die het tegenovergestelde beweert van wat er gemeten is.
+     *
+     * Alleen bij een meting die het getal meebrengt. Ophalingen van vóór 20 september 2026
+     * hebben het niet; daar blijft de badge doen wat hij deed.
+     */
+    const nietsVerborgen = (m: any) =>
+      typeof m.uitkomst?.dichtgeklapt === 'number' &&
+      m.uitkomst.dichtgeklapt === 0 &&
+      m.uitkomst?.gehydrateerd !== false;
+    /*
+     * Elke dragende meting hoort in de auditsessie.
+     *
+     * Hier stond een regel die een headless meting goedpraatte zodra een ándere dragende
+     * meting wél in de sessie zat. Dat is niet wat een waarborg hoort te doen: bij 1.4.5
+     * wil je de HTML én de opname in de sessie, niet één van beide. Bovendien sleepte die
+     * regel 1.4.11 mee, waar drie van de vier metingen headless waren en de badge toch op
+     * groen sprong. Frits, 2026-09-20.
+     *
+     * Twee uitzonderingen blijven, en die zijn allebei een uitspraak van de meting zelf:
+     * een `--klik` is de klik waarvoor de sessie nodig was, en nul dichtgeklapte blokken
+     * is de vaststelling dat er niets te missen viel.
+     */
+    const verklaard = (m: any) => metKlik(m) || nietsVerborgen(m);
+    const bewustHeadless = weegMee.filter((m) => !inSessie(m) && verklaard(m));
+    const buiten = weegMee.filter((m) => !inSessie(m) && !verklaard(m));
 
     if (!buiten.length) {
       return (
@@ -4278,9 +4308,15 @@ export default function Stapel({
             /* Een bewust headless gedraaide klik-meting hoort erbij te staan, anders
                belooft het groen meer dan er is. */
             (bewustHeadless.length
-              ? ` ${Array.from(new Set(bewustHeadless.map((m) => m.commando))).join(
-                  ', '
-                )} draaide met een klik buiten de sessie; dat is opzet, want zo'n instelling blijft in de sessie staan en vervuilt de volgende meting.`
+              ? ' ' +
+                bewustHeadless
+                  .map((m) =>
+                    m.argumenten?.klik
+                      ? `${m.commando} draaide met een klik buiten de sessie; dat is opzet, want zo'n instelling blijft in de sessie staan en vervuilt de volgende meting.`
+                      : `${m.commando} is headless opgehaald, maar telde nul dichtgeklapte blokken: er viel niets te missen.`
+                  )
+                  .filter((t, i, lijst) => lijst.indexOf(t) === i)
+                  .join(' ')
               : '')
           }
         >
@@ -4310,21 +4346,30 @@ export default function Stapel({
         : namen.length === 2
           ? `${namen[0]} en ${namen[1]}`
           : `${namen.length} metingen`;
-    const deels = buiten.length < weegMee.length - bewustHeadless.length;
+    const andere = weegMee.length - buiten.length - bewustHeadless.length;
+    /*
+     * "✗ de HTML zonder auditsessie" las als een afkeuring van het werk, en dat is het
+     * niet: het oordeel kan prima kloppen. Het is een aantekening bij de werkwijze --
+     * dit deel is headless opgehaald, kijk daar eventueel nog naar.
+     *
+     * Vandaar geen kruisje maar een cirkeltje, en "headless opgehaald" in plaats van
+     * "zonder auditsessie": dat eerste zegt wát er is gebeurd, het tweede vooral wat er
+     * niet is gebeurd. Frits, 2026-09-20.
+     */
     return (
       <span
         className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900"
         title={
-          `Zonder auditsessie opgehaald: ${commandos.join(', ')}. ` +
-          (deels
-            ? weegMee.length - buiten.length - bewustHeadless.length === 1
-              ? 'De andere meting wel. '
-              : `De andere ${weegMee.length - buiten.length - bewustHeadless.length} metingen wel. `
-            : '') +
-          'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te zien.'
+          `${commandos.join(', ')} is opgehaald zonder auditsessie` +
+          (andere > 0
+            ? `; de ${andere === 1 ? 'andere meting' : `andere ${andere} metingen`} wel. `
+            : '. ') +
+          'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is ' +
+          'daarin niet te zien. Het oordeel kan gewoon kloppen; dit is een aantekening bij ' +
+          'de werkwijze, geen afkeuring.'
         }
       >
-        ✗ {opsomming} zonder auditsessie
+        ○ {opsomming} headless opgehaald
       </span>
     );
   };

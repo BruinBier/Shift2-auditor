@@ -728,7 +728,22 @@ async function getHtml(url: string, flags: Flags) {
         // expliciet vastleggen scheelt de vraag waarom er onder een hoogcontrastoordeel
         // een opname in gewone kleuren staat.
         weergave: 'standaardweergave',
-        uitkomst: { scope: useFull ? 'document' : 'main', bytes: content.length },
+        /*
+         * `dichtgeklapt` hoort in het logboek, niet alleen op het scherm.
+         *
+         * Het is de maat voor wat een headless ophaling gemist kan hebben. Nul is een
+         * uitkomst en geen leegte: dan is vastgesteld dat er niets verborgen was, en dan
+         * heeft het geen zin om op de kaart te waarschuwen dat uitklapblokken niet
+         * beoordeeld zijn. Zonder dit getal moet de badge het ergste aannemen, en stond
+         * er op 1.4.5 van Home "de HTML zonder auditsessie" terwijl er nul dichtgeklapte
+         * blokken waren. Frits, 2026-09-20.
+         */
+        uitkomst: {
+          scope: useFull ? 'document' : 'main',
+          bytes: content.length,
+          dichtgeklapt: dichtgeklapt.aantal,
+          gehydrateerd,
+        },
       });
 
       print({
