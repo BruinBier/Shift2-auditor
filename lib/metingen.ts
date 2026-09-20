@@ -445,6 +445,36 @@ export function vervallenDoorVinkjes(sample: {
   return uit;
 }
 
+/**
+ * De criteria die ALLEEN door een vinkje van de onderzoeker vervallen, met hun reden.
+ *
+ * Het verschil met `vervallenDoorVinkjes` is ALTIJD_NIET_AANWEZIG: dat zit daar wel in en
+ * hier niet. Die lijst gaat over wat zo'n website naar zijn aard niet doet, en dat blijft
+ * gelden ongeacht wat er op deze pagina staat -- een vinkje omzetten mag er dus niets aan
+ * veranderen. Wat hieruit komt is precies wat er verandert als jij dit ene vinkje verzet.
+ *
+ * `vinkje` zegt welk vakje het criterium afsluit. Zet je dat vakje terug op "wel aanwezig"
+ * of op "niet vastgesteld", dan moet het oordeel dat eruit voortkwam weer weg; zonder dat
+ * veld zou de aanroeper moeten raden welke criteria bij welk vakje horen.
+ */
+export function vervaltDoorVinkje(sample: {
+  heeftBewegendBeeld?: boolean | null;
+  heeftFormulier?: boolean | null;
+}): { code: string; reden: string; vinkje: Paginavinkje['veld'] }[] {
+  const uit: { code: string; reden: string; vinkje: Paginavinkje['veld'] }[] = [];
+  for (const vinkje of PAGINAVINKJES) {
+    if (sample[vinkje.veld] !== false) continue;
+    for (const code of vinkje.criteria) {
+      uit.push({
+        code,
+        reden: `Op deze pagina staat geen ${vinkje.wat}. Vastgesteld door de onderzoeker bij het samenstellen van de steekproef; het criterium is daarmee niet van toepassing.`,
+        vinkje: vinkje.veld,
+      });
+    }
+  }
+  return uit;
+}
+
 /** De metingen die dit criterium bedienen, in de volgorde van de lijst hierboven. */
 export function metingenVoorCriterium(code: string): Meetopdracht[] {
   return METINGEN.filter((m) => m.criteria.includes(code));
