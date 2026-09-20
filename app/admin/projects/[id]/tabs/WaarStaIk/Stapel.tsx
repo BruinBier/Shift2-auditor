@@ -3455,7 +3455,10 @@ export default function Stapel({
             en schrijft de agent de tekst, met de huisregels ernaast. Dezelfde weg als
             "Overleggen", en dezelfde terugweg: de bevinding komt terug als voorstel en de
             regel landt in wcag-regels/. */}
-        {!afkeurOpen && (
+        {/* Niet op een verwijskaart. Daar gaat het oordeel over alle pagina's samen en valt
+            er op déze pagina niets vast te leggen; een knop om iets toe te voegen belooft
+            een handeling die nergens landt. Zie verwijstNaar. */}
+        {!afkeurOpen && !verwijstNaar(cel) && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
             {/* "Laat de pagina zien" stond hier, los van elke bevinding. Weggehaald: het
                 aanwijzen zit nu bij de bevinding zelf ("Laat zien in browser" in
@@ -3959,14 +3962,13 @@ export default function Stapel({
       {sitebreedHier(cel.code, cel.sampleId) &&
         (verwijstNaar(cel) ? (
           <p className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-            Dit criterium gaat over de hele website, niet over deze pagina. Het oordeel is
-            vastgelegd op <strong>{verwijstNaar(cel)}</strong>; hier valt niets te
-            beslissen.
+            Dit criterium gaat over <strong>alle pagina&apos;s samen</strong>, niet over deze
+            pagina. Het oordeel staat in de werklijst &ldquo;alle pagina&apos;s&rdquo;; hier
+            valt niets te beslissen.
           </p>
         ) : (
           <p className="mb-3 text-xs text-gray-500">
-            Vastgelegd op {sampleTitel(cel.sampleId)}; op de andere pagina&apos;s staat een
-            verwijzing hierheen.
+            Dit oordeel gaat over alle pagina&apos;s van de steekproef samen.
           </p>
         ))}
     </>
@@ -3984,15 +3986,31 @@ export default function Stapel({
    * Home": een steekproef zonder homepage breekt die afspraak. De drager is het sample met
    * een écht oordeel, dus alles behalve `niet_aanwezig`.
    */
+  /**
+   * Staat deze kaart in de lijst "alle pagina's"?
+   *
+   * Een sitebreed criterium heeft twee gedaanten. In de werklijst van één pagina is het een
+   * verwijzing: daar valt niets te beslissen, want 3.2.4 gaat over de pagina's samen. In de
+   * lijst "alle pagina's" is het het oordeel zelf, met de deelgebieden en de knoppen.
+   *
+   * Dit hangt dus aan de wérklijst en niet aan het sample. Eerder keek de kaart welk sample
+   * het oordeel "droeg" -- het enige met een status anders dan `niet_aanwezig` -- en toonde
+   * daar het volle oordeel. Dat maakte van Home een uitzondering tussen de vier pagina's,
+   * terwijl `get-consistentie` die vier juist naast elkaar legt: het oordeel is van de set,
+   * niet van de pagina waar het toevallig is opgeschreven. Frits, 2026-09-20.
+   */
+  const isSitebreedLijst = focus.split(':')[0] === 'sitebreed';
+
+  /**
+   * Waar het oordeel over gaat, als deze kaart er zelf niet over beslist.
+   *
+   * Geeft een zin terug voor de melding op de kaart, of null als deze kaart wél de plek is
+   * om te beslissen.
+   */
   const verwijstNaar = (cel: Cel): string | null => {
     if (!sitebreedHier(cel.code, cel.sampleId)) return null;
-    if (cel.status !== 'niet_aanwezig') return null;
-    const drager = stand.samples.find((s) => {
-      if (s.id === cel.sampleId || !isSitebreed(cel.code, s.type)) return false;
-      const c = stand.cellen.find((x) => x.sampleId === s.id && x.code === cel.code);
-      return !!c?.status && c.status !== 'niet_aanwezig';
-    });
-    return drager ? drager.title : null;
+    if (isSitebreedLijst) return null;
+    return "alle pagina's samen";
   };
 
   /** Boven de knoppen, zodat duidelijk is waarover je beslist. */
@@ -5261,9 +5279,9 @@ export default function Stapel({
               niets te beslissen. Waar het oordeel wél ligt, hoort er dan bij te staan. */}
           {verwijstNaar(huidig.cel) && (
             <p className="mb-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
-              Dit criterium gaat over de hele website, niet over deze pagina. Het oordeel is
-              vastgelegd op <strong>{verwijstNaar(huidig.cel)}</strong>; hier valt niets te
-              beslissen.
+              Dit criterium gaat over <strong>alle pagina&apos;s samen</strong>, niet over
+              deze pagina. Het oordeel staat in de werklijst &ldquo;alle
+              pagina&apos;s&rdquo;; hier valt niets te beslissen.
             </p>
           )}
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
