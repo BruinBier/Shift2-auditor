@@ -55,6 +55,14 @@ export interface Meting {
   uitkomst?: Record<string, unknown>;
   /** Hoe vaak deze meting is gedraaid. Alleen de laatste staat er; dit is het aantal. */
   keer?: number;
+  /**
+   * Is deze meting ooit in een auditsessie gedaan, ook al is de laatste run headless?
+   *
+   * Een herhaalde meting vervangt de vorige, want die uitkomst is achterhaald. Maar de
+   * waarborg dat er ooit mét sessie gemeten is, wordt daar niet onwaar van. Alleen gezet
+   * als de láátste run buiten de sessie viel; anders zegt `browser` het al.
+   */
+  ooitInSessie?: boolean;
 }
 
 /**
@@ -95,16 +103,24 @@ export function metingUitLogregel(r: LogRegel): Meting {
  * reflow-regels — testklikken op "Nog eens meten" — en was niet meer te zien wat er
  * werkelijk was gedaan.
  *
- * `klik` telt bewust NIET mee. Meet je hetzelfde element eerst in de standaardweergave en
- * daarna in de hoogcontrastweergave, dan is dat tweede een correctie op het eerste en geen
- * tweede bewijsstuk. Bleef de eerste staan, dan stonden er onder een hoogcontrastoordeel
- * opnamen in gewone kleuren die nergens meer op sloegen.
+ * `klik` telt WEL mee: met een klik en zonder een klik zijn twee metingen, tweemaal
+ * dezelfde klik is er één. Bij 1.4.3 zijn beide weergaven het bewijs -- het regelbestand
+ * vraagt om de standaardweergave én de hoogcontrastweergave -- en dan mag de tweede de
+ * eerste niet wegdrukken.
+ *
+ * Dit stond andersom, om te voorkomen dat er onder een hoogcontrastoordeel nog een opname
+ * in gewone kleuren bleef staan die nergens meer op sloeg. Dat is een echte zorg, maar
+ * hij gold voor de meetknop op de kaart, waar je één element overmeet. Hier kostte hij
+ * het bewijs: op 1.4.3 van Home verdween de hoogcontrastmeting uit het logboek doordat
+ * een latere standaardmeting hem overschreef, terwijl de kaart in gebied 2 wel degelijk
+ * "35 elementen, 0 onvoldoende" meldde. Alleen de tekst was nog over, de meting niet.
+ * Frits, 2026-09-20.
  *
  * `breedte` telt wél mee: een reflow-meting op 320 en op 1280 zijn twee metingen, niet
  * dezelfde meting overgedaan.
  */
 export function vormVanMeting(commando: string, argumenten: Record<string, string> = {}): string {
-  const { klik: _klik, ...watGemeten } = argumenten;
+  const watGemeten = { ...argumenten };
   // Een vlag die de standaardwaarde meegeeft is dezelfde meting als die vlag weglaten.
   // `--scope=pagina` was ooit nodig en is nu de standaard; zonder deze regel staan de
   // oude en de nieuwe aanroep als twee metingen op de kaart terwijl ze hetzelfde doen.

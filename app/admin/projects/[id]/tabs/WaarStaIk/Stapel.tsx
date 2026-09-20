@@ -4204,7 +4204,15 @@ export default function Stapel({
   const auditsessieBadge = (cel: Cel) => {
     const metingen = cel.verantwoording ?? [];
     if (!metingen.length) return null;
-    const inSessie = (m: any) => m.browser === 'auditsessie' || m.browser === 'cdp';
+    /*
+     * `ooitInSessie` telt mee: een herhaalde meting vervangt de vorige uitkomst, maar niet
+     * de waarborg. De hoogcontrastknop op Home is op 8 september in de sessie gemeten en
+     * op 17 september headless overgedaan met dezelfde uitkomst (11,99:1); de badge meldde
+     * daarna "zonder auditsessie" over een meting die er wel degelijk een had gehad.
+     * Zie lib/verantwoording.ts.
+     */
+    const inSessie = (m: any) =>
+      m.browser === 'auditsessie' || m.browser === 'cdp' || m.ooitInSessie === true;
     /*
      * Een PDF-meting leest het bestand en start geen browser; het logboek schrijft daar
      * `browser: 'geen'`. Die telt niet mee aan beide kanten: als headless zou de kaart
@@ -4236,7 +4244,23 @@ export default function Stapel({
     const dragend = metBrowser.filter((m) => eigen.has(m.commando));
     const weegMee = dragend.length ? dragend : metBrowser;
 
-    const buiten = weegMee.filter((m) => !inSessie(m));
+    /*
+     * Een meting die met een klik is gedaan, telt niet als "zonder auditsessie".
+     *
+     * De waarschuwing gaat over wat pas ná een klik verschijnt. Draaide de meting mét
+     * `--klik`, dan is die klik juist gedaan en slaat de waarschuwing nergens op.
+     *
+     * Dit is geen randgeval maar voorgeschreven werk: `Shift2_Regels_SC_1_4_3.md` wil de
+     * hoogcontrastweergave gemeten hebben, en CLAUDE.md waarschuwt dat een auditsessie
+     * die instelling vasthoudt en de vólgende meting vervuilt. De agent doet die ene
+     * meting daarom bewust headless. Op 1.4.3 van Home stond daardoor "het contrast
+     * zonder auditsessie" bij een oordeel waarin het contrast in beide weergaven was
+     * gemeten -- de standaardweergave in de sessie, de hoogcontrastweergave met
+     * --klik erbuiten. Frits, 2026-09-20.
+     */
+    const metKlik = (m: any) => !!m.argumenten?.klik;
+    const bewustHeadless = weegMee.filter((m) => !inSessie(m) && metKlik(m));
+    const buiten = weegMee.filter((m) => !inSessie(m) && !metKlik(m));
 
     if (!buiten.length) {
       return (
@@ -4248,7 +4272,14 @@ export default function Stapel({
                   new Set(dragend.map((m) => m.commando))
                 ).join(', ')}) is gedaan in een auditsessie`
               : 'Alle metingen onder dit oordeel zijn gedaan in een auditsessie') +
-            ' (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen.'
+            ' (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen.' +
+            /* Een bewust headless gedraaide klik-meting hoort erbij te staan, anders
+               belooft het groen meer dan er is. */
+            (bewustHeadless.length
+              ? ` ${Array.from(new Set(bewustHeadless.map((m) => m.commando))).join(
+                  ', '
+                )} draaide met een klik buiten de sessie; dat is opzet, want zo'n instelling blijft in de sessie staan en vervuilt de volgende meting.`
+              : '')
           }
         >
           ✓ auditsessie
@@ -4277,16 +4308,16 @@ export default function Stapel({
         : namen.length === 2
           ? `${namen[0]} en ${namen[1]}`
           : `${namen.length} metingen`;
-    const deels = buiten.length < weegMee.length;
+    const deels = buiten.length < weegMee.length - bewustHeadless.length;
     return (
       <span
         className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900"
         title={
           `Zonder auditsessie opgehaald: ${commandos.join(', ')}. ` +
           (deels
-            ? weegMee.length - buiten.length === 1
+            ? weegMee.length - buiten.length - bewustHeadless.length === 1
               ? 'De andere meting wel. '
-              : `De andere ${weegMee.length - buiten.length} metingen wel. `
+              : `De andere ${weegMee.length - buiten.length - bewustHeadless.length} metingen wel. `
             : '') +
           'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te zien.'
         }

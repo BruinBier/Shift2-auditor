@@ -2153,8 +2153,33 @@ async function koppelLogboek(projectId: string, flags: Flags) {
     // als bewijs onder een criterium dat over niet-tekstuele onderdelen gaat.
     if (!gerichtPerSample.has(sample.id)) gerichtPerSample.set(sample.id, new Map());
     const bestaand = gerichtPerSample.get(sample.id)!.get(vorm);
+    /*
+     * De laatste uitkomst telt, maar de waarborg niet.
+     *
+     * Een herhaalde meting vervangt de vorige: die uitkomst is achterhaald. Dát hij ooit
+     * in een auditsessie is gedaan, wordt daar niet onwaar van. De knop op Home is op
+     * 8 september in de sessie gemeten en op 17 september headless overgedaan, met
+     * dezelfde uitkomst (11,99:1); de kaart meldde daarna "zonder auditsessie" bij een
+     * meting die er wel degelijk een had gehad. Dat hoort dus in de badge thuis, niet in de
+     * uitkomst. Frits, 2026-09-20.
+     */
+    const isSessie = (b: string | null | undefined) => b === 'auditsessie' || b === 'cdp';
+    /*
+     * Ook de browsermodus van de VORIGE run meetellen, niet alleen zijn vlag. Die vlag
+     * staat er bewust niet op zolang de laatste run zelf in een sessie zat -- dan zegt
+     * `browser` het al -- dus zonder dit zag een headless herhaling nooit dat zijn
+     * voorganger een sessie had.
+     */
+    const ooitInSessie =
+      bestaand?.meting.ooitInSessie ||
+      isSessie(bestaand?.meting.browser) ||
+      isSessie(meting.browser);
     gerichtPerSample.get(sample.id)!.set(vorm, {
-      meting: { ...meting, keer: (bestaand?.meting.keer ?? 0) + 1 },
+      meting: {
+        ...meting,
+        keer: (bestaand?.meting.keer ?? 0) + 1,
+        ...(ooitInSessie && !isSessie(meting.browser) ? { ooitInSessie: true } : {}),
+      },
       criteria: r.criteria,
     });
   }
