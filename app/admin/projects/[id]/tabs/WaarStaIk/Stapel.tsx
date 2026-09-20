@@ -4436,28 +4436,41 @@ export default function Stapel({
             </summary>
             {/* max-w: zonder grens loopt de uitleg door tot de rand van de kaart en
                 leest hij als een regel van honderdvijftig tekens. */}
+            {/*
+                Schrijf over wat de onderzoeker moet doen, niet over hoe het gereedschap
+                werkt. De eerste versie begon met "get-html draaide in een onzichtbare
+                browser die zichzelf startte" -- waar en compleet, en niemand weet wat
+                hij ermee aan moet. Wat hij wil weten is: wat is er niet bekeken, en moet
+                ik er zelf nog naar kijken? Frits, 2026-09-20.
+            */}
             <div className="max-w-xl rounded-b rounded-tr bg-gray-50 px-3 py-2 text-sm font-normal leading-relaxed text-gray-700">
               <p className="mb-2">
-                <strong className="font-medium text-gray-900">Wat er is gebeurd.</strong>{' '}
-                <code className="rounded bg-white px-1 text-xs">{m.commando}</code> draaide
-                in een onzichtbare browser die zichzelf startte, buiten de auditsessie die
-                jij openzet met <code className="rounded bg-white px-1 text-xs">npm run chrome:debug</code>.
+                De pagina is opgehaald <strong className="font-medium text-gray-900">zonder
+                dat er iemand op geklikt had</strong>. Alles wat pas verschijnt ná een klik
+                is dus niet meegenomen: inhoud in een dichtgeklapt blok, een menu dat nog
+                open moet, de volgende stap van een formulier, en alles wat achter de
+                cookiemelding zit.
               </p>
+              {/* De titel op een eigen regel, niet in de zin. Die titels zijn hele
+                  zinnen ("Elke kop zegt waar het stuk eronder over gaat"), en in een
+                  lopende zin wordt dat "Dit oordeel gaat over elke kop zegt waar...". */}
               <p className="mb-2">
-                <strong className="font-medium text-gray-900">Waarom dat uitmaakt.</strong>{' '}
-                Die browser kent jouw klikken niet: de cookiebanner staat er nog overheen,
-                uitklapblokken zijn dicht, een volgende formulierstap is onbereikbaar. Wat
-                pas na een klik in de pagina komt, staat niet in deze meting — en dat ziet
-                eruit als een pagina waar het niet op staat, niet als een meting die iets
-                mist.
+                Het oordeel hieronder is op die pagina gebaseerd:
+                <br />
+                <em className="text-gray-900">
+                  {cel.code} {kaartteksten[cel.code]?.titel ?? critTitel(cel.code)}
+                </em>
               </p>
+              {/* Geen opdracht aan de onderzoeker: die heeft dit niet gemeten en kan er
+                  ook niets aan veranderen. Het oordeel is in de audit tot stand gekomen;
+                  dit kaartje zegt alleen onder welke omstandigheid. Wat er te doen valt
+                  is het opnieuw laten meten, en dat is een keuze, geen huiswerk. */}
               <p>
-                <strong className="font-medium text-gray-900">Wat dit voor dit oordeel
-                betekent.</strong>{' '}
-                {cel.code} rust op deze meting. Staat er op deze pagina iets achter een
-                klik dat onder dit criterium valt, dan is dat niet meegenomen. Zo niet, dan
-                klopt het oordeel gewoon; dit is een aantekening bij de werkwijze en geen
-                afkeuring.
+                Of dat hier uitmaakt hangt van de pagina af. Staat er niets achter een
+                klik dat onder dit criterium valt, dan is het oordeel gewoon compleet. Wil
+                je het zeker weten, dan moet deze meting opnieuw met een auditsessie
+                open. Daar is geen knop voor: {m.commando} hoort bij het begin van een
+                audit en niet bij één kaart.
               </p>
             </div>
           </details>
