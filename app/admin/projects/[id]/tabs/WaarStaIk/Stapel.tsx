@@ -4404,22 +4404,63 @@ export default function Stapel({
     const headless = uniek(buiten);
     if (!headless.length) return null;
 
+    /*
+     * Uitklapbaar, want de uitleg past niet in een zweeftekst.
+     *
+     * "de HTML headless opgehaald" zegt niets als je niet weet wat headless is, en een
+     * `title` lees je alleen als je weet dat er iets te zweven valt -- op een aanraakscherm
+     * helemaal niet. De uitleg staat nu in de kaart zelf, achter een klik. Frits,
+     * 2026-09-20.
+     *
+     * `<details>` en niet een eigen open/dicht-state: de kaart doet dat elders ook zo, het
+     * werkt zonder JavaScript en het onthoudt zichzelf per kaartje.
+     */
     return (
       <>
         {headless.map((m) => (
-          <span
-            key={m.commando}
-            className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
-            title={
-              `${m.commando} draaide headless: in een onzichtbare browser, zonder de ` +
-              'auditsessie waarin jij cookies hebt weggeklikt en menus hebt geopend. Wat ' +
-              'pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is ' +
-              'daarin niet te zien. Dit criterium rust op deze meting, dus kijk er ' +
-              'eventueel nog naar.'
-            }
-          >
-            {naamVan(m)} headless {meetopdracht(m.commando)?.handeling ?? 'gemeten'}
-          </span>
+          /*
+           * `w-fit`: dicht is dit een kaartje ter breedte van zijn tekst, open groeit het
+           * mee met de uitleg erin. Geen `inline-block` -- in een flex-rij krijgt dat
+           * geen ruimte voor zijn inhoud en blijft de uitleg op nul hoogte staan.
+           *
+           * Het open/dicht-zijn houdt de <details> zelf bij. Een eigen state met
+           * `onToggle` werkte niet: React vuurt dat event pas vanaf versie 19.
+           */
+          <details key={m.commando} className="w-fit">
+            {/* Het driehoekje is dat van de browser zelf: die draait mee met open en
+                dicht, zonder state en zonder CSS-variant die binnen een <summary> toch
+                niet aanslaat. `marker:text-gray-400` maakt hem even grijs als de tekst. */}
+            <summary className="cursor-pointer rounded bg-gray-100 py-0.5 pl-6 pr-2 font-medium text-gray-700 marker:text-gray-400 hover:bg-gray-200">
+              {naamVan(m)} headless {meetopdracht(m.commando)?.handeling ?? 'gemeten'}
+
+            </summary>
+            {/* max-w: zonder grens loopt de uitleg door tot de rand van de kaart en
+                leest hij als een regel van honderdvijftig tekens. */}
+            <div className="max-w-xl rounded-b rounded-tr bg-gray-50 px-3 py-2 text-sm font-normal leading-relaxed text-gray-700">
+              <p className="mb-2">
+                <strong className="font-medium text-gray-900">Wat er is gebeurd.</strong>{' '}
+                <code className="rounded bg-white px-1 text-xs">{m.commando}</code> draaide
+                in een onzichtbare browser die zichzelf startte, buiten de auditsessie die
+                jij openzet met <code className="rounded bg-white px-1 text-xs">npm run chrome:debug</code>.
+              </p>
+              <p className="mb-2">
+                <strong className="font-medium text-gray-900">Waarom dat uitmaakt.</strong>{' '}
+                Die browser kent jouw klikken niet: de cookiebanner staat er nog overheen,
+                uitklapblokken zijn dicht, een volgende formulierstap is onbereikbaar. Wat
+                pas na een klik in de pagina komt, staat niet in deze meting — en dat ziet
+                eruit als een pagina waar het niet op staat, niet als een meting die iets
+                mist.
+              </p>
+              <p>
+                <strong className="font-medium text-gray-900">Wat dit voor dit oordeel
+                betekent.</strong>{' '}
+                {cel.code} rust op deze meting. Staat er op deze pagina iets achter een
+                klik dat onder dit criterium valt, dan is dat niet meegenomen. Zo niet, dan
+                klopt het oordeel gewoon; dit is een aantekening bij de werkwijze en geen
+                afkeuring.
+              </p>
+            </div>
+          </details>
         ))}
       </>
     );
