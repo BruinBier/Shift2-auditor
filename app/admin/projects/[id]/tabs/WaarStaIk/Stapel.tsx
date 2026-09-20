@@ -3954,7 +3954,7 @@ export default function Stapel({
     <>
       <p className="mb-1 text-sm text-gray-500">
         {cel.code} — {critTitel(cel.code)} ·{' '}
-        {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : sampleTitel(cel.sampleId)}
+        {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : paginaLink(cel.sampleId)}
       </p>
       {sitebreedHier(cel.code, cel.sampleId) &&
         (verwijstNaar(cel) ? (
@@ -4311,6 +4311,37 @@ export default function Stapel({
    * het criteriumnummer met zijn naam, zijn niveau, en de pagina waarover je oordeelt. Bij
    * het doorbladeren van twintig kaarten is dat precies wat je bij binnenkomst nodig hebt.
    */
+  /**
+   * De naam van de pagina, als link naar de pagina zelf.
+   *
+   * Beoordelen betekent kijken, en dan wil je er met één klik naartoe kunnen zonder het
+   * adres op te zoeken of deze kaart kwijt te raken. Vandaar een nieuw tabblad.
+   *
+   * `rel="noreferrer"`: een auditsite hoeft niet te weten dat je uit dit scherm komt.
+   *
+   * Geen adres, geen link: een PDF-sample dat als bestand is aangeleverd heeft er geen.
+   */
+  const paginaLink = (sampleId: string | null) => {
+    const url = sampleVoor(sampleId)?.url;
+    const titel = sampleTitel(sampleId);
+    if (!url) return <>{titel}</>;
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        title={`${url} — opent in een nieuw tabblad`}
+        className="underline decoration-gray-300 underline-offset-2 hover:text-gray-900 hover:decoration-gray-500"
+      >
+        {titel}
+        <span aria-hidden="true" className="ml-1 text-xs">
+          ↗
+        </span>
+        <span className="sr-only">(opent in een nieuw tabblad)</span>
+      </a>
+    );
+  };
+
   const criteriumRegel = (cel: Cel) =>
     kaarttekst ? (
       <div className="mb-2 flex flex-wrap items-baseline gap-2">
@@ -4322,8 +4353,9 @@ export default function Stapel({
             WCAG {critNiveau(cel.code)}
           </span>
         )}
+        {/* Bij een sitebreed criterium geen link: het gaat niet over één pagina. */}
         <span className="text-sm text-gray-500">
-          {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : sampleTitel(cel.sampleId)}
+          {sitebreedHier(cel.code, cel.sampleId) ? 'hele website' : paginaLink(cel.sampleId)}
         </span>
       </div>
     ) : null;
@@ -5564,7 +5596,7 @@ export default function Stapel({
               </span>
             )}
             {huidig.voorstel.code} — {critTitel(huidig.voorstel.code)} ·{' '}
-            {sampleTitel(huidig.voorstel.sampleId)}
+            {paginaLink(huidig.voorstel.sampleId)}
           </p>
           <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
             {huidig.voorstel.description}
