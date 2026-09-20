@@ -4318,9 +4318,10 @@ export default function Stapel({
      *
      * Nu draagt elke meting zijn eigen kaartje: dit is een verslag van hóé er getest is,
      * geen beoordeling daarvan. Bij 1.4.5 op Home staat er "auditsessie" naast "de HTML
-     * headless" -- allebei dingen die zijn gebruikt. Groen voor de sessie, grijs voor
-     * een headless ophaling: grijs en niet amber, want een waarschuwingskleur maakt er
-     * weer een oordeel van, en dat is het niet. Frits, 2026-09-20.
+     * headless" -- allebei dingen die zijn gebruikt. Allebei grijs: een kleur maakt er
+     * een oordeel van, en dat is het niet. Hier stond eerst groen voor de sessie, maar
+     * dan leest de ene manier van meten als beter dan de andere terwijl de kaart alleen
+     * verslag doet. Frits, 2026-09-20.
      *
      * Eén kaartje per commando: drie keer get-toetsenbordval zegt niet meer dan één keer.
      */
@@ -4339,7 +4340,7 @@ export default function Stapel({
         {uniek(weegMee.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).length >
           0 && (
           <span
-            className="rounded bg-green-100 px-2 py-0.5 font-medium text-green-800"
+            className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
             title={
               'Gemeten in een auditsessie (npm run chrome:debug), dus met werkende cookies, ' +
               'sessies en klikbare onderdelen: ' +
