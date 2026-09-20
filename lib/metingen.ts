@@ -55,6 +55,14 @@ export interface Meetopdracht {
    * twee zijn aan elkaar te koppelen.
    */
   naam: string;
+  /**
+   * De handeling, als voltooid deelwoord: "getabd", "opgehaald", "gemeten".
+   *
+   * Voor de badge op de kaart, die vertelt waarmee er is getest: "in auditsessie getabt"
+   * zegt meer dan "auditsessie". Een zelfstandig naamwoord kan dat niet -- "de
+   * toetsenbordval" is wat er gemeten is, niet wat er gedaan is.
+   */
+  handeling: string;
   /** Waarom die vraag niet met een klik te beantwoorden is. Alleen als vanafDeKaart uit staat. */
   waaromNiet?: string;
   /** Hoe lang het ongeveer duurt. Staat op de knop terwijl hij draait. */
@@ -80,6 +88,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-html',
     naam: 'de HTML',
+    handeling: 'opgehaald',
     criteria: [],
     toegestaneVlaggen: ['text', 'full'],
     vanafDeKaart: false,
@@ -89,6 +98,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-screenshot',
     naam: 'de schermafdruk',
+    handeling: 'vastgelegd',
     criteria: [],
     toegestaneVlaggen: ['full-page', 'selector', 'breedte', 'klik', 'keep-cookie-banner', 'zicht', 'voor'],
     vanafDeKaart: false,
@@ -98,6 +108,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-videosporen',
     naam: 'de videosporen',
+    handeling: 'uitgelezen',
     criteria: ['1.2.3', '1.2.5'],
     toegestaneVlaggen: ['max', 'klik'],
     vanafDeKaart: true,
@@ -107,6 +118,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-leesvolgorde',
     naam: 'de leesvolgorde',
+    handeling: 'gemeten',
     criteria: ['1.3.2'],
     toegestaneVlaggen: ['zonder-css'],
     vlaggen: { 'zonder-css': 'true' },
@@ -117,6 +129,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-contrast',
     naam: 'het contrast',
+    handeling: 'gemeten',
     criteria: ['1.4.3', '1.4.11'],
     toegestaneVlaggen: ['selector', 'klik'],
     vanafDeKaart: false,
@@ -126,6 +139,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-pixelcontrast',
     naam: 'het randcontrast',
+    handeling: 'gemeten',
     criteria: ['1.4.11'],
     toegestaneVlaggen: ['selector', 'breedte', 'marge', 'klik'],
     vanafDeKaart: false,
@@ -146,6 +160,7 @@ export const METINGEN: Meetopdracht[] = [
      */
     commando: 'get-pdfcontrast',
     naam: 'het PDF-contrast',
+    handeling: 'gemeten',
     criteria: ['1.4.3', '1.4.11'],
     toegestaneVlaggen: ['paginas'],
     vanafDeKaart: true,
@@ -162,6 +177,7 @@ export const METINGEN: Meetopdracht[] = [
      */
     commando: 'get-pdfconsistentie',
     naam: 'de PDF-consistentie',
+    handeling: 'vergeleken',
     criteria: ['3.2.4'],
     toegestaneVlaggen: [],
     vanafDeKaart: true,
@@ -180,6 +196,7 @@ export const METINGEN: Meetopdracht[] = [
      */
     commando: 'get-pdfleesvolgorde',
     naam: 'de PDF-leesvolgorde',
+    handeling: 'gemeten',
     criteria: ['1.3.2'],
     toegestaneVlaggen: [],
     vanafDeKaart: true,
@@ -204,6 +221,7 @@ export const METINGEN: Meetopdracht[] = [
      */
     commando: 'get-pdfstructuur',
     naam: 'de PDF-structuur',
+    handeling: 'uitgelezen',
     criteria: [
       '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4',
       '1.4.2', '2.2.2', '2.3.1',
@@ -218,6 +236,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-nietteksten',
     naam: 'de niet-tekstuele onderdelen',
+    handeling: 'gemeten',
     criteria: ['1.4.11'],
     toegestaneVlaggen: ['klik', 'max', 'marge'],
     vanafDeKaart: true,
@@ -227,6 +246,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-reflow',
     naam: 'de reflow',
+    handeling: 'gemeten',
     criteria: ['1.4.10'],
     toegestaneVlaggen: ['breedte', 'hoogte'],
     vlaggen: { breedte: '320' },
@@ -237,6 +257,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-consistentie',
     naam: 'de consistentie',
+    handeling: 'vergeleken',
     criteria: ['3.2.4'],
     toegestaneVlaggen: ['max', 'scope'],
     vanafDeKaart: true,
@@ -246,6 +267,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-labelinnaam',
     naam: 'label in naam',
+    handeling: 'vergeleken',
     criteria: ['2.5.3'],
     toegestaneVlaggen: ['scope', 'klik'],
     vanafDeKaart: true,
@@ -255,6 +277,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-links',
     naam: 'de links',
+    handeling: 'uitgerekend',
     criteria: ['2.4.4'],
     toegestaneVlaggen: ['scope', 'klik', 'laat-staan'],
     vanafDeKaart: true,
@@ -267,6 +290,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-toetsenbordval',
     naam: 'de toetsenbordval',
+    handeling: 'getabd',
     criteria: ['2.1.2'],
     toegestaneVlaggen: ['scope', 'klik', 'typ-in', 'typ', 'achteruit', 'max'],
     vanafDeKaart: true,
@@ -276,6 +300,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-videos',
     naam: "de video's",
+    handeling: 'uitgelezen',
     criteria: ['2.1.4'],
     toegestaneVlaggen: ['scope', 'doorloop'],
     vanafDeKaart: true,
@@ -285,6 +310,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-sneltoetsen',
     naam: 'de sneltoetsen',
+    handeling: 'uitgeprobeerd',
     criteria: ['2.1.4'],
     toegestaneVlaggen: ['toetsen', 'in'],
     vanafDeKaart: false,
@@ -294,6 +320,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-flitsen',
     naam: 'de flitsen',
+    handeling: 'geteld',
     criteria: ['2.3.1'],
     toegestaneVlaggen: ['seconden', 'klik'],
     vanafDeKaart: true,
@@ -303,6 +330,7 @@ export const METINGEN: Meetopdracht[] = [
   {
     commando: 'get-beweging',
     naam: 'de beweging',
+    handeling: 'gemeten',
     criteria: ['2.2.2'],
     toegestaneVlaggen: ['seconden', 'vanaf', 'klik'],
     vanafDeKaart: true,

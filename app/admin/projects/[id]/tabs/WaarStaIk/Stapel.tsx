@@ -4339,8 +4339,10 @@ export default function Stapel({
      * je puzzelen: wat er goed ging stond in de zweeftekst of in een bijzin, en een
      * waarborg die je moet uitpluizen is er geen.
      *
-     * Nu draagt elke meting zijn eigen kaartje: dit is een verslag van hóé er getest is,
-     * geen beoordeling daarvan. Bij 1.4.5 op Home staat er "auditsessie" naast "de HTML
+     * Nu draagt elke meting zijn eigen kaartje, met de HANDELING erin: "in auditsessie
+     * getabt" zegt wat er gedaan is, waar "auditsessie" alleen zei wáár het gebeurde. De
+     * handeling staat per commando in lib/metingen.ts. Dit is een verslag van hóé er
+     * getest is, geen beoordeling daarvan. Bij 1.4.5 op Home staat er "auditsessie" naast "de HTML
      * headless" -- allebei dingen die zijn gebruikt. Allebei grijs: een kleur maakt er
      * een oordeel van, en dat is het niet. Hier stond eerst groen voor de sessie, maar
      * dan leest de ene manier van meten als beter dan de andere terwijl de kaart alleen
@@ -4373,7 +4375,22 @@ export default function Stapel({
               '.'
             }
           >
-            auditsessie
+            {/*
+                De handeling, niet de naam. "in auditsessie de toetsenbordval getabd" is
+                krom -- je tabt niet een toetsenbordval -- en bij twee metingen werd het
+                "de niet-tekstuele onderdelen gemeten, het randcontrast gemeten": twee keer
+                hetzelfde woord. De handeling alleen leest als een zin en zegt wat er is
+                gedaan; wélk commando dat was staat in de zweeftekst en in het meetlogboek
+                onder "Zo is het vastgesteld".
+            */}
+            in auditsessie{' '}
+            {Array.from(
+              new Set(
+                uniek(weegMee.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).map(
+                  (m) => meetopdracht(m.commando)?.handeling ?? 'gemeten'
+                )
+              )
+            ).join(' en ')}
           </span>
         )}
         {uniek(buiten).map((m) => (
@@ -4387,7 +4404,7 @@ export default function Stapel({
               'gemeten is.'
             }
           >
-            {naamVan(m)} headless
+            {naamVan(m)} headless {meetopdracht(m.commando)?.handeling ?? 'gemeten'}
           </span>
         ))}
       </>
