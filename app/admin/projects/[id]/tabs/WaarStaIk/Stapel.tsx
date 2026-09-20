@@ -4214,13 +4214,42 @@ export default function Stapel({
      */
     const metBrowser = metingen.filter((m) => m.browser !== 'geen');
     if (!metBrowser.length) return null;
-    const buiten = metBrowser.filter((m) => !inSessie(m));
+
+    /*
+     * Kijk naar de meting die dit oordeel DRAAGT, niet naar alle metingen.
+     *
+     * `get-html` en `get-screenshot` staan onder elk oordeel van een pagina: ze halen de
+     * pagina op, meer niet. Een criterium met een eigen meetcommando rust daar niet op.
+     * Bij 1.3.2 op Home was `get-leesvolgorde` in een auditsessie gedaan -- dat commando
+     * legt de plek op het scherm naast de plek in de code, precies de vraag van 1.3.2 --
+     * terwijl de badge oranje stond om een headless `get-html` die er niets mee te maken
+     * had. Frits, 2026-09-20.
+     *
+     * Heeft het criterium geen eigen meting (1.1.1, 1.3.1, 4.1.2), dan is `get-html` wél
+     * de dragende meting en blijft alles bij het oude.
+     *
+     * Op wat er gemeten IS, niet op wat meetbaar is: `metingenVoorCriterium` zegt alleen
+     * dat een commando bestaat. Staat het er niet onder, dan valt de badge terug op de
+     * volle lijst en blijft het oordeel van "niet gemeten" aan `grondslagLabel`.
+     */
+    const eigen = new Set(metingenVoorCriterium(cel.code).map((m) => m.commando));
+    const dragend = metBrowser.filter((m) => eigen.has(m.commando));
+    const weegMee = dragend.length ? dragend : metBrowser;
+
+    const buiten = weegMee.filter((m) => !inSessie(m));
 
     if (!buiten.length) {
       return (
         <span
           className="rounded bg-green-100 px-2 py-0.5 font-medium text-green-800"
-          title="Alle metingen onder dit oordeel zijn gedaan in een auditsessie (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen."
+          title={
+            (dragend.length
+              ? `De meting waar dit oordeel op rust (${Array.from(
+                  new Set(dragend.map((m) => m.commando))
+                ).join(', ')}) is gedaan in een auditsessie`
+              : 'Alle metingen onder dit oordeel zijn gedaan in een auditsessie') +
+            ' (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen.'
+          }
         >
           ✓ auditsessie
         </span>
@@ -4248,16 +4277,16 @@ export default function Stapel({
         : namen.length === 2
           ? `${namen[0]} en ${namen[1]}`
           : `${namen.length} metingen`;
-    const deels = buiten.length < metBrowser.length;
+    const deels = buiten.length < weegMee.length;
     return (
       <span
         className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900"
         title={
           `Zonder auditsessie opgehaald: ${commandos.join(', ')}. ` +
           (deels
-            ? metBrowser.length - buiten.length === 1
+            ? weegMee.length - buiten.length === 1
               ? 'De andere meting wel. '
-              : `De andere ${metBrowser.length - buiten.length} metingen wel. `
+              : `De andere ${weegMee.length - buiten.length} metingen wel. `
             : '') +
           'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te zien.'
         }
