@@ -4319,7 +4319,7 @@ export default function Stapel({
      * meting van het zoekveld zijn twee dingen, ook al heten ze hetzelfde.
      */
     const paartMetKlik = (m: any) =>
-      weegMee.some(
+      toon.some(
         (a) =>
           a !== m &&
           a.commando === m.commando &&
@@ -4376,7 +4376,7 @@ export default function Stapel({
 
     return (
       <>
-        {uniek(toon.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).length >
+        {uniek(toon.filter((m) => inSessie(m) || verklaard(m))).length >
           0 && (
           <span
             className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
@@ -4400,7 +4400,7 @@ export default function Stapel({
             in auditsessie{' '}
             {Array.from(
               new Set(
-                uniek(toon.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).map(
+                uniek(toon.filter((m) => inSessie(m) || verklaard(m))).map(
                   (m) => meetopdracht(m.commando)?.handeling ?? 'gemeten'
                 )
               )
@@ -4413,14 +4413,15 @@ export default function Stapel({
             headless ging, staat in de zweeftekst als aandachtspunt; de rest is alleen
             een vermelding.
         */}
-        {uniek(toon.filter((m) => !inSessie(m) && !metKlik(m) && !nietsVerborgen(m))).map((m) => (
+        {uniek(toon.filter((m) => !inSessie(m) && !verklaard(m))).map((m) => (
           <span
             key={m.commando}
             className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
             title={
-              `${m.commando} is opgehaald zonder auditsessie. Wat pas na een klik ` +
-              'verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te ' +
-              'zien. ' +
+              `${m.commando} draaide headless: in een onzichtbare browser, zonder de ` +
+              'auditsessie waarin jij cookies hebt weggeklikt en menus hebt geopend. Wat ' +
+              'pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is ' +
+              'daarin niet te zien. ' +
               (buiten.some((b) => b.commando === m.commando)
                 ? 'Dit criterium rust op deze meting, dus kijk er eventueel nog naar.'
                 : 'Dit criterium rust op een andere meting; het staat er zodat je weet ' +
