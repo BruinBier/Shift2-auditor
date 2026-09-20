@@ -235,7 +235,7 @@ export const METINGEN: Meetopdracht[] = [
   },
   {
     commando: 'get-nietteksten',
-    naam: 'de niet-tekstuele onderdelen gemeten',
+    naam: 'pictogrammen en veldranden gemeten',
     handeling: 'gemeten',
     criteria: ['1.4.11'],
     toegestaneVlaggen: ['klik', 'max', 'marge'],
