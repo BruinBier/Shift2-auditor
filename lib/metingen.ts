@@ -614,6 +614,43 @@ export const DRAGENDE_ALGEMENE_METING: Record<string, string[]> = {
 };
 
 /**
+ * Wat er met die algemene metingen is GEDAAN, in de woorden van het regelbestand.
+ *
+ * "de HTML en de schermafdruk" noemt twee bestanden; "code en beeld naast elkaar gelegd"
+ * noemt de handeling. Dat laatste is wat de kaart hoort te zeggen, net als bij een
+ * criterium met een eigen commando: daar staat "een tabronde door de pagina" en niet
+ * "get-toetsenbordval".
+ *
+ * Elke zin komt uit `### Zo is het vastgesteld` van het criterium zelf. Bij 1.1.1 staat er
+ * letterlijk "twee bronnen naast elkaar (...) het oordeel ontstaat pas als je die twee
+ * tegen elkaar houdt". Frits, 2026-09-20.
+ *
+ * Staat een criterium hier niet in, dan valt de kaart terug op de namen van de metingen.
+ */
+export const HANDELING_PER_CRITERIUM: Record<string, string> = {
+  '1.1.1': 'tekstalternatief naast het beeld gelegd',
+  '1.2.1': 'gezocht naar ingesloten spelers',
+  '1.2.2': 'gezocht naar ingesloten spelers',
+  '1.2.4': 'gezocht naar een live uitzending',
+  '1.3.1': 'structuur in de code naast het scherm gelegd',
+  '1.3.3': 'de tekst nagelopen op verwijzingen naar vorm en plek',
+  '1.3.5': 'de invoervelden naast de WCAG-lijst gelegd',
+  '1.4.1': 'gekeken of kleur het enige verschil is',
+  '1.4.2': 'gezocht naar geluid dat vanzelf begint',
+  '1.4.5': 'gezocht naar tekst in afbeeldingen',
+  '2.4.2': 'de paginatitels van de steekproef vergeleken',
+  '2.4.6': 'elke kop tegen de tekst eronder gewogen',
+  '2.5.8': 'de klikgebieden uitgelezen',
+  '3.1.1': 'de taal van het document uitgelezen',
+  '3.1.2': 'de taalmarkering per passage nagelopen',
+  '3.3.1': 'het formulier verstuurd en de meldingen gelezen',
+  '3.3.2': 'per veld gekeken wat er zichtbaar bij staat',
+  '3.3.3': 'het formulier verstuurd en de meldingen gelezen',
+  '3.3.7': 'de stappen doorlopen op al ingevulde gegevens',
+  '4.1.2': 'naam, rol en toestand per element gelezen',
+};
+
+/**
  * De commando's waar dit criterium op rust: zijn eigen meting, of anders de algemene
  * meting uit de lijst hierboven. Leeg betekent: weeg alles wat eronder ligt.
  */

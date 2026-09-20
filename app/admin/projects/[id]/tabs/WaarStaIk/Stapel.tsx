@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Bevinding, Cel, Meting, Stand, Voorstel } from './gegevens';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
-import { ALTIJD_NIET_AANWEZIG, dragendeCommandos, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
+import { ALTIJD_NIET_AANWEZIG, HANDELING_PER_CRITERIUM, dragendeCommandos, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -4244,12 +4244,19 @@ export default function Stapel({
      * niet-tekstuele onderdelen en contrastmeting op de beeldpunten" -- waar, en te lang
      * voor een kaartje. Vanaf drie het aantal, met de namen in de zweeftekst.
      */
+    /*
+     * Heeft het criterium een handeling, dan die: "tekstalternatief naast het beeld
+     * gelegd" zegt wat er is gedaan, waar "de HTML en de schermafdruk" twee bestanden
+     * noemt. Zonder handeling de namen van de metingen, die bij een eigen commando al de
+     * handeling zijn ("een tabronde door de pagina").
+     */
     const opsomming =
-      namen.length === 1
+      HANDELING_PER_CRITERIUM[cel.code] ??
+      (namen.length === 1
         ? namen[0]
         : namen.length === 2
           ? `${namen[0]} en ${namen[1]}`
-          : `${namen.length} metingen`;
+          : `${namen.length} metingen`);
 
     /*
      * Het hoe staat in de zweeftekst. Een meting buiten de auditsessie is niet fout, maar

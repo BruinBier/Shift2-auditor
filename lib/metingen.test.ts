@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   DRAGENDE_ALGEMENE_METING,
+  HANDELING_PER_CRITERIUM,
   METINGEN,
   dragendeCommandos,
   metingenVoorCriterium,
@@ -144,4 +145,29 @@ test('elk criterium zonder eigen meting staat in de lijst, of is bewust weggelat
       `${vergeten.join(', ')}. Lees hun "Zo is het vastgesteld" en zet ze erin, of in ` +
       `GEEN_DRAGER hierboven als er niets is dat ze draagt.`
   );
+});
+
+test('elk criterium op een algemene meting heeft een handeling', () => {
+  /**
+   * Zonder handeling valt de kaart terug op de namen van de metingen, en dan staat er
+   * "vastgesteld met: de HTML en de schermafdruk" -- twee bestanden in plaats van wat er
+   * is gedaan. Bij een criterium met een eigen commando is de naam al de handeling ("een
+   * tabronde door de pagina"), dus daar is niets nodig.
+   */
+  const zonder = Object.keys(DRAGENDE_ALGEMENE_METING).filter(
+    (code) => !HANDELING_PER_CRITERIUM[code]
+  );
+  assert.deepEqual(
+    zonder,
+    [],
+    `deze criteria rusten op een algemene meting maar hebben geen handeling in ` +
+      `HANDELING_PER_CRITERIUM: ${zonder.join(', ')}. Lees hun "Zo is het vastgesteld" ` +
+      `en schrijf op wat daar gebeurt.`
+  );
+});
+
+test('een handeling hoort bij een bestaand criterium', () => {
+  for (const code of Object.keys(HANDELING_PER_CRITERIUM)) {
+    assert.ok(regelbestand(code), `handeling voor ${code}, maar er is geen regelbestand`);
+  }
 });
