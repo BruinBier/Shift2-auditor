@@ -4290,7 +4290,30 @@ export default function Stapel({
      * een `--klik` is de klik waarvoor de sessie nodig was, en nul dichtgeklapte blokken
      * is de vaststelling dat er niets te missen viel.
      */
-    const verklaard = (m: any) => metKlik(m) || nietsVerborgen(m);
+    /*
+     * Een meting die hoort bij een klik-meting van hetzelfde commando op hetzelfde
+     * element, telt mee als bewust headless.
+     *
+     * De hoogcontrastweergave meet je met `--klik`, en om die instelling niet in de
+     * auditsessie achter te laten doe je dat headless (zie CLAUDE.md). Maar dan moet de
+     * standaardweergave er ook buiten: je kunt hem niet in de sessie meten als je net de
+     * knop hebt aangezet. Op Home draaide `get-pixelcontrast` op 8 september twee keer
+     * binnen vier seconden -- met knop en zonder -- en de kaart meldde alleen die tweede
+     * als headless, terwijl het één meetsessie in twee weergaven was. Frits, 2026-09-20.
+     *
+     * Op commando én element, niet op commando alleen: een uitsnede van het logo en een
+     * meting van het zoekveld zijn twee dingen, ook al heten ze hetzelfde.
+     */
+    const paartMetKlik = (m: any) =>
+      weegMee.some(
+        (a) =>
+          a !== m &&
+          a.commando === m.commando &&
+          a.argumenten?.klik &&
+          (a.argumenten?.selector ?? null) === (m.argumenten?.selector ?? null)
+      );
+
+    const verklaard = (m: any) => metKlik(m) || nietsVerborgen(m) || paartMetKlik(m);
     const bewustHeadless = weegMee.filter((m) => !inSessie(m) && verklaard(m));
     const buiten = weegMee.filter((m) => !inSessie(m) && !verklaard(m));
 
