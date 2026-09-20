@@ -4244,6 +4244,20 @@ export default function Stapel({
      */
     const eigen = new Set(dragendeCommandos(cel.code));
     const dragend = metBrowser.filter((m) => eigen.has(m.commando));
+    /*
+     * Twee verschillende vragen, twee verzamelingen.
+     *
+     * `toon` is alles wat onder dit oordeel ligt: de kaart vertelt waarmee er is
+     * vastgesteld, en dan hoort de HTML erbij ook als een eigen commando het zware werk
+     * deed. Bij 1.3.2 legt `get-leesvolgorde` code en scherm zelf naast elkaar, maar de
+     * pagina is óók opgehaald en dat is deel van het bewijs.
+     *
+     * `weegMee` is waar de aantekening over gaat: alleen de dragende meting. Een headless
+     * `get-html` onder 1.3.2 is geen tekortkoming -- het criterium rust op de
+     * leesvolgordemeting, en die zat in de sessie. Zou die HTML wél meewegen, dan stond
+     * er een aantekening bij een oordeel waar niets aan mankeert. Frits, 2026-09-20.
+     */
+    const toon = metBrowser;
     const weegMee = dragend.length ? dragend : metBrowser;
 
     /*
@@ -4362,14 +4376,14 @@ export default function Stapel({
 
     return (
       <>
-        {uniek(weegMee.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).length >
+        {uniek(toon.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).length >
           0 && (
           <span
             className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
             title={
               'Gemeten in een auditsessie (npm run chrome:debug), dus met werkende cookies, ' +
               'sessies en klikbare onderdelen: ' +
-              uniek(weegMee.filter((m) => inSessie(m)))
+              uniek(toon.filter((m) => inSessie(m)))
                 .map((m) => m.commando)
                 .join(', ') +
               '.'
@@ -4386,22 +4400,31 @@ export default function Stapel({
             in auditsessie{' '}
             {Array.from(
               new Set(
-                uniek(weegMee.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).map(
+                uniek(toon.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).map(
                   (m) => meetopdracht(m.commando)?.handeling ?? 'gemeten'
                 )
               )
             ).join(' en ')}
           </span>
         )}
-        {uniek(buiten).map((m) => (
+        {/*
+            Elke headless meting krijgt zijn kaartje, ook een die het oordeel niet draagt:
+            de kaart vertelt waarmee er is vastgesteld. Wat het oordeel wél draagt en
+            headless ging, staat in de zweeftekst als aandachtspunt; de rest is alleen
+            een vermelding.
+        */}
+        {uniek(toon.filter((m) => !inSessie(m) && !metKlik(m) && !nietsVerborgen(m))).map((m) => (
           <span
             key={m.commando}
             className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
             title={
               `${m.commando} is opgehaald zonder auditsessie. Wat pas na een klik ` +
               'verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te ' +
-              'zien. Dat hoeft niet uit te maken; het staat er zodat je weet waarmee ' +
-              'gemeten is.'
+              'zien. ' +
+              (buiten.some((b) => b.commando === m.commando)
+                ? 'Dit criterium rust op deze meting, dus kijk er eventueel nog naar.'
+                : 'Dit criterium rust op een andere meting; het staat er zodat je weet ' +
+                  'waarmee is vastgesteld.')
             }
           >
             {naamVan(m)} headless {meetopdracht(m.commando)?.handeling ?? 'gemeten'}
