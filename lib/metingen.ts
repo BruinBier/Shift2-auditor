@@ -627,7 +627,7 @@ export const DRAGENDE_ALGEMENE_METING: Record<string, string[]> = {
  *
  * Staat een criterium hier niet in, dan valt de kaart terug op de namen van de metingen.
  */
-export const HANDELING_PER_CRITERIUM: Record<string, string> = {
+export const HANDELING_PER_CRITERIUM: Record<string, string | { html: string; pdf: string }> = {
   '1.1.1': 'tekstalternatief naast het beeld gelegd',
   '1.2.1': 'in code en beeld gezocht naar video en audio',
   '1.2.2': 'in code en beeld gezocht naar video met geluid',
@@ -641,7 +641,12 @@ export const HANDELING_PER_CRITERIUM: Record<string, string> = {
   '2.4.2': 'de titel naast de inhoud van de pagina gelegd',
   '2.4.6': 'elke kop tegen de tekst eronder gewogen',
   '2.5.8': 'het klikbare gebied per element uitgelezen',
-  '3.1.1': 'de taal van het document uitgelezen',
+  /*
+   * Twee vormen, want het regelbestand kent ze: "get-html --full geeft het hele document
+   * (...) met het lang-attribuut bovenaan. Bij een PDF leest de agent de documenttaal uit
+   * de catalogus." Op een webpagina is "document" PDF-taal en leest het vreemd.
+   */
+  '3.1.1': { html: 'de taalinstelling van de pagina gelezen', pdf: 'de documenttaal uitgelezen' },
   '3.1.2': 'de taalmarkering per passage nagelopen',
   '3.3.1': 'het formulier verstuurd en de meldingen gelezen',
   '3.3.2': 'per veld gekeken wat er zichtbaar bij staat',
@@ -649,6 +654,13 @@ export const HANDELING_PER_CRITERIUM: Record<string, string> = {
   '3.3.7': 'de stappen doorlopen op al ingevulde gegevens',
   '4.1.2': 'naam, rol en toestand per element gelezen',
 };
+
+/** De handeling voor dit criterium, in de vorm die bij het sample past. */
+export function handelingVoor(code: string, isPdf = false): string | undefined {
+  const h = HANDELING_PER_CRITERIUM[code];
+  if (!h) return undefined;
+  return typeof h === 'string' ? h : isPdf ? h.pdf : h.html;
+}
 
 /**
  * De commando's waar dit criterium op rust: zijn eigen meting, of anders de algemene

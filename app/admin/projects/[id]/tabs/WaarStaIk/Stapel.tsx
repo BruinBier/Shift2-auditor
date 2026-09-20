@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Bevinding, Cel, Meting, Stand, Voorstel } from './gegevens';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
-import { ALTIJD_NIET_AANWEZIG, HANDELING_PER_CRITERIUM, dragendeCommandos, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
+import { ALTIJD_NIET_AANWEZIG, handelingVoor, dragendeCommandos, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -4251,7 +4251,7 @@ export default function Stapel({
      * handeling zijn ("een tabronde door de pagina").
      */
     const opsomming =
-      HANDELING_PER_CRITERIUM[cel.code] ??
+      handelingVoor(cel.code, sampleVoor(cel.sampleId)?.type === 'pdf') ??
       (namen.length === 1
         ? namen[0]
         : namen.length === 2

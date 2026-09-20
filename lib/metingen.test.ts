@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import {
   DRAGENDE_ALGEMENE_METING,
   HANDELING_PER_CRITERIUM,
+  handelingVoor,
   METINGEN,
   dragendeCommandos,
   metingenVoorCriterium,
@@ -169,5 +170,23 @@ test('elk criterium op een algemene meting heeft een handeling', () => {
 test('een handeling hoort bij een bestaand criterium', () => {
   for (const code of Object.keys(HANDELING_PER_CRITERIUM)) {
     assert.ok(regelbestand(code), `handeling voor ${code}, maar er is geen regelbestand`);
+  }
+});
+
+test('handelingVoor kiest de vorm die bij het sample past', () => {
+  // 3.1.1 heeft twee vormen: op een pagina is "document" PDF-taal.
+  assert.equal(handelingVoor('3.1.1', false), 'de taalinstelling van de pagina gelezen');
+  assert.equal(handelingVoor('3.1.1', true), 'de documenttaal uitgelezen');
+  // Eén vorm: dezelfde zin voor allebei.
+  assert.equal(handelingVoor('1.1.1', false), handelingVoor('1.1.1', true));
+  // Onbekend criterium: geen handeling, de kaart valt terug op de meetnamen.
+  assert.equal(handelingVoor('2.4.3'), undefined);
+});
+
+test('een handeling met twee vormen heeft ze allebei gevuld', () => {
+  for (const [code, h] of Object.entries(HANDELING_PER_CRITERIUM)) {
+    if (typeof h === 'string') continue;
+    assert.ok(h.html?.trim(), `${code} mist de html-vorm`);
+    assert.ok(h.pdf?.trim(), `${code} mist de pdf-vorm`);
   }
 });
