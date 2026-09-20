@@ -4294,36 +4294,6 @@ export default function Stapel({
     const bewustHeadless = weegMee.filter((m) => !inSessie(m) && verklaard(m));
     const buiten = weegMee.filter((m) => !inSessie(m) && !verklaard(m));
 
-    if (!buiten.length) {
-      return (
-        <span
-          className="rounded bg-green-100 px-2 py-0.5 font-medium text-green-800"
-          title={
-            (dragend.length
-              ? `De meting waar dit oordeel op rust (${Array.from(
-                  new Set(dragend.map((m) => m.commando))
-                ).join(', ')}) is gedaan in een auditsessie`
-              : 'Alle metingen onder dit oordeel zijn gedaan in een auditsessie') +
-            ' (npm run chrome:debug), dus met werkende cookies, sessies en klikbare onderdelen.' +
-            /* Een bewust headless gedraaide klik-meting hoort erbij te staan, anders
-               belooft het groen meer dan er is. */
-            (bewustHeadless.length
-              ? ' ' +
-                bewustHeadless
-                  .map((m) =>
-                    m.argumenten?.klik
-                      ? `${m.commando} draaide met een klik buiten de sessie; dat is opzet, want zo'n instelling blijft in de sessie staan en vervuilt de volgende meting.`
-                      : `${m.commando} is headless opgehaald, maar telde nul dichtgeklapte blokken: er viel niets te missen.`
-                  )
-                  .filter((t, i, lijst) => lijst.indexOf(t) === i)
-                  .join(' ')
-              : '')
-          }
-        >
-          ✓ auditsessie
-        </span>
-      );
-    }
 
     /*
      * De badge noemt WELKE meting headless is gedaan, niet hoeveel.
@@ -4338,39 +4308,65 @@ export default function Stapel({
      * maakt de badge onleesbaar. Bij meer dan twee valt de opsomming terug op een aantal,
      * anders wordt het een zin in plaats van een label; de namen staan dan in de zweeftekst.
      */
-    const commandos = Array.from(new Set(buiten.map((m) => m.commando)));
-    const namen = commandos.map((c) => meetopdracht(c)?.naam ?? c);
-    const opsomming =
-      namen.length === 1
-        ? namen[0]
-        : namen.length === 2
-          ? `${namen[0]} en ${namen[1]}`
-          : `${namen.length} metingen`;
-    const andere = weegMee.length - buiten.length - bewustHeadless.length;
     /*
-     * "✗ de HTML zonder auditsessie" las als een afkeuring van het werk, en dat is het
-     * niet: het oordeel kan prima kloppen. Het is een aantekening bij de werkwijze --
-     * dit deel is headless opgehaald, kijk daar eventueel nog naar.
+     * Eén badge per meting, niet één zin over alles.
      *
-     * Vandaar geen kruisje maar een cirkeltje, en "headless opgehaald" in plaats van
-     * "zonder auditsessie": dat eerste zegt wát er is gebeurd, het tweede vooral wat er
-     * niet is gebeurd. Frits, 2026-09-20.
+     * Hier stond achtereenvolgens "✗ de HTML zonder auditsessie", "○ de HTML headless
+     * opgehaald" en "auditsessie: de schermafdruk, niet de HTML". Alle drie lieten ze
+     * je puzzelen: wat er goed ging stond in de zweeftekst of in een bijzin, en een
+     * waarborg die je moet uitpluizen is er geen.
+     *
+     * Nu draagt elke meting zijn eigen kaartje: dit is een verslag van hóé er getest is,
+     * geen beoordeling daarvan. Bij 1.4.5 op Home staat er "auditsessie" naast "de HTML
+     * headless" -- allebei dingen die zijn gebruikt. Groen voor de sessie, grijs voor
+     * een headless ophaling: grijs en niet amber, want een waarschuwingskleur maakt er
+     * weer een oordeel van, en dat is het niet. Frits, 2026-09-20.
+     *
+     * Eén kaartje per commando: drie keer get-toetsenbordval zegt niet meer dan één keer.
      */
+    const naamVan = (m: any) => meetopdracht(m.commando)?.naam ?? m.commando;
+    const uniek = (lijst: any[]) => {
+      const gezien = new Set<string>();
+      return lijst.filter((m) => {
+        if (gezien.has(m.commando)) return false;
+        gezien.add(m.commando);
+        return true;
+      });
+    };
+
     return (
-      <span
-        className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900"
-        title={
-          `${commandos.join(', ')} is opgehaald zonder auditsessie` +
-          (andere > 0
-            ? `; de ${andere === 1 ? 'andere meting' : `andere ${andere} metingen`} wel. `
-            : '. ') +
-          'Wat pas na een klik verschijnt — uitklapblokken, menus, formulierstappen — is ' +
-          'daarin niet te zien. Het oordeel kan gewoon kloppen; dit is een aantekening bij ' +
-          'de werkwijze, geen afkeuring.'
-        }
-      >
-        ○ {opsomming} headless opgehaald
-      </span>
+      <>
+        {uniek(weegMee.filter((m) => inSessie(m) || metKlik(m) || nietsVerborgen(m))).length >
+          0 && (
+          <span
+            className="rounded bg-green-100 px-2 py-0.5 font-medium text-green-800"
+            title={
+              'Gemeten in een auditsessie (npm run chrome:debug), dus met werkende cookies, ' +
+              'sessies en klikbare onderdelen: ' +
+              uniek(weegMee.filter((m) => inSessie(m)))
+                .map((m) => m.commando)
+                .join(', ') +
+              '.'
+            }
+          >
+            auditsessie
+          </span>
+        )}
+        {uniek(buiten).map((m) => (
+          <span
+            key={m.commando}
+            className="rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
+            title={
+              `${m.commando} is opgehaald zonder auditsessie. Wat pas na een klik ` +
+              'verschijnt — uitklapblokken, menus, formulierstappen — is daarin niet te ' +
+              'zien. Dat hoeft niet uit te maken; het staat er zodat je weet waarmee ' +
+              'gemeten is.'
+            }
+          >
+            {naamVan(m)} headless
+          </span>
+        ))}
+      </>
     );
   };
 
