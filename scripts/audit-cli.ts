@@ -2161,6 +2161,22 @@ async function koppelLogboek(projectId: string, flags: Flags) {
 
   const teSchrijven = checks
     .map((c) => {
+      /*
+       * Een oordeel uit een vinkje krijgt geen meetspoor.
+       *
+       * De algemene metingen hieronder gaan onder elk oordeel van dat sample: de pagina is
+       * opgehaald, daar rust het op. Bij bron 'steekproef' klopt dat niet -- daar heeft de
+       * onderzoeker bij het samenstellen vastgesteld dat er geen video of geen formulier op
+       * staat, en heeft geen agent ernaar gekeken. Het oordeel rust op die vaststelling en
+       * niet op een opgehaalde pagina.
+       *
+       * Deed het dat wel, dan zet de kaart er een waarborg bij over de kwaliteit van een
+       * meting die het oordeel niet draagt: op ZOET-01 stond "door jou vastgesteld bij de
+       * steekproef" naast een groene "auditsessie"-badge, en op een andere pagina naast een
+       * oranje "zonder auditsessie". Allebei een uitspraak over iets wat er niet toe doet.
+       * Frits, 2026-09-20.
+       */
+      if (c.bron === 'steekproef') return null;
       const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
       const gericht = Array.from(gerichtPerSample.get(c.sampleItemId)?.values() ?? [])
         .filter((g) => g.criteria.includes(c.criterionCode))
