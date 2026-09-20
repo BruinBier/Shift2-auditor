@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
 import type { Bevinding, Cel, Meting, Stand, Voorstel } from './gegevens';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
-import { meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
+import { ALTIJD_NIET_AANWEZIG, meetbaarVanafDeKaart, leesbareAanroep, isSitebreed, metingenVoorCriterium, meetopdracht } from '@/lib/metingen';
 
 type Taak =
   | { soort: 'vraag'; cel: Cel }
@@ -1940,9 +1940,31 @@ export default function Stapel({
    * meetbaar IS zegt niet dat er gemeten is. Staat er "gemeten" boven een oordeel waar de
    * agent het commando nooit heeft aangeraakt, dan is het label erger dan geen label.
    */
-  const rustOp = (cel: Cel): 'gemeten' | 'ongemeten' | 'afweging' => {
+  const rustOp = (cel: Cel): 'vastgelegd' | 'gemeten' | 'ongemeten' | 'afweging' => {
+    /*
+     * 1.2.4, 1.4.2 en 2.2.2 zijn één keer vastgelegd voor dit soort websites; per pagina
+     * valt er niets vast te stellen. "Niet gemeten" zou daar als een tekortkoming lezen
+     * en "gemeten" als een onderzoek dat niet hoefde -- op ZOET-01 stond onder 1.2.4 op
+     * Home "gemeten", met een get-html eronder die alleen de pagina had opgehaald.
+     */
+    if (ALTIJD_NIET_AANWEZIG.some((v) => v.code === cel.code)) return 'vastgelegd';
     if ((cel.verantwoording ?? []).length > 0) return 'gemeten';
     return metingenVoorCriterium(cel.code).length > 0 ? 'ongemeten' : 'afweging';
+  };
+
+  /**
+   * Waar het oordeel vandaan komt, in het eerste kaartje.
+   *
+   * Drie herkomsten, en ze horen uit elkaar te blijven. Bij een vinkje heeft de
+   * onderzoeker het vastgesteld, bij ALTIJD_NIET_AANWEZIG staat het vast voor dit soort
+   * websites, en pas in het derde geval heeft een agent er werkelijk naar gekeken.
+   * "Oordeel van de agent" bij de eerste twee schrijft iemand een beslissing toe die hij
+   * niet heeft genomen.
+   */
+  const herkomstLabel = (cel: Cel) => {
+    if (cel.bron === 'steekproef') return 'Volgt uit je steekproef';
+    if (ALTIJD_NIET_AANWEZIG.some((v) => v.code === cel.code)) return 'Vastgelegd voor deze site';
+    return 'Oordeel van de agent';
   };
 
   /** Het kaartje naast "Oordeel van de agent". */
@@ -1952,6 +1974,12 @@ export default function Stapel({
     if (cel.bron === 'steekproef') return null;
 
     const soort = rustOp(cel);
+    /*
+     * Geen tweede kaartje: het eerste zegt al "Vastgelegd voor deze site" (zie
+     * herkomstLabel), en "niet gemeten" ernaast zou lezen als een tekortkoming terwijl er
+     * per pagina niets te meten valt. De uitleg staat onder "Waar dit criterium over gaat".
+     */
+    if (soort === 'vastgelegd') return null;
     if (soort === 'gemeten') {
       return (
         <span
@@ -5178,7 +5206,7 @@ export default function Stapel({
               die niet heeft plaatsgevonden.
             */}
             <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
-              {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
+              {herkomstLabel(huidig.cel)}
             </span>
             {grondslagLabel(huidig.cel)}
             <span
@@ -5663,7 +5691,7 @@ export default function Stapel({
             {kaarttekst ? (
               <>
                 <span className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-900">
-                  {huidig.cel.bron === 'steekproef' ? 'Volgt uit je steekproef' : 'Oordeel van de agent'}
+                  {herkomstLabel(huidig.cel)}
                 </span>
                 {grondslagLabel(huidig.cel)}
                 {/*

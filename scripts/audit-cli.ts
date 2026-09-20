@@ -42,7 +42,7 @@ import {
   timestamp,
 } from './lib/browser-fetch';
 import { legVast, leesLogboek } from './lib/audit-log';
-import { leesbareAanroep } from '../lib/metingen';
+import { ALTIJD_NIET_AANWEZIG, leesbareAanroep } from '../lib/metingen';
 import {
   lintFinding,
   formatLintIssues,
@@ -2177,6 +2177,19 @@ async function koppelLogboek(projectId: string, flags: Flags) {
        * Frits, 2026-09-20.
        */
       if (c.bron === 'steekproef') return null;
+      /*
+       * Om dezelfde reden krijgt een criterium uit ALTIJD_NIET_AANWEZIG er geen.
+       *
+       * 1.2.4, 1.4.2 en 2.2.2 zijn één keer vastgelegd voor dit soort websites: een
+       * gemeentelijke informatiesite zendt niet live uit, start geen geluid vanzelf en
+       * heeft geen carrousels. Dat oordeel rust op die vastlegging en niet op een
+       * opgehaalde pagina, en het regelbestand van 1.2.4 schrijft juist voor dat je het
+       * bewust zo zet en niet met een zoektocht die niets kan vinden.
+       *
+       * Op ZOET-01 stond onder 1.2.4 op Home "gemeten" met een get-html eronder, bij een
+       * oordeel dat niemand per pagina had hoeven vaststellen. Frits, 2026-09-20.
+       */
+      if (ALTIJD_NIET_AANWEZIG.some((v) => v.code === c.criterionCode)) return null;
       const algemeen = Array.from(algemeenPerSample.get(c.sampleItemId)?.values() ?? []);
       const gericht = Array.from(gerichtPerSample.get(c.sampleItemId)?.values() ?? [])
         .filter((g) => g.criteria.includes(c.criterionCode))
