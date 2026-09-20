@@ -179,14 +179,14 @@ bij criterium één. Moet één criterium alsnog of opnieuw beoordeeld worden, g
 agent krijgt er precies één, plus één pagina, plus het regelbestand dat erbij hoort. Wat hij
 daarbuiten ziet, laat hij liggen.
 
-**De auditsessie start vanzelf.** Draait er geen Chrome op poort 9222, dan start de workflow er
-zelf een (`npm run cli:chrome-los`, hetzelfde script als `chrome:debug` maar losgekoppeld, met
-hetzelfde auditprofiel) en wacht tot de poort antwoordt. Dat moet, want de CLI valt anders
-stilzwijgend terug op headless — en dan mist de meting alles wat pas na een klik in de code
-komt: uitklapblokken, menu's, formulierstappen achter een sessie. Dat ziet er niet uit als een
-fout maar als een pagina waar het niet op staat, en dat leverde op 15 augustus 2026 drie
-afkeuringen op die geen van drieën bestonden. Achteraf zie je het aan de oranje badge op de
-kaart, maar dan is het werk al gedaan.
+**De auditsessie start vanzelf, bij deze workflow én bij `audit-samples`.** Draait er geen
+Chrome op poort 9222, dan start de workflow er zelf een (`npm run cli:chrome-los`, hetzelfde
+script als `chrome:debug` maar losgekoppeld, met hetzelfde auditprofiel) en wacht tot de poort
+antwoordt. Dat moet, want de CLI valt anders stilzwijgend terug op headless — en dan mist de
+meting alles wat pas na een klik in de code komt: uitklapblokken, menu's, formulierstappen
+achter een sessie. Dat ziet er niet uit als een fout maar als een pagina waar het niet op
+staat, en dat leverde op 15 augustus 2026 drie afkeuringen op die geen van drieën bestonden.
+Achteraf zie je het aan de oranje badge op de kaart, maar dan is het werk al gedaan.
 
 ```
 Workflow({ scriptPath: '.claude/workflows/audit-criterium.js',

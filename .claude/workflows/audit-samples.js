@@ -1,7 +1,7 @@
 export const meta = {
   name: 'audit-samples',
   description: 'Per sample: audit alle succescriteria van het onderzoekstype met de Shift2-beoordelingsregels en de checklists, verifieer, match tegen bestaande QuickFindings, en schrijf de uitkomsten weg als voorstel',
-  whenToUse: 'Voor een WCAG-audit waarbij per sample elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Werkt op HTML-pagina\'s en op PDF-documenten (die krijgen een eigen beoordeling op documentstructuur). Voor elk criterium met deelgebieden vult de auditor die verplicht in; zonder complete lijst weigert save-checks het oordeel. Schrijft het oordeel per sample per criterium weg en maakt de afkeuringen aan als voorstel — die tellen nergens mee tot de onderzoeker akkoord geeft. Levert daarnaast een lijst met vragen die handmatig in de browser beantwoord moeten worden. Draai met args.drooglopen = true om alleen te rapporteren.',
+  whenToUse: 'Voor een WCAG-audit waarbij per sample elk succescriterium moet worden beoordeeld zonder dat er criteria worden overgeslagen. Werkt op HTML-pagina\'s en op PDF-documenten (die krijgen een eigen beoordeling op documentstructuur). Voor elk criterium met deelgebieden vult de auditor die verplicht in; zonder complete lijst weigert save-checks het oordeel. Schrijft het oordeel per sample per criterium weg en maakt de afkeuringen aan als voorstel — die tellen nergens mee tot de onderzoeker akkoord geeft. Levert daarnaast een lijst met vragen die handmatig in de browser beantwoord moeten worden. Draai met args.drooglopen = true om alleen te rapporteren. Weigert te starten zonder auditsessie-Chrome op poort 9222 (start er zelf een als het kan); met args.headlessMag = true sla je die controle over.',
   phases: [
     { title: 'Voorbereiden', detail: 'Project, samples, SC-set en QuickFindings ophalen' },
     { title: 'Auditen', detail: 'Eén auditor-agent per sample gaat alle SC\'s af (Shift2-regels + wcag-checklists)' },
@@ -238,6 +238,90 @@ if (nogVoorgesteld.length && !args.ookVoorgesteld) {
     voorgesteld: nogVoorgesteld.map((s) => ({ id: s.id, title: s.title })),
   }
 }
+/**
+ * Zonder auditsessie meet deze workflow de verkeerde pagina.
+ *
+ * De CLI valt stilzwijgend terug op headless als er geen Chrome op 9222 draait: één regel
+ * naar stderr, en het commando gaat gewoon door. Wat pas na een klik in de code komt --
+ * uitklapblokken, menu's, formulierstappen, alles achter een cookiemuur -- staat er dan
+ * niet in. Dat ziet er niet uit als een fout maar als een pagina waar het niet op staat,
+ * en dat leverde op 15 augustus 2026 drie afkeuringen op die geen van drieën bestonden.
+ *
+ * `audit-criterium` had deze poort al; deze workflow niet, terwijl dit juist de workflow
+ * is waarmee een nieuw onderzoek wordt gedraaid. In ZOET-01 is `get-html` daardoor 46 keer
+ * in een sessie en 46 keer headless opgehaald, wisselend binnen dezelfde dag. Achteraf zie
+ * je het aan de badge op de kaart, maar dan is het werk al gedaan. Frits, 2026-09-20.
+ *
+ * `headlessMag: true` slaat dit over -- alleen bij een openbare site zonder login,
+ * cookiemuur of uitklapblokken die ertoe doen.
+ */
+const debugUrl = opts.debugUrl || 'http://localhost:9222'
+
+const SESSIE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['draait', 'toelichting'],
+  properties: {
+    draait: { type: 'boolean' },
+    gestart: { type: 'boolean' },
+    toelichting: { type: 'string' },
+  },
+}
+
+if (!opts.headlessMag) {
+  /*
+   * De controle doet een agent, niet dit script: `fetch` naar localhost mislukt hier,
+   * want een workflowscript draait afgeschermd van de eigen machine. Op 2026-08-31 zag
+   * de workflow daardoor een draaiende Chrome niet, startte er een tweede, en
+   * concludeerde daarna dat die ook niet draaide.
+   */
+  const sessie = await agent(
+    [
+      'Zorg dat er een auditsessie-Chrome draait. Je werkdirectory is de repo-root.',
+      '',
+      '1. Kijk of hij er al is:',
+      '',
+      '     curl -s -m 3 ' + debugUrl + '/json/version',
+      '',
+      '   Komt daar JSON uit met een "Browser"-veld, dan ben je klaar: draait is true en',
+      '   gestart is false. Start dan NIETS -- er staat al een Chrome met de sessies van de',
+      '   onderzoeker erin, en een tweede voegt niets toe.',
+      '',
+      '2. Komt er niets uit, start hem dan:',
+      '',
+      '     npm run cli:chrome-los',
+      '',
+      '   Dat start Chrome met foutopsporing op poort 9222, met het eigen auditprofiel',
+      '   (chrome-audit-profile in de home-map, niet het gewone Chrome-profiel), en keert',
+      '   meteen terug -- het blijft niet hangen.',
+      '',
+      '3. Wacht daarna tot de poort antwoordt: herhaal het curl-commando uit stap 1, met een',
+      '   seconde ertussen, tot er JSON uitkomt of tot je het tien keer hebt geprobeerd.',
+      '',
+      'Zet draait op wat er aan het eind werkelijk is, niet op wat je hoopte. Noem in',
+      'toelichting de Chrome-versie als hij draait, en anders wat het startcommando zei.',
+      'Verzin geen tweede manier om Chrome te starten.',
+    ].join('\n'),
+    { label: 'auditsessie', phase: 'Voorbereiden', schema: SESSIE_SCHEMA },
+  )
+
+  if (!sessie?.draait) {
+    return {
+      error:
+        'Er draait geen auditsessie op ' + debugUrl + ', dus alles zou headless gemeten ' +
+        'worden. Start `npm run chrome:debug` met de hand en draai opnieuw. Volstaat ' +
+        'headless voor dit onderzoek -- openbare site, geen login, geen cookiemuur, geen ' +
+        'uitklapblokken die ertoe doen -- geef dan args.headlessMag = true mee.',
+      auditsessie: false,
+      toelichting: sessie?.toelichting ?? null,
+    }
+  }
+  log(
+    'Auditsessie ' + (sessie.gestart ? 'gestart' : 'draaide al') + ' op ' + debugUrl + '. ' +
+      sessie.toelichting,
+  )
+}
+
 if (!context.criteria.length) {
   return { error: 'Geen succescriteria gevonden (onderzoekstype leeg?).', context }
 }
