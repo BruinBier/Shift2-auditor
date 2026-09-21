@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { bekendeGebieden, huidigeLijst, leesGebieden, voegSamen } from '@/lib/deelgebieden';
 import { zetTerugNaarVoorstel } from '@/lib/finding-code';
+import { leidCriteriumOordelenAfUitChecks } from '@/lib/criterion-assessment';
 
 /**
  * De sampleoordelen van een project: het oordeel per criterium per pagina.
@@ -115,6 +116,8 @@ export async function POST(
     let vervallen = 0;
     /** De codes van bevindingen die met een vervallen akkoord weer voorstel zijn geworden. */
     const teruggezet: string[] = [];
+    /** De criteria waarvan een oordeel is weggeschreven; daarvan volgt het projectoordeel. */
+    const geraakteCriteria: string[] = [];
 
     for (const check of checks) {
       const { sampleItemId, criterionCode, status } = check;
@@ -258,6 +261,7 @@ export async function POST(
         },
       });
       geschreven++;
+      geraakteCriteria.push(wcagCriterionId);
 
       /**
        * Vervalt het akkoord, dan gaan de bevindingen mee terug naar voorstel.
@@ -297,10 +301,31 @@ export async function POST(
       }
     }
 
+    /**
+     * Het projectoordeel volgt hier, en niet pas bij de eerste bevinding.
+     *
+     * `herberekenCriteriumOordeel` hangt aan de bevindingroutes en laat een criterium
+     * zonder bevindingen met rust. Een criterium waar de audit uitsluitend `voldoet` of
+     * `niet_aanwezig` op uitkomt kreeg daardoor nooit een projectoordeel -- er komt geen
+     * bevinding aan te pas -- en stond in het tabblad Bevindingen op "niet getoetst".
+     * Op ZOET-01 gold dat voor 20 van de 33 criteria. Zie lib/criterion-assessment.ts.
+     *
+     * Alleen de criteria uit dit bericht, en alleen als het wegschrijven lukte. Een fout
+     * hierin mag het oordeel dat al is opgeslagen niet ongedaan maken, dus melden en door.
+     */
+    let afgeleid: { criterionId: string; status: string }[] = [];
+    try {
+      afgeleid = await leidCriteriumOordelenAfUitChecks(params.id, geraakteCriteria);
+    } catch (e: any) {
+      fouten.push(`projectoordeel niet bijgewerkt (${e?.message ?? 'onbekende fout'})`);
+    }
+
     return NextResponse.json({
       geschreven,
       overgeslagen: fouten.length,
       akkoordVervallen: vervallen,
+      // Welke criteria hierdoor een nieuw projectoordeel kregen.
+      criteriumoordelen: afgeleid.length,
       // Welke bevindingen weer voorstel zijn geworden. In het antwoord en niet alleen in de
       // database, zodat een agent het meldt en de onderzoeker weet wat er opnieuw op zijn
       // stapel ligt.

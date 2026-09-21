@@ -122,3 +122,90 @@ export async function herberekenCriteriumOordelen(
     await herberekenCriteriumOordeel(projectId, id);
   }
 }
+
+/* ------------------------------------------------------------------------- *
+ * Het oordeel dat uit de sampleoordelen volgt
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Leidt het criteriumoordeel af uit de oordelen per pagina, voor één criterium.
+ *
+ * Dit is een ANDERE vraag dan `herberekenCriteriumOordeel` hierboven, en daarom een
+ * aparte functie. Die kijkt naar de bevindingen en laat een criterium zonder
+ * bevindingen bewust met rust. Deze kijkt naar `SampleCriterionCheck`: het oordeel dat
+ * de agent of het paginavinkje per pagina heeft vastgelegd.
+ *
+ * Dat verschil was precies het gat. De herberekening hing aan zeven bevindingroutes --
+ * aanmaken, wijzigen, verwijderen, goedkeuren -- en aan niets anders. Een criterium waar
+ * de audit uitsluitend `voldoet` of `niet_aanwezig` op uitkwam, kreeg dus nooit een
+ * projectoordeel, want daar komt geen bevinding aan te pas. Op ZOET-01 gold dat voor 20
+ * van de 33 criteria: 1.2.3 stond op "niet getoetst" terwijl alle zes de pagina's al
+ * beoordeeld en goedgekeurd waren. De route `derive-assessments` rekende het goed uit,
+ * maar werd door niets aangeroepen; hij moest met de hand gedraaid worden.
+ *
+ * De rekenregels staan in `oordeelUitChecks` en zijn dezelfde als daar, vastgesteld met
+ * Frits op 2026-08-02 en aangescherpt op 2026-08-03.
+ *
+ * Vastgelegd op 2026-09-21 bij ZOET-01.
+ */
+export function oordeelUitChecks(
+  statussen: string[]
+): 'failed' | 'passed' | 'not_present' | null {
+  // `niet_te_bepalen` levert geen tegenbewijs: daar is niets gevonden dat het criterium
+  // schendt, alleen iets dat niet te toetsen viel. Staat ALLES erop, dan is er echt geen
+  // oordeel af te leiden en blijft het criterium onbeslist.
+  const beoordeeld = statussen.filter((s) => s !== 'niet_te_bepalen');
+  if (!beoordeeld.length) return null;
+
+  if (beoordeeld.some((s) => s === 'afgekeurd')) return 'failed';
+  if (beoordeeld.every((s) => s === 'niet_aanwezig')) return 'not_present';
+  // voldoet, eventueel met opmerkingen ertussen. Een opmerking is geen WCAG-schending.
+  return 'passed';
+}
+
+/**
+ * Leidt het oordeel af voor de opgegeven criteria en schrijft het weg.
+ *
+ * Alleen de criteria die zijn meegegeven, niet alle drieendertig. Een losse correctie op
+ * een pagina hoort geen oordelen elders te overschrijven.
+ *
+ * Een afgerond project ligt vast, net als bij de herberekening uit bevindingen.
+ */
+export async function leidCriteriumOordelenAfUitChecks(
+  projectId: string,
+  wcagCriterionIds: (string | null | undefined)[]
+): Promise<{ criterionId: string; status: string }[]> {
+  const uniek = Array.from(new Set(wcagCriterionIds.filter((id): id is string => !!id)));
+  if (!projectId || !uniek.length) return [];
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { checkPhase: true },
+  });
+  if (!project || project.checkPhase === 'afgerond') return [];
+
+  const checks = await prisma.sampleCriterionCheck.findMany({
+    where: { sampleItem: { projectId }, wcagCriterionId: { in: uniek } },
+    select: { wcagCriterionId: true, status: true },
+  });
+
+  const perCriterium = new Map<string, string[]>();
+  for (const c of checks) {
+    const lijst = perCriterium.get(c.wcagCriterionId) ?? [];
+    lijst.push(c.status);
+    perCriterium.set(c.wcagCriterionId, lijst);
+  }
+
+  const geschreven: { criterionId: string; status: string }[] = [];
+  for (const [criterionId, statussen] of Array.from(perCriterium.entries())) {
+    const status = oordeelUitChecks(statussen);
+    if (!status) continue;
+    await prisma.criterionAssessment.upsert({
+      where: { projectId_wcagCriterionId: { projectId, wcagCriterionId: criterionId } },
+      update: { status },
+      create: { projectId, wcagCriterionId: criterionId, status },
+    });
+    geschreven.push({ criterionId, status });
+  }
+  return geschreven;
+}

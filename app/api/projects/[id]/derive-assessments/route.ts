@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { oordeelUitChecks } from '@/lib/criterion-assessment';
 
 /**
  * Leidt de project-brede CriterionAssessment af uit de beoordelingen per steekproefitem.
@@ -81,15 +82,11 @@ async function bereken(projectId: string) {
       continue;
     }
 
-    let status: 'failed' | 'passed' | 'not_present';
-    if (beoordeeld.some((c) => c.status === 'afgekeurd')) {
-      status = 'failed';
-    } else if (beoordeeld.every((c) => c.status === 'niet_aanwezig')) {
-      status = 'not_present';
-    } else {
-      // voldoet, eventueel met opmerkingen ertussen
-      status = 'passed';
-    }
+    // Dezelfde rekenregel als bij het opslaan van de sampleoordelen. Eén versie, in
+    // lib/criterion-assessment.ts: liepen ze uit elkaar, dan gaf de knop hier een ander
+    // antwoord dan de audit zelf net had weggeschreven.
+    const status = oordeelUitChecks(beoordeeld.map((c) => c.status));
+    if (!status) continue;
 
     criteria.push({
       criterionId,
