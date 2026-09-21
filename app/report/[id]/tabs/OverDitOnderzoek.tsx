@@ -600,11 +600,20 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 // Nulmeting en herinspectie delen dat onderzoekstype en kregen
                 // daardoor een identieke kop. Spreek bij een herinspectie van
                 // heronderzoek, net als in de introtekst hieronder.
-                const researchType = isHeronderzoekReport && project.researchType
-                  ? project.researchType
+                // "met formulieren" hoort niet in de kop: dat onderscheidt intern of
+                // 3.3.1, 3.3.3 en 3.3.7 meelopen, en dat is een keuze over de scope van
+                // het onderzoek en geen naam die de klant op zijn rapport wil zien.
+                // Staat ook in lib/generate-report-html.ts: deze tab en de generator
+                // bouwen elk hun eigen kop, dus een wijziging hier bereikt de Word- en
+                // PDF-versie niet. Frits, 2026-09-21 bij ZOET-01.
+                const basisType = String(project.researchType || '')
+                  .replace(/\s+met formulieren\b/gi, '')
+                  .trim();
+                const researchType = isHeronderzoekReport && basisType
+                  ? basisType
                       .replace(/\bdeelonderzoek\b/gi, 'heronderzoek')
                       .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek')
-                  : project.researchType;
+                  : basisType;
 
                 return [researchType, scopeUrl.replace(/^https?:\/\//, '')].filter(Boolean).join(' ')
                   || `Toegankelijkheidsonderzoek ${formatProjectName(project.subject || project.title, project.researchTypeData?.type)}`;

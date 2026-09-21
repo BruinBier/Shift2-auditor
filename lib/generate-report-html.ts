@@ -97,6 +97,16 @@ function buildReportTitle(
   // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
   // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
   let rt = String(project.researchType || 'Deelonderzoek').trim();
+  /*
+   * "met formulieren" hoort niet in de kop.
+   *
+   * Het onderzoekstype onderscheidt intern of de formuliercriteria (3.3.1, 3.3.3 en
+   * 3.3.7) meelopen; dat is een keuze over de scope van het onderzoek en geen naam die
+   * de klant op zijn rapport wil zien. De kop noemt wat er is onderzocht -- de content
+   * van de website -- en die blijft hetzelfde of er nu wel of geen formulieren in de
+   * steekproef zaten. Frits, 2026-09-21 bij ZOET-01.
+   */
+  rt = rt.replace(/\s+met formulieren\b/gi, '').trim();
   // Nulmeting en heronderzoek delen hetzelfde onderzoekstype en kregen daardoor
   // een identieke kop. Spreek bij een heronderzoek van heronderzoek.
   if (isHeronderzoek) {
