@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { bekendeGebieden, huidigeLijst, leesGebieden, voegSamen } from '@/lib/deelgebieden';
 import { zetTerugNaarVoorstel } from '@/lib/finding-code';
 import { leidCriteriumOordelenAfUitChecks } from '@/lib/criterion-assessment';
+import { ALTIJD_NIET_AANWEZIG } from '@/lib/metingen';
 
 /**
  * De sampleoordelen van een project: het oordeel per criterium per pagina.
@@ -228,11 +229,40 @@ export async function POST(
       const inhoudelijkGewijzigd =
         !!bestaande && (bestaande.status !== status || (bestaande.reden ?? null) !== nieuweReden);
 
+      /**
+       * Een oordeel dat jij al hebt geveld, hoef je niet nog eens goed te keuren.
+       *
+       * Twee soorten `niet_aanwezig` komen hier binnen zonder dat een agent iets heeft
+       * beoordeeld, en ze vragen allebei om een akkoord op een vaststelling die er al ligt:
+       *
+       *   `bron: 'steekproef'` -- jouw vinkje op het tabblad Steekproef. Jij hebt gezegd
+       *   dat er geen video of formulier op die pagina staat; dat dan per criterium nog
+       *   eens bevestigen is dezelfde vaststelling zes keer afvinken.
+       *
+       *   ALTIJD_NIET_AANWEZIG (1.2.4, 1.4.2, 2.2.2) -- één keer vastgelegd voor dit soort
+       *   websites: ze zenden niet live uit, er start geen geluid vanzelf en er beweegt
+       *   niets uit zichzelf. De reden zegt het zelf: "Vastgelegd voor dit soort websites,
+       *   niet per pagina vastgesteld."
+       *
+       * Allebei krijgen ze hun akkoord hier, zodat ze meteen doortellen naar het
+       * projectoordeel, het tabblad Bevindingen en het rapport. Frits, 2026-09-21.
+       *
+       * Alleen bij `niet_aanwezig`: komt er iets anders binnen op zo'n criterium, dan is
+       * het geen vaststelling meer maar een oordeel, en dat hoort langs de poort.
+       * Een expliciet meegegeven `akkoord` gaat voor -- wie 'afgewezen' stuurt, meent dat.
+       */
+      const volgtUitEenVaststelling =
+        status === 'niet_aanwezig' &&
+        (bronVanDitOordeel === 'steekproef' ||
+          ALTIJD_NIET_AANWEZIG.some((v) => v.code === criterionCode));
+
       const nieuwAkkoord = akkoord
         ? akkoord
-        : inhoudelijkGewijzigd
-          ? null
-          : (bestaande?.akkoord ?? null);
+        : volgtUitEenVaststelling
+          ? 'akkoord'
+          : inhoudelijkGewijzigd
+            ? null
+            : (bestaande?.akkoord ?? null);
 
       await prisma.sampleCriterionCheck.upsert({
         where: {
@@ -244,7 +274,10 @@ export async function POST(
           status,
           reden: nieuweReden,
           bron: bronVanDitOordeel as any,
-          akkoord: akkoord as any,
+          // `nieuwAkkoord` en niet `akkoord`: een nieuw oordeel dat uit een vaststelling
+          // volgt krijgt zijn akkoord net zo goed als een bestaand oordeel. Zonder dit
+          // kreeg alleen de tweede auditronde het, want dan bestond de rij al.
+          akkoord: nieuwAkkoord as any,
           ...(verantwoording !== undefined ? { verantwoording } : {}),
           ...(controle !== undefined ? { controle } : {}),
           ...(gebiedenVoorDitOordeel ? { gebieden: gebiedenVoorDitOordeel as any } : {}),

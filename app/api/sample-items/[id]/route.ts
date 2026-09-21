@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { PAGINAVINKJES, vervaltDoorVinkje } from '@/lib/metingen';
+import { leidCriteriumOordelenAfUitChecks } from '@/lib/criterion-assessment';
 import { bekendeGebieden } from '@/lib/deelgebieden';
 
 export async function PATCH(
@@ -128,8 +129,14 @@ export async function DELETE(
  * ALTIJD_NIET_AANWEZIG blijft erbuiten, want dat gaat over de aard van de website en
  * niet over deze pagina. Zie `vervaltDoorVinkje` in lib/metingen.ts.
  *
- * Het oordeel wordt gezet, het akkoord niet: de kaart komt gewoon in de werklijst van
- * "Waar sta ik". Zie docs/plannen/meetdossier-per-pagina.md.
+ * Het akkoord gaat mee. Jij hebt op het tabblad Steekproef vastgesteld dat er geen video
+ * of formulier op deze pagina staat; dat vervolgens per criterium nog eens bevestigen is
+ * dezelfde vaststelling zes keer afvinken. Het oordeel telt dus meteen door naar het
+ * projectoordeel, het tabblad Bevindingen en het rapport. Frits, 2026-09-21.
+ *
+ * Dit gold eerder niet -- de kaarten kwamen in de werklijst van "Waar sta ik", zoals
+ * docs/plannen/meetdossier-per-pagina.md beschrijft. Hetzelfde geldt sindsdien voor
+ * ALTIJD_NIET_AANWEZIG in de criterion-checks-route, om dezelfde reden.
  */
 async function synchroniseerVinkjeOordelen(
   sampleItemId: string,
@@ -182,6 +189,7 @@ async function synchroniseerVinkjeOordelen(
           status: 'niet_aanwezig',
           reden: v.reden,
           bron: 'steekproef',
+          akkoord: 'akkoord',
           ...(gebieden.length ? { gebieden } : {}),
         },
         /*
@@ -199,6 +207,7 @@ async function synchroniseerVinkjeOordelen(
           status: 'niet_aanwezig',
           reden: v.reden,
           bron: 'steekproef',
+          akkoord: 'akkoord',
           checkedAt: new Date(),
           verantwoording: [],
           ...(gebieden.length ? { gebieden } : {}),
@@ -219,6 +228,30 @@ async function synchroniseerVinkjeOordelen(
         where: { sampleItemId, wcagCriterionId: { in: terugIds }, bron: 'steekproef' },
       })
     : { count: 0 };
+
+  /*
+   * En dan het projectoordeel. Het oordeel per pagina is gezet en goedgekeurd; zonder deze
+   * stap blijft het daar steken en toont het tabblad Bevindingen "niet getoetst" voor een
+   * criterium dat op elke pagina is afgesloten. Zowel de criteria die nu vervallen als die
+   * zojuist zijn teruggedraaid, want in beide gevallen verandert wat eronder ligt.
+   */
+  const geraakteIds = Array.from(
+    new Set([...sluiten.map((v) => idVanCode.get(v.code)), ...terugIds])
+  ).filter(Boolean) as string[];
+  if (geraakteIds.length) {
+    const sampleRij = await prisma.sampleItem.findUnique({
+      where: { id: sampleItemId },
+      select: { projectId: true },
+    });
+    if (sampleRij) {
+      try {
+        await leidCriteriumOordelenAfUitChecks(sampleRij.projectId, geraakteIds);
+      } catch {
+        // Het oordeel per pagina staat er al; een mislukte afleiding mag dat niet
+        // terugdraaien. De knop `derive-assessments` haalt het later alsnog op.
+      }
+    }
+  }
 
   return { gezet: gezet.filter(Boolean).length, teruggedraaid: teruggedraaid.count };
 }
