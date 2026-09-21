@@ -218,6 +218,14 @@ export const METINGEN: Meetopdracht[] = [
      * tellingen die het daarnaast levert (getagde pagina's, figuren zonder alt, links)
      * dienen 1.1.1, 1.3.1, 1.3.2 en 2.4.4, maar vellen daar geen oordeel -- die zou een
      * knop "gemeten" geven aan een vraag die een mens moet wegen.
+     *
+     * Om dezelfde reden staat 1.4.10 er NIET in, al lijkt het erbij te horen. Reflow is in
+     * een PDF niet van toepassing, maar dat volgt uit de aard van het formaat en niet uit
+     * een veld in deze uitkomst: er is geen tellingetje dat over herschikken gaat. Op
+     * 2026-09-21 stond op de kaart van Bijlage 2 "gemeten" bij 1.4.10 terwijl er alleen
+     * paginatellingen en figuren zonder alt onder lagen. Bovendien heeft 1.4.10 een eigen
+     * commando (`get-reflow`), en een criterium met een eigen meting hoort niet ook aan
+     * een algemene te hangen.
      */
     commando: 'get-pdfstructuur',
     naam: 'de PDF-structuur uitgelezen',
@@ -226,7 +234,7 @@ export const METINGEN: Meetopdracht[] = [
       '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '2.1.4',
       '1.4.2', '2.2.2', '2.3.1',
       '1.3.5', '3.3.1', '3.3.2', '3.3.3', '3.3.7', '2.1.2', '2.5.3', '2.5.8',
-      '3.1.1', '2.4.2', '1.4.10',
+      '3.1.1', '2.4.2',
     ],
     toegestaneVlaggen: [],
     vanafDeKaart: true,

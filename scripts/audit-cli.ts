@@ -4240,6 +4240,12 @@ async function getPdfStructuur(doel: string, _flags: Flags) {
       formuliervelden: v.formuliervelden?.aantal,
       lang: v.taal?.lang,
       titel: v.titel?.titel,
+      // Allebei, en in deze volgorde. `paginasGetagd` telt de pagina's met markeringen;
+      // dat is 9 van 9 ook als de tagboom leeg is, want het anonimiseringsprogramma laat
+      // de markeringen staan en gooit de boom leeg. Zonder het veld eronder leest de
+      // verantwoording onder een 1.3.1-afkeuring als "9 van 9 getagd", wat een
+      // tegenspraak lijkt. Vastgesteld op 2026-09-21 bij ZOET-01, Collegebesluit.
+      structTreeRootMetInhoud: v.tagstructuur?.structTreeRootMetInhoud,
       paginasGetagd: v.tagstructuur?.paginasGetagd,
       figurenZonderAlt: v.afbeeldingen?.zonderAlt,
       koppelingen: v.koppelingen?.aantal,

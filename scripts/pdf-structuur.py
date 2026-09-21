@@ -189,8 +189,16 @@ def meet(pad):
     }
 
     # --- reflow -----------------------------------------------------------
+    # `hard` staat bewust op False. Dit blok MEET reflow niet -- het redeneert erover:
+    # een PDF heeft een vaste paginamaat, dus 1.4.10 is niet van toepassing. Dat klopt,
+    # maar er komt geen enkel reflow-veld uit dit bestand, en `hard` bepaalt of het
+    # criterium als GEMETEN in het logboek belandt. Stond het op True, dan kreeg 1.4.10
+    # op de kaart een groen "gemeten" met paginatellingen eronder. 1.4.10 heeft een eigen
+    # commando (`get-reflow`); een criterium met een eigen meting hoort niet ook aan een
+    # algemene te hangen. Zie dezelfde overweging in lib/metingen.ts, waar 1.4.10 om deze
+    # reden niet bij get-pdfstructuur staat. Vastgesteld op 2026-09-21 bij ZOET-01.
     vast['reflow'] = {
-        'hard': True,
+        'hard': False,
         'criteria': ['1.4.10'],
         'gevolg': 'niet_aanwezig',
         'toelichting': (
