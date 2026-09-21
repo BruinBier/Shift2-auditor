@@ -5947,6 +5947,33 @@ export default function Stapel({
                 >
                   Niet van toepassing
                 </button>
+                {/*
+                  De derde uitweg: niet te bepalen is hier het EINDoordeel.
+
+                  De twee knoppen hierboven gaan ervan uit dat een open vraag altijd een
+                  van tweeen wordt: jij beoordeelt het alsnog, of het is niet van
+                  toepassing. Er is een derde geval, en dat komt bij elke ongetagde PDF
+                  voor: het criterium geldt wel, maar er valt niets te toetsen omdat de
+                  structuur ontbreekt. De regelbestanden schrijven dat voor -- 1.3.2, 3.2.4
+                  en 4.1.2 zeggen alle drie `niet_te_bepalen` bij een PDF zonder tags, en
+                  1.3.2 sluit `voldoet` daar uitdrukkelijk uit.
+
+                  Zonder deze knop drukte je op de groene, want die heet "Pagina akkoord",
+                  en dan werd een onbepaalbaar oordeel stilletjes `voldoet` -- met een
+                  reden eronder die het tegensprak. Dat gebeurde op ZOET-01 twee keer op
+                  dezelfde dag, op hetzelfde document. Nu bevestig je de open vraag als
+                  uitkomst: de status blijft, de reden van de agent blijft, en de kaart
+                  komt niet terug in de werklijst. Vastgesteld 2026-09-21.
+                */}
+                <button
+                  type="button"
+                  disabled={bezig}
+                  onClick={() => beantwoord(huidig.cel, 'niet_te_bepalen', { behoudReden: true })}
+                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                  title="Het criterium geldt hier wel, maar er valt niets vast te stellen. Bevestig dat als eindoordeel."
+                >
+                  Niet te bepalen, en dat blijft zo
+                </button>
               </div>
             </>
           ) : (

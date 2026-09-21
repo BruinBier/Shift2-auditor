@@ -358,10 +358,20 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
   // een eigen oordeel en hoort het dus wél in de werklijst van dat sample.
   const perPagina = (c: Cel) => !isSitebreed(c.code, typeVanSample(c.sampleId));
 
+  /**
+   * Een open vraag die jij hebt bevestigd, is geen open vraag meer.
+   *
+   * `niet_te_bepalen` betekent meestal "uitzoeken", maar soms is het het eindoordeel:
+   * bij een PDF zonder tags valt er aan 1.3.2, 3.2.4 en 4.1.2 niets te toetsen, en hun
+   * regelbestanden schrijven die stand dan voor. Zo'n kaart hoort na akkoord weg uit de
+   * werklijst, anders blijft hij terugkomen en is de enige uitweg hem op `voldoet` te
+   * zetten -- precies wat 1.3.2 uitdrukkelijk verbiedt. De kaart heeft daarvoor de knop
+   * "Niet te bepalen, en dat blijft zo". Vastgesteld 2026-09-21 bij ZOET-01.
+   */
+  const openVraag = (c: Cel) => c.status === 'niet_te_bepalen' && c.akkoord !== 'akkoord';
+
   const openVragenVoorSample = (sampleId: string) =>
-    cellen.filter(
-      (c) => c.sampleId === sampleId && c.status === 'niet_te_bepalen' && perPagina(c)
-    );
+    cellen.filter((c) => c.sampleId === sampleId && openVraag(c) && perPagina(c));
 
   // Beoordeeld maar nog niet bevestigd. Een openstaande vraag telt hier niet mee:
   // die staat al als vraag op de stapel en heeft nog geen oordeel om te bevestigen.
@@ -374,9 +384,20 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
   const voorstellenVoorSample = (sampleId: string) =>
     voorstellen.filter((v) => v.sampleId === sampleId);
 
+  /**
+   * Zelfde `perPagina`-filter als `werkVoorKolom`, en om dezelfde reden.
+   *
+   * Bij een sitebreed criterium staat er per HTML-pagina een streepje in de matrix: het
+   * oordeel gaat over alle pagina's samen, dus die cellen hebben geen eigen kaart om
+   * goed te keuren. Telde de rij ze toch mee, dan bleef er een getal achter het criterium
+   * staan dat nergens af te werken viel -- op ZOET-01 stond 3.2.4 op "Voldoet" met een 3
+   * ernaast, drie HTML-samples op `niet_aanwezig` zonder akkoord. Vastgesteld 2026-09-21.
+   */
   const werkVoorRij = (code: string) =>
-    cellen.filter((c) => c.code === code && (c.status === 'niet_te_bepalen' || teBeoordelen(c)))
-      .length + voorstellen.filter((v) => v.code === code).length;
+    cellen.filter(
+      (c) =>
+        c.code === code && perPagina(c) && (openVraag(c) || teBeoordelen(c))
+    ).length + voorstellen.filter((v) => v.code === code).length;
 
   const werkVoorKolom = (sampleId: string) =>
     openVragenVoorSample(sampleId).length +
@@ -404,7 +425,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     // vraag -- die moet je uitzoeken voordat een voorstel erover zin heeft. Een wachtend
     // voorstel is het lichtst: het werk is gedaan, jij hoeft alleen ja of nee te zeggen.
     if (rij.some((c) => c.status === null)) return 'not_tested';
-    if (rij.some((c) => c.status === 'niet_te_bepalen')) return 'vraag_open';
+    if (rij.some(openVraag)) return 'vraag_open';
     if (voorstellen.some((v) => v.code === code)) return 'wacht_op_akkoord';
 
     if (rij.every((c) => c.status === 'niet_aanwezig')) return 'not_present';
@@ -428,7 +449,7 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
       samples: samples.length,
       samplesNagekeken: samples.filter((s) => isNagekeken(s.id)).length,
       criteria: criteria.length,
-      openVragen: cellen.filter((c) => c.status === 'niet_te_bepalen').length,
+      openVragen: cellen.filter(openVraag).length,
       teBeoordelen: cellen.filter(teBeoordelen).length,
       voorstellen: voorstellen.length,
       onbeoordeeld: cellen.filter((c) => c.status === null).length,
