@@ -123,20 +123,51 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
     }
   }, [editingFinding?.id, editingFinding?.description, editingFinding?.advice, criterionId]);
 
-  // Reset editor key when dialog opens to force remount with delay
+  /**
+   * De editors monteren pas als het venster er echt staat, niet na een vaste tijd.
+   *
+   * md-editor-rt leest bij het opstarten `offsetTop` van zijn eigen container. Staat die er
+   * nog niet, of verschuift hij op dat moment, dan crasht de pagina met "Cannot read
+   * properties of null (reading 'offsetTop')". Hier stond daarom een `setTimeout` van 500 ms
+   * met de opmerking "use longer delay to prevent offsetTop errors".
+   *
+   * Dat is een gok op de klok, en die verliest zodra er iets anders aan de hand is. De
+   * criterialijst links scrolt met `behavior: 'smooth'`; klik je tijdens die scroll een
+   * bevinding open, dan monteert de editor terwijl de pagina nog beweegt en is `offsetTop`
+   * alsnog van een element dat verschuift. Frits liep daar op 2026-09-22 tegenaan.
+   *
+   * Nu wacht het op twee dingen die wel te controleren zijn: `dialogRef` is gevuld, dus het
+   * venster staat in de DOM, en de browser heeft daarna een frame getekend. Geen vaste tijd
+   * meer, en het is meteen sneller dan een halve seconde wachten.
+   */
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
       setEditorsReady(false);
-      setEditorKey(Date.now());
-      // Delay to ensure DOM is ready before mounting editors
-      // Use longer delay to prevent offsetTop errors
-      const timer = setTimeout(() => {
-        setEditorsReady(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setEditorsReady(false);
+      return;
     }
+    setEditorsReady(false);
+    setEditorKey(Date.now());
+
+    let afgebroken = false;
+    let frame = 0;
+    const wacht = () => {
+      if (afgebroken) return;
+      if (!dialogRef.current) {
+        frame = requestAnimationFrame(wacht);
+        return;
+      }
+      // Eén frame extra: de container bestaat, maar de browser heeft hem nog niet
+      // opgemeten. Pas daarna klopt offsetTop.
+      frame = requestAnimationFrame(() => {
+        if (!afgebroken) setEditorsReady(true);
+      });
+    };
+    frame = requestAnimationFrame(wacht);
+
+    return () => {
+      afgebroken = true;
+      cancelAnimationFrame(frame);
+    };
   }, [isOpen]);
 
   // Close dialog on Escape key (but first close tooltips if any are open)

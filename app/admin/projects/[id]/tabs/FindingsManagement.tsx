@@ -321,15 +321,25 @@ export default function FindingsManagement({ project, allCriteria, researchTypeE
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            // Extract criterion ID from hash
-            const criterionId = hash.replace('#criterion-', '');
-            setHighlightedCriterion(criterionId);
-            setSelectedCriterion(criterionId);
+            /*
+             * Alleen een `#criterion-`-anker wijst een criterium aan.
+             *
+             * `hash.replace('#criterion-', '')` liet elk ander anker ongemoeid en gaf dan de
+             * hele hash door als criterium-id. Bij `#finding-f7a93573...` -- de link naar
+             * één bevinding -- werd dat criterium gemarkeerd en geselecteerd terwijl het
+             * niet bestaat. Zichtbaar werd het niet, maar het zette de lijst links op een
+             * selectie die nergens bij hoort.
+             */
+            if (hash.startsWith('#criterion-')) {
+              const criterionId = hash.slice('#criterion-'.length);
+              setHighlightedCriterion(criterionId);
+              setSelectedCriterion(criterionId);
 
-            // Remove highlight after 2 seconds
-            setTimeout(() => {
-              setHighlightedCriterion(null);
-            }, 2000);
+              // Remove highlight after 2 seconds
+              setTimeout(() => {
+                setHighlightedCriterion(null);
+              }, 2000);
+            }
           }
         }, 300);
       }
