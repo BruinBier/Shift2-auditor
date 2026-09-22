@@ -403,7 +403,7 @@ const OORDEEL_SCHEMA = {
           },
           responsibility: {
             type: ['string', 'null'],
-            enum: ['redacteur', 'ontwikkelaar', 'ontwerper', 'onbekend', null],
+            enum: ['redacteur', 'ontwikkelaar', 'onbekend', null],
           },
           // Bestaat er al een bevinding over ditzelfde? Dan geen tweede.
           nieuw: { type: 'boolean' },
@@ -805,7 +805,7 @@ const SAMENVOEG_SCHEMA = {
           },
           responsibility: {
             type: ['string', 'null'],
-            enum: ['redacteur', 'ontwikkelaar', 'ontwerper', 'onbekend', null],
+            enum: ['redacteur', 'ontwikkelaar', 'onbekend', null],
           },
           // Waar hij aan gehangen wordt. Bij een sitebreed patroon: alleen de pagina waar
           // je hem beschrijft, met de zin erbij dat het overal zo is.

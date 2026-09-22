@@ -321,7 +321,12 @@ function getResponsibility(t?: TestCoverage): string {
   const n = t.testName.toLowerCase();
   if (n.includes('alt') || n.includes('label') || n.includes('heading') || n.includes('readmore'))
     return 'redacteur';
-  if (n.includes('contrast') || n.includes('viewport')) return 'ontwerper';
+  // Contrast en viewport gingen hier naar 'ontwerper'. Die waarde gebruiken we niet: de
+  // vraag is wie het kan aanpassen, en dat is de redacteur of de ontwikkelaar. Een
+  // kleurkeuze voelt als ontwerp, maar de redacteur past hem aan in het CMS of het
+  // brondocument. Zie CLAUDE.md. Frits, 2026-09-22.
+  if (n.includes('contrast')) return 'redacteur';
+  if (n.includes('viewport')) return 'ontwikkelaar';
   return 'ontwikkelaar';
 }
 

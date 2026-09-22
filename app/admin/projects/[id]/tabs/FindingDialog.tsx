@@ -813,7 +813,6 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                   >
                     <option value="redacteur">Redacteur</option>
                     <option value="ontwikkelaar">Ontwikkelaar</option>
-                    <option value="ontwerper">Ontwerper</option>
                   </select>
                 </div>
                 <div>

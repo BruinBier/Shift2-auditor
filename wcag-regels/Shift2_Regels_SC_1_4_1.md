@@ -39,7 +39,7 @@ Vastgelegd door Frits op 2026-08-04 bij BEV-03.
 - **Verplichte velden alleen met een kleur gemarkeerd**, zonder sterretje of woord.
 
 Er is een QuickFinding voor de PDF-variant: "PDF - grafieken en diagrammen enkel afhankelijk van
-kleur" (1576c63f), impact **klein**, responsibility **ontwerper**. Gebruik die tekst en vul de
+kleur" (1576c63f), impact **klein**, responsibility **redacteur**. Gebruik die tekst en vul de
 paginanummers en grafieknamen in; ga niet zelf herformuleren.
 
 ## Wat GEEN bevinding is

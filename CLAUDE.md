@@ -110,7 +110,7 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 
 **Valid enum values:**
 - `--impact`: `klein` | `matig` | `serieus` | `kritiek` | `onbekend`
-- `--responsibility`: `redacteur` | `ontwikkelaar` | `ontwerper` | `onbekend`
+- `--responsibility`: `redacteur` | `ontwikkelaar` | `onbekend`. **Nooit `ontwerper`**, al accepteert de database die waarde nog voor oude gegevens. De vraag is niet welke discipline erbij hoort maar wie het kan aanpassen, en bij een leverancier zijn dat de redacteur en de ontwikkelaar; een ontwerper zit niet in die keten en kan niets uit een rapport oppakken. Een kleurkeuze voelt als ontwerp, maar de redacteur past hem aan in het brondocument of het CMS. Vastgelegd door Frits op 2026-09-22 bij ZOET-01; vier bevindingen daar en negen QuickFindings stonden op `ontwerper` omdat agents die redenering wel maakten.
 - `--status` (finding): `voorstel` | `open` | `published` | `resolved` | `afgewezen` (default `voorstel`)
 - `--status` (assessment): `passed` | `failed` | `not_present` | `unknown` | `not_tested`
 - `--type` (sample): `structured` | `random` | `pdf`

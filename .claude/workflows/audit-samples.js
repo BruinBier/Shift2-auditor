@@ -1071,7 +1071,7 @@ zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
     Denk aan een cirkeldiagram waarvan de segmenten alleen via de legendakleur te herleiden
     zijn, of twee tinten die nauwelijks van elkaar verschillen. Wie kleurenblind is loopt daar
     visueel tegenaan, los van wat een schermlezer met het document kan. Er is een QuickFinding
-    "PDF - grafieken en diagrammen enkel afhankelijk van kleur" (impact klein, ontwerper).
+    "PDF - grafieken en diagrammen enkel afhankelijk van kleur" (impact klein, redacteur).
     LET OP: de kaarten-uitzondering geldt hier NIET. Kaarten zijn uitgezonderd bij 1.1.1 en
     1.4.5, niet bij 1.4.1. Een hittekaart waarvan de temperatuurzones alleen aan hun kleur te
     herkennen zijn, is dus WEL een 1.4.1-afkeuring: rood en oranje zijn voor iemand met
@@ -1236,7 +1236,7 @@ SCHRIJFREGELS voor voorstelBevinding.description:
   - Geen toolnamen in het advies (niet Canva, Word, InDesign). Spreek over "het brondocument".
     Adobe Acrobat mag wel bij concrete tag-stappen.
   - Formuleer vanuit voorlezen/horen: hulpsoftware leest voor, laat niets zien.
-Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar|ontwerper.
+Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar.
 Bij opmerking: laat impact en responsibility leeg.
 
 ${deelgebiedenSectie}
@@ -1473,7 +1473,7 @@ SCHRIJFREGELS voor elke voorstellen[].description (belangrijk):
   - Geen HTML-codeblokken; noem elementen inline in de lopende tekst.
   - Formuleer vanuit voorlezen/horen (screenreaders lezen voor, ze "laten niet zien").
   - Maximaal 2-3 voorbeelden met "zoals".
-Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar|ontwerper.
+Bij afgekeurd: kies impact uit klein|matig|serieus|kritiek en responsibility uit redacteur|ontwikkelaar.
 Bij opmerking: laat impact en responsibility leeg.
 
 ${deelgebiedenSectie}

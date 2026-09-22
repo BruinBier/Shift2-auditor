@@ -34,7 +34,7 @@ werkende voorbeeld.
      `<input type="checkbox">` zonder eigen CSS).
    - **Essentieel** — de presentatie is essentieel of wettelijk vereist.
 4. Wat na die filters overblijft, is een **afkeuring** (impact klein tot matig,
-   responsibility ontwerper of ontwikkelaar).
+   responsibility redacteur of ontwikkelaar).
 
 ### Wat je niet automatisch kunt bepalen — ALTIJD MELDEN
 
