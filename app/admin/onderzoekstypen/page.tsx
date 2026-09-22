@@ -969,6 +969,7 @@ Content voor de tweede uitklapbare sectie...`}
                   <div>
                     {mounted && (
                       <MdEditor
+                        scrollAuto={false}
                         key={reportTab}
                         modelValue={reportTab === 'rapport-inleiding' ? formData.reportIntro : formData.reportIntroPdf}
                         onChange={(content) => setFormData({

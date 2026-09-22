@@ -300,6 +300,7 @@ export default function FindingNotesSection({ projectId, findingId, initialNotes
           </label>
 
           <MdEditor
+            scrollAuto={false}
             modelValue={notes}
             onChange={(content) => setNotes(content)}
             language="en-US"

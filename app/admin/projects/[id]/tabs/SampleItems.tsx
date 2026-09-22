@@ -897,6 +897,7 @@ export default function SampleItems({ project }: { project: any }) {
                     </label>
                     {editorsReady ? (
                       <MdEditor
+                        scrollAuto={false}
                         key={`sample-description-${editorKey}`}
                         modelValue={formData.description}
                         onChange={(content) => setFormData({ ...formData, description: content })}
@@ -1006,6 +1007,7 @@ export default function SampleItems({ project }: { project: any }) {
                 </label>
                 {editorsReady ? (
                   <MdEditor
+                    scrollAuto={false}
                     key={`sample-info-${editorKey}`}
                     modelValue={tempSampleInfo}
                     onChange={setTempSampleInfo}

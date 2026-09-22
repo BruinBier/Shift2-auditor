@@ -1386,6 +1386,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             <div className="text-sm text-gray-500 mb-2 italic">Nieuwe notitie</div>
 
             <MdEditor
+              scrollAuto={false}
               key={editorKey}
               modelValue={newNoteContent}
               onChange={(value: string) => setNewNoteContent(value)}
@@ -1772,6 +1773,7 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
             {/* Content */}
             <div className="p-6 overflow-y-auto flex-1">
               <MdEditor
+                scrollAuto={false}
                 key={`edit-${editingNoteId}`}
                 modelValue={editingNoteContent}
                 onChange={(value: string) => setEditingNoteContent(value)}

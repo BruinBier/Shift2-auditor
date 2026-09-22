@@ -124,6 +124,7 @@ export default function ExplanationDialog({
                 Deze toelichting wordt getoond in het rapport onder het resultaat van dit criterium.
               </p>
               <MdEditor
+                scrollAuto={false}
                 modelValue={explanation}
                 onChange={(content) => {
                   console.log('Editor content changed:', content);

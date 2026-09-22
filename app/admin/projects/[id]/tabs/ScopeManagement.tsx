@@ -867,6 +867,7 @@ export default function ScopeManagement({ project }: { project: any }) {
                   Beschrijving
                 </label>
                 <MdEditor
+                  scrollAuto={false}
                   modelValue={tempScopeInfo}
                   onChange={setTempScopeInfo}
                   language="en-US"

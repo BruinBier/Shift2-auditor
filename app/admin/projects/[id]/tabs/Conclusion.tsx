@@ -503,6 +503,7 @@ export default function Conclusion({ project }: { project: any }) {
                 </div>
               ) : (
                 <MdEditor
+                  scrollAuto={false}
                   modelValue={tempContent}
                   onChange={setTempContent}
                   language="en-US"

@@ -726,6 +726,7 @@ export default function CrawlerTestsPage() {
                                 Documentatie bewerken (Markdown)
                               </label>
                               <MdEditor
+                                scrollAuto={false}
                                 modelValue={editedDocumentation}
                                 onChange={(content) => setEditedDocumentation(content)}
                                 language="en-US"

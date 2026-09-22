@@ -300,6 +300,7 @@ export default function NotesSection({ sampleItemId, initialNotes }: NotesSectio
           </label>
 
           <MdEditor
+            scrollAuto={false}
             modelValue={notes}
             onChange={(content) => setNotes(content)}
             language="en-US"

@@ -755,6 +755,7 @@ export default function SnelleBevindingen() {
                 </label>
                 {mounted && (
                   <MdEditor
+                    scrollAuto={false}
                     modelValue={formData.description}
                     onChange={(content) => setFormData({ ...formData, description: content })}
                     language="en-US"
@@ -801,6 +802,7 @@ export default function SnelleBevindingen() {
                 </label>
                 {mounted && (
                   <MdEditor
+                    scrollAuto={false}
                     modelValue={formData.advice}
                     onChange={(content) => setFormData({ ...formData, advice: content })}
                     language="en-US"

@@ -625,6 +625,26 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                     language="en-US"
                     theme="light"
                     previewTheme="default"
+                    /*
+                      Zonder dit crasht het tabblad bij het openen van dit venster:
+                      "Cannot read properties of null (reading 'offsetTop')".
+
+                      md-editor-rt synchroniseert het scrollen van het invoerveld met dat
+                      van het voorbeeld ernaast. Bij het opstarten vuurt het zelf een
+                      scroll-event af (Editor.mjs regel 116 roept i.init() aan), en de
+                      berekening daarachter leest offsetTop van een element dat er niet
+                      hoeft te zijn: `e.querySelector('[data-line]') ||
+                      e.firstElementChild?.firstElementChild` mag undefined opleveren, en
+                      de regel eronder leest er alsnog offsetTop van (index3.mjs regel 74).
+
+                      Hier stond eerder een setTimeout van 500 ms om dit te ontwijken, en
+                      daarna een montage op requestAnimationFrame; allebei losten het niet
+                      op, want het opstart-event komt hoe dan ook. Met scrollAuto={false}
+                      wordt i.init() niet aangeroepen en draait die code nooit. Het
+                      voorbeeldpaneel blijft gewoon werken; alleen scrollen de twee helften
+                      niet meer met elkaar mee. Frits, 2026-09-22.
+                    */
+                    scrollAuto={false}
                     codeTheme="github"
                     showCodeRowNumber={true}
                     sanitize={(html) => html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
@@ -683,6 +703,26 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
                     language="en-US"
                     theme="light"
                     previewTheme="default"
+                    /*
+                      Zonder dit crasht het tabblad bij het openen van dit venster:
+                      "Cannot read properties of null (reading 'offsetTop')".
+
+                      md-editor-rt synchroniseert het scrollen van het invoerveld met dat
+                      van het voorbeeld ernaast. Bij het opstarten vuurt het zelf een
+                      scroll-event af (Editor.mjs regel 116 roept i.init() aan), en de
+                      berekening daarachter leest offsetTop van een element dat er niet
+                      hoeft te zijn: `e.querySelector('[data-line]') ||
+                      e.firstElementChild?.firstElementChild` mag undefined opleveren, en
+                      de regel eronder leest er alsnog offsetTop van (index3.mjs regel 74).
+
+                      Hier stond eerder een setTimeout van 500 ms om dit te ontwijken, en
+                      daarna een montage op requestAnimationFrame; allebei losten het niet
+                      op, want het opstart-event komt hoe dan ook. Met scrollAuto={false}
+                      wordt i.init() niet aangeroepen en draait die code nooit. Het
+                      voorbeeldpaneel blijft gewoon werken; alleen scrollen de twee helften
+                      niet meer met elkaar mee. Frits, 2026-09-22.
+                    */
+                    scrollAuto={false}
                     codeTheme="github"
                     showCodeRowNumber={true}
                     sanitize={(html) => html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
