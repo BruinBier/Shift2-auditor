@@ -6,6 +6,7 @@ import { fmtMinSec } from '@/lib/formatTime';
 import { GEMEENTEN, GEMEENTE_LABELS, PHASE_LABELS } from '@/lib/videoPhases';
 import VideoStats from './VideoStats';
 import Werkwijze from './Werkwijze';
+import NotitieEditor, { notitieNaarHtml } from './NotitieEditor';
 import type { Video, VideoPhase, PhaseStatus } from './types';
 
 const STATUS_BADGE: Record<PhaseStatus, string> = {
@@ -146,7 +147,13 @@ export default function VideoA2GemeentenPage() {
     if (res.ok) setVideos((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const filtered = gemeenteFilter ? videos.filter((v) => v.gemeente === gemeenteFilter) : videos;
+  // Afgeronde video's (elke fase klaar of n.v.t.) bovenaan; binnen elke groep blijft de volgorde gelijk.
+  const isAfgerond = (v: Video) =>
+    v.phases.length > 0 && v.phases.every((p) => p.status === 'klaar' || p.status === 'nvt');
+  const filtered = (gemeenteFilter ? videos.filter((v) => v.gemeente === gemeenteFilter) : videos)
+    .map((v, i) => ({ v, i }))
+    .sort((a, b) => Number(isAfgerond(b.v)) - Number(isAfgerond(a.v)) || a.i - b.i)
+    .map(({ v }) => v);
 
   const liveSeconds = (p: VideoPhase): number => {
     if (!p.timerStartedAt) return p.seconds;
@@ -331,11 +338,16 @@ export default function VideoA2GemeentenPage() {
 
 function VideoNotes({ video, onSaved }: { video: Video; onSaved: (v: Video) => void }) {
   const [open, setOpen] = useState(!!video.notities);
-  const [text, setText] = useState(video.notities ?? '');
+  // Een bestaande notitie opent als opgemaakte tekst met klikbare links; bewerken is een aparte stap.
+  const [editing, setEditing] = useState(!video.notities);
+  const opgeslagen = video.notities ? notitieNaarHtml(video.notities) : '';
+  const [html, setHtml] = useState(opgeslagen);
+  // Nieuwe sleutel = verse editor met de opgeslagen inhoud, bijvoorbeeld na Annuleren.
+  const [editorKey, setEditorKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(false);
 
-  const dirty = (text.trim() || '') !== (video.notities?.trim() || '');
+  const dirty = html.trim() !== opgeslagen.trim();
 
   const save = async () => {
     setSaving(true);
@@ -343,10 +355,12 @@ function VideoNotes({ video, onSaved }: { video: Video; onSaved: (v: Video) => v
       const res = await fetch(`/api/videos/${video.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notities: text }),
+        body: JSON.stringify({ notities: html }),
       });
       if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
-      onSaved(await res.json());
+      const updated = await res.json();
+      onSaved(updated);
+      if (updated.notities) setEditing(false);
       setSavedAt(true);
       setTimeout(() => setSavedAt(false), 2000);
     } catch (e: any) {
@@ -354,6 +368,12 @@ function VideoNotes({ video, onSaved }: { video: Video; onSaved: (v: Video) => v
     } finally {
       setSaving(false);
     }
+  };
+
+  const cancel = () => {
+    setHtml(opgeslagen);
+    setEditorKey((k) => k + 1);
+    setEditing(false);
   };
 
   return (
@@ -375,22 +395,40 @@ function VideoNotes({ video, onSaved }: { video: Video; onSaved: (v: Video) => v
 
       {open && (
         <div className="mt-2 space-y-2">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={4}
-            className="w-full text-sm px-3 py-2 border border-gray-300 rounded font-mono"
-            placeholder="Aantekeningen bij deze video, bijv. gemaakte ondertiteling-correcties…"
+          <NotitieEditor
+            key={`${editorKey}-${editing || !video.notities}`}
+            html={opgeslagen}
+            editable={editing || !video.notities}
+            onChange={setHtml}
           />
           <div className="flex items-center gap-2">
-            <button
-              onClick={save}
-              disabled={saving || !dirty}
-              className="text-xs px-3 py-1.5 rounded text-white hover:opacity-90 disabled:opacity-40"
-              style={{ backgroundColor: '#6b2d8f' }}
-            >
-              {saving ? 'Bezig…' : 'Notitie opslaan'}
-            </button>
+            {editing || !video.notities ? (
+              <>
+                <button
+                  onClick={save}
+                  disabled={saving || !dirty}
+                  className="text-xs px-3 py-1.5 rounded text-white hover:opacity-90 disabled:opacity-40"
+                  style={{ backgroundColor: '#6b2d8f' }}
+                >
+                  {saving ? 'Bezig…' : 'Notitie opslaan'}
+                </button>
+                {video.notities && (
+                  <button
+                    onClick={cancel}
+                    className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Annuleren
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Bewerken
+              </button>
+            )}
             {savedAt && <span className="text-xs text-green-700">✓ opgeslagen</span>}
           </div>
         </div>
