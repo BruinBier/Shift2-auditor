@@ -182,9 +182,20 @@ function groupTableHeaders(table: PDFDict, context: PDFContext): boolean {
   for (const r of headerRows) r.dict.set(PDFName.of('P'), theadRef);
   for (const r of bodyRows) r.dict.set(PDFName.of('P'), tbodyRef);
 
+  // Wat geen rij is (een Caption bovenaan, soms een TFoot) blijft op zijn plek staan;
+  // alleen de rijen zelf gaan in THead en TBody. Zonder dit viel het bijschrift van
+  // een tabel uit de structuurboom.
+  const isRow = (item: unknown) => {
+    const dict = asDict(item, context);
+    return dict !== null && structType(dict) === '/TR';
+  };
+  const all = kids.asArray();
+  const firstRow = all.findIndex(isRow);
   const tableKids = PDFArray.withContext(context);
+  all.slice(0, firstRow).forEach((item) => tableKids.push(item));
   tableKids.push(theadRef);
   tableKids.push(tbodyRef);
+  all.slice(firstRow).filter((item) => !isRow(item)).forEach((item) => tableKids.push(item));
   table.set(PDFName.of('K'), tableKids);
   return true;
 }
@@ -246,6 +257,12 @@ export interface PdfAccessibilityOptions {
    * alleen het logo in de header; het alt-attribuut uit de HTML.
    */
   imageAltText?: string;
+  /**
+   * Ongetagde afbeeldingen alsnog als Figure taggen (standaard aan). De PDF-bouwer zet dit
+   * uit: daar is elke afbeelding die Chrome niet tagt een decoratieve, en die hoort geen
+   * Figure met "Logo" te worden.
+   */
+  tagUntaggedImages?: boolean;
 }
 
 export interface PdfAccessibilityResult {
@@ -511,12 +528,14 @@ export async function makePdfAccessible(
       if (wrapListItem(li, context)) stats.listItemsWrapped += 1;
     }
 
-    stats.imagesTagged = tagUntaggedImages(
-      doc,
-      context,
-      new Map(),
-      options.imageAltText ?? 'Logo',
-    );
+    if (options.tagUntaggedImages !== false) {
+      stats.imagesTagged = tagUntaggedImages(
+        doc,
+        context,
+        new Map(),
+        options.imageAltText ?? 'Logo',
+      );
+    }
   }
 
   // ── Link-annotaties van een beschrijving voorzien ──────────

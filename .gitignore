@@ -83,3 +83,7 @@ public/uploads/
 # dit is een tweede kopie voor Codex, en die doet geen ontwikkelwerk meer.
 # Zie docs/adr/0004-codex-mag-alleen-lezen.md.
 .agents/
+
+# PDF-bouwer: de documenten die de onderzoeker samenstelt (/admin/pdf-bouwer). Er kan
+# klantinhoud in staan, en de afbeeldingen zitten er als data-URL in.
+/pdf-bouwer-documenten/
