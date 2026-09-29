@@ -71,7 +71,7 @@ een criteriumoordeel. `"failed"` bestaat hier dus niet.
 
 ## Schrijfregels tijdens dit werk
 
-`wcag-regels/Shift2_Schrijfregels.md` geldt onverkort. Wat bij dit werk het vaakst misgaat:
+`writing/FRITS-WRITING-GUIDE.md` geldt onverkort. Wat bij dit werk het vaakst misgaat:
 
 - **Geen technische termen.** Geen elementnamen (`th`, `ul`, `li`), geen "CSS", geen "DOM".
   Beschrijf wat de bezoeker merkt.

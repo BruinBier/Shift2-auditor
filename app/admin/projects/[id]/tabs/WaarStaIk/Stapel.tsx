@@ -8,6 +8,7 @@
  * over alle pagina's), een kolom (één pagina) of één cel.
  */
 
+import LeerVanCorrectieKnop from '../LeerVanCorrectieKnop';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HERKOMST } from './gegevens';
@@ -3129,6 +3130,10 @@ export default function Stapel({
                   <p className="whitespace-pre-line leading-relaxed">{b.advice}</p>
                 </div>
               )}
+              {/* Alleen bij een tekst van Claude die je hebt aangepast; zie LeerVanCorrectieKnop. */}
+              <div className="mt-2">
+                <LeerVanCorrectieKnop finding={b} description={b.description} advice={b.advice} />
+              </div>
               {/* Los akkoord per voorstel.
                   De grote "Akkoord"-knop onderaan de kaart nam alle wachtende voorstellen in
                   één keer mee — praktisch bij één voorstel, maar bij twee of drie kon je ze

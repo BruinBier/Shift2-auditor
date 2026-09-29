@@ -122,6 +122,14 @@ export async function POST(
       interimReviewed,
     };
 
+    // Door Claude geschreven (de audit-CLI zet deze vlag): bewaar de tekst zoals hij
+    // binnenkwam. Daarna schrijft niets deze velden nog bij, ook PUT niet, zodat "Leer van
+    // mijn correctie" altijd met het origineel vergelijkt. Zie writing/FRITS-WRITING-WORKFLOW.md.
+    if (body.aiTekst === true) {
+      createData.aiDescription = createData.description;
+      createData.aiAdvice = createData.advice;
+    }
+
     // Schrijfregel-check. Draaide eerder alleen in de CLI, waardoor
     // bevindingen uit de UI en de crawler er langs gingen. Harde fouten
     // blokkeren; waarschuwingen komen mee in het antwoord. Omzeilen kan met

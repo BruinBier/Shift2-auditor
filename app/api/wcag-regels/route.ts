@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { GIDS_PAD } from '@/lib/schrijfstijl/gids';
 
 /**
  * De Shift2-huisregels voor één succescriterium, als tekst.
@@ -37,7 +38,8 @@ export async function GET(request: NextRequest) {
   const bestandsnaam = `Shift2_Regels_SC_${code.replace(/\./g, '_')}.md`;
   const [regels, schrijfregels, scope, bewijsvoering] = await Promise.all([
     lees(bestandsnaam),
-    lees('Shift2_Schrijfregels.md'),
+    // De schrijfgids staat sinds 2026-09-28 in writing/, niet meer in wcag-regels/.
+    readFile(GIDS_PAD, 'utf8').catch(() => null),
     lees('Shift2_Scope_Per_Sample.md'),
     lees('Shift2_Bewijsvoering.md'),
   ]);

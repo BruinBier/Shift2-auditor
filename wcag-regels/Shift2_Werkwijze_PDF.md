@@ -5,7 +5,7 @@
 > de regelbestanden: `Shift2_Regels_SC_1_3_1.md` heeft de lijst van wat er bij een document
 > zonder tags vervalt en wat je wél beoordeelt, `Shift2_Regels_SC_1_1_1.md` de regels voor het
 > logo en voor wat je uit de bytes níet mag afleiden. De schrijfregels voor PDF-bevindingen
-> staan in `Shift2_Schrijfregels.md`, sectie "PDF-bevindingen". Dit bestand gaat over het
+> staan in `writing/FRITS-WRITING-GUIDE.md`, sectie "PDF-bevindingen". Dit bestand gaat over het
 > onderzoek dat daaraan voorafgaat, en over de tool waar het meeste van afhangt.
 
 ## Stap 1 — Getagd of niet? Dat stel je zelf vast
@@ -418,7 +418,7 @@ Drie dingen die vastliggen:
 - **Matterhorn-id's staan nooit in een bevinding.** Ook geen PAC-checkpointnamen en geen
   tagnamen (`<Figure>`, `/Alt`, `<LBody>`). De redacteur die het rapport leest, kent die
   niet, en de bevinding moet zonder PAC te begrijpen zijn. Hoe je het dan wél schrijft, staat
-  in `Shift2_Schrijfregels.md`, sectie "PDF-bevindingen", inclusief het standaardadvies bij een
+  in `writing/FRITS-WRITING-GUIDE.md`, sectie "PDF-bevindingen", inclusief het standaardadvies bij een
   document zonder tagstructuur en de regel over toolnamen (geen Canva, Word of InDesign;
   Acrobat mag bij concrete tagstappen).
 - **PAC is een hulpmiddel, geen oordeel.** Een Failed is een aanwijzing om zelf te kijken,

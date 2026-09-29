@@ -186,6 +186,7 @@ async function importAllData(backupDir: string) {
     // 5. Finding-related tables (depends on findings)
     totalImported += await importTable(backupDir, 'finding_urls', prisma.findingUrl, 'FindingUrl');
     totalImported += await importTable(backupDir, 'finding_occurrences', prisma.findingOccurrence, 'FindingOccurrence');
+    totalImported += await importTable(backupDir, 'schrijfcorrecties', prisma.schrijfcorrectie, 'Schrijfcorrectie');
 
     // 6. Crawler results (depends on scope_urls)
     totalImported += await importTable(backupDir, 'crawler_results', prisma.crawlerResult, 'CrawlerResult');

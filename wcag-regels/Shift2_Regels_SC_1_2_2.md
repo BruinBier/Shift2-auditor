@@ -39,7 +39,7 @@ Meld dat expliciet in de bevinding, anders denkt de redacteur dat het geregeld i
 ## Bij een afkeuring
 
 Check eerst de QuickFinding-bibliotheek (`search-quick-findings ondertiteling`). Schrijf drie
-zinnen volgens `Shift2_Schrijfregels.md`: wat de kijker mist, waarom dat een probleem is, en wat
+zinnen volgens `writing/FRITS-WRITING-GUIDE.md`: wat de kijker mist, waarom dat een probleem is, en wat
 de organisatie moet doen. Noem de videotitel, niet de URL.
 
 Wie doof of slechthorend is, kan de video zonder ondertiteling niet volgen. Impact `serieus`,

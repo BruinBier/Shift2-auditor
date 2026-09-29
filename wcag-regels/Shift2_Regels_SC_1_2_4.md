@@ -42,7 +42,7 @@ of tijdens de uitzending live ondertiteling beschikbaar is (zie
 
 ## Bij een afkeuring
 
-Drie zinnen volgens `Shift2_Schrijfregels.md`. Wie doof of slechthorend is, kan een
+Drie zinnen volgens `writing/FRITS-WRITING-GUIDE.md`. Wie doof of slechthorend is, kan een
 raadsvergadering op het moment zelf niet volgen en moet wachten tot de opname met ondertiteling
 beschikbaar is. Impact `serieus`, verantwoordelijkheid `redacteur`.
 

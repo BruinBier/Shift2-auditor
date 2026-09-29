@@ -778,6 +778,12 @@ model Finding {
   createdAt          DateTime                  @default(now()) @map("created_at")
   updatedAt          DateTime                  @updatedAt @map("updated_at")
 
+  /// De tekst zoals Claude hem schreef (via de audit-CLI). Wordt bij het aanmaken gevuld en
+  /// daarna nooit meer bijgewerkt, zodat een correctie van de onderzoeker er altijd mee
+  /// vergeleken kan worden. Leeg bij handmatige bevindingen en snelle bevindingen.
+  /// Zie writing/FRITS-WRITING-WORKFLOW.md.
+  aiDescription      String?                   @map("ai_description") @db.Text
+  aiAdvice           String?                   @map("ai_advice") @db.Text
   project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wcagCriterion   WCAGCriterion          @relation(fields: [wcagCriterionId], references: [id])
   technicalIssue  TechnicalIssue?        @relation(fields: [technicalIssueId], references: [id], onDelete: SetNull)
@@ -788,6 +794,7 @@ model Finding {
 
   /// Vangnet tegen dubbele codes: vier routes kenden findingCode toe met een
   /// lezen-dan-schrijven zonder transactie, waardoor twee findings dezelfde
+  schrijfcorrecties Schrijfcorrectie[]
   /// code konden krijgen. Zie lib/finding-code.ts.
   @@unique([projectId, findingCode])
   @@map("findings")
@@ -1075,4 +1082,34 @@ model VideoPhase {
   @@unique([videoId, phase])
   @@index([videoId])
   @@map("video_phases")
+}
+
+/// Een correctie van de onderzoeker op een tekst van Claude, om van te leren.
+///
+/// De tool analyseert niets: Claude Code haalt de lijst op, analyseert, en zet de analyse
+/// terug. Frits beslist daarna op /admin/schrijfstijl of de schrijfgids verandert. De gids
+/// zelf staat in writing/FRITS-WRITING-GUIDE.md, niet in de database. Statussen en het
+/// formaat van `analyse`: lib/schrijfstijl/correcties.ts.
+model Schrijfcorrectie {
+  id                   String    @id @default(uuid())
+  /// 'bevinding' of 'test' (testmodus: geen bevinding eraan).
+  bron                 String    @default("bevinding")
+  findingId            String?   @map("finding_id")
+  criteriumCode        String?   @map("criterium_code")
+  origineelDescription String    @map("origineel_description") @db.Text
+  origineelAdvice      String    @map("origineel_advice") @db.Text
+  bewerktDescription   String    @map("bewerkt_description") @db.Text
+  bewerktAdvice        String    @map("bewerkt_advice") @db.Text
+  status               String    @default("te_analyseren")
+  analyse              Json?
+  /// Het id van de regel in writing/guide-history.jsonl die de gids veranderde.
+  wijzigingId          String?   @map("wijziging_id")
+  ingediendOp          DateTime  @default(now()) @map("ingediend_op")
+  geanalyseerdOp       DateTime? @map("geanalyseerd_op")
+  beslistOp            DateTime? @map("beslist_op")
+
+  finding Finding? @relation(fields: [findingId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("schrijfcorrecties")
 }

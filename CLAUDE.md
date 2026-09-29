@@ -473,6 +473,38 @@ hier hoort, niet onder 2.4.4 of 4.1.2.
 
 Het CRM-nummer (P0xxxx) staat op het klantproject (`ClientProject.projectnummer`) en geldt voor alle onderzoeken eronder. Om te zien welke onderzoeken er nog geen hebben, of om nummers in bulk te zetten:
 
+## Schrijfstijl: de gids en leren van correcties
+
+De schrijfregels voor elke bevinding staan in **`writing/FRITS-WRITING-GUIDE.md`** (tot
+2026-09-28 `wcag-regels/Shift2_Schrijfregels.md`). Hoe je hem toepast en hoe hij bijleert
+staat in **`writing/FRITS-WRITING-WORKFLOW.md`**. Lees beide bij elke opdracht waarin je een
+bevinding of advies schrijft of verbetert. De feiten komen uit het onderzoek; de gids
+bepaalt alleen hoe ze op papier komen.
+
+Een bevinding die via `create-finding` binnenkomt, bewaart haar tekst ook in `aiDescription`
+en `aiAdvice`. Die velden schrijft daarna niets meer bij. Past Frits de tekst aan en klikt hij
+op "Leer van mijn correctie" (bevindingvenster en kaart in "Waar sta ik"), dan komt het paar in
+de tabel `Schrijfcorrectie`. **De tool roept zelf geen Claude aan**: geen API-sleutel, geen
+aparte rekening. De analyse doe jij, als Frits zegt "leer van mijn correcties" (skill
+`schrijfstijl`). Het voorstel verschijnt op `/admin/schrijfstijl`.
+
+**Pas de gids nooit zelf aan.** Alleen de knop op `/admin/schrijfstijl` schrijft erin, na
+bevestiging, en legt de oude en nieuwe tekst vast in `writing/guide-history.jsonl`; daar kan
+Frits ook terugdraaien. Elke regel heeft een id (`<!-- regel: R07 -->`); zonder die id kan
+een wijziging niet precies één regel raken. Een gidswijziging staat pas op de andere computer
+na een commit.
+
+## PDF-bouwer
+
+`/admin/pdf-bouwer` (menu Beheer): een toegankelijke PDF vanaf nul samenstellen uit blokken
+(kop, alinea, lijst, afbeelding met alt en zichtbare beschrijving, tabel, pagina-einde). Code
+in `lib/pdf-bouwer/`. De blokken worden HTML (`html.ts`, ook het voorbeeld in de bouwer),
+Chrome drukt die getagd af, `makePdfAccessible` vult PDF/UA aan en `artefacten.ts` markeert
+wat Chrome ongemarkeerd laat (paginanummers, decoratieve afbeeldingen, vlakken). De route
+weigert een PDF zolang `controleer()` een fout meldt. Documenten staan als JSON in
+`pdf-bouwer-documenten/` (buiten git, per computer). Dit is iets anders dan een bestaande
+PDF ombouwen; zie `docs/plannen/pdf-nieuw-opbouwen-onderzoek.md`.
+
 ```bash
 npm run crm:sync -- report                        # onderzoeken zonder CRM-nummer, per opdrachtgever
 npm run crm:sync -- apply lijst.json --dry-run    # laat zien wat er zou veranderen

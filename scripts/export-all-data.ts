@@ -184,6 +184,11 @@ async function exportAllData() {
         opdrachtgevers: opdrachtgevers.length,
         projects: projects.length,
         project_notes: projectNotes.length,
+    // 21. Schrijfcorrecties -- wat Frits aan teksten van Claude verbeterde, en wat de
+    // schrijfgids daarvan leerde. De gids zelf staat in writing/, in git.
+    const schrijfcorrecties = await prisma.schrijfcorrectie.findMany();
+    await exportTable('schrijfcorrecties', schrijfcorrecties, 'Schrijfcorrectie');
+
         findings: findings.length,
         finding_urls: findingUrls.length,
         finding_occurrences: findingOccurrences.length,
@@ -210,6 +215,7 @@ async function exportAllData() {
       'utf-8'
     );
 
+        schrijfcorrecties: schrijfcorrecties.length,
     // Create README
     const backupName = path.basename(backupDir);
     const readme = `# Shift2 Auditor Data Backup

@@ -634,7 +634,6 @@ interface CreateFindingModalProps {
 }
 
 function CreateFindingModal({ sampleItemId, tests, onClose, onSuccess }: CreateFindingModalProps) {
-  const [useAI, setUseAI] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -649,7 +648,6 @@ function CreateFindingModal({ sampleItemId, tests, onClose, onSuccess }: CreateF
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           testIds,
-          useAI,
         }),
       });
 
@@ -723,43 +721,12 @@ function CreateFindingModal({ sampleItemId, tests, onClose, onSuccess }: CreateF
             </div>
           </div>
 
-          {/* Choice between QuickFinding and AI */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Hoe wil je de bevindingen genereren?</h3>
-            <div className="space-y-3">
-              <label className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${!useAI ? 'border-purple-500 bg-purple-50' : 'border-gray-300'}`}>
-                <input
-                  type="radio"
-                  name="generation-method"
-                  checked={!useAI}
-                  onChange={() => setUseAI(false)}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">QuickFinding template gebruiken</div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Gebruik bestaande bevindingen templates. Sneller maar werkt alleen voor tests met een template.
-                  </div>
-                </div>
-              </label>
-
-              <label className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${useAI ? 'border-purple-500 bg-purple-50' : 'border-gray-300'}`}>
-                <input
-                  type="radio"
-                  name="generation-method"
-                  checked={useAI}
-                  onChange={() => setUseAI(true)}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">AI genereren (GPT-4o-mini)</div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Laat AI een unieke beschrijving en advies schrijven op basis van de test details. Langzamer maar werkt altijd.
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
+          {/* De tekst komt uit de QuickFinding-bibliotheek. Een AI-optie (GPT-4o-mini) is
+              op 2026-09-28 weggehaald: die kende de schrijfregels niet. */}
+          <p className="text-sm text-gray-600">
+            De bevindingen krijgen de tekst van hun QuickFinding-template. Een test zonder template
+            wordt overgeslagen en staat daarna bij de fouten.
+          </p>
 
           {/* Error message */}
           {error && (

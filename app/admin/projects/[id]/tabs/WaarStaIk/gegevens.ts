@@ -64,6 +64,9 @@ export interface Bevinding {
   impact: string | null;
   type: string;
   status: string;
+  /** Claudes oorspronkelijke tekst, als Claude hem schreef. Voor "Leer van mijn correctie". */
+  aiDescription?: string | null;
+  aiAdvice?: string | null;
 }
 
 /**
@@ -272,6 +275,8 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     impact: f.impact ?? null,
     type: f.type ?? 'bevinding',
     status: f.status ?? 'open',
+    aiDescription: f.aiDescription ?? null,
+    aiAdvice: f.aiAdvice ?? null,
   });
 
   const samplesVan = (f: any): string[] =>

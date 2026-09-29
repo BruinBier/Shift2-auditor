@@ -270,6 +270,32 @@ export default function Navigation() {
                     </svg>
                   </Link>
                   <Link
+                    href="/admin/pdf-bouwer"
+                    onClick={() => setShowBeheerMenu(false)}
+                    className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                    style={{ transition: 'background-color 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    PDF-bouwer
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2zM12 11v6m-3-3h6" />
+                    </svg>
+                  </Link>
+                  <Link
+                    href="/admin/schrijfstijl"
+                    onClick={() => setShowBeheerMenu(false)}
+                    className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                    style={{ transition: 'background-color 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    Schrijfstijl
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </Link>
+                  <Link
                     href="/admin/video-a2-gemeenten"
                     onClick={() => setShowBeheerMenu(false)}
                     className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"

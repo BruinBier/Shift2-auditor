@@ -934,6 +934,9 @@ type Zicht = {
  *
  * De Nederlandse namen zijn de ingang: `grijs` is de proef voor 1.4.1, en wie een van de
  * drie kleurzienstoornissen wil, hoeft niet te weten dat protanopie over rood gaat. De
+    // Deze tekst komt van Claude. De tool bewaart hem apart als origineel, zodat een
+    // correctie van de onderzoeker er later mee vergeleken kan worden.
+    aiTekst: true,
  * namen die de browser zelf gebruikt mogen ook, zodat een agent die de DevTools kent niet
  * hoeft te raden.
  */
@@ -992,6 +995,63 @@ async function getScreenshot(url: string, flags: Flags) {
         await page.reload({ waitUntil: 'networkidle2' }).catch(() => {});
         await new Promise((r) => setTimeout(r, 1200));
       }
+/**
+ * Leren van correcties: de lijst ophalen en de analyse terugzetten.
+ *
+ * De tool analyseert zelf niets; dat doet Claude Code, volgens
+ * writing/FRITS-WRITING-WORKFLOW.md. Deze commando's raken de schrijfgids niet: die past
+ * alleen Frits aan, met de knop op /admin/schrijfstijl.
+ *
+ *   npm run cli -- list-correcties [--status=te_analyseren]
+ *   npm run cli -- save-correctie-analyse <correctieId> < analyse.json
+ *   npm run cli -- create-testcorrectie --criterium=1.3.1 < paar.json
+ */
+async function listCorrecties(flags: Flags) {
+  const status = flags.status && flags.status !== 'true' ? flags.status : 'te_analyseren';
+  const lijst = await api(`/api/schrijfstijl/correcties?status=${encodeURIComponent(status)}`);
+  // Alleen wat de analyse nodig heeft: de twee teksten en het criterium. Geen pagina's,
+  // geen andere bevindingen; zie stap 3 van de werkwijze.
+  print(
+    (Array.isArray(lijst) ? lijst : []).map((c: any) => ({
+      id: c.id,
+      bron: c.bron,
+      criterium: c.criteriumCode,
+      bevinding: c.finding?.findingCode ?? null,
+      origineel: { description: c.origineelDescription, advice: c.origineelAdvice },
+      bewerkt: { description: c.bewerktDescription, advice: c.bewerktAdvice },
+    })),
+  );
+}
+
+async function leesJsonVanStdin(): Promise<unknown> {
+  const invoer = await leesStdin();
+  if (!invoer.trim()) throw new Error('Geen invoer op stdin.');
+  // Een BOM aan het begin sloopt JSON.parse; zie saveChecks.
+  return JSON.parse(invoer.replace(/^﻿/, ''));
+}
+
+async function saveCorrectieAnalyse(correctieId: string) {
+  const analyse = await leesJsonVanStdin();
+  print(
+    await api(`/api/schrijfstijl/correcties/${correctieId}/analyse`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(analyse),
+    }),
+  );
+}
+
+async function createTestcorrectie(flags: Flags) {
+  const paar = (await leesJsonVanStdin()) as Record<string, unknown>;
+  print(
+    await api('/api/schrijfstijl/correcties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ ...paar, bron: 'test', criteriumCode: flags.criterium ?? paar.criteriumCode }),
+    }),
+  );
+}
+
       const pageTitle = await page.title();
       const finalUrl = page.url();
       const dir = ensureOutputDir();
@@ -9360,3 +9420,12 @@ main().catch((err) => {
   console.error('ERROR:', err?.message || err);
   process.exit(1);
 });
+    case 'list-correcties':
+      return listCorrecties(flags);
+    case 'save-correctie-analyse':
+      return saveCorrectieAnalyse(requirePositional(positional, 0, 'correctieId'));
+    case 'create-testcorrectie':
+      return createTestcorrectie(flags);
+        `  list-correcties [--status=te_analyseren|voorstel|geen_wijziging|toegevoegd|niet_toegevoegd]   # correcties van Frits om van te leren\n` +
+        `  save-correctie-analyse <correctieId> < analyse.json   # zie writing/FRITS-WRITING-WORKFLOW.md\n` +
+        `  create-testcorrectie --criterium=1.3.1 < paar.json     # testmodus, zonder bevinding\n` +

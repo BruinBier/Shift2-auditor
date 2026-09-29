@@ -252,7 +252,7 @@ voor wie. Schrijf allebei op, en schrijf ze zo:
   twee. En nooit "wie de pagina beluistert": dat is vaag, en op een site met een
   voorleesknop voor alle bezoekers wijst het naar de verkeerde groep. Heuvelrug.nl heeft
   zo'n knop ("Lees voor"), bedoeld voor mensen die moeite hebben met lezen. Zie de
-  algemene regel in `Shift2_Schrijfregels.md`.
+  algemene regel in `writing/FRITS-WRITING-GUIDE.md`.
 - **Wat er wegvalt: de afzender.** Bij een gewone afbeelding met tekst is dat "de tekst op
   de afbeelding"; bij een logo is het van wie iets is. Schrijf dus "welke organisatie deze
   pagina uitgeeft" of "welke groep de gemeente adviseert", niet "de tekst in het logo".

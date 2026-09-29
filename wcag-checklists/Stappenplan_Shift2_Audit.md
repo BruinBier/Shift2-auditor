@@ -179,7 +179,7 @@ Schrijf per sample de beoordelingen weg naar de dekkingslijst met een PUT naar
 
 Dit gaat over de **dekkingslijst**, niet over bevindingen. Die laatste komen pas in stap 5d, na
 akkoord. Voor de dekkingslijst is de Prisma-route prima; voor bevindingen niet (zie
-`wcag-regels/Shift2_Schrijfregels.md`).
+`writing/FRITS-WRITING-GUIDE.md`).
 
 ### Stap 5c — Vergelijken met wat er al lag
 

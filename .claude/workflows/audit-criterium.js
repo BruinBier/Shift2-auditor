@@ -588,7 +588,8 @@ Lees daarnaast eenmalig:
   - \`wcag-regels/Shift2_Scope_Per_Sample.md\` — welk deel van de pagina je beoordeelt
   - \`wcag-regels/Shift2_Bewijsvoering.md\` — waarop een oordeel mag rusten. Begin hiermee: het schrijft voor dat je de pagina opent zonder opmaak en eerst controleert of je op de gevraagde pagina bent uitgekomen.
   - \`wcag-regels/Shift2_Voldoet_Of_Niet_Aanwezig.md\` — wanneer iets gehaald is en wanneer het niet van toepassing is. Dat verschil gaat vaak mis in beide richtingen.
-  - \`wcag-regels/Shift2_Schrijfregels.md\` — bindend voor elke bevindingstekst
+  - \`writing/FRITS-WRITING-GUIDE.md\` — bindend voor elke bevindingstekst
+  - \`writing/FRITS-WRITING-WORKFLOW.md\`, hoofdstuk 1 en 2 — hoe je de gids toepast: de feiten komen uit je meting, de gids bepaalt alleen hoe ze op papier komen
 
 MEET, VRAAG NIET
 Kijk in \`lib/metingen.ts\` welk commando bij ${criterium} hoort en draai dat. De pagina haal
@@ -682,7 +683,7 @@ NIET de afkeuring zelf — die staat in de bevinding.
 Drie, vier zinnen is genoeg.
 
 DE BEVINDINGEN
-Schrijf ze volgens \`wcag-regels/Shift2_Schrijfregels.md\`. Bij type \`bevinding\` horen impact
+Schrijf ze volgens \`writing/FRITS-WRITING-GUIDE.md\`. Bij type \`bevinding\` horen impact
 en responsibility; bij type \`opmerking\` laat je beide op null.${
         context.deelgebieden.length
           ? `
@@ -857,7 +858,7 @@ WAT JE DOET
    bevindingen die een ander advies nodig hebben, zijn twee bevindingen.
 
 REGELS VOOR DE TEKST
-Lees \`wcag-regels/Shift2_Schrijfregels.md\` en houd je eraan — ook bij het herschrijven van
+Lees \`writing/FRITS-WRITING-GUIDE.md\` en houd je eraan — ook bij het herschrijven van
 een samengevoegde tekst. Let in het bijzonder op: begin niet met de URL, geen
 gedachtestreepjes, hulpsoftware leest voor (nooit "laat zien"), maximaal twee of drie
 voorbeelden, en geen lange opsomming van vindplaatsen (de sample-items tonen die al).
@@ -998,7 +999,7 @@ Let op:
   - \`--sample-items\` krijgt de id's uit \`sampleIds\` van dat punt, met komma's ertussen.
   - \`--status=voorstel\` is verplicht. Een voorstel telt nergens mee tot de onderzoeker akkoord geeft; maak dus geen bevinding met status open.
   - Bij type 'bevinding' geef je ZOWEL --impact als --responsibility mee. Bij type 'opmerking' laat je ze allebei weg.
-  - Gebruik \`--skip-lint\` NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens \`wcag-regels/Shift2_Schrijfregels.md\` en probeer opnieuw.
+  - Gebruik \`--skip-lint\` NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens \`writing/FRITS-WRITING-GUIDE.md\` en probeer opnieuw.
   - **Noteer per punt het \`id\` dat je terugkrijgt** — het uuid, niet de code. Dat heb je in stap 2 nodig. De code verandert bij goedkeuring (V001 wordt B00x uit een andere reeks); het id verandert nooit.
 
 DE PUNTEN:

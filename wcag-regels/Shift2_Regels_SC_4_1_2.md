@@ -172,7 +172,7 @@ Let op de details die Frits hierin heeft aangescherpt:
   "hulpsoftware kan de link niet identificeren".
 - De derde zin is op 2026-08-18 bijgewerkt van "Wie de website met een schermlezer gebruikt"
   naar "Wie blind is en een schermlezer gebruikt", volgens de algemene regel in
-  `Shift2_Schrijfregels.md`. De overige details van deze formulering zijn ongewijzigd.
+  `writing/FRITS-WRITING-GUIDE.md`. De overige details van deze formulering zijn ongewijzigd.
 
 ## 4.1.2 naast 1.1.1 — losse bevindingen, geen onderlinge verwijzing
 

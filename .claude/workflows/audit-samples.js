@@ -517,7 +517,8 @@ Lees eenmalig, vóór je begint:
   - \`wcag-regels/Shift2_Scope_Per_Sample.md\` — VERPLICHT. Welk deel van de pagina je beoordeelt (header/main/footer) en waarom.
   - \`wcag-regels/Shift2_Bewijsvoering.md\` — VERPLICHT. Waarop een oordeel mag rusten en wat je als bewijs meelevert. Begin er ook mee: dat bestand schrijft voor dat je elk sample opent met de pagina zonder opmaak, en dat je eerst controleert of je wel op de gevraagde pagina bent uitgekomen.
   - \`wcag-regels/Shift2_Voldoet_Of_Niet_Aanwezig.md\` — VERPLICHT. Wanneer een criterium gehaald is en wanneer het niet van toepassing is. Dat verschil gaat vaak mis in beide richtingen.
-  - \`wcag-regels/Shift2_Schrijfregels.md\` — VERPLICHT. De schrijfregels voor elke bevinding: structuur, toon, terminologie, wat je niet doet. Bindend, ook waar ze afwijken van de projectinstructie.
+  - \`writing/FRITS-WRITING-GUIDE.md\` — VERPLICHT. De schrijfregels voor elke bevinding: structuur, toon, terminologie, wat je niet doet. Bindend, ook waar ze afwijken van de projectinstructie.
+  - \`writing/FRITS-WRITING-WORKFLOW.md\`, hoofdstuk 1 en 2 — hoe je de gids toepast. De feiten komen uit je meting, de gids bepaalt alleen hoe ze op papier komen; schrijf voor deze situatie en vul geen vaste zinnen in.
   - \`wcag-checklists/Project_Instructie_WCAG_Audit.md\` — werkwijze en bevindingformat
   - \`wcag-checklists/Voorbeelden_Bevindingen.md\` — schrijfstijl en toon
   - \`wcag-regels/README.md\` — hoe de regels zich tot de checklists verhouden
@@ -1552,7 +1553,7 @@ Een 'nee' betekent NIET dat het oordeel fout is. Het betekent dat de onderbouwin
 
 Lees \`wcag-regels/Shift2_Bewijsvoering.md\` en toets of de onderbouwing draagt wat het oordeel beweert. Rust een schone uitkomst op een uitgevoerde controle, of alleen op de afwezigheid van een melding? Staat er bij 'niet_aanwezig' waarnaar is gezocht? Wordt er een afwezigheid vastgesteld in materiaal waarin het niet kón staan — zoals CSS-positionering in opgehaalde HTML? Weerleg dat, ook als het oordeel zelf waarschijnlijk juist is: een onterecht 'voldoet' valt later niemand op.
 
-Lees daarnaast \`wcag-regels/Shift2_Schrijfregels.md\` en toets elke description en advice daaraan: geen URL aan het begin, geen gedachtestreepjes, geen HTML-codeblokken, geen vindplaats-lijst, hulpsoftware LEEST VOOR (laat niets zien), "tekstalternatief" niet "tekstbeschrijving", maximaal twee a drie voorbeelden, en bij een opmerking impact en responsibility leeg.
+Lees daarnaast \`writing/FRITS-WRITING-GUIDE.md\` en toets elke description en advice daaraan: geen URL aan het begin, geen gedachtestreepjes, geen HTML-codeblokken, geen vindplaats-lijst, hulpsoftware LEEST VOOR (laat niets zien), "tekstalternatief" niet "tekstbeschrijving", maximaal twee a drie voorbeelden, en bij een opmerking impact en responsibility leeg.
 
 Weerleg een oordeel expliciet als het in strijd is met een Shift2-regel. Typische gevallen: een afkeuring op een teaser-afbeelding met alt="", of een afkeuring waar de regels een opmerking voorschrijven (zet dan gecorrigeerdeStatus op 'opmerking').
 
@@ -1849,7 +1850,7 @@ Let op:
   - Bij type 'bevinding' geef je ZOWEL --impact als --responsibility mee; de auditor heeft die bepaald en ze staan hieronder. Zonder responsibility klaagt de schrijfregel-linter, en moet de onderzoeker het alsnog met de hand invullen.
   - Bij type 'opmerking' laat je --impact en --responsibility allebei weg; die heeft geen ernst en geen adressant.
   - Het criteriumId haal je uit \`npm run cli -- list-criteria\` (niet de code, de id).
-  - Gebruik --skip-lint NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens wcag-regels/Shift2_Schrijfregels.md en probeer opnieuw.
+  - Gebruik --skip-lint NIET. Klaagt de schrijfregel-linter, pas dan de tekst aan volgens writing/FRITS-WRITING-GUIDE.md en probeer opnieuw.
   - Noteer per punt het \`id\` (de uuid) uit het antwoord van create-finding. Punt 1 in de lijst is \`@1\`, punt 2 is \`@2\`, enzovoort.
 
 DE PUNTEN:

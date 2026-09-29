@@ -40,7 +40,7 @@ maar dat is een los criterium.
 
 ## Bij een afkeuring
 
-Drie zinnen volgens `Shift2_Schrijfregels.md`. Wie niet kan horen mist de inhoud van een
+Drie zinnen volgens `writing/FRITS-WRITING-GUIDE.md`. Wie niet kan horen mist de inhoud van een
 audiofragment volledig; wie niet kan zien mist de inhoud van een geluidloze video volledig.
 Impact `serieus`, verantwoordelijkheid `redacteur`.
 

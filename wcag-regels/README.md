@@ -74,7 +74,7 @@ Dat verschil gaat in beide richtingen mis. Lees het bestand één keer voor je b
 
 ## Schrijfregels
 
-`Shift2_Schrijfregels.md` geldt voor **elke** bevinding, ongeacht het criterium: structuur
+`writing/FRITS-WRITING-GUIDE.md` geldt voor **elke** bevinding, ongeacht het criterium: structuur
 van de description, toon, terminologie, en wat je juist niet doet (geen URL aan het begin,
 geen gedachtestreepjes, geen codeblokken). Lees dat bestand één keer voor je begint.
 

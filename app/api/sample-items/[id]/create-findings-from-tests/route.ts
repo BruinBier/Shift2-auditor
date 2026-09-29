@@ -6,12 +6,13 @@ import { herberekenCriteriumOordelen } from '@/lib/criterion-assessment';
 
 interface CreateFindingsRequest {
   testIds: string[];
-  useAI: boolean; // true = use AI, false = use QuickFinding
 }
 
 /**
  * POST /api/sample-items/[id]/create-findings-from-tests
- * Creates findings from crawler test results for a sample item
+ * Creates findings from crawler test results for a sample item, with the text of
+ * the matching QuickFinding. The GPT-4o-mini option was removed on 2026-09-28: it
+ * ignored the writing rules.
  */
 export async function POST(
   request: NextRequest,
@@ -20,7 +21,7 @@ export async function POST(
   try {
     const sampleItemId = params.id;
     const body: CreateFindingsRequest = await request.json();
-    const { testIds, useAI } = body;
+    const { testIds } = body;
 
     if (!testIds || testIds.length === 0) {
       return NextResponse.json(
@@ -58,7 +59,6 @@ export async function POST(
     const errors = [];
 
     console.log(`[CREATE-FINDINGS] Processing ${sampleItem.crawlerResults.length} test results`);
-    console.log(`[CREATE-FINDINGS] Use AI: ${useAI}`);
 
     // Process each test result
     for (const result of sampleItem.crawlerResults) {
@@ -76,90 +76,37 @@ export async function POST(
           where: { crawlerTestId: result.testId },
         });
 
-        if (useAI) {
-          // Generate text using AI
-          const aiResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sample-items/${sampleItemId}/generate-finding-text`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              testId: result.testId,
-              testName: result.testName,
-              testDetails: result.details ? JSON.parse(result.details) : null,
-              count: result.count,
-            }),
+        // Use QuickFinding template
+        if (!quickFinding) {
+          errors.push({
+            testId: result.testId,
+            testName: result.testName,
+            error: 'No QuickFinding template found',
           });
-
-          if (!aiResponse.ok) {
-            const errorData = await aiResponse.json();
-            throw new Error(`AI text generation failed: ${errorData.error || 'Unknown error'}`);
-          }
-
-          const aiData = await aiResponse.json();
-          description = aiData.description;
-          advice = aiData.advice;
-
-          // Use QuickFinding metadata if available
-          if (quickFinding) {
-            impact = quickFinding.impact || 'onbekend';
-            responsibility = quickFinding.responsibility || 'onbekend';
-            wcagCriterionId = (await prisma.wCAGCriterion.findUnique({
-              where: { code: quickFinding.criterionCode },
-            }))?.id;
-          } else {
-            // No QuickFinding - use default WCAG criterion
-            // Try to find a reasonable WCAG criterion based on test type
-            // For now, use a generic Level A criterion (1.1.1 - Non-text Content)
-            const defaultCriterion = await prisma.wCAGCriterion.findFirst({
-              where: { code: '1.1.1' },
-            });
-
-            if (defaultCriterion) {
-              wcagCriterionId = defaultCriterion.id;
-            } else {
-              // Fallback: get any Level A criterion
-              const anyCriterion = await prisma.wCAGCriterion.findFirst({
-                where: { level: 'A' },
-              });
-              wcagCriterionId = anyCriterion?.id;
-            }
-
-            // Set reasonable defaults
-            impact = 'matig';
-            responsibility = 'ontwikkelaar';
-          }
-        } else {
-          // Use QuickFinding template
-          if (!quickFinding) {
-            errors.push({
-              testId: result.testId,
-              testName: result.testName,
-              error: 'No QuickFinding template found',
-            });
-            continue;
-          }
-
-          description = quickFinding.description;
-          advice = quickFinding.advice;
-          impact = quickFinding.impact || 'onbekend';
-          responsibility = quickFinding.responsibility || 'onbekend';
-          quickFindingId = quickFinding.id;
-
-          // Get WCAG criterion
-          const wcagCriterion = await prisma.wCAGCriterion.findUnique({
-            where: { code: quickFinding.criterionCode },
-          });
-
-          if (!wcagCriterion) {
-            errors.push({
-              testId: result.testId,
-              testName: result.testName,
-              error: `WCAG criterion ${quickFinding.criterionCode} not found`,
-            });
-            continue;
-          }
-
-          wcagCriterionId = wcagCriterion.id;
+          continue;
         }
+
+        description = quickFinding.description;
+        advice = quickFinding.advice;
+        impact = quickFinding.impact || 'onbekend';
+        responsibility = quickFinding.responsibility || 'onbekend';
+        quickFindingId = quickFinding.id;
+
+        // Get WCAG criterion
+        const wcagCriterion = await prisma.wCAGCriterion.findUnique({
+          where: { code: quickFinding.criterionCode },
+        });
+
+        if (!wcagCriterion) {
+          errors.push({
+            testId: result.testId,
+            testName: result.testName,
+            error: `WCAG criterion ${quickFinding.criterionCode} not found`,
+          });
+          continue;
+        }
+
+        wcagCriterionId = wcagCriterion.id;
 
         if (!wcagCriterionId) {
           // If we still don't have a criterion, skip this test

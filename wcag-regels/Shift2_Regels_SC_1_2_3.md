@@ -191,7 +191,7 @@ Algemener: een advies dat rechtstreeks uit een QuickFinding komt, is standaardte
 niet vanuit de eigen W3C-leeswijze kritisch op in en stel geen wijziging voor. Wil de
 onderzoeker zelf iets veranderen, dan is dat zijn beslissing; bespreek dan ook of de
 QuickFinding zelf mee moet veranderen, en pas nooit meer aan dan het project waar de vraag
-over gaat (zie `Shift2_Schrijfregels.md`).
+over gaat (zie `writing/FRITS-WRITING-GUIDE.md`).
 
 ## Op de kaart
 

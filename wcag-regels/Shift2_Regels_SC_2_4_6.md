@@ -79,7 +79,7 @@ Aanleiding: duurzaam.beverwijk.nl/tweedehands (2026-07-28). De kop "TIP!" stond 
 B007 (2.4.6, afkeuring) en B008 (1.3.1, opmerking) in BEV-03.
 
 Let op: er zijn geen QuickFindings onder 2.4.6, dus je schrijft deze bevindingen zelf. Volg
-`Shift2_Schrijfregels.md`.
+`writing/FRITS-WRITING-GUIDE.md`.
 
 ## Regels
 

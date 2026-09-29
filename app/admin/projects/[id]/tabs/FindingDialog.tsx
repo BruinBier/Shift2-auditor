@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import 'md-editor-rt/lib/style.css';
+import LeerVanCorrectieKnop from './LeerVanCorrectieKnop';
 
 const MdEditor = dynamic(() => import('md-editor-rt').then(mod => mod.MdEditor), {
   ssr: false,
@@ -1053,6 +1054,15 @@ export default function FindingDialog({ isOpen, onClose, onSave, criterionId, cr
           >
             Opslaan en dupliceren
           </button>
+          {editingFinding && (
+            <div className="ml-auto">
+              <LeerVanCorrectieKnop
+                finding={editingFinding}
+                description={formData.description}
+                advice={formData.advice}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

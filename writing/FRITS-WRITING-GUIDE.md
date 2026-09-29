@@ -1,10 +1,20 @@
-# Shift2-schrijfregels voor bevindingen
+# Schrijfstijl van Frits voor bevindingen
 
 Deze regels gelden voor **elke** bevinding, ongeacht het succescriterium. Ze gaan over
 de description en het advice-veld in de Shift2-auditor.
 
-De SC-specifieke regels staan in `Shift2_Regels_SC_<code>.md`. Bij tegenspraak wint het
-SC-bestand, want dat is specifieker.
+De SC-specifieke regels staan in `wcag-regels/Shift2_Regels_SC_<code>.md`. Bij tegenspraak
+wint het SC-bestand, want dat is specifieker.
+
+Hoe deze gids wordt toegepast en hoe hij bijleert uit correcties staat in
+`writing/FRITS-WRITING-WORKFLOW.md`. Tot 2026-09-28 heette dit bestand
+`wcag-regels/Shift2_Schrijfregels.md`.
+
+**Elke regel begint met een onzichtbare regel-id** (`<!-- regel: R07 -->`). Een regel loopt
+tot de volgende id of het volgende kopje. Via die id kan de tool een regel aanpassen,
+samenvoegen of terugdraaien; laat de id's dus staan als je dit bestand met de hand bewerkt.
+Een nieuwe regel met de hand? Geef hem het eerstvolgende vrije nummer. Wijzigingen die via
+de tool gaan, staan met de oude en nieuwe tekst in `writing/guide-history.jsonl`.
 
 > Let op: deze regels wijken bewust af van `wcag-checklists/Project_Instructie_WCAG_Audit.md`
 > op twee punten (URL in de description, en HTML-fragmenten citeren). Die instructie is voor
@@ -12,6 +22,7 @@ SC-bestand, want dat is specifieker.
 
 ## Structuur van de description
 
+<!-- regel: R01 -->
 Kort en to-the-point. Bij eenvoudige issues drie zinnen:
 
 1. **Locatie + wat er staat** — "Op de pagina staat ..." / "In de footer staat ..."
@@ -28,16 +39,21 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
 
 ## Wat je NIET doet
 
+<!-- regel: R02 -->
 - **Niet met de URL beginnen.** Die staat al bij het SampleItem. Begin met "Op de pagina",
   "In de footer", "Boven aan de pagina".
+<!-- regel: R03 -->
 - **Geen gedachtestreepjes.** Geen em-dash (—) en geen en-dash (–). Splits in twee zinnen
   of gebruik een komma.
+<!-- regel: R04 -->
 - **Geen HTML-codeblokken.** Geen aparte sectie "HTML van de getroffen koppen:" met een
   fragment eronder. Noem elementen inline in de lopende tekst ("de koptekst is omsloten
   door een strong-element").
+<!-- regel: R05 -->
 - **Geen volledige vindplaats-lijst.** Komt de bevinding op meerdere sample-items voor,
   geef dan één concreet voorbeeld ("Een voorbeeld is de link X in de footer van de
   homepage"). De gekoppelde sample-items tonen de rest al.
+<!-- regel: R06 -->
 - **Geen andere criteria erin mengen.** Een verwant probleem dat onder een ander
   succescriterium valt, krijgt een eigen bevinding.
 
@@ -53,24 +69,30 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   Aanleiding (2026-08-18): bij de fototabel op de Japanse-duizendknooppagina hield ik het
   onderschrift bewust buiten het advies. Frits: "vermeld je niet dat bij het naast elkaar
   plaatsen van de afbeeldingen dat onderschrift bedoeld is..."
+<!-- regel: R07 -->
 - **Niet dezelfde zaak twee keer uitleggen** in andere woorden. Het komt er bijna altijd
   zo in: eerst vanuit de software, dan vanuit de gebruiker. "Hulpsoftware kondigt geen
   lijst aan en noemt het aantal items niet, zodat wie de pagina laat voorlezen niet hoort
   dat het om een opsomming gaat en hoeveel er zijn" is één feit in twee jassen. Kies de
   kant van de gebruiker; die staat toch al voorgeschreven als derde zin.
+<!-- regel: R08 -->
 - **Geen bewijsvoering in de bevinding.** Wat je hebt nagekeken en wat in orde was, hoort
   in de onderbouwing van het oordeel, niet in de bevinding. "De eerste en derde
   footerkolom doen dit wel goed" zegt de lezer van het rapport niets over het probleem dat
   hij moet oplossen.
+<!-- regel: R09 -->
 - **Geen overbodige uitleg over hoe WCAG werkt.**
+<!-- regel: R10 -->
 - **Geen overbodige "van de gemeente"** of vergelijkbare bezitsbepaling. Schrijf "de links naar
   de sociale media", niet "de links naar de sociale media van de gemeente". De bevinding staat
   al in het rapport van die organisatie. Wél noemen waar het inhoudelijk uitmaakt, zoals bij
   2.4.4 waar het probleem juist is dat de linktekst de organisatie niet noemt.
+<!-- regel: R11 -->
 - **Geen slotzin met een oordeel.** "Dit is verwarrend", "dit maakt de structuur
   onlogisch", "dit is niet gebruiksvriendelijk": die zinnen voegen na de concrete
   uitwerking niets toe. De derde zin heeft het gevolg al benoemd; wat erachteraan komt is
   een mening over dat gevolg.
+<!-- regel: R12 -->
 - **Geen slotzin in het advies die het gevolg van je eigen instructie herhaalt.** "Voorzie
   de afbeelding van een tekstalternatief waarin de zichtbare naam terugkomt. Daarmee komt de
   zichtbare naam ook in de naam die software gebruikt." De tweede zin zegt wat de eerste al
@@ -82,12 +104,15 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   "haal de staptitel zelf niet weg: die benoemt op elke stap welke stap u invult".
 
   Vastgelegd door Frits op 2026-08-18.
+<!-- regel: R13 -->
 - **Zet de plaats in de eerste zin, niet in het advies.** Komt uit het advies pas naar
   voren waar het probleem zit ("de titel van het uitklapblok is al een kop"), dan mist de
   bevinding zijn eerste zin. Het advies wordt er bovendien langer van dan nodig.
+<!-- regel: R14 -->
 - **Let ook op dubbeling binnen één zinsdeel.** "Een tweede, identieke kop met dezelfde
   tekst" zegt het twee keer. Idem "een lege sectie zonder inhoud" en "elke afzonderlijke
   link apart".
+<!-- regel: R15 -->
 - **Geen aantallen die alleen de omvang aangeven.** "met 59 rijen en 29", "op 14 van de 20
   pagina's", "twaalf keer op deze pagina": zulke getallen onderbouwen hooguit hoe erg het
   is, en dat hoort in de onderbouwing van het oordeel. Ze verouderen bovendien meteen --
@@ -99,6 +124,7 @@ Meer dan drie zinnen alleen als dat echt nodig is voor begrip.
   er is, niet hoe vaak het misgaat.
 
   Vastgelegd door Frits op 2026-08-18.
+<!-- regel: R16 -->
 - **Citeer de werkelijke waarde, omschrijf hem niet.** "De titel bevat de bestandsnaam,
   inclusief de aanduiding 'concept' en een maandaanduiding" laat de lezer raden. Zet er
   gewoon neer wat er staat: "Microsoft Word - Beleidsvisie Horeca &
@@ -116,7 +142,9 @@ dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 
 ## Toon en formulering
 
+<!-- regel: R17 -->
 - **Direct en stellig.** Vermijd "mogelijk", "misschien", "het wordt aanbevolen".
+<!-- regel: R18 -->
 - **Knip een lange zin met een puntkomma in twee of drie korte.** Een zin als "krijgt de
   tekst voorgelezen met de uitspraak van de taal die in zijn schermlezer is ingesteld;
   staat die niet op Nederlands, dan is de tekst niet te volgen" leest stroef. Drie korte
@@ -126,19 +154,24 @@ dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 
   Noem het hulpmiddel daarbij één keer. Staat "schermlezer" al in de vorige zin, dan
   volstaat "wie blind is"; de hele formulering nog een keer maakt de zin onnodig zwaar.
+<!-- regel: R19 -->
 - **Bij contrast: "voldoende contrast hebben", niet "afsteken tegen".** Schrijf "zodat de
   witte tekst voldoende contrast heeft", niet "zodat de tekst er voldoende van afsteekt".
   Afsteken is beeldspraak vanuit het zien; contrast is de eis waar het om gaat.
+<!-- regel: R20 -->
 - **Kleurcodes altijd als #RRGGBB.** Schrijf "de rode tekst (#FF0000) op een witte achtergrond
   (#FFFFFF)", niet "rood op wit" of een rgb-notatie. Zo kan de ontwikkelaar de kleur meteen
   opzoeken in de stijl van de site en kan de onderzoeker de meting nadoen.
+<!-- regel: R21 -->
 - **Hulpsoftware leest voor, laat niets zien.** Schermlezers zijn auditief. Schrijf
   "hulpsoftware leest de linktekst voor" en "gebruikers horen alleen ...", nooit
   "hulpsoftware laat zien" of "gebruikers zien alleen".
+<!-- regel: R22 -->
 - **Noem de beperking en het hulpmiddel samen.** Niet "wie een schermlezer gebruikt" en
   niet "iemand die blind is", maar allebei: **"Wie blind is en een schermlezer gebruikt,
   ..."** Het hulpmiddel alleen laat in het midden om wie het gaat, en de beperking alleen
   laat in het midden hoe iemand het document dan wel benadert. Samen is het concreet.
+<!-- regel: R23 -->
 - **Schrijf nooit "wie de pagina beluistert".** Dat is vaag, en op een site met een
   voorleesknop voor alle bezoekers wijst het naar de verkeerde groep. Heuvelrug.nl heeft
   zo'n knop ("Lees voor"), en die is er voor mensen die moeite hebben met lezen, niet voor
@@ -147,10 +180,13 @@ dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 
   Vastgelegd door Frits op 2026-08-18, bij een bevinding over een leeg tekstalternatief en
   bij een ongetagde PDF.
+<!-- regel: R24 -->
 - **Maximaal twee à drie voorbeelden**, met "zoals" of "bijvoorbeeld". Geen lange
   parenthetische opsommingen.
+<!-- regel: R25 -->
 - **Voeg gelijksoortige voorbeelden samen.** Verschillen twee bullets alleen in een naam,
   maak er één bullet van ("In de video's van X en Y ...").
+<!-- regel: R26 -->
 - **Site-breed patroon?** Koppel aan één representatief sample (meestal de homepage) en
   zet in de description "Dit patroon is op alle pagina's van de website aanwezig".
   **Uitzondering: header en footer.** Staat er al "In de footer" of "Boven aan de pagina", dan
@@ -160,6 +196,7 @@ dubbele kop op de paspoortpagina) leverden telkens dezelfde drie patronen op.
 
 ## Terminologie
 
+<!-- regel: R27 -->
 Vermijd technisch jargon; bevindingen worden gelezen door redacteuren, bestuurders en
 communicatiemedewerkers.
 
@@ -184,6 +221,7 @@ dezelfde volgorde.
 
 ### Namen voor onderdelen van de pagina
 
+<!-- regel: R28 -->
 Vaste woorden, zodat niet elke ronde een ander woord kiest voor hetzelfde onderdeel. Een
 redacteur die twee bevindingen naast elkaar legt moet niet hoeven raden of "accordeon" en
 "uitklapper" hetzelfde zijn.
@@ -213,6 +251,7 @@ onthouden voor volgende bevindingen.
 
 ### Opmaak-advies bij verantwoordelijkheid redacteur: via de CMS-stijl, niet via CSS
 
+<!-- regel: R29 -->
 Staat de verantwoordelijkheid op **redacteur** en gaat het advies over visuele opmaak, schrijf
 dan dat de opmaak via de stijl in het CMS geregeld moet worden:
 
@@ -233,6 +272,7 @@ verwoording al. Zie ook de regels over `em` en `strong` in `Shift2_Regels_SC_1_3
 
 ## Geen voorbehoud over criteria die niet in het onderzoek zitten
 
+<!-- regel: R30 -->
 Een onderbouwing eindigen met "hiermee is niet beoordeeld of X; dat valt onder SC Y" is alleen
 zinnig als SC Y in het onderzoekstype zit. Zit het er niet in, dan wijs je de lezer op werk dat
 niemand gaat doen en dat ook niemand hoeft te doen.
@@ -249,6 +289,7 @@ onderzoekstype."
 
 ## Ook in het scherm zelf
 
+<!-- regel: R31 -->
 **Dit geldt net zo goed voor de teksten in het scherm zelf.** Daar sluipt een ander soort
 jargon in: de naam van een bestand of van een stuk machinerie, in plaats van wat het doet.
 
@@ -266,6 +307,7 @@ bewijsvoeringsregels gelegd. Die controle draait mee met de audit-workflow." Fri
 daarmee bedoeld werd — terecht, want er stonden twee interne namen in en geen enkel woord
 over wat er wél of niet was nagekeken.
 
+<!-- regel: R32 -->
 HTML-elementnamen (`strong`, `em`, `h1`, `ul`, `li`, `th`) mogen wel genoemd worden, maar
 inline in de lopende tekst, niet als los codeblok.
 
@@ -277,11 +319,13 @@ Gebruik het spaarzaam: noem eerst wat het is in gewone taal, dan pas de technisc
 Voor PDF-bevindingen geldt dit NIET: daar blijven interne tagnamen (`<Figure>`, `/Alt`,
 `<LBody>`) buiten de tekst. Zie de PDF-regels hieronder.
 
+<!-- regel: R33 -->
 Een tekstalternatief is **functioneel**, geen visuele beschrijving: het geeft de informatie
 of boodschap door die de afbeelding overbrengt, niet hoe de afbeelding eruitziet.
 
 ### PDF-bevindingen
 
+<!-- regel: R34 -->
 - **Paginanummers zijn die van de PDF-lezer, niet het gedrukte nummer.** Een rapport begint
   vaak met een omslag en een inhoudsopgave die niet meetellen in de nummering onderaan de
   pagina; dan staat er "4" op het blad dat in de lezer pagina 8 is. Neem het nummer dat de
@@ -289,11 +333,14 @@ of boodschap door die de afbeelding overbrengt, niet hoe de afbeelding eruitziet
   vanaf het eerste genummerde blad. Bij ZOET-01 Bijlage 2 scheelde dat vier pagina's, en in
   één bevinding stonden beide nummers door elkaar. Vastgesteld door Frits op 2026-09-19.
 
+<!-- regel: R35 -->
 - Geen interne tagnamen: niet `<Figure>`, `ImageData`, `src`, `Alt-attribuut`, `<L>`,
   `<LBody>`, `<Lbl>`. Schrijf "als afbeelding aangemerkt", "geen tekstalternatief".
+<!-- regel: R36 -->
 - Geen toolnamen in het advies: niet Canva, Word of InDesign. Spreek over "het
   brondocument". Adobe Acrobat mag wél genoemd worden bij concrete tag-stappen (het
   Tags-paneel, "Wijzig tagtype").
+<!-- regel: R37 -->
 - **Standaardadvies bij een document zonder tagstructuur.** Vastgesteld door Frits op
   2026-08-18:
 
@@ -309,6 +356,7 @@ of boodschap door die de afbeelding overbrengt, niet hoe de afbeelding eruitziet
 
 ## Fout of opmerking
 
+<!-- regel: R38 -->
 - **Fout** (afgekeurd, status `open`): impact én verantwoordelijkheid invullen.
 - **Opmerking** (status `resolved`): impact en verantwoordelijkheid **altijd leeg laten**.
   Een opmerking is geen WCAG-schending maar een verbeteradvies.
@@ -318,6 +366,7 @@ Sluit het advies van een opmerking af met "Dit is een best practice." waar dat p
 
 ## Voor je een bevinding aanmaakt
 
+<!-- regel: R39 -->
 1. **Check de QuickFinding-bibliotheek** — bestaat er al een passende template? Doe dit
    **meteen** bij het constateren van een issue, niet pas nadat je zelf een tekst hebt bedacht.
 
@@ -354,6 +403,7 @@ Sluit het advies van een opmerking af met "Dit is een best practice." waar dat p
 
 ### Neem je een QuickFinding over: vul de placeholders in
 
+<!-- regel: R40 -->
 QuickFindings zijn sjablonen voor hergebruik over alle projecten. Ze bevatten placeholders als
 `[organisatie]`, `ORGANISATIE` of `gemeente X`, en soms zinnen die op deze site niet kloppen.
 Loop **zowel de description als de advice** na voordat je wegschrijft:
@@ -367,6 +417,7 @@ Loop **zowel de description als de advice** na voordat je wegschrijft:
 
 ### Komt er een correctie: alleen dit project, en de snelle bevinding ernaast leggen
 
+<!-- regel: R41 -->
 Corrigeert de onderzoeker een bevinding (een onjuiste zin in het advies, een aanscherping van
 de formulering), pas dan **alleen die bevinding in dit project** aan. Niet ongevraagd:
 
@@ -396,6 +447,7 @@ bibliotheek houden.
 
 ## Schrijf bevindingen via de API, niet rechtstreeks in de database
 
+<!-- regel: R42 -->
 Gebruik `POST /api/projects/<id>/findings` om een bevinding aan te maken en
 `PUT /api/projects/<id>/findings/<findingId>` om er een te wijzigen. Niet Prisma of een los
 script dat de tabel `findings` aanpast.
@@ -415,6 +467,7 @@ Prisma-route prima.
 
 ## Kun je iets niet beoordelen? Melden, niet weglaten
 
+<!-- regel: R43 -->
 Kom je bij een criterium iets tegen dat je niet zelf kunt vaststellen (een uitzondering die
 een inhoudelijk oordeel vraagt, een meting die niet lukt), zet het criterium dan op
 `niet_te_bepalen` en formuleer de concrete vraag voor de onderzoeker, met de gegevens die je

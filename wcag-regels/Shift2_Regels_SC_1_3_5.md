@@ -76,7 +76,7 @@ postcode had correct `postal-code`, dus het criterium voldoet.
 ## Regels
 
 - Iets dat alleen in de HTML zit maar niet zichtbaar is op de pagina: check eerst de full-page screenshot voordat je rapporteert. HTML-only betekent niet automatisch zichtbaar voor de gebruiker.
-- Geen URL's in het advies. De QuickFinding `a3e675f7-...` eindigt met een link naar de W3C-vertaling; laat die weg in de bevinding zelf, conform `Shift2_Schrijfregels.md`.
+- Geen URL's in het advies. De QuickFinding `a3e675f7-...` eindigt met een link naar de W3C-vertaling; laat die weg in de bevinding zelf, conform `writing/FRITS-WRITING-GUIDE.md`.
 
 ## Op de kaart
 
