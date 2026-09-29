@@ -171,9 +171,23 @@ async function exportAllData() {
     const bespreekpunten = await prisma.bespreekpunt.findMany();
     await exportTable('bespreekpunten', bespreekpunten, 'Bespreekpunt');
 
+    // Bewust NIET in de backup: de tabellen van steekproefselectie v2. Het zijn afgeleide
+    // gegevens die opnieuw te maken zijn, met veel JSON- en lijstkolommen die de restore niet
+    // terugzet:
+    //   - steekproef_inventarissen en inventaris_kandidaten: de kandidatenpool van een site,
+    //     met de knop op het tabblad Scope in een minuut opnieuw te maken (fase 1);
+    //   - steekproef_profielruns en pagina_profielen: de browsermeting, opnieuw te draaien
+    //     met steekproef-profiel (fase 2);
+    //   - pagina_signalen: opnieuw te vragen; de cache vult zich vanzelf (fase 4).
+
     // 20. Klantafspraken -- wat er uit een gesprek kwam en waar je op terugkomt.
     const klantafspraken = await prisma.klantafspraak.findMany();
     await exportTable('klantafspraken', klantafspraken, 'Klantafspraak');
+
+    // 21. Schrijfcorrecties -- wat Frits aan teksten van Claude verbeterde, en wat de
+    // schrijfgids daarvan leerde. De gids zelf staat in writing/, in git.
+    const schrijfcorrecties = await prisma.schrijfcorrectie.findMany();
+    await exportTable('schrijfcorrecties', schrijfcorrecties, 'Schrijfcorrectie');
 
     // Create metadata file
     const metadata = {
@@ -184,11 +198,6 @@ async function exportAllData() {
         opdrachtgevers: opdrachtgevers.length,
         projects: projects.length,
         project_notes: projectNotes.length,
-    // 21. Schrijfcorrecties -- wat Frits aan teksten van Claude verbeterde, en wat de
-    // schrijfgids daarvan leerde. De gids zelf staat in writing/, in git.
-    const schrijfcorrecties = await prisma.schrijfcorrectie.findMany();
-    await exportTable('schrijfcorrecties', schrijfcorrecties, 'Schrijfcorrectie');
-
         findings: findings.length,
         finding_urls: findingUrls.length,
         finding_occurrences: findingOccurrences.length,
@@ -206,6 +215,7 @@ async function exportAllData() {
         project_planning_changes: planningChanges.length,
         bespreekpunten: bespreekpunten.length,
         klantafspraken: klantafspraken.length,
+        schrijfcorrecties: schrijfcorrecties.length,
       }
     };
 
@@ -215,7 +225,6 @@ async function exportAllData() {
       'utf-8'
     );
 
-        schrijfcorrecties: schrijfcorrecties.length,
     // Create README
     const backupName = path.basename(backupDir);
     const readme = `# Shift2 Auditor Data Backup

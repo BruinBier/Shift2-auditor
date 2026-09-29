@@ -284,6 +284,9 @@ model Project {
   bespreekpunten          Bespreekpunt[]
   klantafspraken          Klantafspraak[]
   crawlerRuns             CrawlerRun[]
+  steekproefInventarissen SteekproefInventaris[]
+  steekproefProfielRuns   SteekproefProfielRun[]
+  paginaSignalen          PaginaSignaal[]
   advices                 ProjectAdvice[]
 
   @@map("projects")
@@ -775,15 +778,15 @@ model Finding {
   /// Gevuld als de afwijzing was: "dit is techniek". Verwijst naar het issue dat
   /// daaruit is aangemaakt, zodat zichtbaar blijft waar de vondst heen ging.
   technicalIssueId   String?                   @map("technical_issue_id")
-  createdAt          DateTime                  @default(now()) @map("created_at")
-  updatedAt          DateTime                  @updatedAt @map("updated_at")
-
   /// De tekst zoals Claude hem schreef (via de audit-CLI). Wordt bij het aanmaken gevuld en
   /// daarna nooit meer bijgewerkt, zodat een correctie van de onderzoeker er altijd mee
   /// vergeleken kan worden. Leeg bij handmatige bevindingen en snelle bevindingen.
   /// Zie writing/FRITS-WRITING-WORKFLOW.md.
   aiDescription      String?                   @map("ai_description") @db.Text
   aiAdvice           String?                   @map("ai_advice") @db.Text
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
+
   project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wcagCriterion   WCAGCriterion          @relation(fields: [wcagCriterionId], references: [id])
   technicalIssue  TechnicalIssue?        @relation(fields: [technicalIssueId], references: [id], onDelete: SetNull)
@@ -791,10 +794,10 @@ model Finding {
   affectedUrls    FindingUrl[]
   attachments     FindingAttachment[]
   waarnemingen    Waarneming[]
+  schrijfcorrecties Schrijfcorrectie[]
 
   /// Vangnet tegen dubbele codes: vier routes kenden findingCode toe met een
   /// lezen-dan-schrijven zonder transactie, waardoor twee findings dezelfde
-  schrijfcorrecties Schrijfcorrectie[]
   /// code konden krijgen. Zie lib/finding-code.ts.
   @@unique([projectId, findingCode])
   @@map("findings")
@@ -932,6 +935,202 @@ model CrawlerRun {
   project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("crawler_runs")
+}
+
+/// Een inventarisatie van kandidaatpagina's voor de steekproef (steekproefselectie v2,
+/// fase 1): alles wat er op de site te vinden is, met bron, status en reden.
+///
+/// Kiest niets. De steekproef komt nog uit de workflow `steekproef-samenstellen`; deze
+/// tabel maakt alleen zichtbaar en controleerbaar waaruit gekozen kan worden. Elke run
+/// blijft staan, zodat twee runs naast elkaar te leggen zijn: dezelfde site en scope
+/// horen dezelfde `poolHash` op te leveren.
+///
+/// Afgeleide gegevens, in een minuut opnieuw te maken. Staat daarom niet in de backup.
+model SteekproefInventaris {
+  id             String    @id @default(uuid())
+  projectId      String    @map("project_id")
+  /// bezig | klaar | mislukt
+  status         String    @default("bezig")
+  startUrl       String    @map("start_url")
+  canonHost      String?   @map("canon_host")
+  /// Wat er in ging: start-URL, scope-URL's, klantpagina's, buiten scope.
+  invoer         Json?
+  /// Versies van inventarisatie, normalisatie en aanwijzingen. Een andere versie kan een
+  /// andere pool verklaren.
+  versies        Json?
+  instellingen   Json?
+  sitemap        Json?
+  uitsluitregels Json?
+  externeHosts   Json?     @map("externe_hosts")
+  samenvatting   Json?
+  poolHash       String?   @map("pool_hash")
+  kandidatenHash String?   @map("kandidaten_hash")
+  fout           String?   @db.Text
+  gestartOp      DateTime  @default(now()) @map("gestart_op")
+  klaarOp        DateTime? @map("klaar_op")
+
+  project     Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  kandidaten  InventarisKandidaat[]
+  profielRuns SteekproefProfielRun[]
+
+  @@index([projectId, gestartOp])
+  @@map("steekproef_inventarissen")
+}
+
+/// Een browsermeting van een deel van de kandidatenpool (steekproefselectie v2, fase 2).
+///
+/// Meten, niet kiezen. Welke pagina's gemeten worden bepaalt lib/steekproef/profielkeuze.ts
+/// (homepage en klant altijd, dan geprioriteerd op statische aanwijzingen, dan gespreid);
+/// `config` legt het budget en de seed vast, zodat een run te herhalen is.
+///
+/// Afgeleide gegevens, opnieuw te maken. Staat daarom niet in de backup.
+model SteekproefProfielRun {
+  id           String    @id @default(uuid())
+  projectId    String    @map("project_id")
+  inventarisId String    @map("inventaris_id")
+  /// bezig | klaar | mislukt
+  status       String    @default("bezig")
+  /// budget, aandeelGespreid, documentBudget, seed
+  config       Json?
+  versies      Json?
+  /// cdp (auditsessie) of headless
+  browser      String?
+  /// Hoe het budget is verdeeld over de lagen A, B en C.
+  uitleg       Json?
+  samenvatting Json?
+  gestartOp    DateTime  @default(now()) @map("gestart_op")
+  klaarOp      DateTime? @map("klaar_op")
+
+  project    Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inventaris SteekproefInventaris @relation(fields: [inventarisId], references: [id], onDelete: Cascade)
+  profielen  PaginaProfiel[]
+
+  @@index([projectId, gestartOp])
+  @@map("steekproef_profielruns")
+}
+
+/// Een semantisch signaal (steekproefselectie v2, fase 4): het antwoord op één kleine,
+/// gesloten vraag uit lib/steekproef/vragen.ts, over één pagina, document of afbeelding.
+///
+/// GEEN besluit over de steekproef. Niets in de selectie leest deze tabel.
+///
+/// Aanbieder-onafhankelijk: Claude is de eerste, een andere (bijvoorbeeld Jev) vult dezelfde
+/// velden met zijn eigen `aanbieder` en `model`. De cache-sleutel (`sleutel`) is afgeleid van
+/// onderwerp + vraagId + vraagVersie + contentHash; per aanbieder één antwoord.
+model PaginaSignaal {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  /// onderwerp + vraagId + vraagVersie + contentHash, gehasht (lib/steekproef/classifier.ts).
+  sleutel       String
+  /// De URL van de pagina, het document of de afbeelding.
+  onderwerp     String   @db.Text
+  /// pagina | document | afbeelding | pagina-in-cluster
+  onderwerpSoort String  @map("onderwerp_soort")
+  vraagId       String   @map("vraag_id")
+  vraagVersie   Int      @map("vraag_versie")
+  aanbieder     String
+  model         String
+  /// Het ruwe antwoord uit de gesloten lijst. Bij zekerheid laag is het effectief "twijfel".
+  antwoord      String
+  /// hoog | middel | laag
+  zekerheid     String
+  reden         String?  @db.Text
+  /// Hash van precies de invoer die de aanbieder te zien kreeg.
+  contentHash   String   @map("content_hash")
+  /// Die invoer zelf, zodat een andere aanbieder dezelfde vraag kan krijgen.
+  invoer        Json?
+  /// regel | beoordelingsset: gesteld volgens de regel van de vraag, of als controlevoorbeeld.
+  waarom        String?
+  gemaaktOp     DateTime @default(now()) @map("gemaakt_op")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, sleutel, aanbieder])
+  @@index([projectId, vraagId])
+  @@map("pagina_signalen")
+}
+
+/// Wat de browser op één pagina (of in één PDF) aantrof, met bewijs.
+model PaginaProfiel {
+  id           String    @id @default(uuid())
+  runId        String    @map("run_id")
+  urlNorm      String    @map("url_norm") @db.Text
+  /// html | document
+  soort        String
+  /// Waarom deze pagina gemeten is: HOMEPAGE, KLANT, ..._AANWIJZING, GESPREIDE_AANVULLING,
+  /// EXTRA_HANDMATIG; bij documenten DOCUMENT_KLANT, DOCUMENT_SOORT. De eerste is de laag.
+  redenen      String[]
+  /// A | B | C | extra | document
+  laag         String?
+  /// gepland | gemeten | mislukt
+  status       String
+  fout         String?   @db.Text
+  /// De aanwijzingen uit de inventarisatie (fase 1), om statisch en gemeten te vergelijken.
+  statisch     Json?
+  eindUrl      String?   @map("eind_url") @db.Text
+  titel        String?   @db.Text
+  browser      String?
+  omgeleid     Boolean?
+  gehydrateerd Boolean?
+  cookiescherm Json?
+  dichtgeklapt Int?
+  bereik       String?
+  htmlTaal     String?   @map("html_taal")
+  /// De ruwe meting uit profiel-meting.browser.js, met bewijs per kenmerk.
+  kenmerken    Json?
+  /// Gebieden uit de dekkingslijst die code heeft gevonden (lib/steekproef/dekking.ts).
+  gebieden     Json?
+  /// Bij een PDF: pagina's, titel, taal, formuliervelden, tags, geschatte soort.
+  document     Json?
+  schermafdruk String?   @db.Text
+  duurMs       Int?      @map("duur_ms")
+  gemetenOp    DateTime? @map("gemeten_op")
+
+  run SteekproefProfielRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, soort])
+  @@map("pagina_profielen")
+}
+
+/// Eén URL uit een inventarisatie. De sleutel is `urlNorm`: de genormaliseerde URL
+/// (lib/steekproef/urls.ts), uniek binnen de inventarisatie.
+model InventarisKandidaat {
+  id            String   @id @default(uuid())
+  inventarisId  String   @map("inventaris_id")
+  urlNorm       String   @map("url_norm") @db.Text
+  /// html | document
+  soort         String
+  documentSoort String?  @map("document_soort")
+  /// klant | scope | sitemap | link | doorverwijzing -- vaak meer dan één.
+  bronnen       String[]
+  /// kandidaat | uitgesloten | dubbel | niet_opgehaald
+  status        String
+  reden         String?  @db.Text
+  dubbelVan     String?  @map("dubbel_van") @db.Text
+  httpStatus    Int?     @map("http_status")
+  contentType   String?  @map("content_type")
+  eindUrl       String?  @map("eind_url") @db.Text
+  titel         String?  @db.Text
+  canonical     String?  @db.Text
+  taal          String?
+  noindex       Boolean  @default(false)
+  grootte       Int?
+  /// Statische aanwijzingen uit de HTML zonder browser. Indicatief.
+  aanwijzingen  Json?
+  /// Structuurvingerafdruk voor de sjabloonclusters (fase 3, schaduwfunctie):
+  /// inhoudstype en componenten volgens het CMS, DOM-paden van main, sjabloonkoppen.
+  /// Geen tekst. Zie lib/steekproef/vingerafdruk.ts.
+  vingerafdruk  Json?
+  gevondenOp    String[] @map("gevonden_op")
+  varianten     String[]
+  ingrepen      String[]
+  diepte        Int
+  waarschuwing  String?  @db.Text
+
+  inventaris SteekproefInventaris @relation(fields: [inventarisId], references: [id], onDelete: Cascade)
+
+  @@index([inventarisId, status])
+  @@map("inventaris_kandidaten")
 }
 
 model TechnicalIssue {

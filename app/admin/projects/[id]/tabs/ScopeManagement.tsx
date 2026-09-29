@@ -6,6 +6,9 @@ import dynamic from 'next/dynamic';
 import { marked } from 'marked';
 import 'md-editor-rt/lib/style.css';
 import CrawlerModal from '../components/CrawlerModal';
+import KandidatenPaneel from './steekproef/KandidatenPaneel';
+import ProfielPaneel from './steekproef/ProfielPaneel';
+import ClusterPaneel from './steekproef/ClusterPaneel';
 
 // Configure marked to preserve line breaks
 marked.setOptions({
@@ -776,6 +779,13 @@ export default function ScopeManagement({ project }: { project: any }) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Kandidateninventarisatie (steekproefselectie v2, fase 1): alleen lezen */}
+      <div className="col-span-3 space-y-6">
+        <KandidatenPaneel projectId={project.id} />
+        <ProfielPaneel projectId={project.id} />
+        <ClusterPaneel projectId={project.id} />
       </div>
 
       {/* Modal */}

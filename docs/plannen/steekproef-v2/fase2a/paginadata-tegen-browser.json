@@ -1,0 +1,1519 @@
+[
+ {
+  "project": "UTHEU",
+  "url": "https://www.heuvelrug.nl/rosarium",
+  "paginadata": {
+   "video": 0,
+   "kaart": 0,
+   "iframe": 1,
+   "bewijs": [
+    {
+     "reden": "iframe-html",
+     "soort": "iframe",
+     "waarde": "https://debouw.app/embed/rosarium?header=show&amp;theme=light&amp;info=show&amp;v=1755696631408"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G07",
+    "G10",
+    "G18",
+    "G25",
+    "G30"
+   ],
+   "geblokkeerd": [],
+   "iframes": [
+    "debouw.app"
+   ]
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/12-stooktips-voor-houtkachels-open-haarden-en-vuurkorven",
+  "paginadata": {
+   "video": 0,
+   "kaart": 0,
+   "iframe": 1,
+   "bewijs": [
+    {
+     "reden": "iframe-html",
+     "soort": "iframe",
+     "waarde": "https://atlas.apps.geodan.nl/stookwijzer/widget?"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G25",
+    "G31"
+   ],
+   "geblokkeerd": [
+    "overig"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/beschermd-wonen-wmo",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/kfbcrgk5mKU"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-buggenum",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-ell",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-baexem",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-haler",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-grathem",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-haelen",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-horn",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-heythuysen",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-heibloem",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-hunsel",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-kelpen-oler",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-ittervoort",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-nunhem",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-neeritter",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-neer",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/hackshield",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/aMVl8Z_3m18"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-roggel",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/eherkenning",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "video",
+     "waarde": "ParagraphVideo"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G06",
+    "G07",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/keukentafelgesprek",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/kfbcrgk5mKU"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21",
+    "G31"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/hulp-en-advies",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/kfbcrgk5mKU"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/interesse",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/I4QaOdiXSec"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/keyport",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/jgrXkPnHtaQ"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/leudallied",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/j0T3WMm2poY"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G21",
+    "G25"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/laaggeletterdheid",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/Rxda5bABl30"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G06",
+    "G07",
+    "G17",
+    "G21",
+    "G31"
+   ],
+   "geblokkeerd": [
+    "video",
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/participatie-en-omgevingsdialoog",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/avdrSwYi3w0"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G07",
+    "G12",
+    "G17",
+    "G21",
+    "G25",
+    "G31"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/omgevingsloket",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/PKX-Xrt9KGU"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G07",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/ondermijnende-criminaliteit",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "video",
+     "waarde": "ParagraphVideo"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21",
+    "G25"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-3-roggel-haelen-nunhem-neer",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-1-haler-neeritter-ittervoort-hunsel-ell",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-2-kelpen-oler-grathem-baexem-heythuysen-heibloem",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-f-fietspaden-ell-hunsel-ittervoort-neeritter-haler-grathem-kelpen-oler",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-4-horn-bedrijventerrein-windmolenbos-buggenum",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-5-heythuysen-roggel",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-g-fietspaden-grathem-baexem-heythuysen-roggel",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/sneeuwroute-h-fietspaden-horn-haelen-buggenum-neer",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/startersevent",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-c-roggel-heythuysen",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-b-heythuysen-baexem-kelpen-oler-grathem",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-a-ell-hunsel-ittervoort-haler-neeritter",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-f-fietspaden-ell-hunsel-ittervoort-neeritter-haler-grathem-kelpen-oler",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-d-neer-roggel-haelen-buggenum",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-e-horn-haelen-bedrijventerrein-windmolenbos",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-g-fietspaden-grathem-baexem-heythuysen-roggel",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/trainees",
+  "paginadata": {
+   "video": 2,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/Ft9Nj-SqM9E"
+    },
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/RYgWVgoZyYE"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video",
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/strooiroute-h-fietspaden-horn-buggenum-haelen-nunhem-neer",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/video-wethouders-stellen-zich-voor",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/LhAVE-jdQHc"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/welkom-bij-leudal-business",
+  "paginadata": {
+   "video": 0,
+   "kaart": 1,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "component",
+     "soort": "kaart",
+     "waarde": "ParagraphDynamicMap"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G07",
+    "G17",
+    "G29"
+   ],
+   "geblokkeerd": [
+    "kaart"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/zorgfraude",
+  "paginadata": {
+   "video": 1,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/J97oLoQUK8U"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G07",
+    "G17",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video"
+   ],
+   "iframes": []
+  }
+ },
+ {
+  "project": "LEU",
+  "url": "https://www.leudal.nl/werken-bij-de-gemeente",
+  "paginadata": {
+   "video": 2,
+   "kaart": 0,
+   "iframe": 0,
+   "bewijs": [
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/Ft9Nj-SqM9E"
+    },
+    {
+     "reden": "embed-url",
+     "soort": "video",
+     "waarde": "youtube.com/embed/RYgWVgoZyYE"
+    }
+   ]
+  },
+  "browser": {
+   "status": "gemeten",
+   "gebieden": [
+    "G01",
+    "G02",
+    "G07",
+    "G21"
+   ],
+   "geblokkeerd": [
+    "video",
+    "video"
+   ],
+   "iframes": []
+  }
+ }
+]

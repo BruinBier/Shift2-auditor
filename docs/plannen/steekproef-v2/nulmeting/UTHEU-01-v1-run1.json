@@ -1,0 +1,912 @@
+{
+ "kenmerk": "UTHEU-01",
+ "run": 1,
+ "workflowRunId": "wf_4c00eb40-265",
+ "bewaardOp": "2026-09-28T13:09:22.549Z",
+ "planning": {
+  "startUrl": "https://www.heuvelrug.nl/",
+  "onderzoekstype": "WCAG 2.2 AA deelonderzoek content website met formulieren",
+  "aangedragenPaginas": [
+   "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0"
+  ],
+  "buitenScope": [
+   "https://meldingen.heuvelrug.nl/incident/beschrijf",
+   "https://mijn.heuvelrug.nl/",
+   "https://heuvelrug.notubiz.nl/"
+  ],
+  "bestaandeSamples": [],
+  "scopeInfo": "- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)\n- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).\n- Niet de live video's (wettelijke uitzondering voor de overheid)\n- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)\n- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)\n- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)\n- Niet de inhoud achter een inlog"
+ },
+ "kandidaten": {
+  "bron": "sitemap",
+  "urls": [
+   "https://www.heuvelrug.nl/",
+   "https://www.heuvelrug.nl/inwoners-en-bezoekers",
+   "https://www.heuvelrug.nl/ondernemers",
+   "https://www.heuvelrug.nl/over-de-gemeente",
+   "https://www.heuvelrug.nl/contact",
+   "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+   "https://www.heuvelrug.nl/actueel",
+   "https://www.heuvelrug.nl/nieuws-en-meer",
+   "https://www.heuvelrug.nl/gemeentenieuws",
+   "https://www.heuvelrug.nl/werkzaamheden",
+   "https://www.heuvelrug.nl/online-nieuwsbrieven",
+   "https://www.heuvelrug.nl/aanvragen-en-regelen",
+   "https://www.heuvelrug.nl/burgerzaken",
+   "https://www.heuvelrug.nl/paspoort-id-kaart-en-rijbewijs",
+   "https://www.heuvelrug.nl/paspoort",
+   "https://www.heuvelrug.nl/verhuizing-doorgeven",
+   "https://www.heuvelrug.nl/uittreksel-basisregistratie-personen-brp",
+   "https://www.heuvelrug.nl/geboorteaangifte",
+   "https://www.heuvelrug.nl/trouwen-en-geregistreerd-partnerschap",
+   "https://www.heuvelrug.nl/welke-ceremonie-wilt-u",
+   "https://www.heuvelrug.nl/overlijden",
+   "https://www.heuvelrug.nl/begraafplaats-doorn",
+   "https://www.heuvelrug.nl/alles-over-afval",
+   "https://www.heuvelrug.nl/huishoudelijk-afval",
+   "https://www.heuvelrug.nl/afvalapp-en-afvalkalender",
+   "https://cuatro.sim-cdn.nl/heuvelrug/uploads/afvalkalender_doorn_2026_0.pdf?cb=MvCiQzzo",
+   "https://www.heuvelrug.nl/grofvuil",
+   "https://www.heuvelrug.nl/wat-mag-ik-inleveren-bij-de-milieustraat",
+   "https://www.heuvelrug.nl/belastingen",
+   "https://www.heuvelrug.nl/wonen",
+   "https://www.heuvelrug.nl/vestigen-bouwen-en-verbouwen",
+   "https://www.heuvelrug.nl/omgevingsvergunning",
+   "https://www.heuvelrug.nl/vergunningvrij-bouwen",
+   "https://www.heuvelrug.nl/dakkapel",
+   "https://www.heuvelrug.nl/omgevingsplan",
+   "https://www.heuvelrug.nl/bouwplannen-en-bouwtekeningen-bekijken",
+   "https://www.heuvelrug.nl/parkeervergunning",
+   "https://www.heuvelrug.nl/gehandicaptenparkeerplaats",
+   "https://www.heuvelrug.nl/evenement-organiseren",
+   "https://www.heuvelrug.nl/terras-plaatsen",
+   "https://www.heuvelrug.nl/subsidies",
+   "https://www.heuvelrug.nl/sociale-basis-en-cultuur-subsidies-tot-en-met-25000",
+   "https://www.heuvelrug.nl/financiele-hulp",
+   "https://www.heuvelrug.nl/waar-heeft-u-recht-op",
+   "https://www.heuvelrug.nl/sociale-dorpsteams",
+   "https://www.heuvelrug.nl/leerlingenvervoer",
+   "https://www.heuvelrug.nl/veiligheid",
+   "https://www.heuvelrug.nl/woninginbraak",
+   "https://www.heuvelrug.nl/zorgen-of-verward-gedrag-melden",
+   "https://www.heuvelrug.nl/melden",
+   "https://www.heuvelrug.nl/duurzaam",
+   "https://www.heuvelrug.nl/isoleren",
+   "https://www.heuvelrug.nl/subsidieregeling-duurzaamheid",
+   "https://www.heuvelrug.nl/warmteprogramma",
+   "https://cuatro.sim-cdn.nl/heuvelrug/uploads/guh-warmteprogramma-2026-2035.pdf?cb=L58Sk2o6",
+   "https://www.heuvelrug.nl/natuur-en-landschap",
+   "https://www.heuvelrug.nl/bomen-kappen",
+   "https://www.heuvelrug.nl/dieren",
+   "https://www.heuvelrug.nl/wolf",
+   "https://www.heuvelrug.nl/oog-voor-dieren-egelopvang",
+   "https://www.heuvelrug.nl/dorpen",
+   "https://www.heuvelrug.nl/doorn",
+   "https://www.heuvelrug.nl/projecten",
+   "https://www.heuvelrug.nl/projecten-in-driebergen-rijsenburg",
+   "https://www.heuvelrug.nl/herinrichting-hoflaan-in-leersum",
+   "https://www.heuvelrug.nl/gemeentebestuur",
+   "https://www.heuvelrug.nl/gemeenteraad",
+   "https://www.heuvelrug.nl/college",
+   "https://www.heuvelrug.nl/burgemeester-frits-naafs",
+   "https://www.heuvelrug.nl/vergaderingen-van-de-raad",
+   "https://www.heuvelrug.nl/besluiten",
+   "https://www.heuvelrug.nl/beleidsnotas",
+   "https://cuatro.sim-cdn.nl/heuvelrug/uploads/2026_addendum_woonzorgvisie_2024-2029.pdf?cb=HGRHB1yn",
+   "https://www.heuvelrug.nl/terinzage",
+   "https://www.heuvelrug.nl/vacatures",
+   "https://www.heuvelrug.nl/senior-juridisch-adviseur",
+   "https://www.heuvelrug.nl/klachten-en-bezwaren",
+   "https://www.heuvelrug.nl/bezwaar-maken",
+   "https://www.heuvelrug.nl/privacy",
+   "https://www.heuvelrug.nl/proclaimer",
+   "https://www.heuvelrug.nl/digitale-toegankelijkheid",
+   "https://www.heuvelrug.nl/informatie-opvragen-bij-gemeente-wet-open-overheid-woo",
+   "https://www.heuvelrug.nl/openingstijden",
+   "https://www.heuvelrug.nl/cultuur",
+   "https://www.heuvelrug.nl/cultuuragenda",
+   "https://www.heuvelrug.nl/struikelstenen-in-doorn",
+   "https://www.heuvelrug.nl/monumenten",
+   "https://www.heuvelrug.nl/aanvragen-en-vergunningen-week-39-2026",
+   "https://www.heuvelrug.nl/burgemeester-frits-naafs-op-1-september-2027-met-pensioen",
+   "https://www.heuvelrug.nl/videos-besproken-in-de-raad"
+  ],
+  "toelichting": "De sitemap (https://www.heuvelrug.nl/sitemap.xml, geen index) bevat 579 adressen, allemaal plat onder de root. Twee ervan vallen af: /home is dubbel met / en /node/7202 geeft 404. Van de 577 die overblijven heb ik er 86 geselecteerd, verdeeld over de thema's (burgerzaken, afval, bouwen en wonen, subsidies, zorg, veiligheid, duurzaamheid, natuur en dieren, dorpen en projecten, bestuur, nieuws, vacatures, service en cultuur). De overige 491 heb ik laten liggen. Daarnaast staan in de lijst het contactformulier dat de klant aandroeg en drie PDF's die van pagina's van de site gelinkt zijn: de afvalkalender van Doorn, het warmteprogramma en het addendum op de woonzorgvisie. Die PDF's staan op het CDN van SIMsite (cuatro.sim-cdn.nl/heuvelrug) en dus niet op het domein van de site zelf. Het contactformulier geeft eerst een 302 die naar zichzelf terugverwijst, waarschijnlijk om een cookie te zetten."
+ },
+ "paginasBekeken": [
+  {
+   "url": "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+   "titel": "Contactformulier",
+   "soort": "formulierstap",
+   "gebieden": [
+    "Logo",
+    "Formulier",
+    "Pagina met een eigen sjabloon: portaal, boekingsmodule"
+   ],
+   "sjabloon": "formuliermodule-header (logo + terug naar site + afsluiten/opnieuw starten) + voortgangsbalk + kop + introtekst + knop Volgende stap",
+   "gehydrateerd": false,
+   "opmerking": "get-html meldt gehydrateerd: false, ook via de auditsessie-Chrome op 9222. Wat hieronder staat komt dus uit HTML waarin de JavaScript niet draaide. Dit is stap 1 van het formulier (voortgang 25%) en bevat alleen introtekst en de knop \"Volgende stap\", zonder invoervelden. De velden staan in latere stappen, dus beoordeel het formulier verder in de auditsessie. De pagina draait op het eigen sjabloon van de formuliermodule (/form/, met een eigen header en een voortgangsbalk) en niet op het sitesjabloon, daarom telt ze voor 3.2.4. Logo: img alt=\"Logo Gemeente Utrechtse Heuvelrug\" in de header van de module. In de HTML staan ook de knoppen van een cookiescherm (accept-button/decline-button)."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/",
+   "titel": "Home",
+   "soort": "homepage",
+   "gebieden": [
+    "Logo",
+    "Hero- of headerafbeelding zonder tekst",
+    "Teaser- of kaartafbeeldingen in een overzicht",
+    "Iconen zonder tekst ernaast",
+    "Afbeelding met tekst erin"
+   ],
+   "sjabloon": "hero-afbeelding met zoekveld en zes tegellinks met icoon + kop + nieuwskaartjes (afbeelding, titel, datum) in drie kolommen + footer met contactgegevens en sociale-media-iconen",
+   "gehydrateerd": true,
+   "opmerking": "Er staat maar één afbeelding met tekst erin: een teaserafbeelding, \"Infographic resultaten DIFTAR 2025.jpg\" (alt=\"\"). Die staat in het nieuwsoverzicht en is bijgesneden. Voor 1.4.5 of complex beeld is het nieuwsbericht zelf een betere kandidaat. De hero (bos01.jpg, alt=\"\") heeft geen tekst in het beeld, maar het zoekveld en de tegellinks liggen er als witte vlakken overheen. De teaserafbeeldingen staan niet in een link: de link zit op de kaarttitel. De vier kanalen zonder tekst in beeld (twitter, facebook, linkedin, youtube) en de twee daarna (instagram, whatsapp) zijn pictogrammen. Hun tekst staat alleen in een verborgen span. Er zijn geen tabel, video, iframe, figure, PDF-link of bewegende slider gezien."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/inwoners-en-bezoekers",
+   "titel": "Inwoners en bezoekers",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten"
+   ],
+   "sjabloon": "hero met kop eroverheen + kruimelpad + tegels met alleen tekstlinks in drie kolommen",
+   "gehydrateerd": true,
+   "opmerking": "De hero bestaat uit een foto (_dsc8531kasteel_amerongen_anne_hamers.jpg, alt=\"\") met een decoratieve svg-laag erover (Tekengebied 1 v3.svg, alt=\"\"). De h1 \"Inwoners en bezoekers\" staat eroverheen. Op de schermafdruk zie je van de foto maar een smal randje: de kop staat vrijwel helemaal op het groenblauwe vlak. Contrast op de beeldpunten meten, niet op stijlwaarden. De tegels in het overzicht hebben geen afbeeldingen, dus teaserafbeeldingen staan hier niet op. Het linkpictogram bij \"Zorg, Welzijn, Geldzaken en Jeugd\" staat naast tekst en telt niet als pictogram zonder tekst."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/ondernemers",
+   "titel": "Ondernemers en Organisaties",
+   "soort": "overzichtspagina (doelgroep)",
+   "gebieden": [
+    "Logo",
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "zoekbalk + toptaken met icoon in twee kolommen + headerafbeelding als achtergrondstrook + twee tekstblokken naast elkaar + grijs blok met pijl-lijsten in twee kolommen",
+   "gehydrateerd": true,
+   "opmerking": "De headerafbeelding (maarn-0004.jpg, alt=\"\") staat in de code na de toptaken en is op de opname alleen als smalle strook onder het logo te zien. De toptaken hebben icoonlettertekens met aria-hidden naast een zichtbare tekst, dus het zijn geen iconen zonder tekst. Er staat geen tabel, video, formulier, accordeon of PDF-link in de main. Het logo komt uit de header en staat op elke pagina."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/over-de-gemeente",
+   "titel": "Over de gemeente",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero met foto rechts (kop op gekleurd vlak ernaast) + kruimelpad + lijst met tegellinks in drie kolommen, zonder afbeeldingen of introtekst",
+   "gehydrateerd": true,
+   "opmerking": "De hero is een foto (maarn_fiets_015.jpg, alt=\"\") met een decoratieve SVG-vorm erover (alt=\"\"). De h1 \"Over de gemeente\" staat op het groene vlak naast de foto en niet op de foto zelf, dus dit is een hero zonder tekst en geen hero met tekst eroverheen. Het lijstgebied is één enkele ul met 27 tegellinks (APV t/m Werken bij de gemeente), zonder geneste lijst. De tegels hebben geen afbeeldingen, dus teaserafbeeldingen tellen hier niet mee. Verder staan er geen tabel, video, formulier, PDF, accordeon of iframe in main. Het logo zit alleen in de sjabloonheader."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/contact",
+   "titel": "Contact",
+   "soort": "overzichtspagina (contact)",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst"
+   ],
+   "sjabloon": "hero met h1 op gekleurd vlak + foto rechts, kruimelpad, introalinea, submenu met tegels in drie kolommen (SubmenuThreeColumns)",
+   "gehydrateerd": true,
+   "opmerking": "Weinig om te dekken. De hero-foto (smartphone.jpg, alt=\"\") heeft de h1 \"Contact\" naast zich op het groene vlak en niet eroverheen. De cijfers van het toetsenbord op de telefoon staan toevallig in de foto en dragen geen inhoud. De vier tegels (Contactformulier, Openingstijden, Communicatie vanuit de gemeente, Sociale media) zijn een ul met alleen tekstlinks, zonder afbeelding of pictogram, dus ze vallen niet onder \"Teaser- of kaartafbeeldingen\". Er staat geen formulier op deze pagina zelf: het contactformulier staat op /form/contactformulier."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/actueel",
+   "titel": "Actueel",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Logo",
+    "Hero- of headerafbeelding zonder tekst"
+   ],
+   "sjabloon": "hero (kop op gekleurd vlak + foto) + kruimelpad + introzin + tegels zonder afbeelding in drie kolommen",
+   "gehydrateerd": true,
+   "opmerking": "Het is een overzichtspagina met zeven tekstlinks in tegels, zonder afbeeldingen (Werkzaamheden, Nieuwsoverzicht, Gemeentenieuws, Stukken ter Inzage, Bekendmakingen, Kalender, Online nieuwsbrieven). Er staat verder niets uit groep 2 op: geen teaserafbeeldingen, tabel, video, iframe, formulier of PDF-link. Het logo is heuvelruglogo.jpg met een lege alt. De hero is cultuurhuis_pleiade.jpg met een lege alt. De kop \"Actueel\" staat op het groene vlak naast de foto en niet op de foto zelf."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/nieuws-en-meer",
+   "titel": "Nieuws en meer",
+   "soort": "overzichtspagina (nieuws)",
+   "gebieden": [
+    "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten",
+    "Teaser- of kaartafbeeldingen in een overzicht",
+    "Afbeelding met tekst erin — 1.4.5",
+    "Iconen zonder tekst ernaast",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero-overlay met h1 + kruimelpad + intro met zijblok 'Snel naar' + kaartjes in drie kolommen (afbeelding, titel, datum) + paginering",
+   "gehydrateerd": true,
+   "opmerking": "Hero is een ContentHeroOverlay: de h1 'Nieuws en meer' staat over een beeldlaag (bos01.jpg plus Tekengebied 1 v3.svg, beide alt=\"\"), op het teal vlak. De teaserafbeelding 'Infographic resultaten DIFTAR 2025.jpg' heeft tekst in het beeld gebrand, met alt=\"\". Het pijltje 'Volgende pagina' in de paginering heeft alleen verborgen tekst. Kaartafbeeldingen staan niet in de link, want de link zit op de titel. Er staat geen tabel, video of PDF-link in de main."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/gemeentenieuws",
+   "titel": "Gemeentenieuws",
+   "soort": "documentenoverzicht",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst",
+    "Foto in de lopende tekst"
+   ],
+   "sjabloon": "kruimelpad + kop + reeks blokken (h2 + ul met één documentlink met bestandstype en grootte) + uitgelicht tekstblok met afbeelding ernaast + tekstblok nieuwsbrief",
+   "gehydrateerd": true,
+   "opmerking": "Er staan 11 PDF's op de pagina, bijvoorbeeld \"Gemeente Heuvelrug WK39-2026.pdf\". Het zijn krantenpagina's, specials en één infographic (\"Juni jaarrekening 2025 Infographic\", een PDF). Als tweede PDF van een andere soort telt dit dus nauwelijks: het zijn bijna allemaal krantenpagina's. De enige afbeelding staat in een uitgelicht blok naast de tekst over De Kaap, met alt=\"Afbeelding homepage\". Het is geen hero en het is niet bekend of hij informatie draagt. Verder zijn er geen svg, iframe, tabel, video of formulier in de main. De lijsten zijn ul-elementen met elk één documentlink, zonder nesting."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/werkzaamheden",
+   "titel": "Werkzaamheden",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero-balk in effen kleur zonder afbeelding + kruimelpad + intro met call-to-action-knop + zijbalk met tekstblok + boxlinks-kaartjes (ul, drie kolommen, zonder afbeeldingen)",
+   "gehydrateerd": true,
+   "opmerking": "De hero heeft geen afbeelding: het vak ContentHeroOverlay imageWrapper is leeg. De kaartjes zijn een ul van vijf li-items met alleen tekst, zonder img of svg. Er staat dus geen teaserafbeelding op; alleen de lijst telt, niet genest. De kaart met werkzaamheden staat niet op deze pagina. Hij opent via een externe link naar bereikbaarheid.andes.nl en zit niet in een iframe. Het eerste kaartje, \"Vervanging bruggen Fuut en Waterhoen Driebergen\", heeft zijn titel in een div; de andere vier hebben een h2."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/online-nieuwsbrieven",
+   "titel": "Online nieuwsbrieven",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + brede headerafbeelding met introtekst in wit vak half eroverheen + drie omkaderde blokken (kop als externe link + alinea met link), afwisselende achtergrondbanden",
+   "gehydrateerd": true,
+   "opmerking": "De headerafbeelding (nieuwsbrieven_2.jpg, alt=\"\") heeft zelf geen tekst. De introtekst staat in een wit vak dat half over de foto valt, dus het contrast wordt gemeten tegen wit en niet tegen de foto. Daarom is gebied 4 (tekst over een hero) niet opgegeven. De drie blokken linken naar aanmeldformulieren van Mailchimp (eepurl.com) op een extern domein. Op deze pagina zelf staat geen formulier, geen tabel en geen iframe."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/aanvragen-en-regelen",
+   "titel": "Aanvragen en regelen",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero (kop links op vlak, foto rechts) + kruimelpad + tegels met alleen tekst in drie kolommen",
+   "gehydrateerd": true,
+   "opmerking": "De hero is een foto met alt=\"\" (chalet_helenaheuvel_-_kaapse_bossen_1194.jpg) plus een decoratieve svg-overlay. De kop \"Aanvragen en regelen\" staat op het effen groene vlak ernaast en niet over de foto. De negen doorklikkers staan in één ul, zonder geneste lijst, en de tegels hebben geen afbeeldingen, dus teaserafbeeldingen komen hier niet voor. Verder staat er niets op: geen tabel, geen media, geen formulier, geen PDF-links en geen accordeon."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/burgerzaken",
+   "titel": "Burgerzaken",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero (kop op effen vlak + foto rechts) + kruimelpad + introalinea + lijst met doorklikkaartjes in drie kolommen zonder afbeeldingen",
+   "gehydrateerd": true,
+   "opmerking": "De hero is de foto gemeente-utrechtse-heuvelrug-balie-burgerzaken-3-1.jpg met alt=\"\". De kop \"Burgerzaken\" staat op het effen groene vlak naast de foto, dus niet over de foto heen. De lijst is één platte ul (SubmenuThreeColumns) met acht doorklikkers en zonder geneste lijst. De kaartjes hebben geen afbeeldingen, dus het gebied teaser- of kaartafbeeldingen geldt hier niet. Het decoratieve lijnvlak \"Tekengebied 1 v3.svg\" (alt=\"\") is geen apart gebied. Er staan geen tabel, video, iframe, formulier of PDF-links op deze pagina."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/paspoort-id-kaart-en-rijbewijs",
+   "titel": "Paspoort, ID-kaart en rijbewijs",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero (kop op gekleurd vlak + foto op halve breedte) + kruimelpad + introalinea + tegels zonder afbeelding in drie kolommen (ul SubmenuThreeColumns)",
+   "gehydrateerd": true,
+   "opmerking": "Er staat een hero-foto op (kcc_uitreiken_paspoort_0.jpg, alt=\"\"). Er is geen tekst in gebrand. De h1 staat op het gekleurde vlak ernaast en niet op de foto, maar ligt wel onder een decoratieve svg-overlay met lijnen (Tekengebied 1 v3.svg). Een contrastmeting op de beeldpunten achter de kop kan daarom zinvol zijn. De zeven tegels (Paspoort, Rijbewijs, enzovoort) zijn doorklikkers zonder afbeelding, dus geen teaserafbeeldingen. Er staan geen tabel, video, formulier, PDF-link of accordeon in de main. get-html haalde alleen de main op; het logo staat in de header van het sjabloon."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/paspoort",
+   "titel": "Paspoort",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + intro + tussenkoppen met lopende tekst en opsomming + twee afspraaklinks + zes uitklapblokken (details) + slotsectie met kop",
+   "gehydrateerd": true,
+   "opmerking": "Uitklapblokken zijn zes details-elementen (\"Paspoort voor kinderen tot 18 jaar\", \"Kosten 2026\", \"Reizen met kinderen\", \"Paspoort kwijt of gestolen\", \"Spoedaanvraag\", \"Zakenpaspoort of tweede paspoort\"). Hun inhoud staat wel in de code. In main staan geen img, svg, table, iframe, video of PDF-links. De lijsten zijn niet genest. De afspraaklinks gaan naar heuvelrug.mijnafspraakmaken.nl. Dat is een aparte boekingsmodule en valt niet onder deze pagina. In het uitklapblok staat een e-maillink \"postbusbz@heuvelrug.nl\" met href=\"/#\". Dat is een kapotte koppeling, dus een technisch issue en geen WCAG-bevinding."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/verhuizing-doorgeven",
+   "titel": "Verhuizing doorgeven",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + lopende tekst met h2/h3-secties, opsommingslijsten en call-to-action-knoppen naar extern loket",
+   "gehydrateerd": true,
+   "opmerking": "Alleen lijsten gevonden: 5 platte ul-lijsten, geen geneste lijst. In de main staan geen img, svg, tabel, iframe, video, figure of citaat. Het enige element met aria-expanded is de ReadSpeaker-menuknop, dus er is geen accordeon. De twee call-to-action-links (\"Verhuizing naar onze gemeente doorgeven\" en \"Verhuizing naar een instelling doorgeven\") leiden naar het externe formulier op iburgerzaken.heuvelrug.nl. Dat formulier staat niet op deze pagina en is daarom niet als gebied opgegeven. Het is wel een kandidaat voor \"Formulier\" en \"Pagina met een eigen sjabloon\" als het in scope valt."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/uittreksel-basisregistratie-personen-brp",
+   "titel": "Uittreksel Basisregistratie Personen (BRP)",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknoppen + tekstblokken met h2 en ongenummerde lijsten + rij call-to-action-knoppen + uitklapblokken (details/summary met h2)",
+   "gehydrateerd": true,
+   "opmerking": "Er staan geen img- of svg-elementen in de hoofdinhoud, dus deze pagina heeft geen beeldgebieden. De lijsten zijn enkelvoudig: er zit geen geneste lijst in. De drie uitklapblokken zijn details-elementen (\"Machtigen\", \"Meertalig uittreksel/internationaal uittreksel\", \"Uittreksel Registratie Niet-Ingezetenen (RNI)\"). Hun inhoud staat al in de HTML. De knoppen \"Uittreksel aanvragen\" en \"Uittreksel BRP-bevoegde organisatie\" gaan naar een formulier op iburgerzaken.heuvelrug.nl, en \"Afspraak maken\" gaat naar heuvelrug.mijnafspraakmaken.nl. Die formulieren staan dus niet op deze pagina. Als je formulier of eigen sjabloon wilt dekken, zijn die aanvraagmodules zelf kandidaten."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/geboorteaangifte",
+   "titel": "Geboorteaangifte",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + tekstparagrafen met h2/h3-tussenkoppen en opsommingen + call-to-actionknop naar extern portaal",
+   "gehydrateerd": true,
+   "opmerking": "Alleen platte lijsten (4 ul, niet genest), bijv. \"Iedere persoon die aanwezig was bij de geboorte\". Geen img, svg, iframe, tabel, video, accordeon of PDF-link in de main. De knop \"Online geboorteaangifte\" linkt naar iburgerzaken.heuvelrug.nl (StartGeboorte), een eigen sjabloon (gebied 28) dat niet op deze pagina zelf staat. Wil de onderzoeker dat gebied dekken, dan is die portaal-URL een aparte kandidaat."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/trouwen-en-geregistreerd-partnerschap",
+   "titel": "Trouwen en geregistreerd partnerschap",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero (kop op vlak + foto half) + kruimelpad + tegels zonder afbeelding in drie kolommen + blok \"Direct regelen\" met één link",
+   "gehydrateerd": true,
+   "opmerking": "Het gebied \"Hero zonder tekst\" is Trouwringen.jpg met alt=\"\". De kop staat op het groene vlak ernaast en niet over de foto heen. Het gebied \"Lijst\" is een ul met 11 li. Dat zijn tegels die doorklikken naar subpagina's, dus die lijst heeft de rol van een overzicht. De tegels hebben geen afbeelding, dus teaserafbeeldingen staan er niet op. Onder \"Direct regelen\" staat de link \"Huwelijk of geregistreerd partnerschap melden\". Die gaat naar iburgerzaken.heuvelrug.nl, dus het formulier staat op een ander domein en niet op deze pagina. Op de pagina zelf staan geen tabel, video, PDF, formulier, accordeon of iframe."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/welke-ceremonie-wilt-u",
+   "titel": "Welke ceremonie wilt u?",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknoppen + intro-alinea + genummerde lijst met lange tekstitems",
+   "gehydrateerd": true,
+   "opmerking": "Het is een kale tekstpagina. De inhoud bestaat uit één alinea en een genummerde lijst (ol) met drie soorten ceremonies. De lijst is niet genest. Er staan geen afbeeldingen, svg's, tabellen, iframes, media of formulieren in de hoofdinhoud. Er staat ook geen link in, behalve die in het kruimelpad. Het enige dichtgeklapte element is de suggestielijst van de zoekfunctie, en die valt buiten de dekking."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/overlijden",
+   "titel": "Overlijden",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero met tekst eroverheen",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero-overlay met h1 + kruimelpad + intro + tegels met doorklikkers in drie kolommen (ul) + blok 'Meer informatie' met lijst externe links",
+   "gehydrateerd": true,
+   "opmerking": "Hero: de h1 staat in ContentHeroOverlay boven een foto (_mg_8455donker_0.jpg, alt=\"\") en een decoratieve svg (Tekengebied 1 v3.svg, alt=\"\"). Op de schermafdruk is de foto bijna helemaal bedekt door een groen vlak. Je ziet hem alleen als smalle rand rechtsboven. Of de kop echt over beeldpunten van de foto staat, moet dus met get-pixelcontrast worden vastgesteld. Er staan geen tabel, video, formulier en PDF op de pagina. De drie links onder 'Meer informatie' gaan naar lokaleregelgeving.overheid.nl (CVDR), niet naar PDF-bestanden. De tegels zijn alleen tekst, zonder teaserafbeeldingen."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/begraafplaats-doorn",
+   "titel": "Begraafplaats Doorn",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + tekstsecties met h2/h3 in wisselende achtergrondbanden + gekleurd zijblok (adres) naast eerste sectie + opsommingslijsten",
+   "gehydrateerd": true,
+   "opmerking": "De hoofdinhoud bevat geen img, svg, iframe, tabel, video, formulier, uitklapblok of PDF-link. De enige lijsten zijn een ul met drie punten onder \"Cremeren\" (niet genest) en een ul met één punt (\"Doorn, Amersfoortseweg tegenover nummer 80\"). Het adresblok staat als gekleurd zijvak naast de tekst. Logo en sociale-media-iconen staan alleen in de sitebrede header en footer. Het ene dichtgeklapte element is de zoeksuggestielijst in de header."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/alles-over-afval",
+   "titel": "Alles over afval",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero (kop op gekleurd vlak + foto op halve breedte) + kruimelpad + intro-alinea + tegels zonder afbeelding in drie kolommen (ul, SubmenuThreeColumns)",
+   "gehydrateerd": true,
+   "opmerking": "Kan zijn dat het ook een technisch issue is: de telefoonlink \"033 - 47 96 312\" in de intro wijst naar href=\"/#\" en niet naar een tel:-adres. De hero-foto (vuilnisbak_0.jpg, alt=\"\") staat naast de kop en niet eronder; de h1 staat op een effen gekleurd vlak, dus er valt geen hero met tekst eroverheen onder. De tegels zijn een ul met alleen tekstlinks, zonder img of svg, dus er zijn geen teaserafbeeldingen. Verder geen tabel, video, formulier, accordeon of PDF-link in de main."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/huishoudelijk-afval",
+   "titel": "Huishoudelijk afval",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + intro + h2-secties met lopende tekst en één opsomming",
+   "gehydrateerd": true,
+   "opmerking": "Alleen tekst. De enige lijst staat onder \"Klacht over afvalinzameling\": twee punten, niet genest. In de main staan geen img, svg, figure, tabel, iframe, video, audio, formulier, accordeon of PDF-link. Het ene dichtgeklapte element is de suggestielijst van de zoekfunctie, en die valt buiten de dekkingslijst."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/afvalapp-en-afvalkalender",
+   "titel": "Afvalapp en afvalkalender",
+   "soort": "informatiepagina met formulier",
+   "gebieden": [
+    "Formulier — telt als één gebied, ongeacht het aantal stappen",
+    "Lijst, en geneste lijst",
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "kruimelpad + kop + formulierblok (postcode/huisnummer) + tekstsecties met tussenkoppen op wisselende achtergrond + lijst met documentlinks",
+   "gehydrateerd": true,
+   "opmerking": "De zes PDF's zijn allemaal van dezelfde soort: afvalkalenders 2026 per kern, bijvoorbeeld \"Afvalkalender Doorn 2026\". Voor het tweede PDF-exemplaar van een andere soort is dus een andere pagina nodig. Het formulier bevat ook twee verborgen honeypotvelden (\"Vul dit veld niet in.\"). Het PDF-pictogram bij de documentlinks staat niet als img of svg in de code, dus ik heb geen \"afbeelding in een link\" opgegeven."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/afvalkalender_doorn_2026_0.pdf?cb=MvCiQzzo",
+   "titel": "Afvalkalender Doorn 2026",
+   "soort": "pdf-folder",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-document (afvalkalender per kern, jaarversie)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald (PDF): de soort komt alleen uit de bestandsnaam afvalkalender_doorn_2026_0.pdf. Het is een kalender of folder, geen besluit of nota. Waarschijnlijk staat er een tabel of een kalenderraster in, maar dat is niet gezien. Er zijn vermoedelijk meer kalenders per kern ('_0', Doorn), dus neem er voor de tweede PDF een van een ander soort. 'gehydrateerd' is niet gemeten."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/grofvuil",
+   "titel": "Grofvuil",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Tabel",
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + tekstblokken met tussenkoppen in wisselende achtergrondvlakken + opsommingslijsten + uitklapblok onderaan",
+   "gehydrateerd": true,
+   "opmerking": "De tabel zit in het uitklapblok \"Overzicht van soorten (grof) afval dat wij niet als grofvuil meenemen\" (details, standaard dicht). Hij heeft een caption en th scope=\"col\". Er zijn twee ul-lijsten (\"Hoe werkt het\" en \"Goed om te weten\"), maar geen geneste lijst. In de main-content staan geen afbeeldingen, pdf-links of iframes."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/wat-mag-ik-inleveren-bij-de-milieustraat",
+   "titel": "Wat mag ik inleveren bij de milieustraat?",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Tabel",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + intro + opsomming + tussenkoppen met scrollbare tabellen (lijsten in tabelcellen) + lopende tekst met lijst",
+   "gehydrateerd": true,
+   "opmerking": "Tabellen: drie datatabellen (ScrollableTable) onder Gratis inleveren, Betaald inleveren en Afval dat u niet in mag leveren. Lijsten: onder meer de lijst \"Maak vooraf een afspraak / Geef per bezoek maximaal 2 m3\", plus lijsten in tabelcellen (\"Gasflessen, brandblussers...\", \"gipsplaten, gasbeton...\"). Er is geen lijst die in een andere lijst genest is. In main staan geen img, svg, iframe, video, figure of PDF-links."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/belastingen",
+   "titel": "Belastingen",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + intro-alinea + opsomming + slotalinea met links",
+   "gehydrateerd": true,
+   "opmerking": "Het enige gebied uit groep 2 is een platte ul met acht belastingsoorten (\"de WOZ-waarde\" ... \"BedrijvenInvesteringsZone (BIZ)\"). Die lijst is niet genest. In main staan geen img, svg, tabel, iframe, video, figure of accordeon."
+  },
+  {
+   "url": "https://www.heuvelrug.nl/wonen",
+   "titel": "Wonen",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero (kop op effen vlak + foto rechts) + kruimelpad + introzin + tegelraster met doorklikkers in drie kolommen + blok \"Meer informatie\" met externe links in drie kolommen",
+   "gehydrateerd": true,
+   "opmerking": "Hero: foto driebergen_fiets_033a.jpg met alt=\"\" plus een decoratieve lijn-svg (Tekengebied 1 v3.svg, alt=\"\"). De kop \"Wonen\" staat op het effen groene vlak naast de foto, niet eroverheen, dus hij valt niet onder \"Hero met tekst eroverheen\". Lijsten: de 24 doorklikkers staan in een ul (SubmenuThreeColumns), de twee links onder \"Meer informatie\" in een tweede ul (ContentLinks). Geen van de tegels heeft een afbeelding, dus \"Teaser- of kaartafbeeldingen\" is niet van toepassing. Geen tabel, video, formulier, iframe, accordeon of PDF-link in main."
+  }
+ ],
+ "keuze": {
+  "samples": [
+   {
+    "url": "https://www.heuvelrug.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Iconen zonder tekst ernaast",
+     "Afbeelding met tekst erin — 1.4.5"
+    ],
+    "waarom": "De homepage gaat er altijd in. Dekt in één keer het logo, de hero zonder tekst, de nieuwskaartjes met afbeelding en datum, en de sociale-media-pictogrammen die hun tekst alleen in een verborgen span hebben."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/grofvuil",
+    "titel": "Grofvuil",
+    "type": "structured",
+    "gebieden": [
+     "Tabel",
+     "Accordeon of tabbladen",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Voegt de meeste ongedekte gebieden toe: een datatabel met caption en th scope binnen een uitklapblok, plus lijsten. De combinatie van tabel en uitklapblok komt nergens anders voor. De milieustraatpagina heeft meer tabellen, maar die zijn van dezelfde soort, en de paspoort- en BRP-pagina hebben hetzelfde details-uitklapblok zonder tabel."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/begraafplaats-doorn",
+    "titel": "Begraafplaats Doorn",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking uit de informatiepagina's. Voegt niets toe aan de dekking en is daarom gekozen. 1 van de 7 samples is ruim 10%."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/nieuws-en-meer",
+    "titel": "Nieuws en meer",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten",
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Afbeelding met tekst erin — 1.4.5",
+     "Iconen zonder tekst ernaast",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Dekt de hero met de h1 eroverheen (ContentHeroOverlay, contrast op de beeldpunten meten). Het is ook de beste plek voor de DIFTAR-infographic met tekst in beeld: niet bijgesneden zoals op de homepage. Verder staan er kaartjes met titel en datum en een pagineringspijl met alleen verborgen tekst."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/gemeentenieuws",
+    "titel": "Gemeentenieuws",
+    "type": "structured",
+    "gebieden": [
+     "Foto in de lopende tekst",
+     "PDF — twee stuks, verschillend van soort",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "De enige pagina met een foto naast lopende tekst (alt=\"Afbeelding homepage\" bij het blok over De Kaap). Het is ook de vindplaats van de tweede PDF, van een andere soort dan de afvalkalender."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+    "titel": "Contactformulier stap 1 - Introductie",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Formulier — telt als één gebied, ongeacht het aantal stappen",
+     "Pagina met een eigen sjabloon: portaal, boekingsmodule — 3.2.4"
+    ],
+    "waarom": "Door de klant aangedragen. Dekt het formulier en het eigen sjabloon van de formuliermodule, met een eigen header en een voortgangsbalk. Let op: dit is stap 1 van 4 (25%). Hij heeft geen invoervelden en was niet gehydrateerd. De volgende stappen horen er als losse samples bij, maar zijn nog niet bekeken."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Gemeente%20Heuvelrug%20WK39-2026.pdf?cb=XIetrT4c",
+    "titel": "Gemeentenieuws week 39-2026",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Eerste PDF: de wekelijkse gemeentepagina uit de krant, in meerkoloms krantenopmaak. De link staat op /gemeentenieuws. De titel komt uit de linktekst en moet door de onderzoeker bevestigd worden."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/afvalkalender_doorn_2026_0.pdf?cb=MvCiQzzo",
+    "titel": "Afvalkalender Doorn 2026",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Tweede PDF, een andere soort: een kalender en folder met vermoedelijk een raster of tabel, tegenover de krantenpagina. De zes afvalkalenders per kern zijn onderling gelijk, dus er gaat er één in."
+   }
+  ],
+  "nietGedekt": [
+   "Hero met tekst erin gebrand — 1.4.5",
+   "Afbeelding in een link of knop (behalve het logo): kaartafbeeldingen staan buiten de link en de PDF-pictogrammen staan niet als img of svg in de code",
+   "Complex beeld: schema, organogram, infographic. Niet als eigen gebied gezien. De DIFTAR-infographic staat alleen als teaser en 'Juni jaarrekening 2025 Infographic' alleen als PDF",
+   "Kaart of plattegrond als afbeelding",
+   "Afbeelding met een onderschrift, of in een figure",
+   "Fotogalerij",
+   "Poster of aankondiging",
+   "Grafiek of diagram met een legenda",
+   "Citaat",
+   "Anderstalig tekstfragment",
+   "Anderstalige pagina",
+   "Video met geluid: geen video gevonden, dus aan de eis van twee video's kan de site niet voldoen",
+   "Video zonder geluid, of een animerende GIF",
+   "Audio of podcast",
+   "Live uitzending",
+   "Iets dat uit zichzelf beweegt: geen slider of animatie gezien",
+   "Kaart in een iframe: de werkzaamhedenkaart opent extern via bereikbaarheid.andes.nl",
+   "Ander kader van een ander domein",
+   "Invulbaar PDF-formulier",
+   "Geneste lijst: alle lijsten zijn plat"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://www.heuvelrug.nl/inwoners-en-bezoekers",
+    "reden": "Hero met tekst eroverheen is al gedekt door Nieuws en meer, dat hetzelfde sjabloon heeft en rijker is"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/overlijden",
+    "reden": "Zelfde hero-overlay als Nieuws en meer, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/ondernemers",
+    "reden": "Logo, hero zonder tekst en lijst zijn al gedekt"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/over-de-gemeente",
+    "reden": "Zelfde sjabloon als de andere overzichtspagina's (hero naast de kop, tegels zonder afbeelding), dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/contact",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/actueel",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/aanvragen-en-regelen",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/burgerzaken",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/paspoort-id-kaart-en-rijbewijs",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/trouwen-en-geregistreerd-partnerschap",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/alles-over-afval",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws. De telefoonlink met href=\"/#\" is een technisch issue"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/wonen",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/werkzaamheden",
+    "reden": "Alleen een lijst, die is al gedekt"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/online-nieuwsbrieven",
+    "reden": "Alleen een hero zonder tekst, die is al gedekt"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/paspoort",
+    "reden": "Zelfde details-uitklapblok als Grofvuil, zonder de tabel. Het e-mailadres met href=\"/#\" is een technisch issue"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/uittreksel-basisregistratie-personen-brp",
+    "reden": "Zelfde details-uitklapblok als Grofvuil, zonder de tabel"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/wat-mag-ik-inleveren-bij-de-milieustraat",
+    "reden": "De tabel is al gedekt door Grofvuil. Drie tabellen van dezelfde soort zijn geen extra dekking"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/afvalapp-en-afvalkalender",
+    "reden": "Formulier, lijst en PDF zijn al gedekt. Het is wel de enige bekeken pagina met echte invoervelden en blijft een kandidaat als de onderzoeker het formulier op het sitesjabloon apart wil zien"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/verhuizing-doorgeven",
+    "reden": "Alleen lijsten, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/geboorteaangifte",
+    "reden": "Alleen lijsten, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/welke-ceremonie-wilt-u",
+    "reden": "Alleen een lijst, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/huishoudelijk-afval",
+    "reden": "Alleen een lijst, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/belastingen",
+    "reden": "Alleen een lijst, dekt niets nieuws"
+   }
+  ],
+  "toelichting": "heuvelrug.nl draait bijna helemaal op twee SIMsite-sjablonen: overzichtspagina's met een hero naast de kop en tegels zonder afbeelding, en informatiepagina's met tekst, lijsten en soms een uitklapblok. Daarom dekken 5 pagina's en 2 PDF's alles wat er te vinden is. Er zijn geen video's, dus de eis van twee video's kan niet worden gehaald. Van het contactformulier is alleen stap 1 gezien: die heeft geen velden en de JavaScript draaide niet. Neem de volgende stappen daarom als losse samples op na een doorloop in de auditsessie. De aanvraagportalen op iburgerzaken.heuvelrug.nl en heuvelrug.mijnafspraakmaken.nl zijn eigen sjablonen buiten dit domein. Of ze in scope vallen, beslist de onderzoeker."
+ },
+ "eindresultaat": {
+  "drooglopen": true,
+  "startUrl": "https://www.heuvelrug.nl/",
+  "bron": "sitemap",
+  "bekeken": 30,
+  "voorstel": [
+   {
+    "url": "https://www.heuvelrug.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Iconen zonder tekst ernaast",
+     "Afbeelding met tekst erin — 1.4.5"
+    ],
+    "waarom": "De homepage gaat er altijd in. Dekt in één keer het logo, de hero zonder tekst, de nieuwskaartjes met afbeelding en datum, en de sociale-media-pictogrammen die hun tekst alleen in een verborgen span hebben."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/grofvuil",
+    "titel": "Grofvuil",
+    "type": "structured",
+    "gebieden": [
+     "Tabel",
+     "Accordeon of tabbladen",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Voegt de meeste ongedekte gebieden toe: een datatabel met caption en th scope binnen een uitklapblok, plus lijsten. De combinatie van tabel en uitklapblok komt nergens anders voor. De milieustraatpagina heeft meer tabellen, maar die zijn van dezelfde soort, en de paspoort- en BRP-pagina hebben hetzelfde details-uitklapblok zonder tabel."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/begraafplaats-doorn",
+    "titel": "Begraafplaats Doorn",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking uit de informatiepagina's. Voegt niets toe aan de dekking en is daarom gekozen. 1 van de 7 samples is ruim 10%."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/nieuws-en-meer",
+    "titel": "Nieuws en meer",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten",
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Afbeelding met tekst erin — 1.4.5",
+     "Iconen zonder tekst ernaast",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Dekt de hero met de h1 eroverheen (ContentHeroOverlay, contrast op de beeldpunten meten). Het is ook de beste plek voor de DIFTAR-infographic met tekst in beeld: niet bijgesneden zoals op de homepage. Verder staan er kaartjes met titel en datum en een pagineringspijl met alleen verborgen tekst."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/gemeentenieuws",
+    "titel": "Gemeentenieuws",
+    "type": "structured",
+    "gebieden": [
+     "Foto in de lopende tekst",
+     "PDF — twee stuks, verschillend van soort",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "De enige pagina met een foto naast lopende tekst (alt=\"Afbeelding homepage\" bij het blok over De Kaap). Het is ook de vindplaats van de tweede PDF, van een andere soort dan de afvalkalender."
+   },
+   {
+    "url": "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+    "titel": "Contactformulier stap 1 - Introductie",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Formulier — telt als één gebied, ongeacht het aantal stappen",
+     "Pagina met een eigen sjabloon: portaal, boekingsmodule — 3.2.4"
+    ],
+    "waarom": "Door de klant aangedragen. Dekt het formulier en het eigen sjabloon van de formuliermodule, met een eigen header en een voortgangsbalk. Let op: dit is stap 1 van 4 (25%). Hij heeft geen invoervelden en was niet gehydrateerd. De volgende stappen horen er als losse samples bij, maar zijn nog niet bekeken."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Gemeente%20Heuvelrug%20WK39-2026.pdf?cb=XIetrT4c",
+    "titel": "Gemeentenieuws week 39-2026",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Eerste PDF: de wekelijkse gemeentepagina uit de krant, in meerkoloms krantenopmaak. De link staat op /gemeentenieuws. De titel komt uit de linktekst en moet door de onderzoeker bevestigd worden."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/afvalkalender_doorn_2026_0.pdf?cb=MvCiQzzo",
+    "titel": "Afvalkalender Doorn 2026",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Tweede PDF, een andere soort: een kalender en folder met vermoedelijk een raster of tabel, tegenover de krantenpagina. De zes afvalkalenders per kern zijn onderling gelijk, dus er gaat er één in."
+   }
+  ],
+  "nietGedekt": [
+   "Hero met tekst erin gebrand — 1.4.5",
+   "Afbeelding in een link of knop (behalve het logo): kaartafbeeldingen staan buiten de link en de PDF-pictogrammen staan niet als img of svg in de code",
+   "Complex beeld: schema, organogram, infographic. Niet als eigen gebied gezien. De DIFTAR-infographic staat alleen als teaser en 'Juni jaarrekening 2025 Infographic' alleen als PDF",
+   "Kaart of plattegrond als afbeelding",
+   "Afbeelding met een onderschrift, of in een figure",
+   "Fotogalerij",
+   "Poster of aankondiging",
+   "Grafiek of diagram met een legenda",
+   "Citaat",
+   "Anderstalig tekstfragment",
+   "Anderstalige pagina",
+   "Video met geluid: geen video gevonden, dus aan de eis van twee video's kan de site niet voldoen",
+   "Video zonder geluid, of een animerende GIF",
+   "Audio of podcast",
+   "Live uitzending",
+   "Iets dat uit zichzelf beweegt: geen slider of animatie gezien",
+   "Kaart in een iframe: de werkzaamhedenkaart opent extern via bereikbaarheid.andes.nl",
+   "Ander kader van een ander domein",
+   "Invulbaar PDF-formulier",
+   "Geneste lijst: alle lijsten zijn plat"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://www.heuvelrug.nl/inwoners-en-bezoekers",
+    "reden": "Hero met tekst eroverheen is al gedekt door Nieuws en meer, dat hetzelfde sjabloon heeft en rijker is"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/overlijden",
+    "reden": "Zelfde hero-overlay als Nieuws en meer, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/ondernemers",
+    "reden": "Logo, hero zonder tekst en lijst zijn al gedekt"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/over-de-gemeente",
+    "reden": "Zelfde sjabloon als de andere overzichtspagina's (hero naast de kop, tegels zonder afbeelding), dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/contact",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/actueel",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/aanvragen-en-regelen",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/burgerzaken",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/paspoort-id-kaart-en-rijbewijs",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/trouwen-en-geregistreerd-partnerschap",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/alles-over-afval",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws. De telefoonlink met href=\"/#\" is een technisch issue"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/wonen",
+    "reden": "Zelfde overzichtssjabloon, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/werkzaamheden",
+    "reden": "Alleen een lijst, die is al gedekt"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/online-nieuwsbrieven",
+    "reden": "Alleen een hero zonder tekst, die is al gedekt"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/paspoort",
+    "reden": "Zelfde details-uitklapblok als Grofvuil, zonder de tabel. Het e-mailadres met href=\"/#\" is een technisch issue"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/uittreksel-basisregistratie-personen-brp",
+    "reden": "Zelfde details-uitklapblok als Grofvuil, zonder de tabel"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/wat-mag-ik-inleveren-bij-de-milieustraat",
+    "reden": "De tabel is al gedekt door Grofvuil. Drie tabellen van dezelfde soort zijn geen extra dekking"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/afvalapp-en-afvalkalender",
+    "reden": "Formulier, lijst en PDF zijn al gedekt. Het is wel de enige bekeken pagina met echte invoervelden en blijft een kandidaat als de onderzoeker het formulier op het sitesjabloon apart wil zien"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/verhuizing-doorgeven",
+    "reden": "Alleen lijsten, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/geboorteaangifte",
+    "reden": "Alleen lijsten, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/welke-ceremonie-wilt-u",
+    "reden": "Alleen een lijst, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/huishoudelijk-afval",
+    "reden": "Alleen een lijst, dekt niets nieuws"
+   },
+   {
+    "url": "https://www.heuvelrug.nl/belastingen",
+    "reden": "Alleen een lijst, dekt niets nieuws"
+   }
+  ],
+  "randomPercentage": 13,
+  "toelichting": "heuvelrug.nl draait bijna helemaal op twee SIMsite-sjablonen: overzichtspagina's met een hero naast de kop en tegels zonder afbeelding, en informatiepagina's met tekst, lijsten en soms een uitklapblok. Daarom dekken 5 pagina's en 2 PDF's alles wat er te vinden is. Er zijn geen video's, dus de eis van twee video's kan niet worden gehaald. Van het contactformulier is alleen stap 1 gezien: die heeft geen velden en de JavaScript draaide niet. Neem de volgende stappen daarom als losse samples op na een doorloop in de auditsessie. De aanvraagportalen op iburgerzaken.heuvelrug.nl en heuvelrug.mijnafspraakmaken.nl zijn eigen sjablonen buiten dit domein. Of ze in scope vallen, beslist de onderzoeker."
+ },
+ "logs": [
+  "WCAG 2.2 AA deelonderzoek content website met formulieren op https://www.heuvelrug.nl/",
+  "De klant heeft 1 pagina's aangedragen; die gaan sowieso mee.",
+  "90 kandidaten via sitemap. De sitemap (https://www.heuvelrug.nl/sitemap.xml, geen index) bevat 579 adressen, allemaal plat onder de root. Twee ervan vallen af: /home is dubbel met / en /node/7202 geeft 404. Van de 577 die overblijven heb ik er 86 geselecteerd, verdeeld over de thema's (burgerzaken, afval, bouwen en wonen, subsidies, zorg, veiligheid, duurzaamheid, natuur en dieren, dorpen en projecten, bestuur, nieuws, vacatures, service en cultuur). De overige 491 heb ik laten liggen. Daarnaast staan in de lijst het contactformulier dat de klant aandroeg en drie PDF's die van pagina's van de site gelinkt zijn: de afvalkalender van Doorn, het warmteprogramma en het addendum op de woonzorgvisie. Die PDF's staan op het CDN van SIMsite (cuatro.sim-cdn.nl/heuvelrug) en dus niet op het domein van de site zelf. Het contactformulier geeft eerst een 302 die naar zichzelf terugverwijst, waarschijnlijk om een cookie te zetten.",
+  "Ik bekijk er 30 van de 90. De rest blijft ongezien; verhoog args.maxKandidaten als dat te weinig is.",
+  "LET OP: 1 pagina's laadden hun JavaScript niet. Daar kloppen de waarnemingen mogelijk niet.",
+  "30 pagina's bekeken.",
+  "8 samples gekozen, 1 random (13%). heuvelrug.nl draait bijna helemaal op twee SIMsite-sjablonen: overzichtspagina's met een hero naast de kop en tegels zonder afbeelding, en informatiepagina's met tekst, lijsten en soms een uitklapblok. Daarom dekken 5 pagina's en 2 PDF's alles wat er te vinden is. Er zijn geen video's, dus de eis van twee video's kan niet worden gehaald. Van het contactformulier is alleen stap 1 gezien: die heeft geen velden en de JavaScript draaide niet. Neem de volgende stappen daarom als losse samples op na een doorloop in de auditsessie. De aanvraagportalen op iburgerzaken.heuvelrug.nl en heuvelrug.mijnafspraakmaken.nl zijn eigen sjablonen buiten dit domein. Of ze in scope vallen, beslist de onderzoeker.",
+  "Niet op deze site: Hero met tekst erin gebrand — 1.4.5, Afbeelding in een link of knop (behalve het logo): kaartafbeeldingen staan buiten de link en de PDF-pictogrammen staan niet als img of svg in de code, Complex beeld: schema, organogram, infographic. Niet als eigen gebied gezien. De DIFTAR-infographic staat alleen als teaser en 'Juni jaarrekening 2025 Infographic' alleen als PDF, Kaart of plattegrond als afbeelding, Afbeelding met een onderschrift, of in een figure, Fotogalerij, Poster of aankondiging, Grafiek of diagram met een legenda, Citaat, Anderstalig tekstfragment, Anderstalige pagina, Video met geluid: geen video gevonden, dus aan de eis van twee video's kan de site niet voldoen, Video zonder geluid, of een animerende GIF, Audio of podcast, Live uitzending, Iets dat uit zichzelf beweegt: geen slider of animatie gezien, Kaart in een iframe: de werkzaamhedenkaart opent extern via bereikbaarheid.andes.nl, Ander kader van een ander domein, Invulbaar PDF-formulier, Geneste lijst: alle lijsten zijn plat."
+ ],
+ "gebruik": {
+  "agents": 33,
+  "tokens": 3009977,
+  "toolCalls": 194
+ }
+}

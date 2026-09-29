@@ -1,0 +1,97 @@
+{
+  "toelichting": "Beoordelingsset fase 4. Pagina's krijgen paginarol + dienstverlening, en livestream als er een video is vastgesteld. 'afbeeldingenVan' = pagina's waarvan de redactionele afbeeldingen de beeldvraag krijgen (max 3 per pagina). 'documenten' = PDF's; 'waarom' zegt of de vraag volgens de regel gesteld wordt of als controlevoorbeeld. 'clusterproef' = pagina's voor de proefvraag afwijkend_in_cluster (drempel 0,80). Dezelfde set kan later aan een andere aanbieder worden voorgelegd.",
+  "projecten": {
+    "63b4b0ef-a86c-4bc3-939a-45a5a454e23d": {
+      "kenmerk": "LEU-01",
+      "paginas": [
+        "https://www.leudal.nl/",
+        "https://www.leudal.nl/paspoort-aanvragen",
+        "https://www.leudal.nl/openingstijden-gemeente-leudal",
+        "https://www.leudal.nl/nieuws",
+        "https://www.leudal.nl/video-wethouders-stellen-zich-voor",
+        "https://www.leudal.nl/trainees",
+        "https://www.leudal.nl/zorgfraude",
+        "https://www.leudal.nl/eherkenning",
+        "https://www.leudal.nl/bestuur",
+        "https://www.leudal.nl/strooiroute-a-ell-hunsel-ittervoort-haler-neeritter",
+        "https://www.leudal.nl/startersevent",
+        "https://www.leudal.nl/form/aanmeldformulier-leudal-business-11-juni-2026/leudal-business-0",
+        "https://www.leudal.nl/openbare-ruimte-melding",
+        "https://www.leudal.nl/accommodatiebeleid",
+        "https://www.leudal.nl/afkoppeling-hemelwater",
+        "https://www.leudal.nl/drs-m-michel-graef"
+      ],
+      "afbeeldingenVan": [
+        "https://www.leudal.nl/openbare-ruimte-melding",
+        "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+        "https://www.leudal.nl/trainees",
+        "https://www.leudal.nl/omgevingswet"
+      ],
+      "documenten": [
+        { "url": "https://cuatro.sim-cdn.nl/leudal/uploads/gr2026_18032026_na31-2_bijlage_1_7._la_rochelle_0.pdf", "waarom": "regel" },
+        { "url": "https://cuatro.sim-cdn.nl/leudal/uploads/inspectie-content-leudalbestuurlijkeinformatienl-10-2025.pdf", "waarom": "regel" },
+        { "zoek": "2025 Aanvraagformulier uitvoeringsbudget sport", "waarom": "regel" },
+        { "zoek": "Akkoordverklaring vrije trouwlocatie", "waarom": "regel" },
+        { "zoek": "advies_dd._17_augustus_2023", "waarom": "beoordelingsset" },
+        { "zoek": "resultaten_naar_aanleiding_van_gezondheidsmonitoren", "waarom": "beoordelingsset" },
+        { "zoek": "energiekansenkaart", "waarom": "beoordelingsset" }
+      ],
+      "clusterproef": [
+        "https://www.leudal.nl/zorgfraude",
+        "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+        "https://www.leudal.nl/beschermd-wonen-wmo"
+      ]
+    },
+    "9d8d3b8c-2675-4603-b6b6-01125bf9b024": {
+      "kenmerk": "UTHEU-01",
+      "paginas": [
+        "https://www.heuvelrug.nl/",
+        "https://www.heuvelrug.nl/bomen-kappen",
+        "https://www.heuvelrug.nl/grofvuil",
+        "https://www.heuvelrug.nl/nieuws-en-meer",
+        "https://www.heuvelrug.nl/aanvragen-en-vergunningen-week-34-2026",
+        "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+        "https://www.heuvelrug.nl/contact",
+        "https://www.heuvelrug.nl/omgevingsvergunning",
+        "https://www.heuvelrug.nl/afvalapp-en-afvalkalender",
+        "https://www.heuvelrug.nl/rosarium",
+        "https://www.heuvelrug.nl/adviseur-business-continuity-management",
+        "https://www.heuvelrug.nl/commissie-bezwaarschriften-1",
+        "https://www.heuvelrug.nl/aan-de-slag-met-ambities-en-financieel-in-balans"
+      ],
+      "afbeeldingenVan": [
+        "https://www.heuvelrug.nl/bomen-kappen",
+        "https://www.heuvelrug.nl/omgevingsvergunning",
+        "https://www.heuvelrug.nl/bomen-en-beleid",
+        "https://www.heuvelrug.nl/anterieure-overeenkomst-kostenverhaal-ontwikkeling-perceel-rottegatsteeg-1a-maarsbergen",
+        "https://www.heuvelrug.nl/carolijn-selten"
+      ],
+      "documenten": [
+        { "zoek": "Beleidsregels aanvraag prioriteit transportcapaciteit", "waarom": "regel" },
+        { "zoek": "bijlage-bij-formulier-aangifte-briefadres", "waarom": "regel" },
+        { "zoek": "Informatiebrochure bezwaarschriften", "waarom": "beoordelingsset" },
+        { "zoek": "guh-warmteprogramma-2026-2035", "waarom": "beoordelingsset" }
+      ],
+      "clusterproef": [
+        "https://www.heuvelrug.nl/aanvragen-en-vergunningen-week-34-2026",
+        "https://www.heuvelrug.nl/openingstijden",
+        "https://www.heuvelrug.nl/duurzaam-bouwen"
+      ]
+    },
+    "f4bda4cd-7ff9-48dc-833a-256327fbc8f5": {
+      "kenmerk": "ZOET-01",
+      "paginas": [
+        "https://bo.zoetermeer.nl/",
+        "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+        "https://bo.zoetermeer.nl/omgevingsprogrammas",
+        "https://bo.zoetermeer.nl/wat-is-bo",
+        "https://bo.zoetermeer.nl/omgevingsvisie"
+      ],
+      "afbeeldingenVan": [],
+      "documenten": [
+        { "zoek": "Bijlage 5 - Beoogde beslispunten", "waarom": "regel" }
+      ],
+      "clusterproef": []
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+ "kenmerk": "LEU-01",
+ "projectId": "63b4b0ef-a86c-4bc3-939a-45a5a454e23d",
+ "opgehaald": "2026-09-28T12:53:07.214Z",
+ "toelichting": "Bestaande steekproef v1.0, ter referentie",
+ "samples": [
+  {
+   "titel": "Home",
+   "url": "https://www.leudal.nl/",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Logo, Hero- of headerafbeelding zonder tekst, Teaser- of kaartafbeeldingen in een overzicht, Iconen zonder tekst ernaast"
+  },
+  {
+   "titel": "Bladafval",
+   "url": "https://www.leudal.nl/bladafval",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Complex beeld: schema, organogram, infographic, Afbeelding met tekst erin — 1.4.5, Lijst, en geneste lijst, Accordeon of tabbladen, PDF — twee stuks, verschillend van soort"
+  },
+  {
+   "titel": "Gemeentelijke belastingen",
+   "url": "https://www.leudal.nl/gemeentelijke-belastingen",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten, Afbeelding in een link of knop (behalve het logo)"
+  },
+  {
+   "titel": "Paspoort aanvragen",
+   "url": "https://www.leudal.nl/paspoort-aanvragen",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Tabel, PDF — twee stuks, verschillend van soort"
+  },
+  {
+   "titel": "Onroerendezaakbelasting (OZB)",
+   "url": "https://www.leudal.nl/onroerendezaakbelasting-ozb",
+   "type": "random",
+   "vanAgent": true,
+   "beschrijving": "Gewone productpagina met alleen tekst"
+  },
+  {
+   "titel": "Afspraak in het gemeentehuis?",
+   "url": "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Afbeelding met een onderschrift, of in een figure, Foto in de lopende tekst"
+  },
+  {
+   "titel": "Openbare ruimte, melding",
+   "url": "https://www.leudal.nl/openbare-ruimte-melding",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Hero met tekst erin gebrand — 1.4.5, Lijst, en geneste lijst"
+  },
+  {
+   "titel": "Sneeuwroute 1 | Haler - Neeritter - Ittervoort - Hunsel - Ell",
+   "url": "https://www.leudal.nl/sneeuwroute-1-haler-neeritter-ittervoort-hunsel-ell",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Kaart in een iframe"
+  },
+  {
+   "titel": "PDF Infographic bladafval 2024",
+   "url": "https://cuatro.sim-cdn.nl/leudal/uploads/leudal_infographic_bladafval_2024.pdf?cb=kh9EBZ_s",
+   "type": "pdf",
+   "vanAgent": true,
+   "beschrijving": "PDF — twee stuks, verschillend van soort"
+  },
+  {
+   "titel": "PDF Toestemmingsformulier reisdocument minderjarige",
+   "url": "https://cuatro.sim-cdn.nl/leudal/uploads/Reisdocument%20minderjarige%2C%20aanvraag%20toestemming_25.pdf?cb=ugY9duWm",
+   "type": "pdf",
+   "vanAgent": true,
+   "beschrijving": "PDF — twee stuks, verschillend van soort, Invulbaar PDF-formulier — 4.1.2"
+  }
+ ]
+}

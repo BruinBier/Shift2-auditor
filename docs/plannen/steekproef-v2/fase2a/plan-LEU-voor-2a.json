@@ -1,0 +1,391 @@
+{
+  "inventarisId": "d871de47-c8dd-4091-9e43-4dcd89637d8a",
+  "config": {
+    "budget": 40,
+    "aandeelGespreid": 0.3,
+    "documentBudget": 12,
+    "maxDocumentMB": 25,
+    "seed": "shift2-v2"
+  },
+  "uitleg": {
+    "htmlKandidaten": 715,
+    "budget": 40,
+    "laagA": 1,
+    "gereserveerdVoorC": 12,
+    "laagB": 27,
+    "laagC": 12,
+    "stilBeschikbaar": 531,
+    "extra": 0
+  },
+  "paginas": [
+    {
+      "urlNorm": "https://www.leudal.nl/",
+      "laag": "A",
+      "redenen": [
+        "HOMEPAGE"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/maatschappelijk-actief-bonus-digid/toelichting-0-6",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/energiebespaar-brigade",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/res-noord-en-midden-limburg",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/kennismakingsbijeenkomst-met-fabrica-de-padel/meld-u-aan-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/openingstijden-gemeente-leudal",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/coalitieakkoord-2026-2030",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/melding-wmo/toelichting-0-1-1",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/persoonlijk-participatiebudget-pensioengerechtigden",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/accommodatiebeleid",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/aanvraag-starterslening/toelichting-0-6",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/rijbewijs-aanvragen-en-verlengen",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/rekenkamer",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/vragenformulier-briefadres/toelichting-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/reconstructie-tramstraat-maassenstraat-en-groenstraat-in-roggel",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING",
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/publicatie-volgordelijst-voor-prioriteit-transportcapaciteit-woningbouw-en-onderwijsprojecten-0",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/informatiebijeenkomst-vermogensopbouw-en-fiscale-verdeling/meld-u-aan-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/gemeentewerf-hunsel",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/protocol-integriteitschendingen",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/aanvraag-individuele-inkomenstoeslag-digid/toelichting-0-6",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/sportaccommodaties-en-velden-huren",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING",
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/collectieve-evenementenverzekering",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/vaststelling-subsidie/toelichting-0-5-1",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/paspoort-aanvragen",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING",
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/toegankelijkheidsverklaring",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/form/aanmeldformulier-leudal-business-11-juni-2026/leudal-business-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/receptie-gemeentehuis",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/denk-mee-over-de-speelplekken-in-neer-baexem-en-ell",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/ondersteuning-voor-verenigingen",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/subsidies/2",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/aanpassen-onjuiste-persoonsgegevens",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/omgevingswet",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/sneeuwroute-3-roggel-haelen-nunhem-neer",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/trainees",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/zorgfraude",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/interessante-websites",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/spandoek-ophangen",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/geheimhouden-persoonsgegevens",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/afval-milieu-en-duurzaamheid",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.leudal.nl/bijstand-voor-zelfstandigen-bbz",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    }
+  ],
+  "documenten": [
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/Z-24-164470-603259-%20Openbare%20besluitenlijst%20B&W%20d.d.%2014.10.2025.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/bodemkwaliteitskaart-limburg-noord-en-midden-2020-2029_0.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "folder"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/2025%20Aanvraagformulier%20uitvoeringsbudget%20sport%20en%20beweegakkoord%20Leudal.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "formulier"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/Coalitieprogramma%20RO%20en%20SV_0.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/gr2026_18032026_na31-2_bijlage_1_7._la_rochelle_0.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "overig"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/bijlage_2_resultaten_naar_aanleiding_van_gezondheidsmonitoren.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "verslag"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/Openbare%20besluitenlijst%20B&W%20d.d.%2008.09.2026.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/beleidskader-bijlage-4-energiekansenkaart.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "folder"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/Akkoordverklaring%20vrije%20trouwlocatie_9.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "formulier"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/advies_dd._17_augustus_2023_inzake_regionale_beleidsplan_sd_regio_midden_limburg_west.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/inspectie-content-leudalbestuurlijkeinformatienl-10-2025.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "overig"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/leudal/uploads/jaarverslag_griffie_2022.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "verslag"
+    }
+  ]
+}

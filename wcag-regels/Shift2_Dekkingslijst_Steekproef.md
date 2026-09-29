@@ -53,50 +53,50 @@ Geen stopcriterium. Wordt beoordeeld, maar stuurt de paginakeuze niet.
 
 ### Beeld
 
-1. Logo
-2. Hero- of headerafbeelding zonder tekst
-3. Hero met tekst erin gebrand — 1.4.5
-4. Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten
-5. Teaser- of kaartafbeeldingen in een overzicht
-6. Afbeelding in een link of knop (behalve het logo)
-7. Iconen zonder tekst ernaast
-8. Complex beeld: schema, organogram, infographic
-9. Kaart of plattegrond als afbeelding, met legenda
-10. Afbeelding met een onderschrift, of in een `figure`
-11. Foto in de lopende tekst
-12. Fotogalerij
-13. Poster of aankondiging
-14. Afbeelding met tekst erin — 1.4.5
-15. Grafiek of diagram met een legenda — 1.4.1 en 1.4.11
+1. Logo <!-- gebied: G01 -->
+2. Hero- of headerafbeelding zonder tekst <!-- gebied: G02 -->
+3. Hero met tekst erin gebrand — 1.4.5 <!-- gebied: G03 -->
+4. Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten <!-- gebied: G04 -->
+5. Teaser- of kaartafbeeldingen in een overzicht <!-- gebied: G05 -->
+6. Afbeelding in een link of knop (behalve het logo) <!-- gebied: G06 -->
+7. Iconen zonder tekst ernaast <!-- gebied: G07 -->
+8. Complex beeld: schema, organogram, infographic <!-- gebied: G08 -->
+9. Kaart of plattegrond als afbeelding, met legenda <!-- gebied: G09 -->
+10. Afbeelding met een onderschrift, of in een `figure` <!-- gebied: G10 -->
+11. Foto in de lopende tekst <!-- gebied: G11 -->
+12. Fotogalerij <!-- gebied: G12 -->
+13. Poster of aankondiging <!-- gebied: G13 -->
+14. Afbeelding met tekst erin — 1.4.5 <!-- gebied: G14 -->
+15. Grafiek of diagram met een legenda — 1.4.1 en 1.4.11 <!-- gebied: G15 -->
 
 ### Structuur
 
-16. Tabel
-17. Lijst, en geneste lijst
-18. Citaat
-19. Anderstalig tekstfragment — 3.1.2
-20. Anderstalige pagina — 3.1.1
+16. Tabel <!-- gebied: G16 -->
+17. Lijst, en geneste lijst <!-- gebied: G17 -->
+18. Citaat <!-- gebied: G18 -->
+19. Anderstalig tekstfragment — 3.1.2 <!-- gebied: G19 -->
+20. Anderstalige pagina — 3.1.1 <!-- gebied: G20 -->
 
 ### Media
 
-21. Video met geluid — twee stuks, onderling verschillend
-22. Video zonder geluid, of een animerende GIF
-23. Audio of podcast
-24. Live uitzending: raadsvergadering, webcam — 1.2.4
+21. Video met geluid — twee stuks, onderling verschillend <!-- gebied: G21 -->
+22. Video zonder geluid, of een animerende GIF <!-- gebied: G22 -->
+23. Audio of podcast <!-- gebied: G23 -->
+24. Live uitzending: raadsvergadering, webcam — 1.2.4 <!-- gebied: G24 -->
 
 ### Interactie
 
-25. Accordeon of tabbladen
-26. Formulier — telt als één gebied, ongeacht het aantal stappen
-27. Iets dat uit zichzelf beweegt: slider, teller, animatie — 2.2.2
-28. Pagina met een eigen sjabloon: portaal, boekingsmodule — 3.2.4
-29. Kaart in een iframe
-30. Ander kader van een ander domein
+25. Accordeon of tabbladen <!-- gebied: G25 -->
+26. Formulier — telt als één gebied, ongeacht het aantal stappen <!-- gebied: G26 -->
+27. Iets dat uit zichzelf beweegt: slider, teller, animatie — 2.2.2 <!-- gebied: G27 -->
+28. Pagina met een eigen sjabloon: portaal, boekingsmodule — 3.2.4 <!-- gebied: G28 -->
+29. Kaart in een iframe <!-- gebied: G29 -->
+30. Ander kader van een ander domein <!-- gebied: G30 -->
 
 ### Documenten
 
-31. PDF — twee stuks, verschillend van soort
-32. Invulbaar PDF-formulier — 4.1.2
+31. PDF — twee stuks, verschillend van soort <!-- gebied: G31 -->
+32. Invulbaar PDF-formulier — 4.1.2 <!-- gebied: G32 -->
 
 ---
 

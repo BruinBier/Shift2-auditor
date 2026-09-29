@@ -1,0 +1,50 @@
+{
+ "kenmerk": "ZOET-01",
+ "projectId": "f4bda4cd-7ff9-48dc-833a-256327fbc8f5",
+ "opgehaald": "2026-09-28T12:53:06.966Z",
+ "toelichting": "Bestaande steekproef v1.0, ter referentie",
+ "samples": [
+  {
+   "titel": "Home",
+   "url": "https://bo.zoetermeer.nl/",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "logo, hero-afbeelding, lijsten, koppen, links. Enige pagina met afbeeldingen; ook het zoekveld staat hier (zoekfunctie valt onder techniek)."
+  },
+  {
+   "titel": "Omgevingsprogramma's",
+   "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+   "type": "random",
+   "vanAgent": true,
+   "beschrijving": "Overzichtspagina met doorklikkers: kaartjes met titel en datum, geen afbeelding. Twee kopniveaus (per thema / per gebied)."
+  },
+  {
+   "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+   "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Door klant aangedragen pagina. 12 PDF-links, lijsten, koppen."
+  },
+  {
+   "titel": "Wat is BO?",
+   "url": "https://bo.zoetermeer.nl/wat-is-bo",
+   "type": "structured",
+   "vanAgent": true,
+   "beschrijving": "Willekeurig getrokken informatiepagina. Lopende tekst, lijsten, koppen."
+  },
+  {
+   "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "type": "pdf",
+   "vanAgent": true,
+   "beschrijving": "Door klant aangedragen. Besluitdocument."
+  },
+  {
+   "titel": "Bijlage 2 - Motivering van het Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer, eerste fase",
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+   "type": "pdf",
+   "vanAgent": true,
+   "beschrijving": "Door klant aangedragen. Motiveringsbijlage; verschilt van soort met het collegebesluit."
+  }
+ ]
+}

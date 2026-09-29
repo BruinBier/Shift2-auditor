@@ -1,0 +1,418 @@
+{
+  "inventarisId": "67b1f7c6-8721-4007-8e7f-9aea3855307a",
+  "config": {
+    "budget": 40,
+    "aandeelGespreid": 0.3,
+    "documentBudget": 12,
+    "maxDocumentMB": 25,
+    "seed": "shift2-v2"
+  },
+  "uitleg": {
+    "htmlKandidaten": 618,
+    "budget": 40,
+    "laagA": 2,
+    "gereserveerdVoorC": 12,
+    "laagB": 26,
+    "laagC": 12,
+    "stilBeschikbaar": 478,
+    "extra": 0,
+    "documentenTeGroot": [
+      {
+        "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/2024-6646_bijlage_1_-_scenarios_centrumvisie_driebergen_2040.pdf",
+        "mb": 46,
+        "klant": false
+      },
+      {
+        "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Akoestisch%20onderzoek%20wegverkeerslawaai_Geanonimiseerd.pdf",
+        "mb": 32,
+        "klant": false
+      },
+      {
+        "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Infographic_DVMM_A3_26%20verkleind%20opt%20ext.pdf",
+        "mb": 75,
+        "klant": false
+      },
+      {
+        "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/centrumvisie_maarsbergen_met_voorkeursscenario.pdf",
+        "mb": 42,
+        "klant": false
+      },
+      {
+        "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/verslag_informatiebijeenkomst_centrumvisie_driebergen.pdf",
+        "mb": 49,
+        "klant": false
+      }
+    ]
+  },
+  "paginas": [
+    {
+      "urlNorm": "https://www.heuvelrug.nl/",
+      "laag": "A",
+      "redenen": [
+        "HOMEPAGE"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+      "laag": "A",
+      "redenen": [
+        "KLANT",
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/overzicht-geleverde-persoonsgegevens-opvragen/informatie-over-de-aanvraag-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/publicatielijst-verleende-subsidieaanvragen-en-vaststellingen",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/denkvooruit",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/aanmelden-zwerfafval-op-de-kaart/aanmelden-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/openingstijden",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/gemeentenieuws",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/aanmelden-buurt-whatsapp-groep/uw-buurt-whatsapp-groep-aanmelden-0-2",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/struikelstenen-of-stolpersteine",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/buitenplaatsen-en-landgoederen",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/leningregeling-asbestdaken/inleiding-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/overzicht-verzamellocaties",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/gebiedsvisie-stationsgebied-driebergen-zeist",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/huisnummering/digid-of-eherkenning-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/bomen-en-beleid",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING",
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/monumentenschildje",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/rioolaansluiting-aanvragen/informatiepagina-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/afvalstoffenheffing-en-regelgeving",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/bouwen",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/afvalpas-voor-de-verzamelcontainer/stap-0-3",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/nederlander-worden-door-naturalisatie",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/dorpsgerichte-activiteiten",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/leerlingenvervoer-2026-2027/aanvragen-voorziening-leerlingenvervoer-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/participatie",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/bestemmingsplan-recreatieterreinen",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/form/verkennend-gesprek-verduurzamen-vastgoed/inleiding-0",
+      "laag": "B",
+      "redenen": [
+        "FORMULIER_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/monumenten",
+      "laag": "B",
+      "redenen": [
+        "TABEL_AANWIJZING",
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/anterieure-overeenkomst-kostenverhaal-ontwikkeling-perceel-rottegatsteeg-1a-maarsbergen",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/nieuws-en-meer/2",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/nieuwsoverzicht-dieren/2",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/begraafplaats-maarn",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/nieuws-en-meer/3",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/informatie-over-beleid-of-besluiten-opvragen-who-verzoek",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/in-gebreke-stellen-gemeente-bij-te-laat-beslissen",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/natuurlijk-begraven",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/aanvragen-en-vergunningen-week-36-2026",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/vergunningvrij-bouwen",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/oude-metalen",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://www.heuvelrug.nl/carolijn-selten",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    }
+  ],
+  "documenten": [
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/nieuwsbriefbewonersbrief_12_maart_2025_voortgang_haalbaarheidsonderzoek_flexwoningen_golfterrein_doorn.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "bekendmaking"
+    },
+    {
+      "urlNorm": "https://utrechtseheuvelrug.qualigraf.nl/vji/public/councildocument/action=showdoc/gd=a80820282a82800a02a2a00286a93d0d/Besluitenlijst_B_en_W_08_mei_2025.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Informatiebrochure%20bezwaarschriften_406.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "folder"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/bijlage-bij-formulier-aangifte-briefadres_770.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "formulier"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/guh-warmteprogramma-2026-2035.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/4._grondtekening-getekend.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "overig"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/uitvoeringsprogramma_2024_en_het_jaarverslag_2023_collegevergadering_11_juni_2024.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "verslag"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Gemeentenieuws%20week%2035%20-%2027%20augustus%20def.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "bekendmaking"
+    },
+    {
+      "urlNorm": "https://utrechtseheuvelrug.qualigraf.nl/vji/public/councildocument/action=showdoc/gd=888a808882a2828a02a2a2829e973217/Besluitenlijst_B_en_W_openbaar_091025.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/BIZDoornOverzichtskaartBIZone_bijlage4_1.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "folder"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Beleidsregels%20aanvraag%20prioriteit%20transportcapaciteit.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "formulier"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/nota_ruimtelijke_kwaliteit_gebiedscriteria.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    }
+  ]
+}

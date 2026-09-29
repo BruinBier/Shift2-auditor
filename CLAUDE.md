@@ -72,6 +72,10 @@ npm run cli -- list-projects
 npm run cli -- get-project <projectId>            # scope URLs, sample items, findings, assessments
 npm run cli -- list-criteria                       # all WCAG criterion IDs + codes
 npm run cli -- search-quick-findings <keyword>     # reuse finding templates
+npm run cli -- steekproef-inventaris <projectId>   # kandidatenpool: scope + sitemap + klant + links, genormaliseerd; kiest niets (v2 fase 1)
+npm run cli -- steekproef-inventaris-verschil <projectId> <idA> <idB>  # wat verschilt tussen twee inventarisaties
+npm run cli -- steekproef-profiel <projectId> [--budget=40] [--ook=url,url] [--droog=bestand]  # browsermeting van een deel van de pool, met bewijs; kiest niets (v2 fase 2)
+npm run cli -- steekproef-clusters <projectId> [--drempel=0.8] [--controle=bestand.md]  # sjabloonclusters, schaduwfunctie zonder invloed op de steekproef (v2 fase 3)
 
 # Pagina's bekijken — altijd via de CLI, nooit via een ingebouwde browser
 npm run cli -- get-html <url> [--text] [--full]
@@ -137,7 +141,7 @@ npm run cli -- set-assessment <projectId> --criterion=<criterionId> --status=fai
 - Wat jij aanmaakt is een **voorstel**, geen bevinding. Het telt nergens mee — niet in het criteriumoordeel, niet in het rapport — tot de onderzoeker akkoord geeft in het tabblad "Waar sta ik". Zie `docs/adr/0001-akkoord-als-poort.md` en de woordenlijst in `CONTEXT.md`.
 - Finding codes worden toegekend: `V001` voor een voorstel, `B001` pas bij akkoord. Geef er zelf nooit een mee.
 - **Verwijs naar een bevinding met het `id`, nooit met de `findingCode`.** Bij akkoord wordt `V001` een `B00x` uit een andere reeks (`lib/finding-code.ts`), dus een verwijzing op de code breekt precies op het moment dat de onderzoeker akkoord geeft. Toon de code wel op het scherm; de koppeling eronder is het id.
-- `get-project` stuurt de scope-velden niet mee: `scopeInScope`, `scopeOutOfScope` en `scopeInfo` (Details > Planning) ontbreken in het antwoord, net als het transcript. Lees ze uit het volledige projectrecord (`GET /api/projects` geeft het per project terug), anders lijkt de scope leeg terwijl hij gevuld is.
+- `get-project` stuurt de planningvelden mee onder `project`: `scopeInScope`, `scopeOutOfScope`, `scopeInfo` en `sampleClientPages` (Details > Planning). Tot 2026-09-28 ontbraken ze, waardoor de workflow `steekproef-samenstellen` de klantpagina's en uitsluitingen leeg binnenkreeg. Een leeg veld komt als `null`, niet als ontbrekende sleutel. Het transcript zit er nog steeds niet in; dat staat alleen in het volledige projectrecord (`GET /api/projects`).
 - Het criteriumoordeel volgt uit de bevindingen en wordt herberekend bij aanmaken, wijzigen en verwijderen (`lib/criterion-assessment.ts`). Zet het niet zelf met `set-assessment` tenzij je het echt handmatig wilt overrulen.
 - Een opmerking (`type=opmerking`, geen impact) keurt een criterium **niet** af.
 - **`niet_te_bepalen` is een open vraag, `niet_aanwezig` een afgerond oordeel.** Bij het afleiden van het criteriumoordeel uit de sample-checks (`app/api/projects/[id]/derive-assessments`) tellen `niet_te_bepalen`-samples niet mee; alleen als álle samples van een criterium erop staan, krijgt het geen oordeel en komt het als blokkade terug. Staat het overal op `niet_aanwezig`, dan is dat `not_present`: geen video op de site is een afgerond oordeel voor 1.2.x. Let op: de knop Afronden (`/api/projects/[id]/finalize`) controleert dit nu niet; het onderzoek gaat op "Gereed" ook als er nog open vragen staan.
@@ -469,10 +473,6 @@ opmerking (een `strong` op een knoptekst is een 1.3.1-opmerking, geen technisch 
 kapotte `href` op een mail- of telefoonlink is het omgekeerde: een functioneel probleem dat
 hier hoort, niet onder 2.4.4 of 4.1.2.
 
-## CRM-sync (Dynamics-nummers)
-
-Het CRM-nummer (P0xxxx) staat op het klantproject (`ClientProject.projectnummer`) en geldt voor alle onderzoeken eronder. Om te zien welke onderzoeken er nog geen hebben, of om nummers in bulk te zetten:
-
 ## Schrijfstijl: de gids en leren van correcties
 
 De schrijfregels voor elke bevinding staan in **`writing/FRITS-WRITING-GUIDE.md`** (tot
@@ -504,6 +504,10 @@ wat Chrome ongemarkeerd laat (paginanummers, decoratieve afbeeldingen, vlakken).
 weigert een PDF zolang `controleer()` een fout meldt. Documenten staan als JSON in
 `pdf-bouwer-documenten/` (buiten git, per computer). Dit is iets anders dan een bestaande
 PDF ombouwen; zie `docs/plannen/pdf-nieuw-opbouwen-onderzoek.md`.
+
+## CRM-sync (Dynamics-nummers)
+
+Het CRM-nummer (P0xxxx) staat op het klantproject (`ClientProject.projectnummer`) en geldt voor alle onderzoeken eronder. Om te zien welke onderzoeken er nog geen hebben, of om nummers in bulk te zetten:
 
 ```bash
 npm run crm:sync -- report                        # onderzoeken zonder CRM-nummer, per opdrachtgever

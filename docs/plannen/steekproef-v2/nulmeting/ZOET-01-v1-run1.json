@@ -1,0 +1,455 @@
+{
+ "kenmerk": "ZOET-01",
+ "run": 1,
+ "workflowRunId": "wf_ae6c7af0-5fd",
+ "bewaardOp": "2026-09-28T12:56:52.156Z",
+ "planning": {
+  "startUrl": "https://bo.zoetermeer.nl/",
+  "onderzoekstype": "WCAG 2.2 AA deelonderzoek content website met formulieren",
+  "aangedragenPaginas": [
+   "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv"
+  ],
+  "buitenScope": [],
+  "bestaandeSamples": [
+   {
+    "id": "72215721-1ffc-4bf7-be1a-49778109fc5e",
+    "title": "Home",
+    "url": "https://bo.zoetermeer.nl/"
+   },
+   {
+    "id": "fb39d43b-b357-4890-a817-313fc2fdc286",
+    "title": "Omgevingsprogramma's",
+    "url": "https://bo.zoetermeer.nl/omgevingsprogrammas"
+   },
+   {
+    "id": "db39ebaa-ee8e-4c38-b2bd-2ecccb2d5f8c",
+    "title": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+    "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase"
+   },
+   {
+    "id": "869d83e2-3fd6-446f-945f-d1e6612c92ea",
+    "title": "Wat is BO?",
+    "url": "https://bo.zoetermeer.nl/wat-is-bo"
+   },
+   {
+    "id": "f9b6c9a5-e35b-48d7-8f91-dc5666b740bb",
+    "title": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC"
+   },
+   {
+    "id": "3738702e-1466-46bd-ac40-f00f3fe09309",
+    "title": "Bijlage 2 - Motivering van het Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer, eerste fase",
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv"
+   }
+  ],
+  "scopeInfo": "- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)\n- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).\n- Niet de live video's (wettelijke uitzondering voor de overheid)\n- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)\n- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)\n- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)\n- Niet de inhoud achter een inlog"
+ },
+ "kandidaten": {
+  "bron": "sitemap",
+  "urls": [
+   "https://bo.zoetermeer.nl/",
+   "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+   "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+   "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "https://bo.zoetermeer.nl/wat-is-bo",
+   "https://bo.zoetermeer.nl/omgevingsvisie",
+   "https://bo.zoetermeer.nl/omgevingsprogrammas",
+   "https://bo.zoetermeer.nl/omgevingsplan",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv"
+  ],
+  "toelichting": "De sitemap.xml bestaat en is geen index. Er staan 12 adressen in. Ik heb /home weggelaten omdat die dubbel is met /, en /node/3 omdat die een 404 geeft. Er bleven 10 pagina's over, plus de twee PDF's die de klant heeft aangedragen, dus selecteren was niet nodig. Op de pagina's staan nog zo'n 23 andere PDF's op cuatro.sim-cdn.nl, vooral bijlagen bij het volkshuisvestingsprogramma. Die heb ik laten liggen omdat ze op een ander domein staan en niet in de lijst van de klant."
+ },
+ "paginasBekeken": [
+  {
+   "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+   "soort": "documentenpagina bekendmaking",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + tussenkop + lijst met documentlinks (PDF met formaat en grootte)",
+   "gehydrateerd": true,
+   "opmerking": "Zes PDF's van verschillende soort in één ul (Documents-module): een collegebesluit (4,5 MB), regels en toelichting (74,5 MB), een motivering (13 MB), een nota beantwoording participatie, een overzicht van regels en een raadsmemo. Zo dekt deze ene pagina de eis van twee verschillende PDF's. Op de pagina staat geen img, svg, tabel, iframe of formulier. De lijst is een platte lijst zonder nesting. Let op: de bijlage van 74,5 MB is erg groot om te openen."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+   "soort": "pdf-besluit",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "PDF-document (collegebesluit), geüpload via SIMsite-CDN",
+   "gehydrateerd": false,
+   "opmerking": "Niet opgehaald: volgens de opdracht is het een PDF en is alleen de bestandsnaam gelezen. Daarom staat gehydrateerd op false; dat is hier geen fout van de pagina. Of het document getagd of invulbaar is, blijkt pas na openen. De bestandsnaam bevat de typfout \"omgevinsplan\" (moet zijn \"omgevingsplan\")."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+   "titel": "Bijlage 2 - Motivering van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer - eerste fase'",
+   "soort": "pdf",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "losse PDF-bijlage op sim-cdn (uploads), niet opgehaald",
+   "gehydrateerd": false,
+   "opmerking": "Niet opgehaald: het is een PDF, dus gehydrateerd is niet gemeten en staat op false zonder dat er iets mis is met de pagina. Aan de bestandsnaam te zien is het een toelichtende nota (motivering, bijlage 2) bij een ontwerpbesluit over het omgevingsplan: een raadsstuk of beleidsnota, geen formulier. Of het een invulbaar formulier is, is niet vastgesteld; aan de naam te zien is het dat niet. Het soort document voor de dekkingslijst: nota of raadsstuk."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/",
+   "titel": "Home",
+   "soort": "homepage",
+   "gebieden": [
+    "Logo",
+    "Hero- of headerafbeelding zonder tekst",
+    "Iconen zonder tekst ernaast",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "header met logo en hoofdmenu + hero met zoekbalk + voorleesbalk + introtekst + lijst met drie kaartjes zonder afbeelding (datum + titel) + footer in drie kolommen",
+   "gehydrateerd": true,
+   "opmerking": "Er staan geen tabellen, video's, formulieren (behalve de zoekbalk), accordeons of PDF-links op de pagina. De hero (img alt=\"\" 'achtergrond BO (1).png', een silhouet van de stad) bevat geen tekst; de zoekbalk ligt eroverheen. De iconen zonder tekst zijn de Facebook-, Instagram- en LinkedIn-links in de footer, dus een sjabloononderdeel dat op elke pagina staat. 'Meest recente stukken' is een lijst met drie doorklikkers zonder afbeelding."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+   "titel": "Volkshuisvestingsprogramma",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknoppen + h2 met kaartje zonder afbeelding (datum + titellink) + h2 Archief met lijst van documentlinks met datum",
+   "gehydrateerd": true,
+   "opmerking": "Heel dunne pagina: één kaartje zonder afbeelding onder \"Vastgesteld\" en onder \"Archief\" een ul met één li (link \"Ontwerp Volkshuisvestingsprogramma gemeente Zoetermeer\" + datum). Er staat geen img, svg, iframe, tabel, video, figure of formulier in main. Beide links gaan naar HTML-pagina's op bo.zoetermeer.nl, niet naar een PDF. De lijst is geen gewone lijst in de tekst maar een lijst met doorklikkers, en er staat maar één item in. Voor de dekking levert deze pagina vrijwel niets op."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "titel": "Vaststelling Volkshuisvestingsprogramma gemeente Zoetermeer",
+   "soort": "documentenpagina besluitvorming",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + h1 + twee h2-blokken met elk een ul-lijst met documentlinks (bestandsnaam, formaat en grootte, docReader-link)",
+   "gehydrateerd": true,
+   "opmerking": "Twaalf PDF-links van verschillende soort: collegevoorstel en raadsbesluit ('Raadsbesluit Volkshuisvestingsprogramma.pdf', 11,3 MB), programmadocument ('Bijlage 1 - Volkshuisvestingsprogramma gemeente Zoetermeer DSO versie.pdf'), nota's van wijzigingen en beantwoording zienswijzen, en een raadsmemo. Deze ene pagina kan dus beide PDF's leveren. Geen img, svg, tabel, figure, iframe, video of uitklapblok in main. De lijsten zijn twee ul's met documentlinks, niet genest."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+   "titel": "Archief Volkshuisvestingsprogramma",
+   "soort": "overzichtspagina (archief)",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + h1 + voorleesknoppen + introalinea + contentlijst met h2 en doorklikkers met datum",
+   "gehydrateerd": true,
+   "opmerking": "Deze pagina voegt vrijwel niets toe aan de dekking. De main bevat één introzin (\"Hier komen documenten omtrent het ontwerp\"), een h2 met de placeholdertekst \"xx\" en een ul met precies één item: een link naar de HTML-pagina /ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer met de datum 01-05-2026. De lijst is een lijst met één item, en dat levert volgens de werkwijze hooguit een opmerking op. Er staan geen img, svg, tabel, video, formulier of iframe in de main, en ook geen PDF-link: het enige document zit achter die doorklik. Wie een PDF zoekt, moet naar de doorgelinkte pagina kijken. De kop \"xx\" is waarschijnlijk een 2.4.6-punt (een kop die niets beschrijft), maar dat valt onder groep 1."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "titel": "Ontwerp Volkshuisvestingsprogramma gemeente Zoetermeer",
+   "soort": "documentenpagina",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + één blok met h2 en lijst met documentlinks (PDF-icoon, bestandsnaam, formaat, docReader-link)",
+   "gehydrateerd": true,
+   "opmerking": "Geen lopende tekst: de main bevat alleen een ul met zeven PDF-links onder de h2 \"Besluit ontwerp omgevingsprogramma\". Soorten verschillen: een collegebesluit (\"Collegebesluit ontwerp Volkshuisvestingsprogramma (Geanonimiseerd).pdf\"), een raadsbesluit, het programma zelf als nota (Bijlage 1 DSO-versie en Bijlage 2 opgemaakt, 6,1 en 6,4 MB) en twee uitvoeringsagenda's. Geen img of svg in de main; de PDF-iconen zijn aria-hidden spans naast de tekst. De lijst is niet genest."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/wat-is-bo",
+   "titel": "Wat is BO?",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Logo",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknop + lopende tekst met een ongenummerde lijst",
+   "gehydrateerd": true,
+   "opmerking": "De lijst gaat over de soorten onderzoek (Bodemonderzoek, Geluidsonderzoek, Archeologisch onderzoek, Een milieueffectrapport) en is niet genest. Het logo (img.logo-img, logo-gemeente-zoetermeer.png) staat in de header van het sjabloon. In de main staan verder geen afbeeldingen, tabellen, media of documentlinks."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/omgevingsvisie",
+   "titel": "Omgevingsvisie",
+   "soort": "lege informatiepagina",
+   "gebieden": [],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + één alinea (geen verdere inhoud)",
+   "gehydrateerd": true,
+   "opmerking": "De pagina is een lege plaatshouder. In de hoofdinhoud staat alleen de kop \"Omgevingsvisie\", de voorleesknoppen en de zin \"Hier komen de BO-documenten over de Omgevingsvisie.\" Er staan geen documenten, afbeeldingen, tabellen of andere groep 2-inhoud op. Het logo in de header en de sociale-mediapictogrammen zonder tekst in de footer zitten in het sjabloon. Die maken deze pagina dus geen reden voor de steekproef. De pagina is ongeschikt als sample, tenzij de documenten er later bij komen."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+   "titel": "Omgevingsprogramma's",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknoppen + twee blokken met h2 en lijst met tekstkaartjes zonder afbeelding in drie kolommen (titel-link + datum)",
+   "gehydrateerd": true,
+   "opmerking": "De pagina is bijna leeg. Het blok \"Omgevingsprogramma's per thema\" is een ul met één li, alleen de link \"Volkshuisvestingsprogramma\" met datum 01-05-2026. Daarom staat alleen \"Lijst\" bij de gebieden, en dat is ook een geval van een lijst met één item. Het blok \"Omgevingsprogramma's per gebied\" heeft een h2 maar geen items: de div met de items is leeg, dus er staat een kop zonder inhoud. In het main-gedeelte staan geen afbeeldingen, svg's, tabellen of documentlinks. Het CSS-sjabloon heet \"columns--3-without-image-and-intro\". Het logo in de header is niet bekeken, omdat alleen het main-gedeelte is opgehaald."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/omgevingsplan",
+   "titel": "Omgevingsplan",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Logo",
+    "Iconen zonder tekst ernaast"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + kaartjes zonder afbeelding in drie kolommen (ThreeColumnsWithoutImageAndIntro)",
+   "gehydrateerd": true,
+   "opmerking": "De hoofdinhoud draagt geen enkel gebied uit groep 2 bij. Er staat één kaartje zonder afbeelding: \"Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase\" (21-05-2026). Beide gebieden komen uit het sjabloon en staan dus op elke pagina van bo.zoetermeer.nl. Het logo staat in de header als img met alt \"Logo gemeente Zoetermeer\". De drie socialemedia-iconen (Facebook, Instagram, LinkedIn) staan in de footer zonder zichtbare tekst ernaast. Daarom geen reden om deze pagina voor de steekproef te kiezen. Hooguit is ze bruikbaar als voorbeeld van het overzichtssjabloon, en de doorgelinkte bekendmaking is waarschijnlijk de interessantere kandidaat."
+  }
+ ],
+ "keuze": {
+  "samples": [
+   {
+    "url": "https://bo.zoetermeer.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Iconen zonder tekst ernaast",
+     "Teaser- of kaartafbeeldingen in een overzicht (kaartjes met titel en datum, zonder afbeelding)",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Homepage gaat er altijd in. Dekt in één keer logo, hero zonder tekst, de sociale-media-iconen in de footer en het overzicht 'Meest recente stukken' met doorklikkers (titel + datum), waar de vraag speelt of de datum in de code bij het goede item hoort."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+    "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+    "type": "structured",
+    "gebieden": [
+     "Lijst, en geneste lijst",
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. Staat model voor het documentenpagina-sjabloon (lijst met documentlinks met formaat en grootte) en is de pagina waar beide PDF's vandaan komen."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/wat-is-bo",
+    "titel": "Wat is BO?",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking; staat al in de steekproef en voegt voor de dekking niets toe, wat bij een random pagina de bedoeling is. Het is de enige pagina met een gewone lijst in lopende tekst, dus als informatiepagina ook representatief."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+    "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. Soort: besluit."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+    "titel": "Bijlage 2 - Motivering van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer - eerste fase'",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. Soort: nota (motivering), dus een ander soort dan het collegebesluit; samen voldoen ze aan de eis van twee verschillende PDF's."
+   }
+  ],
+  "nietGedekt": [
+   "Hero met tekst erin gebrand (1.4.5)",
+   "Hero met tekst eroverheen (de hero draagt alleen de zoekbalk, geen tekst)",
+   "Teaser- of kaartafbeeldingen met een echte afbeelding: alle kaartjes op de site zijn zonder afbeelding",
+   "Afbeelding in een link of knop (behalve het logo)",
+   "Complex beeld: schema, organogram, infographic",
+   "Kaart of plattegrond als afbeelding",
+   "Afbeelding met onderschrift of in een figure",
+   "Foto in de lopende tekst",
+   "Fotogalerij",
+   "Poster of aankondiging",
+   "Afbeelding met tekst erin (1.4.5)",
+   "Grafiek of diagram met legenda",
+   "Tabel",
+   "Citaat",
+   "Anderstalig tekstfragment",
+   "Anderstalige pagina",
+   "Video met geluid: geen video's op de site, dus de eis van twee verschillende video's kan niet worden gehaald",
+   "Video zonder geluid of animerende GIF",
+   "Audio of podcast",
+   "Live uitzending",
+   "Accordeon of tabbladen",
+   "Formulier (alleen de zoekbalk, die buiten een deelonderzoek content valt)",
+   "Iets dat uit zichzelf beweegt",
+   "Pagina met een eigen sjabloon (portaal, boekingsmodule)",
+   "Kaart in een iframe",
+   "Ander kader van een ander domein",
+   "Invulbaar PDF-formulier: aan de bestandsnamen te zien zijn alle PDF's besluiten, nota's en memo's; niet geopend, dus niet definitief vastgesteld"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+    "reden": "Staat al in de steekproef, maar dekt niets nieuws: zelfde overzichtssjabloon met kaartjes zonder afbeelding als de homepage, lijst met één item. Voorstel: uit de steekproef halen. Let wel: het blok 'per gebied' is een kop zonder inhoud, dat komt via een ander sample niet in beeld."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de door de klant aangedragen bekendmaking; meer PDF-links is geen extra dekking."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de door de klant aangedragen bekendmaking."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+    "reden": "Dunne overzichtspagina, zelfde kaartjessjabloon als de homepage; dekt niets nieuws."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+    "reden": "Dekt niets nieuws: één introzin, kop 'xx' en een lijst met één item."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsplan",
+    "reden": "Zelfde overzichtssjabloon als de homepage-kaartjes; logo en iconen komen uit het sjabloon."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsvisie",
+    "reden": "Lege plaatshouder zonder inhoud; dekt niets."
+   }
+  ],
+  "toelichting": "bo.zoetermeer.nl is een kleine bekendmakingssite op SIMsite. Er zijn maar twee soorten pagina's: overzichten met kaartjes zonder afbeelding, en documentenpagina's met lijsten van PDF-links. Er staan geen video's, tabellen, formulieren, uitklapblokken of foto's in de inhoud. Daarom volstaat een steekproef van vijf items: de homepage, de door de klant aangedragen bekendmaking met haar twee PDF's (een besluit en een nota) en 'Wat is BO?' als willekeurige pagina (1 van 5, 20%). Er is nog één ding te doen: 'Omgevingsprogramma's' staat al in de steekproef maar voegt niets toe. Of die pagina eruit gaat, beslist de onderzoeker."
+ },
+ "eindresultaat": {
+  "drooglopen": true,
+  "startUrl": "https://bo.zoetermeer.nl/",
+  "bron": "sitemap",
+  "bekeken": 12,
+  "voorstel": [
+   {
+    "url": "https://bo.zoetermeer.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Iconen zonder tekst ernaast",
+     "Teaser- of kaartafbeeldingen in een overzicht (kaartjes met titel en datum, zonder afbeelding)",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Homepage gaat er altijd in. Dekt in één keer logo, hero zonder tekst, de sociale-media-iconen in de footer en het overzicht 'Meest recente stukken' met doorklikkers (titel + datum), waar de vraag speelt of de datum in de code bij het goede item hoort."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+    "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+    "type": "structured",
+    "gebieden": [
+     "Lijst, en geneste lijst",
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. Staat model voor het documentenpagina-sjabloon (lijst met documentlinks met formaat en grootte) en is de pagina waar beide PDF's vandaan komen."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/wat-is-bo",
+    "titel": "Wat is BO?",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking; staat al in de steekproef en voegt voor de dekking niets toe, wat bij een random pagina de bedoeling is. Het is de enige pagina met een gewone lijst in lopende tekst, dus als informatiepagina ook representatief."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+    "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. Soort: besluit."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+    "titel": "Bijlage 2 - Motivering van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer - eerste fase'",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. Soort: nota (motivering), dus een ander soort dan het collegebesluit; samen voldoen ze aan de eis van twee verschillende PDF's."
+   }
+  ],
+  "nietGedekt": [
+   "Hero met tekst erin gebrand (1.4.5)",
+   "Hero met tekst eroverheen (de hero draagt alleen de zoekbalk, geen tekst)",
+   "Teaser- of kaartafbeeldingen met een echte afbeelding: alle kaartjes op de site zijn zonder afbeelding",
+   "Afbeelding in een link of knop (behalve het logo)",
+   "Complex beeld: schema, organogram, infographic",
+   "Kaart of plattegrond als afbeelding",
+   "Afbeelding met onderschrift of in een figure",
+   "Foto in de lopende tekst",
+   "Fotogalerij",
+   "Poster of aankondiging",
+   "Afbeelding met tekst erin (1.4.5)",
+   "Grafiek of diagram met legenda",
+   "Tabel",
+   "Citaat",
+   "Anderstalig tekstfragment",
+   "Anderstalige pagina",
+   "Video met geluid: geen video's op de site, dus de eis van twee verschillende video's kan niet worden gehaald",
+   "Video zonder geluid of animerende GIF",
+   "Audio of podcast",
+   "Live uitzending",
+   "Accordeon of tabbladen",
+   "Formulier (alleen de zoekbalk, die buiten een deelonderzoek content valt)",
+   "Iets dat uit zichzelf beweegt",
+   "Pagina met een eigen sjabloon (portaal, boekingsmodule)",
+   "Kaart in een iframe",
+   "Ander kader van een ander domein",
+   "Invulbaar PDF-formulier: aan de bestandsnamen te zien zijn alle PDF's besluiten, nota's en memo's; niet geopend, dus niet definitief vastgesteld"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+    "reden": "Staat al in de steekproef, maar dekt niets nieuws: zelfde overzichtssjabloon met kaartjes zonder afbeelding als de homepage, lijst met één item. Voorstel: uit de steekproef halen. Let wel: het blok 'per gebied' is een kop zonder inhoud, dat komt via een ander sample niet in beeld."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de door de klant aangedragen bekendmaking; meer PDF-links is geen extra dekking."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de door de klant aangedragen bekendmaking."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+    "reden": "Dunne overzichtspagina, zelfde kaartjessjabloon als de homepage; dekt niets nieuws."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+    "reden": "Dekt niets nieuws: één introzin, kop 'xx' en een lijst met één item."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsplan",
+    "reden": "Zelfde overzichtssjabloon als de homepage-kaartjes; logo en iconen komen uit het sjabloon."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsvisie",
+    "reden": "Lege plaatshouder zonder inhoud; dekt niets."
+   }
+  ],
+  "randomPercentage": 20,
+  "toelichting": "bo.zoetermeer.nl is een kleine bekendmakingssite op SIMsite. Er zijn maar twee soorten pagina's: overzichten met kaartjes zonder afbeelding, en documentenpagina's met lijsten van PDF-links. Er staan geen video's, tabellen, formulieren, uitklapblokken of foto's in de inhoud. Daarom volstaat een steekproef van vijf items: de homepage, de door de klant aangedragen bekendmaking met haar twee PDF's (een besluit en een nota) en 'Wat is BO?' als willekeurige pagina (1 van 5, 20%). Er is nog één ding te doen: 'Omgevingsprogramma's' staat al in de steekproef maar voegt niets toe. Of die pagina eruit gaat, beslist de onderzoeker."
+ },
+ "logs": [
+  "WCAG 2.2 AA deelonderzoek content website met formulieren op https://bo.zoetermeer.nl/",
+  "De klant heeft 3 pagina's aangedragen; die gaan sowieso mee.",
+  "Let op: er staan al 6 samples in de steekproef.",
+  "12 kandidaten via sitemap. De sitemap.xml bestaat en is geen index. Er staan 12 adressen in. Ik heb /home weggelaten omdat die dubbel is met /, en /node/3 omdat die een 404 geeft. Er bleven 10 pagina's over, plus de twee PDF's die de klant heeft aangedragen, dus selecteren was niet nodig. Op de pagina's staan nog zo'n 23 andere PDF's op cuatro.sim-cdn.nl, vooral bijlagen bij het volkshuisvestingsprogramma. Die heb ik laten liggen omdat ze op een ander domein staan en niet in de lijst van de klant.",
+  "LET OP: 2 pagina's laadden hun JavaScript niet. Daar kloppen de waarnemingen mogelijk niet.",
+  "12 pagina's bekeken.",
+  "5 samples gekozen, 1 random (20%). bo.zoetermeer.nl is een kleine bekendmakingssite op SIMsite. Er zijn maar twee soorten pagina's: overzichten met kaartjes zonder afbeelding, en documentenpagina's met lijsten van PDF-links. Er staan geen video's, tabellen, formulieren, uitklapblokken of foto's in de inhoud. Daarom volstaat een steekproef van vijf items: de homepage, de door de klant aangedragen bekendmaking met haar twee PDF's (een besluit en een nota) en 'Wat is BO?' als willekeurige pagina (1 van 5, 20%). Er is nog één ding te doen: 'Omgevingsprogramma's' staat al in de steekproef maar voegt niets toe. Of die pagina eruit gaat, beslist de onderzoeker.",
+  "Niet op deze site: Hero met tekst erin gebrand (1.4.5), Hero met tekst eroverheen (de hero draagt alleen de zoekbalk, geen tekst), Teaser- of kaartafbeeldingen met een echte afbeelding: alle kaartjes op de site zijn zonder afbeelding, Afbeelding in een link of knop (behalve het logo), Complex beeld: schema, organogram, infographic, Kaart of plattegrond als afbeelding, Afbeelding met onderschrift of in een figure, Foto in de lopende tekst, Fotogalerij, Poster of aankondiging, Afbeelding met tekst erin (1.4.5), Grafiek of diagram met legenda, Tabel, Citaat, Anderstalig tekstfragment, Anderstalige pagina, Video met geluid: geen video's op de site, dus de eis van twee verschillende video's kan niet worden gehaald, Video zonder geluid of animerende GIF, Audio of podcast, Live uitzending, Accordeon of tabbladen, Formulier (alleen de zoekbalk, die buiten een deelonderzoek content valt), Iets dat uit zichzelf beweegt, Pagina met een eigen sjabloon (portaal, boekingsmodule), Kaart in een iframe, Ander kader van een ander domein, Invulbaar PDF-formulier: aan de bestandsnamen te zien zijn alle PDF's besluiten, nota's en memo's; niet geopend, dus niet definitief vastgesteld."
+ ],
+ "gebruik": {
+  "agents": 15,
+  "tokens": 1347262,
+  "toolCalls": 70
+ }
+}

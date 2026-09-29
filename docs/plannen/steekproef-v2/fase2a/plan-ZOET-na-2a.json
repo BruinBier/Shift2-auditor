@@ -1,0 +1,186 @@
+{
+  "inventarisId": "a4a483f3-4459-43e6-a11e-5c345fee4e09",
+  "config": {
+    "budget": 40,
+    "aandeelGespreid": 0.3,
+    "documentBudget": 12,
+    "maxDocumentMB": 25,
+    "seed": "shift2-v2"
+  },
+  "uitleg": {
+    "htmlKandidaten": 10,
+    "budget": 40,
+    "laagA": 2,
+    "gereserveerdVoorC": 12,
+    "laagB": 2,
+    "laagC": 6,
+    "stilBeschikbaar": 6,
+    "extra": 0,
+    "documentenTeGroot": [
+      {
+        "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Regels%20en%20toelichting%20op%20de%20regels%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer_%20eerste%20fase%E2%80%99.pdf",
+        "mb": 75,
+        "klant": false
+      }
+    ]
+  },
+  "paginas": [
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/",
+      "laag": "A",
+      "redenen": [
+        "HOMEPAGE"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+      "laag": "A",
+      "redenen": [
+        "KLANT",
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+      "laag": "B",
+      "redenen": [
+        "DOCUMENTLINKS_AANWIJZING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/omgevingsvisie",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/wat-is-bo",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    },
+    {
+      "urlNorm": "https://bo.zoetermeer.nl/omgevingsplan",
+      "laag": "C",
+      "redenen": [
+        "GESPREIDE_AANVULLING"
+      ]
+    }
+  ],
+  "documenten": [
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf",
+      "redenen": [
+        "DOCUMENT_KLANT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf",
+      "redenen": [
+        "DOCUMENT_KLANT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Raadsbesluit%20Ontwerp%20Volkshuisvestingsprogramma.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20(DSO-versie)%20(1).pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Beoogde%20beslispunten.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "overig"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Raadsbesluit%20Volkshuisvestingsprogramma.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20(opgemaakt).pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20ontwerp%20Volkshuisvestingsprogramma%20(Geanonimiseerd).pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Raadsmemo%20Volkshuisvestingsprogramma%20vastgesteld%20(Geanonimiseerd)_0.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Overzicht%20Regels%20Ontwerp%20Wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20(opgemaakt).pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "nota"
+    },
+    {
+      "urlNorm": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Raadsmemo%20ontwerp%20wijzingsbesluit%20omgevingsplan%20gemeente%20Zoetermeer%20eerste%20fase_1.pdf",
+      "redenen": [
+        "DOCUMENT_SOORT"
+      ],
+      "geschatteSoort": "besluit"
+    }
+  ]
+}

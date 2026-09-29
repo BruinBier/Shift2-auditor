@@ -1,0 +1,922 @@
+{
+ "kenmerk": "LEU-01",
+ "run": 2,
+ "workflowRunId": "wf_082da574-efc",
+ "bewaardOp": "2026-09-28T13:07:34.057Z",
+ "planning": {
+  "startUrl": "https://www.leudal.nl",
+  "onderzoekstype": "WCAG 2.2 AA deelonderzoek content website",
+  "aangedragenPaginas": [],
+  "buitenScope": [],
+  "bestaandeSamples": [],
+  "scopeInfo": null
+ },
+ "kandidaten": {
+  "bron": "sitemap",
+  "urls": [
+   "https://www.leudal.nl/",
+   "https://www.leudal.nl/nieuws",
+   "https://www.leudal.nl/producten-diensten",
+   "https://www.leudal.nl/aanvragen-en-regelen-voor-inwoners",
+   "https://www.leudal.nl/aanvragen-en-regelen-voor-ondernemers",
+   "https://www.leudal.nl/aanvragen-en-regelen-voor-verenigingen",
+   "https://www.leudal.nl/paspoort-aanvragen",
+   "https://www.leudal.nl/identiteitskaart-aanvragen",
+   "https://www.leudal.nl/rijbewijs-aanvragen-en-verlengen",
+   "https://www.leudal.nl/verhuizing-doorgeven",
+   "https://www.leudal.nl/geboorteaangifte",
+   "https://www.leudal.nl/trouwengeregistreerd-partnerschap",
+   "https://www.leudal.nl/overlijden-aangifte",
+   "https://www.leudal.nl/uittreksel-persoonsgegevens-brp",
+   "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+   "https://www.leudal.nl/openingstijden-gemeente-leudal",
+   "https://www.leudal.nl/contact-opnemen-met-de-gemeenteraad",
+   "https://www.leudal.nl/openbare-ruimte-melding",
+   "https://www.leudal.nl/melden-aan-de-gemeente",
+   "https://www.leudal.nl/klacht-indienen",
+   "https://www.leudal.nl/bezwaar-en-beroep",
+   "https://www.leudal.nl/gemeentelijke-belastingen",
+   "https://www.leudal.nl/woz-waarde",
+   "https://www.leudal.nl/afvalstoffenheffing",
+   "https://www.leudal.nl/belastingen-en-heffingen-kwijtschelding",
+   "https://www.leudal.nl/afvalinzameling",
+   "https://www.leudal.nl/afval-wat-hoort-waar",
+   "https://www.leudal.nl/bladkorven-en-bladveegroutes-baexem",
+   "https://www.leudal.nl/strooiroute-a-ell-hunsel-ittervoort-haler-neeritter",
+   "https://www.leudal.nl/evenementenvergunning-in-leudal",
+   "https://www.leudal.nl/evenementen",
+   "https://www.leudal.nl/alcoholvergunning",
+   "https://www.leudal.nl/terras-plaatsen",
+   "https://www.leudal.nl/boom-kappen",
+   "https://www.leudal.nl/aanvraag-omgevingsvergunning",
+   "https://www.leudal.nl/omgevingsloket",
+   "https://www.leudal.nl/omgevingsplan-leudal",
+   "https://www.leudal.nl/hoe-bekijk-ik-het-omgevingsplan-leudal",
+   "https://www.leudal.nl/vergunningcheck",
+   "https://www.leudal.nl/bijstand-uitkering",
+   "https://www.leudal.nl/werk-en-inkomen",
+   "https://www.leudal.nl/schuldhulpverlening",
+   "https://www.leudal.nl/hulp-bij-geldzaken",
+   "https://www.leudal.nl/de-voorzieningenwijzer",
+   "https://www.leudal.nl/wmo-wat-moet-ik-doen",
+   "https://www.leudal.nl/hulp-bij-het-huishouden-wmo",
+   "https://www.leudal.nl/mantelzorg",
+   "https://www.leudal.nl/zorg-en-ondersteuning",
+   "https://www.leudal.nl/centrum-voor-jeugd-en-gezin",
+   "https://www.leudal.nl/jeugd",
+   "https://www.leudal.nl/kinderopvang",
+   "https://www.leudal.nl/leerlingenvervoer",
+   "https://www.leudal.nl/mensontwikkelbedrijf",
+   "https://www.leudal.nl/het-mob-werkt-voor-anthony",
+   "https://www.leudal.nl/oekraine",
+   "https://www.leudal.nl/inburgeren",
+   "https://www.leudal.nl/wonen",
+   "https://www.leudal.nl/sociale-huurwoning",
+   "https://www.leudal.nl/starterslening",
+   "https://www.leudal.nl/nieuwbouwprojecten",
+   "https://www.leudal.nl/energie",
+   "https://www.leudal.nl/energiebesparende-maatregelen-inwoners",
+   "https://www.leudal.nl/duurzaamheid-in-leudal",
+   "https://www.leudal.nl/subsidies",
+   "https://www.leudal.nl/sport-en-gezondheid",
+   "https://www.leudal.nl/recreatie-en-toerisme",
+   "https://www.leudal.nl/wandelen-en-fietsen",
+   "https://www.leudal.nl/ondernemer",
+   "https://www.leudal.nl/leudal-business",
+   "https://www.leudal.nl/ondernemersteam",
+   "https://www.leudal.nl/bedrijf-vestigen",
+   "https://www.leudal.nl/werk-in-uitvoering",
+   "https://www.leudal.nl/parkeren",
+   "https://www.leudal.nl/gehandicaptenparkeerkaart",
+   "https://www.leudal.nl/veiligheid",
+   "https://www.leudal.nl/gemeenteraad",
+   "https://www.leudal.nl/samenstelling-gemeenteraad",
+   "https://www.leudal.nl/samenstelling-college",
+   "https://www.leudal.nl/d-h-desiree-schmalschlager",
+   "https://www.leudal.nl/vergaderingen-gemeenteraad",
+   "https://www.leudal.nl/verkiezingen",
+   "https://www.leudal.nl/bekendmakingen",
+   "https://www.leudal.nl/rekenkamer",
+   "https://www.leudal.nl/publicaties-rekenkamer",
+   "https://www.leudal.nl/organogram",
+   "https://www.leudal.nl/werken-bij-de-gemeente",
+   "https://www.leudal.nl/toegankelijkheidsverklaring",
+   "https://cuatro.sim-cdn.nl/leudal/uploads/Coalitieprogramma%20RO%20en%20SV_0.pdf?cb=YaVwQKhR",
+   "https://cuatro.sim-cdn.nl/leudal/uploads/mobiliteitsplan_2022.pdf?cb=v7ECWKAN",
+   "https://cuatro.sim-cdn.nl/leudal/uploads/beheerplan_groen_en_wegen_leudal_2023-2026.pdf?cb=h3o-SUUl"
+  ],
+  "toelichting": "De sitemap (https://www.leudal.nl/sitemap.xml) staat er en telt 663 pagina's, allemaal met een plat pad zonder submappen. Daarom heb ik 87 pagina's gekozen die over de onderwerpen verspreid zijn (burgerzaken, belastingen, afval, vergunningen en omgevingswet, zorg en inkomen, wonen, ondernemen, bestuur, nieuws en de vaste pagina's) en 576 laten liggen, waaronder /home als dubbel van de startpagina. In de sitemap staan geen PDF's; de drie PDF's heb ik gevonden op de pagina's /coalitieakkoord-2026-2030, /mobiliteitsplan-2021-2035 en /beheerplan-groen-en-wegen-2023-2026. Ze staan op het documentendomein cuatro.sim-cdn.nl van de site."
+ },
+ "paginasBekeken": [
+  {
+   "url": "https://www.leudal.nl/",
+   "titel": "Home",
+   "soort": "homepage",
+   "gebieden": [
+    "Logo",
+    "Hero- of headerafbeelding zonder tekst",
+    "Teaser- of kaartafbeeldingen in een overzicht",
+    "Iconen zonder tekst ernaast",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "header met logo en menu + hero-afbeelding met vijf toptaaktegels (icoon + tekst) + lijst met doorklikkers in twee kolommen + drie nieuwskaartjes met afbeelding + banner met tekstblok en knop + footer met contact, afspraakknop en sociale-media-iconen",
+   "gehydrateerd": true,
+   "opmerking": "Hero (Herfst.jpg) en de banner \"Interessante websites\" hebben alt=\"\"; de toptaaktegels liggen over de hero maar hebben een eigen witte achtergrond, dus geen tekst direct op de beeldpunten. In de bannerafbeelding staan kleine partnerlogo's met tekst (o.a. \"igom\", \"Gemeente leudal\"); als logo's vallen die onder de uitzondering van 1.4.5, daarom niet als gebied opgegeven. Iconen zonder tekst: de sociale-media-iconen in de footer (Facebook, LinkedIn, Instagram, X). Geen tabel, video, iframe, formulier, accordeon of PDF-link op de pagina."
+  },
+  {
+   "url": "https://www.leudal.nl/nieuws",
+   "titel": "Nieuws",
+   "soort": "overzichtspagina nieuws",
+   "gebieden": [
+    "Teaser- of kaartafbeeldingen in een overzicht",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + intro + lijst met nieuwskaartjes in drie kolommen (afbeelding, titel, datum) + RSS-link + slotalinea",
+   "gehydrateerd": true,
+   "opmerking": "De 15 nieuwskaartjes staan elk in een li (klasse ThreeColumns, item_0 t/m item_14) en hebben elk een teaserafbeelding met alt=\"\" (bijv. StockfotosRaadzaal-1.jpg). De pagina heeft geen hero, tabel, video, formulier of PDF-link. Een van de berichten heet \"Video: wethouders stellen zich voor\" en kan een kandidaat zijn voor video."
+  },
+  {
+   "url": "https://www.leudal.nl/producten-diensten",
+   "titel": "Producten & Diensten",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknop + intro-alinea + enkelvoudige ul met tekstlinks (geen afbeeldingen) + lege paginering",
+   "gehydrateerd": true,
+   "opmerking": "De intro zegt \"Overzichtspagina van al onze producten & diensten\", maar de lijst bevat maar 7 links (van Geluidsklachten tot Wet open overheid). Het pagineringsblok is leeg, en er staat geen afbeelding, tabel, formulier of kader op. Het lijkt een onvolledige of gefilterde overzichtslijst, dus als bron van kandidaatpagina's is deze pagina beperkt. De lijst is een gewone ul zonder nesting."
+  },
+  {
+   "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-inwoners",
+   "titel": "Aanvragen en regelen voor inwoners",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero met tekst eroverheen",
+    "Accordeon of tabbladen",
+    "Lijst, en geneste lijst",
+    "PDF"
+   ],
+   "sjabloon": "kruimelpad + hero met kop over de foto + h2-blokken in twee kolommen met accordeons (details/summary met h3) die elk een lijst met doorklikkers bevatten",
+   "gehydrateerd": true,
+   "opmerking": "Zestien accordeons (details) zijn in de opname dichtgeklapt; hun linklijsten staan wel in de code. De PDF-link is \"Toestemmingsformulier reisdocument minderjarige\" (Reisdocument minderjarige, aanvraag toestemming.pdf), dus een formulier-PDF. Die staat in het accordeon Identiteitsbewijzen. De hero-afbeelding heeft alt=\"\". Er staat een H1 op een halfdoorzichtig vlak over de foto, dus het contrast moet op de beeldpunten gemeten worden. Op de foto zelf staat een bordje met \"Welkom! Neem hier uw volgnummer\". Dat is geen inhoudelijke tekst in een afbeelding en is daarom niet als gebied opgegeven."
+  },
+  {
+   "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-ondernemers",
+   "titel": "Aanvragen en regelen voor ondernemers",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten",
+    "Accordeon of tabbladen",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + hero-foto met kop en voorleesknoppen in half-doorzichtig vlak + zeven uitklapblokken (details/summary met h2) in drie kolommen, elk met een ul van doorklikkers",
+   "gehydrateerd": true,
+   "opmerking": "De hero (truusaugustinus_dsc_8900.jpg, alt=\"\") heeft de paginakop in een half-doorzichtig wit vlak over de foto heen. Alle inhoud zit in zeven dichtgeklapte details-blokken (Algemeen t/m Vestigen, bouwen en verbouwen); de linklijsten staan wel in de HTML, maar de get-html --text-uitvoer toont alleen de blokkoppen. Geen tabel, video, formulier, PDF-link of afbeelding in de inhoud buiten de hero."
+  },
+  {
+   "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-verenigingen",
+   "titel": "Aanvragen en regelen voor verenigingen",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten",
+    "Accordeon of tabbladen",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + hero-foto met h1 op half-doorzichtig vlak + vijf uitklapblokken (details/summary met h2) in drie kolommen, elk met een lijst doorklik-links",
+   "gehydrateerd": true,
+   "opmerking": "De inhoud zit volledig in vijf dichtgeklapte details-blokken (Algemeen, Drank en Horeca, Evenement en kansspel, Markt en venten, Reclame); de linklijsten staan wel in de code (ul met 26 links naar vervolgpagina's). Hero-afbeelding truusaugustinus_dsc_8900.jpg heeft alt=\"\" en de h1 staat erover op een lichte, half-doorzichtige laag. Geen tabel, video, formulier, iframe of PDF-link in main."
+  },
+  {
+   "url": "https://www.leudal.nl/paspoort-aanvragen",
+   "titel": "Paspoort aanvragen",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Tabel",
+    "Lijst, en geneste lijst",
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "kruimelpad + kop + zijblok (kostentabel, doorklik-links \"Of bent u op zoek naar...\") + tekstblokken met h2 en opsommingen + documentlijst met PDF-link",
+   "gehydrateerd": true,
+   "opmerking": "Gemeten binnen main. Er staan geen img-, svg- of iframe-elementen in. De tabel is de kostentabel \"Soort paspoort / Kosten / Geldigheid\". De lijsten zijn gewone ul-lijsten; geen enkele lijst is genest. Er staat één PDF op: \"Reisdocument minderjarige, aanvraag toestemming.pdf\" (72 kB). Dat is een toestemmingsformulier. Of je het kunt invullen, is niet vastgesteld, want het bestand is niet geopend. Daarom staat gebied 32 niet in de lijst. Het is kandidaat voor het PDF-soort \"formulier\"."
+  },
+  {
+   "url": "https://www.leudal.nl/identiteitskaart-aanvragen",
+   "titel": "Identiteitskaart aanvragen",
+   "soort": "productpagina / informatiepagina",
+   "gebieden": [
+    "Tabel",
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen",
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "kruimelpad + h1 + h2-secties met tabel en lijsten + documentlink (PDF met ReadSpeaker docReader) + details-uitklapblok \"Extra informatie\" met h3-secties + zijbalk met doorverwijslinks",
+   "gehydrateerd": true,
+   "opmerking": "Tabel: kosten per soort identiteitskaart (table.ScrollableTable). Lijsten: drie losse ul-lijsten, niet genest. Accordeon: een details/summary \"Extra informatie\" met h3-secties, bij het ophalen dichtgeklapt; de inhoud staat wel in de code. PDF: \"Reisdocument minderjarige, aanvraag toestemming.pdf\" (72 kB). Dat is een toestemmingsformulier, maar of het invulbaar is blijkt pas na openen, dus 32 staat er niet bij. In de main staat geen img en geen svg. \"Maak een afspraak\" en \"Geef digitaal toestemming\" zijn links naar een formulier elders en geen formulier op deze pagina."
+  },
+  {
+   "url": "https://www.leudal.nl/rijbewijs-aanvragen-en-verlengen",
+   "titel": "Rijbewijs aanvragen en verlengen",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Tabel",
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + tabel + tekstblok + uitklapblokken (details/summary) + opsomming + zijblok met links + 'Of bent u op zoek naar'-links",
+   "gehydrateerd": true,
+   "opmerking": "Geen img, svg, iframe, video of PDF-link in de main-content. Er zijn 8 dichtgeklapte blokken (6 inhoudelijke details/summary-uitklappers zoals \"Afspraak maken\" en \"Gezondheidsverklaring\"); de lijsten zijn gewone ul-opsommingen, er is geen geneste lijst gezien."
+  },
+  {
+   "url": "https://www.leudal.nl/verhuizing-doorgeven",
+   "titel": "Verhuizing doorgeven",
+   "soort": "productpagina (informatiepagina)",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "kruimelpad + h1 + voorleesknop + tekstblokken met h2/h3 (Wat is het / Hoe werkt het / Wat moet ik doen / Wat heb ik nodig / Direct regelen met call-to-action-knop / Wat kost het / Hoe lang duurt het / Extra informatie) + documentenlijst met PDF-links",
+   "gehydrateerd": true,
+   "opmerking": "Geneste lijsten staan onder \"Wat heb ik nodig\" (ul in li, bv. \"als u gaat inwonen of samenwonen:\"). Twee PDF's van verschillende soort: \"Folder adreswijziging bij verblijf in een zorginstelling.pdf\" (folder) en \"Verklaring van inwoning-bewoning Leudal.pdf\" (formulier; of het invulbaar is, is niet vastgesteld zonder openen). Geen img, svg, tabel, iframe, video of accordeon in main. De knop \"Geef uw verhuizing online door\" linkt naar een extern formulier (iburgerzaken.leudal.nl); het formulier staat niet op deze pagina."
+  },
+  {
+   "url": "https://www.leudal.nl/geboorteaangifte",
+   "titel": "Geboorteaangifte",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + tekstblokken met h2/h3 en opsommingen + uitklapblok onderaan",
+   "gehydrateerd": true,
+   "opmerking": "Het uitklapblok \"Meer informatie\" is een details/summary. De inhoud staat in de opgehaalde code: h3's, alinea's, een lijst en twee links. Op de pagina staan geen img, svg, tabel, video, iframe of PDF-link. Ook de lijsten zijn niet genest."
+  },
+  {
+   "url": "https://www.leudal.nl/trouwengeregistreerd-partnerschap",
+   "titel": "Trouwen/Geregistreerd partnerschap",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen",
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "kruimelpad + kop + intro + tussenkoppen met tekst + zijblok met gerelateerde links + reeks uitklapblokken (details) + documentenlijst met PDF-links",
+   "gehydrateerd": true,
+   "opmerking": "Elf uitklapblokken (details) waren in de ophaling dichtgeklapt; de lijsten zitten erin, ook een lijst in een lijst. Er staan geen img, svg, table of iframe op de pagina. De drie PDF's zijn allemaal formulieren: \"Buitengewoon ambtenaar burgerlijke stand voor een dag, aanvraagformulier.pdf\", \"Aanvraagformulier vrije trouwlocatie.pdf\" en \"Akkoordverklaring vrije trouwlocatie.pdf\". Ze zijn dus van dezelfde soort en dekken samen maar één soort van de twee die gebied 31 vraagt. Of ze invulbaar zijn (gebied 32), is niet nagekeken. De link \"Melding huwelijk/geregistreerd partnerschap\" leidt naar een online melding die mogelijk een formulier of boekingsmodule is, maar dat formulier staat niet op deze pagina."
+  },
+  {
+   "url": "https://www.leudal.nl/overlijden-aangifte",
+   "titel": "Overlijden, aangifte",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + h1 + voorleesbalk + tekstblokken onder h2/h3 (Wat is het / Wat moet ik doen / Wat heb ik nodig / Extra informatie / Meer informatie) met ul- en ol-lijsten, zonder afbeeldingen",
+   "gehydrateerd": true,
+   "opmerking": "Er staan wel lijsten op (vier ul en een ol, zoals de ol met \"een afschrift van de overlijdensakte\"), maar die zijn niet genest. Verder staat er in main geen afbeelding, tabel, iframe, video, PDF-link of accordeon."
+  },
+  {
+   "url": "https://www.leudal.nl/uittreksel-persoonsgegevens-brp",
+   "titel": "Uittreksel persoonsgegevens BRP",
+   "soort": "productpagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesknoppen + tekstblokken met h2/h3-tussenkoppen en opsommingen + twee call-to-action-knoppen",
+   "gehydrateerd": true,
+   "opmerking": "Alleen platte lijsten (9 ul, geen geneste lijst); geen img, svg, tabel, iframe, accordeon of PDF-link in de main. De call-to-actions (\"Vraag een uittreksel persoonsgegevens BRP aan\", \"Maak een afspraak\") leiden naar een formulier buiten deze pagina; het formulier zelf staat hier niet op."
+  },
+  {
+   "url": "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+   "titel": "Afspraak in het gemeentehuis?",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Afbeelding met een onderschrift, of in een figure",
+    "Foto in de lopende tekst"
+   ],
+   "sjabloon": "kruimelpad + kop + intro + figure met figcaption (links uitgelijnd) + tekstblokken met h2-tussenkoppen + let-op-blok",
+   "gehydrateerd": true,
+   "opmerking": "Eén foto in de tekst: figure met img alt=\"De zuil waar u zich kunt melden met een afspraak\" en figcaption \"De zuil in het gemeentehuis\". Er staan geen tabel, video, formulier, PDF-link, accordeon of iframe in de hoofdinhoud."
+  },
+  {
+   "url": "https://www.leudal.nl/openingstijden-gemeente-leudal",
+   "titel": "Openingstijden Gemeente Leudal",
+   "soort": "informatiepagina openingstijden",
+   "gebieden": [
+    "Hero met tekst eroverheen",
+    "Tabel",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + hero met kop en intro in tekstvak over de foto + openingstijdenblok met tabbladen en twee tabellen + drie tekstkolommen met knop + contactblok over achtergrondfoto + drie tekstkolommen met knop",
+   "gehydrateerd": true,
+   "opmerking": "De hero-afbeelding (Bezoekershal leudal.jpg, alt leeg) heeft de h1 en de intro in een lichte, deels doorzichtige kader over de foto; het contrast daar hangt af van de beeldpunten. De tabbladen (role=tablist: Receptie Gemeentehuis, Telefoon Gemeentehuis, Gemeentewerf Hunsel) tonen elk twee tabellen met openingstijden (6 table-elementen in totaal). Het blok Contactgegevens staat ook over een achtergrondfoto (20120117_entraa_bezoekershal_leudal_21570.jpg); dat is geen hero en geen foto in de lopende tekst, maar kan wel meetellen voor 1.4.3. Geen PDF, video, iframe of formulier op de pagina zelf; het contactformulier en de afspraakmodule staan achter een link."
+  },
+  {
+   "url": "https://www.leudal.nl/contact-opnemen-met-de-gemeenteraad",
+   "titel": "Contact opnemen met de gemeenteraad",
+   "soort": "informatiepagina",
+   "gebieden": [],
+   "sjabloon": "kop + voorleesknop + intro-alinea + twee h2-secties met lopende tekst en links in de tekst",
+   "gehydrateerd": true,
+   "opmerking": "Geen enkel gebied uit groep 2: in de main staan geen img, svg, tabel, lijst, figure, iframe, video of formulier. Wel iets voor /technische-issues: de link met de tekst \"raadsgriffie@leudal.nl\" heeft href=\"/#\" en geen mailto. Dat is een functionele fout en geen 2.4.4-bevinding."
+  },
+  {
+   "url": "https://www.leudal.nl/openbare-ruimte-melding",
+   "titel": "Openbare ruimte, melding",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Hero met tekst erin gebrand",
+    "Complex beeld: schema, organogram, infographic",
+    "Afbeelding met tekst erin",
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + introafbeelding + voortgangsbalk in drie fasen + tekst met tussenkoppen + uitklapblokken + geneste lijsten + afbeelding in de tekst met uitklapbare uitgeschreven tekst",
+   "gehydrateerd": true,
+   "opmerking": "De introafbeelding (buiten-beter-app_voor-bij-nieuwsbericht-website.png, alt=\"\") toont het BuitenBeter-logo en een telefoonscherm met de tekst \"Waar gaat je melding over?\". Het logo valt onder de uitzondering, de schermtekst niet. De afbeelding afvalbak_vullingsgraad.jpg is een tabel als afbeelding: vijf niveaus (A+ t/m D) met foto's en tekst. Er staat een uitklapblok \"Uitgeschreven tekst bij afbeelding afvalbak-vullingsgraad\" onder. Geneste lijst: een ul met li's waarin een h3 en een ul staan. Er zijn vier details-uitklapblokken. De voortgangsbalk \"Zien - Melden - Volgen\" valt onder geen enkel gebied. Op de pagina staan geen formulier, iframe, video, tabel in code of PDF-link: melden gaat via een externe link naar buitenbeter.nl."
+  },
+  {
+   "url": "https://www.leudal.nl/melden-aan-de-gemeente",
+   "titel": "Melden aan de gemeente",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Hero met tekst eroverheen — 1.4.3, contrast op de beeldpunten"
+   ],
+   "sjabloon": "kruimelpad + hero met titelvak eroverheen + raster van tekstkaarten (icoon + kop + intro) in drie kolommen",
+   "gehydrateerd": true,
+   "opmerking": "De hero is een afbeelding (telefoon_in_hand_0.jpg, alt=\"\") met de h1 in een halfdoorzichtig vak eroverheen; het contrast van die kop meet je dus op de beeldpunten. De elf kaarten hebben geen afbeelding, alleen een pictogram naast de kop. Daarom telt hier \"teaser- of kaartafbeeldingen\" niet mee en \"iconen zonder tekst ernaast\" ook niet. Er staan geen tabellen, video, formulier, PDF-links of iframes op."
+  },
+  {
+   "url": "https://www.leudal.nl/klacht-indienen",
+   "titel": "Klacht indienen",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Afbeelding met een onderschrift, of in een figure",
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen",
+    "PDF"
+   ],
+   "sjabloon": "kruimelpad + kop + intro met lijst + tekstblok met lijst + vijf uitklapblokken (details/summary met h3) + drie blokken met kop, tekst en callToAction-knop",
+   "gehydrateerd": true,
+   "opmerking": "De foto (figure, alt \"Foto Klachtencommissaris gemeente Leudal\", figcaption \"Dhr. Stevens - Klachtencommissaris gemeente Leudal\") en de PDF-link (jaarverslag_klachten_2023_gemeente_leudal.pdf, linktekst \"Jaarverslag klachten 2024\") staan in dichtgeklapte uitklapblokken. Let op: het bestand heet 2023, de linktekst zegt 2024. Er staan alleen ongeneste lijsten (ul en ol). Het klachtenformulier staat niet op deze pagina; er is alleen een knop die ernaar linkt (/form/klachtenformulier/...)."
+  },
+  {
+   "url": "https://www.leudal.nl/bezwaar-en-beroep",
+   "titel": "Bezwaar en beroep",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + intro + tekstblokken met h2 + uitklapblok (details) + extra-informatieblok",
+   "gehydrateerd": true,
+   "opmerking": "Het uitklapblok \"Procedure\" (details) was bij het ophalen dicht. De inhoud staat wel in de HTML: daarin zit een geneste lijst (\"De Commissie bezwaarschriften bestaat uit onafhankelijke leden...\" met daaronder een ul). Er staan geen afbeeldingen, tabellen, video's, iframes, formulieren of PDF-links op de pagina."
+  },
+  {
+   "url": "https://www.leudal.nl/gemeentelijke-belastingen",
+   "titel": "Gemeentelijke belastingen",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Hero met tekst eroverheen",
+    "Afbeelding in een link of knop (behalve het logo)",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + hero (foto met halfdoorzichtig tekstvak met h1 en intro eroverheen) + tekstblokken met h2 in drie kolommen, met knoppen en linklijsten",
+   "gehydrateerd": true,
+   "opmerking": "De hero (geld.jpg, alt=\"\") heeft het tekstvak met de h1 en de introtekst half over de foto heen, dus contrast op de beeldpunten meten. Tekst die in de foto zelf zit is er niet. Afbeelding in een link: de knop \"Mijn BsGW\" staat er twee keer, met img alt=\"DigiD\" (digid.svg) erin. Lijsten: twee ul's zonder nesting (\"Wat kunt u doen op Mijn BsGW\", \"Meer informatie over\"). Tabel, video, PDF, formulier en accordeon staan er niet op."
+  },
+  {
+   "url": "https://www.leudal.nl/woz-waarde",
+   "titel": "WOZ-waarde",
+   "soort": "informatiepagina",
+   "gebieden": [],
+   "sjabloon": "kop + voorleesbalk + tekstblok met h2/h3-secties (\"Wat is het?\", \"Extra informatie\") en links in lopende tekst",
+   "gehydrateerd": true,
+   "opmerking": "Het hoofdgedeelte bevat alleen koppen, alinea's en twee externe links in de lopende tekst (bsgw.nl, woz-waardeloket.nl). Er staat geen img, svg, tabel, iframe, video, formulier of uitklapblok in; het enige dichtgeklapte element is het toegankelijkheidsmenu van het sjabloon. Deze pagina dekt dus geen gebied uit groep 2."
+  },
+  {
+   "url": "https://www.leudal.nl/afvalstoffenheffing",
+   "titel": "Afvalstoffenheffing",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Tabel"
+   ],
+   "sjabloon": "kruimelpad + kop + tekstblokken met h2/h3 + scrollbare tabel",
+   "gehydrateerd": true,
+   "opmerking": null
+  },
+  {
+   "url": "https://www.leudal.nl/belastingen-en-heffingen-kwijtschelding",
+   "titel": "Belastingen en heffingen, kwijtschelding",
+   "soort": "informatiepagina (product)",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kop + voorleesknop + vaste productkoppen (Wat is / Direct regelen met externe link / Wat moet ik doen / Wat heb ik nodig met opsomming / Extra informatie), geen afbeeldingen",
+   "gehydrateerd": true,
+   "opmerking": "Er zijn geen afbeeldingen, svg's, tabellen, iframes of formulieren gevonden in de hoofdinhoud. De enige lijst is een platte ul met drie items onder \"Wat heb ik nodig?\", niet genest. Alle links gaan naar bsgw.nl."
+  },
+  {
+   "url": "https://www.leudal.nl/afvalinzameling",
+   "titel": "Afvalinzameling",
+   "soort": "overzichtspagina (landingspagina)",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "hero-afbeelding met zijmenu (kop + lijst toptaaklinks met icoon) + zoekbalk + tekstblok met koppen en alinea's + zijbalk met kaderblok en knoplink",
+   "gehydrateerd": true,
+   "opmerking": "De hero (rd_maasland-3.jpg, alt=\"\") heeft geen tekst erin en geen tekst over de beeldpunten: het witte zijmenukader met \"Afvalinzameling\" en drie toptaaklinks overlapt de foto, maar de tekst staat op een witte ondergrond. De lijst is de ul met drie toptaaklinks, elk met een pictogram (aria-hidden) naast de tekst. Er zijn geen tabellen, video's, PDF's, formulieren (behalve de zoekbalk) of iframes. Het logo staat alleen in de header, die buiten de opgehaalde main valt."
+  },
+  {
+   "url": "https://www.leudal.nl/afval-wat-hoort-waar",
+   "titel": "Afval | Wat hoort waar?",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Hero- of headerafbeelding zonder tekst",
+    "Accordeon of tabbladen"
+   ],
+   "sjabloon": "kruimelpad + kop + brede headerfoto + voorleesbalk + tekstblokken met tussenkoppen en twee knoplinks + raster van uitklapblokken in drie kolommen + tekstblok + uitgelicht blok (tekstkader op brede foto)",
+   "gehydrateerd": true,
+   "opmerking": "Hero is kliko-3120_0.jpg met alt=\"\" in de header, zonder tekst erin of eroverheen. De 15 uitklapblokken zijn details/summary (Restafval t/m Medisch afval). Onderaan staat een uitgelicht blok \"Koffiecapsules voortaan bij PMD\": een wit tekstkader op een brede foto (fotografie_los_hero_lullia.jpg, alt=\"\"). Die tekst staat in een eigen vlak en niet direct op de foto, dus niet opgegeven als hero met tekst eroverheen. De video waar het blok naar verwijst is een externe Instagram-link en staat niet op de pagina zelf. Behalve de kruimelpadlijst staan er in de code geen lijsten."
+  },
+  {
+   "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-baexem",
+   "titel": "Bladkorven en bladveegroutes Baexem",
+   "soort": "informatiepagina met kaart",
+   "gebieden": [
+    "Kaart in een iframe"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + introzin + h2 + ingesloten kaart (cookieplaceholder)",
+   "gehydrateerd": true,
+   "opmerking": "De kaart zelf is niet geladen. Op de plek van de kaart staat alleen de melding \"Op deze plek staat een kaart van een externe website\", met de knoppen \"Cookie-instellingen aanpassen\" en \"Accepteer alle cookies\". In de opgehaalde HTML staat nog geen iframe. Ik heb \"Kaart in een iframe\" alleen op grond van die melding opgegeven. Om de kaart te beoordelen moeten eerst de cookies geaccepteerd worden in de auditsessie-Chrome. Verder heeft de pagina geen img, tabel, figure, video of formulier in de main-inhoud."
+  },
+  {
+   "url": "https://www.leudal.nl/strooiroute-a-ell-hunsel-ittervoort-haler-neeritter",
+   "titel": "Strooiroute A | Ell - Hunsel - Ittervoort - Haler - Neeritter",
+   "soort": "informatiepagina met kaart",
+   "gebieden": [
+    "Lijst, en geneste lijst",
+    "Kaart in een iframe"
+   ],
+   "sjabloon": "kruimelpad + h1 + intro met ongeordende lijst + h2 + ingesloten kaart (DynamicMap) achter toestemmingsscherm",
+   "gehydrateerd": true,
+   "opmerking": "De kaart is nog niet geladen: er staat alleen een toestemmingsscherm (\"Op deze plek staat een kaart van een externe website ... Accepteer alle cookies\"). Het iframe zelf is dus niet waargenomen. Om de kaart zelf te beoordelen moet de onderzoeker in de auditsessie-Chrome de cookies voor de kaart accepteren. De lijst is een gewone lijst met vijf plaatsnamen (Ell, Hunsel, Ittervoort, Haler, Neeritter) en is niet genest."
+  },
+  {
+   "url": "https://www.leudal.nl/evenementenvergunning-in-leudal",
+   "titel": "Evenementenvergunning in Leudal",
+   "soort": "productpagina (vergunning)",
+   "gebieden": [
+    "Tabel",
+    "Lijst, en geneste lijst",
+    "Accordeon of tabbladen",
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "kop + productsecties (Wat is het / Hoe werkt het / Wat kost het / Wat moet ik doen / Hoe lang duurt het) met lopende tekst en lijsten + uitklapblokken (details) + documentenlijst met bestandslinks",
+   "gehydrateerd": true,
+   "opmerking": "Er staat geen enkele img of svg in de hoofdinhoud. De tabel (eindtijden evenement en geluid, met \"Feesttenten en in de openlucht\" als kop) zit in een van de zeven details-uitklapblokken, vermoedelijk \"Regels omtrent geluid\". Er staan lijsten (ul) en een ol met voorwaarden in een uitklapblok, maar geen geneste lijsten. Documenten: Checklist Veiligheidsplan.pdf (checklist), Invulinstructie elektronisch aanvraagformulier evenementenvergunning.pdf (instructie) en Voorbeeldtekening tent.pdf (tekening), plus een DOCX-sjabloon (Communicatie Omwonenden_sjabloon_2026.docx). \"Vraag een evenementenvergunning aan\" is een link naar een extern e-formulier. Er staat dus geen formulier op deze pagina zelf."
+  }
+ ],
+ "keuze": {
+  "samples": [
+   {
+    "url": "https://www.leudal.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Iconen zonder tekst ernaast",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Homepage gaat er altijd in; dekt meteen logo, hero zonder tekst, nieuwskaartjes en de sociale-media-iconen."
+   },
+   {
+    "url": "https://www.leudal.nl/openbare-ruimte-melding",
+    "titel": "Openbare ruimte, melding",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst erin gebrand",
+     "Complex beeld: schema, organogram, infographic",
+     "Afbeelding met tekst erin",
+     "Lijst, en geneste lijst",
+     "Accordeon of tabbladen"
+    ],
+    "waarom": "Enige pagina met tekst in beeld (introafbeelding met schermtekst) en een tabel als afbeelding met uitgeschreven tekst; ook geneste lijst en uitklapblokken."
+   },
+   {
+    "url": "https://www.leudal.nl/gemeentelijke-belastingen",
+    "titel": "Gemeentelijke belastingen",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst eroverheen",
+     "Afbeelding in een link of knop (behalve het logo)"
+    ],
+    "waarom": "Enige pagina met een afbeelding in een knop (DigiD-logo in \"Mijn BsGW\"); dekt ook de hero met h1 op een halfdoorzichtig vlak."
+   },
+   {
+    "url": "https://www.leudal.nl/overlijden-aangifte",
+    "titel": "Overlijden, aangifte",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking: standaard productpagina die inhoudelijk niets nieuws toevoegt."
+   },
+   {
+    "url": "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+    "titel": "Afspraak in het gemeentehuis?",
+    "type": "structured",
+    "gebieden": [
+     "Afbeelding met een onderschrift, of in een figure",
+     "Foto in de lopende tekst"
+    ],
+    "waarom": "Enige pagina met een foto in de lopende tekst, in een figure met figcaption."
+   },
+   {
+    "url": "https://www.leudal.nl/openingstijden-gemeente-leudal",
+    "titel": "Openingstijden Gemeente Leudal",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst eroverheen",
+     "Tabel",
+     "Accordeon of tabbladen"
+    ],
+    "waarom": "Dekt de tabel, met echte tabbladen (role=tablist) in plaats van details; rijker dan de kostentabellen op de productpagina's."
+   },
+   {
+    "url": "https://www.leudal.nl/strooiroute-a-ell-hunsel-ittervoort-haler-neeritter",
+    "titel": "Strooiroute A | Ell - Hunsel - Ittervoort - Haler - Neeritter",
+    "type": "structured",
+    "gebieden": [
+     "Kaart in een iframe",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Kaart in een iframe achter een toestemmingsscherm; cookies voor de kaart eerst accepteren in de auditsessie-Chrome."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/leudal/uploads/Verklaring%20van%20inwoning-bewoning%20Leudal.pdf",
+    "titel": "Verklaring van inwoning-bewoning (formulier)",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort",
+     "Invulbaar PDF-formulier (nog vast te stellen)"
+    ],
+    "waarom": "PDF van de soort formulier, gelinkt vanaf Verhuizing doorgeven; of het invulbaar is (gebied 32) blijkt bij openen."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/leudal/uploads/Folder%20adreswijziging%20bij%20verblijf%20in%20een%20zorginstelling_8.pdf",
+    "titel": "Folder adreswijziging bij verblijf in een zorginstelling",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "PDF van de soort folder, als tegenhanger van het formulier; beide staan op Verhuizing doorgeven."
+   }
+  ],
+  "nietGedekt": [
+   "Kaart of plattegrond als afbeelding, met legenda",
+   "Fotogalerij",
+   "Poster of aankondiging",
+   "Grafiek of diagram met een legenda",
+   "Citaat",
+   "Anderstalig tekstfragment",
+   "Anderstalige pagina",
+   "Video met geluid (geen video gevonden; de eis van twee video's is op deze site niet te halen)",
+   "Video zonder geluid, of een animerende GIF",
+   "Audio of podcast",
+   "Live uitzending",
+   "Formulier (alle formulieren staan achter een link, extern of op /form/...)",
+   "Iets dat uit zichzelf beweegt",
+   "Pagina met een eigen sjabloon: portaal, boekingsmodule (niet bekeken)",
+   "Ander kader van een ander domein",
+   "Invulbaar PDF-formulier (niet vastgesteld; blijkt bij het openen van de formulier-PDF)"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://www.leudal.nl/nieuws",
+    "reden": "Nieuwskaartjes al gedekt door de homepage; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/producten-diensten",
+    "reden": "Alleen een platte lijst; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-inwoners",
+    "reden": "Hero met tekst eroverheen en accordeons al gedekt; PDF is hetzelfde formulier als op paspoort."
+   },
+   {
+    "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-ondernemers",
+    "reden": "Zelfde sjabloon als aanvragen voor inwoners; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-verenigingen",
+    "reden": "Zelfde sjabloon als aanvragen voor inwoners; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/paspoort-aanvragen",
+    "reden": "Tabel al gedekt; één PDF, dezelfde als op identiteitskaart."
+   },
+   {
+    "url": "https://www.leudal.nl/identiteitskaart-aanvragen",
+    "reden": "Zelfde sjabloon als paspoort; tabel en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/rijbewijs-aanvragen-en-verlengen",
+    "reden": "Zelfde productsjabloon; tabel en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/verhuizing-doorgeven",
+    "reden": "Geneste lijst al gedekt; de twee PDF's staan er als eigen pdf-sample in."
+   },
+   {
+    "url": "https://www.leudal.nl/geboorteaangifte",
+    "reden": "Zelfde productsjabloon; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/trouwengeregistreerd-partnerschap",
+    "reden": "Drie PDF's van dezelfde soort (formulier); verder niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/uittreksel-persoonsgegevens-brp",
+    "reden": "Zelfde productsjabloon; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/contact-opnemen-met-de-gemeenteraad",
+    "reden": "Geen gebied uit groep 2 (kapotte mailtolink hoort bij /technische-issues)."
+   },
+   {
+    "url": "https://www.leudal.nl/melden-aan-de-gemeente",
+    "reden": "Hero met tekst eroverheen al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/klacht-indienen",
+    "reden": "Figure al gedekt; jaarverslag-PDF niet nodig naast folder en formulier."
+   },
+   {
+    "url": "https://www.leudal.nl/bezwaar-en-beroep",
+    "reden": "Geneste lijst en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/woz-waarde",
+    "reden": "Geen gebied uit groep 2."
+   },
+   {
+    "url": "https://www.leudal.nl/afvalstoffenheffing",
+    "reden": "Tabel al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/belastingen-en-heffingen-kwijtschelding",
+    "reden": "Zelfde productsjabloon; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/afvalinzameling",
+    "reden": "Hero zonder tekst al gedekt door de homepage."
+   },
+   {
+    "url": "https://www.leudal.nl/afval-wat-hoort-waar",
+    "reden": "Hero zonder tekst en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-baexem",
+    "reden": "Zelfde sjabloon als strooiroute A; die is gekozen."
+   },
+   {
+    "url": "https://www.leudal.nl/evenementenvergunning-in-leudal",
+    "reden": "Tabel al gedekt; PDF's (checklist, instructie, tekening) zijn een minder duidelijk soortverschil dan folder tegenover formulier."
+   }
+  ],
+  "toelichting": "Leudal.nl draait op één SIMsite-sjabloon. Productpagina's lijken sterk op elkaar (tekstblokken, lijsten, details-uitklapblokken, soms een kostentabel). Op de 27 bekeken pagina's staan geen video, audio, galerij, formulier of bewegende inhoud. De eis van twee video's is dus niet te halen. Mogelijk staat er één in het nieuwsbericht \"Video: wethouders stellen zich voor\", maar dat is niet bekeken. De steekproef telt 9 items: 7 pagina's (waarvan 1 random, 11%) en 2 PDF's van verschillende soort, een formulier en een folder, allebei van Verhuizing doorgeven. Bij Strooiroute A moeten de kaartcookies eerst geaccepteerd worden in de auditsessie-Chrome, anders is het iframe niet te beoordelen."
+ },
+ "eindresultaat": {
+  "drooglopen": true,
+  "startUrl": "https://www.leudal.nl",
+  "bron": "sitemap",
+  "bekeken": 30,
+  "voorstel": [
+   {
+    "url": "https://www.leudal.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Iconen zonder tekst ernaast",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Homepage gaat er altijd in; dekt meteen logo, hero zonder tekst, nieuwskaartjes en de sociale-media-iconen."
+   },
+   {
+    "url": "https://www.leudal.nl/openbare-ruimte-melding",
+    "titel": "Openbare ruimte, melding",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst erin gebrand",
+     "Complex beeld: schema, organogram, infographic",
+     "Afbeelding met tekst erin",
+     "Lijst, en geneste lijst",
+     "Accordeon of tabbladen"
+    ],
+    "waarom": "Enige pagina met tekst in beeld (introafbeelding met schermtekst) en een tabel als afbeelding met uitgeschreven tekst; ook geneste lijst en uitklapblokken."
+   },
+   {
+    "url": "https://www.leudal.nl/gemeentelijke-belastingen",
+    "titel": "Gemeentelijke belastingen",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst eroverheen",
+     "Afbeelding in een link of knop (behalve het logo)"
+    ],
+    "waarom": "Enige pagina met een afbeelding in een knop (DigiD-logo in \"Mijn BsGW\"); dekt ook de hero met h1 op een halfdoorzichtig vlak."
+   },
+   {
+    "url": "https://www.leudal.nl/overlijden-aangifte",
+    "titel": "Overlijden, aangifte",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking: standaard productpagina die inhoudelijk niets nieuws toevoegt."
+   },
+   {
+    "url": "https://www.leudal.nl/afspraak-in-het-gemeentehuis",
+    "titel": "Afspraak in het gemeentehuis?",
+    "type": "structured",
+    "gebieden": [
+     "Afbeelding met een onderschrift, of in een figure",
+     "Foto in de lopende tekst"
+    ],
+    "waarom": "Enige pagina met een foto in de lopende tekst, in een figure met figcaption."
+   },
+   {
+    "url": "https://www.leudal.nl/openingstijden-gemeente-leudal",
+    "titel": "Openingstijden Gemeente Leudal",
+    "type": "structured",
+    "gebieden": [
+     "Hero met tekst eroverheen",
+     "Tabel",
+     "Accordeon of tabbladen"
+    ],
+    "waarom": "Dekt de tabel, met echte tabbladen (role=tablist) in plaats van details; rijker dan de kostentabellen op de productpagina's."
+   },
+   {
+    "url": "https://www.leudal.nl/strooiroute-a-ell-hunsel-ittervoort-haler-neeritter",
+    "titel": "Strooiroute A | Ell - Hunsel - Ittervoort - Haler - Neeritter",
+    "type": "structured",
+    "gebieden": [
+     "Kaart in een iframe",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Kaart in een iframe achter een toestemmingsscherm; cookies voor de kaart eerst accepteren in de auditsessie-Chrome."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/leudal/uploads/Verklaring%20van%20inwoning-bewoning%20Leudal.pdf",
+    "titel": "Verklaring van inwoning-bewoning (formulier)",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort",
+     "Invulbaar PDF-formulier (nog vast te stellen)"
+    ],
+    "waarom": "PDF van de soort formulier, gelinkt vanaf Verhuizing doorgeven; of het invulbaar is (gebied 32) blijkt bij openen."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/leudal/uploads/Folder%20adreswijziging%20bij%20verblijf%20in%20een%20zorginstelling_8.pdf",
+    "titel": "Folder adreswijziging bij verblijf in een zorginstelling",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "PDF van de soort folder, als tegenhanger van het formulier; beide staan op Verhuizing doorgeven."
+   }
+  ],
+  "nietGedekt": [
+   "Kaart of plattegrond als afbeelding, met legenda",
+   "Fotogalerij",
+   "Poster of aankondiging",
+   "Grafiek of diagram met een legenda",
+   "Citaat",
+   "Anderstalig tekstfragment",
+   "Anderstalige pagina",
+   "Video met geluid (geen video gevonden; de eis van twee video's is op deze site niet te halen)",
+   "Video zonder geluid, of een animerende GIF",
+   "Audio of podcast",
+   "Live uitzending",
+   "Formulier (alle formulieren staan achter een link, extern of op /form/...)",
+   "Iets dat uit zichzelf beweegt",
+   "Pagina met een eigen sjabloon: portaal, boekingsmodule (niet bekeken)",
+   "Ander kader van een ander domein",
+   "Invulbaar PDF-formulier (niet vastgesteld; blijkt bij het openen van de formulier-PDF)"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://www.leudal.nl/nieuws",
+    "reden": "Nieuwskaartjes al gedekt door de homepage; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/producten-diensten",
+    "reden": "Alleen een platte lijst; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-inwoners",
+    "reden": "Hero met tekst eroverheen en accordeons al gedekt; PDF is hetzelfde formulier als op paspoort."
+   },
+   {
+    "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-ondernemers",
+    "reden": "Zelfde sjabloon als aanvragen voor inwoners; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/aanvragen-en-regelen-voor-verenigingen",
+    "reden": "Zelfde sjabloon als aanvragen voor inwoners; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/paspoort-aanvragen",
+    "reden": "Tabel al gedekt; één PDF, dezelfde als op identiteitskaart."
+   },
+   {
+    "url": "https://www.leudal.nl/identiteitskaart-aanvragen",
+    "reden": "Zelfde sjabloon als paspoort; tabel en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/rijbewijs-aanvragen-en-verlengen",
+    "reden": "Zelfde productsjabloon; tabel en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/verhuizing-doorgeven",
+    "reden": "Geneste lijst al gedekt; de twee PDF's staan er als eigen pdf-sample in."
+   },
+   {
+    "url": "https://www.leudal.nl/geboorteaangifte",
+    "reden": "Zelfde productsjabloon; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/trouwengeregistreerd-partnerschap",
+    "reden": "Drie PDF's van dezelfde soort (formulier); verder niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/uittreksel-persoonsgegevens-brp",
+    "reden": "Zelfde productsjabloon; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/contact-opnemen-met-de-gemeenteraad",
+    "reden": "Geen gebied uit groep 2 (kapotte mailtolink hoort bij /technische-issues)."
+   },
+   {
+    "url": "https://www.leudal.nl/melden-aan-de-gemeente",
+    "reden": "Hero met tekst eroverheen al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/klacht-indienen",
+    "reden": "Figure al gedekt; jaarverslag-PDF niet nodig naast folder en formulier."
+   },
+   {
+    "url": "https://www.leudal.nl/bezwaar-en-beroep",
+    "reden": "Geneste lijst en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/woz-waarde",
+    "reden": "Geen gebied uit groep 2."
+   },
+   {
+    "url": "https://www.leudal.nl/afvalstoffenheffing",
+    "reden": "Tabel al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/belastingen-en-heffingen-kwijtschelding",
+    "reden": "Zelfde productsjabloon; dekt niets nieuws."
+   },
+   {
+    "url": "https://www.leudal.nl/afvalinzameling",
+    "reden": "Hero zonder tekst al gedekt door de homepage."
+   },
+   {
+    "url": "https://www.leudal.nl/afval-wat-hoort-waar",
+    "reden": "Hero zonder tekst en accordeon al gedekt."
+   },
+   {
+    "url": "https://www.leudal.nl/bladkorven-en-bladveegroutes-baexem",
+    "reden": "Zelfde sjabloon als strooiroute A; die is gekozen."
+   },
+   {
+    "url": "https://www.leudal.nl/evenementenvergunning-in-leudal",
+    "reden": "Tabel al gedekt; PDF's (checklist, instructie, tekening) zijn een minder duidelijk soortverschil dan folder tegenover formulier."
+   }
+  ],
+  "randomPercentage": 11,
+  "toelichting": "Leudal.nl draait op één SIMsite-sjabloon. Productpagina's lijken sterk op elkaar (tekstblokken, lijsten, details-uitklapblokken, soms een kostentabel). Op de 27 bekeken pagina's staan geen video, audio, galerij, formulier of bewegende inhoud. De eis van twee video's is dus niet te halen. Mogelijk staat er één in het nieuwsbericht \"Video: wethouders stellen zich voor\", maar dat is niet bekeken. De steekproef telt 9 items: 7 pagina's (waarvan 1 random, 11%) en 2 PDF's van verschillende soort, een formulier en een folder, allebei van Verhuizing doorgeven. Bij Strooiroute A moeten de kaartcookies eerst geaccepteerd worden in de auditsessie-Chrome, anders is het iframe niet te beoordelen."
+ },
+ "logs": [
+  "WCAG 2.2 AA deelonderzoek content website op https://www.leudal.nl",
+  "90 kandidaten via sitemap. De sitemap (https://www.leudal.nl/sitemap.xml) staat er en telt 663 pagina's, allemaal met een plat pad zonder submappen. Daarom heb ik 87 pagina's gekozen die over de onderwerpen verspreid zijn (burgerzaken, belastingen, afval, vergunningen en omgevingswet, zorg en inkomen, wonen, ondernemen, bestuur, nieuws en de vaste pagina's) en 576 laten liggen, waaronder /home als dubbel van de startpagina. In de sitemap staan geen PDF's; de drie PDF's heb ik gevonden op de pagina's /coalitieakkoord-2026-2030, /mobiliteitsplan-2021-2035 en /beheerplan-groen-en-wegen-2023-2026. Ze staan op het documentendomein cuatro.sim-cdn.nl van de site.",
+  "Ik bekijk er 30 van de 90. De rest blijft ongezien; verhoog args.maxKandidaten als dat te weinig is.",
+  "30 pagina's bekeken.",
+  "9 samples gekozen, 1 random (11%). Leudal.nl draait op één SIMsite-sjabloon. Productpagina's lijken sterk op elkaar (tekstblokken, lijsten, details-uitklapblokken, soms een kostentabel). Op de 27 bekeken pagina's staan geen video, audio, galerij, formulier of bewegende inhoud. De eis van twee video's is dus niet te halen. Mogelijk staat er één in het nieuwsbericht \"Video: wethouders stellen zich voor\", maar dat is niet bekeken. De steekproef telt 9 items: 7 pagina's (waarvan 1 random, 11%) en 2 PDF's van verschillende soort, een formulier en een folder, allebei van Verhuizing doorgeven. Bij Strooiroute A moeten de kaartcookies eerst geaccepteerd worden in de auditsessie-Chrome, anders is het iframe niet te beoordelen.",
+  "Niet op deze site: Kaart of plattegrond als afbeelding, met legenda, Fotogalerij, Poster of aankondiging, Grafiek of diagram met een legenda, Citaat, Anderstalig tekstfragment, Anderstalige pagina, Video met geluid (geen video gevonden; de eis van twee video's is op deze site niet te halen), Video zonder geluid, of een animerende GIF, Audio of podcast, Live uitzending, Formulier (alle formulieren staan achter een link, extern of op /form/...), Iets dat uit zichzelf beweegt, Pagina met een eigen sjabloon: portaal, boekingsmodule (niet bekeken), Ander kader van een ander domein, Invulbaar PDF-formulier (niet vastgesteld; blijkt bij het openen van de formulier-PDF)."
+ ],
+ "gebruik": {
+  "agents": 33,
+  "tokens": 3009542,
+  "toolCalls": 203
+ }
+}

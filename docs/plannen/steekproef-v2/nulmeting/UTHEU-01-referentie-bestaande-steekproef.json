@@ -1,0 +1,148 @@
+{
+ "kenmerk": "UTHEU-01",
+ "projectId": "9d8d3b8c-2675-4603-b6b6-01125bf9b024",
+ "opgehaald": "2026-09-28T12:53:07.102Z",
+ "toelichting": "Bestaande steekproef v1.0, ter referentie",
+ "samples": [
+  {
+   "titel": "Home",
+   "url": "https://www.heuvelrug.nl/",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Nieuws en meer",
+   "url": "https://www.heuvelrug.nl/nieuws-en-meer",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "archeologie",
+   "url": "https://www.heuvelrug.nl/archeologie",
+   "type": "random",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Paspoort | Heuvelrug",
+   "url": "https://www.heuvelrug.nl/paspoort",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": ""
+  },
+  {
+   "titel": "Afvalapp en afvalkalender",
+   "url": "https://www.heuvelrug.nl/afvalapp-en-afvalkalender",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Japanse Duizendknoop",
+   "url": "https://www.heuvelrug.nl/Japanseduizendknoop",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Geen geothermie in onze gemeente",
+   "url": "https://www.heuvelrug.nl/geen-geothermie-in-onze-gemeente",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Allround Boomverzorger",
+   "url": "https://www.heuvelrug.nl/allround-boomverzorger",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Werken bij de gemeente",
+   "url": "https://www.heuvelrug.nl/werken-bij-de-gemeente",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Buitenspelen",
+   "url": "https://www.heuvelrug.nl/buitenspelen",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Lokale inclusie",
+   "url": "https://www.heuvelrug.nl/lokale-inclusie-en-vanzelfsprekend-meedoen",
+   "type": "random",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Afvalstoffenheffing en regelgeving",
+   "url": "https://www.heuvelrug.nl/afvalstoffenheffing-en-regelgeving",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Bomen kappen",
+   "url": "https://www.heuvelrug.nl/bomen-kappen",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Milieu en Duurzaamheid",
+   "url": "https://www.heuvelrug.nl/milieu-en-duurzaamheid",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Contact",
+   "url": "https://www.heuvelrug.nl/contact",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Stap 1: Contactformulier",
+   "url": "https://www.heuvelrug.nl/form/contactformulier/contactformulier-0",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": ""
+  },
+  {
+   "titel": "Stap 2: Uw gegevens",
+   "url": "https://www.heuvelrug.nl/form/contactformulier/stap-0-8-1",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": ""
+  },
+  {
+   "titel": "Stap 3: Controleren",
+   "url": "https://www.heuvelrug.nl/form/contactformulier/overzicht-2",
+   "type": "structured",
+   "vanAgent": false,
+   "beschrijving": ""
+  },
+  {
+   "titel": "Gemeentenieuws week 30 - 23 juli 2026",
+   "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/Gemeentenieuws%20week%2030%20-%2023%20juli%202026.pdf?cb=R0EwkOt1",
+   "type": "pdf",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  },
+  {
+   "titel": "Beleidsvisie horeca en terrassen",
+   "url": "https://cuatro.sim-cdn.nl/heuvelrug/uploads/beleidsvisie_horeca_en_terrassen.pdf?cb=jSf1DLxx",
+   "type": "pdf",
+   "vanAgent": false,
+   "beschrijving": "Door klant aangedragen pagina"
+  }
+ ]
+}

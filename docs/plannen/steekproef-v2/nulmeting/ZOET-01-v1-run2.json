@@ -1,0 +1,829 @@
+{
+ "kenmerk": "ZOET-01",
+ "run": 2,
+ "workflowRunId": "wf_02a1aa15-1b0",
+ "bewaardOp": "2026-09-28T13:00:30.972Z",
+ "planning": {
+  "startUrl": "https://bo.zoetermeer.nl/",
+  "onderzoekstype": "WCAG 2.2 AA deelonderzoek content website met formulieren",
+  "aangedragenPaginas": [
+   "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv"
+  ],
+  "buitenScope": [],
+  "bestaandeSamples": [
+   {
+    "id": "72215721-1ffc-4bf7-be1a-49778109fc5e",
+    "title": "Home",
+    "url": "https://bo.zoetermeer.nl/"
+   },
+   {
+    "id": "fb39d43b-b357-4890-a817-313fc2fdc286",
+    "title": "Omgevingsprogramma's",
+    "url": "https://bo.zoetermeer.nl/omgevingsprogrammas"
+   },
+   {
+    "id": "db39ebaa-ee8e-4c38-b2bd-2ecccb2d5f8c",
+    "title": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+    "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase"
+   },
+   {
+    "id": "869d83e2-3fd6-446f-945f-d1e6612c92ea",
+    "title": "Wat is BO?",
+    "url": "https://bo.zoetermeer.nl/wat-is-bo"
+   },
+   {
+    "id": "f9b6c9a5-e35b-48d7-8f91-dc5666b740bb",
+    "title": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC"
+   },
+   {
+    "id": "3738702e-1466-46bd-ac40-f00f3fe09309",
+    "title": "Bijlage 2 - Motivering van het Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer, eerste fase",
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv"
+   }
+  ],
+  "scopeInfo": "- Niet de online kaarten en karteringsdiensten, tenzij ze bedoeld zijn voor navigatie (wettelijke uitzondering voor de overheid)\n- Niet de kantoorbestanden van vóór 23 september 2018, tenzij ze deel uitmaken van een administratief proces (wettelijke uitzondering voor de overheid).\n- Niet de live video's (wettelijke uitzondering voor de overheid)\n- Niet de audio- en videobestanden die vóór 23 september 2020 op het digitale kanaal zijn geplaatst (wettelijke uitzondering voor de overheid)\n- Niet de van derden afkomstige inhoud (wettelijke uitzondering voor de overheid)\n- Niet de inhoud van archieven (wettelijke uitzondering voor de overheid)\n- Niet de inhoud achter een inlog"
+ },
+ "kandidaten": {
+  "bron": "sitemap",
+  "urls": [
+   "https://bo.zoetermeer.nl/",
+   "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+   "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+   "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "https://bo.zoetermeer.nl/wat-is-bo",
+   "https://bo.zoetermeer.nl/omgevingsvisie",
+   "https://bo.zoetermeer.nl/omgevingsprogrammas",
+   "https://bo.zoetermeer.nl/omgevingsplan",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Regels%20en%20toelichting%20op%20de%20regels%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer_%20eerste%20fase%E2%80%99.pdf?cb=ogIdQm-S",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20beantwoording%20participatie%20en%20overlegreacties%20voorontwerp%20wijziging%20Omgevingsplan_0.pdf?cb=ySIjfmvj",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Overzicht%20Regels%20Ontwerp%20Wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer.pdf?cb=na_n_0pw",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Raadsmemo%20ontwerp%20wijzingsbesluit%20omgevingsplan%20gemeente%20Zoetermeer%20eerste%20fase_1.pdf?cb=QAJUNnDT",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28DSO-versie%29%20%281%29.pdf?cb=g6RAjmjH",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20%28DSO-versie%29.pdf?cb=o48E0WxT",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer%20DSO%20versie.pdf?cb=up7J9VpI",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28opgemaakt%29.pdf?cb=F57F3wT7",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20%28opgemaakt%29.pdf?cb=kBk3BzsA",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20opgemaakt.pdf?cb=nf6i1Mwh",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20Uitvoeringsagenda%20Volkshuisvesting.pdf?cb=7QPS7lZo",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20uitvoeringsagenda%20volkshuisvesting.pdf?cb=fcDsGXBa",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20Zoetermeer%20%281%29.pdf?cb=C3ZmURpY",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20Zoetermeer_0.pdf?cb=kwLtbc98",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=tpjvJJAM",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Uitvoeringsagenda%20Woonzorgvisie.pdf?cb=g7Q-0i69",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Beoogde%20beslispunten.pdf?cb=L4NhumnU",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=KvRmhixi",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20ontwerp%20Volkshuisvestingsprogramma%20%28Geanonimiseerd%29.pdf?cb=a7gCPkTl",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegevoorstel%20Volkshuisvestingsprogramma%20%28Geanonimiseerd%29_0.pdf?cb=EK9XeXqA",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Raadsbesluit%20Ontwerp%20Volkshuisvestingsprogramma.pdf?cb=xVZaJVW7",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Raadsbesluit%20Volkshuisvestingsprogramma.pdf?cb=LZSYF89r",
+   "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Raadsmemo%20Volkshuisvestingsprogramma%20vastgesteld%20%28Geanonimiseerd%29_0.pdf?cb=RNRkghHr"
+  ],
+  "toelichting": "De sitemap.xml bestaat en noemt 12 adressen. Daarvan heb ik /home laten vallen, omdat het dezelfde pagina is als /, en /node/3, omdat die een 404 geeft. Er blijven 10 HTML-pagina's over. Daarbij komen 25 PDF's waar die pagina's naar linken, waaronder de twee die de klant aandroeg. Ze staan allemaal op de eigen uploadmap van de site op cuatro.sim-cdn.nl, dus een ander domein. De ReadSpeaker-docreaderlinks naar dezelfde PDF's heb ik als dubbel weggelaten. Het totaal is 35 adressen; ik hoefde niet te selecteren."
+ },
+ "paginasBekeken": [
+  {
+   "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+   "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+   "soort": "documentenpagina bekendmaking",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + h2 + lijst met documentlinks (bestandsnaam, formaat en grootte, docReader-link)",
+   "gehydrateerd": true,
+   "opmerking": "Zes PDF's van verschillende soort in een ul onder de kop \"Besluit ontwerp Omgevingsplan\": een collegebesluit (4,5 MB), regels en toelichting (74,5 MB), een motivering (13 MB), een nota beantwoording participatie (1,3 MB), een overzicht van regels (383,3 kB) en een raadsmemo (1,2 MB). De lijst is niet genest. Er staat geen img, svg, tabel, iframe of formulier in de main-inhoud. Bijlage 1 is 74,5 MB en daardoor lastig als PDF-sample; het collegebesluit en de nota of de raadsmemo zijn beter te hanteren."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+   "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+   "soort": "pdf-besluit",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "PDF-document (collegebesluit), niet geopend",
+   "gehydrateerd": false,
+   "opmerking": "PDF niet opgehaald, zoals de opdracht voorschrijft. Soort en titel komen alleen uit de bestandsnaam (\"Collegebesluit Ontwerp wijzigingsbesluit omgevinsplan ... eerste fase_3\"; in het bestandspad staat de tikfout \"omgevinsplan\"). Het suffix _3 wijst misschien op een derde versie of bijlage. Het veld gehydrateerd is niet gemeten en staat daarom op false, dus niet als foutmelding lezen. Of het een invulbaar formulier is, is niet vastgesteld, maar bij een collegebesluit ligt dat niet voor de hand."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+   "titel": "Bijlage 2 - Motivering van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer - eerste fase'",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-bijlage bij een raadsbesluit (motivering), geüpload via SIMsite-CDN",
+   "gehydrateerd": false,
+   "opmerking": "Het is een PDF, dus volgens de opdracht niet opgehaald. gehydrateerd staat op false omdat get-html niet is gedraaid, niet omdat de pagina een fout gaf. Soort en titel komen uit de bestandsnaam: een motivering (nota) die als bijlage 2 bij het ontwerp-wijzigingsbesluit voor het Omgevingsplan hoort. Of het document getagd is of een formulier bevat, is niet vastgesteld."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/",
+   "titel": "Home",
+   "soort": "homepage",
+   "gebieden": [
+    "Logo",
+    "Hero- of headerafbeelding zonder tekst",
+    "Iconen zonder tekst ernaast"
+   ],
+   "sjabloon": "header met logo + hoofdnavigatie + headerafbeelding met zoekveld + introtekst + drie kaartjes zonder afbeelding (datum + titel) + footer met adres, links en sociale-media-iconen",
+   "gehydrateerd": true,
+   "opmerking": "Het zijn drie gebieden. Logo: een img met alt=\"Logo gemeente Zoetermeer\". De headerafbeelding (\"achtergrond BO (1).png\", alt=\"\") is een silhouet van de skyline zonder tekst erin; het zoekveld eroverheen valt buiten de dekking. De iconen zonder tekst zijn de sociale-medialinks in de footer: je ziet alleen het icoon (aria-hidden) en de tekst \"Facebook\", \"Instagram\" of \"LinkedIn\" staat verborgen ernaast. Deze iconen horen bij het sitesjabloon. Wat er niet op staat: de kaartjes onder \"Meest recente stukken\" hebben geen afbeelding, en er is geen tabel, video, iframe, accordeon of PDF-link. Op de pagina staat weinig inhoud; zij dekt nauwelijks meer dan het sjabloon."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+   "titel": "Volkshuisvestingsprogramma",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Logo",
+    "Iconen zonder tekst ernaast",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + h1 + voorleesknoppen + h2 met kaartjes zonder afbeelding in drie kolommen (ul) + h2 met lijst doorklikkers met datum (ul)",
+   "gehydrateerd": true,
+   "opmerking": "Deze pagina heeft weinig inhoud. In de main staan alleen twee lijsten (ul) van elk één doorklikker: onder \"Vastgesteld\" een kaartje zonder afbeelding (\"Vaststelling Volkshuisvestingsprogramma gemeente Zoetermeer\") en onder \"Archief\" een link met datum (\"Ontwerp Volkshuisvestingsprogramma gemeente Zoetermeer\"). Het logo (img alt=\"Logo gemeente Zoetermeer\") en de sociale-media-iconen staan in de header en de footer van het sjabloon. Die iconen zijn zichtbaar zonder tekst, want de tekst \"Facebook\" staat verborgen in een span. Er staan geen tabel, geen afbeeldingen in de inhoud, geen iframe, geen video en geen PDF-links op de pagina. Als steekproefpagina voegt hij weinig toe, behalve het sjabloon voor een overzicht per omgevingsprogramma."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "titel": "Vaststelling Volkshuisvestingsprogramma gemeente Zoetermeer",
+   "soort": "documentenpagina besluit",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + twee blokken met tussenkop en lijst met documentlinks (bestandsgrootte + voorleeslink)",
+   "gehydrateerd": true,
+   "opmerking": "De pagina bevat 11 PDF-links van verschillende soorten, waaronder een collegevoorstel, een raadsbesluit, een raadsmemo, nota's van wijzigingen en beantwoording, en een uitvoeringsagenda, dus hij dekt de eis van twee verschillende PDF's. De documentlijsten zijn twee losse ul-elementen zonder nesting. In main staat geen img of svg; het PDF-pictogram is geen afbeeldingselement, dus 'afbeelding in een link' is niet toegekend. De 'Lees voor'-links (ReadSpeaker docReader) horen bij groep 1 en zijn niet meegeteld."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+   "titel": "Archief Volkshuisvestingsprogramma",
+   "soort": "overzichtspagina (archief)",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + h1 + voorleesbalk + introalinea + h2 + lijst met doorklikkers met datum (content-list, lege paginering)",
+   "gehydrateerd": true,
+   "opmerking": "De pagina lijkt nog in opbouw. De h2 boven de lijst heet letterlijk \"xx\", en de intro zegt \"Hier komen documenten omtrent het ontwerp\". De lijst bevat één doorklikker: \"Ontwerp Volkshuisvestingsprogramma gemeente Zoetermeer\" (01-05-2026), naar een HTML-pagina en niet naar een PDF. In de main staan geen afbeeldingen, tabellen, media of formulieren. Het enige gebied uit groep 2 is een lijst (ul) van één item. Voor de dekking voegt deze pagina weinig toe. Logo en footer-iconen horen bij het sjabloon en zijn daarom niet meegeteld."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+   "titel": "Ontwerp Volkshuisvestingsprogramma gemeente Zoetermeer",
+   "soort": "documentenpagina besluit",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort",
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + tussenkop + lijst met documentlinks (bestandsnaam, formaat en grootte, docReader-link)",
+   "gehydrateerd": true,
+   "opmerking": "De pagina heeft zeven PDF's van verschillende soort: besluiten (\"Collegebesluit ontwerp Volkshuisvestingsprogramma (Geanonimiseerd).pdf\", \"Raadsbesluit Ontwerp Volkshuisvestingsprogramma.pdf\") en een beleidsprogramma met bijlagen (\"Bijlage 2 - Ontwerp Volkshuisvestingsprogramma definitief concept (opgemaakt).pdf\", uitvoeringsagenda's). De lijst is een ul met zeven li en is niet genest. Er staat geen img of svg in main, dus ook geen afbeelding in een link."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/wat-is-bo",
+   "titel": "Wat is BO?",
+   "soort": "informatiepagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + lopende tekst met één opsomming (ul) + vetgedrukte tussenregel, één kolom zonder zijbalk",
+   "gehydrateerd": true,
+   "opmerking": "De main bevat alleen tekst en één niet-geneste lijst (ul met 4 onderzoekssoorten, Bodemonderzoek t/m milieueffectrapport): geen img, svg, tabel, iframe, figure of video. Buiten de main staan het logo in de header en de sociale-media-iconen zonder tekst in de footer (Facebook, Instagram, LinkedIn); die zijn sjabloononderdelen en niet specifiek voor deze pagina."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/omgevingsvisie",
+   "titel": "Omgevingsvisie",
+   "soort": "lege informatiepagina",
+   "gebieden": [
+    "Logo",
+    "Iconen zonder tekst ernaast"
+   ],
+   "sjabloon": "kruimelpad + kop + voorleesbalk + één alinea",
+   "gehydrateerd": true,
+   "opmerking": "De pagina is nog niet gevuld. De hoofdinhoud bestaat alleen uit de kop en de zin \"Hier komen de BO-documenten over de Omgevingsvisie.\" Er staan geen documenten, afbeeldingen, tabellen of andere inhoud in de hoofdinhoud. De twee gebieden komen uit het sjabloon en staan dus op elke pagina: het logo in de header, en de pictogramlinks naar Facebook, Instagram en LinkedIn onder \"Volg ons\" in de footer. Als voorbeeld van de inhoud is deze pagina niet geschikt voor de steekproef."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+   "titel": "Omgevingsprogramma's",
+   "soort": "overzichtspagina",
+   "gebieden": [
+    "Lijst, en geneste lijst"
+   ],
+   "sjabloon": "kruimelpad + h1 + voorleesknoppen + twee lijstparagrafen (h2 + ul met kaartjes in drie kolommen zonder afbeelding en intro, titel + datum)",
+   "gehydrateerd": true,
+   "opmerking": "Een dunne pagina: in de main staat geen img, svg, tabel, iframe, video, formulier of PDF-link. De lijst is een ul met één kaartje, \"Volkshuisvestingsprogramma\" met de datum 01-05-2026. De tweede sectie \"Omgevingsprogramma's per gebied\" is een h2 zonder inhoud eronder: er staat geen lijst onder. Die kop zonder inhoud kan de onderzoeker onder 1.3.1/2.4.6 bekijken. Voor de dekking voegt de pagina weinig toe."
+  },
+  {
+   "url": "https://bo.zoetermeer.nl/omgevingsplan",
+   "titel": "Omgevingsplan",
+   "soort": "overzichtspagina",
+   "gebieden": [],
+   "sjabloon": "kruimelpad + kop + voorleesknoppen + lijst met kaartjes zonder afbeelding in drie kolommen (titel-link + datum) + lege paginering",
+   "gehydrateerd": true,
+   "opmerking": "Ik vond op deze pagina geen gebieden uit groep 2. In de main staat alleen een overzicht met één kaartje: een ul met één li, met als titel-link \"Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase\" en de datum 21-05-2026. Het sjabloon heet ThreeColumnsWithoutImageAndIntro. Er staan geen img, table, iframe of video in de main. Ik heb geen Lijst opgegeven, want die ul is een overzicht met één doorklikker en geen inhoudelijke lijst. De pagina voegt dus niets toe aan de dekking, behalve eventueel als voorbeeld van dit overzichtssjabloon."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Regels%20en%20toelichting%20op%20de%20regels%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer_%20eerste%20fase%E2%80%99.pdf?cb=ogIdQm-S",
+   "titel": "Bijlage 1 - Regels en toelichting op de regels van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase'",
+   "soort": "pdf-besluit",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-bijlage bij ontwerpbesluit (regels + toelichting)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald: het is een PDF, dus de soort is alleen afgeleid uit de bestandsnaam. Dit is een bijlage met juridische regels bij een ontwerpbesluit, geen formulier. Er is ook niets gemeten, dus 'gehydrateerd' zegt hier niets. Of het document getagd is, blijkt pas na openen."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20beantwoording%20participatie%20en%20overlegreacties%20voorontwerp%20wijziging%20Omgevingsplan_0.pdf?cb=ySIjfmvj",
+   "titel": "Bijlage 3 - Nota beantwoording participatie en overlegreacties voorontwerp wijziging Omgevingsplan",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-document (bijlage bij raadsstuk, SIMsite-uploadmap)",
+   "gehydrateerd": false,
+   "opmerking": "De PDF is volgens de opdracht niet opgehaald, dus er is geen get-html gedraaid en ook geen waarde voor 'gehydrateerd' gemeten. De false is een invulwaarde en zegt niets over de pagina. Het documenttype komt alleen uit de bestandsnaam: een nota van beantwoording van participatie- en overlegreacties, als bijlage 3 bij een raadsstuk over het wijzigen van het Omgevingsplan. Of het document tabellen of afbeeldingen bevat en of het getagd is, is niet vastgesteld. Het telt als één van de twee PDF's onder gebied 31, soort beleidsnota of raadsstuk, en is geen invulbaar formulier."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Overzicht%20Regels%20Ontwerp%20Wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer.pdf?cb=na_n_0pw",
+   "titel": "Bijlage 4 - Overzicht Regels Ontwerp Wijzigingsbesluit Omgevingsplan gemeente Zoetermeer",
+   "soort": "pdf-besluit",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-bijlage bij een besluit (SIMsite-uploadmap), opbouw niet bekeken",
+   "gehydrateerd": false,
+   "opmerking": "Dit is een PDF. Zoals de opdracht voorschreef, heb ik hem niet opgehaald. De soort heb ik afgeleid uit de bestandsnaam: een bijlage met een overzicht van regels bij een ontwerp-wijzigingsbesluit voor het omgevingsplan. Het gaat dus om een besluitstuk en niet om een formulier. Omdat de PDF niet is opgehaald, staat gehydrateerd op false. Of het een invulbaar formulier is (gebied 32) en of de PDF getagd is, heb ik niet vastgesteld."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Raadsmemo%20ontwerp%20wijzingsbesluit%20omgevingsplan%20gemeente%20Zoetermeer%20eerste%20fase_1.pdf?cb=QAJUNnDT",
+   "titel": "Bijlage 5 - Raadsmemo ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+   "soort": "pdf-raadsstuk",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-document (raadsmemo, bijlage bij raadsstuk)",
+   "gehydrateerd": true,
+   "opmerking": "Ik heb de PDF niet opgehaald, zoals de opdracht voorschrijft. Wat voor document het is (een raadsmemo, bijlage 5 bij een ontwerp-wijzigingsbesluit voor het omgevingsplan) blijkt alleen uit de bestandsnaam. Of het een formulier is of getagd is, heb ik niet vastgesteld. Het veld gehydrateerd komt niet uit get-html, want dat commando is niet gedraaid."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28DSO-versie%29%20%281%29.pdf?cb=g6RAjmjH",
+   "titel": "Bijlage 1 - Ontwerp Volkshuisvestingsprogramma definitief concept (DSO-versie)",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "PDF-bijlage (SIMsite-uploads op cuatro.sim-cdn.nl)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald. Het is een PDF, dus de soort komt alleen uit de bestandsnaam: een beleidsprogramma (ontwerp-volkshuisvestingsprogramma, bijlage 1 bij een raadsstuk) en geen formulier. Of er tabellen, grafieken of invulvelden in staan, blijkt pas als je hem opent, net als of hij getagd is. \"gehydrateerd\" is hier niet gemeten."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20%28DSO-versie%29.pdf?cb=o48E0WxT",
+   "titel": "Bijlage 1 - Volkshuisvestingsprogramma (DSO-versie)",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-bijlage bij een raadsstuk (beleidsprogramma, DSO-versie)",
+   "gehydrateerd": false,
+   "opmerking": "Dit is een PDF en is daarom niet opgehaald. Het veld gehydrateerd staat op false omdat er niets gemeten is, niet omdat de pagina een fout gaf. De soort is afgeleid uit de bestandsnaam: een beleidsprogramma, gepubliceerd als bijlage 1 bij een raadsstuk. Uit de naam blijkt niet dat het een invulbaar formulier is. Of de PDF getagd is, moet nog blijken, bijvoorbeeld met get-pdfstructuur."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer%20DSO%20versie.pdf?cb=up7J9VpI",
+   "titel": "Bijlage 1 - Volkshuisvestingsprogramma gemeente Zoetermeer (DSO-versie)",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-bijlage (beleidsprogramma), niet geopend",
+   "gehydrateerd": true,
+   "opmerking": "Ik heb de PDF niet opgehaald. Het soort komt alleen uit de bestandsnaam: een beleidsprogramma, in een DSO-versie. Ook dat het document geen invulbaar formulier is, volgt uit die naam. Het veld gehydrateerd is niet gemeten: een PDF heeft geen JavaScript om te laden."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28opgemaakt%29.pdf?cb=F57F3wT7",
+   "titel": "Bijlage 2 - Ontwerp Volkshuisvestingsprogramma definitief concept (opgemaakt)",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-document (opgemaakte beleidsnota, bijlage bij raadsstuk)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald: het is een PDF, dus de soort komt uit de bestandsnaam. Die wijst op een beleidsnota: een ontwerp-volkshuisvestingsprogramma, bijlage 2 bij een raadsstuk. Er is niet gecontroleerd of de PDF getagd is of invulvelden heeft. Daarom staat \"Invulbaar PDF-formulier\" niet bij de gebieden. Het veld gehydrateerd is niet gemeten, want get-html is niet gedraaid."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20%28opgemaakt%29.pdf?cb=kBk3BzsA",
+   "titel": "Bijlage 2 - Volkshuisvestingsprogramma (opgemaakt)",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "pdf-document (opgemaakte beleidsbijlage)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald. Het adres wijst naar een PDF, dus soort en titel komen alleen uit de bestandsnaam: een opgemaakte bijlage bij een volkshuisvestingsprogramma, een beleidsnota. Of het document getagd of invulbaar is, is niet vastgesteld. 'gehydrateerd' is niet gemeten en staat alleen op true omdat het veld verplicht is."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20opgemaakt.pdf?cb=nf6i1Mwh",
+   "titel": "Bijlage 2 - Volkshuisvestingsprogramma (opgemaakt)",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-bijlage (opgemaakte beleidsnota)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald, want het is een PDF. De soort komt alleen uit de bestandsnaam: bijlage 2 bij een raadsstuk, het Volkshuisvestingsprogramma, dus een beleidsnota. Het veld gehydrateerd is niet gemeten, omdat get-html niet is gedraaid."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20Uitvoeringsagenda%20Volkshuisvesting.pdf?cb=7QPS7lZo",
+   "titel": "Bijlage 3 - Concept Uitvoeringsagenda Volkshuisvesting",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-bijlage bij raadsstuk (beleidsdocument)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald: dit is een PDF, dus de soort komt alleen uit de bestandsnaam. Het is een bijlage bij een raadsstuk: een beleidsnota of uitvoeringsagenda als concept. Of hij getagd is of een invulformulier bevat, is niet vastgesteld. Gehydrateerd is niet van toepassing en staat daarom op true."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20uitvoeringsagenda%20volkshuisvesting.pdf?cb=fcDsGXBa",
+   "titel": "Bijlage 3 - Concept uitvoeringsagenda volkshuisvesting",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-bijlage bij raadsstuk (SIMsite-uploads)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald, want het is een PDF. Soort en titel komen alleen uit de bestandsnaam: een conceptbeleidsagenda die als bijlage bij een raadsvoorstel hoort. Of de PDF getagd of invulbaar is, is niet vastgesteld. Het veld gehydrateerd is niet gemeten."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20Zoetermeer%20%281%29.pdf?cb=C3ZmURpY",
+   "titel": "Bijlage 3 - Nota van Wijzigingen Volkshuisvestingsprogramma Zoetermeer",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-document (raadsbijlage bij beleidsprogramma)",
+   "gehydrateerd": true,
+   "opmerking": "Het is een PDF, dus niet opgehaald: soort en titel komen uit de bestandsnaam. \"Nota van Wijzigingen\" wijst op een raadsbijlage bij een beleidsprogramma en niet op een formulier; of er invulbare velden in staan, is niet gecontroleerd. De bestandsnaam eindigt op \"(1)\", dus het is mogelijk een dubbel geüploade kopie. Gehydrateerd staat op true omdat het veld verplicht is, maar het is niet gemeten."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20Zoetermeer_0.pdf?cb=kwLtbc98",
+   "titel": "Bijlage 4 - Nota van Beantwoording Zienswijzen Volkshuisvestingsprogramma Zoetermeer",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "PDF-bijlage bij een raadsstuk (nota van beantwoording)",
+   "gehydrateerd": true,
+   "opmerking": "Het document is niet opgehaald, zoals de opdracht voor een PDF voorschrijft. De soort komt alleen uit de bestandsnaam: een nota van beantwoording van zienswijzen, bijlage 4 bij het Volkshuisvestingsprogramma. Of het document getagd of invulbaar is, is niet vastgesteld. 'gehydrateerd' is voor een PDF niet van toepassing en staat alleen op true omdat het veld verplicht is."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=tpjvJJAM",
+   "titel": "Bijlage 4 - Nota van Wijzigingen Volkshuisvestingsprogramma gemeente Zoetermeer",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-document (bijlage bij raadsstuk), niet geopend",
+   "gehydrateerd": true,
+   "opmerking": "Ik heb de PDF volgens de opdracht niet opgehaald. Wat hier staat, komt alleen uit de bestandsnaam: bijlage 4 bij het Volkshuisvestingsprogramma, een nota van wijzigingen, en dus een beleids- of raadsstuk en geen formulier. Of hij getagd is en of er invulvelden in staan, is niet vastgesteld. Een invulbaar PDF-formulier heb ik daarom niet opgegeven. Het veld gehydrateerd bestaat alleen bij get-html en is hier niet van toepassing: true is een vulwaarde, geen meting."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Uitvoeringsagenda%20Woonzorgvisie.pdf?cb=g7Q-0i69",
+   "titel": "Bijlage 4 - Uitvoeringsagenda Woonzorgvisie",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-bijlage bij beleidsstuk (uploads SIMsite-CDN)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald: het adres eindigt op .pdf (met ?cb-parameter). Soort afgeleid uit de bestandsnaam \"Bijlage 4 - Uitvoeringsagenda Woonzorgvisie\": een beleidsbijlage (uitvoeringsagenda bij de woonzorgvisie), geen formulier. Of het een invulbaar formulier of getagd is, is niet vastgesteld; gehydrateerd is niet van toepassing en staat hier op true omdat er geen get-html is gedraaid."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Beoogde%20beslispunten.pdf?cb=L4NhumnU",
+   "titel": "Bijlage 5 - Beoogde beslispunten",
+   "soort": "pdf-bijlage bij raadsstuk",
+   "gebieden": [
+    "PDF — twee stuks, verschillend van soort"
+   ],
+   "sjabloon": "PDF-bijlage (SIMsite-uploadmap), inhoud niet geopend",
+   "gehydrateerd": false,
+   "opmerking": "Ik heb de PDF niet opgehaald, zoals de opdracht voor een .pdf-adres vraagt. Het soort document heb ik alleen uit de bestandsnaam afgeleid: \"Bijlage 5 - Beoogde beslispunten\" is waarschijnlijk een bijlage bij een raads- of besluitvormingsstuk. Of het document getagd is en wat erin staat (tabellen, afbeeldingen, formuliervelden), weet ik dus niet. \"gehydrateerd\" staat op false omdat get-html niet is gedraaid; het is geen waarneming van een kapotte pagina."
+  },
+  {
+   "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=KvRmhixi",
+   "titel": "Bijlage 5 - Nota van Beantwoording Zienswijzen Volkshuisvestingsprogramma gemeente Zoetermeer",
+   "soort": "pdf-nota",
+   "gebieden": [
+    "PDF"
+   ],
+   "sjabloon": "pdf-document (bijlage bij raadsstuk, geupload via SIMsite-CDN)",
+   "gehydrateerd": true,
+   "opmerking": "Niet opgehaald, zoals de opdracht voor een PDF voorschrijft; soort en titel zijn afgeleid uit de bestandsnaam. Er is dus ook niet gemeten of het document getagd is, of het formuliervelden heeft (gebied 32) of wat er verder in staat. 'gehydrateerd' is hier niet van toepassing en is op true gezet omdat het veld verplicht is. Het is een nota van beantwoording van zienswijzen, dus een beleidsstuk en geen formulier. Wil je het als een van de twee PDF's kiezen, neem dan als tweede een ander soort, zoals een formulier of een folder."
+  }
+ ],
+ "keuze": {
+  "samples": [
+   {
+    "url": "https://bo.zoetermeer.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Iconen zonder tekst ernaast",
+     "Teaser- of kaartafbeeldingen in een overzicht"
+    ],
+    "waarom": "Homepage gaat er altijd in. Dekt het logo, de headerafbeelding zonder tekst, de sociale-media-iconen in de footer en het blok kaartjes (datum + titel) onder \"Meest recente stukken\". Staat al in de steekproef."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+    "titel": "Omgevingsprogramma's",
+    "type": "structured",
+    "gebieden": [
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Vertegenwoordigt het overzichtssjabloon met kaartjes (ThreeColumnsWithoutImageAndIntro), dat anders is dan het blok op de homepage; hier speelt of de datum in de code bij het goede item hoort. Heeft ook een h2 zonder inhoud eronder. Staat al in de steekproef."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/wat-is-bo",
+    "titel": "Wat is BO?",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking: een gewone informatiepagina met lopende tekst en één opsomming, die inhoudelijk niets nieuws toevoegt. Staat al in de steekproef; nu als random aangemerkt."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+    "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+    "type": "structured",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Door de klant aangedragen. Documentenpagina van een bekendmaking met een lijst documentlinks naar zes PDF's; staat model voor alle documentenpagina's van de site. Staat al in de steekproef."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+    "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. PDF van soort besluit (collegebesluit). Staat al in de steekproef."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+    "titel": "Bijlage 2 - Motivering van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer - eerste fase'",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. PDF van soort nota (motivering), dus verschillend van het collegebesluit; samen voldoen ze aan de eis van twee PDF's van verschillende soort. Staat al in de steekproef."
+   }
+  ],
+  "nietGedekt": [
+   "Hero met tekst erin gebrand (3)",
+   "Hero met tekst eroverheen (4) -- het zoekveld over de headerafbeelding valt buiten het deelonderzoek content",
+   "Afbeelding in een link of knop, behalve het logo (6)",
+   "Complex beeld: schema, organogram, infographic (8)",
+   "Kaart of plattegrond als afbeelding (9)",
+   "Afbeelding met onderschrift of in een figure (10)",
+   "Foto in de lopende tekst (11)",
+   "Fotogalerij (12)",
+   "Poster of aankondiging (13)",
+   "Afbeelding met tekst erin (14)",
+   "Grafiek of diagram met legenda (15)",
+   "Tabel (16)",
+   "Citaat (18)",
+   "Anderstalig tekstfragment (19)",
+   "Anderstalige pagina (20)",
+   "Video met geluid (21) -- geen video's op de site, dus de eis van twee video's vervalt",
+   "Video zonder geluid of animerende GIF (22)",
+   "Audio of podcast (23)",
+   "Live uitzending (24)",
+   "Accordeon of tabbladen (25)",
+   "Formulier (26)",
+   "Iets dat uit zichzelf beweegt (27)",
+   "Pagina met een eigen sjabloon (28)",
+   "Kaart in een iframe (29)",
+   "Ander kader van een ander domein (30)",
+   "Invulbaar PDF-formulier (32) -- geen PDF die naar de naam een formulier is; niet vastgesteld, want de PDF's zijn niet geopend"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+    "reden": "Zelfde overzichtssjabloon als Omgevingsprogramma's; dekt niets nieuws."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de klantpagina Ontwerp wijzigingsbesluit; meer PDF-links is geen extra dekking."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de klantpagina Ontwerp wijzigingsbesluit."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+    "reden": "Overzicht in opbouw (kop \"xx\") met één doorklikker; dekt niets nieuws. De placeholderkop kan de onderzoeker wel los melden."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsvisie",
+    "reden": "Lege pagina; alleen sjabloononderdelen."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsplan",
+    "reden": "Zelfde overzichtssjabloon als Omgevingsprogramma's; dekt niets nieuws."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Regels%20en%20toelichting%20op%20de%20regels%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer_%20eerste%20fase%E2%80%99.pdf?cb=ogIdQm-S",
+    "reden": "Twee PDF's van verschillende soort zijn al gekozen; bovendien 74,5 MB."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20beantwoording%20participatie%20en%20overlegreacties%20voorontwerp%20wijziging%20Omgevingsplan_0.pdf?cb=ySIjfmvj",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Overzicht%20Regels%20Ontwerp%20Wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer.pdf?cb=na_n_0pw",
+    "reden": "Besluitstuk, zelfde soort als het collegebesluit."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Raadsmemo%20ontwerp%20wijzingsbesluit%20omgevingsplan%20gemeente%20Zoetermeer%20eerste%20fase_1.pdf?cb=QAJUNnDT",
+    "reden": "Raadsstuk; twee PDF's van verschillende soort zijn al gekozen."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28DSO-versie%29%20%281%29.pdf?cb=g6RAjmjH",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20%28DSO-versie%29.pdf?cb=o48E0WxT",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer%20DSO%20versie.pdf?cb=up7J9VpI",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28opgemaakt%29.pdf?cb=F57F3wT7",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20%28opgemaakt%29.pdf?cb=kBk3BzsA",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20opgemaakt.pdf?cb=nf6i1Mwh",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20Uitvoeringsagenda%20Volkshuisvesting.pdf?cb=7QPS7lZo",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20uitvoeringsagenda%20volkshuisvesting.pdf?cb=fcDsGXBa",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20Zoetermeer%20%281%29.pdf?cb=C3ZmURpY",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20Zoetermeer_0.pdf?cb=kwLtbc98",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=tpjvJJAM",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Uitvoeringsagenda%20Woonzorgvisie.pdf?cb=g7Q-0i69",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Beoogde%20beslispunten.pdf?cb=L4NhumnU",
+    "reden": "Bijlage bij een raadsstuk; twee PDF's van verschillende soort zijn al gekozen."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=KvRmhixi",
+    "reden": "Nota, zelfde soort als de motivering."
+   }
+  ],
+  "toelichting": "bo.zoetermeer.nl is een kleine SIMsite-site met drie sjablonen: de homepage, overzichten met kaartjes (titel + datum) en documentenpagina's met lijsten PDF-links. Alle zes gekozen samples staan al in de steekproef, dus er hoeft niets nieuw aangemaakt te worden. Wel wordt Wat is BO? nu als random aangemerkt. De site heeft geen video's, tabellen, formulieren, accordeons of ingesloten kaders. Aan de PDF-eis is voldaan met een collegebesluit tegenover een nota (motivering). Een invulbaar PDF-formulier is niet gevonden."
+ },
+ "eindresultaat": {
+  "drooglopen": true,
+  "startUrl": "https://bo.zoetermeer.nl/",
+  "bron": "sitemap",
+  "bekeken": 30,
+  "voorstel": [
+   {
+    "url": "https://bo.zoetermeer.nl/",
+    "titel": "Home",
+    "type": "structured",
+    "gebieden": [
+     "Logo",
+     "Hero- of headerafbeelding zonder tekst",
+     "Iconen zonder tekst ernaast",
+     "Teaser- of kaartafbeeldingen in een overzicht"
+    ],
+    "waarom": "Homepage gaat er altijd in. Dekt het logo, de headerafbeelding zonder tekst, de sociale-media-iconen in de footer en het blok kaartjes (datum + titel) onder \"Meest recente stukken\". Staat al in de steekproef."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsprogrammas",
+    "titel": "Omgevingsprogramma's",
+    "type": "structured",
+    "gebieden": [
+     "Teaser- of kaartafbeeldingen in een overzicht",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Vertegenwoordigt het overzichtssjabloon met kaartjes (ThreeColumnsWithoutImageAndIntro), dat anders is dan het blok op de homepage; hier speelt of de datum in de code bij het goede item hoort. Heeft ook een h2 zonder inhoud eronder. Staat al in de steekproef."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/wat-is-bo",
+    "titel": "Wat is BO?",
+    "type": "random",
+    "gebieden": [
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Willekeurige trekking: een gewone informatiepagina met lopende tekst en één opsomming, die inhoudelijk niets nieuws toevoegt. Staat al in de steekproef; nu als random aangemerkt."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-wijzigingsbesluit-omgevingsplan-gemeente-zoetermeer-eerste-fase",
+    "titel": "Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer: eerste fase",
+    "type": "structured",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort",
+     "Lijst, en geneste lijst"
+    ],
+    "waarom": "Door de klant aangedragen. Documentenpagina van een bekendmaking met een lijst documentlinks naar zes PDF's; staat model voor alle documentenpagina's van de site. Staat al in de steekproef."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Collegebesluit%20Ontwerp%20wijzigingsbesluit%20omgevinsplan%20gemeente%20Zoetermeer%20eerste%20fase_3.pdf?cb=00z1RrnC",
+    "titel": "Collegebesluit Ontwerp wijzigingsbesluit omgevingsplan gemeente Zoetermeer eerste fase",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. PDF van soort besluit (collegebesluit). Staat al in de steekproef."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Motivering%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer-%20eerste%20fase%E2%80%99.pdf?cb=ZyaOdJYv",
+    "titel": "Bijlage 2 - Motivering van het 'Ontwerp wijzigingsbesluit Omgevingsplan gemeente Zoetermeer - eerste fase'",
+    "type": "pdf",
+    "gebieden": [
+     "PDF — twee stuks, verschillend van soort"
+    ],
+    "waarom": "Door de klant aangedragen. PDF van soort nota (motivering), dus verschillend van het collegebesluit; samen voldoen ze aan de eis van twee PDF's van verschillende soort. Staat al in de steekproef."
+   }
+  ],
+  "nietGedekt": [
+   "Hero met tekst erin gebrand (3)",
+   "Hero met tekst eroverheen (4) -- het zoekveld over de headerafbeelding valt buiten het deelonderzoek content",
+   "Afbeelding in een link of knop, behalve het logo (6)",
+   "Complex beeld: schema, organogram, infographic (8)",
+   "Kaart of plattegrond als afbeelding (9)",
+   "Afbeelding met onderschrift of in een figure (10)",
+   "Foto in de lopende tekst (11)",
+   "Fotogalerij (12)",
+   "Poster of aankondiging (13)",
+   "Afbeelding met tekst erin (14)",
+   "Grafiek of diagram met legenda (15)",
+   "Tabel (16)",
+   "Citaat (18)",
+   "Anderstalig tekstfragment (19)",
+   "Anderstalige pagina (20)",
+   "Video met geluid (21) -- geen video's op de site, dus de eis van twee video's vervalt",
+   "Video zonder geluid of animerende GIF (22)",
+   "Audio of podcast (23)",
+   "Live uitzending (24)",
+   "Accordeon of tabbladen (25)",
+   "Formulier (26)",
+   "Iets dat uit zichzelf beweegt (27)",
+   "Pagina met een eigen sjabloon (28)",
+   "Kaart in een iframe (29)",
+   "Ander kader van een ander domein (30)",
+   "Invulbaar PDF-formulier (32) -- geen PDF die naar de naam een formulier is; niet vastgesteld, want de PDF's zijn niet geopend"
+  ],
+  "afgevallen": [
+   {
+    "url": "https://bo.zoetermeer.nl/volkshuisvestingsprogramma",
+    "reden": "Zelfde overzichtssjabloon als Omgevingsprogramma's; dekt niets nieuws."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/vaststelling-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de klantpagina Ontwerp wijzigingsbesluit; meer PDF-links is geen extra dekking."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/ontwerp-volkshuisvestingsprogramma-gemeente-zoetermeer",
+    "reden": "Zelfde documentenpagina-sjabloon als de klantpagina Ontwerp wijzigingsbesluit."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/archief-volkshuisvestingsprogramma",
+    "reden": "Overzicht in opbouw (kop \"xx\") met één doorklikker; dekt niets nieuws. De placeholderkop kan de onderzoeker wel los melden."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsvisie",
+    "reden": "Lege pagina; alleen sjabloononderdelen."
+   },
+   {
+    "url": "https://bo.zoetermeer.nl/omgevingsplan",
+    "reden": "Zelfde overzichtssjabloon als Omgevingsprogramma's; dekt niets nieuws."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Regels%20en%20toelichting%20op%20de%20regels%20van%20het%20%E2%80%98Ontwerp%20wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer_%20eerste%20fase%E2%80%99.pdf?cb=ogIdQm-S",
+    "reden": "Twee PDF's van verschillende soort zijn al gekozen; bovendien 74,5 MB."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20beantwoording%20participatie%20en%20overlegreacties%20voorontwerp%20wijziging%20Omgevingsplan_0.pdf?cb=ySIjfmvj",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Overzicht%20Regels%20Ontwerp%20Wijzigingsbesluit%20Omgevingsplan%20gemeente%20Zoetermeer.pdf?cb=na_n_0pw",
+    "reden": "Besluitstuk, zelfde soort als het collegebesluit."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Raadsmemo%20ontwerp%20wijzingsbesluit%20omgevingsplan%20gemeente%20Zoetermeer%20eerste%20fase_1.pdf?cb=QAJUNnDT",
+    "reden": "Raadsstuk; twee PDF's van verschillende soort zijn al gekozen."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28DSO-versie%29%20%281%29.pdf?cb=g6RAjmjH",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20%28DSO-versie%29.pdf?cb=o48E0WxT",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%201%20-%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer%20DSO%20versie.pdf?cb=up7J9VpI",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Ontwerp%20Volkshuisvestingsprogramma%20definitief%20concept%20%20%28opgemaakt%29.pdf?cb=F57F3wT7",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20%28opgemaakt%29.pdf?cb=kBk3BzsA",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%202%20-%20Volkshuisvestingsprogramma%20opgemaakt.pdf?cb=nf6i1Mwh",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20Uitvoeringsagenda%20Volkshuisvesting.pdf?cb=7QPS7lZo",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Concept%20uitvoeringsagenda%20volkshuisvesting.pdf?cb=fcDsGXBa",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%203%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20Zoetermeer%20%281%29.pdf?cb=C3ZmURpY",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20Zoetermeer_0.pdf?cb=kwLtbc98",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Nota%20van%20Wijzigingen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=tpjvJJAM",
+    "reden": "Nota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%204%20-%20Uitvoeringsagenda%20Woonzorgvisie.pdf?cb=g7Q-0i69",
+    "reden": "Beleidsnota, zelfde soort als de motivering."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Beoogde%20beslispunten.pdf?cb=L4NhumnU",
+    "reden": "Bijlage bij een raadsstuk; twee PDF's van verschillende soort zijn al gekozen."
+   },
+   {
+    "url": "https://cuatro.sim-cdn.nl/bozoetermeer4c6091/uploads/Bijlage%205%20-%20Nota%20van%20Beantwoording%20Zienswijzen%20Volkshuisvestingsprogramma%20gemeente%20Zoetermeer.pdf?cb=KvRmhixi",
+    "reden": "Nota, zelfde soort als de motivering."
+   }
+  ],
+  "randomPercentage": 17,
+  "toelichting": "bo.zoetermeer.nl is een kleine SIMsite-site met drie sjablonen: de homepage, overzichten met kaartjes (titel + datum) en documentenpagina's met lijsten PDF-links. Alle zes gekozen samples staan al in de steekproef, dus er hoeft niets nieuw aangemaakt te worden. Wel wordt Wat is BO? nu als random aangemerkt. De site heeft geen video's, tabellen, formulieren, accordeons of ingesloten kaders. Aan de PDF-eis is voldaan met een collegebesluit tegenover een nota (motivering). Een invulbaar PDF-formulier is niet gevonden."
+ },
+ "logs": [
+  "WCAG 2.2 AA deelonderzoek content website met formulieren op https://bo.zoetermeer.nl/",
+  "De klant heeft 3 pagina's aangedragen; die gaan sowieso mee.",
+  "Let op: er staan al 6 samples in de steekproef.",
+  "35 kandidaten via sitemap. De sitemap.xml bestaat en noemt 12 adressen. Daarvan heb ik /home laten vallen, omdat het dezelfde pagina is als /, en /node/3, omdat die een 404 geeft. Er blijven 10 HTML-pagina's over. Daarbij komen 25 PDF's waar die pagina's naar linken, waaronder de twee die de klant aandroeg. Ze staan allemaal op de eigen uploadmap van de site op cuatro.sim-cdn.nl, dus een ander domein. De ReadSpeaker-docreaderlinks naar dezelfde PDF's heb ik als dubbel weggelaten. Het totaal is 35 adressen; ik hoefde niet te selecteren.",
+  "Ik bekijk er 30 van de 35. De rest blijft ongezien; verhoog args.maxKandidaten als dat te weinig is.",
+  "LET OP: 6 pagina's laadden hun JavaScript niet. Daar kloppen de waarnemingen mogelijk niet.",
+  "30 pagina's bekeken.",
+  "6 samples gekozen, 1 random (17%). bo.zoetermeer.nl is een kleine SIMsite-site met drie sjablonen: de homepage, overzichten met kaartjes (titel + datum) en documentenpagina's met lijsten PDF-links. Alle zes gekozen samples staan al in de steekproef, dus er hoeft niets nieuw aangemaakt te worden. Wel wordt Wat is BO? nu als random aangemerkt. De site heeft geen video's, tabellen, formulieren, accordeons of ingesloten kaders. Aan de PDF-eis is voldaan met een collegebesluit tegenover een nota (motivering). Een invulbaar PDF-formulier is niet gevonden.",
+  "Niet op deze site: Hero met tekst erin gebrand (3), Hero met tekst eroverheen (4) -- het zoekveld over de headerafbeelding valt buiten het deelonderzoek content, Afbeelding in een link of knop, behalve het logo (6), Complex beeld: schema, organogram, infographic (8), Kaart of plattegrond als afbeelding (9), Afbeelding met onderschrift of in een figure (10), Foto in de lopende tekst (11), Fotogalerij (12), Poster of aankondiging (13), Afbeelding met tekst erin (14), Grafiek of diagram met legenda (15), Tabel (16), Citaat (18), Anderstalig tekstfragment (19), Anderstalige pagina (20), Video met geluid (21) -- geen video's op de site, dus de eis van twee video's vervalt, Video zonder geluid of animerende GIF (22), Audio of podcast (23), Live uitzending (24), Accordeon of tabbladen (25), Formulier (26), Iets dat uit zichzelf beweegt (27), Pagina met een eigen sjabloon (28), Kaart in een iframe (29), Ander kader van een ander domein (30), Invulbaar PDF-formulier (32) -- geen PDF die naar de naam een formulier is; niet vastgesteld, want de PDF's zijn niet geopend."
+ ],
+ "gebruik": {
+  "agents": 33,
+  "tokens": 2863126,
+  "toolCalls": 122
+ }
+}

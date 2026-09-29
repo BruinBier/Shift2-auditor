@@ -124,6 +124,596 @@ async function listProjects() {
   print(slim);
 }
 
+/**
+ * Kandidateninventarisatie voor de steekproef (steekproefselectie v2, fase 1).
+ *
+ * Start de inventarisatie op de server en wacht tot hij klaar is. Kiest niets: de
+ * steekproef komt nog steeds uit de workflow `steekproef-samenstellen`.
+ */
+async function steekproefInventaris(projectId: string, flags: Flags) {
+  const gestart = await api(`/api/projects/${projectId}/steekproef/inventaris`, { method: 'POST' });
+  console.error(`[inventaris] gestart: ${gestart.id} vanaf ${gestart.startUrl}`);
+  if (flags.wacht === 'false') return print(gestart);
+  const t0 = Date.now();
+  for (;;) {
+    await new Promise((z) => setTimeout(z, 4000));
+    const runs: any[] = await api(`/api/projects/${projectId}/steekproef/inventaris`);
+    const r = runs.find((x) => x.id === gestart.id);
+    if (!r) throw new Error('Inventarisatie verdwenen');
+    if (r.status === 'bezig') {
+      console.error(`[inventaris] bezig (${Math.round((Date.now() - t0) / 1000)}s)`);
+      continue;
+    }
+    return print(r);
+  }
+}
+
+/**
+ * Sjabloonclusters (steekproefselectie v2, fase 3), SCHADUWFUNCTIE: geen invloed op de
+ * steekproef. Met --controle=<bestand.md> komt er een controleoverzicht van de grootste
+ * clusters bij, om met de hand te beoordelen.
+ */
+async function steekproefClusters(projectId: string, flags: Flags) {
+  const drempel = flags.drempel && flags.drempel !== 'true' ? flags.drempel : '0.8';
+  const r = await api(`/api/projects/${projectId}/steekproef/clusters?drempel=${drempel}`);
+  const pad = (u: string) => u.replace(/^https?:\/\/[^/]+/, '') || '/';
+  if (flags.controle && flags.controle !== 'true') {
+    const n = flags.aantal && flags.aantal !== 'true' ? Number(flags.aantal) : 15;
+    const regels: string[] = [
+      `# Controle sjabloonclusters, ${r.canonHost}`,
+      '',
+      `Drempel ${r.drempel}, ${r.paginas} pagina's, inventarisatie ${r.inventarisId} (${new Date(r.inventarisDatum).toLocaleString('nl-NL')}).`,
+      'Deze clusters hebben nog geen invloed op de steekproef.',
+      '',
+      '| Drempel | Clusters | Singletons | Grootste | Verschuift t.o.v. gekozen |',
+      '|---|---|---|---|---|',
+      ...r.perDrempel.map((d: any) => `| ${d.drempel} | ${d.clusters} | ${d.singletons} | ${d.grootste.join(', ')} | ${d.verschuivingTovGekozen} |`),
+      '',
+    ];
+    for (const c of r.clusters.filter((x: any) => x.leden.length > 1).slice(0, n)) {
+      const extra = c.leden.filter((l: any) => l.video || l.kaart);
+      regels.push(
+        `## Sjabloon ${c.naam}: ${c.leden.length} pagina's`,
+        '',
+        `- Representant: \`${pad(c.representant)}\``,
+        `- Inhoudstype: ${c.inhoudstype ?? '(geen CMS-data)'}; componenten: ${c.componenten ?? '-'}`,
+        `- Overeenkomst binnen het cluster: laagste ${c.minimaal}, gemiddeld ${c.gemiddeld}`,
+        `- Gedeelde structurele kenmerken: ${c.gedeeld.length ? c.gedeeld.map((g: string) => `\`${g}\``).join(', ') : '(alleen wat de hele site deelt)'}`,
+        ...(extra.length ? [`- Met video/kaart-aanwijzing: ${extra.length} (${extra.slice(0, 4).map((l: any) => pad(l.urlNorm)).join(', ')})`] : []),
+        `- Voorbeelden: ${[0, Math.floor(c.leden.length / 3), Math.floor((2 * c.leden.length) / 3), c.leden.length - 1]
+          .map((i) => c.leden[i])
+          .filter((l: any, i: number, a: any[]) => a.indexOf(l) === i)
+          .map((l: any) => `\`${pad(l.urlNorm)}\``)
+          .join(', ')}`,
+        '',
+        'Oordeel: [ ] terecht samengevoegd  [ ] onterecht samengevoegd  [ ] onterecht gesplitst  [ ] twijfel',
+        '',
+        'Toelichting:',
+        '',
+      );
+    }
+    fs.writeFileSync(flags.controle, regels.join('\n'), 'utf8');
+    console.error(`[clusters] controleoverzicht: ${flags.controle}`);
+  }
+  print({
+    inventarisId: r.inventarisId,
+    drempel: r.drempel,
+    paginas: r.paginas,
+    perDrempel: r.perDrempel,
+    grootste: r.clusters.slice(0, 10).map((c: any) => ({
+      naam: c.naam,
+      aantal: c.leden.length,
+      representant: pad(c.representant),
+      inhoudstype: c.inhoudstype,
+      componenten: c.componenten,
+      minimaal: c.minimaal,
+    })),
+    duurMs: r.duurMs,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Semantische signalen (steekproefselectie v2, fase 4)
+// ---------------------------------------------------------------------------
+
+/** HTML ophalen zoals de inventarisatie het doet: doorverwijzingen zelf volgen, met cookies. */
+async function haalHtmlMetCookies(url: string, jar: Map<string, Record<string, string>>): Promise<string> {
+  let huidig = url;
+  for (let i = 0; i < 10; i++) {
+    const host = new URL(huidig).hostname;
+    const k = jar.get(host) || {};
+    const r = await fetch(huidig, {
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Shift2-Auditor/1.0; toegankelijkheidsonderzoek)',
+        Cookie: Object.entries(k).map(([a, b]) => `${a}=${b}`).join('; '),
+      },
+    });
+    for (const c of (r.headers as any).getSetCookie?.() || []) {
+      const [paar] = c.split(';');
+      const j = paar.indexOf('=');
+      if (j > 0) k[paar.slice(0, j).trim()] = paar.slice(j + 1);
+    }
+    jar.set(host, k);
+    const loc = r.headers.get('location');
+    if (r.status >= 300 && r.status < 400 && loc) {
+      huidig = new URL(loc, huidig).toString();
+      continue;
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status} voor ${url}`);
+    return r.text();
+  }
+  throw new Error(`doorverwijzingslus voor ${url}`);
+}
+
+/**
+ * Maakt de opdrachten voor de semantische vragen uit de beoordelingsset, en laat weg wat
+ * deze aanbieder al beantwoord heeft (zelfde onderwerp, vraag, versie en contentHash).
+ * Schrijft de open opdrachten naar een bestand; een aanbieder beantwoordt die.
+ */
+async function steekproefVragen(projectId: string, flags: Flags) {
+  const { maakOpdracht } = await import('../lib/steekproef/classifier');
+  const { leesPaginainvoer, leesTekstRondVideo, leesAfbeeldingen, paginaSamenvatting } = await import('../lib/steekproef/signaalinvoer');
+  const { createHash } = await import('crypto');
+  const { spawnSync } = await import('child_process');
+
+  const setPad = flags.set && flags.set !== 'true' ? flags.set : 'docs/plannen/steekproef-v2/fase4/beoordelingsset.json';
+  const set = JSON.parse(fs.readFileSync(setPad, 'utf8')).projecten[projectId];
+  if (!set) throw new Error(`Project ${projectId} staat niet in ${setPad}`);
+  const aanbieder = flags.aanbieder && flags.aanbieder !== 'true' ? flags.aanbieder : 'claude';
+  const map = path.join(process.cwd(), 'tmp', 'signalen');
+  fs.mkdirSync(path.join(map, 'afbeeldingen'), { recursive: true });
+  const uitPad = flags.uit && flags.uit !== 'true' ? flags.uit : path.join(map, `${set.kenmerk}-opdrachten.json`);
+
+  const runs: any[] = await api(`/api/projects/${projectId}/steekproef/inventaris`);
+  const inv = runs.find((r) => r.status === 'klaar');
+  const detail = await api(`/api/projects/${projectId}/steekproef/inventaris/${inv.id}`);
+  const perUrl = new Map<string, any>(detail.kandidaten.map((k: any) => [k.urlNorm, k]));
+  const profielRuns: any[] = await api(`/api/projects/${projectId}/steekproef/profielen`);
+  const pr = profielRuns.find((r) => r.status === 'klaar');
+  const profielen: any[] = pr ? (await api(`/api/projects/${projectId}/steekproef/profielen/${pr.id}`)).profielen : [];
+  const clusters = set.clusterproef?.length ? await api(`/api/projects/${projectId}/steekproef/clusters?drempel=0.8`) : null;
+
+  const jar = new Map<string, Record<string, string>>();
+  const htmlCache = new Map<string, string>();
+  const html = async (u: string) => {
+    if (!htmlCache.has(u)) htmlCache.set(u, await haalHtmlMetCookies(u, jar));
+    return htmlCache.get(u)!;
+  };
+  const kenmerkenVan = (u: string) => {
+    const k = perUrl.get(u);
+    const a = k?.aanwijzingen || {};
+    const p = a.paginadata || {};
+    const gemeten = profielen.find((x) => x.urlNorm === u && x.status === 'gemeten');
+    const g = new Set((gemeten?.gebieden || []).map((x: any) => x.gebied));
+    return {
+      formulier: (a.formulieren || 0) > 0 || g.has('G26'),
+      tabel: (a.tabellen || 0) > 0 || g.has('G16'),
+      video: (a.video || 0) > 0 || (p.video || 0) > 0 || g.has('G21'),
+      kaart: (p.kaart || 0) > 0 || g.has('G29'),
+      documentlinks: a.documentlinks || 0,
+    };
+  };
+
+  const opdrachten: any[] = [];
+  const fouten: string[] = [];
+  const voeg = (o: any, waarom: string) => opdrachten.push({ ...o, waarom });
+
+  for (const u of set.paginas || []) {
+    try {
+      const h = await html(u);
+      const p = leesPaginainvoer(h, u);
+      const k = perUrl.get(u);
+      const vf = k?.vingerafdruk || {};
+      const kenmerken = kenmerkenVan(u);
+      voeg(maakOpdracht('paginarol', u, { titel: p.titel, pad: p.pad, inhoudstype: vf.inhoudstype ?? null, componenten: vf.componenten ?? null, koppen: p.koppen, tekstBegin: p.tekstBegin, kenmerken }), 'regel');
+      voeg(maakOpdracht('dienstverlening', u, { titel: p.titel, pad: p.pad, inhoudstype: vf.inhoudstype ?? null, koppen: p.koppen, tekstBegin: p.tekstBegin, actielinks: p.actielinks, kenmerken }), 'regel');
+      if (kenmerken.video) {
+        const bronnen = ((k?.aanwijzingen?.paginadata?.bewijs || []) as any[]).filter((b) => b.soort === 'video').map((b) => `${b.reden}: ${b.waarde}`);
+        voeg(maakOpdracht('livestream', u, { titel: p.titel, pad: p.pad, koppen: p.koppen, tekstRondVideo: leesTekstRondVideo(h), videoBronnen: bronnen }), 'regel');
+      }
+    } catch (e: any) {
+      fouten.push(`${u}: ${e.message}`);
+    }
+  }
+
+  for (const u of set.afbeeldingenVan || []) {
+    try {
+      const h = await html(u);
+      const titel = leesPaginainvoer(h, u).titel;
+      for (const a of leesAfbeeldingen(h, u, 3)) {
+        const r = await fetch(a.src);
+        if (!r.ok) {
+          fouten.push(`${a.src}: HTTP ${r.status}`);
+          continue;
+        }
+        const bytes = Buffer.from(await r.arrayBuffer());
+        const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 20);
+        const ext = (r.headers.get('content-type') || '').includes('png') ? 'png' : (r.headers.get('content-type') || '').includes('webp') ? 'webp' : 'jpg';
+        const bestand = path.join(map, 'afbeeldingen', `${hash}.${ext}`);
+        fs.writeFileSync(bestand, bytes);
+        const onderwerp = a.src.split('?')[0];
+        voeg(
+          maakOpdracht('beeldcategorie', onderwerp, { afbeelding: onderwerp, alt: a.alt, onderschrift: a.onderschrift, tekstRond: a.tekstRond, afmetingen: a.afmetingen, paginaTitel: titel }, { afbeeldingBestand: bestand, afbeeldingHash: hash }),
+          'beoordelingsset',
+        );
+      }
+    } catch (e: any) {
+      fouten.push(`${u}: ${e.message}`);
+    }
+  }
+
+  const docs = detail.kandidaten.filter((k: any) => k.soort === 'document' && k.status === 'kandidaat');
+  for (const d of set.documenten || []) {
+    const doc = d.url ? docs.find((k: any) => k.urlNorm === d.url) : docs.find((k: any) => decodeURIComponent(k.urlNorm).includes(d.zoek));
+    if (!doc) {
+      fouten.push(`document niet in de pool: ${d.url || d.zoek}`);
+      continue;
+    }
+    try {
+      const { bestand } = await haalPdfBinnen(doc.urlNorm);
+      const py = spawnSync(
+        'python',
+        [
+          '-c',
+          'import fitz,json,sys\nd=fitz.open(sys.argv[1])\nt=" ".join(" ".join(p.get_text().split()) for p in list(d)[:2])\nw=sum(1 for p in d for _ in (p.widgets() or []))\nprint(json.dumps({"titel":(d.metadata or {}).get("title") or None,"paginas":d.page_count,"velden":w,"tekst":t[:600]}))',
+          bestand,
+        ],
+        { encoding: 'utf-8' },
+      );
+      if (py.status !== 0) throw new Error(py.stderr.slice(0, 200));
+      const m = JSON.parse(py.stdout);
+      voeg(
+        maakOpdracht('pdfsoort', doc.urlNorm, {
+          bestandsnaam: decodeURIComponent(doc.urlNorm.split('/').pop() || ''),
+          pdfTitel: m.titel,
+          paginas: m.paginas,
+          formuliervelden: m.velden,
+          tekstBegin: m.tekst,
+          gevondenOp: (doc.gevondenOp || []).map((g: string) => g.replace(/^https?:\/\/[^/]+/, '')),
+        }),
+        d.waarom,
+      );
+    } catch (e: any) {
+      fouten.push(`${doc.urlNorm}: ${e.message}`);
+    }
+  }
+
+  for (const u of set.clusterproef || []) {
+    const c = clusters?.clusters.find((x: any) => x.leden.some((l: any) => l.urlNorm === u));
+    if (!c || c.leden.length < 5) {
+      fouten.push(`${u}: niet in een cluster van minstens 5 pagina's; niet gevraagd`);
+      continue;
+    }
+    // Tegen meerdere andere leden, nooit alleen de representant. Vaste keuze: sha1-volgorde.
+    const anderen = c.leden
+      .map((l: any) => l.urlNorm)
+      .filter((x: string) => x !== u)
+      .sort((a: string, b: string) => createHash('sha1').update(`shift2-v2|${a}`).digest('hex').localeCompare(createHash('sha1').update(`shift2-v2|${b}`).digest('hex')))
+      .slice(0, 5);
+    try {
+      const pagina = paginaSamenvatting(await html(u), u);
+      const rest = [];
+      for (const a of anderen) rest.push(paginaSamenvatting(await html(a), a));
+      voeg(maakOpdracht('afwijkend_in_cluster', u, { cluster: `${c.naam} (${c.leden.length} pagina's, ${c.inhoudstype} | ${c.componenten})`, pagina, anderen: rest }), 'beoordelingsset');
+    } catch (e: any) {
+      fouten.push(`${u}: ${e.message}`);
+    }
+  }
+
+  const { bekend } = await api(`/api/projects/${projectId}/steekproef/signalen/bekend`, {
+    method: 'POST',
+    body: JSON.stringify({ sleutels: opdrachten.map((o) => o.sleutel), aanbieder }),
+  });
+  const bekendSet = new Set(bekend);
+  const open = opdrachten.filter((o) => !bekendSet.has(o.sleutel));
+  const perVraag: Record<string, { totaal: number; bekend: number; open: number }> = {};
+  for (const o of opdrachten) {
+    const v = (perVraag[o.vraagId] ||= { totaal: 0, bekend: 0, open: 0 });
+    v.totaal++;
+    if (bekendSet.has(o.sleutel)) v.bekend++;
+    else v.open++;
+  }
+  fs.writeFileSync(uitPad, JSON.stringify({ projectId, kenmerk: set.kenmerk, aanbieder, opdrachten: open }, null, 1), 'utf8');
+  print({ kenmerk: set.kenmerk, aanbieder, bestand: uitPad, perVraag, open: open.length, fouten });
+}
+
+/** Antwoorden van een aanbieder controleren (gesloten lijst) en opslaan. */
+async function steekproefSignalenOpslaan(projectId: string, flags: Flags) {
+  const { controleerAntwoorden } = await import('../lib/steekproef/classifier');
+  const opd = JSON.parse(fs.readFileSync(requireFlag(flags, 'opdrachten'), 'utf8'));
+  let ruw = fs.readFileSync(requireFlag(flags, 'antwoorden'), 'utf8');
+  ruw = ruw.slice(ruw.indexOf('['), ruw.lastIndexOf(']') + 1);
+  const antwoorden = JSON.parse(ruw);
+  const { geldig, ongeldig } = controleerAntwoorden(opd.opdrachten, antwoorden);
+  const perSleutel = new Map<string, any>(opd.opdrachten.map((o: any) => [o.sleutel, o]));
+  const r = await api(`/api/projects/${projectId}/steekproef/signalen`, {
+    method: 'POST',
+    body: JSON.stringify({
+      aanbieder: requireFlag(flags, 'aanbieder'),
+      model: requireFlag(flags, 'model'),
+      signalen: geldig.map((a) => {
+        const o = perSleutel.get(a.sleutel);
+        return { ...a, onderwerp: o.onderwerp, onderwerpSoort: o.onderwerpSoort, vraagId: o.vraagId, vraagVersie: o.vraagVersie, contentHash: o.contentHash, invoer: o.invoer, waarom: o.waarom };
+      }),
+    }),
+  });
+  const ontbreekt = opd.opdrachten.filter((o: any) => !antwoorden.some((a: any) => a.sleutel === o.sleutel)).map((o: any) => o.sleutel);
+  print({ ...r, ongeldig, zonderAntwoord: ontbreekt });
+}
+
+/** Controleoverzicht van de semantische antwoorden, om met de hand te beoordelen. */
+async function steekproefSignalenControle(projectId: string, flags: Flags) {
+  const { VRAGEN } = await import('../lib/steekproef/vragen');
+  const rijen: any[] = await api(`/api/projects/${projectId}/steekproef/signalen`);
+  const pad = (u: string) => {
+    try {
+      const x = new URL(u);
+      return decodeURIComponent(x.hostname.includes('sim-cdn') ? x.pathname.split('/').pop() || u : x.pathname);
+    } catch {
+      return u;
+    }
+  };
+  const cel = (s: string) => String(s ?? '').replace(/\|/g, '/').replace(/\s+/g, ' ');
+  const regels: string[] = [];
+  for (const [id, v] of Object.entries(VRAGEN)) {
+    const r = rijen.filter((x) => x.vraagId === id);
+    if (!r.length) continue;
+    regels.push(`## ${id} (versie ${v.versie}): ${r.length} antwoorden`, '', `> ${v.vraag}`, '', `Antwoorden: ${v.antwoorden.join(', ')}. Laag = altijd twijfel.`, '');
+    regels.push('| Onderwerp | Antwoord | Zekerheid | Reden | Waarom gevraagd | Juist | Onjuist | Twijfel |', '|---|---|---|---|---|---|---|---|');
+    for (const x of r)
+      regels.push(
+        `| ${cel(pad(x.onderwerp))} | ${cel(x.effectief)}${x.effectief !== x.antwoord ? ` (ruw: ${x.antwoord})` : ''} | ${x.zekerheid} | ${cel(x.reden)} | ${x.waarom || ''} | [ ] | [ ] | [ ] |`,
+      );
+    regels.push('');
+  }
+  const uit = flags.uit && flags.uit !== 'true' ? flags.uit : null;
+  const kop = [`# Controle semantische signalen`, '', `Project ${projectId}. Aanbieder en model staan per signaal in de database. Deze signalen hebben geen invloed op de steekproef.`, ''];
+  if (uit) fs.writeFileSync(uit, [...kop, ...regels].join('\n'), 'utf8');
+  print({ signalen: rijen.length, bestand: uit });
+}
+
+/** Wat er tussen twee inventarisaties van hetzelfde project verschilt, per URL. */
+async function steekproefInventarisVerschil(projectId: string, idA: string, idB: string) {
+  const [a, b] = await Promise.all([
+    api(`/api/projects/${projectId}/steekproef/inventaris/${idA}`),
+    api(`/api/projects/${projectId}/steekproef/inventaris/${idB}`),
+  ]);
+  const velden = ['soort', 'status', 'reden', 'dubbelVan', 'bronnen', 'httpStatus', 'aanwijzingen'];
+  const B = new Map<string, any>(b.kandidaten.map((k: any) => [k.urlNorm, k]));
+  const A = new Map<string, any>(a.kandidaten.map((k: any) => [k.urlNorm, k]));
+  const alleenA = [...A.keys()].filter((u) => !B.has(u));
+  const alleenB = [...B.keys()].filter((u) => !A.has(u));
+  const anders: any[] = [];
+  for (const [u, k] of A) {
+    const j = B.get(u);
+    if (!j) continue;
+    const verschil = velden.filter((v) => JSON.stringify(k[v]) !== JSON.stringify(j[v]));
+    if (verschil.length) anders.push({ url: u, velden: Object.fromEntries(verschil.map((v) => [v, [k[v], j[v]]])) });
+  }
+  print({
+    a: { id: a.id, gestartOp: a.gestartOp, poolHash: a.poolHash, versies: a.versies },
+    b: { id: b.id, gestartOp: b.gestartOp, poolHash: b.poolHash, versies: b.versies },
+    gelijk: a.poolHash === b.poolHash && !alleenA.length && !alleenB.length && !anders.length,
+    alleenInA: alleenA,
+    alleenInB: alleenB,
+    anders,
+  });
+}
+
+/**
+ * Paginaprofielen in de browser (steekproefselectie v2, fase 2).
+ *
+ * Kiest uit de laatste inventarisatie welke pagina's en PDF's gemeten worden
+ * (lib/steekproef/profielkeuze.ts), opent ze in de auditsessie en legt per pagina vast wat
+ * er werkelijk staat, met bewijs. Meten, niet kiezen: er komt geen steekproef uit.
+ *
+ * Vlaggen: --budget=40 --seed=... --gespreid=0.3 --documenten=12 --inventaris=<id>
+ * --ook=<url,url> (extra pagina's, buiten het budget, reden EXTRA_HANDMATIG)
+ * --droog=<bestand> (alleen naar een JSON-bestand, niets in de database)
+ * --gelijktijdig=3
+ */
+async function steekproefProfiel(projectId: string, flags: Flags) {
+  const { kiesPaginas, kiesDocumenten, STANDAARD_CONFIG } = await import('../lib/steekproef/profielkeuze');
+  const { leesMeetscript, gebiedenVoor, vatProfielenSamen, PROFIEL_VERSIES } = await import('../lib/steekproef/profiel');
+  const { normaliseer, sitecontextVoor } = await import('../lib/steekproef/urls');
+  const { spawnSync } = await import('child_process');
+
+  const t0 = Date.now();
+  const runs: any[] = await api(`/api/projects/${projectId}/steekproef/inventaris`);
+  const inv = flags.inventaris ? runs.find((r) => r.id === flags.inventaris) : runs.find((r) => r.status === 'klaar');
+  if (!inv) throw new Error('Geen afgeronde inventarisatie. Draai eerst: npm run cli -- steekproef-inventaris ' + projectId);
+  const detail = await api(`/api/projects/${projectId}/steekproef/inventaris/${inv.id}`);
+  const ctx = sitecontextVoor(`https://${detail.canonHost}/`, detail.instellingen?.aliassen || []);
+  const homepage = `https://${detail.canonHost}/`;
+
+  const getal = (v: string | undefined, standaard: number) => (v && v !== 'true' ? Number(v) : standaard);
+  const config = {
+    budget: getal(flags.budget, STANDAARD_CONFIG.budget),
+    aandeelGespreid: getal(flags.gespreid, STANDAARD_CONFIG.aandeelGespreid),
+    documentBudget: getal(flags.documenten, STANDAARD_CONFIG.documentBudget),
+    maxDocumentMB: getal(flags["max-mb"], STANDAARD_CONFIG.maxDocumentMB),
+    seed: flags.seed && flags.seed !== 'true' ? flags.seed : STANDAARD_CONFIG.seed,
+  };
+  const extra = (flags.ook && flags.ook !== 'true' ? flags.ook.split(',') : [])
+    .map((u) => normaliseer(u.trim(), u.trim(), ctx)?.urlNorm)
+    .filter(Boolean) as string[];
+
+  const { gekozen, uitleg } = kiesPaginas(detail.kandidaten, homepage, config, extra);
+  const docs = kiesDocumenten(detail.kandidaten, config);
+  const teGroot = detail.kandidaten.filter(
+    (k: any) => k.soort === 'document' && k.status === 'kandidaat' && k.grootte && k.grootte > config.maxDocumentMB * 1024 * 1024,
+  );
+  if (teGroot.length) {
+    (uitleg as any).documentenTeGroot = teGroot.map((k: any) => ({ urlNorm: k.urlNorm, mb: Math.round(k.grootte / 1024 / 1024), klant: k.bronnen.includes('klant') }));
+    console.error(`[profiel] ${teGroot.length} PDF('s) boven ${config.maxDocumentMB} MB niet gemeten`);
+  }
+  const statischVan = new Map<string, any>(detail.kandidaten.map((k: any) => [k.urlNorm, k.aanwijzingen]));
+  const onbekendExtra = extra.filter((u) => !gekozen.some((g) => g.urlNorm === u));
+  if (onbekendExtra.length) console.error(`[profiel] niet in de pool, dus niet gemeten: ${onbekendExtra.join(', ')}`);
+  console.error(`[profiel] ${gekozen.length} pagina's (${JSON.stringify(uitleg)}) en ${docs.length} PDF's`);
+
+  // --plan: alleen laten zien welke pagina's gemeten zouden worden, en waarom. Geen browser.
+  if (flags.plan === 'true') {
+    return print({
+      inventarisId: inv.id,
+      config,
+      uitleg,
+      paginas: gekozen.map((g) => ({ urlNorm: g.urlNorm, laag: g.laag, redenen: g.redenen })),
+      documenten: docs,
+    });
+  }
+
+  const session = await getBrowser();
+  const droog = flags.droog && flags.droog !== 'true' ? flags.droog : null;
+
+  let runId: string | null = null;
+  if (!droog) {
+    const run = await api(`/api/projects/${projectId}/steekproef/profielen`, {
+      method: 'POST',
+      body: JSON.stringify({
+        inventarisId: inv.id,
+        config,
+        versies: PROFIEL_VERSIES,
+        browser: session.mode,
+        uitleg,
+        paginas: gekozen.map((g) => ({ ...g, statisch: statischVan.get(g.urlNorm) ?? null })),
+        documenten: docs.map((d) => ({ urlNorm: d.urlNorm, redenen: d.redenen, geschatteSoort: d.geschatteSoort })),
+      }),
+    });
+    runId = run.id;
+    console.error(`[profiel] run ${runId}`);
+  }
+  const bewaar = async (urlNorm: string, data: any) => {
+    if (!runId) return;
+    await api(`/api/projects/${projectId}/steekproef/profielen/${runId}/profiel`, {
+      method: 'PATCH',
+      body: JSON.stringify({ urlNorm, ...data }),
+    }).catch((e) => console.error(`[profiel] opslaan mislukte voor ${urlNorm}: ${e}`));
+  };
+
+  const script = leesMeetscript();
+  const resultaten: any[] = [];
+  const gelijktijdig = getal(flags.gelijktijdig, 3);
+  let volgende = 0;
+  try {
+    const werker = async () => {
+      while (volgende < gekozen.length) {
+        const g = gekozen[volgende++];
+        const begin = Date.now();
+        let data: any;
+        // Twee pogingen: een pagina die midden in een doorverwijzing gemeten wordt (de
+        // SIMsite-formulieren zetten eerst een cookie), heeft nog geen body.
+        for (let poging = 1; poging <= 2; poging++) {
+        // Een SIMsite-formulier (/form/...) houdt één formulier per sessie bij. Twee formulieren
+        // in dezelfde sessie en je landt op /form/form-changed: dan meet je de verkeerde pagina.
+        // Daarom krijgt elk formulier een eigen, verse browsercontext.
+        const eigenContext = /^\/form\//.test(new URL(g.urlNorm).pathname) ? await session.browser.createBrowserContext() : null;
+        try {
+          const { page, cleanup, eindUrl, dichtgeklapt, omgeleid } = await openPage(
+            eigenContext ? ({ ...session, browser: eigenContext } as any) : session,
+            g.urlNorm,
+          );
+          try {
+            const meting = await page.evaluate(`(${script})(${JSON.stringify({ maxBewijs: 5 })})`);
+            const dir = ensureOutputDir();
+            const beeld = path.join(dir, `${timestamp()}-${slugifyUrl(eindUrl)}-profiel.png`);
+            try {
+              await page.screenshot({ path: beeld as `${string}.png`, fullPage: true });
+            } catch {
+              /* te lange pagina: de meting blijft geldig */
+            }
+            data = {
+              status: 'gemeten',
+              eindUrl,
+              titel: (meting as any).titel,
+              browser: session.mode,
+              gehydrateerd: (meting as any).gehydrateerd,
+              cookiescherm: (meting as any).cookiescherm,
+              dichtgeklapt: dichtgeklapt.aantal,
+              bereik: (meting as any).bereik,
+              htmlTaal: (meting as any).htmlTaal,
+              kenmerken: (meting as any).kenmerken,
+              gebieden: gebiedenVoor(meting as any),
+              schermafdruk: fs.existsSync(beeld) ? beeld : null,
+              // Een andere pagina dan gevraagd (een formulierstap die terugspringt, een
+              // doorverwijzing): de meting is van die andere pagina, en dat moet te zien zijn.
+              omgeleid: !!omgeleid,
+            };
+          } finally {
+            await cleanup();
+          }
+        } catch (e: any) {
+          data = { status: 'mislukt', fout: String(e?.message || e).slice(0, 500), pogingen: poging };
+        } finally {
+          if (eigenContext) await eigenContext.close().catch(() => {});
+        }
+        if (data.status === 'gemeten') break;
+        await new Promise((z) => setTimeout(z, 2000));
+        }
+        data.duurMs = Date.now() - begin;
+        resultaten.push({ ...g, soort: 'html', statisch: statischVan.get(g.urlNorm) ?? null, ...data });
+        await bewaar(g.urlNorm, data);
+        console.error(`[profiel] ${resultaten.length}/${gekozen.length} ${data.status} ${g.urlNorm} (${data.duurMs} ms)`);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(gelijktijdig, gekozen.length) }, werker));
+
+    // PDF's: dezelfde meting als get-pdfstructuur.
+    for (const d of docs) {
+      const begin = Date.now();
+      let data: any;
+      try {
+        const { bestand } = await haalPdfBinnen(d.urlNorm);
+        const uit = spawnSync('python', [path.join(process.cwd(), 'scripts', 'pdf-structuur.py'), bestand], {
+          encoding: 'utf-8',
+          maxBuffer: 64 * 1024 * 1024,
+        });
+        if (uit.error || uit.status !== 0) throw new Error(String(uit.error?.message || uit.stderr).slice(0, 300));
+        const m = JSON.parse(uit.stdout);
+        const v = m.vaststellingen || {};
+        data = {
+          status: 'gemeten',
+          document: {
+            geschatteSoort: d.geschatteSoort,
+            paginas: m.paginas ?? null,
+            titel: v.titel?.titel ?? null,
+            taal: v.taal?.lang ?? null,
+            formuliervelden: v.formuliervelden?.aantal ?? 0,
+            media: !!v.media?.aanwezig,
+            scripts: !!v.geluid_en_beweging?.startVanzelf,
+            getagd: v.tagstructuur ? { paginasGetagd: v.tagstructuur.paginasGetagd, paginasTotaal: v.tagstructuur.paginasTotaal } : null,
+          },
+          gebieden: (v.formuliervelden?.aantal || 0) > 0
+            ? [{ gebied: 'G32', naam: 'Invulbaar PDF-formulier', bron: 'code', aantal: v.formuliervelden.aantal, bewijs: `${v.formuliervelden.aantal} formuliervelden (AcroForm)` }]
+            : [],
+        };
+      } catch (e: any) {
+        data = { status: 'mislukt', fout: String(e?.message || e).slice(0, 500), document: { geschatteSoort: d.geschatteSoort } };
+      }
+      data.duurMs = Date.now() - begin;
+      resultaten.push({ urlNorm: d.urlNorm, redenen: d.redenen, laag: 'document', soort: 'document', statisch: null, ...data });
+      await bewaar(d.urlNorm, data);
+      console.error(`[profiel] PDF ${data.status} ${d.urlNorm.slice(-60)} (${data.duurMs} ms)`);
+    }
+  } finally {
+    await session.dispose();
+  }
+
+  const duur = Math.round((Date.now() - t0) / 1000);
+  const samenvatting = vatProfielenSamen(resultaten as any, uitleg as any, duur);
+  if (runId) {
+    await api(`/api/projects/${projectId}/steekproef/profielen/${runId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'klaar', samenvatting }),
+    });
+  }
+  if (droog) {
+    fs.writeFileSync(droog, JSON.stringify({ inventarisId: inv.id, config, uitleg, versies: PROFIEL_VERSIES, browser: session.mode, samenvatting, resultaten }, null, 1));
+  }
+  print({ runId, inventarisId: inv.id, browser: session.mode, config, samenvatting });
+}
+
 async function getProject(projectId: string) {
   // Deelverzamelingen mogen ontbreken, maar niet stilzwijgend: een lege lijst
   // door een mislukte aanroep is niet te onderscheiden van een lege lijst in de
@@ -156,6 +746,14 @@ async function getProject(projectId: string) {
       researchType: project.researchType,
       standard: project.standard,
       level: project.level,
+      // De planning (Details > Planning). Ontbraken tot 2026-09-28, terwijl de workflow
+      // steekproef-samenstellen ze hier las: de klantpagina's en de uitsluitingen kwamen
+      // daardoor leeg binnen. Bewust `?? null` en niet weglaten: een leeg veld is een
+      // uitkomst, een ontbrekend veld leest als "niet opgevraagd".
+      scopeInScope: project.scopeInScope ?? null,
+      scopeOutOfScope: project.scopeOutOfScope ?? null,
+      scopeInfo: project.scopeInfo ?? null,
+      sampleClientPages: project.sampleClientPages ?? null,
     },
     scopeUrls: (Array.isArray(scopeUrls) ? scopeUrls : []).map((s: any) => ({
       id: s.id,
@@ -336,6 +934,9 @@ async function createFinding(projectId: string, flags: Flags) {
     // bevinding wil aanmaken geeft --status=open mee.
     // Zie docs/adr/0001-akkoord-als-poort.md.
     status: flags.status || 'voorstel',
+    // Deze tekst komt van Claude. De tool bewaart hem apart als origineel, zodat een
+    // correctie van de onderzoeker er later mee vergeleken kan worden.
+    aiTekst: true,
   };
   if (flags.impact) body.impact = flags.impact;
   if (flags.responsibility) body.responsibility = flags.responsibility;
@@ -392,6 +993,63 @@ async function createFindingFromQuick(projectId: string, quickFindingId: string,
     body: JSON.stringify(body),
   });
   print(result);
+}
+
+/**
+ * Leren van correcties: de lijst ophalen en de analyse terugzetten.
+ *
+ * De tool analyseert zelf niets; dat doet Claude Code, volgens
+ * writing/FRITS-WRITING-WORKFLOW.md. Deze commando's raken de schrijfgids niet: die past
+ * alleen Frits aan, met de knop op /admin/schrijfstijl.
+ *
+ *   npm run cli -- list-correcties [--status=te_analyseren]
+ *   npm run cli -- save-correctie-analyse <correctieId> < analyse.json
+ *   npm run cli -- create-testcorrectie --criterium=1.3.1 < paar.json
+ */
+async function listCorrecties(flags: Flags) {
+  const status = flags.status && flags.status !== 'true' ? flags.status : 'te_analyseren';
+  const lijst = await api(`/api/schrijfstijl/correcties?status=${encodeURIComponent(status)}`);
+  // Alleen wat de analyse nodig heeft: de twee teksten en het criterium. Geen pagina's,
+  // geen andere bevindingen; zie stap 3 van de werkwijze.
+  print(
+    (Array.isArray(lijst) ? lijst : []).map((c: any) => ({
+      id: c.id,
+      bron: c.bron,
+      criterium: c.criteriumCode,
+      bevinding: c.finding?.findingCode ?? null,
+      origineel: { description: c.origineelDescription, advice: c.origineelAdvice },
+      bewerkt: { description: c.bewerktDescription, advice: c.bewerktAdvice },
+    })),
+  );
+}
+
+async function leesJsonVanStdin(): Promise<unknown> {
+  const invoer = await leesStdin();
+  if (!invoer.trim()) throw new Error('Geen invoer op stdin.');
+  // Een BOM aan het begin sloopt JSON.parse; zie saveChecks.
+  return JSON.parse(invoer.replace(/^﻿/, ''));
+}
+
+async function saveCorrectieAnalyse(correctieId: string) {
+  const analyse = await leesJsonVanStdin();
+  print(
+    await api(`/api/schrijfstijl/correcties/${correctieId}/analyse`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(analyse),
+    }),
+  );
+}
+
+async function createTestcorrectie(flags: Flags) {
+  const paar = (await leesJsonVanStdin()) as Record<string, unknown>;
+  print(
+    await api('/api/schrijfstijl/correcties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ ...paar, bron: 'test', criteriumCode: flags.criterium ?? paar.criteriumCode }),
+    }),
+  );
 }
 
 /**
@@ -934,9 +1592,6 @@ type Zicht = {
  *
  * De Nederlandse namen zijn de ingang: `grijs` is de proef voor 1.4.1, en wie een van de
  * drie kleurzienstoornissen wil, hoeft niet te weten dat protanopie over rood gaat. De
-    // Deze tekst komt van Claude. De tool bewaart hem apart als origineel, zodat een
-    // correctie van de onderzoeker er later mee vergeleken kan worden.
-    aiTekst: true,
  * namen die de browser zelf gebruikt mogen ook, zodat een agent die de DevTools kent niet
  * hoeft te raden.
  */
@@ -995,63 +1650,6 @@ async function getScreenshot(url: string, flags: Flags) {
         await page.reload({ waitUntil: 'networkidle2' }).catch(() => {});
         await new Promise((r) => setTimeout(r, 1200));
       }
-/**
- * Leren van correcties: de lijst ophalen en de analyse terugzetten.
- *
- * De tool analyseert zelf niets; dat doet Claude Code, volgens
- * writing/FRITS-WRITING-WORKFLOW.md. Deze commando's raken de schrijfgids niet: die past
- * alleen Frits aan, met de knop op /admin/schrijfstijl.
- *
- *   npm run cli -- list-correcties [--status=te_analyseren]
- *   npm run cli -- save-correctie-analyse <correctieId> < analyse.json
- *   npm run cli -- create-testcorrectie --criterium=1.3.1 < paar.json
- */
-async function listCorrecties(flags: Flags) {
-  const status = flags.status && flags.status !== 'true' ? flags.status : 'te_analyseren';
-  const lijst = await api(`/api/schrijfstijl/correcties?status=${encodeURIComponent(status)}`);
-  // Alleen wat de analyse nodig heeft: de twee teksten en het criterium. Geen pagina's,
-  // geen andere bevindingen; zie stap 3 van de werkwijze.
-  print(
-    (Array.isArray(lijst) ? lijst : []).map((c: any) => ({
-      id: c.id,
-      bron: c.bron,
-      criterium: c.criteriumCode,
-      bevinding: c.finding?.findingCode ?? null,
-      origineel: { description: c.origineelDescription, advice: c.origineelAdvice },
-      bewerkt: { description: c.bewerktDescription, advice: c.bewerktAdvice },
-    })),
-  );
-}
-
-async function leesJsonVanStdin(): Promise<unknown> {
-  const invoer = await leesStdin();
-  if (!invoer.trim()) throw new Error('Geen invoer op stdin.');
-  // Een BOM aan het begin sloopt JSON.parse; zie saveChecks.
-  return JSON.parse(invoer.replace(/^﻿/, ''));
-}
-
-async function saveCorrectieAnalyse(correctieId: string) {
-  const analyse = await leesJsonVanStdin();
-  print(
-    await api(`/api/schrijfstijl/correcties/${correctieId}/analyse`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify(analyse),
-    }),
-  );
-}
-
-async function createTestcorrectie(flags: Flags) {
-  const paar = (await leesJsonVanStdin()) as Record<string, unknown>;
-  print(
-    await api('/api/schrijfstijl/correcties', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ ...paar, bron: 'test', criteriumCode: flags.criterium ?? paar.criteriumCode }),
-    }),
-  );
-}
-
       const pageTitle = await page.title();
       const finalUrl = page.url();
       const dir = ensureOutputDir();
@@ -9293,6 +9891,24 @@ async function main() {
       return listProjects();
     case 'get-project':
       return getProject(requirePositional(positional, 0, 'projectId'));
+    case 'steekproef-inventaris':
+      return steekproefInventaris(requirePositional(positional, 0, 'projectId'), flags);
+    case 'steekproef-vragen':
+      return steekproefVragen(requirePositional(positional, 0, 'projectId'), flags);
+    case 'steekproef-signalen-opslaan':
+      return steekproefSignalenOpslaan(requirePositional(positional, 0, 'projectId'), flags);
+    case 'steekproef-signalen-controle':
+      return steekproefSignalenControle(requirePositional(positional, 0, 'projectId'), flags);
+    case 'steekproef-clusters':
+      return steekproefClusters(requirePositional(positional, 0, 'projectId'), flags);
+    case 'steekproef-profiel':
+      return steekproefProfiel(requirePositional(positional, 0, 'projectId'), flags);
+    case 'steekproef-inventaris-verschil':
+      return steekproefInventarisVerschil(
+        requirePositional(positional, 0, 'projectId'),
+        requirePositional(positional, 1, 'inventarisId A'),
+        requirePositional(positional, 2, 'inventarisId B'),
+      );
     case 'list-criteria':
       return listCriteria();
     case 'search-quick-findings':
@@ -9301,6 +9917,12 @@ async function main() {
       return createSampleItem(requirePositional(positional, 0, 'projectId'), flags);
     case 'lint-finding':
       return lintFindingCommand(flags);
+    case 'list-correcties':
+      return listCorrecties(flags);
+    case 'save-correctie-analyse':
+      return saveCorrectieAnalyse(requirePositional(positional, 0, 'correctieId'));
+    case 'create-testcorrectie':
+      return createTestcorrectie(flags);
     case 'create-finding':
       return createFinding(requirePositional(positional, 0, 'projectId'), flags);
     case 'create-finding-from-quick':
@@ -9391,12 +10013,22 @@ async function main() {
         `Available commands:\n` +
         `  list-projects\n` +
         `  get-project <projectId>\n` +
+        `  steekproef-inventaris <projectId> [--wacht=false]\n` +
+        `  steekproef-inventaris-verschil <projectId> <inventarisId A> <inventarisId B>\n` +
+        `  steekproef-vragen <projectId> [--set=beoordelingsset.json] [--aanbieder=claude] [--uit=opdrachten.json]\n` +
+        `  steekproef-signalen-opslaan <projectId> --opdrachten=f --antwoorden=f --aanbieder=claude --model=...\n` +
+        `  steekproef-signalen-controle <projectId> [--uit=controle.md]\n` +
+        `  steekproef-clusters <projectId> [--drempel=0.8] [--controle=bestand.md] [--aantal=15]\n` +
+        `  steekproef-profiel <projectId> [--budget=40] [--seed=...] [--gespreid=0.3] [--documenten=12] [--ook=url,url] [--droog=bestand.json]\n` +
         `  list-criteria\n` +
         `  search-quick-findings <keyword>\n` +
         `  create-sample-item <projectId> --title=... [--url=...] [--type=structured|random|pdf] [--description=...] [--screenshot=true]\n` +
         `  lint-finding --description=... [--advice=...] [--impact=...] [--responsibility=...] [--status=...] [--criterion=<id|code>] [--pdf] [--json]\n` +
         `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=voorstel|open|published|resolved] [--evidence=...] [--sample-items=id1,id2] [--skip-lint]\n` +
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
+        `  list-correcties [--status=te_analyseren|voorstel|geen_wijziging|toegevoegd|niet_toegevoegd]   # correcties van Frits om van te leren\n` +
+        `  save-correctie-analyse <correctieId> < analyse.json   # zie writing/FRITS-WRITING-WORKFLOW.md\n` +
+        `  create-testcorrectie --criterium=1.3.1 < paar.json     # testmodus, zonder bevinding\n` +
         `  set-assessment <projectId> --criterion=<id> --status=passed|failed|not_present|unknown|not_tested [--explanation=...]\n` +
         `  save-checks <projectId> [--bron=workflow|gesprek|handmatig] < oordelen.json   # sampleoordelen wegschrijven\n` +
       `  save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json    # wat er per deelgebied is nagelopen\n` +
@@ -9420,12 +10052,3 @@ main().catch((err) => {
   console.error('ERROR:', err?.message || err);
   process.exit(1);
 });
-    case 'list-correcties':
-      return listCorrecties(flags);
-    case 'save-correctie-analyse':
-      return saveCorrectieAnalyse(requirePositional(positional, 0, 'correctieId'));
-    case 'create-testcorrectie':
-      return createTestcorrectie(flags);
-        `  list-correcties [--status=te_analyseren|voorstel|geen_wijziging|toegevoegd|niet_toegevoegd]   # correcties van Frits om van te leren\n` +
-        `  save-correctie-analyse <correctieId> < analyse.json   # zie writing/FRITS-WRITING-WORKFLOW.md\n` +
-        `  create-testcorrectie --criterium=1.3.1 < paar.json     # testmodus, zonder bevinding\n` +
