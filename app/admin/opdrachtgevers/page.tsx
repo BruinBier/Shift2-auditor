@@ -207,10 +207,11 @@ export default function OpdrachtgeversPage() {
   const filteredOpdrachtgevers = opdrachtgevers.filter((o) => {
     const searchLower = searchQuery.toLowerCase();
     return (
+      // Contactnaam en e-mail zijn optioneel en kunnen null zijn.
       o.kenmerk.toLowerCase().includes(searchLower) ||
       o.naam.toLowerCase().includes(searchLower) ||
-      o.contactnaam.toLowerCase().includes(searchLower) ||
-      o.contactEmail.toLowerCase().includes(searchLower)
+      (o.contactnaam ?? '').toLowerCase().includes(searchLower) ||
+      (o.contactEmail ?? '').toLowerCase().includes(searchLower)
     );
   });
 
