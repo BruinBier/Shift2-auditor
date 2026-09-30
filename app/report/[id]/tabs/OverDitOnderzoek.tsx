@@ -13,10 +13,10 @@ import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 import {
   isHeronderzoek as bepaalHeronderzoek,
   naarHeronderzoek,
-  onderzoekWoord as woordVoor,
   eerderOnderzoek,
   introLabel,
 } from '@/lib/onderzoek-soort';
+import { samenvattingHtml } from '@/lib/samenvatting';
 import { marked } from 'marked';
 
 /**
@@ -63,8 +63,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   // onrechte als nulmeting presenteren. Een kindproject is per definitie een
   // heronderzoek, ongeacht de fase waarin het staat.
   const isHeronderzoekReport = bepaalHeronderzoek(project);
-  // "heronderzoek" of "aanvullende onderzoek" (achter dit/het), en waar het naar terugverwijst.
-  const ditWoord = woordVoor(project, 'bepaald');
+  // Waar het rapport naar terugverwijst: "de nulmeting" of "het eerdere onderzoek".
   const eerder = eerderOnderzoek(project);
   const isOpenOpmerking = (f: any) =>
     isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
@@ -252,137 +251,57 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const introUrl = getIntroUrl();
 
   // Generate automatic summary
+  // Het cijfermatige deel komt uit lib/samenvatting.ts, dezelfde bron als de Word/PDF-
+  // versie en het voorbeeld op het tabblad Conclusie. Een zelf geschreven samenvatting
+  // vervangt alleen dat deel; feedback en slotadvies staan er altijd onder.
   const generateAutoSummary = () => {
     const totalPages = project.sampleItems.length;
-    const passedCriteria = stats.effectivePassed;
-    const totalCriteria = stats.totalAssessed;
-    const percentage = totalCriteria > 0 ? Math.round((passedCriteria / totalCriteria) * 100) : 0;
-    const failedCriteria = stats.failed;
-
-    const dateStartFormatted = dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : '[datum]';
-    const dateEndFormatted = dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : '[datum]';
-
     const isFormulieren = project.researchTypeData?.type === 'formulieren';
-
-    // Bij een heronderzoek wordt de periode van de nulmeting erbij vermeld
-    const isHeronderzoek = isHeronderzoekReport;
     const nulmetingStart = project.nulmetingDates?.dateStart ? new Date(project.nulmetingDates.dateStart) : null;
     const nulmetingEnd = project.nulmetingDates?.dateEnd ? new Date(project.nulmetingDates.dateEnd) : null;
     const nulmetingPeriode = nulmetingStart && nulmetingEnd
       ? `${format(nulmetingStart, 'd MMMM yyyy', { locale: nl })} en ${format(nulmetingEnd, 'd MMMM yyyy', { locale: nl })}`
       : null;
-    const nulmetingFailedCriteria = project.nulmetingFailedCriteria ?? 0;
-
     // For formulieren projects: count in-scope URLs (each URL = one form)
-    // For other projects: use total sample items
     const uniqueForms = isFormulieren && project.scopeUrls
       ? project.scopeUrls.filter((url: any) => url.inScope).length
       : totalPages;
 
-    // Check if research type has a custom summary template
-    if (project.researchTypeData?.summaryTemplate) {
-      let template = project.researchTypeData.summaryTemplate;
+    const hoofdHtml = project.managementSummary
+      ? String(project.managementSummary)
+      : samenvattingHtml({
+          project,
+          sjabloon: project.researchTypeData?.summaryTemplate,
+          totalPages,
+          uniqueForms,
+          totalCriteria: stats.totalAssessed,
+          passedCriteria: stats.effectivePassed,
+          failedCriteria: stats.failed,
+          dateStart: dateStart ? format(dateStart, 'd MMMM yyyy', { locale: nl }) : '[datum]',
+          dateEnd: dateEnd ? format(dateEnd, 'd MMMM yyyy', { locale: nl }) : '[datum]',
+          standaard: project.researchTypeData?.version,
+          niveau: project.researchTypeData?.level,
+          nulmetingPeriode,
+          nulmetingFailedCriteria: project.nulmetingFailedCriteria ?? 0,
+        });
 
-      // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
-      if (isHeronderzoek) {
-        template = template
-          .replace(/Dit onderzoek is/g, `Dit ${ditWoord} is`)
-          // De steekproef is bij het afronden overgenomen uit de nulmeting;
-          // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
-          // op het verkeerde been zetten.
-          .replace(
-            /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
-            `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`
-          )
-          .replace(/\bdit deelonderzoek\b/g, `dit ${ditWoord}`);
-
-        if (nulmetingPeriode) {
-          template = template.replace(
-            /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
-            `$1 De nulmeting vond plaats tussen ${nulmetingPeriode}.`
-          );
-        }
-
-        /**
-         * Alles opgelost: zeg dat, en noem hoeveel het er waren.
-         *
-         * Het sjabloon eindigt met "Bij {failedCriteria} succescriteria zijn
-         * afwijkingen vastgesteld". Bij een geslaagd heronderzoek staat daar
-         * "Bij 0 succescriteria" - grammaticaal juist, maar het leest als een
-         * onderzoek waarin niets te vinden was, terwijl er dertien criteria zijn
-         * verholpen. Het aantal van de nulmeting erbij maakt dat zichtbaar.
-         */
-        if (failedCriteria === 0 && nulmetingFailedCriteria > 0) {
-          template = template.replace(
-            /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
-            `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailedCriteria}.`
-          );
-        }
-      }
-
-      // Replace placeholders with actual values
-      const summaryHtml = template
-        .replace(/\{dateStart\}/g, dateStartFormatted)
-        .replace(/\{dateEnd\}/g, dateEndFormatted)
-        .replace(/\{totalPages\}/g, String(totalPages))
-        .replace(/\{uniqueForms\}/g, String(uniqueForms))
-        .replace(/\{totalCriteria\}/g, String(totalCriteria))
-        .replace(/\{passedCriteria\}/g, String(passedCriteria))
-        .replace(/\{percentage\}/g, String(percentage))
-        .replace(/\{failedCriteria\}/g, String(failedCriteria))
-        .replace(/\{compliesFully\}/g, percentage === 100 ? 'volledig' : 'niet volledig')
-        .replace(/\{formsSingularPlural\}/g, uniqueForms === 1 ? 'formulier' : 'formulieren')
-        .replace(/\{pagesSingularPlural\}/g, totalPages === 1 ? 'processtap' : 'processtappen')
-        .replace(/\{criteriaFailedSingularPlural\}/g, failedCriteria === 1 ? 'succescriterium' : 'succescriteria')
-        .replace(/\{standard\}/g, project.researchTypeData?.version || 'WCAG 2.2')
-        .replace(/\{level\}/g, project.researchTypeData?.level || 'A en AA');
-
-      return (
-        <>
-          <div dangerouslySetInnerHTML={{ __html: summaryHtml }} />
-
-          {/* Researcher feedback if available */}
-          {project.researcherFeedback && (
-            <div
-              className="mt-4 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
-              dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
-            />
-          )}
-
-          {/* Closing advice - formulieren specific or default */}
-          <p className="mt-4">
-            {isFormulieren
-              ? 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
-              : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.'
-            }
-          </p>
-        </>
-      );
-    }
-
-    // Fallback to default template
     return (
       <>
-        <p className="mb-4">
-          Dit {isHeronderzoek ? ditWoord : 'onderzoek'} is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}.{isHeronderzoek && nulmetingPeriode ? ` De nulmeting vond plaats tussen ${nulmetingPeriode}.` : ''} Voor dit {isHeronderzoek ? ditWoord : 'deelonderzoek'} is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
-        </p>
-
-        <p className="mb-4">
-          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit {isHeronderzoek ? ditWoord : 'deelonderzoek'} zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). {failedCriteria === 0 && isHeronderzoek && project.nulmetingFailedCriteria > 0
-            ? `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${project.nulmetingFailedCriteria}.`
-            : `Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`}
-        </p>
+        <div
+          className="prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+          dangerouslySetInnerHTML={{ __html: hoofdHtml }}
+        />
 
         {/* Researcher feedback if available */}
         {project.researcherFeedback && (
           <div
-            className="mb-4 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+            className="mt-4 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
             dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
           />
         )}
 
         {/* Closing advice - formulieren specific or default */}
-        <p>
+        <p className="mt-4">
           {isFormulieren
             ? 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het beheer- en publicatieproces van formulieren.'
             : 'Wij adviseren om content periodiek te controleren op terugkerende patronen van toegankelijkheidsproblemen en toegankelijkheid structureel te borgen in het publicatieproces.'
@@ -712,14 +631,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Samenvatting</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="text-gray-700 whitespace-pre-line">
-              {project.managementSummary ? (
-                <div
-                  className="prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
-                  dangerouslySetInnerHTML={{ __html: project.managementSummary }}
-                />
-              ) : (
-                generateAutoSummary()
-              )}
+              {generateAutoSummary()}
             </div>
           </div>
         </section>

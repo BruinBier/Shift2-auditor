@@ -189,6 +189,8 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
           summaryTemplate: researchType.summaryTemplate,
           version: researchType.version,
           level: researchType.level,
+          // Bepaalt of de samenvatting formulieren telt in plaats van pagina's.
+          type: researchType.type,
         }
       : null,
     dateStart: project.dateStart?.toISOString() || null,

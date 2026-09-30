@@ -18,6 +18,7 @@ import {
   eerderOnderzoek,
   introLabel,
 } from '@/lib/onderzoek-soort';
+import { samenvattingHtml } from '@/lib/samenvatting';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -303,12 +304,7 @@ function renderSamenvatting(
   /** Hoeveel succescriteria bij de nulmeting werden afgekeurd; 0 bij een nulmeting zelf. */
   nulmetingFailedCriteria: number = 0
 ): string {
-  // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting.
-  // Zelfde toets als in report-data.ts, via lib/onderzoek-soort.ts.
-  const isHeronderzoek = bepaalHeronderzoek(project);
-  // "Dit heronderzoek" of "Dit aanvullende onderzoek".
-  const ditWoord = woordVoor(project, 'bepaald');
-  const eerder = eerderOnderzoek(project);
+  // Heronderzoek of aanvullend onderzoek: zie lib/samenvatting.ts en lib/onderzoek-soort.ts.
   const dateStartFormatted = project.dateStart
     ? formatDateNl(project.dateStart)
     : '[datum]';
@@ -319,8 +315,6 @@ function renderSamenvatting(
   const totalPages = project.sampleItems?.length || 0;
   const passedCriteria = stats.effectivePassed || 0;
   const totalCriteria = stats.totalAssessed || 0;
-  const percentage =
-    totalCriteria > 0 ? Math.round((passedCriteria / totalCriteria) * 100) : 0;
   const failedCriteria = stats.failed || 0;
 
   const isFormulieren = researchTypeData?.type === 'formulieren';
@@ -329,95 +323,25 @@ function renderSamenvatting(
       ? project.scopeUrls.filter((u: any) => u.inScope).length
       : totalPages;
 
-  let mainHtml: string;
-
-  if (researchTypeData?.summaryTemplate) {
-    let summaryTemplate = String(researchTypeData.summaryTemplate);
-
-    // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
-    if (isHeronderzoek) {
-      summaryTemplate = summaryTemplate
-        .replace(/Dit onderzoek is/g, `Dit ${ditWoord} is`)
-        // De steekproef is bij het afronden overgenomen uit de nulmeting;
-        // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
-        // op het verkeerde been zetten.
-        .replace(
-          /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
-          `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`
-        )
-        .replace(/\bdit deelonderzoek\b/g, `dit ${ditWoord}`);
-
-      // Alleen bij een herinspectie: een aanvullend onderzoek heeft geen nulmeting in de tool.
-      if (nulmetingPeriode) {
-        summaryTemplate = summaryTemplate.replace(
-          /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
-          `$1 De nulmeting vond plaats tussen ${escapeHtml(nulmetingPeriode)}.`
-        );
-      }
-
-      // Alles opgelost: zeg dat, en noem hoeveel het er waren. Zelfde
-      // formulering als in het rapport op het scherm; die twee horen
-      // woordelijk gelijk te zijn.
-      if (failedCriteria === 0 && nulmetingFailedCriteria > 0) {
-        summaryTemplate = summaryTemplate.replace(
-          /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
-          `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailedCriteria}.`
-        );
-      }
-    }
-
-    mainHtml = summaryTemplate
-      .replace(/\{dateStart\}/g, dateStartFormatted)
-      .replace(/\{dateEnd\}/g, dateEndFormatted)
-      .replace(/\{totalPages\}/g, String(totalPages))
-      .replace(/\{uniqueForms\}/g, String(uniqueForms))
-      .replace(/\{totalCriteria\}/g, String(totalCriteria))
-      .replace(/\{passedCriteria\}/g, String(passedCriteria))
-      .replace(/\{percentage\}/g, String(percentage))
-      .replace(/\{failedCriteria\}/g, String(failedCriteria))
-      .replace(
-        /\{compliesFully\}/g,
-        percentage === 100 ? 'volledig' : 'niet volledig'
-      )
-      .replace(
-        /\{formsSingularPlural\}/g,
-        uniqueForms === 1 ? 'formulier' : 'formulieren'
-      )
-      .replace(
-        /\{pagesSingularPlural\}/g,
-        totalPages === 1 ? 'processtap' : 'processtappen'
-      )
-      .replace(
-        /\{criteriaFailedSingularPlural\}/g,
-        failedCriteria === 1 ? 'succescriterium' : 'succescriteria'
-      )
-      .replace(/\{standard\}/g, researchTypeData?.version || 'WCAG 2.2')
-      .replace(/\{level\}/g, researchTypeData?.level || 'A en AA');
-  } else {
-    const criteriaWord =
-      failedCriteria === 1 ? 'succescriterium' : 'succescriteria';
-    const onderzoekWoord = isHeronderzoek ? ditWoord : 'deelonderzoek';
-    const nulmetingZin =
-      isHeronderzoek && nulmetingPeriode
-        ? ` De nulmeting vond plaats tussen ${escapeHtml(nulmetingPeriode)}.`
-        : '';
-    mainHtml = `<p>Dit ${
-      isHeronderzoek ? ditWoord : 'onderzoek'
-    } is door Shift2 uitgevoerd tussen ${escapeHtml(
-      dateStartFormatted
-    )} en ${escapeHtml(
-      dateEndFormatted
-    )}.${nulmetingZin} Voor dit ${onderzoekWoord} is een representatieve steekproef samengesteld van ${totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p>
-<p>De onderzochte content voldoet ${
-      percentage === 100 ? 'volledig' : 'niet volledig'
-    } aan WCAG 2.2 niveau A en AA. In dit ${onderzoekWoord} zijn ${totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan ${passedCriteria} van deze ${totalCriteria} succescriteria (${percentage}%). ${
-      // Zelfde formulering als in het rapport op het scherm; die twee horen
-      // woordelijk gelijk te zijn.
-      failedCriteria === 0 && isHeronderzoek && nulmetingFailedCriteria > 0
-        ? `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailedCriteria}.`
-        : `Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.`
-    }</p>`;
-  }
+  // Een zelf geschreven samenvatting (tabblad Conclusie) vervangt het cijfermatige
+  // deel, net als op het scherm. Feedback en slotadvies komen er in beide gevallen onder.
+  const mainHtml: string = project.managementSummary
+    ? String(project.managementSummary)
+    : samenvattingHtml({
+        project,
+        sjabloon: researchTypeData?.summaryTemplate,
+        totalPages,
+        uniqueForms,
+        totalCriteria,
+        passedCriteria,
+        failedCriteria,
+        dateStart: dateStartFormatted,
+        dateEnd: dateEndFormatted,
+        standaard: researchTypeData?.version,
+        niveau: researchTypeData?.level,
+        nulmetingPeriode,
+        nulmetingFailedCriteria,
+      });
 
   const feedbackHtml = project.researcherFeedback
     ? `<div class="researcher-feedback">${project.researcherFeedback}</div>`
