@@ -1200,7 +1200,7 @@ Content voor de tweede uitklapbare sectie...`}
               </button>
               <button
                 onClick={handleDuplicate}
-                className="px-4 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity"
+                className="modal-save-button px-4 py-2 text-sm font-medium text-white bg-shift2-primary rounded-lg hover:opacity-90 transition-opacity"
               >
                 Dupliceren
               </button>
