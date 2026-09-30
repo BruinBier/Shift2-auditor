@@ -47,6 +47,11 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
   const checkPhase: 'nulmeting' | 'tussencheck' | 'herinspectie' | 'afgerond' =
     project.checkPhase ?? 'nulmeting';
   const tussencheckActive = checkPhase === 'tussencheck' || checkPhase === 'herinspectie';
+  // Een aanvullend onderzoek doorloopt dezelfde fasen als een herinspectie, maar heet
+  // anders. Zie lib/onderzoek-soort.ts.
+  const aanvullend = !!project.aanvullendOnderzoek;
+  const herLabel = aanvullend ? 'Aanvullend onderzoek' : 'Herinspectie';
+  const faseLabel = aanvullend && checkPhase === 'herinspectie' ? 'aanvullend onderzoek' : checkPhase;
 
   // A nulmeting that is afgerond ("Gereed") but has no child project yet
   // can be turned into a herinspection on demand.
@@ -99,8 +104,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
     const messages: Record<typeof target, string> = {
       tussencheck:
         'Tussencheck starten? Je kunt vanaf nu bevindingen aanvinken als opgelost en het criterium wordt automatisch bijgewerkt.',
-      herinspectie:
-        'Tussencheck afronden en herinspectie starten? Al je werk uit de tussencheck (vinkjes en notities) blijft bewaard.',
+      herinspectie: `Tussencheck afronden en ${herLabel.toLowerCase()} starten? Al je werk uit de tussencheck (vinkjes en notities) blijft bewaard.`,
       afgerond: 'Project afronden? Je kunt daarna geen bevindingen meer wijzigen.',
     };
     if (!confirm(messages[target])) return;
@@ -604,7 +608,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                         : 'border-transparent text-gray-500 tab-hover'
                     }`}
                   >
-                    {checkPhase === 'tussencheck' ? 'Tussencheck' : 'Herinspectie'}
+                    {checkPhase === 'tussencheck' ? 'Tussencheck' : herLabel}
                   </button>
                 )}
                 {!showFixlijstTab && (
@@ -692,15 +696,26 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                   className={`px-3 py-1 text-xs font-medium rounded-full ${getPhaseColor(checkPhase)}`}
                   title="Fase van het onderzoek"
                 >
-                  Fase: {checkPhase}
+                  Fase: {faseLabel}
                 </span>
+                {/* Een aanvullend onderzoek heeft geen nulmeting in de tool om een
+                    herinspectie van aan te maken; het gaat zelf de tussencheck in. */}
+                {aanvullend && checkPhase === 'nulmeting' && (
+                  <button
+                    onClick={() => handlePhaseChange('tussencheck')}
+                    disabled={isChangingPhase}
+                    className="px-3 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 hover:bg-purple-200 disabled:opacity-50"
+                  >
+                    Tussencheck starten
+                  </button>
+                )}
                 {checkPhase === 'tussencheck' && (
                   <button
                     onClick={() => handlePhaseChange('herinspectie')}
                     disabled={isChangingPhase}
                     className="px-3 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 disabled:opacity-50"
                   >
-                    Tussencheck afronden, start herinspectie
+                    Tussencheck afronden, start {herLabel.toLowerCase()}
                   </button>
                 )}
                 {checkPhase === 'herinspectie' && (
@@ -709,7 +724,7 @@ export default function ProjectAdminTabs({ project, allCriteria, relatedProjects
                     disabled={isChangingPhase}
                     className="px-3 py-1 text-xs font-medium rounded bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50"
                   >
-                    Herinspectie afronden
+                    {herLabel} afronden
                   </button>
                 )}
                 {canCreateReinspection && (

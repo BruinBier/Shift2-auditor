@@ -308,6 +308,7 @@ export async function PATCH(
      * PUT-handler hierboven, met een eigen, ruimere set.
      */
     const TOEGESTAAN = new Set([
+      'aanvullendOnderzoek',
       'accountmanager',
       'adviceCallAccepted',
       'adviceCallDate',

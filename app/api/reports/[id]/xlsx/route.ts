@@ -315,7 +315,11 @@ export async function GET(
     // - fallback op project.kenmerk/subject als er geen sample-URL beschikbaar is
     const versionNum = Number(project.version || 1);
     const versionStr = versionNum.toFixed(1);
-    const phaseLabel = versionNum > 1 ? 'herinspectie' : 'nulmeting';
+    const phaseLabel = (project as any).aanvullendOnderzoek
+      ? 'aanvullend-onderzoek'
+      : versionNum > 1
+        ? 'herinspectie'
+        : 'nulmeting';
 
     let siteLabel = '';
     const hostCounts = new Map<string, number>();

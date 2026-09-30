@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { isHeronderzoek as bepaalHeronderzoek } from '@/lib/onderzoek-soort';
 
 /**
  * Alle gegevens die een rapport nodig heeft, in één keer opgehaald.
@@ -47,8 +48,9 @@ export async function getReportData(projectId: string) {
   // terug in het rapport. Een kindproject is per definitie een heronderzoek,
   // ongeacht de fase. Alleen op 'afgerond' toetsen kan niet: een afgeronde
   // nulmeting heeft die status ook.
-  const isHeronderzoek =
-    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
+  // Een aanvullend onderzoek heeft geen parent: nulmeting en nulmetingFailedCriteria
+  // blijven dan leeg, en de zinnen die ze noemen vallen weg.
+  const isHeronderzoek = bepaalHeronderzoek(project);
   const nulmeting =
     isHeronderzoek && project.parentProjectId
       ? await prisma.project.findUnique({

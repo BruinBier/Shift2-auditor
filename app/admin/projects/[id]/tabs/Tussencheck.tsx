@@ -200,7 +200,11 @@ export default function Tussencheck({ project }: TussencheckProps) {
         <div className="flex items-start justify-between gap-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {phase === 'tussencheck' ? 'Tussencheck' : 'Herinspectie'}
+              {phase === 'tussencheck'
+                ? 'Tussencheck'
+                : project.aanvullendOnderzoek
+                  ? 'Aanvullend onderzoek'
+                  : 'Herinspectie'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               Loop de bevindingen langs en markeer per bevinding of die opgelost is. De status van het

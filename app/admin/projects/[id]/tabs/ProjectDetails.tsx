@@ -132,6 +132,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showPostponeModal, setShowPostponeModal] = useState(false);
   const [isOngoing, setIsOngoing] = useState(Boolean(project.isOngoing));
+  const [aanvullend, setAanvullend] = useState(Boolean(project.aanvullendOnderzoek));
+  const [isSavingAanvullend, setIsSavingAanvullend] = useState(false);
   // Valt terug op de accountmanager van de opdrachtgever zolang er voor dit
   // onderzoek nog niets is gekozen.
   const [accountmanager, setAccountmanager] = useState(
@@ -817,6 +819,49 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
               </label>
               <p className="text-xs text-gray-500 mt-1 ml-6">
                 Werk zonder begin- en einddatum, zoals monitoring.
+              </p>
+            </div>
+            {/* Een hertest van een eerder onderzoek dat niet in de tool staat. Werkt als
+                een herinspectie, maar heet in rapport en knoppen "aanvullend onderzoek".
+                Zie lib/onderzoek-soort.ts. */}
+            <div>
+              <label className="flex items-center gap-2 text-sm text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={aanvullend}
+                  disabled={isSavingAanvullend}
+                  onChange={async (e) => {
+                    const nieuw = e.target.checked;
+                    setAanvullend(nieuw);
+                    setIsSavingAanvullend(true);
+                    try {
+                      const res = await fetch(`/api/projects/${project.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ aanvullendOnderzoek: nieuw }),
+                      });
+                      if (!res.ok) {
+                        setAanvullend(!nieuw);
+                        alert('Het opslaan is niet gelukt.');
+                        return;
+                      }
+                      // De knoppen en het tabblad bovenaan lezen dit kenmerk uit de
+                      // projectgegevens; die komen pas mee na herladen.
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Error saving aanvullendOnderzoek:', error);
+                      setAanvullend(!nieuw);
+                      alert('Het opslaan is niet gelukt.');
+                    } finally {
+                      setIsSavingAanvullend(false);
+                    }
+                  }}
+                />
+                Aanvullend onderzoek
+              </label>
+              <p className="text-xs text-gray-500 mt-1 ml-6">
+                Hertest van een eerder onderzoek dat niet in de tool staat. Werkt als een
+                herinspectie, maar heet in het rapport &quot;aanvullend onderzoek&quot;.
               </p>
             </div>
             <div>

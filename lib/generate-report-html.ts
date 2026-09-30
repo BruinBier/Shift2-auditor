@@ -11,6 +11,13 @@ import {
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 import { isOpmerking, hoortInRapport } from '@/lib/finding-classification';
 import { getReportData } from '@/lib/report-data';
+import {
+  isHeronderzoek as bepaalHeronderzoek,
+  naarHeronderzoek,
+  onderzoekWoord as woordVoor,
+  eerderOnderzoek,
+  introLabel,
+} from '@/lib/onderzoek-soort';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -88,11 +95,7 @@ function statusLabel(status: AssessmentStatus | string): { label: string; klass:
   }
 }
 
-function buildReportTitle(
-  project: any,
-  website: string,
-  isHeronderzoek = false
-): string {
+function buildReportTitle(project: any, website: string): string {
   // Gelijk aan de "Over dit onderzoek"-tab: onderzoekstype + domein.
   // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
   // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
@@ -108,12 +111,9 @@ function buildReportTitle(
    */
   rt = rt.replace(/\s+met formulieren\b/gi, '').trim();
   // Nulmeting en heronderzoek delen hetzelfde onderzoekstype en kregen daardoor
-  // een identieke kop. Spreek bij een heronderzoek van heronderzoek.
-  if (isHeronderzoek) {
-    rt = rt
-      .replace(/\bdeelonderzoek\b/gi, 'heronderzoek')
-      .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
-  }
+  // een identieke kop. Spreek bij een heronderzoek van heronderzoek (of van
+  // aanvullend onderzoek, zie lib/onderzoek-soort.ts).
+  rt = naarHeronderzoek(rt, project);
   return [rt, website].filter(Boolean).join(' ').trim();
 }
 
@@ -155,7 +155,7 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const website = scopeDomain || project.subject || '';
   const version = Number(project.version).toFixed(1);
   const datum = formatDateNl(project.reportDate);
-  const title = buildReportTitle(project, website, isHeronderzoek);
+  const title = buildReportTitle(project, website);
   // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
   // De URL als echte link opnemen. Een kale URL in lopende tekst wordt bij de
@@ -169,9 +169,11 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     .split(/\s+en\s+/i)
     .pop()!
     .trim();
-  const onderzoekLabel = `${
-    researchTypeData?.version || project.standard || 'WCAG 2.2'
-  } ${introLevel}-content${isHeronderzoek ? 'her' : ''}onderzoek`;
+  const onderzoekLabel = introLabel(
+    researchTypeData?.version || project.standard || 'WCAG 2.2',
+    introLevel,
+    project
+  );
   const introOpdrachtgever =
     opdrachtgever && opdrachtgever !== 'n.v.t.'
       ? `, uitgevoerd in opdracht van ${escapeHtml(opdrachtgever)}.`
@@ -241,13 +243,15 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     grouped,
     'bevinding',
     isHeronderzoek,
-    nulmetingFailedCriteria
+    nulmetingFailedCriteria,
+    eerderOnderzoek(project)
   );
   const opmerkingenHtml = renderBevindingenSectie(
     grouped,
     'opmerking',
     isHeronderzoek,
-    opgelosteOpmerkingen
+    opgelosteOpmerkingen,
+    eerderOnderzoek(project)
   );
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
@@ -300,10 +304,11 @@ function renderSamenvatting(
   nulmetingFailedCriteria: number = 0
 ): string {
   // Bij een heronderzoek spreken we van heronderzoek en noemen we de nulmeting.
-  // Zelfde toets als in report-data.ts: na afronden staat checkPhase op
-  // 'afgerond', maar een kindproject blijft een heronderzoek.
-  const isHeronderzoek =
-    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
+  // Zelfde toets als in report-data.ts, via lib/onderzoek-soort.ts.
+  const isHeronderzoek = bepaalHeronderzoek(project);
+  // "Dit heronderzoek" of "Dit aanvullende onderzoek".
+  const ditWoord = woordVoor(project, 'bepaald');
+  const eerder = eerderOnderzoek(project);
   const dateStartFormatted = project.dateStart
     ? formatDateNl(project.dateStart)
     : '[datum]';
@@ -332,16 +337,17 @@ function renderSamenvatting(
     // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
     if (isHeronderzoek) {
       summaryTemplate = summaryTemplate
-        .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+        .replace(/Dit onderzoek is/g, `Dit ${ditWoord} is`)
         // De steekproef is bij het afronden overgenomen uit de nulmeting;
         // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
         // op het verkeerde been zetten.
         .replace(
           /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
-          "Voor dit heronderzoek zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld."
+          `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`
         )
-        .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
+        .replace(/\bdit deelonderzoek\b/g, `dit ${ditWoord}`);
 
+      // Alleen bij een herinspectie: een aanvullend onderzoek heeft geen nulmeting in de tool.
       if (nulmetingPeriode) {
         summaryTemplate = summaryTemplate.replace(
           /(Dit heronderzoek is door Shift2 uitgevoerd tussen \{dateStart\} en \{dateEnd\}\.)/,
@@ -355,7 +361,7 @@ function renderSamenvatting(
       if (failedCriteria === 0 && nulmetingFailedCriteria > 0) {
         summaryTemplate = summaryTemplate.replace(
           /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
-          `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${nulmetingFailedCriteria}.`
+          `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailedCriteria}.`
         );
       }
     }
@@ -390,13 +396,13 @@ function renderSamenvatting(
   } else {
     const criteriaWord =
       failedCriteria === 1 ? 'succescriterium' : 'succescriteria';
-    const onderzoekWoord = isHeronderzoek ? 'heronderzoek' : 'deelonderzoek';
+    const onderzoekWoord = isHeronderzoek ? ditWoord : 'deelonderzoek';
     const nulmetingZin =
       isHeronderzoek && nulmetingPeriode
         ? ` De nulmeting vond plaats tussen ${escapeHtml(nulmetingPeriode)}.`
         : '';
     mainHtml = `<p>Dit ${
-      isHeronderzoek ? 'heronderzoek' : 'onderzoek'
+      isHeronderzoek ? ditWoord : 'onderzoek'
     } is door Shift2 uitgevoerd tussen ${escapeHtml(
       dateStartFormatted
     )} en ${escapeHtml(
@@ -408,7 +414,7 @@ function renderSamenvatting(
       // Zelfde formulering als in het rapport op het scherm; die twee horen
       // woordelijk gelijk te zijn.
       failedCriteria === 0 && isHeronderzoek && nulmetingFailedCriteria > 0
-        ? `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${nulmetingFailedCriteria}.`
+        ? `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailedCriteria}.`
         : `Bij ${failedCriteria} ${criteriaWord} zijn afwijkingen vastgesteld.`
     }</p>`;
   }
@@ -437,15 +443,9 @@ function renderOverOnderzoek(project: any, researchTypeData?: any): string {
   // Bij een heronderzoek de aanduiding meebewegen met de kop. De verwijzingen
   // naar het "deelonderzoek techniek" verderop blijven staan: dat is een ander
   // onderzoek en heet ook bij een heronderzoek zo.
-  const isHeronderzoek =
-    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
+  const isHeronderzoek = bepaalHeronderzoek(project);
   const researchType = escapeHtml(
-    isHeronderzoek
-      ? String(project.researchType || 'onderzoek').replace(
-          /\bdeelonderzoek\b/gi,
-          'heronderzoek'
-        )
-      : project.researchType || 'onderzoek'
+    naarHeronderzoek(String(project.researchType || 'onderzoek'), project)
   );
   const isContentOnderzoek = (project.researchType || '')
     .toLowerCase()
@@ -493,7 +493,7 @@ ${UITGESLOTEN.map((u) => `        <tr><th scope="row">${u.code}</th><td>${u.naam
 
   const afbakeningPanel = isContentOnderzoek
     ? `<div class="panel"><div class="panel-title"><h3>Afbakening van het onderzoek</h3></div><div class="panel-body">
-    <p>Dit ${isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
+    <p>Dit ${isHeronderzoek ? woordVoor(project, 'bepaald') : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
     <p>Bij dit onderzoek zijn ${aantalBeoordeeld} van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
     ${tweedeAlinea}
     <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>${uitsluitingHtml}
@@ -598,7 +598,9 @@ function renderBevindingenSectie(
    * Hoeveel er bij de nulmeting openstond: succescriteria bij de bevindingen,
    * opmerkingen bij de opmerkingen. 0 als er niets te melden valt.
    */
-  opgelostBijNulmeting = 0
+  opgelostBijNulmeting = 0,
+  /** "de nulmeting", of bij een aanvullend onderzoek "het eerdere onderzoek". */
+  eerder = 'de nulmeting'
 ): string {
   const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
@@ -698,8 +700,8 @@ ${findingsHtml}`);
     let leegTekst = `Er zijn geen ${heading.toLowerCase()} vastgesteld.`;
     if (isHeronderzoek && opgelostBijNulmeting > 0) {
       leegTekst = isOpmerkingen
-        ? `${een ? 'De opmerking die' : `De ${opgelostBijNulmeting} opmerkingen die`} bij de nulmeting ${een ? 'openstond' : 'openstonden'}, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`
-        : `${een ? 'Het succescriterium dat' : `De ${opgelostBijNulmeting} succescriteria die`} bij de nulmeting ${een ? 'werd' : 'werden'} afgekeurd, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`;
+        ? `${een ? 'De opmerking die' : `De ${opgelostBijNulmeting} opmerkingen die`} bij ${eerder} ${een ? 'openstond' : 'openstonden'}, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`
+        : `${een ? 'Het succescriterium dat' : `De ${opgelostBijNulmeting} succescriteria die`} bij ${eerder} ${een ? 'werd' : 'werden'} afgekeurd, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`;
     }
     return `<section class="content-block">
   <h2 id="${isOpmerkingen ? 'opmerkingen' : 'bevindingen'}">${heading}</h2>

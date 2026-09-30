@@ -10,6 +10,13 @@ import { useSearchParams } from 'next/navigation';
 import { getDriveFolderUrl } from '@/lib/drive-folders';
 import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
+import {
+  isHeronderzoek as bepaalHeronderzoek,
+  naarHeronderzoek,
+  onderzoekWoord as woordVoor,
+  eerderOnderzoek,
+  introLabel,
+} from '@/lib/onderzoek-soort';
 import { marked } from 'marked';
 
 /**
@@ -55,8 +62,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   // gaat checkPhase naar 'afgerond', en dan bleef het rapport zichzelf ten
   // onrechte als nulmeting presenteren. Een kindproject is per definitie een
   // heronderzoek, ongeacht de fase waarin het staat.
-  const isHeronderzoekReport =
-    project.checkPhase === 'herinspectie' || !!project.parentProjectId;
+  const isHeronderzoekReport = bepaalHeronderzoek(project);
+  // "heronderzoek" of "aanvullende onderzoek" (achter dit/het), en waar het naar terugverwijst.
+  const ditWoord = woordVoor(project, 'bepaald');
+  const eerder = eerderOnderzoek(project);
   const isOpenOpmerking = (f: any) =>
     isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
 
@@ -277,15 +286,15 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
       // Bij een heronderzoek: spreek van heronderzoek en noem de periode van de nulmeting
       if (isHeronderzoek) {
         template = template
-          .replace(/Dit onderzoek is/g, 'Dit heronderzoek is')
+          .replace(/Dit onderzoek is/g, `Dit ${ditWoord} is`)
           // De steekproef is bij het afronden overgenomen uit de nulmeting;
           // er wordt er geen nieuwe samengesteld. "Samengesteld" zou de lezer
           // op het verkeerde been zetten.
           .replace(
             /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
-            "Voor dit heronderzoek zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld."
+            `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`
           )
-          .replace(/\bdit deelonderzoek\b/g, 'dit heronderzoek');
+          .replace(/\bdit deelonderzoek\b/g, `dit ${ditWoord}`);
 
         if (nulmetingPeriode) {
           template = template.replace(
@@ -306,7 +315,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         if (failedCriteria === 0 && nulmetingFailedCriteria > 0) {
           template = template.replace(
             /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
-            `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${nulmetingFailedCriteria}.`
+            `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailedCriteria}.`
           );
         }
       }
@@ -355,12 +364,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
     return (
       <>
         <p className="mb-4">
-          Dit {isHeronderzoek ? 'heronderzoek' : 'onderzoek'} is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}.{isHeronderzoek && nulmetingPeriode ? ` De nulmeting vond plaats tussen ${nulmetingPeriode}.` : ''} Voor dit {isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
+          Dit {isHeronderzoek ? ditWoord : 'onderzoek'} is door Shift2 uitgevoerd tussen {dateStartFormatted} en {dateEndFormatted}.{isHeronderzoek && nulmetingPeriode ? ` De nulmeting vond plaats tussen ${nulmetingPeriode}.` : ''} Voor dit {isHeronderzoek ? ditWoord : 'deelonderzoek'} is een representatieve steekproef samengesteld van {totalPages} gepubliceerde webpagina's met verschillende contenttypen.
         </p>
 
         <p className="mb-4">
-          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit {isHeronderzoek ? 'heronderzoek' : 'deelonderzoek'} zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). {failedCriteria === 0 && isHeronderzoek && project.nulmetingFailedCriteria > 0
-            ? `Er zijn geen afwijkingen meer vastgesteld; bij de nulmeting waren dat er nog ${project.nulmetingFailedCriteria}.`
+          De onderzochte content voldoet {percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. In dit {isHeronderzoek ? ditWoord : 'deelonderzoek'} zijn {totalCriteria} succescriteria beoordeeld. Er wordt voldaan aan {passedCriteria} van deze {totalCriteria} succescriteria ({percentage}%). {failedCriteria === 0 && isHeronderzoek && project.nulmetingFailedCriteria > 0
+            ? `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${project.nulmetingFailedCriteria}.`
             : `Bij ${failedCriteria} ${failedCriteria === 1 ? 'succescriterium' : 'succescriteria'} zijn afwijkingen vastgesteld.`}
         </p>
 
@@ -609,11 +618,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 const basisType = String(project.researchType || '')
                   .replace(/\s+met formulieren\b/gi, '')
                   .trim();
-                const researchType = isHeronderzoekReport && basisType
-                  ? basisType
-                      .replace(/\bdeelonderzoek\b/gi, 'heronderzoek')
-                      .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek')
-                  : basisType;
+                const researchType = basisType ? naarHeronderzoek(basisType, project) : basisType;
 
                 return [researchType, scopeUrl.replace(/^https?:\/\//, '')].filter(Boolean).join(' ')
                   || `Toegankelijkheidsonderzoek ${formatProjectName(project.subject || project.title, project.researchTypeData?.type)}`;
@@ -630,11 +635,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 // Use reportIntroHeader if available
                 // Bij een heronderzoek spreken we van heronderzoek in plaats van deelonderzoek
                 const rawTemplate = project.researchTypeData?.reportIntroHeader;
-                const withPhase = rawTemplate && isHeronderzoekReport
-                  ? rawTemplate
-                      .replace(/\bdeelonderzoek\b/g, 'heronderzoek')
-                      .replace(/\bcontentonderzoek\b/g, 'contentheronderzoek')
-                  : rawTemplate;
+                const withPhase = rawTemplate ? naarHeronderzoek(rawTemplate, project) : rawTemplate;
                 // {opdrachtgever} invullen; laat de zin netjes eindigen als de
                 // opdrachtgever niet is ingevuld.
                 const opdrachtgeverNaam =
@@ -671,7 +672,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   // In de introzin het hoogste niveau kort noemen ("AA"), niet
                   // de volledige reeks "A en AA" die elders wordt gebruikt.
                   const introLevel = (project.researchTypeData?.level || 'AA').split(/\s+en\s+/i).pop()!.trim();
-                  const onderzoekLabel = `${project.researchTypeData?.version || 'WCAG 2.2'} ${introLevel}-content${isHeronderzoekReport ? 'her' : ''}onderzoek`;
+                  const onderzoekLabel = introLabel(project.researchTypeData?.version || 'WCAG 2.2', introLevel, project);
                   const opdrachtgever = project.commissionedBy || project.clientProject?.name || '';
                   return (
                     <>
@@ -1130,7 +1131,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   gevonden" gevolgd door een aantal dat de lezer nergens kan plaatsen.
                 */}
                 {isHeronderzoekReport && (project.nulmetingFailedCriteria ?? 0) > 0
-                  ? `${project.nulmetingFailedCriteria === 1 ? 'Het succescriterium dat' : `De ${project.nulmetingFailedCriteria} succescriteria die`} bij de nulmeting ${project.nulmetingFailedCriteria === 1 ? 'werd' : 'werden'} afgekeurd, ${project.nulmetingFailedCriteria === 1 ? 'is' : 'zijn'} nu ${project.nulmetingFailedCriteria === 1 ? '' : 'allemaal '}opgelost.`
+                  ? `${project.nulmetingFailedCriteria === 1 ? 'Het succescriterium dat' : `De ${project.nulmetingFailedCriteria} succescriteria die`} bij ${eerder} ${project.nulmetingFailedCriteria === 1 ? 'werd' : 'werden'} afgekeurd, ${project.nulmetingFailedCriteria === 1 ? 'is' : 'zijn'} nu ${project.nulmetingFailedCriteria === 1 ? '' : 'allemaal '}opgelost.`
                   : 'Er zijn geen bevindingen vastgesteld.'}
               </p>
             )}
@@ -1310,7 +1311,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               <p className="text-sm text-gray-500 italic">
                 {/* Zelfde opbouw als bij de bevindingen: uitgangspunt, wat er is gedaan, uitkomst. */}
                 {opgelosteOpmerkingen > 0
-                  ? `${opgelosteOpmerkingen === 1 ? 'De opmerking die' : `De ${opgelosteOpmerkingen} opmerkingen die`} bij de nulmeting ${opgelosteOpmerkingen === 1 ? 'openstond' : 'openstonden'}, ${opgelosteOpmerkingen === 1 ? 'is' : 'zijn'} nu ${opgelosteOpmerkingen === 1 ? '' : 'allemaal '}opgelost.`
+                  ? `${opgelosteOpmerkingen === 1 ? 'De opmerking die' : `De ${opgelosteOpmerkingen} opmerkingen die`} bij ${eerder} ${opgelosteOpmerkingen === 1 ? 'openstond' : 'openstonden'}, ${opgelosteOpmerkingen === 1 ? 'is' : 'zijn'} nu ${opgelosteOpmerkingen === 1 ? '' : 'allemaal '}opgelost.`
                   : 'Er zijn geen opmerkingen vastgesteld.'}
               </p>
             )}

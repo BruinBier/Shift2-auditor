@@ -224,7 +224,12 @@ export async function generateVoortgangsoverzichtDocx(projectId: string): Promis
   }));
 
   const groups = groupFindings(exportFindings);
-  const phaseLabel = project.checkPhase === 'tussencheck' ? 'tussencheck' : 'herinspectie';
+  const phaseLabel =
+    project.checkPhase === 'tussencheck'
+      ? 'tussencheck'
+      : project.aanvullendOnderzoek
+        ? 'aanvullend onderzoek'
+        : 'herinspectie';
 
   const documentParagraphs: Paragraph[] = [];
 
