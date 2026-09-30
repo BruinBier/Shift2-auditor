@@ -1,4 +1,10 @@
-import { isHeronderzoek, onderzoekWoord, eerderOnderzoek, type OnderzoekSoortInvoer } from '@/lib/onderzoek-soort';
+import {
+  isHeronderzoek,
+  isAanvullendOnderzoek,
+  onderzoekWoord,
+  eerderOnderzoek,
+  type OnderzoekSoortInvoer,
+} from '@/lib/onderzoek-soort';
 
 /**
  * De automatische samenvatting bovenaan het rapport: periode, steekproef en score.
@@ -48,8 +54,15 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   const criteriaWoord = i.failedCriteria === 1 ? 'succescriterium' : 'succescriteria';
   // Alles opgelost: zeg dat, en noem hoeveel het er waren. "Bij 0 succescriteria zijn
   // afwijkingen vastgesteld" leest als een onderzoek waarin niets te vinden was.
-  const allesOpgelost = her && i.failedCriteria === 0 && nulmetingFailed > 0;
-  const opgelostZin = `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;
+  //
+  // Een aanvullend onderzoek kent het aantal van het eerdere onderzoek niet (dat staat
+  // niet in de tool), en krijgt daarom een vaste zin. Formulering van Frits, 2026-09-30.
+  const aanvullend = isAanvullendOnderzoek(i.project);
+  const allesOpgelost =
+    her && i.failedCriteria === 0 && (aanvullend || nulmetingFailed > 0);
+  const opgelostZin = aanvullend
+    ? 'Uit het onderzoek blijkt dat de laatste openstaande punten uit het vorige onderzoek zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.'
+    : `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;
 
   if (i.sjabloon) {
     let t = String(i.sjabloon);
