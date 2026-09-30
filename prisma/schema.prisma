@@ -288,6 +288,7 @@ model Project {
   steekproefProfielRuns   SteekproefProfielRun[]
   paginaSignalen          PaginaSignaal[]
   advices                 ProjectAdvice[]
+  urenregels              Urenregel[]
 
   @@map("projects")
 }
@@ -1311,4 +1312,24 @@ model Schrijfcorrectie {
 
   @@index([status])
   @@map("schrijfcorrecties")
+}
+
+/// Uren die Frits in zijn urenapp heeft geschreven, als eigen overzicht: in die app
+/// kan hij niet zoeken. De urenapp blijft de bron; dit is een logboek ernaast.
+/// Zonder project is het "Overig" (overleg, administratie).
+model Urenregel {
+  id           String   @id @default(uuid())
+  projectId    String?  @map("project_id")
+  datum        DateTime @db.Date
+  uren         Float
+  omschrijving String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  /// SetNull: een verwijderd onderzoek laat de geschreven uren staan.
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([datum])
+  @@index([projectId])
+  @@map("urenregels")
 }
