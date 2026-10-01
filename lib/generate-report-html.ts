@@ -17,6 +17,7 @@ import {
   onderzoekWoord as woordVoor,
   eerderOnderzoek,
   introLabel,
+  isAanvullendOnderzoek,
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml } from '@/lib/samenvatting';
 
@@ -417,7 +418,7 @@ ${UITGESLOTEN.map((u) => `        <tr><th scope="row">${u.code}</th><td>${u.naam
 
   const afbakeningPanel = isContentOnderzoek
     ? `<div class="panel"><div class="panel-title"><h3>Afbakening van het onderzoek</h3></div><div class="panel-body">
-    <p>Dit ${isHeronderzoek ? woordVoor(project, 'bepaald') : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
+    <p>Dit ${isHeronderzoek && !isAanvullendOnderzoek(project) ? woordVoor(project, 'bepaald') : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
     <p>Bij dit onderzoek zijn ${aantalBeoordeeld} van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
     ${tweedeAlinea}
     <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>${uitsluitingHtml}

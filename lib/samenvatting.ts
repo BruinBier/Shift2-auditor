@@ -45,8 +45,16 @@ function escapeHtml(s: string): string {
 
 export function samenvattingHtml(i: SamenvattingInvoer): string {
   const her = isHeronderzoek(i.project);
-  // "Dit heronderzoek" of "Dit aanvullende onderzoek".
-  const ditWoord = onderzoekWoord(i.project, 'bepaald');
+  const aanvullend = isAanvullendOnderzoek(i.project);
+  // "Dit heronderzoek". Een aanvullend onderzoek heet in de samenvatting gewoon "dit
+  // onderzoek", zoals Cardan het doet; dat het een vervolg is, blijkt uit de zin over
+  // opgeloste punten en uit de feedback. Frits, 2026-10-01.
+  const ditWoord = aanvullend ? 'onderzoek' : onderzoekWoord(i.project, 'bepaald');
+  // De steekproef is overgenomen uit het eerdere onderzoek; er wordt geen nieuwe
+  // samengesteld. "Samengesteld" zou de lezer op het verkeerde been zetten.
+  const steekproefZin = aanvullend
+    ? `Tijdens dit onderzoek zijn {totalPages} pagina's onderzocht.`
+    : `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`;
   const eerder = eerderOnderzoek(i.project);
   const nulmetingFailed = i.nulmetingFailedCriteria ?? 0;
   const percentage =
@@ -57,7 +65,6 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   //
   // Een aanvullend onderzoek kent het aantal van het eerdere onderzoek niet (dat staat
   // niet in de tool), en krijgt daarom een vaste zin. Formulering van Frits, 2026-09-30.
-  const aanvullend = isAanvullendOnderzoek(i.project);
   const allesOpgelost =
     her && i.failedCriteria === 0 && (aanvullend || nulmetingFailed > 0);
   const opgelostZin = aanvullend
@@ -69,11 +76,9 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
     if (her) {
       t = t
         .replace(/Dit onderzoek is/g, `Dit ${ditWoord} is`)
-        // De steekproef is overgenomen uit het eerdere onderzoek; er wordt geen nieuwe
-        // samengesteld. "Samengesteld" zou de lezer op het verkeerde been zetten.
         .replace(
           /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
-          `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`,
+          steekproefZin,
         )
         .replace(/\bdit deelonderzoek\b/g, `dit ${ditWoord}`);
       if (i.nulmetingPeriode) {
@@ -111,7 +116,10 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
     her && i.nulmetingPeriode ? ` De nulmeting vond plaats tussen ${escapeHtml(i.nulmetingPeriode)}.` : '';
   return (
     `<p>Dit ${her ? ditWoord : 'onderzoek'} is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}.${nulmetingZin} ` +
-    `Voor dit ${onderzoek} is een representatieve steekproef samengesteld van ${i.totalPages} gepubliceerde webpagina's met verschillende contenttypen.</p>\n` +
+    (her
+      ? steekproefZin.replace('{totalPages}', String(i.totalPages))
+      : `Voor dit ${onderzoek} is een representatieve steekproef samengesteld van ${i.totalPages} gepubliceerde webpagina's met verschillende contenttypen.`) +
+    `</p>\n` +
     `<p>De onderzochte content voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. ` +
     `In dit ${onderzoek} zijn ${i.totalCriteria} succescriteria beoordeeld. ` +
     `Er wordt voldaan aan ${i.passedCriteria} van deze ${i.totalCriteria} succescriteria (${percentage}%). ` +

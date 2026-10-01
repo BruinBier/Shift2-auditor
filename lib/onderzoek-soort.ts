@@ -58,32 +58,16 @@ export function onderzoekWoord(
  *
  * "deelonderzoek techniek" en het meervoud blijven staan: dat is het andere
  * deelonderzoek en heet ook bij een heronderzoek zo.
+ *
+ * Een aanvullend onderzoek houdt de standaardtekst, zoals Cardan het doet: daar
+ * heet het in kop, intro en afbakening gewoon "deelonderzoek". Dat het een vervolg
+ * is, blijkt uit de samenvatting (lib/samenvatting.ts). Frits, 2026-10-01.
  */
 export function naarHeronderzoek(tekst: string, p: OnderzoekSoortInvoer): string {
-  if (!isHeronderzoek(p)) return tekst;
-  if (!isAanvullendOnderzoek(p)) {
-    return tekst
-      .replace(/\bdeelonderzoek\b(?!\s+techniek)/gi, 'heronderzoek')
-      .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
-  }
-  // In één doorgang, anders pakt de tweede vervanging het resultaat van de eerste
-  // opnieuw op ("het aanvullende aanvullend contentonderzoek").
-  //
-  // "het WCAG 2.2 AA-contentonderzoek" wordt "het aanvullende WCAG 2.2
-  // AA-contentonderzoek", niet "het WCAG 2.2 AA-aanvullend contentonderzoek".
-  // Een samenstelling met streepje blijft daarom in de tweede stap ongemoeid.
+  if (!isHeronderzoek(p) || isAanvullendOnderzoek(p)) return tekst;
   return tekst
-    .replace(
-      /\b(dit|het|dat)\s+(WCAG\s+[\d.]+\s+[A]{1,3}-contentonderzoek)\b/gi,
-      (_m, lw: string, label: string) => `${lw} aanvullende ${label}`,
-    )
-    .replace(
-      /(?<!-)\b(?:(dit|het|dat)\s+)?(deelonderzoek|contentonderzoek)\b(?!\s+techniek)/gi,
-      (_m, lw: string | undefined, woord: string) => {
-        const kern = woord.toLowerCase() === 'contentonderzoek' ? 'contentonderzoek' : 'onderzoek';
-        return lw ? `${lw} aanvullende ${kern}` : `aanvullend ${kern}`;
-      },
-    );
+    .replace(/\bdeelonderzoek\b(?!\s+techniek)/gi, 'heronderzoek')
+    .replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
 }
 
 /**
@@ -97,10 +81,10 @@ export function eerderOnderzoek(p: OnderzoekSoortInvoer): string {
 
 /**
  * Het label in de introzin: "WCAG 2.2 AA-contentonderzoek", bij een herinspectie
- * "…-contentheronderzoek", bij een aanvullend onderzoek "aanvullende WCAG 2.2
- * AA-contentonderzoek" (de zin luidt "de resultaten van het …").
+ * "…-contentheronderzoek". Een aanvullend onderzoek houdt het standaardlabel
+ * (zie naarHeronderzoek).
  */
 export function introLabel(standaard: string, niveau: string, p: OnderzoekSoortInvoer): string {
-  if (isAanvullendOnderzoek(p)) return `aanvullende ${standaard} ${niveau}-contentonderzoek`;
-  return `${standaard} ${niveau}-content${isHeronderzoek(p) ? 'her' : ''}onderzoek`;
+  const her = isHeronderzoek(p) && !isAanvullendOnderzoek(p);
+  return `${standaard} ${niveau}-content${her ? 'her' : ''}onderzoek`;
 }
