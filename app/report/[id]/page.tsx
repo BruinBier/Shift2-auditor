@@ -59,7 +59,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
   // ook bij een heronderzoek zo. Bij een aanvullend onderzoek wordt het "aanvullend
   // onderzoek"; zie lib/onderzoek-soort.ts.
   const toHeronderzoek = (text: string) =>
-    naarAanvullendAfbakening(naarHeronderzoek(text, project), project);
+    naarAanvullendAfbakening(naarHeronderzoek(text, project), project, project.sampleItems?.length ?? 0);
 
   const rt = data.researchTypeData;
   const researchTypeData = rt

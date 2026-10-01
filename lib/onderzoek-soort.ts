@@ -132,8 +132,19 @@ export function leesbaarAdres(url: string): string {
  * Eén bron voor het scherm (naarAanvullendAfbakening, op de markdown van het
  * onderzoekstype) en Word/PDF (generate-report-html.ts).
  */
-export function aanvullendAfbakeningZin(p: OnderzoekSoortInvoer): string {
-  return `Dit aanvullende onderzoek heeft betrekking op de punten die na ${vorigOnderzoek(p)} nog openstonden. Daarbij is nagegaan of deze zijn opgelost.`;
+export function aanvullendAfbakeningZin(p: OnderzoekSoortInvoer, aantalPaginas = 0): string {
+  // "Heronderzoek", net als kop, introzin en samenvatting. Noemt waar is gekeken en
+  // wat níet opnieuw is beoordeeld: zonder die zin leest "voldoet aan alle 33" in de
+  // samenvatting als een volledige nieuwe toets. Frits, 2026-10-01.
+  const waar = aantalPaginas > 0
+    ? `Op dezelfde ${aantalPaginas} pagina's is nagegaan of deze punten zijn opgelost.`
+    : 'Daarbij is nagegaan of deze punten zijn opgelost.';
+  return `Dit heronderzoek heeft betrekking op de punten die na ${vorigOnderzoek(p)} nog openstonden. ${waar} De overige succescriteria zijn niet opnieuw beoordeeld.`;
+}
+
+/** "Het onderzoek omvat 33 van de 55 …": welke criteria eronder vallen, niet dat ze alle 33 opnieuw zijn getest. */
+export function aanvullendOmvatZin(aantal: number, standaardNiveau = 'WCAG 2.2 niveau A en AA'): string {
+  return `Het onderzoek omvat ${aantal} van de 55 succescriteria van ${standaardNiveau}.`;
 }
 
 /**
@@ -149,13 +160,21 @@ export function vorigOnderzoek(p: OnderzoekSoortInvoer): string {
 const CMS_ZIN = /Dit deelonderzoek heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast\./;
 const TECHNIEK_WORDEN = /(succescriteria )worden beoordeeld in het afzonderlijke deelonderzoek techniek/;
 const TECHNISCHE_BASIS = / Zij gaan over de technische basis van de website\./;
+const BIJ_DIT_ONDERZOEK = /Bij dit onderzoek zijn (\d+) van de 55 succescriteria van (WCAG [\d.]+ niveau A en AA) beoordeeld\.\s*\n\s*\n\s*/;
 const BEIDE_ZIN = /\n?[^\S\n]*Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website\.[^\S\n]*\n?/;
 
 /** Past de afbakening in de markdown van het onderzoekstype aan; zie aanvullendAfbakeningZin. */
-export function naarAanvullendAfbakening(tekst: string, p: OnderzoekSoortInvoer): string {
+export function naarAanvullendAfbakening(
+  tekst: string,
+  p: OnderzoekSoortInvoer,
+  aantalPaginas = 0,
+): string {
   if (!isAanvullendOnderzoek(p)) return tekst;
   return tekst
-    .replace(CMS_ZIN, aanvullendAfbakeningZin(p))
+    .replace(CMS_ZIN, aanvullendAfbakeningZin(p, aantalPaginas))
+    // "Bij dit onderzoek zijn 33 … beoordeeld." + de alinea over techniek worden één
+    // alinea die met "Het onderzoek omvat" begint.
+    .replace(BIJ_DIT_ONDERZOEK, (_m, n: string, sn: string) => `${aanvullendOmvatZin(Number(n), sn)} `)
     .replace(BEIDE_ZIN, '\n')
     // Het deelonderzoek techniek ligt bij een aanvullend onderzoek al achter ons.
     .replace(TECHNIEK_WORDEN, '$1zijn beoordeeld in het afzonderlijke deelonderzoek techniek')
