@@ -94,7 +94,9 @@ export function eerderOnderzoek(p: OnderzoekSoortInvoer): string {
  * heronderzoek (Frits); "aanvullend" staat nog in de afbakening.
  */
 export function introLabel(standaard: string, niveau: string, p: OnderzoekSoortInvoer): string {
-  return `${standaard} ${niveau}-content${isHeronderzoek(p) ? 'her' : ''}onderzoek`;
+  // Spatie tussen niveau en "content", geen streepje: "AA contentonderzoek". Frits, 2026-10-01.
+  // En bij een heronderzoek een streepje: "content-heronderzoek". Frits, 2026-10-01.
+  return `${standaard} ${niveau} content${isHeronderzoek(p) ? '-her' : ''}onderzoek`;
 }
 
 /**
@@ -102,8 +104,13 @@ export function introLabel(standaard: string, niveau: string, p: OnderzoekSoortI
  * introLabel: het scherm gebruikt deze tekst, Word/PDF bouwt de zin met introLabel.
  */
 export function naarIntrozin(tekst: string, p: OnderzoekSoortInvoer): string {
-  if (!isAanvullendOnderzoek(p)) return naarHeronderzoek(tekst, p);
-  return tekst.replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
+  const t = isAanvullendOnderzoek(p)
+    ? tekst.replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek')
+    : naarHeronderzoek(tekst, p);
+  // "AA-contentonderzoek" wordt "AA contentonderzoek"; zie introLabel.
+  return t
+    .replace(/\b(A{1,3})-(content)/g, '$1 $2')
+    .replace(/\bcontentheronderzoek\b/g, 'content-heronderzoek');
 }
 
 /**

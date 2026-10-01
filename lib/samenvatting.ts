@@ -44,7 +44,16 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/**
+ * Zonder witruimte tussen de alinea's. Het rapport op het scherm zet de samenvatting
+ * in een blok met whitespace-pre-line, en daar werd elke lege regel tussen twee
+ * <p>'s een lege regel op het scherm (MAAS-01, 2026-10-01). Word/PDF merkte het niet.
+ */
 export function samenvattingHtml(i: SamenvattingInvoer): string {
+  return samenvattingRuw(i).replace(/>\s+</g, '><').trim();
+}
+
+function samenvattingRuw(i: SamenvattingInvoer): string {
   const her = isHeronderzoek(i.project);
   const aanvullend = isAanvullendOnderzoek(i.project);
   // "Dit heronderzoek". Een aanvullend onderzoek heet in de samenvatting ook
