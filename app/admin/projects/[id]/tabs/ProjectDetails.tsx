@@ -135,6 +135,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [aanvullend, setAanvullend] = useState(Boolean(project.aanvullendOnderzoek));
   const [eerderPeriode, setEerderPeriode] = useState<string>(project.eerderOnderzoekPeriode || '');
   const [eerderPeriodeStatus, setEerderPeriodeStatus] = useState<'' | 'opgeslagen' | 'fout'>('');
+  const [kopNaam, setKopNaam] = useState<string>(project.kopNaam || '');
+  const [kopNaamStatus, setKopNaamStatus] = useState<'' | 'opgeslagen' | 'fout'>('');
   const [isSavingAanvullend, setIsSavingAanvullend] = useState(false);
   // Valt terug op de accountmanager van de opdrachtgever zolang er voor dit
   // onderzoek nog niets is gekozen.
@@ -911,6 +913,47 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                   </p>
                 </div>
               )}
+            </div>
+            {/* De naam van de website in de kop van het rapport. Leeg: het domein uit
+                de scope-URL. Zie kopRapport in lib/onderzoek-soort.ts. */}
+            <div>
+              <label htmlFor="kop-naam" className="block text-sm text-gray-500 mb-1">
+                Naam in de kop
+              </label>
+              <input
+                id="kop-naam"
+                type="text"
+                value={kopNaam}
+                onChange={(e) => {
+                  setKopNaam(e.target.value);
+                  setKopNaamStatus('');
+                }}
+                onBlur={async () => {
+                  const waarde = kopNaam.trim() || null;
+                  if (waarde === (project.kopNaam || null)) return;
+                  try {
+                    const res = await fetch(`/api/projects/${project.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                      body: JSON.stringify({ kopNaam: waarde }),
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    project.kopNaam = waarde;
+                    setKopNaamStatus('opgeslagen');
+                  } catch (error) {
+                    console.error('Error saving kopNaam:', error);
+                    setKopNaamStatus('fout');
+                  }
+                }}
+                placeholder="Leeg: het domein uit de scope"
+                aria-describedby="kop-naam-uitleg"
+                className="w-full max-w-md px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
+              />
+              <p id="kop-naam-uitleg" className="text-xs text-gray-500 mt-1">
+                Vervangt de URL in de kop van het rapport, bijvoorbeeld &quot;Maassluismaakthet&quot;.
+                {kopNaamStatus === 'opgeslagen' && <span className="text-green-700"> Opgeslagen.</span>}
+                {kopNaamStatus === 'fout' && <span className="text-red-700"> Het opslaan is niet gelukt.</span>}
+              </p>
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Versie</label>

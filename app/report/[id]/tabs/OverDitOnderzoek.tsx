@@ -16,6 +16,8 @@ import {
   naarIntrozin,
   eerderOnderzoek,
   introLabel,
+  kopRapport,
+  leesbaarAdres,
 } from '@/lib/onderzoek-soort';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
 import { samenvattingHtml } from '@/lib/samenvatting';
@@ -526,22 +528,10 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {(() => {
-                // De kop komt uit researchType + scope-URL, niet uit het titelveld.
-                // Nulmeting en herinspectie delen dat onderzoekstype en kregen
-                // daardoor een identieke kop. Spreek bij een herinspectie van
-                // heronderzoek, net als in de introtekst hieronder.
-                // "met formulieren" hoort niet in de kop: dat onderscheidt intern of
-                // 3.3.1, 3.3.3 en 3.3.7 meelopen, en dat is een keuze over de scope van
-                // het onderzoek en geen naam die de klant op zijn rapport wil zien.
-                // Staat ook in lib/generate-report-html.ts: deze tab en de generator
-                // bouwen elk hun eigen kop, dus een wijziging hier bereikt de Word- en
-                // PDF-versie niet. Frits, 2026-09-21 bij ZOET-01.
-                const basisType = String(project.researchType || '')
-                  .replace(/\s+met formulieren\b/gi, '')
-                  .trim();
-                const researchType = basisType ? naarHeronderzoek(basisType, project) : basisType;
-
-                return [researchType, scopeUrl.replace(/^https?:\/\//, '')].filter(Boolean).join(' ')
+                // De kop komt uit researchType + scope-URL (of de naam op Details),
+                // niet uit het titelveld. Zelfde regels als Word/PDF: kopRapport in
+                // lib/onderzoek-soort.ts.
+                return kopRapport(project.researchType, scopeUrl.replace(/^https?:\/\//, ''), project)
                   || `Toegankelijkheidsonderzoek ${formatProjectName(project.subject || project.title, project.researchTypeData?.type)}`;
               })()}
             </h1>
@@ -574,17 +564,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   return (
                     <>
                       {parts[0]}
-                      <a
-                        href={introUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline inline-flex items-center gap-1"
-                      >
-                        {introUrl}
-                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
+                      {/* Het adres als gewone tekst, geen link: "heuvelrug.nl". Frits, 2026-10-01. */}
+                      {leesbaarAdres(introUrl)}
                       {parts[1] || ''}
                     </>
                   );
@@ -598,17 +579,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   return (
                     <>
                       Dit rapport beschrijft de resultaten van het {onderzoekLabel} naar de digitale toegankelijkheid van{' '}
-                      <a
-                        href={introUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline inline-flex items-center gap-1"
-                      >
-                        {introUrl}
-                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
+                      {/* Het adres als gewone tekst, geen link: "heuvelrug.nl". Frits, 2026-10-01. */}
+                      {leesbaarAdres(introUrl)}
                       {opdrachtgever ? `, uitgevoerd in opdracht van ${opdrachtgever}.` : '.'}
                     </>
                   );

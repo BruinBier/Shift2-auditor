@@ -19,6 +19,8 @@ import {
   introLabel,
   isAanvullendOnderzoek,
   aanvullendAfbakeningZin,
+  kopRapport,
+  leesbaarAdres,
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
@@ -100,25 +102,8 @@ function statusLabel(status: AssessmentStatus | string): { label: string; klass:
 }
 
 function buildReportTitle(project: any, website: string): string {
-  // Gelijk aan de "Over dit onderzoek"-tab: onderzoekstype + domein.
-  // Het researchType bevat doorgaans al "... website", dus we voegen dat woord
-  // niet nogmaals toe (voorkomt "website website www.beverwijk.nl").
-  let rt = String(project.researchType || 'Deelonderzoek').trim();
-  /*
-   * "met formulieren" hoort niet in de kop.
-   *
-   * Het onderzoekstype onderscheidt intern of de formuliercriteria (3.3.1, 3.3.3 en
-   * 3.3.7) meelopen; dat is een keuze over de scope van het onderzoek en geen naam die
-   * de klant op zijn rapport wil zien. De kop noemt wat er is onderzocht -- de content
-   * van de website -- en die blijft hetzelfde of er nu wel of geen formulieren in de
-   * steekproef zaten. Frits, 2026-09-21 bij ZOET-01.
-   */
-  rt = rt.replace(/\s+met formulieren\b/gi, '').trim();
-  // Nulmeting en heronderzoek delen hetzelfde onderzoekstype en kregen daardoor
-  // een identieke kop. Spreek bij een heronderzoek van heronderzoek (of van
-  // aanvullend onderzoek, zie lib/onderzoek-soort.ts).
-  rt = naarHeronderzoek(rt, project);
-  return [rt, website].filter(Boolean).join(' ').trim();
+  // Zelfde kop als de "Over dit onderzoek"-tab; zie kopRapport in lib/onderzoek-soort.ts.
+  return kopRapport(project.researchType || 'Deelonderzoek', website, project);
 }
 
 function compareWcagCodes(a: string, b: string): number {
@@ -162,11 +147,10 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const title = buildReportTitle(project, website);
   // Gelijk aan de "Over dit onderzoek"-tab: kort "deelonderzoek" + type + URL met protocol.
   const introUrl = website ? `https://${website.replace(/^https?:\/\//, '')}` : '';
-  // De URL als echte link opnemen. Een kale URL in lopende tekst wordt bij de
-  // PDF-export niet als link herkend, wat een toegankelijkheidsfout oplevert.
-  const introLink = introUrl
-    ? `<a href="${escapeHtml(introUrl)}">${escapeHtml(introUrl)}</a>`
-    : '';
+  // Het adres als gewone tekst, zonder https:// en www.: "heuvelrug.nl". Geen link
+  // (Frits, 2026-10-01). Vroeger stond hier de volledige URL als link, omdat een kale
+  // URL in de PDF niet als link werd herkend; zonder protocol is het geen URL meer.
+  const introLink = introUrl ? escapeHtml(leesbaarAdres(introUrl)) : '';
   // In de introzin het hoogste niveau kort noemen ("AA"), niet de volledige
   // reeks "A en AA" die elders in het rapport wordt gebruikt.
   const introLevel = (researchTypeData?.level || project.level || 'AA')

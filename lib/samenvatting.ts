@@ -47,16 +47,18 @@ function escapeHtml(s: string): string {
 export function samenvattingHtml(i: SamenvattingInvoer): string {
   const her = isHeronderzoek(i.project);
   const aanvullend = isAanvullendOnderzoek(i.project);
-  // "Dit heronderzoek". Een aanvullend onderzoek heet maar één keer zo, in de eerste
-  // zin ("Dit aanvullende onderzoek is door Shift2 uitgevoerd"); daarna "dit
-  // onderzoek". Drie keer "onderzoek" in wisselende vormen las als drie onderzoeken.
-  // Frits, 2026-10-01.
+  // "Dit heronderzoek". Een aanvullend onderzoek heet in de samenvatting ook
+  // "heronderzoek", maar alleen in de eerste zin; daarna "dit onderzoek". Drie keer
+  // "onderzoek" in wisselende vormen las als drie onderzoeken. Frits, 2026-10-01.
   const ditWoord = aanvullend ? 'onderzoek' : onderzoekWoord(i.project, 'bepaald');
-  const openingWoord = aanvullend ? 'aanvullende onderzoek' : ditWoord;
+  const openingWoord = aanvullend ? 'heronderzoek' : ditWoord;
+  // Wat op Details staat ("het onderzoek van 27 november 2025"), anders "het vorige
+  // onderzoek"; zie vorigOnderzoek in lib/onderzoek-soort.ts.
+  const vorige = escapeHtml(vorigOnderzoek(i.project));
   // De steekproef is overgenomen uit het eerdere onderzoek; er wordt geen nieuwe
   // samengesteld. "Samengesteld" zou de lezer op het verkeerde been zetten.
   const steekproefZin = aanvullend
-    ? `Daarbij zijn {totalPages} pagina's onderzocht.`
+    ? `Daarbij zijn dezelfde {totalPages} pagina's onderzocht als in ${vorige}.`
     : `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`;
   const eerder = eerderOnderzoek(i.project);
   const nulmetingFailed = i.nulmetingFailedCriteria ?? 0;
@@ -70,9 +72,6 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // niet in de tool), en krijgt daarom een vaste zin. Formulering van Frits, 2026-09-30.
   const allesOpgelost =
     her && i.failedCriteria === 0 && (aanvullend || nulmetingFailed > 0);
-  // Wat op Details staat ("de nulmeting en de herinspectie (27 november 2025)"),
-  // anders "het vorige onderzoek"; zie vorigOnderzoek in lib/onderzoek-soort.ts.
-  const vorige = escapeHtml(vorigOnderzoek(i.project));
   const opgelostZin = aanvullend
     ? `De punten die na ${vorige} nog openstonden, zijn allemaal opgelost.`
     : `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;
@@ -91,8 +90,8 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // er is opgelost, dan wat dat betekent. Frits, 2026-10-01.
   if (aanvullend && allesOpgelost) {
     return (
-      `<p class="mb-3">Dit aanvullende onderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}. ` +
-      `Daarbij zijn ${i.totalPages} pagina's onderzocht.</p>\n\n` +
+      `<p class="mb-3">Dit heronderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}. ` +
+      `${steekproefZin.replace('{totalPages}', String(i.totalPages))}</p>\n\n` +
       `<p class="mb-3">${opgelostZin} ` +
       `De onderzochte content voldoet daarmee aan alle ${i.totalCriteria} beoordeelde succescriteria van ${escapeHtml(i.standaard || 'WCAG 2.2')} niveau ${escapeHtml(i.niveau || 'A en AA')}.</p>`
     );

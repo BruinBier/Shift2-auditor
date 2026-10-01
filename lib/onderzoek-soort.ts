@@ -27,6 +27,8 @@ export type OnderzoekSoortInvoer = {
    * de database nog "periode"; het veld is ruimer geworden.
    */
   eerderOnderzoekPeriode?: string | null;
+  /** De naam van de website in de kop; leeg is het domein. */
+  kopNaam?: string | null;
 };
 
 /**
@@ -86,16 +88,12 @@ export function eerderOnderzoek(p: OnderzoekSoortInvoer): string {
 }
 
 /**
- * Het label in de introzin: "WCAG 2.2 AA-contentonderzoek", bij een herinspectie
- * "…-contentheronderzoek", bij een aanvullend onderzoek "aanvullende WCAG 2.2
- * AA-contentonderzoek" (de zin luidt "de resultaten van het …").
- *
- * De introzin is de enige plek waar een aanvullend onderzoek zo heet: hij sluit aan
- * op de kop ("… aanvullend onderzoek content …"). De rest van het rapport houdt de
- * standaardtekst, zoals Cardan het doet. Frits, 2026-10-01.
+ * Het label in de introzin: "WCAG 2.2 AA-contentonderzoek", bij een herinspectie en
+ * een aanvullend onderzoek "…-contentheronderzoek" (de zin luidt "de resultaten van
+ * het …"). Sinds 2026-10-01 heet een aanvullend onderzoek in kop en introzin ook
+ * heronderzoek (Frits); "aanvullend" staat nog in de afbakening.
  */
 export function introLabel(standaard: string, niveau: string, p: OnderzoekSoortInvoer): string {
-  if (isAanvullendOnderzoek(p)) return `aanvullende ${standaard} ${niveau}-contentonderzoek`;
   return `${standaard} ${niveau}-content${isHeronderzoek(p) ? 'her' : ''}onderzoek`;
 }
 
@@ -105,10 +103,15 @@ export function introLabel(standaard: string, niveau: string, p: OnderzoekSoortI
  */
 export function naarIntrozin(tekst: string, p: OnderzoekSoortInvoer): string {
   if (!isAanvullendOnderzoek(p)) return naarHeronderzoek(tekst, p);
-  return tekst.replace(
-    /\b(het|dit)\s+(WCAG\s+[\d.]+\s+A{1,3}-contentonderzoek)\b/gi,
-    (_m, lw: string, label: string) => `${lw} aanvullende ${label}`,
-  );
+  return tekst.replace(/\bcontentonderzoek\b/gi, 'contentheronderzoek');
+}
+
+/**
+ * Het webadres zoals het in de lopende tekst staat: "maassluismaakthet.nl", zonder
+ * https:// en www. De link zelf houdt het volledige adres. Frits, 2026-10-01.
+ */
+export function leesbaarAdres(url: string): string {
+  return url.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
 }
 
 /**
@@ -169,4 +172,32 @@ export function techniekenVoorAanvullend(huidig: string[]): string[] {
   const lijst = huidig.length ? [...huidig] : ['DOM', 'HTML', 'CSS'];
   for (const t of AANVULLENDE_TECHNIEKEN) if (!lijst.includes(t)) lijst.push(t);
   return lijst;
+}
+
+/**
+ * De kop van het rapport: onderzoekstype + website.
+ *
+ * - "met formulieren" valt weg: dat onderscheidt intern of 3.3.1, 3.3.3 en 3.3.7
+ *   meelopen, en is geen naam die de klant op zijn rapport wil zien (Frits,
+ *   2026-09-21 bij ZOET-01).
+ * - Een herinspectie spreekt van heronderzoek (naarHeronderzoek). Een aanvullend
+ *   onderzoek ook: "WCAG 2.2 AA aanvullend onderzoek content website" wordt
+ *   "WCAG 2.2 AA heronderzoek content website" (Frits, 2026-10-01). Het
+ *   onderzoekstype houdt zijn naam, want dashboard en onderzoekenlijst herkennen
+ *   een aanvullend onderzoek aan "aanvullend" in die naam.
+ * - De website is de naam op Details ("Naam in de kop"), anders het domein.
+ *
+ * Eén bron voor het scherm (OverDitOnderzoek.tsx) en Word/PDF (generate-report-html.ts);
+ * die bouwden elk hun eigen kop.
+ */
+export function kopRapport(
+  researchType: string | null | undefined,
+  domein: string,
+  p: OnderzoekSoortInvoer,
+): string {
+  let rt = String(researchType || '').replace(/\s+met formulieren\b/gi, '').trim();
+  rt = naarHeronderzoek(rt, p);
+  if (isAanvullendOnderzoek(p)) rt = rt.replace(/\baanvullende?\s+onderzoek\b/i, 'heronderzoek');
+  const website = p.kopNaam?.trim() || domein;
+  return [rt, website].filter(Boolean).join(' ').trim();
 }

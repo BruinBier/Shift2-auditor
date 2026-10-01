@@ -186,6 +186,9 @@ model Project {
   /// verwijzen ermee naar dat onderzoek; een URL naar het portaal van Cardan kan de
   /// klant meestal niet openen. De naam zegt nog "periode"; het veld is ruimer geworden.
   eerderOnderzoekPeriode  String?        @map("eerder_onderzoek_periode")
+  /// De naam van de website in de kop van het rapport ("Maassluismaakthet"). Leeg:
+  /// het domein uit de scope-URL. Zie kopRapport in lib/onderzoek-soort.ts.
+  kopNaam                 String?        @map("kop_naam")
 
   // Tussencheck / Herinspectie fase
   checkPhase              ProjectCheckPhase @default(nulmeting) @map("check_phase")

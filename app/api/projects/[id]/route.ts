@@ -324,6 +324,7 @@ export async function PATCH(
       'dateEnd',
       'dateStart',
       'eerderOnderzoekPeriode',
+      'kopNaam',
       'hasReinspection',
       'invitationSent',
       'isOngoing',
