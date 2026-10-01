@@ -47,14 +47,16 @@ function escapeHtml(s: string): string {
 export function samenvattingHtml(i: SamenvattingInvoer): string {
   const her = isHeronderzoek(i.project);
   const aanvullend = isAanvullendOnderzoek(i.project);
-  // "Dit heronderzoek". Een aanvullend onderzoek heet in de samenvatting gewoon "dit
-  // onderzoek", zoals Cardan het doet; dat het een vervolg is, blijkt uit de zin over
-  // opgeloste punten en uit de feedback. Frits, 2026-10-01.
+  // "Dit heronderzoek". Een aanvullend onderzoek heet maar één keer zo, in de eerste
+  // zin ("Dit aanvullende onderzoek is door Shift2 uitgevoerd"); daarna "dit
+  // onderzoek". Drie keer "onderzoek" in wisselende vormen las als drie onderzoeken.
+  // Frits, 2026-10-01.
   const ditWoord = aanvullend ? 'onderzoek' : onderzoekWoord(i.project, 'bepaald');
+  const openingWoord = aanvullend ? 'aanvullende onderzoek' : ditWoord;
   // De steekproef is overgenomen uit het eerdere onderzoek; er wordt geen nieuwe
   // samengesteld. "Samengesteld" zou de lezer op het verkeerde been zetten.
   const steekproefZin = aanvullend
-    ? `Tijdens dit onderzoek zijn {totalPages} pagina's onderzocht.`
+    ? `Daarbij zijn {totalPages} pagina's onderzocht.`
     : `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`;
   const eerder = eerderOnderzoek(i.project);
   const nulmetingFailed = i.nulmetingFailedCriteria ?? 0;
@@ -72,11 +74,11 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // anders "het vorige onderzoek"; zie vorigOnderzoek in lib/onderzoek-soort.ts.
   const vorige = escapeHtml(vorigOnderzoek(i.project));
   const opgelostZin = aanvullend
-    ? `Uit dit aanvullende onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.`
+    ? `De punten die na ${vorige} nog openstonden, zijn allemaal opgelost.`
     : `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;
   // Een aanvullend onderzoek zegt altijd hoe het staat met de punten uit het vorige
   // onderzoek, ook als er nog iets openstaat. Frits, 2026-10-01.
-  const nogOpenZin = `Uit dit aanvullende onderzoek blijkt dat nog niet alle openstaande punten uit ${vorige} zijn opgelost. Bij ${i.failedCriteria} ${criteriaWoord} zijn nog afwijkingen vastgesteld.`;
+  const nogOpenZin = `De punten die na ${vorige} nog openstonden, zijn nog niet allemaal opgelost. Bij ${i.failedCriteria} ${criteriaWoord} zijn nog afwijkingen vastgesteld.`;
   const slotZin = allesOpgelost
     ? opgelostZin
     : aanvullend
@@ -89,11 +91,10 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // er is opgelost, dan wat dat betekent. Frits, 2026-10-01.
   if (aanvullend && allesOpgelost) {
     return (
-      `<p class="mb-3">Dit onderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}. ` +
-      `Tijdens dit onderzoek zijn ${i.totalPages} pagina's onderzocht.</p>\n\n` +
-      `<p class="mb-3">Uit dit aanvullende onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. ` +
-      `Er wordt nu voldaan aan alle ${i.totalCriteria} beoordeelde succescriteria. ` +
-      `Daarmee voldoet de onderzochte content volledig aan ${escapeHtml(i.standaard || 'WCAG 2.2')} niveau ${escapeHtml(i.niveau || 'A en AA')}.</p>`
+      `<p class="mb-3">Dit aanvullende onderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}. ` +
+      `Daarbij zijn ${i.totalPages} pagina's onderzocht.</p>\n\n` +
+      `<p class="mb-3">${opgelostZin} ` +
+      `De onderzochte content voldoet daarmee aan alle ${i.totalCriteria} beoordeelde succescriteria van ${escapeHtml(i.standaard || 'WCAG 2.2')} niveau ${escapeHtml(i.niveau || 'A en AA')}.</p>`
     );
   }
 
@@ -101,7 +102,7 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
     let t = String(i.sjabloon);
     if (her) {
       t = t
-        .replace(/Dit onderzoek is/g, `Dit ${ditWoord} is`)
+        .replace(/Dit onderzoek is/g, `Dit ${openingWoord} is`)
         .replace(
           /Voor dit deelonderzoek is een representatieve steekproef samengesteld van \{totalPages\} gepubliceerde webpagina's met verschillende contenttypen\./g,
           steekproefZin,
@@ -141,7 +142,7 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   const nulmetingZin =
     her && i.nulmetingPeriode ? ` De nulmeting vond plaats tussen ${escapeHtml(i.nulmetingPeriode)}.` : '';
   return (
-    `<p>Dit ${her ? ditWoord : 'onderzoek'} is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}.${nulmetingZin} ` +
+    `<p>Dit ${her ? openingWoord : 'onderzoek'} is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}.${nulmetingZin} ` +
     (her
       ? steekproefZin.replace('{totalPages}', String(i.totalPages))
       : `Voor dit ${onderzoek} is een representatieve steekproef samengesteld van ${i.totalPages} gepubliceerde webpagina's met verschillende contenttypen.`) +
