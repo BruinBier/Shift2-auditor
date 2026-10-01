@@ -17,6 +17,7 @@ import {
   eerderOnderzoek,
   introLabel,
 } from '@/lib/onderzoek-soort';
+import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
 import { samenvattingHtml } from '@/lib/samenvatting';
 import { marked } from 'marked';
 
@@ -957,7 +958,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                 {isOpen && (
                                   <div className="px-4 py-3 bg-white text-sm text-gray-700">
                                     {/* Sample Items - URLs with bullets if 2+ occurrences */}
-                                    {finding.occurrences && finding.occurrences.length > 0 && (
+                                    {finding.occurrences && finding.occurrences.length > 0 && !geldtVoorAllePaginas(finding.occurrences, project.sampleItems?.length || 0) && (
                                       <>
                                         {finding.occurrences.length >= 2 ? (
                                           <ul
@@ -1021,8 +1022,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                     <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.description) }} />
 
                                     {/* Advice */}
-                                    <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
-                                    <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.advice) }} />
+                                    {heeftTekst(finding.advice) && (
+                                      <>
+                                        <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
+                                        <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.advice) }} />
+                                      </>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -1137,7 +1142,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                 {isOpen && (
                                   <div className="px-4 py-3 bg-white text-sm text-gray-700">
                                     {/* Sample Items - URLs with bullets if 2+ occurrences */}
-                                    {finding.occurrences && finding.occurrences.length > 0 && (
+                                    {finding.occurrences && finding.occurrences.length > 0 && !geldtVoorAllePaginas(finding.occurrences, project.sampleItems?.length || 0) && (
                                       <>
                                         {finding.occurrences.length >= 2 ? (
                                           <ul
@@ -1201,8 +1206,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                     <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.description) }} />
 
                                     {/* Advice */}
-                                    <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
-                                    <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.advice) }} />
+                                    {heeftTekst(finding.advice) && (
+                                      <>
+                                        <h5 className="font-medium text-gray-900 mb-2 italic mt-3">Advies:</h5>
+                                        <div className="finding-description" dangerouslySetInnerHTML={{ __html: renderFindingHtml(finding.advice) }} />
+                                      </>
+                                    )}
                                   </div>
                                 )}
                               </div>

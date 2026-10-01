@@ -20,6 +20,7 @@ import {
   isAanvullendOnderzoek,
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml } from '@/lib/samenvatting';
+import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -246,14 +247,16 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     'bevinding',
     isHeronderzoek,
     nulmetingFailedCriteria,
-    eerderOnderzoek(project)
+    eerderOnderzoek(project),
+    project.sampleItems?.length || 0
   );
   const opmerkingenHtml = renderBevindingenSectie(
     grouped,
     'opmerking',
     isHeronderzoek,
     opgelosteOpmerkingen,
-    eerderOnderzoek(project)
+    eerderOnderzoek(project),
+    project.sampleItems?.length || 0
   );
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
@@ -525,7 +528,9 @@ function renderBevindingenSectie(
    */
   opgelostBijNulmeting = 0,
   /** "de nulmeting", of bij een aanvullend onderzoek "het eerdere onderzoek". */
-  eerder = 'de nulmeting'
+  eerder = 'de nulmeting',
+  /** Aantal pagina's in de steekproef; staat een bevinding op alle, dan geen URL-lijst. */
+  aantalSamples = 0
 ): string {
   const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
@@ -576,8 +581,9 @@ function renderBevindingenSectie(
                   .filter((u: any) => !!u)
               )
             ) as string[];
+            // Op alle pagina's van de steekproef: geen lijst, zie lib/vindplaatsen.ts.
             const locHtml =
-              urls.length === 0
+              urls.length === 0 || geldtVoorAllePaginas(f.occurrences, aantalSamples)
                 ? ''
                 : urls.length === 1
                 ? `<p><a href="${escapeHtml(urls[0])}" target="_blank" rel="noopener">${escapeHtml(urls[0])}</a></p>`
@@ -588,7 +594,7 @@ function renderBevindingenSectie(
                     )
                     .join('')}</ul>`;
             const descHtml = renderFindingMarkdown(f.description);
-            const adviceHtml = f.advice
+            const adviceHtml = heeftTekst(f.advice)
               ? `<h5>Advies</h5><div class="finding-text">${renderFindingMarkdown(f.advice)}</div>`
               : '';
             return `<div class="panel"><div class="panel-title"><h4>${itemLabel} ${

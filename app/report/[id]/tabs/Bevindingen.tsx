@@ -9,6 +9,7 @@ import {
 } from '@/lib/report-calculations';
 import { formatProjectName } from '@/lib/format-project-name';
 import { findingLabel, findingLabelClass, hoortInRapport, isOpmerking } from '@/lib/finding-classification';
+import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
 
 export default function Bevindingen({ project }: { project: any }) {
   console.log('🔵 Bevindingen component loaded!');
@@ -687,7 +688,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                           </div>
 
                                           {/* Sample Items (Steekproef) */}
-                                          {finding.occurrences && finding.occurrences.length > 0 && (
+                                          {finding.occurrences && finding.occurrences.length > 0 && !geldtVoorAllePaginas(finding.occurrences, project.sampleItems?.length || 0) && (
                                             <div className="text-sm text-gray-700">
                                               {console.log('Finding:', finding.findingCode, 'Occurrences:', finding.occurrences.length)}
                                               {finding.occurrences.length >= 2 ? (
@@ -761,7 +762,8 @@ export default function Bevindingen({ project }: { project: any }) {
                                             {renderAdvice(finding.description)}
                                           </div>
 
-                                          {/* Advies section */}
+                                          {/* Advies section: alleen als er advies is */}
+                                          {heeftTekst(finding.advice) && (
                                           <div>
                                             <button
                                               onClick={() => setExpandedAdvice(
@@ -785,6 +787,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                               </div>
                                             )}
                                           </div>
+                                          )}
 
                                           {/* Attachments count */}
                                           {finding.evidence && (() => {
@@ -950,7 +953,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                                 </div>
 
                                                 {/* Sample Items (Steekproef) */}
-                                                {finding.occurrences && finding.occurrences.length > 0 && (
+                                                {finding.occurrences && finding.occurrences.length > 0 && !geldtVoorAllePaginas(finding.occurrences, project.sampleItems?.length || 0) && (
                                                   <div className="text-sm text-gray-700">
                                                     {finding.occurrences.length >= 2 ? (
                                                       <ul className="list-disc list-inside space-y-1">
@@ -1007,7 +1010,8 @@ export default function Bevindingen({ project }: { project: any }) {
                                                   {renderAdvice(finding.description)}
                                                 </div>
 
-                                                {/* Advies section */}
+                                                {/* Advies section: alleen als er advies is */}
+                                                {heeftTekst(finding.advice) && (
                                                 <div>
                                                   <button
                                                     onClick={() => setExpandedAdvice(
@@ -1031,6 +1035,7 @@ export default function Bevindingen({ project }: { project: any }) {
                                                     </div>
                                                   )}
                                                 </div>
+                                                )}
 
                                                 {/* Attachments count */}
                                                 {finding.evidence && (() => {
