@@ -13,6 +13,7 @@ import { formatUserAgentsHtml } from '@/lib/format-user-agents';
 import {
   isHeronderzoek as bepaalHeronderzoek,
   naarHeronderzoek,
+  naarIntrozin,
   eerderOnderzoek,
   introLabel,
 } from '@/lib/onderzoek-soort';
@@ -554,7 +555,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 // Use reportIntroHeader if available
                 // Bij een heronderzoek spreken we van heronderzoek in plaats van deelonderzoek
                 const rawTemplate = project.researchTypeData?.reportIntroHeader;
-                const withPhase = rawTemplate ? naarHeronderzoek(rawTemplate, project) : rawTemplate;
+                const withPhase = rawTemplate ? naarIntrozin(rawTemplate, project) : rawTemplate;
                 // {opdrachtgever} invullen; laat de zin netjes eindigen als de
                 // opdrachtgever niet is ingevuld.
                 const opdrachtgeverNaam =

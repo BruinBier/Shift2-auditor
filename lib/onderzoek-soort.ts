@@ -81,10 +81,26 @@ export function eerderOnderzoek(p: OnderzoekSoortInvoer): string {
 
 /**
  * Het label in de introzin: "WCAG 2.2 AA-contentonderzoek", bij een herinspectie
- * "…-contentheronderzoek". Een aanvullend onderzoek houdt het standaardlabel
- * (zie naarHeronderzoek).
+ * "…-contentheronderzoek", bij een aanvullend onderzoek "aanvullende WCAG 2.2
+ * AA-contentonderzoek" (de zin luidt "de resultaten van het …").
+ *
+ * De introzin is de enige plek waar een aanvullend onderzoek zo heet: hij sluit aan
+ * op de kop ("… aanvullend onderzoek content …"). De rest van het rapport houdt de
+ * standaardtekst, zoals Cardan het doet. Frits, 2026-10-01.
  */
 export function introLabel(standaard: string, niveau: string, p: OnderzoekSoortInvoer): string {
-  const her = isHeronderzoek(p) && !isAanvullendOnderzoek(p);
-  return `${standaard} ${niveau}-content${her ? 'her' : ''}onderzoek`;
+  if (isAanvullendOnderzoek(p)) return `aanvullende ${standaard} ${niveau}-contentonderzoek`;
+  return `${standaard} ${niveau}-content${isHeronderzoek(p) ? 'her' : ''}onderzoek`;
+}
+
+/**
+ * De introzin uit het onderzoekstype (reportIntroHeader), met hetzelfde label als
+ * introLabel: het scherm gebruikt deze tekst, Word/PDF bouwt de zin met introLabel.
+ */
+export function naarIntrozin(tekst: string, p: OnderzoekSoortInvoer): string {
+  if (!isAanvullendOnderzoek(p)) return naarHeronderzoek(tekst, p);
+  return tekst.replace(
+    /\b(het|dit)\s+(WCAG\s+[\d.]+\s+A{1,3}-contentonderzoek)\b/gi,
+    (_m, lw: string, label: string) => `${lw} aanvullende ${label}`,
+  );
 }
