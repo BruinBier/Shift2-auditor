@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
+import { isHeronderzoek } from '@/lib/onderzoek-soort';
 
 interface FinalizeProps {
   project: any;
@@ -10,6 +12,13 @@ interface FinalizeProps {
 }
 
 export default function Finalize({ project, allCriteria }: FinalizeProps) {
+  const heronderzoek = isHeronderzoek(project);
+  const telInRapport = (f: any) =>
+    isOpenBevinding(f) ||
+    (isOpmerking(f) &&
+      f.status !== 'voorstel' &&
+      f.status !== 'afgewezen' &&
+      !(heronderzoek && f.status === 'resolved'));
   const router = useRouter();
   const [applicableCriteria, setApplicableCriteria] = useState(allCriteria);
 
@@ -210,8 +219,12 @@ export default function Finalize({ project, allCriteria }: FinalizeProps) {
                         }
                       };
 
+                      // Tel wat er in het rapport komt, niet alles wat ooit bij dit
+                      // criterium hoorde: bij een herinspectie of aanvullend onderzoek
+                      // staat een opgeloste bevinding hier anders als "1" achter
+                      // "Goedgekeurd". Zelfde regel als het rapport (OverDitOnderzoek.tsx).
                       const findingsCount = project.findings?.filter(
-                        (f: any) => f.wcagCriterionId === criterion.id
+                        (f: any) => f.wcagCriterionId === criterion.id && telInRapport(f)
                       ).length || 0;
 
                       return (
