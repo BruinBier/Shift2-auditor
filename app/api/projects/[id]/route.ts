@@ -322,6 +322,7 @@ export async function PATCH(
       'crmProjectActief',
       'dateEnd',
       'dateStart',
+      'eerderOnderzoekPeriode',
       'hasReinspection',
       'invitationSent',
       'isOngoing',

@@ -21,6 +21,8 @@ export type OnderzoekSoortInvoer = {
   checkPhase?: string | null;
   parentProjectId?: string | null;
   aanvullendOnderzoek?: boolean | null;
+  /** Bij een aanvullend onderzoek: wanneer het vorige onderzoek was ("februari 2026"). */
+  eerderOnderzoekPeriode?: string | null;
 };
 
 /**

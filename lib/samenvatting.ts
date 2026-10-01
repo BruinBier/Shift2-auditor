@@ -67,9 +67,20 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // niet in de tool), en krijgt daarom een vaste zin. Formulering van Frits, 2026-09-30.
   const allesOpgelost =
     her && i.failedCriteria === 0 && (aanvullend || nulmetingFailed > 0);
+  // "het vorige onderzoek (februari 2026)" als de periode op Details is ingevuld.
+  const periode = i.project.eerderOnderzoekPeriode?.trim();
+  const vorige = periode ? `het vorige onderzoek (${escapeHtml(periode)})` : 'het vorige onderzoek';
   const opgelostZin = aanvullend
-    ? 'Uit het onderzoek blijkt dat de laatste openstaande punten uit het vorige onderzoek zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.'
+    ? `Uit het onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.`
     : `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;
+  // Een aanvullend onderzoek zegt altijd hoe het staat met de punten uit het vorige
+  // onderzoek, ook als er nog iets openstaat. Frits, 2026-10-01.
+  const nogOpenZin = `Uit het onderzoek blijkt dat nog niet alle openstaande punten uit ${vorige} zijn opgelost. Bij ${i.failedCriteria} ${criteriaWoord} zijn nog afwijkingen vastgesteld.`;
+  const slotZin = allesOpgelost
+    ? opgelostZin
+    : aanvullend
+      ? nogOpenZin
+      : null;
 
   if (i.sjabloon) {
     let t = String(i.sjabloon);
@@ -87,10 +98,10 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
           `$1 De nulmeting vond plaats tussen ${escapeHtml(i.nulmetingPeriode)}.`,
         );
       }
-      if (allesOpgelost) {
+      if (slotZin) {
         t = t.replace(
           /Bij \{failedCriteria\} \{criteriaFailedSingularPlural\} zijn afwijkingen vastgesteld\./,
-          opgelostZin,
+          slotZin,
         );
       }
     }
@@ -123,6 +134,6 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
     `<p>De onderzochte content voldoet ${percentage === 100 ? 'volledig' : 'niet volledig'} aan WCAG 2.2 niveau A en AA. ` +
     `In dit ${onderzoek} zijn ${i.totalCriteria} succescriteria beoordeeld. ` +
     `Er wordt voldaan aan ${i.passedCriteria} van deze ${i.totalCriteria} succescriteria (${percentage}%). ` +
-    `${allesOpgelost ? opgelostZin : `Bij ${i.failedCriteria} ${criteriaWoord} zijn afwijkingen vastgesteld.`}</p>`
+    `${slotZin ?? `Bij ${i.failedCriteria} ${criteriaWoord} zijn afwijkingen vastgesteld.`}</p>`
   );
 }

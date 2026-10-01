@@ -133,6 +133,8 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   const [showPostponeModal, setShowPostponeModal] = useState(false);
   const [isOngoing, setIsOngoing] = useState(Boolean(project.isOngoing));
   const [aanvullend, setAanvullend] = useState(Boolean(project.aanvullendOnderzoek));
+  const [eerderPeriode, setEerderPeriode] = useState<string>(project.eerderOnderzoekPeriode || '');
+  const [eerderPeriodeStatus, setEerderPeriodeStatus] = useState<'' | 'opgeslagen' | 'fout'>('');
   const [isSavingAanvullend, setIsSavingAanvullend] = useState(false);
   // Valt terug op de accountmanager van de opdrachtgever zolang er voor dit
   // onderzoek nog niets is gekozen.
@@ -863,6 +865,50 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 Hertest van een eerder onderzoek dat niet in de tool staat. Werkt als een
                 herinspectie, maar heet in het rapport &quot;aanvullend onderzoek&quot;.
               </p>
+              {/* Wanneer het vorige onderzoek was. De samenvatting zegt dan "de
+                  openstaande punten uit het vorige onderzoek (februari 2026)". */}
+              {aanvullend && (
+                <div className="mt-2 ml-6">
+                  <label htmlFor="eerder-onderzoek-periode" className="block text-sm text-gray-900 mb-1">
+                    Periode vorig onderzoek
+                  </label>
+                  <input
+                    id="eerder-onderzoek-periode"
+                    type="text"
+                    value={eerderPeriode}
+                    onChange={(e) => {
+                      setEerderPeriode(e.target.value);
+                      setEerderPeriodeStatus('');
+                    }}
+                    onBlur={async () => {
+                      const waarde = eerderPeriode.trim() || null;
+                      if (waarde === (project.eerderOnderzoekPeriode || null)) return;
+                      try {
+                        const res = await fetch(`/api/projects/${project.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                          body: JSON.stringify({ eerderOnderzoekPeriode: waarde }),
+                        });
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        project.eerderOnderzoekPeriode = waarde;
+                        setEerderPeriodeStatus('opgeslagen');
+                      } catch (error) {
+                        console.error('Error saving eerderOnderzoekPeriode:', error);
+                        setEerderPeriodeStatus('fout');
+                      }
+                    }}
+                    placeholder="februari 2026"
+                    aria-describedby="eerder-onderzoek-periode-uitleg"
+                    className="w-full max-w-xs px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
+                  />
+                  <p id="eerder-onderzoek-periode-uitleg" className="text-xs text-gray-500 mt-1">
+                    In de samenvatting: &quot;de openstaande punten uit het vorige onderzoek
+                    (februari 2026)&quot;. Leeg laten mag.
+                    {eerderPeriodeStatus === 'opgeslagen' && <span className="text-green-700"> Opgeslagen.</span>}
+                    {eerderPeriodeStatus === 'fout' && <span className="text-red-700"> Het opslaan is niet gelukt.</span>}
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Versie</label>
