@@ -72,16 +72,30 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // anders "het vorige onderzoek"; zie vorigOnderzoek in lib/onderzoek-soort.ts.
   const vorige = escapeHtml(vorigOnderzoek(i.project));
   const opgelostZin = aanvullend
-    ? `Uit het onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.`
+    ? `Uit dit aanvullende onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.`
     : `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;
   // Een aanvullend onderzoek zegt altijd hoe het staat met de punten uit het vorige
   // onderzoek, ook als er nog iets openstaat. Frits, 2026-10-01.
-  const nogOpenZin = `Uit het onderzoek blijkt dat nog niet alle openstaande punten uit ${vorige} zijn opgelost. Bij ${i.failedCriteria} ${criteriaWoord} zijn nog afwijkingen vastgesteld.`;
+  const nogOpenZin = `Uit dit aanvullende onderzoek blijkt dat nog niet alle openstaande punten uit ${vorige} zijn opgelost. Bij ${i.failedCriteria} ${criteriaWoord} zijn nog afwijkingen vastgesteld.`;
   const slotZin = allesOpgelost
     ? opgelostZin
     : aanvullend
       ? nogOpenZin
       : null;
+
+  // Aanvullend onderzoek waarin alles is opgelost: eigen opbouw. Het sjabloon zegt
+  // dan twee keer dat de content voldoet ("voldoet volledig aan WCAG" en "voldoet aan
+  // de toegankelijkheidseisen") en zet de uitkomst achter de cijfers. Nu eerst wat
+  // er is opgelost, dan wat dat betekent. Frits, 2026-10-01.
+  if (aanvullend && allesOpgelost) {
+    return (
+      `<p class="mb-3">Dit onderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}. ` +
+      `Tijdens dit onderzoek zijn ${i.totalPages} pagina's onderzocht.</p>\n\n` +
+      `<p class="mb-3">Uit dit aanvullende onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. ` +
+      `Er wordt nu voldaan aan alle ${i.totalCriteria} beoordeelde succescriteria. ` +
+      `Daarmee voldoet de onderzochte content volledig aan ${escapeHtml(i.standaard || 'WCAG 2.2')} niveau ${escapeHtml(i.niveau || 'A en AA')}.</p>`
+    );
+  }
 
   if (i.sjabloon) {
     let t = String(i.sjabloon);
