@@ -3,6 +3,7 @@ import {
   isAanvullendOnderzoek,
   onderzoekWoord,
   eerderOnderzoek,
+  vorigOnderzoek,
   type OnderzoekSoortInvoer,
 } from '@/lib/onderzoek-soort';
 
@@ -67,9 +68,9 @@ export function samenvattingHtml(i: SamenvattingInvoer): string {
   // niet in de tool), en krijgt daarom een vaste zin. Formulering van Frits, 2026-09-30.
   const allesOpgelost =
     her && i.failedCriteria === 0 && (aanvullend || nulmetingFailed > 0);
-  // "het vorige onderzoek (februari 2026)" als de periode op Details is ingevuld.
-  const periode = i.project.eerderOnderzoekPeriode?.trim();
-  const vorige = periode ? `het vorige onderzoek (${escapeHtml(periode)})` : 'het vorige onderzoek';
+  // Wat op Details staat ("de nulmeting en de herinspectie (27 november 2025)"),
+  // anders "het vorige onderzoek"; zie vorigOnderzoek in lib/onderzoek-soort.ts.
+  const vorige = escapeHtml(vorigOnderzoek(i.project));
   const opgelostZin = aanvullend
     ? `Uit het onderzoek blijkt dat de laatste openstaande punten uit ${vorige} zijn opgelost. Hiermee voldoet de onderzochte content aan de toegankelijkheidseisen.`
     : `Er zijn geen afwijkingen meer vastgesteld; bij ${eerder} waren dat er nog ${nulmetingFailed}.`;

@@ -18,6 +18,7 @@ import {
   eerderOnderzoek,
   introLabel,
   isAanvullendOnderzoek,
+  aanvullendAfbakeningZin,
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
@@ -415,16 +416,20 @@ ${UITGESLOTEN.map((u) => `        <tr><th scope="row">${u.code}</th><td>${u.naam
     </table>`
     : '';
 
+  // Bij een aanvullend onderzoek is het deelonderzoek techniek al gedaan.
+  const techniekWerkwoord = isAanvullendOnderzoek(project) ? 'zijn' : 'worden';
   const tweedeAlinea = toonUitsluiting
-    ? `<p>De overige ${aantalOverig} succescriteria worden beoordeeld in het afzonderlijke deelonderzoek techniek. Daarvan gaan er ${aantalOverig - UITGESLOTEN.length} over de technische basis van de website. De overige ${UITGESLOTEN.length} zijn hieronder toegelicht.</p>`
-    : `<p>De overige ${aantalOverig} succescriteria worden beoordeeld in het afzonderlijke deelonderzoek techniek. Zij gaan over de technische basis van de website.</p>`;
+    ? `<p>De overige ${aantalOverig} succescriteria ${techniekWerkwoord} beoordeeld in het afzonderlijke deelonderzoek techniek. Daarvan gaan er ${aantalOverig - UITGESLOTEN.length} over de technische basis van de website. De overige ${UITGESLOTEN.length} zijn hieronder toegelicht.</p>`
+    : `<p>De overige ${aantalOverig} succescriteria ${techniekWerkwoord} beoordeeld in het afzonderlijke deelonderzoek techniek.${isAanvullendOnderzoek(project) ? '' : ' Zij gaan over de technische basis van de website.'}</p>`;
 
   const afbakeningPanel = isContentOnderzoek
     ? `<div class="panel"><div class="panel-title"><h3>Afbakening van het onderzoek</h3></div><div class="panel-body">
-    <p>Dit ${isHeronderzoek && !isAanvullendOnderzoek(project) ? woordVoor(project, 'bepaald') : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.</p>
+    <p>${isAanvullendOnderzoek(project)
+      ? escapeHtml(aanvullendAfbakeningZin(project))
+      : `Dit ${isHeronderzoek ? woordVoor(project, 'bepaald') : 'deelonderzoek'} heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast.`}</p>
     <p>Bij dit onderzoek zijn ${aantalBeoordeeld} van de 55 succescriteria van WCAG 2.2 niveau A en AA beoordeeld.</p>
     ${tweedeAlinea}
-    <p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>${uitsluitingHtml}
+    ${isAanvullendOnderzoek(project) ? '' : '<p>Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website.</p>'}${uitsluitingHtml}
   </div></div>`
     : '';
 

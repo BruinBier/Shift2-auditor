@@ -865,12 +865,13 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 Hertest van een eerder onderzoek dat niet in de tool staat. Werkt als een
                 herinspectie, maar heet in het rapport &quot;aanvullend onderzoek&quot;.
               </p>
-              {/* Wanneer het vorige onderzoek was. De samenvatting zegt dan "de
-                  openstaande punten uit het vorige onderzoek (februari 2026)". */}
+              {/* Welk onderzoek eraan voorafging, zoals het in de zin moet staan. Komt in
+                  de afbakening en de samenvatting; zie vorigOnderzoek in
+                  lib/onderzoek-soort.ts. */}
               {aanvullend && (
                 <div className="mt-2 ml-6">
                   <label htmlFor="eerder-onderzoek-periode" className="block text-sm text-gray-900 mb-1">
-                    Periode vorig onderzoek
+                    Vorig onderzoek
                   </label>
                   <input
                     id="eerder-onderzoek-periode"
@@ -897,13 +898,14 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                         setEerderPeriodeStatus('fout');
                       }
                     }}
-                    placeholder="februari 2026"
+                    placeholder="de nulmeting en de herinspectie (27 november 2025)"
                     aria-describedby="eerder-onderzoek-periode-uitleg"
-                    className="w-full max-w-xs px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
+                    className="w-full max-w-md px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-900"
                   />
                   <p id="eerder-onderzoek-periode-uitleg" className="text-xs text-gray-500 mt-1">
-                    In de samenvatting: &quot;de openstaande punten uit het vorige onderzoek
-                    (februari 2026)&quot;. Leeg laten mag.
+                    Zoals het in de zin moet staan: &quot;de punten die na … nog
+                    openstonden&quot;. Komt in de afbakening en de samenvatting. Leeg: &quot;het
+                    vorige onderzoek&quot;.
                     {eerderPeriodeStatus === 'opgeslagen' && <span className="text-green-700"> Opgeslagen.</span>}
                     {eerderPeriodeStatus === 'fout' && <span className="text-red-700"> Het opslaan is niet gelukt.</span>}
                   </p>

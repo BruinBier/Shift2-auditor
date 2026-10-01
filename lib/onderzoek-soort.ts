@@ -21,7 +21,11 @@ export type OnderzoekSoortInvoer = {
   checkPhase?: string | null;
   parentProjectId?: string | null;
   aanvullendOnderzoek?: boolean | null;
-  /** Bij een aanvullend onderzoek: wanneer het vorige onderzoek was ("februari 2026"). */
+  /**
+   * Bij een aanvullend onderzoek: welk onderzoek eraan voorafging, als vrije tekst die
+   * zo in de zin past ("de nulmeting en de herinspectie (27 november 2025)"). Heet in
+   * de database nog "periode"; het veld is ruimer geworden.
+   */
   eerderOnderzoekPeriode?: string | null;
 };
 
@@ -105,4 +109,45 @@ export function naarIntrozin(tekst: string, p: OnderzoekSoortInvoer): string {
     /\b(het|dit)\s+(WCAG\s+[\d.]+\s+A{1,3}-contentonderzoek)\b/gi,
     (_m, lw: string, label: string) => `${lw} aanvullende ${label}`,
   );
+}
+
+/**
+ * De afbakening van een aanvullend onderzoek. Wat er beoordeeld is, volgt uit wat er
+ * in het vorige onderzoek openstond, niet uit wat er in het CMS zit: dat vorige
+ * onderzoek (vaak van Cardan) trok die grens niet, en zijn openstaande punten kunnen
+ * ook techniek zijn. "Uitsluitend content via het CMS" en "beide deelonderzoeken
+ * vormen samen de volledige beoordeling" beloven dan iets wat dit onderzoek niet doet.
+ * Frits, 2026-10-01.
+ *
+ * Eén bron voor het scherm (naarAanvullendAfbakening, op de markdown van het
+ * onderzoekstype) en Word/PDF (generate-report-html.ts).
+ */
+export function aanvullendAfbakeningZin(p: OnderzoekSoortInvoer): string {
+  return `Dit aanvullende onderzoek heeft betrekking op de punten die na ${vorigOnderzoek(p)} nog openstonden. Daarbij is nagegaan of deze zijn opgelost.`;
+}
+
+/**
+ * Hoe het rapport het voorafgaande onderzoek noemt: wat de onderzoeker op Details
+ * invulde ("de nulmeting en de herinspectie (27 november 2025)"), anders "het vorige
+ * onderzoek". Niet elk aanvullend onderzoek komt na een herinspectie, dus dat staat
+ * niet vast in de tekst. Frits, 2026-10-01.
+ */
+export function vorigOnderzoek(p: OnderzoekSoortInvoer): string {
+  return p.eerderOnderzoekPeriode?.trim() || 'het vorige onderzoek';
+}
+
+const CMS_ZIN = /Dit deelonderzoek heeft uitsluitend betrekking op de content van de website die door de organisatie via het CMS kan worden ingevoerd of aangepast\./;
+const TECHNIEK_WORDEN = /(succescriteria )worden beoordeeld in het afzonderlijke deelonderzoek techniek/;
+const TECHNISCHE_BASIS = / Zij gaan over de technische basis van de website\./;
+const BEIDE_ZIN = /\n?[^\S\n]*Beide deelonderzoeken vormen gezamenlijk de volledige beoordeling van de website\.[^\S\n]*\n?/;
+
+/** Past de afbakening in de markdown van het onderzoekstype aan; zie aanvullendAfbakeningZin. */
+export function naarAanvullendAfbakening(tekst: string, p: OnderzoekSoortInvoer): string {
+  if (!isAanvullendOnderzoek(p)) return tekst;
+  return tekst
+    .replace(CMS_ZIN, aanvullendAfbakeningZin(p))
+    .replace(BEIDE_ZIN, '\n')
+    // Het deelonderzoek techniek ligt bij een aanvullend onderzoek al achter ons.
+    .replace(TECHNIEK_WORDEN, '$1zijn beoordeeld in het afzonderlijke deelonderzoek techniek')
+    .replace(TECHNISCHE_BASIS, '');
 }

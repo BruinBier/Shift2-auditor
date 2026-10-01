@@ -181,9 +181,10 @@ model Project {
   /// kenmerk viel een onderzoek zonder parentProjectId na afronden terug op
   /// nulmeting. Zie lib/onderzoek-soort.ts.
   aanvullendOnderzoek     Boolean        @default(false) @map("aanvullend_onderzoek")
-  /// Bij een aanvullend onderzoek: wanneer het vorige onderzoek was, als vrije tekst
-  /// ("februari 2026"). De samenvatting verwijst ermee naar dat onderzoek; een URL
-  /// naar het portaal van Cardan kan de klant meestal niet openen.
+  /// Bij een aanvullend onderzoek: welk onderzoek eraan voorafging, als vrije tekst
+  /// ("de nulmeting en de herinspectie (27 november 2025)"). Afbakening en samenvatting
+  /// verwijzen ermee naar dat onderzoek; een URL naar het portaal van Cardan kan de
+  /// klant meestal niet openen. De naam zegt nog "periode"; het veld is ruimer geworden.
   eerderOnderzoekPeriode  String?        @map("eerder_onderzoek_periode")
 
   // Tussencheck / Herinspectie fase

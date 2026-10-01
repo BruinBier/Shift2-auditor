@@ -4,7 +4,7 @@ import ReportTabs from './ReportTabs';
 import { marked } from 'marked';
 import { groupFindingsByHierarchy } from '@/lib/report-calculations';
 import { getReportData } from '@/lib/report-data';
-import { naarHeronderzoek } from '@/lib/onderzoek-soort';
+import { naarHeronderzoek, naarAanvullendAfbakening } from '@/lib/onderzoek-soort';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -58,7 +58,8 @@ export default async function ReportPage({ params }: { params: { id: string } })
   // techniek" wordt overgeslagen: beide slaan op het andere deelonderzoek en heten
   // ook bij een heronderzoek zo. Bij een aanvullend onderzoek wordt het "aanvullend
   // onderzoek"; zie lib/onderzoek-soort.ts.
-  const toHeronderzoek = (text: string) => naarHeronderzoek(text, project);
+  const toHeronderzoek = (text: string) =>
+    naarAanvullendAfbakening(naarHeronderzoek(text, project), project);
 
   const rt = data.researchTypeData;
   const researchTypeData = rt
