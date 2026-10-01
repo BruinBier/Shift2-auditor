@@ -151,3 +151,22 @@ export function naarAanvullendAfbakening(tekst: string, p: OnderzoekSoortInvoer)
     .replace(TECHNIEK_WORDEN, '$1zijn beoordeeld in het afzonderlijke deelonderzoek techniek')
     .replace(TECHNISCHE_BASIS, '');
 }
+
+/**
+ * De technieken van een aanvullend onderzoek: JavaScript en WAI-ARIA horen erbij.
+ *
+ * Een contentonderzoek noemt alleen wat de redacteur via het CMS gebruikt (DOM, HTML,
+ * CSS, SVG, PDF). Een aanvullend onderzoek beoordeelt de punten die na het vorige
+ * onderzoek openstonden, en dat onderzoek (vaak van Cardan) noemt de technieken waar
+ * de website op leunt -- ook JavaScript en WAI-ARIA. Bij MAAS-01 ging het om een
+ * dialoogvenster met role="alert". Frits, 2026-10-01.
+ *
+ * Voegt alleen toe wat ontbreekt; wat er al staat blijft staan.
+ */
+export const AANVULLENDE_TECHNIEKEN = ['JavaScript', 'WAI-ARIA'];
+
+export function techniekenVoorAanvullend(huidig: string[]): string[] {
+  const lijst = huidig.length ? [...huidig] : ['DOM', 'HTML', 'CSS'];
+  for (const t of AANVULLENDE_TECHNIEKEN) if (!lijst.includes(t)) lijst.push(t);
+  return lijst;
+}

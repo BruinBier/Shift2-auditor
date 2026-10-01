@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { techniekenVoorAanvullend } from '@/lib/onderzoek-soort';
 
 /**
  * Recalculate the reinspection child's planned dates based on the parent's
@@ -372,6 +373,13 @@ export async function PATCH(
     // Alleen de meegestuurde velden bijwerken. `null` blijft staan: dat is hoe een vinkje
     // bij de voorbereidingsstappen wordt uitgezet, en wegfilteren zou dat stil breken.
     const data = Object.fromEntries(Object.entries(body).filter(([k]) => TOEGESTAAN.has(k)));
+
+    // Wordt een onderzoek aanvullend, dan horen JavaScript en WAI-ARIA bij de technieken;
+    // zie techniekenVoorAanvullend. Alleen als de technieken niet zelf worden meegestuurd.
+    if (body.aanvullendOnderzoek === true && !('technologies' in body)) {
+      const huidig = await prisma.project.findUnique({ where: { id }, select: { technologies: true } });
+      data.technologies = techniekenVoorAanvullend(huidig?.technologies ?? []);
+    }
 
     const project = await prisma.project.update({
       where: { id },
