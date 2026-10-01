@@ -57,6 +57,7 @@ async function ensureReinspectionChild(parentId: string) {
       status: 'Gepland',
       clientName: parent.clientName,
       commissionedBy: parent.commissionedBy,
+      kopNaam: parent.kopNaam,
       clientProjectId: parent.clientProjectId,
       auditedByOrg: parent.auditedByOrg,
       researcherName: parent.researcherName,

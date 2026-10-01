@@ -96,6 +96,7 @@ export async function POST(
         hasReinspection: false,
         reinspectionWeeks: null,
         parentProjectId: parent.id,
+        kopNaam: parent.kopNaam,
         summaryText: parent.summaryText,
         researcherFeedbackText: parent.researcherFeedbackText,
         aboutResearchText: parent.aboutResearchText,

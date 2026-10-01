@@ -307,6 +307,10 @@ export async function POST(
       await prisma.project.update({
         where: { id: herinspectieProject.id },
         data: {
+          // De naam in de kop gaat mee, tenzij de herinspectie al een eigen naam heeft.
+          // Het kind ontstaat vaak al bij het aanmaken van de nulmeting, vóórdat die
+          // naam is ingevuld; daarom hier en niet alleen bij het aanmaken.
+          kopNaam: herinspectieProject.kopNaam ?? originalProject.kopNaam,
           // Rich text fields
           summaryText: originalProject.summaryText,
           researcherFeedbackText: originalProject.researcherFeedbackText,
