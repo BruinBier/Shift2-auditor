@@ -26,6 +26,7 @@
     "test:browser-versions": "tsx --test lib/browser-versions.test.ts",
     "test:metingen": "tsx --test lib/metingen.test.ts",
     "test:oordelen": "tsx --test lib/criterion-assessment.test.ts",
+    "test:projecten-excel": "tsx --test lib/projecten-excel.test.ts",
     "test:steekproef": "tsx --test lib/steekproef/urls.test.ts lib/steekproef/profiel.test.ts lib/steekproef/clusters.test.ts lib/steekproef/classifier.test.ts"
   },
   "dependencies": {

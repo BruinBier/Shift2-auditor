@@ -517,6 +517,17 @@ npm run crm:sync -- apply lijst.json              # zet de nummers (bestaande ni
 
 Het JSON-bestand is een lijst met `{ "kenmerk": "ECHT-01" | "WAAL", "projectnummer": "P02645", "cardanKenmerk": "C-4521" }`; beide nummers zijn optioneel. Het Cardan-kenmerk staat naast het CRM-nummer op het klantproject (`ClientProject.cardanKenmerk`). Zie `scripts/crm-sync.example.json`.
 
+### Excel-export en -import van klantprojecten
+
+Op `/admin/projecten` staan "Exporteren naar Excel" en "Excel uploaden". Excel is de losse
+tussenlaag naar Dynamics: er is geen koppeling. Logica in `lib/projecten-excel.ts`
+(test: `npm run test:projecten-excel`), routes onder `app/api/client-projects/excel/`.
+Koppelen gaat op het Project-ID (`ClientProject.id`); een regel zonder ID is een nieuw
+project, een ontbrekende regel verwijdert niets. Uploaden toont eerst een controle;
+`toepassen` rekent die opnieuw uit, weigert bij een fout of een gewijzigde vingerafdruk,
+en schrijft alles in een transactie. Een waarde die al ongeldig in de tool stond
+(P0270) blokkeert niet; alleen wat de gebruiker wijzigt wordt gekeurd.
+
 ## Database & Prisma Workflow
 
 ### Critical User Preferences

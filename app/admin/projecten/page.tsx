@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import ContactpersoonVelden, { contactpersonenUit } from '@/app/components/ContactpersoonVelden';
+import ProjectenExcel from './ProjectenExcel';
 
 const RichTextEditor = dynamic(() => import('../../admin/projects/[id]/tabs/RichTextEditor'), {
   ssr: false,
@@ -104,6 +105,11 @@ export default function ProjectenPage() {
 
     fetchData();
   }, []);
+
+  const herlaadProjecten = async () => {
+    const res = await fetch('/api/client-projects');
+    if (res.ok) setProjects(await res.json());
+  };
 
   const handleMigrateProjects = async () => {
     if (!confirm('Wil je de oude projecten uit localStorage naar de database migreren? Dit kan niet ongedaan worden gemaakt.')) {
@@ -572,7 +578,7 @@ export default function ProjectenPage() {
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-8 py-8">
         {/* Header with title and button */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
             <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -581,7 +587,7 @@ export default function ProjectenPage() {
               Projecten {mounted && !loading && `(${sortedProjects.length})`}
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {showMigrationButton && (
               <button
                 onClick={handleMigrateProjects}
@@ -594,6 +600,7 @@ export default function ProjectenPage() {
                 {isMigrating ? 'Migreren...' : 'Oude projecten migreren'}
               </button>
             )}
+            <ProjectenExcel onGeimporteerd={herlaadProjecten} />
             <button
               onClick={openCreateModal}
               className="new-project-button flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
