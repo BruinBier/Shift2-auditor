@@ -53,3 +53,24 @@ test('staat alles op niet_te_bepalen, dan is er geen oordeel', () => {
 test('zonder oordelen valt er niets af te leiden', () => {
   assert.equal(oordeelUitChecks([]), null);
 });
+
+/**
+ * Een pagina zonder oordeel is niet hetzelfde als `niet_te_bepalen`: daar heeft nog niemand
+ * gekeken. LEU-01, 3 oktober 2026: dertien pagina's op `niet_aanwezig` via het videovinkje,
+ * HackShield met video en nog geen audit, en 1.2.3 stond al op "niet aanwezig".
+ */
+test('een pagina zonder oordeel houdt het criterium open', () => {
+  const dertien = Array(13).fill('niet_aanwezig');
+  assert.equal(oordeelUitChecks(dertien, 1), null);
+  assert.equal(oordeelUitChecks(['voldoet', 'voldoet'], 1), null);
+  assert.equal(oordeelUitChecks([], 3), null);
+});
+
+test('een afkeuring blijft staan, ook met pagina\'s zonder oordeel', () => {
+  assert.equal(oordeelUitChecks(['niet_aanwezig', 'afgekeurd'], 2), 'failed');
+});
+
+test('zonder ontbrekende pagina\'s geldt de oude regel', () => {
+  assert.equal(oordeelUitChecks(Array(13).fill('niet_aanwezig'), 0), 'not_present');
+  assert.equal(oordeelUitChecks(['niet_te_bepalen', 'voldoet'], 0), 'passed');
+});

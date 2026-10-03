@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { oordeelUitChecks } from '@/lib/criterion-assessment';
+import { oordeelUitChecks, steekproefVan, zetVoorbarigOordeelTerug } from '@/lib/criterion-assessment';
 
 /**
  * Leidt de project-brede CriterionAssessment af uit de beoordelingen per steekproefitem.
@@ -18,6 +18,10 @@ import { oordeelUitChecks } from '@/lib/criterion-assessment';
  *
  * Alleen als ALLE samples op `niet_te_bepalen` staan, is er echt geen oordeel en blokkeert
  * het criterium het afronden.
+ *
+ * Een pagina in de steekproef ZONDER oordeel voor een criterium is wel een blokkade
+ * (sinds 2026-10-03): daar heeft nog niemand gekeken. Alleen een afkeuring elders gaat
+ * voor; die blijft `failed`.
  *
  * GET  = alleen berekenen en tonen (droogloop)
  * POST = berekenen en wegschrijven naar CriterionAssessment
@@ -45,6 +49,7 @@ function haalChecks(projectId: string) {
 
 async function bereken(projectId: string) {
   const checks = await haalChecks(projectId);
+  const steekproef = await steekproefVan(projectId);
 
   if (!checks.length) {
     return { leeg: true, criteria: [], blokkades: [] };
@@ -68,25 +73,27 @@ async function bereken(projectId: string) {
     const tel = (s: string) => lijst.filter((c) => c.status === s).length;
 
     const open = lijst.filter((c) => c.status === 'niet_te_bepalen');
-
-    // Alleen als er NERGENS een oordeel is, valt er niets af te leiden. Losse
-    // niet_te_bepalen-samples tellen niet mee: die leveren geen tegenbewijs.
-    const beoordeeld = lijst.filter((c) => c.status !== 'niet_te_bepalen');
-    if (!beoordeeld.length) {
-      blokkades.push({
-        code,
-        aantal: open.length,
-        samples: open.map((c) => c.sampleItem.title),
-        vragen: open.map((c) => ({ sample: c.sampleItem.title, reden: c.reden })),
-      });
-      continue;
-    }
+    const metOordeel = new Set(lijst.map((c) => c.sampleItemId));
+    const zonderOordeel = steekproef.filter((s) => !metOordeel.has(s.id));
 
     // Dezelfde rekenregel als bij het opslaan van de sampleoordelen. Eén versie, in
     // lib/criterion-assessment.ts: liepen ze uit elkaar, dan gaf de knop hier een ander
     // antwoord dan de audit zelf net had weggeschreven.
-    const status = oordeelUitChecks(beoordeeld.map((c) => c.status));
-    if (!status) continue;
+    const status = oordeelUitChecks(lijst.map((c) => c.status), zonderOordeel.length);
+
+    // Geen oordeel: alles stond op niet_te_bepalen, of er is een pagina waar nog niemand
+    // heeft gekeken. Losse niet_te_bepalen-samples naast een oordeel blokkeren niet.
+    if (!status) {
+      blokkades.push({
+        criterionId,
+        code,
+        aantal: open.length + zonderOordeel.length,
+        samples: [...open.map((c) => c.sampleItem.title), ...zonderOordeel.map((s) => s.title)],
+        vragen: open.map((c) => ({ sample: c.sampleItem.title, reden: c.reden })),
+        zonderOordeel: zonderOordeel.map((s) => s.title),
+      });
+      continue;
+    }
 
     criteria.push({
       criterionId,
@@ -101,6 +108,8 @@ async function bereken(projectId: string) {
         niet_te_bepalen: open.length,
       },
       afgekeurdOp: lijst.filter((c) => c.status === 'afgekeurd').map((c) => c.sampleItem.title),
+      // Kan alleen naast een afkeuring voorkomen; anders was het een blokkade.
+      zonderOordeel: zonderOordeel.map((s) => s.title),
       // Samples die buiten het oordeel zijn gelaten, zodat zichtbaar blijft waar niet is getoetst.
       nietBeoordeeldOp: open.map((c) => c.sampleItem.title),
     });
@@ -160,6 +169,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           data: { projectId: params.id, wcagCriterionId: c.criterionId, status: c.status },
         });
       }
+    }
+
+    // Een te vroeg afgeleid oordeel weghalen bij een criterium waar nog pagina's open zijn.
+    for (const b of res.blokkades) {
+      if (b.zonderOordeel?.length) await zetVoorbarigOordeelTerug(params.id, b.criterionId);
     }
 
     return NextResponse.json({

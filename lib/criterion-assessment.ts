@@ -149,18 +149,55 @@ export async function herberekenCriteriumOordelen(
  * Vastgelegd op 2026-09-21 bij ZOET-01.
  */
 export function oordeelUitChecks(
-  statussen: string[]
+  statussen: string[],
+  zonderOordeel = 0
 ): 'failed' | 'passed' | 'not_present' | null {
   // `niet_te_bepalen` levert geen tegenbewijs: daar is niets gevonden dat het criterium
   // schendt, alleen iets dat niet te toetsen viel. Staat ALLES erop, dan is er echt geen
   // oordeel af te leiden en blijft het criterium onbeslist.
   const beoordeeld = statussen.filter((s) => s !== 'niet_te_bepalen');
+
+  // Een afkeuring staat, ook als er nog pagina's open zijn: een pagina die niemand
+  // bekeken heeft, haalt een gevonden fout niet weg.
+  if (beoordeeld.some((s) => s === 'afgekeurd')) return 'failed';
+
+  // Een pagina zonder oordeel is iets anders dan `niet_te_bepalen`: daar heeft nog
+  // niemand gekeken. Zolang er zo'n pagina is, valt er geen `passed` of `not_present`
+  // af te leiden. LEU-01, 3 oktober 2026: dertien pagina's stonden via het videovinkje op
+  // `niet_aanwezig`, HackShield had een video en nog geen oordeel, en 1.2.3 kwam vóór
+  // de audit al op "niet aanwezig" uit.
+  if (zonderOordeel > 0) return null;
   if (!beoordeeld.length) return null;
 
-  if (beoordeeld.some((s) => s === 'afgekeurd')) return 'failed';
   if (beoordeeld.every((s) => s === 'niet_aanwezig')) return 'not_present';
   // voldoet, eventueel met opmerkingen ertussen. Een opmerking is geen WCAG-schending.
   return 'passed';
+}
+
+/**
+ * De pagina's die meetellen voor het criteriumoordeel: alles in de steekproef behalve een
+ * voorstel waar de onderzoeker nog geen akkoord op gaf. Zo'n voorstel wordt ook niet
+ * geaudit (`audit-samples` weigert te starten), dus het zou elk criterium openhouden.
+ */
+export function steekproefVan(projectId: string) {
+  return prisma.sampleItem.findMany({
+    where: { projectId, voorgesteld: false },
+    select: { id: true, title: true },
+  });
+}
+
+/**
+ * Zet een `passed` of `not_present` terug op `not_tested` als er nog een pagina zonder
+ * oordeel is. Zonder deze stap bleef een te vroeg afgeleid oordeel gewoon staan: de
+ * herberekening sloeg het criterium over, maar haalde het oude oordeel niet weg.
+ * `failed` en de andere standen blijven staan.
+ */
+export async function zetVoorbarigOordeelTerug(projectId: string, criterionId: string): Promise<boolean> {
+  const res = await prisma.criterionAssessment.updateMany({
+    where: { projectId, wcagCriterionId: criterionId, status: { in: ['passed', 'not_present'] } },
+    data: { status: 'not_tested' },
+  });
+  return res.count > 0;
 }
 
 /**
@@ -186,20 +223,28 @@ export async function leidCriteriumOordelenAfUitChecks(
 
   const checks = await prisma.sampleCriterionCheck.findMany({
     where: { sampleItem: { projectId }, wcagCriterionId: { in: uniek } },
-    select: { wcagCriterionId: true, status: true },
+    select: { wcagCriterionId: true, status: true, sampleItemId: true },
   });
+  const steekproef = await steekproefVan(projectId);
 
-  const perCriterium = new Map<string, string[]>();
+  const perCriterium = new Map<string, { statussen: string[]; samples: Set<string> }>();
   for (const c of checks) {
-    const lijst = perCriterium.get(c.wcagCriterionId) ?? [];
-    lijst.push(c.status);
-    perCriterium.set(c.wcagCriterionId, lijst);
+    const groep = perCriterium.get(c.wcagCriterionId) ?? { statussen: [], samples: new Set<string>() };
+    groep.statussen.push(c.status);
+    groep.samples.add(c.sampleItemId);
+    perCriterium.set(c.wcagCriterionId, groep);
   }
 
   const geschreven: { criterionId: string; status: string }[] = [];
-  for (const [criterionId, statussen] of Array.from(perCriterium.entries())) {
-    const status = oordeelUitChecks(statussen);
-    if (!status) continue;
+  for (const [criterionId, groep] of Array.from(perCriterium.entries())) {
+    const zonderOordeel = steekproef.filter((s) => !groep.samples.has(s.id)).length;
+    const status = oordeelUitChecks(groep.statussen, zonderOordeel);
+    if (!status) {
+      if (zonderOordeel > 0 && (await zetVoorbarigOordeelTerug(projectId, criterionId))) {
+        geschreven.push({ criterionId, status: 'not_tested' });
+      }
+      continue;
+    }
     await prisma.criterionAssessment.upsert({
       where: { projectId_wcagCriterionId: { projectId, wcagCriterionId: criterionId } },
       update: { status },
