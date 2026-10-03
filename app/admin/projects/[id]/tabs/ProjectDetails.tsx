@@ -145,6 +145,41 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
   );
   const [isSavingAccountmanager, setIsSavingAccountmanager] = useState(false);
   const [isSavingOngoing, setIsSavingOngoing] = useState(false);
+  /**
+   * Onderzoekstype wijzigen. De criteria van het onderzoek komen uit dat type en worden op de
+   * server bepaald, dus na het opslaan laadt de pagina opnieuw; anders toont "Waar sta ik"
+   * nog de oude criteria.
+   */
+  const [researchType, setResearchType] = useState<string>(project.researchType || '');
+  const [researchTypeOpties, setResearchTypeOpties] = useState<string[]>([]);
+  const [isSavingResearchType, setIsSavingResearchType] = useState(false);
+  useEffect(() => {
+    fetch('/api/research-types')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((lijst: { name: string }[]) => setResearchTypeOpties(lijst.map((t) => t.name)))
+      .catch(() => setResearchTypeOpties([]));
+  }, []);
+
+  const handleResearchTypeChange = async (nieuw: string) => {
+    if (nieuw === researchType) return;
+    const vorig = researchType;
+    setResearchType(nieuw);
+    setIsSavingResearchType(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ researchType: nieuw }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving researchType:', error);
+      setResearchType(vorig);
+      alert('Het opslaan van het onderzoekstype is niet gelukt.');
+      setIsSavingResearchType(false);
+    }
+  };
   const [planningChanges, setPlanningChanges] = useState<any[]>([]);
   const [postponeWeeks, setPostponeWeeks] = useState('2');
   const [postponeReason, setPostponeReason] = useState('');
@@ -785,8 +820,22 @@ export default function ProjectDetails({ project, relatedProjects = [] }: { proj
                 )}
             </div>
             <div>
-              <label className="block text-sm text-gray-500 mb-1">Onderzoekstype</label>
-              <div className="text-sm text-gray-900">{project.researchType}</div>
+              <label htmlFor="onderzoekstype" className="block text-sm text-gray-500 mb-1">Onderzoekstype</label>
+              <select
+                id="onderzoekstype"
+                value={researchType}
+                onChange={(e) => handleResearchTypeChange(e.target.value)}
+                disabled={isSavingResearchType || researchTypeOpties.length === 0}
+                className="w-full text-sm text-gray-900 border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {/* Een oud type dat niet meer in de lijst staat blijft zichtbaar en kiesbaar. */}
+                {researchType && !researchTypeOpties.includes(researchType) && (
+                  <option value={researchType}>{researchType}</option>
+                )}
+                {researchTypeOpties.map((naam) => (
+                  <option key={naam} value={naam}>{naam}</option>
+                ))}
+              </select>
             </div>
             {/* Doorlopend werk krijgt een eigen sectie in de onderzoekenlijst,
                 los van de onderzoeken met een begin- en einddatum. */}

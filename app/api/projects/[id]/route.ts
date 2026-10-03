@@ -336,6 +336,7 @@ export async function PATCH(
       'reinspectionWeeks',
       'reportDate',
       'reportSentAt',
+      'researchType',
       'researcherFeedback',
       'gespreksverslagGemaakt',
       'sampleClientPages',
@@ -383,10 +384,34 @@ export async function PATCH(
       data.technologies = techniekenVoorAanvullend(huidig?.technologies ?? []);
     }
 
+    /**
+     * Het onderzoekstype bepaalt welke criteria het onderzoek telt, en de koppeling loopt op
+     * de naam (`ResearchType.name`), niet op een id. Een naam die niet bestaat levert een
+     * onderzoek zonder criteria op; dat weigeren we hier in plaats van het later te ontdekken.
+     */
+    if ('researchType' in data) {
+      const bestaat = typeof data.researchType === 'string'
+        && (await prisma.researchType.findUnique({ where: { name: data.researchType }, select: { id: true } }));
+      if (!bestaat) {
+        return NextResponse.json(
+          { error: `Onbekend onderzoekstype: ${String(data.researchType)}` },
+          { status: 400 }
+        );
+      }
+    }
+
     const project = await prisma.project.update({
       where: { id },
       data,
     });
+
+    // De herinspectie toetst wat de nulmeting toetste: zelfde onderzoekstype.
+    if ('researchType' in data) {
+      await prisma.project.updateMany({
+        where: { parentProjectId: id },
+        data: { researchType: data.researchType as string },
+      });
+    }
 
     /**
      * Ook hier het herinspectieproject aanmaken, niet alleen in de PUT.
