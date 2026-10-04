@@ -21,6 +21,11 @@ Pillow>=11.0
 # scripts/pdf-contrast.py -- de tagstructuur van een PDF lezen
 pikepdf>=10.0
 
+# scripts/video-analyse.py -- spraakherkenning (lokaal) en scènewissels voor de
+# A2-video's. Vraagt daarnaast ffmpeg op het pad: winget install Gyan.FFmpeg
+faster-whisper>=1.2
+scenedetect[opencv]>=0.6
+
 # scripts/psb-naar-stukken.py -- een PSB/PSD-scrollopname van PAC's
 # Screen reader preview in leesbare stukken snijden
 psd-tools>=1.19

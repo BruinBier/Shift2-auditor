@@ -33,6 +33,26 @@ PDF, `psb-naar-stukken.py` voor een scrollopname van PAC's Screen reader preview
 die modules, dan geeft het bijbehorende commando een foutmelding over een ontbrekende
 module -- de tool blijft werken, maar die ene meting niet.
 
+## Video's toegankelijk maken (A2-gemeenten)
+
+Drie scripts nemen het monteren over dat tot oktober 2026 in Premiere en Narakeet gebeurde. De
+video staat in `Downloads\video A2-gemeenten\<videonaam>\`, gedownload door de onderzoeker uit
+YouTube Studio (gemeente-account; dat doe jij niet).
+
+```bash
+python scripts/video-analyse.py <video.mp4> [--hint "namen, vaktermen"]  # spraak, ruimtes, scènes, overzichtsvellen
+python scripts/video-stem.py <videomap>                                   # audiodescriptie.json -> mp3's (Azure, Maarten)
+python scripts/video-inmengen.py <video.mp4> [--droog]                    # controleert overlap, mengt in
+```
+
+Draai de analyse eerst zonder hint, lees de naambalkjes van de overzichtsvellen, en draai dan
+met `--hint`: zonder hint werd "ijzerpoeder" "IJspoede". Ruimte voor audiodescriptie is de tijd
+tussen gesproken zinnen, niet stilte: er ligt bijna altijd muziek onder. `audiodescriptie.json`
+naast de video (`bestand`, `start_ms`, `tekst`) schrijf jij; de onderzoeker leest de zinnen na
+vóór het inspreken. De Azure-sleutel staat in `Downloads\video A2-gemeenten\azure.env`; nooit
+tonen of in de repo zetten. De stappen per video en wie wat doet staan in de app op
+`/admin/video-a2-gemeenten`.
+
 ## Wie wat doet: Claude Code, ChatGPT Work en Codex
 
 **Al het ontwikkelwerk aan Shift2Auditor gaat naar Claude Code.** Codex mag lezen op de
