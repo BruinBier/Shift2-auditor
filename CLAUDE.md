@@ -42,7 +42,7 @@ YouTube Studio (gemeente-account; dat doe jij niet).
 ```bash
 python scripts/video-analyse.py <video.mp4> [--hint "namen, vaktermen"]  # spraak, ruimtes, scènes, overzichtsvellen
 python scripts/video-stem.py <videomap>                                   # audiodescriptie.json -> mp3's (Azure, Maarten)
-python scripts/video-inmengen.py <video.mp4> [--droog]                    # controleert overlap, mengt in
+python scripts/video-inmengen.py <video.mp4> [--droog] [--verleng 1.5]    # controleert overlap, mengt in; --verleng houdt het laatste beeld langer stil
 ```
 
 Draai de analyse eerst zonder hint, lees de naambalkjes van de overzichtsvellen, en draai dan

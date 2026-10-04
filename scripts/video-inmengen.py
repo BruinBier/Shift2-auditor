@@ -51,6 +51,8 @@ def main() -> None:
     p.add_argument("--uit", type=Path)
     p.add_argument("--droog", action="store_true", help="alleen controleren, niets maken")
     p.add_argument("--toch", action="store_true", help="ook mengen als een stem overlapt")
+    p.add_argument("--verleng", type=float, default=0.0,
+                   help="seconden extra aan het eind, met het laatste beeld stil (codeert het beeld opnieuw)")
     a = p.parse_args()
 
     video = a.video.resolve()
@@ -61,8 +63,13 @@ def main() -> None:
     if not spraak:
         print("Let op: geen analyse/analyse.json, dus geen controle op overlap met sprekers.")
 
-    problemen = []
-    for z in zinnen:
+    # Een video zonder gesproken tekst (alleen muziek) krijgt veel zinnen vlak achter elkaar;
+    # dan is de botsing met de vorige zin het risico, niet die met een spreker.
+    video_duur = float(subprocess.check_output(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)]
+    ).decode().strip()) + a.verleng
+    problemen, vorige_eind, vorige_naam = [], None, None
+    for z in sorted(zinnen, key=lambda z: z["start_ms"]):
         mp3 = map_ / a.mp3_map / z["bestand"]
         if not mp3.exists():
             sys.exit(f"Ontbreekt: {mp3}")
@@ -71,13 +78,20 @@ def main() -> None:
         botsing = [s for s in spraak if s["start"] < tot and s["eind"] > van]
         marge = min((s["start"] - tot for s in spraak if s["start"] >= tot), default=None)
         regel = f"{z['bestand']:10s} stem {van:6.2f}-{tot:6.2f}"
-        if botsing:
+        if vorige_eind is not None and van < vorige_eind + 0.2:
+            regel += f"  OVERLAPT met {vorige_naam} (die eindigt op {vorige_eind:.2f})"
+            problemen.append(z["bestand"])
+        elif tot > video_duur - 0.2:
+            regel += f"  LOOPT DOOR na het einde van de video ({video_duur:.2f}); gebruik --verleng"
+            problemen.append(z["bestand"])
+        elif botsing:
             s = botsing[0]
             regel += f"  OVERLAPT met spraak {s['start']:.2f}-{s['eind']:.2f}: {s['tekst'][:40]}"
             problemen.append(z["bestand"])
         elif marge is not None:
             regel += f"  vrij, {marge:.2f} s voor de volgende spreker"
         print(regel)
+        vorige_eind, vorige_naam = tot, z["bestand"]
 
     if problemen and not a.toch:
         sys.exit(f"Niet gemengd: {', '.join(problemen)} overlapt. Schuif start_ms of kort de tekst in.")
@@ -91,12 +105,21 @@ def main() -> None:
         fc += f"[{i}:a]adelay={z['start_ms']}:all=1[a{i}];"
     n = len(zinnen)
     fc += "".join(f"[a{i}]" for i in range(1, n + 1))
+    # Verlengen: de eindkaart (logo) blijft staan zodat de laatste zin erin past. Het
+    # oorspronkelijke geluid krijgt stilte erachter, anders kapt amix af op zijn lengte.
+    origineel = f"[0:a]apad=pad_dur={a.verleng}[orig];[orig]" if a.verleng else "[0:a]"
     fc += (f"amix=inputs={n}:normalize=0,apad[ad];[ad]asplit[ad1][ad2];"
-           "[0:a][ad1]sidechaincompress=threshold=0.02:ratio=8:attack=50:release=600[duck];"
+           f"{origineel}[ad1]sidechaincompress=threshold=0.02:ratio=8:attack=50:release=600[duck];"
            "[duck][ad2]amix=inputs=2:normalize=0:duration=first[aout]")
+    if a.verleng:
+        fc += f";[0:v]tpad=stop_mode=clone:stop_duration={a.verleng}[vout]"
+        beeld = ["-map", "[vout]", "-c:v", "libx264", "-crf", "18", "-preset", "medium",
+                 "-pix_fmt", "yuv420p"]
+    else:
+        beeld = ["-map", "0:v", "-c:v", "copy"]
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *invoer,
-                    "-filter_complex", fc, "-map", "0:v", "-map", "[aout]",
-                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", str(uit)], check=True)
+                    "-filter_complex", fc, *beeld, "-map", "[aout]",
+                    "-c:a", "aac", "-b:a", "192k", str(uit)], check=True)
     print(f"Klaar: {uit}")
 
 
