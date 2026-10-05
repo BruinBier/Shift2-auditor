@@ -4,6 +4,11 @@
 Gebruik
 -------
     python scripts/video-inmengen.py <video.mp4> [--mp3-map audiodescriptie-mp3] [--droog]
+                                     [--verleng 1.5]
+
+Een zin mag in audiodescriptie.json ook "tot_ms" en "vasthouden_op_ms" hebben: dan blijft het
+beeld op dat moment stilstaan tot de zin past (zie rek_dias). Voor tekstdia's die te kort in
+beeld staan om voor te lezen.
 
 Leest audiodescriptie.json naast de video (zie scripts/video-stem.py) en, als die er is,
 analyse/analyse.json van scripts/video-analyse.py. Schrijft
@@ -44,6 +49,56 @@ def stem_binnen_mp3(mp3: Path) -> tuple[float, float, float]:
     return begin, eind, duur
 
 
+def rek_dias(video: Path, zinnen: list, spraak: list, mp3_map: Path, werkmap: Path):
+    """Laat het beeld stilstaan waar een zin langer is dan zijn dia in beeld staat.
+
+    Een zin met "tot_ms" (tot wanneer zijn dia in het origineel te zien is) en
+    "vasthouden_op_ms" (een moment waarop de dia volledig in beeld staat) krijgt zoveel
+    stilstand als nodig is om de zin 0,3 s voor het einde van de dia af te ronden. Alles na
+    zo'n punt schuift op; dat geldt ook voor de start_ms van latere zinnen en voor de spraak
+    uit de analyse. Bedacht voor "Heeze-Leende duurzaam vooruit 2025": elf tekstdia's van
+    ongeveer een seconde, zonder geluid, waarin een voice-over anders steeds verder achterliep.
+    Geeft (nieuwe video, zinnen, spraak) terug; zonder vasthoudpunten verandert er niets.
+    """
+    stops = []
+    for z in zinnen:
+        if "tot_ms" not in z or "vasthouden_op_ms" not in z:
+            continue
+        _, e, _ = stem_binnen_mp3(mp3_map / z["bestand"])
+        nodig = z["start_ms"] / 1000 + e + 0.3 - z["tot_ms"] / 1000
+        if nodig > 0:
+            stops.append((z["vasthouden_op_ms"] / 1000, round(nodig, 3)))
+    if not stops:
+        return video, zinnen, spraak
+    stops.sort()
+
+    def schuif(t: float) -> float:
+        return t + sum(d for p, d in stops if p <= t)
+
+    grenzen = [0.0] + [p for p, _ in stops] + [None]
+    fc, labels = "", ""
+    for i in range(len(grenzen) - 1):
+        van, tot = grenzen[i], grenzen[i + 1]
+        bereik = f"start={van}" + (f":end={tot}" if tot is not None else "")
+        stil = stops[i][1] if i < len(stops) else 0
+        fc += (f"[0:v]trim={bereik},setpts=PTS-STARTPTS"
+               + (f",tpad=stop_mode=clone:stop_duration={stil}" if stil else "") + f"[v{i}];")
+        fc += (f"[0:a]atrim={bereik},asetpts=PTS-STARTPTS"
+               + (f",apad=pad_dur={stil}" if stil else "") + f"[a{i}];")
+        labels += f"[v{i}][a{i}]"
+    fc += f"{labels}concat=n={len(grenzen) - 1}:v=1:a=1[v][a]"
+    gerekt = werkmap / f"{video.stem} - gerekt.mp4"
+    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(video),
+                    "-filter_complex", fc, "-map", "[v]", "-map", "[a]", "-c:v", "libx264",
+                    "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "aac",
+                    "-b:a", "192k", str(gerekt)], check=True)
+    for p, d in stops:
+        print(f"stilstand {d:.2f} s op {p:.2f}")
+    zinnen = [{**z, "start_ms": int(round(schuif(z["start_ms"] / 1000) * 1000))} for z in zinnen]
+    spraak = [{**s, "start": schuif(s["start"]), "eind": schuif(s["eind"])} for s in spraak]
+    return gerekt, zinnen, spraak
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("video", type=Path)
@@ -60,8 +115,12 @@ def main() -> None:
     zinnen = json.loads((map_ / "audiodescriptie.json").read_text(encoding="utf-8"))
     analyse_pad = map_ / "analyse" / "analyse.json"
     spraak = json.loads(analyse_pad.read_text(encoding="utf-8"))["spraak"] if analyse_pad.exists() else []
-    if not spraak:
+    if not analyse_pad.exists():
         print("Let op: geen analyse/analyse.json, dus geen controle op overlap met sprekers.")
+    origineel_naam = video.stem
+    werkmap = map_ / "analyse"
+    werkmap.mkdir(exist_ok=True)
+    video, zinnen, spraak = rek_dias(video, zinnen, spraak, map_ / a.mp3_map, werkmap)
 
     # Een video zonder gesproken tekst (alleen muziek) krijgt veel zinnen vlak achter elkaar;
     # dan is de botsing met de vorige zin het risico, niet die met een spreker.
@@ -98,7 +157,7 @@ def main() -> None:
     if a.droog:
         return
 
-    uit = a.uit or map_ / f"{video.stem} - met audiodescriptie.mp4"
+    uit = a.uit or map_ / f"{origineel_naam} - met audiodescriptie.mp4"
     invoer, fc = ["-i", str(video)], ""
     for i, z in enumerate(zinnen, 1):
         invoer += ["-i", str(map_ / a.mp3_map / z["bestand"])]
