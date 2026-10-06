@@ -670,6 +670,19 @@ export default function Stapel({
   const [bewerkAdvies, setBewerkAdvies] = useState('');
   const [bewerkBezig, setBewerkBezig] = useState(false);
   const [bewerkFout, setBewerkFout] = useState<string | null>(null);
+  /**
+   * Soort, impact en verantwoordelijke van één bevinding, los van de tekst. Een opmerking
+   * heeft geen impact en geen verantwoordelijke; wie het moet oplossen staat dan in het
+   * technisch issue (zie slaSoortOp en registreerTechnischIssue).
+   */
+  const [soortVoor, setSoortVoor] = useState<string | null>(null);
+  const [soortType, setSoortType] = useState<'bevinding' | 'opmerking'>('bevinding');
+  const [soortImpact, setSoortImpact] = useState('');
+  const [soortVerantw, setSoortVerantw] = useState('');
+  const [soortBezig, setSoortBezig] = useState(false);
+  const [soortFout, setSoortFout] = useState<string | null>(null);
+  /** Fout bij het registreren, met het id erbij: anders staat hij op elke bevinding. */
+  const [issueFout, setIssueFout] = useState<{ id: string; tekst: string } | null>(null);
   /** Wat er uit het overleg terugkomt, en wat ermee gebeurd is. */
   const [uitkomstTekst, setUitkomstTekst] = useState('');
   /** Het regelspoor apart, want het gaat naar een andere plek dan de tekst. */
@@ -2977,6 +2990,62 @@ export default function Stapel({
   };
 
   /**
+   * Bevinding of opmerking, met impact en verantwoordelijke.
+   *
+   * Een opmerking krijgt beide velden leeg: zo is het afgesproken, de linter weigert het
+   * anders en het akkoord maakt ze toch leeg. Het criteriumoordeel wordt in de PUT-route
+   * herberekend. Een voorstel blijft een voorstel; akkoord neemt daarna dit type over.
+   */
+  const slaSoortOp = async (b: Bevinding) => {
+    setSoortBezig(true);
+    setSoortFout(null);
+    try {
+      const body =
+        soortType === 'opmerking'
+          ? { type: 'opmerking', impact: null, responsibility: null }
+          : { type: 'bevinding', impact: soortImpact, responsibility: soortVerantw };
+      const res = await fetch(`/api/projects/${projectId}/findings/${b.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const f = await res.json().catch(() => ({}));
+        throw new Error(f.error || 'Opslaan mislukt');
+      }
+      setSoortVoor(null);
+      router.refresh();
+    } catch (e: any) {
+      setSoortFout(e.message);
+    } finally {
+      setSoortBezig(false);
+    }
+  };
+
+  /**
+   * Hetzelfde punt ook naar de leverancier, op /technische-issues. De bevinding blijft
+   * staan; dat is het verschil met "doorzetten", dat het voorstel afwijst.
+   */
+  const registreerTechnischIssue = async (b: Bevinding) => {
+    setSoortBezig(true);
+    setIssueFout(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/findings/${b.id}/technisch-issue`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const f = await res.json().catch(() => ({}));
+        throw new Error(f.error || 'Registreren als technisch issue mislukt');
+      }
+      router.refresh();
+    } catch (e: any) {
+      setIssueFout({ id: b.id, tekst: e.message });
+    } finally {
+      setSoortBezig(false);
+    }
+  };
+
+  /**
    * Eén bevinding aanwijzen in het browserpaneel.
    *
    * Stond eerst in `onToggle` van de details hieronder: openklappen deed automatisch ook
@@ -3061,6 +3130,12 @@ export default function Stapel({
             ) : b.type === 'opmerking' ? (
               <span className="rounded bg-white/70 px-1.5 py-0.5">opmerking</span>
             ) : null}
+            {b.responsibility && b.type !== 'opmerking' && (
+              <span className="rounded bg-white/70 px-1.5 py-0.5">{b.responsibility}</span>
+            )}
+            {b.technicalIssue && (
+              <span className="rounded bg-white/70 px-1.5 py-0.5">technisch issue</span>
+            )}
             {!!gebieden?.length && (
               <span className="rounded bg-white/70 px-1.5 py-0.5 italic text-blue-900">
                 {gebieden.join(', ')}
@@ -3273,6 +3348,134 @@ export default function Stapel({
               >
                 Tekst aanpassen
               </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSoortVoor(soortVoor === b.id ? null : b.id);
+                  setSoortType(b.type === 'opmerking' ? 'opmerking' : 'bevinding');
+                  setSoortImpact(b.impact ?? '');
+                  setSoortVerantw(b.responsibility ?? '');
+                  setSoortFout(null);
+                }}
+                className="ml-2 mt-3 rounded border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100"
+              >
+                Bevinding of opmerking
+              </button>
+              {b.technicalIssue ? (
+                <a
+                  href="/technische-issues"
+                  className="ml-2 mt-3 inline-block text-xs text-blue-800 underline"
+                >
+                  Technisch issue: {b.technicalIssue.title}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled={soortBezig}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    registreerTechnischIssue(b);
+                  }}
+                  className="ml-2 mt-3 rounded border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100 disabled:opacity-40"
+                >
+                  Registreer als technisch issue
+                </button>
+              )}
+              {soortVoor === b.id && (
+                <div className="mt-3 rounded border border-blue-200 bg-white/60 p-3">
+                  <fieldset className="flex flex-wrap gap-4 text-xs">
+                    <legend className="sr-only">Soort</legend>
+                    {(['bevinding', 'opmerking'] as const).map((t) => (
+                      <label key={t} className="flex items-center gap-1">
+                        <input
+                          type="radio"
+                          name={`soort-${b.id}`}
+                          checked={soortType === t}
+                          onChange={() => setSoortType(t)}
+                        />
+                        {t === 'bevinding' ? 'Bevinding (afkeuring)' : 'Opmerking'}
+                      </label>
+                    ))}
+                  </fieldset>
+                  {soortType === 'bevinding' ? (
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                      <label className="flex items-center gap-1">
+                        Impact
+                        <select
+                          value={soortImpact}
+                          onChange={(e) => setSoortImpact(e.target.value)}
+                          className="rounded border border-blue-300 px-1 py-0.5"
+                        >
+                          <option value="">Kies</option>
+                          {['klein', 'matig', 'serieus', 'kritiek', 'onbekend'].map((i) => (
+                            <option key={i} value={i}>
+                              {i}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {/* Nooit "ontwerper": zie CLAUDE.md, de vraag is wie het kan aanpassen. */}
+                      <label className="flex items-center gap-1">
+                        Verantwoordelijke
+                        <select
+                          value={soortVerantw}
+                          onChange={(e) => setSoortVerantw(e.target.value)}
+                          className="rounded border border-blue-300 px-1 py-0.5"
+                        >
+                          <option value="">Kies</option>
+                          {['redacteur', 'ontwikkelaar', 'onbekend'].map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs opacity-70">
+                      Een opmerking krijgt geen impact en geen verantwoordelijke. Moet de
+                      leverancier het oplossen, registreer het dan als technisch issue.
+                    </p>
+                  )}
+                  {soortFout && (
+                    <p className="mt-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                      {soortFout}
+                    </p>
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={
+                        soortBezig ||
+                        (soortType === 'bevinding' && (!soortImpact || !soortVerantw))
+                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        slaSoortOp(b);
+                      }}
+                      className="rounded bg-blue-700 px-3 py-1 text-xs font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+                    >
+                      {soortBezig ? 'Bezig…' : 'Opslaan'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSoortVoor(null);
+                      }}
+                      className="rounded px-3 py-1 text-xs opacity-70 hover:bg-white/50"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              )}
+              {issueFout?.id === b.id && (
+                <p className="mt-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                  {issueFout.tekst}
+                </p>
+              )}
             </>
           )}
         </div>

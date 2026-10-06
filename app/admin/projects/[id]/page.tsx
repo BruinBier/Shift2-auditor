@@ -92,6 +92,9 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
               scopeUrl: true,
             },
           },
+          // Voor de kaart in "Waar sta ik": staat deze bevinding al als technisch issue
+          // geregistreerd? Dan toont hij een link in plaats van de knop.
+          technicalIssue: { select: { id: true, title: true } },
         },
         orderBy: { createdAt: 'desc' },
       },

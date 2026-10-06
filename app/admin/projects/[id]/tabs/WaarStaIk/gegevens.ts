@@ -67,6 +67,10 @@ export interface Bevinding {
   /** Claudes oorspronkelijke tekst, als Claude hem schreef. Voor "Leer van mijn correctie". */
   aiDescription?: string | null;
   aiAdvice?: string | null;
+  /** redacteur | ontwikkelaar | onbekend; leeg bij een opmerking. */
+  responsibility?: string | null;
+  /** Het technisch issue waar deze bevinding aan gekoppeld is, als dat er is. */
+  technicalIssue?: { id: string; title: string } | null;
 }
 
 /**
@@ -277,6 +281,8 @@ export function bouwStand(project: any, allCriteria: any[]): Stand {
     status: f.status ?? 'open',
     aiDescription: f.aiDescription ?? null,
     aiAdvice: f.aiAdvice ?? null,
+    responsibility: f.responsibility ?? null,
+    technicalIssue: f.technicalIssue ?? null,
   });
 
   const samplesVan = (f: any): string[] =>
