@@ -286,7 +286,10 @@ const isHomepage = (s) => {
     return false
   }
 }
-const homepageSample = teBeoordelen.find(isHomepage) || null
+// Gezocht in de hele steekproef, niet alleen in wat er nu beoordeeld wordt: draai je dit
+// voor één vervolgpagina, dan zit de homepage er niet bij, maar hij bestaat wel. Anders
+// meldt het logboek ten onrechte dat elke pagina header en footer meeneemt.
+const homepageSample = context.samples.find(isHomepage) || null
 if (!homepageSample) {
   log(
     `LET OP: geen homepage-sample herkend. Elke pagina wordt inclusief header en footer beoordeeld, wat sitebrede bevindingen dupliceert. Geef eventueel args.homepageSampleId mee.`,

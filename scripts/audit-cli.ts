@@ -1370,7 +1370,14 @@ async function getHtml(url: string, flags: Flags) {
       legVast({
         commando: 'get-html',
         stap: `De pagina opgehaald in een echte browser, zodat de JavaScript van de site heeft gedraaid: ${
-          useFull ? 'de hele pagina inclusief header en footer, want dit is de homepage' : 'alleen de main-content, want dit is geen homepage'
+          // Met --full op een vervolgpagina stond hier ook "want dit is de homepage". Op
+          // LEU-01 (2026-10-03) leek Bladafval daardoor als homepage herkend, terwijl de
+          // agent zelf om de footer had gevraagd en die vervolgens beoordeelde.
+          isHomepage
+            ? 'de hele pagina inclusief header en footer, want dit is de homepage'
+            : useFull
+              ? 'de hele pagina inclusief header en footer, omdat erom gevraagd werd (--full); dit is geen homepage, dus header en footer horen niet in het oordeel'
+              : 'alleen de main-content, want dit is geen homepage'
         }.`,
         // Alleen de vlaggen die werkelijk zijn meegegeven. `useFull` volgt uit de
         // homepage-detectie en niet uit een vlag; die hier opnemen maakt de regel
