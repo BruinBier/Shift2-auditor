@@ -616,6 +616,20 @@ export default function Stapel({
   const [afkeurOpen, setAfkeurOpen] = useState(false);
   const [afkeurFout, setAfkeurFout] = useState<string | null>(null);
   /**
+   * "Ik zie hier nog iets": de onderzoeker voert de bevinding zelf in, met advies en soort.
+   * `eigenOverleg` schakelt naar de oude weg (waarneming naar een chatdienst, die de tekst
+   * schrijft); die blijft bereikbaar, maar is niet meer wat de knop opent.
+   */
+  const [eigenTekst, setEigenTekst] = useState('');
+  const [eigenAdvies, setEigenAdvies] = useState('');
+  const [eigenType, setEigenType] = useState<'bevinding' | 'opmerking'>('bevinding');
+  const [eigenImpact, setEigenImpact] = useState('');
+  const [eigenVerantw, setEigenVerantw] = useState('');
+  const [eigenBezig, setEigenBezig] = useState(false);
+  const [eigenOverleg, setEigenOverleg] = useState(false);
+  /** Het deelgebied waar de eigen bevinding onder valt; leeg = geen gebied. */
+  const [eigenGebied, setEigenGebied] = useState('');
+  /**
    * De deelgebieden die de onderzoeker zelf invult, zolang ze nog niet zijn opgeslagen.
    *
    * Zonder dit is een oordeel van vóór 23 augustus alleen te repareren door een agent te
@@ -3023,6 +3037,55 @@ export default function Stapel({
   };
 
   /**
+   * Een bevinding die de onderzoeker zelf invoert, op deze pagina en dit criterium.
+   *
+   * Meteen akkoord (status `open`, B-code): het is zijn eigen oordeel, er valt niets te
+   * bevestigen. De schrijfregels gelden wel: de route draait de linter en weigert met 422,
+   * en die meldingen komen hier per regel in beeld. Een opmerking gaat zonder impact en
+   * verantwoordelijke.
+   */
+  const slaEigenBevindingOp = async (cel: Cel) => {
+    setEigenBezig(true);
+    setAfkeurFout(null);
+    try {
+      const opmerking = eigenType === 'opmerking';
+      const res = await fetch(`/api/projects/${projectId}/findings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          criterionId: critId(cel.code),
+          description: eigenTekst.trim(),
+          advice: eigenAdvies.trim(),
+          type: eigenType,
+          impact: opmerking ? null : eigenImpact,
+          responsibility: opmerking ? null : eigenVerantw,
+          status: 'open',
+          sampleItemIds: cel.sampleId ? [cel.sampleId] : [],
+          gebied: eigenGebied || undefined,
+        }),
+      });
+      const antwoord = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const regels = (antwoord.lintIssues ?? [])
+          .filter((i: any) => i.severity === 'error')
+          .map((i: any) => `· ${i.message ?? i.rule ?? JSON.stringify(i)}`)
+          .join('\n');
+        throw new Error(
+          regels ? `De schrijfregels klagen:\n${regels}` : antwoord.error || 'Opslaan mislukt',
+        );
+      }
+      setAfkeurOpen(false);
+      setEigenTekst('');
+      setEigenAdvies('');
+      router.refresh();
+    } catch (e: any) {
+      setAfkeurFout(e.message);
+    } finally {
+      setEigenBezig(false);
+    }
+  };
+
+  /**
    * Hetzelfde punt ook naar de leverancier, op /technische-issues. De bevinding blijft
    * staan; dat is het verschil met "doorzetten", dat het voorstel afwijst.
    */
@@ -3656,13 +3719,11 @@ export default function Stapel({
         {/* De knop staat onder de lijst en niet naast de kop: je voegt iets toe nadat je
             hebt gezien wat er al staat, niet ervoor.
 
-            Hij opende een formulier met twee tekstvakken waarin je de bevinding zelf
-            uitschreef. Dat ging langs alle schrijfregels heen — hulpsoftware leest voor,
-            geen gedachtestreepjes, begin niet met de URL, en nog tientallen andere — en wat
-            je daar typte belandde zo in het rapport. Nu levert de onderzoeker de waarneming
-            en schrijft de agent de tekst, met de huisregels ernaast. Dezelfde weg als
-            "Overleggen", en dezelfde terugweg: de bevinding komt terug als voorstel en de
-            regel landt in wcag-regels/. */}
+            Hij opent een formulier waarin je de bevinding zelf invoert, met advies en soort.
+            Dat formulier is eerder weggehaald omdat wat je typte langs de schrijfregels ging;
+            sindsdien draait de aanmaakroute de linter, dus dat bezwaar geldt niet meer. De weg
+            via een chatdienst (waarneming erin, tekst van de agent terug) staat eronder als
+            tweede keuze. */}
         {/* Niet op een verwijskaart. Daar gaat het oordeel over alle pagina's samen en valt
             er op déze pagina niets vast te leggen; een knop om iets toe te voegen belooft
             een handeling die nergens landt. Zie verwijstNaar. */}
@@ -3677,6 +3738,14 @@ export default function Stapel({
               onClick={() => {
                 setReden('');
                 setBlok(null);
+                setEigenTekst('');
+                setEigenAdvies('');
+                setEigenType('bevinding');
+                setEigenImpact('');
+                setEigenVerantw('');
+                setEigenOverleg(false);
+                setEigenGebied('');
+                setAfkeurFout(null);
                 setAfkeurOpen(true);
                 // Het browserpaneel opent meteen mee, niet pas als je in het tekstvak begint
                 // te typen. Zonder URL (een PDF-sample) is er niets om te tonen; dan blijft
@@ -3700,10 +3769,138 @@ export default function Stapel({
         )}
 
         {afkeurFout && (
-          <p className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{afkeurFout}</p>
+          <p className="mt-2 whitespace-pre-line rounded bg-red-50 px-3 py-2 text-sm text-red-800">{afkeurFout}</p>
+        )}
+
+        {/* Zelf invoeren is weer de eerste weg (Frits, 2026-10-06): de waarneming via een
+            chatdienst laten uitschrijven was een omweg als je de tekst al weet. Het bezwaar
+            van toen -- wat je typte ging langs de schrijfregels -- geldt niet meer: de
+            aanmaakroute draait de linter. De chatweg blijft bereikbaar via de link onderaan. */}
+        {afkeurOpen && !eigenOverleg && (
+          <div className="mt-3 rounded border border-blue-200 bg-blue-50/40 p-3">
+            <label className="mb-1 block text-sm font-medium text-gray-800">Bevinding</label>
+            <textarea
+              value={eigenTekst}
+              onChange={(e) => setEigenTekst(e.target.value)}
+              rows={5}
+              autoFocus
+              className="w-full rounded border border-gray-300 p-2 text-sm leading-relaxed"
+              placeholder="Op de pagina staat ... Wie blind is en een schermlezer gebruikt, hoort ..."
+            />
+            <label className="mb-1 mt-2 block text-sm font-medium text-gray-800">Advies</label>
+            <textarea
+              value={eigenAdvies}
+              onChange={(e) => setEigenAdvies(e.target.value)}
+              rows={3}
+              className="w-full rounded border border-gray-300 p-2 text-sm leading-relaxed"
+            />
+            {/* Alleen als dit oordeel deelgebieden heeft. Kies je er een, dan komt de
+                bevinding daar te staan en gaat dat gebied op fout of opmerking; zie
+                koppelBevindingAanGebied. */}
+            {!!cel.gebieden?.length && (
+              <label className="mt-2 flex flex-wrap items-center gap-1 text-sm">
+                Deelgebied
+                <select
+                  value={eigenGebied}
+                  onChange={(e) => setEigenGebied(e.target.value)}
+                  className="rounded border border-gray-300 px-1 py-0.5"
+                >
+                  <option value="">Geen</option>
+                  {cel.gebieden.map((g) => (
+                    <option key={g.gebied} value={g.gebied}>
+                      {g.gebied}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <fieldset className="mt-2 flex flex-wrap gap-4 text-sm">
+              <legend className="sr-only">Soort</legend>
+              {(['bevinding', 'opmerking'] as const).map((t) => (
+                <label key={t} className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name={`eigen-soort-${cel.sampleId}-${cel.code}`}
+                    checked={eigenType === t}
+                    onChange={() => setEigenType(t)}
+                  />
+                  {t === 'bevinding' ? 'Bevinding (afkeuring)' : 'Opmerking'}
+                </label>
+              ))}
+            </fieldset>
+            {eigenType === 'bevinding' ? (
+              <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                <label className="flex items-center gap-1">
+                  Impact
+                  <select
+                    value={eigenImpact}
+                    onChange={(e) => setEigenImpact(e.target.value)}
+                    className="rounded border border-gray-300 px-1 py-0.5"
+                  >
+                    <option value="">Kies</option>
+                    {['klein', 'matig', 'serieus', 'kritiek', 'onbekend'].map((i) => (
+                      <option key={i} value={i}>
+                        {i}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {/* Nooit "ontwerper": zie CLAUDE.md, de vraag is wie het kan aanpassen. */}
+                <label className="flex items-center gap-1">
+                  Verantwoordelijke
+                  <select
+                    value={eigenVerantw}
+                    onChange={(e) => setEigenVerantw(e.target.value)}
+                    className="rounded border border-gray-300 px-1 py-0.5"
+                  >
+                    <option value="">Kies</option>
+                    {['redacteur', 'ontwikkelaar', 'onbekend'].map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-gray-600">
+                Een opmerking krijgt geen impact en geen verantwoordelijke, en keurt het criterium
+                niet af.
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={
+                  eigenBezig ||
+                  !eigenTekst.trim() ||
+                  (eigenType === 'bevinding' && (!eigenImpact || !eigenVerantw))
+                }
+                onClick={() => slaEigenBevindingOp(cel)}
+                className="rounded bg-blue-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+              >
+                {eigenBezig ? 'Bezig…' : 'Opslaan'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAfkeurOpen(false)}
+                className="rounded px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Annuleren
+              </button>
+              <button
+                type="button"
+                onClick={() => setEigenOverleg(true)}
+                className="ml-auto text-xs text-blue-800 underline"
+              >
+                Liever laten formuleren door een chatdienst
+              </button>
+            </div>
+          </div>
         )}
 
         {afkeurOpen &&
+          eigenOverleg &&
           overlegPaneel(
             cel.code,
             (huisregels) =>

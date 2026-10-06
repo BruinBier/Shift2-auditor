@@ -109,4 +109,61 @@ export async function vervangBevindingInGebieden(
   return aangepast;
 }
 
+/**
+ * Een bevinding die de onderzoeker zelf invoert aan een deelgebied hangen.
+ *
+ * Het omgekeerde van `haalBevindingUitGebieden`, voor "Ik zie hier nog iets" op de kaart.
+ * Zonder koppeling komt de bevinding wel onder "Bevindingen" maar niet bij haar gebied, en
+ * blijft dat gebied op `ok` staan terwijl er iets mis is.
+ *
+ * Het gebied gaat naar `fout` bij een bevinding en naar `opmerking` bij een opmerking (een
+ * `fout` blijft `fout`). Het sample-oordeel gaat mee: een bevinding maakt een `voldoet`
+ * `afgekeurd`, een opmerking maakt hem `opmerking`. De toelichting van de agent blijft
+ * staan, met een zin erachter, zodat niet "in orde" naast een kruisje staat zonder uitleg.
+ * `reden` blijft ongemoeid: een akkoord vervalt als die verandert.
+ *
+ * Geeft false als er voor deze pagina en dit criterium nog geen oordeel met dat gebied is.
+ */
+export async function koppelBevindingAanGebied(
+  findingId: string,
+  sampleItemId: string,
+  wcagCriterionId: string,
+  gebiedNaam: string,
+  type: 'bevinding' | 'opmerking',
+): Promise<boolean> {
+  const check = await prisma.sampleCriterionCheck.findUnique({
+    where: { sampleItemId_wcagCriterionId: { sampleItemId, wcagCriterionId } },
+    select: { id: true, gebieden: true, status: true },
+  });
+  const gebieden = check?.gebieden as Gebied[] | null;
+  if (!check || !Array.isArray(gebieden) || !gebieden.some((g) => g.gebied === gebiedNaam)) {
+    return false;
+  }
+
+  const nieuw = gebieden.map((g) => {
+    if (g.gebied !== gebiedNaam) return g;
+    const uitkomst = type === 'bevinding' || g.uitkomst === 'fout' ? 'fout' : 'opmerking';
+    const aanvulling = 'Door de onderzoeker aangevuld met een eigen bevinding.';
+    return {
+      ...g,
+      uitkomst,
+      toelichting: g.toelichting ? `${g.toelichting} ${aanvulling}` : aanvulling,
+      bevindingen: Array.from(new Set([...(g.bevindingen ?? []), findingId])),
+    };
+  });
+
+  const status =
+    type === 'bevinding' && check.status !== 'afgekeurd'
+      ? 'afgekeurd'
+      : type === 'opmerking' && (check.status === 'voldoet' || check.status === 'niet_aanwezig')
+        ? 'opmerking'
+        : check.status;
+
+  await prisma.sampleCriterionCheck.update({
+    where: { id: check.id },
+    data: { gebieden: nieuw, status },
+  });
+  return true;
+}
+
 export { VERVALLEN };

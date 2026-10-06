@@ -4,6 +4,7 @@ import { typeVoorImpact } from '@/lib/finding-classification';
 import { createFindingWithCode } from '@/lib/finding-code';
 import { herberekenCriteriumOordeel } from '@/lib/criterion-assessment';
 import { lintFinding, type LintIssue } from '@/lib/finding-lint';
+import { koppelBevindingAanGebied } from '@/lib/gebied-koppeling';
 
 export async function GET(
   request: NextRequest,
@@ -200,12 +201,29 @@ export async function POST(
       console.log('Created', occurrences.length, 'FindingOccurrence records');
     }
 
+    // Een eigen bevinding vanaf de kaart kan meteen bij haar deelgebied horen. Alleen bij
+    // precies één pagina: de koppeling hangt aan het oordeel van één sample.
+    let gekoppeld: boolean | undefined;
+    if (typeof body.gebied === 'string' && body.gebied && body.sampleItemIds?.length === 1) {
+      gekoppeld = await koppelBevindingAanGebied(
+        finding.id,
+        body.sampleItemIds[0],
+        body.criterionId,
+        body.gebied,
+        createData.type === 'opmerking' ? 'opmerking' : 'bevinding',
+      );
+    }
+
     // Het criteriumoordeel volgt uit de bevindingen; het wordt hier niet los
     // gezet. Zie lib/criterion-assessment.ts en docs/adr/0001-akkoord-als-poort.md.
     await herberekenCriteriumOordeel(params.id, body.criterionId);
 
     return NextResponse.json(
-      lintWarnings.length > 0 ? { ...finding, lintWarnings } : finding,
+      {
+        ...finding,
+        ...(lintWarnings.length > 0 ? { lintWarnings } : {}),
+        ...(gekoppeld !== undefined ? { gebiedGekoppeld: gekoppeld } : {}),
+      },
       { status: 201 }
     );
   } catch (error: any) {
