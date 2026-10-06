@@ -27,6 +27,34 @@ samples leveren dus één knop-oordeel op, niet twaalf.
 Wat op een vervolgpagina wél onder 1.4.3 valt: tekst in een afbeelding in de main-content,
 want die schakelt niet mee met de knop. Zie de uitzondering onderaan.
 
+**Alleen de knop is een homepage-zaak, de hoogcontrastweergave niet.** Staat er in de
+main-content een afbeelding met tekst (infographic, banner, poster, logo), dan loop je op
+díe pagina ook de deelgebieden ‘De hele pagina in de hoogcontrastweergave’ en ‘Logo's en
+afbeeldingen met tekst in die weergave’ af. Maak een uitsnede van de afbeelding met en
+zonder de knop aan:
+
+```
+npm run cli -- get-screenshot <url> --selector='<afbeelding>' --voor=1.4.3
+npm run cli -- get-screenshot <url> --selector='<afbeelding>' --voor=1.4.3 --klik="tekst:Contrast verhogen"
+```
+
+De tekst achter `--klik` verschilt per site: op heuvelrug.nl is het "Contrast verhogen", op
+leudal.nl zit de schakelaar in het toegankelijkheidsmenu. Zet de knop daarna terug; de
+weergave blijft in de auditsessie staan. Die twee gebieden op
+`nvt` zetten met "hoort bij het homepage-sample" is fout zodra er zo'n afbeelding in de
+main-content staat. Alleen zonder afbeeldingen met tekst mag dat, en dan schrijf je dat er
+geen zijn.
+
+Dat de tekst van de afbeelding ook als echte tekst op de pagina staat, ontslaat je niet van
+deze controle. Die uitzondering (onderaan) gaat over het contrast in de normale weergave.
+Wordt de afbeelding in de hoogcontrastweergave onleesbaar, leg het dan vast en laat de
+onderzoeker wegen of de uitgeschreven tekst het oplost.
+
+Aanleiding: LEU-01 (2026-10-06). Op Bladafval stonden beide gebieden op `nvt` met als reden
+dat de hoogcontrastroute bij de homepage hoort, terwijl de infographic in de
+hoogcontrastweergave onvoldoende contrast heeft. Het staat niet in het rapport omdat er
+nooit met de knop aan is gekeken.
+
 **Uitzondering voor PDF's:** die volgen een eigen route. `get-contrast` werkt er niet; je
 meet op de beeldpunten van de gerenderde pagina, en PAC-uitvoer bij de sample gaat voor je
 eigen meting. Zie de regels onderaan.
