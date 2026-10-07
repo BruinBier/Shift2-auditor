@@ -555,6 +555,14 @@ export function leesUitkomst(tekst: string): Uitkomst | null {
  * neutrale aanwijzing; dat is beter dan een misleidende.
  */
 const VOORBEELD_PER_CRITERIUM: Record<string, string> = {
+  '1.1.1': 'Bijvoorbeeld: de kaart is decoratief, de route staat als tekst eronder',
+  '1.2.1': 'Bijvoorbeeld: de video heeft gesproken uitleg, dus geen louter beeld of geluid',
+  '1.2.2': 'Bijvoorbeeld: begin en eind nagekeken, alle gesproken tekst is ondertiteld',
+  '1.2.3': 'Bijvoorbeeld: transcript onder de video beschrijft ook wat er te zien is',
+  '1.2.5': 'Bijvoorbeeld: audiodescriptie beluisterd, namen in beeld worden uitgesproken',
+  '1.3.2': 'Bijvoorbeeld: leesvolgorde in het document nagelopen, klopt met de opmaak',
+  '1.4.5': 'Bijvoorbeeld: de tekst in de afbeelding is een woordmerk',
+  '2.3.1': 'Bijvoorbeeld: video bekeken, niets flitst vaker dan drie keer per seconde',
   '1.4.3': 'Bijvoorbeeld: knop gemeten met de pipet, #ffffff op #007373 = 5,68:1',
   '1.4.11': 'Bijvoorbeeld: rand van het zoekveld tegen de foto, slechtste punt 2,4:1',
   '1.4.10': 'Bijvoorbeeld: op 320px geen horizontaal schuiven, menu klapt in en opent',
@@ -6359,7 +6367,9 @@ export default function Stapel({
                     onChange={(e) => setReden(e.target.value)}
                     rows={2}
                     className="w-full rounded border border-gray-300 p-2 text-sm"
-                    placeholder="Bijvoorbeeld: de video heeft gesproken uitleg, dus geen louter beeld of geluid."
+                    // Per criterium, zoals bij het oude veld: één vast voorbeeld over video
+                    // stond op 7 oktober ook op elke 1.1.1-kaart.
+                    placeholder={VOORBEELD_PER_CRITERIUM[huidig.cel.code] ?? 'Wat je hebt gedaan, en wat je zag'}
                   />
                   <p className="mt-1 text-xs text-gray-500">
                     Verplicht bij Voldoet en Niet van toepassing. Dit wordt de onderbouwing van het oordeel.
