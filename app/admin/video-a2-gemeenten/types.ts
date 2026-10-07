@@ -17,6 +17,8 @@ export interface Video {
   titel: string;
   url: string;
   notities: string | null;
+  /** Ingebrande ondertiteling; null = nog niet vastgesteld. */
+  openCaptions: boolean | null;
   sortOrder: number;
   phases: VideoPhase[];
 }

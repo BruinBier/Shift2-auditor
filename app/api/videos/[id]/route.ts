@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isGemeente } from '@/lib/videoPhases';
+import { isGemeente, type GemeenteKey } from '@/lib/videoPhases';
 
 // GET: één video met fasen.
 export async function GET(
@@ -32,7 +32,19 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const data: { gemeente?: string; titel?: string; url?: string; notities?: string | null } = {};
+    const data: {
+      gemeente?: GemeenteKey;
+      titel?: string;
+      url?: string;
+      notities?: string | null;
+      openCaptions?: boolean | null;
+    } = {};
+    if (body.openCaptions !== undefined) {
+      if (body.openCaptions !== null && typeof body.openCaptions !== 'boolean') {
+        return NextResponse.json({ error: 'openCaptions moet true, false of null zijn' }, { status: 400 });
+      }
+      data.openCaptions = body.openCaptions;
+    }
     if (body.gemeente !== undefined) {
       if (!isGemeente(body.gemeente)) {
         return NextResponse.json({ error: 'ongeldige gemeente' }, { status: 400 });

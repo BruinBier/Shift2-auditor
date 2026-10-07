@@ -1271,6 +1271,8 @@ model Video {
   titel     String
   url       String
   notities  String?       @db.Text
+  /// Ingebrande ondertiteling (open captions). null = nog niet vastgesteld.
+  openCaptions Boolean?   @map("open_captions")
   sortOrder Int           @default(0) @map("sort_order")
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")

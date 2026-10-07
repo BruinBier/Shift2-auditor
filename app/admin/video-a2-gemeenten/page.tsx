@@ -240,11 +240,15 @@ export default function VideoA2GemeentenPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map((v) => (
+            {filtered.map((v, nr) => (
               <div key={v.id} className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
+                      {/* Volgnummer in de lijst zoals hij nu getoond wordt (filter en sortering tellen mee). */}
+                      <span className="text-sm font-semibold text-gray-500 tabular-nums shrink-0 w-7 text-right">
+                        {nr + 1}.
+                      </span>
                       <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-800 shrink-0">
                         {GEMEENTE_LABELS[v.gemeente]}
                       </span>
@@ -259,6 +263,7 @@ export default function VideoA2GemeentenPage() {
                         {v.titel}
                       </a>
                     </div>
+                    <VideoLabels video={v} onSaved={applyVideo} />
                   </div>
                   <button
                     onClick={() => deleteVideo(v.id)}
@@ -330,6 +335,62 @@ export default function VideoA2GemeentenPage() {
       {showNew && <NewVideoModal onClose={() => setShowNew(false)} onCreated={fetchVideos} />}
       {showBulk && <BulkModal onClose={() => setShowBulk(false)} onDone={fetchVideos} />}
       {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={fetchVideos} />}
+    </div>
+  );
+}
+
+/* ---------- Labels per video: platform, open captions, gepubliceerd ---------- */
+
+// Het platform volgt uit de link; daar hoeft niemand iets voor in te vullen.
+function platformVan(url: string): { label: string; klasse: string } {
+  if (/vimeo\.com/i.test(url)) return { label: 'Vimeo', klasse: 'bg-sky-100 text-sky-800' };
+  if (/youtube\.com\/shorts\//i.test(url)) return { label: 'YouTube Short', klasse: 'bg-red-50 text-red-800' };
+  if (/youtu\.be\/|youtube\.com/i.test(url)) return { label: 'YouTube', klasse: 'bg-red-50 text-red-800' };
+  return { label: 'Ander platform', klasse: 'bg-gray-100 text-gray-700' };
+}
+
+function VideoLabels({ video, onSaved }: { video: Video; onSaved: (v: Video) => void }) {
+  const [saving, setSaving] = useState(false);
+  const platform = platformVan(video.url);
+  const gepubliceerd = video.phases.some((p) => p.phase === 'publiceren' && p.status === 'klaar');
+  const waarde = video.openCaptions === true ? 'ja' : video.openCaptions === false ? 'nee' : '';
+
+  const zetOpenCaptions = async (nieuw: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/videos/${video.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ openCaptions: nieuw === 'ja' ? true : nieuw === 'nee' ? false : null }),
+      });
+      if (res.ok) onSaved(await res.json());
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-9">
+      <span className={`text-xs px-2 py-0.5 rounded ${platform.klasse}`}>{platform.label}</span>
+      {video.openCaptions === true && (
+        <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800">Open captions</span>
+      )}
+      {gepubliceerd && (
+        <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">Gepubliceerd</span>
+      )}
+      <label className="text-xs text-gray-500 flex items-center gap-1 ml-1">
+        Open captions:
+        <select
+          value={waarde}
+          disabled={saving}
+          onChange={(e) => zetOpenCaptions(e.target.value)}
+          className="text-xs border border-gray-300 rounded px-1 py-0.5 bg-white"
+        >
+          <option value="">onbekend</option>
+          <option value="ja">ja</option>
+          <option value="nee">nee</option>
+        </select>
+      </label>
     </div>
   );
 }
