@@ -339,7 +339,7 @@ export default function VideoA2GemeentenPage() {
   );
 }
 
-/* ---------- Labels per video: platform, open captions, gepubliceerd ---------- */
+/* ---------- Labels per video: platform, gepubliceerd, op website, open captions ---------- */
 
 // Het platform volgt uit de link; daar hoeft niemand iets voor in te vullen.
 function platformVan(url: string): { label: string; klasse: string } {
@@ -353,38 +353,103 @@ function VideoLabels({ video, onSaved }: { video: Video; onSaved: (v: Video) => 
   const [saving, setSaving] = useState(false);
   const platform = platformVan(video.url);
   const gepubliceerd = video.phases.some((p) => p.phase === 'publiceren' && p.status === 'klaar');
-  const waarde = video.openCaptions === true ? 'ja' : video.openCaptions === false ? 'nee' : '';
+  const [url, setUrl] = useState(video.websiteUrl ?? '');
+  const [urlFout, setUrlFout] = useState<string | null>(null);
+  const alsKeuze = (b: boolean | null) => (b === true ? 'ja' : b === false ? 'nee' : '');
+  const uitKeuze = (s: string) => (s === 'ja' ? true : s === 'nee' ? false : null);
 
-  const zetOpenCaptions = async (nieuw: string) => {
+  const bewaar = async (velden: Partial<Pick<Video, 'openCaptions' | 'opWebsite' | 'websiteUrl'>>) => {
     setSaving(true);
     try {
       const res = await fetch(`/api/videos/${video.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ openCaptions: nieuw === 'ja' ? true : nieuw === 'nee' ? false : null }),
+        body: JSON.stringify(velden),
       });
-      if (res.ok) onSaved(await res.json());
+      if (res.ok) {
+        setUrlFout(null);
+        onSaved(await res.json());
+      } else {
+        setUrlFout((await res.json().catch(() => ({}))).error ?? 'Opslaan mislukt');
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  const bewaarUrl = () => {
+    const u = url.trim();
+    if (u === (video.websiteUrl ?? '')) return;
+    // Een pagina invullen betekent dat de video op de website staat.
+    bewaar(u ? { websiteUrl: u, opWebsite: true } : { websiteUrl: null });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-9">
       <span className={`text-xs px-2 py-0.5 rounded ${platform.klasse}`}>{platform.label}</span>
-      {video.openCaptions === true && (
-        <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800">Open captions</span>
-      )}
       {gepubliceerd && (
         <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">Gepubliceerd</span>
+      )}
+      {video.opWebsite === true &&
+        (video.websiteUrl ? (
+          <a
+            href={video.websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 underline hover:bg-indigo-200"
+          >
+            Op website<span className="sr-only"> (opent in nieuw tabblad)</span>
+          </a>
+        ) : (
+          <span className="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Op website</span>
+        ))}
+      {video.opWebsite === false && (
+        <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-800">Niet op website</span>
+      )}
+      <label className="text-xs text-gray-500 flex items-center gap-1 ml-1">
+        Op website:
+        <select
+          value={alsKeuze(video.opWebsite)}
+          disabled={saving}
+          onChange={(e) => bewaar({ opWebsite: uitKeuze(e.target.value) })}
+          className="text-xs border border-gray-300 rounded px-1 py-0.5 bg-white"
+        >
+          <option value="">onbekend</option>
+          <option value="ja">ja</option>
+          <option value="nee">nee</option>
+        </select>
+      </label>
+      <label className="text-xs text-gray-500 flex items-center gap-1">
+        Pagina:
+        <input
+          type="url"
+          value={url}
+          disabled={saving}
+          placeholder="https://..."
+          onChange={(e) => setUrl(e.target.value)}
+          onBlur={bewaarUrl}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
+          className="text-xs border border-gray-300 rounded px-1 py-0.5 w-64"
+        />
+      </label>
+      {urlFout && (
+        <span role="alert" className="text-xs text-red-700">
+          {urlFout}
+        </span>
       )}
       <label className="text-xs text-gray-500 flex items-center gap-1 ml-1">
         Open captions:
         <select
-          value={waarde}
+          value={alsKeuze(video.openCaptions)}
           disabled={saving}
-          onChange={(e) => zetOpenCaptions(e.target.value)}
-          className="text-xs border border-gray-300 rounded px-1 py-0.5 bg-white"
+          onChange={(e) => bewaar({ openCaptions: uitKeuze(e.target.value) })}
+          className={`text-xs border rounded px-1 py-0.5 ${
+            video.openCaptions === true
+              ? 'border-amber-300 bg-amber-100 text-amber-800'
+              : 'border-gray-300 bg-white'
+          }`}
         >
           <option value="">onbekend</option>
           <option value="ja">ja</option>

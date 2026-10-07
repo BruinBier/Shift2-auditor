@@ -19,6 +19,9 @@ export interface Video {
   notities: string | null;
   /** Ingebrande ondertiteling; null = nog niet vastgesteld. */
   openCaptions: boolean | null;
+  /** Staat de video op de website; null = nog niet vastgesteld. */
+  opWebsite: boolean | null;
+  websiteUrl: string | null;
   sortOrder: number;
   phases: VideoPhase[];
 }

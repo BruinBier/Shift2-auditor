@@ -38,12 +38,27 @@ export async function PUT(
       url?: string;
       notities?: string | null;
       openCaptions?: boolean | null;
+      opWebsite?: boolean | null;
+      websiteUrl?: string | null;
     } = {};
     if (body.openCaptions !== undefined) {
       if (body.openCaptions !== null && typeof body.openCaptions !== 'boolean') {
         return NextResponse.json({ error: 'openCaptions moet true, false of null zijn' }, { status: 400 });
       }
       data.openCaptions = body.openCaptions;
+    }
+    if (body.opWebsite !== undefined) {
+      if (body.opWebsite !== null && typeof body.opWebsite !== 'boolean') {
+        return NextResponse.json({ error: 'opWebsite moet true, false of null zijn' }, { status: 400 });
+      }
+      data.opWebsite = body.opWebsite;
+    }
+    if (body.websiteUrl !== undefined) {
+      const u = typeof body.websiteUrl === 'string' ? body.websiteUrl.trim() : '';
+      if (u && !/^https?:\/\//i.test(u)) {
+        return NextResponse.json({ error: 'websiteUrl moet met http(s):// beginnen' }, { status: 400 });
+      }
+      data.websiteUrl = u || null;
     }
     if (body.gemeente !== undefined) {
       if (!isGemeente(body.gemeente)) {

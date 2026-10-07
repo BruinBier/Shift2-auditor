@@ -1273,6 +1273,10 @@ model Video {
   notities  String?       @db.Text
   /// Ingebrande ondertiteling (open captions). null = nog niet vastgesteld.
   openCaptions Boolean?   @map("open_captions")
+  /// Staat de video op de website van de gemeente? null = nog niet vastgesteld.
+  opWebsite    Boolean?   @map("op_website")
+  /// De pagina waar de video op staat (de belangrijkste; de rest in de notities).
+  websiteUrl   String?    @map("website_url")
   sortOrder Int           @default(0) @map("sort_order")
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
