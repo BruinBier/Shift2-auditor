@@ -181,6 +181,28 @@ export async function POST(
         select: { status: true, reden: true, akkoord: true, gebieden: true },
       });
 
+      /**
+       * Een open vraag wordt geen oordeel met de vraag als onderbouwing.
+       *
+       * Bij niet_te_bepalen is de reden een vraag aan de onderzoeker ("kun je de cookies
+       * accepteren?"). Gaat het oordeel naar iets anders zonder nieuwe tekst, dan wordt
+       * die vraag de onderbouwing van een voldoet of niet_aanwezig. Op LEU-01 (HackShield,
+       * 2026-10-07) stond 1.2.1 zo op voldoet met de cookievraag eronder, akkoord en al;
+       * op ZOET-01 gebeurde het op 2026-09-21 twee keer. Geldt voor elke weg naar deze
+       * route: de kaart, de CLI en de workflows.
+       */
+      if (
+        bestaande?.status === 'niet_te_bepalen' &&
+        status !== 'niet_te_bepalen' &&
+        (!check.reden?.trim() || check.reden.trim() === (bestaande.reden ?? '').trim())
+      ) {
+        fouten.push(
+          `${criterionCode} op sample ${sampleItemId}: dit oordeel stond op niet_te_bepalen. ` +
+            `Gaat het naar ${status}, schrijf dan op wat er is vastgesteld; de vraag van toen kan niet de onderbouwing worden.`
+        );
+        continue;
+      }
+
       const bekend = bekendeGebieden(criterionCode);
       let gebiedenVoorDitOordeel: any[] | undefined;
       if (bekend.length) {

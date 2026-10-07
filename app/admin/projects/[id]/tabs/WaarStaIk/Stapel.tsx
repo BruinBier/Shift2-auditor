@@ -1295,8 +1295,31 @@ export default function Stapel({
   const beantwoord = async (
     cel: Cel,
     status: 'voldoet' | 'afgekeurd' | 'opmerking' | 'niet_aanwezig' | 'niet_te_bepalen',
-    opties: { behoudReden?: boolean; bron?: string; ookVoorstellen?: Voorstel[] } = {}
+    opties: {
+      behoudReden?: boolean;
+      bron?: string;
+      ookVoorstellen?: Voorstel[];
+      /** Tekst als het veld leeg is, alleen waar het oordeel uit iets anders volgt (een afkeuring met bevinding). */
+      standaardReden?: string;
+    } = {}
   ) => {
+    /*
+     * Een open vraag krijgt nooit de vraag zelf als onderbouwing.
+     *
+     * Bij niet_te_bepalen is cel.reden de vraag van de agent. Viel het veld leeg, dan werd
+     * die vraag de reden van het nieuwe oordeel: op LEU-01 stond 1.2.1 zo op voldoet met
+     * "kun je de cookies accepteren?" eronder (2026-10-07). De route weigert het ook, maar
+     * hier hoort de melding te staan, vóór er iets verstuurd wordt.
+     */
+    const wasVraag = cel.status === 'niet_te_bepalen' && status !== 'niet_te_bepalen';
+    const eigenTekst = reden.trim();
+    const tekst = opties.behoudReden
+      ? cel.reden ?? null
+      : eigenTekst || (wasVraag ? opties.standaardReden ?? null : cel.reden ?? null);
+    if (wasVraag && !tekst) {
+      setFout('Schrijf op wat je hebt vastgesteld. De vraag van de agent kan niet de onderbouwing van je oordeel worden.');
+      return;
+    }
     setBezig(true);
     setFout(null);
     try {
@@ -1326,9 +1349,7 @@ export default function Stapel({
               sampleItemId: cel.sampleId,
               criterionCode: cel.code,
               status,
-              reden: opties.behoudReden
-                ? cel.reden ?? null
-                : reden.trim() || cel.reden || null,
+              reden: tekst,
               akkoord: 'akkoord',
             },
           ],
@@ -6266,7 +6287,10 @@ export default function Stapel({
 
           {!kaarttekst && (
             <label className="mb-1 block text-sm font-medium text-gray-800">
-              Wat zag je? <span className="font-normal text-gray-500">(mag leeg)</span>
+              Wat zag je?{' '}
+              <span className="font-normal text-gray-500">
+                {huidig.cel.status === 'niet_te_bepalen' ? '(verplicht bij een oordeel)' : '(mag leeg)'}
+              </span>
             </label>
           )}
           {!kaarttekst && (
@@ -6319,6 +6343,30 @@ export default function Stapel({
                     : 'Deze stap staat nog open.'}
               </p>
               {/*
+                Bij een open vraag schrijf je op wat je hebt vastgesteld. Zonder dit veld werd
+                de vraag van de agent de onderbouwing van je oordeel: 1.2.1 op LEU-01 stond op
+                voldoet met "kun je de cookies accepteren?" eronder (2026-10-07). Bij een
+                afkeuring mag het leeg blijven; die rust op de bevinding.
+              */}
+              {huidig.cel.status === 'niet_te_bepalen' && (
+                <div className="mx-auto mb-3 max-w-xl">
+                  <label htmlFor="vaststelling" className="mb-1 block text-sm font-medium text-gray-800">
+                    Wat heb je vastgesteld?
+                  </label>
+                  <textarea
+                    id="vaststelling"
+                    value={reden}
+                    onChange={(e) => setReden(e.target.value)}
+                    rows={2}
+                    className="w-full rounded border border-gray-300 p-2 text-sm"
+                    placeholder="Bijvoorbeeld: de video heeft gesproken uitleg, dus geen louter beeld of geluid."
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Verplicht bij Voldoet en Niet van toepassing. Dit wordt de onderbouwing van het oordeel.
+                  </p>
+                </div>
+              )}
+              {/*
                 Dezelfde knoppen als op elke andere kaart: groen gevuld voor de bevestigende
                 keuze, omlijnd voor de andere, met de criteriumcode erop. Ze stonden hier als
                 ronde omlijnde knoppen zonder code ("Niet van toepassing" / "Klaar"), en dan
@@ -6329,28 +6377,43 @@ export default function Stapel({
                 een oordeel, op een auditkaart bevestig je er een.
               */}
               <div className="flex flex-wrap justify-center gap-2">
+                {/*
+                  Het opschrift zegt welk oordeel de knop geeft. Er stond "Pagina akkoord voor
+                  1.2.1", en dat las als "ik ben het eens met wat hier staat" -- terwijl hier
+                  niets staat om mee eens te zijn, alleen een vraag. Wie "niet aanwezig"
+                  bedoelde, drukte zo op voldoet.
+                */}
                 <button
                   type="button"
-                  disabled={bezig}
-                  onClick={() =>
-                    beantwoord(
-                      huidig.cel,
-                      huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
-                        ? 'afgekeurd'
-                        : 'voldoet'
-                    )
+                  disabled={
+                    bezig ||
+                    (huidig.cel.status === 'niet_te_bepalen' &&
+                      !reden.trim() &&
+                      !huidig.cel.bevindingen.some((b) => b.type !== 'opmerking'))
                   }
+                  onClick={() => {
+                    const afkeuringen = huidig.cel.bevindingen.filter((b) => b.type !== 'opmerking');
+                    beantwoord(huidig.cel, afkeuringen.length ? 'afgekeurd' : 'voldoet', {
+                      standaardReden: afkeuringen.length
+                        ? `Afgekeurd door de onderzoeker; zie ${afkeuringen
+                            .map((b) => b.findingCode ?? 'de bevinding')
+                            .join(', ')}.`
+                        : undefined,
+                    });
+                  }}
                   className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
                 >
-                  {`Pagina akkoord voor ${huidig.cel.code}`}
+                  {huidig.cel.bevindingen.some((b) => b.type !== 'opmerking')
+                    ? `Afgekeurd voor ${huidig.cel.code}`
+                    : `Voldoet voor ${huidig.cel.code}`}
                 </button>
                 <button
                   type="button"
-                  disabled={bezig}
+                  disabled={bezig || (huidig.cel.status === 'niet_te_bepalen' && !reden.trim())}
                   onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
                   className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
                 >
-                  Niet van toepassing
+                  {`Niet van toepassing voor ${huidig.cel.code}`}
                 </button>
                 {/*
                   De derde uitweg: niet te bepalen is hier het EINDoordeel.
@@ -6385,17 +6448,16 @@ export default function Stapel({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={bezig}
+                disabled={bezig || (huidig.cel.status === 'niet_te_bepalen' && !reden.trim())}
                 onClick={() => beantwoord(huidig.cel, 'voldoet')}
                 className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40"
               >
-                {/* Zelfde opschrift als op de andere kaarten: "In orde" zei hetzelfde maar
-                    met andere woorden, en zonder de code was onduidelijk waarvoor. */}
-                {`Pagina akkoord voor ${huidig.cel.code}`}
+                {/* Het opschrift zegt welk oordeel de knop geeft; zie de kaart hierboven. */}
+                {`Voldoet voor ${huidig.cel.code}`}
               </button>
               <button
                 type="button"
-                disabled={bezig}
+                disabled={bezig || (huidig.cel.status === 'niet_te_bepalen' && !reden.trim())}
                 onClick={() => beantwoord(huidig.cel, 'niet_aanwezig')}
                 className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40"
               >

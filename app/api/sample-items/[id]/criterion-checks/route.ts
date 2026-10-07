@@ -79,6 +79,16 @@ export async function PUT(
     const opCode = new Map(criteria.map((c) => [c.code, c.id]));
     const bestaandeIds = new Set(criteria.map((c) => c.id));
 
+    // Wat er al staat, voor de controle op een open vraag hieronder.
+    const bestaand = new Map(
+      (
+        await prisma.sampleCriterionCheck.findMany({
+          where: { sampleItemId: params.id },
+          select: { wcagCriterionId: true, status: true, reden: true },
+        })
+      ).map((b) => [b.wcagCriterionId, b])
+    );
+
     const fouten: string[] = [];
     const rijen: {
       wcagCriterionId: string;
@@ -104,6 +114,19 @@ export async function PUT(
       }
       if (c.akkoord && !AKKOORD.includes(c.akkoord)) {
         fouten.push(`checks[${i}]: ongeldige akkoord-waarde "${c.akkoord}"`);
+        continue;
+      }
+      // Een open vraag wordt geen oordeel met de vraag als onderbouwing. Zie dezelfde
+      // controle in app/api/projects/[id]/criterion-checks/route.ts.
+      const vorige = bestaand.get(critId);
+      if (
+        vorige?.status === 'niet_te_bepalen' &&
+        c.status !== 'niet_te_bepalen' &&
+        (!c.reden?.trim() || c.reden.trim() === (vorige.reden ?? '').trim())
+      ) {
+        fouten.push(
+          `checks[${i}]: dit oordeel stond op niet_te_bepalen. Gaat het naar ${c.status}, schrijf dan op wat er is vastgesteld; de vraag van toen kan niet de onderbouwing worden.`
+        );
         continue;
       }
       rijen.push({
