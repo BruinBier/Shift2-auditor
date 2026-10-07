@@ -337,7 +337,9 @@ export default function VideoA2GemeentenPage() {
 /* ---------- Notities per video ---------- */
 
 function VideoNotes({ video, onSaved }: { video: Video; onSaved: (v: Video) => void }) {
-  const [open, setOpen] = useState(!!video.notities);
+  // Standaard ingeklapt: met tientallen video's per gemeente werd de lijst anders één lange muur
+  // van notities. De knop zegt "(ingevuld)" als er iets in staat.
+  const [open, setOpen] = useState(false);
   // Een bestaande notitie opent als opgemaakte tekst met klikbare links; bewerken is een aparte stap.
   const [editing, setEditing] = useState(!video.notities);
   const opgeslagen = video.notities ? notitieNaarHtml(video.notities) : '';
