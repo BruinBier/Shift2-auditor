@@ -104,6 +104,12 @@ export interface OpenPageResult {
    * als 1.3.1 telt die inhoud gewoon mee.
    */
   dichtgeklapt: { aantal: number; voorbeelden: string[]; fout?: string };
+  /**
+   * De knoppen waarmee de cookies zijn geaccepteerd, in de volgorde waarin erop geklikt
+   * is. Leeg als er niets te accepteren viel of als `AUDIT_COOKIES=laten` stond. Zie
+   * `accepteerCookies`.
+   */
+  cookiesGeaccepteerd: string[];
 }
 
 /**
@@ -258,6 +264,81 @@ export async function maakWakker(page: Page): Promise<boolean> {
 }
 
 /**
+ * Accepteert de cookies op de pagina, zodat wat erachter zit gemeten kan worden.
+ *
+ * Een video achter een cookiemelding heeft geen adres in de code: de speler wordt pas na
+ * toestemming ingevoegd. Zonder klik meet elk videocommando een plaatshouder, en dan
+ * staan 1.2.2 tot en met 2.3.1 op "niet te bepalen" met de vraag aan de onderzoeker om
+ * de cookies te accepteren. Op LEU-01 (HackShield, 2026-10-07) stonden er zo vijf open
+ * vragen op één pagina, alle vijf met dezelfde oorzaak. Tot die dag klikte de tool dit
+ * bewust niet weg; Frits heeft besloten dat hij het wel doet.
+ *
+ * Alleen knoppen die duidelijk over cookies gaan: de tekst noemt cookies, of de knop
+ * staat in een blok dat over cookies of toestemming gaat, of de pagina zelf is een
+ * toestemmingspagina (consent.youtube.com). Een kale "Akkoord" ergens in een formulier
+ * wordt dus niet aangeklikt.
+ *
+ * In de auditsessie blijft de keuze in het profiel staan; headless begint elke ophaling
+ * opnieuw en klikt dus elke keer. Wie de cookiemelding zelf wil beoordelen (de melding
+ * hoort bij de homepage), zet `AUDIT_COOKIES=laten`.
+ */
+export async function accepteerCookies(page: Page): Promise<string[]> {
+  if ((process.env.AUDIT_COOKIES || '').toLowerCase() === 'laten') return [];
+  const geklikt: string[] = [];
+  for (let ronde = 0; ronde < 3; ronde++) {
+    let tekst: string | null = null;
+    try {
+      tekst = await page.evaluate(() => {
+        const AKKOORD =
+          /^(alle cookies accepteren|accepteer alle cookies|alles accepteren|alle accepteren|cookies accepteren|accepteer cookies|alle cookies toestaan|alles toestaan|cookies toestaan|accepteren|accepteer|akkoord|ik ga akkoord|ja, ik ga akkoord|toestaan|accept all cookies|accept all|accept cookies|accept|allow all cookies|allow all|i agree|agree)$/i;
+        const OVER_COOKIES = /cookie|consent|toestemming|gdpr|cmp|privacy/i;
+        const toestemmingspagina = /^consent\./i.test(location.hostname);
+        // Geen benoemde hulpfuncties hierbinnen: tsx zet er dan een __name-aanroep omheen
+        // die in de browser niet bestaat, en dan faalt de hele evaluate zonder melding.
+        const knoppen = Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'button, [role="button"], a, input[type="button"], input[type="submit"]'
+          )
+        );
+        for (const k of knoppen) {
+          const t = ((k as HTMLInputElement).value || k.innerText || k.textContent || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (!t || t.length > 40 || !AKKOORD.test(t)) continue;
+          const r = k.getBoundingClientRect();
+          const stijl = getComputedStyle(k);
+          if (!r.width || !r.height || stijl.visibility === 'hidden' || stijl.display === 'none') continue;
+          let overCookies = /cookie/i.test(t) || toestemmingspagina;
+          let n: HTMLElement | null = k;
+          for (let i = 0; !overCookies && n && i < 10; i++, n = n.parentElement) {
+            const kenmerk = `${n.id} ${typeof n.className === 'string' ? n.className : ''} ${
+              n.getAttribute('aria-label') || ''
+            }`;
+            if (OVER_COOKIES.test(kenmerk)) overCookies = true;
+            else if (n.getAttribute('role') === 'dialog' && /cookie/i.test(n.innerText || '')) overCookies = true;
+          }
+          if (!overCookies) continue;
+          k.click();
+          return t;
+        }
+        return null;
+      });
+    } catch {
+      // De pagina was nog aan het doorsturen; wat er staat, staat er.
+      break;
+    }
+    if (!tekst) break;
+    geklikt.push(tekst);
+    await page.waitForNetworkIdle({ idleTime: 500, timeout: 8000 }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 800));
+  }
+  if (geklikt.length) {
+    process.stderr.write(`[browser] cookies geaccepteerd met: ${geklikt.join(' · ')}\n`);
+  }
+  return geklikt;
+}
+
+/**
  * Open een verse tab op `url`, wacht tot het netwerk rustig is + 1s buffer
  * voor late JS-rendering. Geeft een cleanup-functie terug die alleen de tab
  * sluit (niet de hele browser).
@@ -274,6 +355,7 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
   }
   await new Promise((r) => setTimeout(r, 1000));
   await maakWakker(page);
+  const cookiesGeaccepteerd = await accepteerCookies(page);
   const eindUrl = page.url();
   const dichtgeklapt = await telDichtgeklapt(page);
   // De waarschuwing hoort hier en niet in één commando: elk commando dat een pagina opent
@@ -298,6 +380,7 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
     gevraagdeUrl: url,
     eindUrl,
     dichtgeklapt,
+    cookiesGeaccepteerd,
     omgeleid: !zelfdePagina(url, eindUrl),
     cleanup: async () => {
       await page.close().catch(() => {});

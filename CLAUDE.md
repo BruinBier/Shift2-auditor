@@ -352,11 +352,18 @@ weigert YouTube dat (Fout 153, "fout bij configuratie van videospeler"), dan de 
 Op een gewone pagina somt `get-flitsen` de gevonden video's op mét de regel om ze apart te
 meten.
 
-Staat er een toestemmingsvenster voor ("Voordat je verdergaat naar YouTube"), dan meldt het
-commando dat en klikt het niet weg: toestemming geven is een keuze van de onderzoeker. Wil je
-eromheen, geef dan `--klik="tekst:Alles afwijzen"` mee of accepteer eenmalig in de
-audit-sessie-Chrome. Zonder dat blijft de uitkomst `beslist: false` — een speler die niet
-gespeeld heeft is niet gemeten.
+**De CLI accepteert cookies zelf.** Elke pagina die een meetcommando opent, gaat langs
+`accepteerCookies` (`scripts/lib/browser-fetch.ts`): een zichtbare knop als "Accepteer alle
+cookies" of "Alles accepteren" wordt aangeklikt, mits hij over cookies gaat (de tekst noemt
+cookies, hij staat in een cookie- of toestemmingsblok, of de pagina is consent.youtube.com).
+Tot 7 oktober 2026 deed de tool dat bewust niet. Toen stonden op LEU-01 (HackShield) vijf
+video-criteria op "niet te bepalen", allemaal door één cookiemelding, en `get-videosporen`
+meldde zelfs "geen video, beslist". Frits heeft besloten dat de tool het voortaan doet.
+`get-html` geeft `cookies_geaccepteerd` terug. Wil je de cookiemelding zelf beoordelen,
+haal de pagina dan op met `AUDIT_COOKIES=laten`, want na de klik staat de melding niet
+meer in de HTML. Herkent de functie de knop niet, dan meldt het commando het
+toestemmingsvenster nog steeds en blijft de uitkomst `beslist: false`: een speler die niet
+gespeeld heeft, is niet gemeten.
 
 **Voor 1.2.3 en 1.2.5 lees je de sporen van de speler, niet de pagina.** `get-videosporen`
 opent elke video op zijn eigen pagina en leest uit `ytInitialPlayerResponse` welke
@@ -376,6 +383,15 @@ aanstaat, *"Zet uitgeschreven tekst aan"* dat er een transcript is. Dat is een a
 een tekst en geen meting van de ondertiteling zelf; zo staat het er ook bij. De uitgeschreven
 tekst wordt meegenomen met zijn lengte, want een kopje "Transcript" boven drie regels is geen
 tekstalternatief.
+
+**Kijk ook naast de video, niet alleen erin.** Een dienst als Scribit zet de knoppen
+"Audiodescriptie" en "Transcript" in een eigen vak onder de video, buiten het kader van
+YouTube en in shadow DOM. Daar ziet `get-html` alleen een leeg `div.scribit-widget`.
+`get-videosporen` zoekt die knoppen op de pagina zelf af voordat het naar YouTube gaat, en
+geeft ze terug onder `hulpmiddelen_naast_de_video`: welk vak, welke video (`data-video`),
+en bij een transcript de lengte van de tekst en of er beeld in beschreven staat. Op LEU-01
+(HackShield, 2026-10-07) keurden de agents 1.2.3 en 1.2.5 af omdat YouTube geen
+audiodescriptiespoor en geen transcript opgaf, terwijl beide onder de video stonden.
 
 **Een pagina die slaapt, meet je niet.** Versnellers als WP Rocket stellen álle scripts uit tot
 de bezoeker iets doet. Zonder muisbeweging staat er dan geen speler, geen menu en geen widget —

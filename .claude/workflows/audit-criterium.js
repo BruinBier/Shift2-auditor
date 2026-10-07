@@ -164,13 +164,15 @@ const CONTEXT_SCHEMA = {
         additionalProperties: false,
         // description is verplicht met null toegestaan: een optioneel veld laat een agent
         // graag weg, en juist daar staat wat er bijzonder is aan een pagina.
-        required: ['id', 'title', 'url', 'sampleType', 'description'],
+        required: ['id', 'title', 'url', 'sampleType', 'description', 'heeftBewegendBeeld'],
         properties: {
           id: { type: 'string' },
           title: { type: 'string' },
           url: { type: ['string', 'null'] },
           sampleType: { type: 'string' },
           description: { type: ['string', 'null'] },
+          // Het video-vinkje van de steekproef: true, false of null (niet vastgesteld).
+          heeftBewegendBeeld: { type: ['boolean', 'null'] },
         },
       },
     },
@@ -226,7 +228,7 @@ const context = await agent(
 Project-id: ${projectId}
 Criterium:  ${criterium}
 
-1. \`npm run cli -- get-project ${projectId}\` — neem alle sampleItems op (id, title, url, sampleType, description). Neem de description letterlijk over: daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.${samplesFilter}
+1. \`npm run cli -- get-project ${projectId}\` — neem alle sampleItems op (id, title, url, sampleType, description, heeftBewegendBeeld). Neem heeftBewegendBeeld letterlijk over, ook als het null is: dat is het video-vinkje van de onderzoeker. Neem de description letterlijk over: daar staat wat er bijzonder is aan een pagina, bijvoorbeeld dat hij alleen via een ingevuld formulier te bereiken is.${samplesFilter}
 
 2. \`npm run cli -- list-criteria\` — zoek criterium ${criterium} op en geef zijn id, titel (titleNl) en niveau (level) terug. Zonder dat id kan er straks geen bevinding worden aangemaakt.
 
@@ -299,32 +301,27 @@ if (!homepageSample) {
 const isPdf = (s) => s.sampleType === 'pdf' || /\.pdf(\?|#|$)/i.test(s.url || '')
 
 /**
- * Video-criteria overslaan als de steekproef nergens video heeft.
+ * Video-criteria overslaan als de onderzoeker bij elke pagina "geen video" heeft aangevinkt.
  *
- * 1.2.1 t/m 1.2.5 gaan allemaal over media. De steekproef-workflow zet per sample al een
- * kale opsomming van contenttypen in de description ("tabel, galerij, video (2x)" — zie
- * .claude/workflows/steekproef-samenstellen.js). Staat het woord "video" of "audio" nergens
- * in de descriptions van de HELE steekproef, dan heeft geen enkele pagina media, en is het
- * zinloos om twintig agents dat één voor één te laten vaststellen.
+ * Tot 2026-10-07 besliste hier de description: stond het woord "video" of "audio" in geen
+ * enkele beschrijving, dan gingen 1.2.1 t/m 1.2.5 overal op niet_aanwezig. Maar de
+ * description is wat de steekproef-workflow bij het samenstellen zag, niet wat er staat. Op
+ * LEU-01 had HackShield "Gewone productpagina met alleen tekst" als beschrijving, terwijl
+ * er een video achter een cookiemelding stond en het vinkje op "ja" stond. De kortsluiting
+ * zette 1.2.2, 1.2.3 en 1.2.5 op niet_aanwezig, over een eerder niet_te_bepalen heen.
  *
- * Voorwaardelijk: alleen als ELKE sample een description heeft. Ontbreekt die ergens — een
- * steekproef die (deels) met de hand is samengesteld, van vóór dit systeem — dan is er geen
- * bewijs dat de description volledig is, en beoordeelt de pipeline gewoon alle pagina's zoals
- * voorheen. Een lege description is geen "geen video"; het is "onbekend".
+ * Nu beslist alleen het vinkje, en alleen `false` telt: null is "niet vastgesteld" en geen
+ * "nee". Staat het bij elke pagina op false, dan heeft de steekproef die oordelen meestal
+ * al gezet (bron `steekproef`); deze kortsluiting voorkomt dan alleen dat er alsnog agents
+ * voor draaien.
  */
 const VIDEO_CRITERIA = ['1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5']
-const descriptiesCompleet = teBeoordelen.every(
-  (s) => typeof s.description === 'string' && s.description.trim().length > 0,
-)
-const steekproefHeeftVideo = teBeoordelen.some((s) =>
-  /video|audio/i.test(s.description || ''),
-)
 const magKortsluiten =
-  VIDEO_CRITERIA.includes(criterium) && descriptiesCompleet && !steekproefHeeftVideo
+  VIDEO_CRITERIA.includes(criterium) && teBeoordelen.every((s) => s.heeftBewegendBeeld === false)
 
 if (magKortsluiten) {
   log(
-    `Geen enkele sample-beschrijving in deze steekproef noemt video of audio. ${criterium} wordt voor alle ${teBeoordelen.length} pagina's op niet_aanwezig gezet zonder ze apart te laten beoordelen.`,
+    `Bij elke pagina staat het video-vinkje op "nee". ${criterium} wordt voor alle ${teBeoordelen.length} pagina's op niet_aanwezig gezet zonder ze apart te laten beoordelen.`,
   )
 }
 
@@ -531,12 +528,12 @@ const kortgeslotenOordeel = (sample) => ({
   sampleTitel: sample.title,
   status: 'niet_aanwezig',
   reden:
-    'Niet apart beoordeeld: geen enkele sample-beschrijving in deze steekproef noemt video of audio, dus dit media-criterium is op geen van de pagina\'s van toepassing.',
+    'Niet apart beoordeeld: bij deze pagina staat het video-vinkje van de steekproef op "nee", dus dit media-criterium is hier niet van toepassing.',
   deelgebieden: context.deelgebieden.map((g) => ({
     gebied: g,
     uitkomst: 'nvt',
     toelichting:
-      'Vastgesteld op steekproefniveau: de contenttypen-beschrijving van elke sample in deze steekproef is nagelopen op het woord video of audio, en dat komt nergens voor.',
+      'Vastgesteld door de onderzoeker in de steekproef: het video-vinkje van deze pagina staat op "nee".',
   })),
   bevindingen: [],
 })

@@ -37,6 +37,7 @@ import * as path from 'path';
 import {
   getBrowser,
   openPage,
+  accepteerCookies,
   ensureOutputDir,
   slugifyUrl,
   timestamp,
@@ -1308,7 +1309,8 @@ async function getHtml(url: string, flags: Flags) {
   const wantText = flags.text === 'true';
   const session = await getBrowser();
   try {
-    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid, dichtgeklapt } = await openPage(session, url);
+    const { page, cleanup, gevraagdeUrl, eindUrl, omgeleid, dichtgeklapt, cookiesGeaccepteerd } =
+      await openPage(session, url);
     try {
       const pageTitle = await page.title();
       const finalUrl = page.url();
@@ -1435,6 +1437,10 @@ async function getHtml(url: string, flags: Flags) {
         // uitkomst en geen leegte: dan is vastgesteld dat er niets verborgen was.
         dichtgeklapt: dichtgeklapt.aantal,
         dichtgeklapt_voorbeelden: dichtgeklapt.aantal ? dichtgeklapt.voorbeelden : undefined,
+        // Welke cookieknop de tool heeft aangeklikt. Een cookiemelding die op de pagina
+        // stond, staat dus niet meer in deze HTML; wie de melding zelf beoordeelt, haalt de
+        // pagina op met AUDIT_COOKIES=laten.
+        cookies_geaccepteerd: cookiesGeaccepteerd.length ? cookiesGeaccepteerd : undefined,
         waarschuwing_dichtgeklapt:
           dichtgeklapt.aantal && session.mode === 'headless'
             ? `Er staan ${dichtgeklapt.aantal} blokken dichtgeklapt die niet zijn gemeten. Voor een criterium over de inhoud van de pagina — 1.3.1, 1.1.1, 2.4.6 — is dit onvolledig: koppen, lijsten en tabellen binnen een gesloten blok tellen gewoon mee. Start een auditsessie met \`npm run chrome:debug\` en klap ze open.`
@@ -6367,12 +6373,12 @@ async function getFlitsen(url: string, flags: Flags) {
         // fout bij configuratie van videospeler": de eigenaar staat insluiten niet toe, of
         // de speler mist de herkomst die hij verwacht. Dan is de pagina van de video zelf
         // de plek waar hij wél speelt. Daar kan een toestemmingsscherm voor staan; dat
-        // wordt gemeld, niet weggeklikt -- akkoord geven namens de onderzoeker is niet aan
-        // dit gereedschap.
+        // klikt accepteerCookies weg (zie browser-fetch.ts).
         for (const adres of [video.speeladres, video.paginaadres]) {
           if (page.url() !== adres) {
             await page.goto(adres, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
             await new Promise((r) => setTimeout(r, 1500));
+            await accepteerCookies(page);
           }
           videoAdres = adres;
           // Nu pas klikken: hier staat het toestemmingsvenster dat de speler tegenhoudt.
@@ -6398,10 +6404,8 @@ async function getFlitsen(url: string, flags: Flags) {
       // venster overheen ("Voordat je verdergaat naar YouTube"). Vandaar de tekst, niet de
       // URL.
       //
-      // Het wordt gemeld en niet weggeklikt. Toestemming geven voor cookies is een keuze
-      // van de onderzoeker, niet van een meetgereedschap — en in de audit-sessie zou die
-      // keuze in zijn eigen browser blijven staan. Wil hij eromheen, dan kan dat met
-      // --klik="tekst:Alles afwijzen".
+      // accepteerCookies heeft het dan al geprobeerd. Staat het er nog, dan herkende hij de
+      // knop niet, of stond AUDIT_COOKIES=laten; dan wordt het gemeld.
       const toestemmingsscherm: string | null = await page.evaluate(() => {
         if (/consent\./i.test(location.hostname)) return 'een toestemmingspagina';
         const tekst = (document.body.innerText || '').slice(0, 4000);
@@ -7258,6 +7262,117 @@ async function leesSpelersOpPagina(page: any): Promise<any[]> {
   return uit;
 }
 
+type Hulpmiddel = {
+  soort: 'transcript' | 'audiodescriptie';
+  /** De naam van de knop of link, zoals hulpsoftware hem voorleest. */
+  knop: string;
+  /** Het vak waar de knop in staat, bijvoorbeeld "scribit-widget". */
+  vak: string | null;
+  /** Het YouTube-nummer waar het vak bij hoort, als het vak dat opgeeft (data-video). */
+  videonummer: string | null;
+  inSchaduw: boolean;
+  /** Bij een transcript: de tekst achter de knop, als die op de pagina staat. */
+  tekst?: { tekens: number; begin: string; beschrijftBeeld: boolean } | null;
+};
+
+/**
+ * Zoekt knoppen voor een transcript of audiodescriptie NAAST de video, op de pagina zelf.
+ *
+ * `leesSpelersOpPagina` kijkt alleen binnen een speler. Maar een dienst als Scribit zet
+ * zijn knoppen in een eigen vak onder de video, buiten het kader van YouTube en in shadow
+ * DOM, zodat ook `get-html` alleen een leeg vak ziet. Op LEU-01 (HackShield, 2026-10-07)
+ * stonden daar "Audiodescriptie" en "Transcript", met achter de tweede een volledige tekst
+ * inclusief beeldbeschrijving. De agents zagen het niet en keurden 1.2.3 en 1.2.5 af.
+ *
+ * Leest bij een transcriptknop met aria-controls ook de tekst die hij openklapt: de
+ * lengte en of er beeld in beschreven staat, want een kop boven drie regels is geen
+ * tekstalternatief. Of de audiodescriptie goed is, valt hier niet te meten: dat is
+ * luisteren, en dat doet de onderzoeker.
+ */
+async function leesHulpmiddelenNaastDeVideo(page: any): Promise<Hulpmiddel[]> {
+  return page
+    .evaluate(() => {
+      // Geen benoemde hulpfuncties: tsx hangt daar __name aan, en dat bestaat niet in de
+      // browser.
+      const wortels: (Document | ShadowRoot)[] = [document];
+      const stapel: Element[] = Array.from(document.querySelectorAll('*'));
+      let bekeken = 0;
+      while (stapel.length && bekeken < 40000) {
+        const el = stapel.pop()!;
+        bekeken++;
+        if (el.shadowRoot) {
+          wortels.push(el.shadowRoot);
+          stapel.push(...Array.from(el.shadowRoot.querySelectorAll('*')));
+        }
+      }
+      const uit: any[] = [];
+      const gezien = new Set<string>();
+      for (const wortel of wortels) {
+        const gastheer: any = (wortel as ShadowRoot).host ?? null;
+        for (const k of Array.from(
+          wortel.querySelectorAll('button, [role="button"], a[href]')
+        ) as HTMLElement[]) {
+          const naam = (k.getAttribute('aria-label') || k.getAttribute('title') || k.textContent || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (!naam || naam.length > 60) continue;
+          const soort = /audiodescriptie|audio.?descri|gesproken beschrijving/i.test(naam)
+            ? 'audiodescriptie'
+            : /transcript|uitgeschreven|tekstversie|leesversie/i.test(naam)
+            ? 'transcript'
+            : null;
+          if (!soort) continue;
+          // Het vak: de gastheer van de afgeschermde wortel, of het dichtstbijzijnde blok
+          // met data-video.
+          let vakEl: any = gastheer;
+          if (!vakEl) {
+            vakEl = k.closest('[data-video]');
+          }
+          const vak = vakEl
+            ? `${vakEl.tagName.toLowerCase()}${
+                typeof vakEl.className === 'string' && vakEl.className
+                  ? '.' + vakEl.className.trim().split(/\s+/)[0]
+                  : ''
+              }`
+            : null;
+          const videonummer = vakEl?.getAttribute?.('data-video') ?? null;
+          const sleutel = `${soort}|${naam}|${vak}|${videonummer}`;
+          if (gezien.has(sleutel)) continue;
+          gezien.add(sleutel);
+
+          let tekst: any = null;
+          if (soort === 'transcript') {
+            const doel = k.getAttribute('aria-controls');
+            const houder: any = doel
+              ? (wortel as any).getElementById?.(doel) ??
+                wortel.querySelector(`[id="${doel.replace(/"/g, '')}"]`)
+              : null;
+            if (houder) {
+              const t = (houder.textContent || '').replace(/\s+/g, ' ').trim();
+              tekst = {
+                tekens: t.length,
+                begin: t.slice(0, 200),
+                // Beeldbeschrijving: een blok met beeldtekst, of zinnen die zeggen wat er
+                // te zien is. Een aanwijzing, geen oordeel.
+                beschrijftBeeld: /beeldtekst|in beeld|te zien|toont|verschijnt|beeld:/i.test(t),
+              };
+            }
+          }
+          uit.push({
+            soort,
+            knop: naam,
+            vak,
+            videonummer,
+            inSchaduw: wortel !== document,
+            tekst,
+          });
+        }
+      }
+      return uit.slice(0, 20);
+    })
+    .catch(() => []);
+}
+
 /**
  * Leest per video uit welke sporen erbij zitten: ondertiteling, audiosporen, transcript.
  *
@@ -7297,6 +7412,7 @@ async function getVideosporen(url: string, flags: Flags) {
       // Eén video, of een pagina waar video's op staan.
       let adressen: string[] = [];
       let paginaTekstalternatief: any = null;
+      let hulpmiddelen: Hulpmiddel[] = [];
       let eigenSpelers: any[] = [];
       let kleineSpelers = 0;
       if (eersteAdres) {
@@ -7327,6 +7443,7 @@ async function getVideosporen(url: string, flags: Flags) {
           }
           return treffers.slice(0, 10);
         });
+        hulpmiddelen = await leesHulpmiddelenNaastDeVideo(page);
       }
 
       const alleUnieke = Array.from(
@@ -7365,6 +7482,7 @@ async function getVideosporen(url: string, flags: Flags) {
 
         await page.goto(v.paginaadres, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
         await new Promise((r) => setTimeout(r, 1200));
+        await accepteerCookies(page);
         if (klik) {
           await page
             .evaluate((zoek: string) => {
@@ -7573,6 +7691,24 @@ async function getVideosporen(url: string, flags: Flags) {
       const gevondenMaarNietGelezen = adressen.length > 0 && videos.length === 0;
       const beslist = nietAfTeLezen === 0 && !gevondenMaarNietGelezen && nietBekeken === 0;
 
+      // Wat er naast de video staat. Hoort in dezelfde zin als de sporen: "geen
+      // audiodescriptiespoor" zonder "maar wel een knop Audiodescriptie onder de video" is
+      // precies de halve waarheid die op LEU-01 twee onterechte afkeuringen opleverde.
+      const hulpmiddelZin = hulpmiddelen.length
+        ? ` Naast de video op de pagina: ${hulpmiddelen
+            .map((h) =>
+              h.soort === 'transcript'
+                ? `knop "${h.knop}"${h.vak ? ` in ${h.vak}` : ''}${
+                    h.tekst
+                      ? `, met ${h.tekst.tekens} tekens tekst erachter${
+                          h.tekst.beschrijftBeeld ? ' waarin ook beeld beschreven staat' : ''
+                        }`
+                      : ', tekst niet uitgelezen'
+                  }`
+                : `knop "${h.knop}"${h.vak ? ` in ${h.vak}` : ''} (beluister die zelf: of de beschrijving klopt is niet gemeten)`
+            )
+            .join('; ')}.`
+        : '';
       const stapZin = (() => {
         if (!videos.length) {
           if (eigenSpelers.length) {
@@ -7628,7 +7764,7 @@ async function getVideosporen(url: string, flags: Flags) {
             ? ` Van ${zonderBeeldjes} ${zonderBeeldjes === 1 ? 'video' : "video's"} kwamen geen beeldjes: de speler kwam niet op gang, dus open ondertiteling is niet nagekeken.`
             : ' Van elke video zijn drie beeldjes vastgelegd om open ondertiteling te kunnen zien.'
         }`;
-      })();
+      })() + hulpmiddelZin;
 
       let overzicht: string | null = path.join(dir, `${stempel}-videosporen.txt`);
       try {
@@ -7660,6 +7796,16 @@ async function getVideosporen(url: string, flags: Flags) {
             `  beeldjes:         ${v.beeldjes?.length ?? 0}${v.beeldjesGelukt ? '' : ' (speler kwam niet op gang)'}`,
             '',
           ]),
+          'NAAST DE VIDEO (knoppen op de pagina, ook in shadow DOM)',
+          ...(hulpmiddelen.length
+            ? hulpmiddelen.map(
+                (h) =>
+                  `  ${h.soort}: "${h.knop}"${h.vak ? ` in ${h.vak}` : ''}${
+                    h.videonummer ? ` (video ${h.videonummer})` : ''
+                  }${h.tekst ? ` · ${h.tekst.tekens} tekens${h.tekst.beschrijftBeeld ? ', beschrijft ook beeld' : ''}` : ''}`
+              )
+            : ['  geen']),
+          '',
           'TEKSTALTERNATIEF OP DE PAGINA (kandidaten, niet nagelopen)',
           ...(paginaTekstalternatief?.length
             ? paginaTekstalternatief.map((t: any) => `  ${t.soort} "${t.tekst}"${t.adres ? ` → ${t.adres}` : ''}`)
@@ -7690,6 +7836,8 @@ async function getVideosporen(url: string, flags: Flags) {
           videos: videos.length,
           eigenSpelers: eigenSpelers.length,
           zonderAudiodescriptiespoor: zonderAudiodescriptie,
+          transcriptknopNaastDeVideo: hulpmiddelen.filter((h) => h.soort === 'transcript').length,
+          audiodescriptieknopNaastDeVideo: hulpmiddelen.filter((h) => h.soort === 'audiodescriptie').length,
           nietAfTeLezen,
           zonderBeeldjes,
           beslist,
@@ -7706,6 +7854,7 @@ async function getVideosporen(url: string, flags: Flags) {
         videos,
         eigen_spelers: eigenSpelers.length ? eigenSpelers : undefined,
         kleine_videovakjes_overgeslagen: kleineSpelers || undefined,
+        hulpmiddelen_naast_de_video: hulpmiddelen.length ? hulpmiddelen : undefined,
         tekstalternatief_op_de_pagina: paginaTekstalternatief ?? undefined,
         schermafdruk: beelden[0]?.pad ?? paginaOpname,
         overzicht,
@@ -7726,7 +7875,13 @@ async function getVideosporen(url: string, flags: Flags) {
                 ? 'Er staan video-adressen op de pagina die niet uit te lezen waren. '
                 : ''
             }Meet opnieuw in de audit-sessie, of beoordeel met de hand.`
-          : `Uitgelezen, niet geoordeeld. Voor 1.2.5 is audiodescriptie nodig; voor 1.2.3 mag dat ook een tekstalternatief zijn dat beschrijft wat er te zien is. LET OP: audiodescriptie wordt in Nederland meestal als LOSSE video gepubliceerd en niet als tweede audiospoor, dus "geen apart audiospoor" is geen afkeuring — zoek ook naar een variant met "audiodescriptie" in de titel${
+          : `${
+              hulpmiddelen.length
+                ? `LET OP: naast de video staan knoppen voor ${Array.from(
+                    new Set(hulpmiddelen.map((h) => h.soort))
+                  ).join(' en ')} (zie hulpmiddelen_naast_de_video). "Geen apart audiospoor" of "geen transcript op YouTube" betekent hier dus NIET dat het ontbreekt. Lees de transcripttekst na en beluister de audiodescriptie voordat je oordeelt. `
+                : ''
+            }Uitgelezen, niet geoordeeld. Voor 1.2.5 is audiodescriptie nodig; voor 1.2.3 mag dat ook een tekstalternatief zijn dat beschrijft wat er te zien is. LET OP: audiodescriptie wordt in Nederland meestal als LOSSE video gepubliceerd en niet als tweede audiospoor, dus "geen apart audiospoor" is geen afkeuring — zoek ook naar een variant met "audiodescriptie" in de titel${
               paginaTekstalternatief?.length ? ' — er staan kandidaten op de pagina, loop die na' : ''
             }. Bekijk de beeldjes op open ondertiteling: die staat in geen enkele gegevensbron en is de klassieke bron van onterechte bevindingen. Automatisch gegenereerde ondertiteling telt niet als ondertiteling.`,
       });
