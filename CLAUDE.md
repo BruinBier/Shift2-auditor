@@ -349,6 +349,11 @@ krijgt dan niets te zien en de uitkomst wordt ten onrechte "er gebeurt niets". G
 videoadres zelf mee — `get-flitsen https://www.youtube.com/watch?v=<nummer>` — dan opent het
 commando de video op zijn eigen pagina en zet de speler gedempt aan. Eerst het insluitadres;
 weigert YouTube dat (Fout 153, "fout bij configuratie van videospeler"), dan de watchpagina.
+Bij een videoadres neemt het commando de hele video op, tot het einde en maximaal tien
+minuten; `--seconden` begrenst dat. Het meldt welk stuk gemeten is
+(`gemeten_deel_van_de_video`) en geeft het drukste moment in videotijd. Tot 7 oktober 2026
+waren het tien seconden, en op LEU-01 zat de strobo op 0:19. Zonder flitsen in een deel
+van de video is de uitkomst onbeslist; een afkeuring in een deel staat wel.
 Op een gewone pagina somt `get-flitsen` de gevonden video's op mét de regel om ze apart te
 meten.
 
