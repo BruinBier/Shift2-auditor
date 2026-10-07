@@ -6470,16 +6470,72 @@ async function getFlitsen(url: string, flags: Flags) {
           // De opname is gestopt; dan hoeft er niets meer bevestigd te worden.
         }
       });
+      // Waar de video staat. Bij een video gaat de opname over de hele film, niet over de
+      // standaard tien seconden van een gewone pagina: op LEU-01 (HackShield, 2026-10-07)
+      // zat een strobo op 0:19 en meldde de eerste meting "voldoet". Doorspoelen kan niet
+      // (YouTube blijft op `seeking` hangen), dus de opname loopt mee met het afspelen, en
+      // de eerste seconden die opgingen aan het starten van de speler staan erbij.
+      const videoTijd = async () =>
+        page
+          .evaluate(() => {
+            const v = document.querySelector('video') as HTMLVideoElement | null;
+            return v
+              ? {
+                  tijd: v.currentTime,
+                  duur: Number.isFinite(v.duration) ? v.duration : null,
+                  klaar: v.ended,
+                }
+              : null;
+          })
+          .catch(() => null);
+      const MAX_VIDEO = 600;
+      const videoBegin = video && videoStand?.speelt ? await videoTijd() : null;
+      const opnameSeconden =
+        flags.seconden || !videoBegin
+          ? seconden
+          : Math.min(
+              MAX_VIDEO,
+              Math.max(seconden, Math.ceil((videoBegin.duur ?? 60) - videoBegin.tijd) + 2)
+            );
+
       await cdp.send('Page.enable').catch(() => {});
       await cdp.send('Page.startScreencast', {
         format: 'jpeg',
-        quality: 70,
+        // Bij een lange opname iets lager, anders loopt het geheugen vol: twee minuten film
+        // zijn zo'n vierduizend beeldjes. De analyse verkleint toch naar 160 bij 120.
+        quality: opnameSeconden > 30 ? 55 : 70,
         maxWidth: 640,
         maxHeight: 400,
         everyNthFrame: 1,
       });
-      await new Promise((r) => setTimeout(r, seconden * 1000));
+      const opnameStart = Date.now();
+      while (Date.now() - opnameStart < opnameSeconden * 1000) {
+        await new Promise((r) => setTimeout(r, Math.min(2000, opnameSeconden * 1000)));
+        // Afgelopen is afgelopen: daarna tekent de speler een eindscherm, en dat hoort
+        // niet bij de film.
+        if (videoBegin && (await videoTijd())?.klaar) break;
+      }
       await cdp.send('Page.stopScreencast').catch(() => {});
+      // Hoe lang er werkelijk is opgenomen: bij een video die eerder afloopt korter dan gevraagd.
+      const opgenomen = Math.round((Date.now() - opnameStart) / 1000);
+      const videoEind = videoBegin ? await videoTijd() : null;
+      const mmss = (s: number) =>
+        `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+      const videoBereik = videoBegin
+        ? {
+            van: Math.round(videoBegin.tijd * 10) / 10,
+            tot: Math.round((videoEind?.tijd ?? videoBegin.tijd) * 10) / 10,
+            duur: videoBegin.duur ? Math.round(videoBegin.duur) : null,
+          }
+        : null;
+      // Drie seconden marge aan het begin: zo lang duurt het starten van de speler, en
+      // zonder marge zou elke schone uitkomst onbeslist worden. Wat er overgeslagen is,
+      // staat altijd in de zin erbij.
+      const volledigGemeten =
+        !videoBereik ||
+        (videoBereik.duur !== null &&
+          videoBereik.van <= 3 &&
+          videoBereik.tot >= videoBereik.duur - 2);
 
       // De tijdstempels komen in seconden sinds het begin van de tijdrekening; omrekenen
       // naar seconden sinds het eerste beeldje leest een stuk prettiger.
@@ -6733,7 +6789,12 @@ async function getFlitsen(url: string, flags: Flags) {
           n++;
           const pad = path.join(dir, `${stempel}-${naam}-flits-${n}.jpg`);
           fs.writeFileSync(pad, Buffer.from(x.b.data, 'base64'));
-          beelden.push({ pad, bijschrift: `Beeldje ${n} — ${x.t.toFixed(2)} s` });
+          beelden.push({
+            pad,
+            bijschrift: videoBereik
+              ? `Beeldje ${n} — ${(videoBereik.van + x.t).toFixed(2)} s in de video`
+              : `Beeldje ${n} — ${x.t.toFixed(2)} s`,
+          });
         }
       }
 
@@ -6747,8 +6808,25 @@ async function getFlitsen(url: string, flags: Flags) {
       // Een video die niet gespeeld heeft is niet gemeten. Dat als "niets gezien"
       // wegschrijven is precies de valse gerustheid die dit commando moet voorkomen.
       const videoGespeeld = !video || (!!videoStand?.speelt && videoStand.gelopen > 0);
+      // Een afkeuring in een deel van de video staat; een schone uitkomst over een deel niet.
       const beslist =
-        genoegSnel && stilleSpelers === 0 && videoGespeeld && !(video && toestemmingsscherm);
+        genoegSnel &&
+        stilleSpelers === 0 &&
+        videoGespeeld &&
+        !(video && toestemmingsscherm) &&
+        (volledigGemeten || verdacht);
+      // Het drukste moment in de tijd van de video zelf, niet van de opname: de onderzoeker
+      // zoekt het op in de speler, en daar is 0:19 0:19.
+      const ergsteInVideo = videoBereik ? videoBereik.van + ergsteMoment : null;
+      const bereikZin = videoBereik
+        ? ` Gemeten van ${mmss(videoBereik.van)} tot ${mmss(videoBereik.tot)}${
+            videoBereik.duur ? ` van de ${mmss(videoBereik.duur)}` : ''
+          }${
+            videoBereik.van > 0.5
+              ? ` (de eerste ${Math.round(videoBereik.van)} seconden gingen op aan het starten van de speler)`
+              : ''
+          }${volledigGemeten ? '.' : '; de rest is niet opgenomen.'}`
+        : '';
 
       const stapZin = (() => {
         const waar = video
@@ -6764,7 +6842,7 @@ async function getFlitsen(url: string, flags: Flags) {
         // Eén beeldje is de tekening bij binnenkomst; die telt niet als verandering. Pas
         // vanaf het derde beeldje is er een reeks om iets over te zeggen.
         if (beeldjes.length <= 2) {
-          return `${waar}${seconden} seconden lang de tekenopnemer van de browser meegelezen: de pagina heeft in die tijd ${
+          return `${waar}${opgenomen} seconden lang de tekenopnemer van de browser meegelezen: de pagina heeft in die tijd ${
             beeldjes.length === 0
               ? 'geen enkele keer getekend'
               : `${beeldjes.length === 1 ? 'één keer getekend' : 'twee keer getekend'} — de tekening bij binnenkomst — en daarna niet meer`
@@ -6772,16 +6850,18 @@ async function getFlitsen(url: string, flags: Flags) {
             stilleSpelers ? ` Let op: er ${stilleSpelers === 1 ? 'staat 1 speler' : `staan ${stilleSpelers} spelers`} stil in beeld; die is niet meegemeten.` : ''
           }`;
         }
-        const hoe = `${waar}${seconden} seconden opgenomen met de tekenopnemer van de browser: ${beeldjes.length} beeldjes, ${perSeconde} per seconde. Per blok van het beeld de helderheid gevolgd en de tegengestelde sprongen geteld (10% van de schaal, donkerste onder 0,80).`;
+        const hoe = `${waar}${opgenomen} seconden opgenomen met de tekenopnemer van de browser: ${beeldjes.length} beeldjes, ${perSeconde} per seconde.${bereikZin} Per blok van het beeld de helderheid gevolgd en de tegengestelde sprongen geteld (10% van de schaal, donkerste onder 0,80).`;
         if (!genoegSnel) {
           return `${hoe} Er staat een bron op de pagina die doorlopend tekent (film, canvas of een kader van een ander domein) en daarvoor is deze snelheid te laag: een snelle flits kan dan tussen de beeldjes door vallen. Hieruit volgt geen uitspraak over 2.3.1.`;
         }
         if (!verdacht) {
-          return `${hoe} Geen enkel blok kwam boven drie flitsen per seconde; de zwaarste seconde telde er ${ergsteAantal}.`;
+          return `${hoe} Geen enkel blok kwam boven drie flitsen per seconde; de zwaarste seconde telde er ${ergsteAantal}.${
+            volledigGemeten ? '' : ' Dat zegt niets over het stuk dat niet is opgenomen.'
+          }`;
         }
-        return `${hoe} De drukste seconde begon op ${ergsteMoment.toFixed(
-          2
-        )} s en telde ${ergsteAantal} flitsen. ${blokkenBoven.size} van de ${KOL * RIJ} blokken kwam boven drie per seconde, samen ${(aandeel * 100).toFixed(1)}% van het beeld — ${
+        return `${hoe} De drukste seconde begon op ${
+          ergsteInVideo !== null ? `${mmss(ergsteInVideo)} in de video` : `${ergsteMoment.toFixed(2)} s`
+        } en telde ${ergsteAantal} flitsen. ${blokkenBoven.size} van de ${KOL * RIJ} blokken kwam boven drie per seconde, samen ${(aandeel * 100).toFixed(1)}% van het beeld — ${
           teGroot ? 'boven' : 'onder'
         } de gebiedsgrens van ${(GEBIEDSGRENS * 100).toFixed(1)}%.${
           blokkenBovenRood.size ? ` Bij ${blokkenBovenRood.size} blokken ging het om verzadigd rood.` : ''
@@ -6796,13 +6876,22 @@ async function getFlitsen(url: string, flags: Flags) {
             session.mode === 'cdp' ? 'auditsessie' : 'headless'
           }`,
           `Weergave: ${klik ? `na klikken op ${klik}` : 'standaardweergave'}`,
-          `Opname: ${seconden}s · ${beeldjes.length} beeldjes · ${perSeconde} per seconde · alleen wat in beeld stond`,
+          `Opname: ${opgenomen}s · ${beeldjes.length} beeldjes · ${perSeconde} per seconde · alleen wat in beeld stond`,
           `Blokken: ${KOL} x ${RIJ} · gebiedsgrens ${(GEBIEDSGRENS * 100).toFixed(1)}% van het beeld`,
           '',
           'UITKOMST',
           `  blokken boven 3 flitsen per seconde: ${blokkenBoven.size} (${(aandeel * 100).toFixed(1)}% van het beeld)`,
           `  waarvan verzadigd rood:              ${blokkenBovenRood.size} (${(aandeelRood * 100).toFixed(1)}%)`,
-          `  drukste seconde:                     ${ergsteAantal} flitsen vanaf ${ergsteMoment.toFixed(2)}s`,
+          `  drukste seconde:                     ${ergsteAantal} flitsen vanaf ${ergsteMoment.toFixed(2)}s${
+            ergsteInVideo !== null ? ` (${mmss(ergsteInVideo)} in de video)` : ''
+          }`,
+          ...(videoBereik
+            ? [
+                `  gemeten deel van de video:           ${mmss(videoBereik.van)} tot ${mmss(videoBereik.tot)}${
+                  videoBereik.duur ? ` van ${mmss(videoBereik.duur)}` : ''
+                }${volledigGemeten ? ' (volledig)' : ' (NIET volledig)'}`,
+              ]
+            : []),
           `  boven de gebiedsgrens:               ${teGroot ? 'JA' : 'nee'}${teGrootRood ? ' (rood: JA)' : ''}`,
           `  bruikbare snelheid:                  ${genoegSnel ? 'ja' : 'NEE — te weinig beeldjes per seconde'}`,
           '',
@@ -6861,6 +6950,7 @@ async function getFlitsen(url: string, flags: Flags) {
           maxFlitsenPerSeconde: ergsteAantal,
           verzadigdRood: blokkenBovenRood.size,
           bovenDeGebiedsgrens: teGroot || teGrootRood,
+          ...(videoBereik ? { videoVan: videoBereik.van, videoTot: videoBereik.tot, videoDuur: videoBereik.duur, volledigGemeten } : {}),
           beslist,
         },
       });
@@ -6871,7 +6961,10 @@ async function getFlitsen(url: string, flags: Flags) {
         weergave: klik ? `na klikken op ${klik}` : 'standaardweergave',
         omgeleid,
         gevraagdeUrl: omgeleid ? gevraagdeUrl : undefined,
-        opname: `${seconden}s · ${beeldjes.length} beeldjes · ${perSeconde} per seconde`,
+        opname: `${opgenomen}s · ${beeldjes.length} beeldjes · ${perSeconde} per seconde`,
+        gemeten_deel_van_de_video: videoBereik
+          ? { van: mmss(videoBereik.van), tot: mmss(videoBereik.tot), duur: videoBereik.duur ? mmss(videoBereik.duur) : null, volledig: volledigGemeten }
+          : undefined,
         gebied: 'alleen wat in beeld stond; wat onder de vouw flitst is niet opgenomen',
         beeldjes: beeldjes.length,
         beeldjes_per_seconde: perSeconde,
@@ -6881,7 +6974,7 @@ async function getFlitsen(url: string, flags: Flags) {
         gebiedsgrens: `${(GEBIEDSGRENS * 100).toFixed(1)}% van het beeld (een kwart van een gezichtsveld van 10 graden)`,
         boven_de_gebiedsgrens: teGroot,
         drukste_seconde: ergsteAantal,
-        drukste_moment: `${ergsteMoment.toFixed(2)}s`,
+        drukste_moment: ergsteInVideo !== null ? `${mmss(ergsteInVideo)} in de video` : `${ergsteMoment.toFixed(2)}s`,
         verzadigd_rood_blokken: blokkenBovenRood.size,
         verzadigd_rood_boven_de_grens: teGrootRood,
         gemeten_op: video ? `de video zelf (${video.platform} ${video.nummer})` : 'de pagina',
