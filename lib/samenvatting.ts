@@ -101,8 +101,12 @@ function samenvattingRuw(i: SamenvattingInvoer): string {
     return (
       `<p class="mb-3">Dit heronderzoek is door Shift2 uitgevoerd tussen ${escapeHtml(i.dateStart)} en ${escapeHtml(i.dateEnd)}. ` +
       `${steekproefZin.replace('{totalPages}', String(i.totalPages))}</p>\n\n` +
+      // De cijferzin staat er ook hier, zoals in elk ander rapport: de lezer zoekt het
+      // aantal beoordeelde en behaalde criteria op dezelfde plek. Frits, 2026-10-08 (MAAS-01).
       `<p class="mb-3">${opgelostZin} ` +
-      `De onderzochte content voldoet daarmee aan alle ${i.totalCriteria} beoordeelde succescriteria van ${escapeHtml(i.standaard || 'WCAG 2.2')} niveau ${escapeHtml(i.niveau || 'A en AA')}.</p>`
+      `In dit ${ditWoord} zijn ${i.totalCriteria} succescriteria beoordeeld. ` +
+      `Er wordt voldaan aan ${i.passedCriteria} van deze ${i.totalCriteria} succescriteria (${percentage}%). ` +
+      `De onderzochte content voldoet daarmee aan ${escapeHtml(i.standaard || 'WCAG 2.2')} niveau ${escapeHtml(i.niveau || 'A en AA')}.</p>`
     );
   }
 
