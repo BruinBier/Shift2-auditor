@@ -166,4 +166,85 @@ export async function koppelBevindingAanGebied(
   return true;
 }
 
+/**
+ * Een bevinding is omgezet naar opmerking of andersom: gebied en sample-oordeel gaan mee.
+ *
+ * Het oordeel per pagina staat los van de bevindingen opgeslagen. Werd een bevinding op de
+ * kaart een opmerking, dan bleef het oordeel `afgekeurd` en het gebied `fout` staan: op
+ * LEU-01 (Stap 2b, 1.3.1, B021, 2026-10-08) stond er "voldoet niet" boven een kaart met
+ * alleen een opmerking. Het omgekeerde gold ook: een opmerking die een bevinding werd liet
+ * een `voldoet` staan.
+ *
+ * Per pagina waar de bevinding staat (of naar wie een gebied verwijst) wordt opnieuw
+ * gekeken naar de bevindingen die nog gelden (niet afgewezen) onder dit criterium:
+ * - is er nog een bevinding, dan `afgekeurd`;
+ * - zijn er alleen opmerkingen, dan wordt een `afgekeurd` een `opmerking`;
+ * - andere oordelen (`voldoet`, `niet_aanwezig`, `niet_te_bepalen`) blijven staan.
+ * Een gebied gaat van `fout` naar `opmerking` als er onder dat gebied geen bevinding meer
+ * hangt, en naar `fout` als er weer een bij komt. `reden` en akkoord blijven ongemoeid:
+ * het is de onderzoeker die hier omzet.
+ */
+export async function volgSoortwissel(
+  findingId: string,
+  projectId: string,
+  wcagCriterionId: string,
+): Promise<number> {
+  const bevinding = await prisma.finding.findUnique({
+    where: { id: findingId },
+    select: { occurrences: { select: { sampleItemId: true } } },
+  });
+  const samples = new Set((bevinding?.occurrences ?? []).map((o) => o.sampleItemId));
+
+  const checks = await prisma.sampleCriterionCheck.findMany({
+    where: { wcagCriterionId, sampleItem: { projectId } },
+    select: { id: true, sampleItemId: true, status: true, gebieden: true },
+  });
+
+  let aangepast = 0;
+  for (const check of checks) {
+    const gebieden = check.gebieden as Gebied[] | null;
+    const verwijst = Array.isArray(gebieden) && gebieden.some((g) => (g.bevindingen ?? []).includes(findingId));
+    if (!samples.has(check.sampleItemId) && !verwijst) continue;
+
+    // Wat er nu nog geldt onder dit criterium op deze pagina.
+    const geldend = await prisma.finding.findMany({
+      where: {
+        projectId,
+        wcagCriterionId,
+        status: { notIn: Array.from(VERVALLEN) as any },
+        occurrences: { some: { sampleItemId: check.sampleItemId } },
+      },
+      select: { id: true, type: true },
+    });
+    const soortVan = new Map(geldend.map((f) => [f.id, f.type]));
+    const heeftBevinding = geldend.some((f) => f.type !== 'opmerking');
+
+    const status = heeftBevinding
+      ? 'afgekeurd'
+      : check.status === 'afgekeurd'
+        ? geldend.length
+          ? 'opmerking'
+          : 'voldoet'
+        : check.status;
+
+    const nieuweGebieden = Array.isArray(gebieden)
+      ? gebieden.map((g) => {
+          const ids = (g.bevindingen ?? []).filter((id) => soortVan.has(id));
+          if (!ids.length) return g;
+          const nogFout = ids.some((id) => soortVan.get(id) !== 'opmerking');
+          const uitkomst = nogFout ? 'fout' : g.uitkomst === 'fout' ? 'opmerking' : g.uitkomst;
+          return uitkomst === g.uitkomst ? g : { ...g, uitkomst };
+        })
+      : gebieden;
+
+    if (status === check.status && JSON.stringify(nieuweGebieden) === JSON.stringify(gebieden)) continue;
+    await prisma.sampleCriterionCheck.update({
+      where: { id: check.id },
+      data: { status: status as any, ...(Array.isArray(nieuweGebieden) ? { gebieden: nieuweGebieden } : {}) },
+    });
+    aangepast += 1;
+  }
+  return aangepast;
+}
+
 export { VERVALLEN };

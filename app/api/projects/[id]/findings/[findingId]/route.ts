@@ -6,7 +6,7 @@ import {
   herberekenCriteriumOordeel,
   herberekenCriteriumOordelen,
 } from '@/lib/criterion-assessment';
-import { haalBevindingUitGebieden } from '@/lib/gebied-koppeling';
+import { haalBevindingUitGebieden, volgSoortwissel } from '@/lib/gebied-koppeling';
 
 export async function PUT(
   request: NextRequest,
@@ -160,6 +160,12 @@ export async function PUT(
 
         console.log('Created', occurrences.length, 'new FindingOccurrence records');
       }
+    }
+
+    // Omgezet naar opmerking of andersom: het oordeel per pagina en het gebied gaan mee.
+    // Anders bleef "voldoet niet" staan boven een kaart met alleen een opmerking.
+    if (updatedFinding.type !== existingFinding.type) {
+      await volgSoortwissel(params.findingId, params.id, updatedFinding.wcagCriterionId);
     }
 
     // Het criteriumoordeel volgt uit de bevindingen — in elke projectfase dezelfde
