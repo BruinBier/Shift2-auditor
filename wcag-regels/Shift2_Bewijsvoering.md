@@ -174,3 +174,23 @@ Aanleiding: beverwijk.nl, homepage (2026-07-02). Er stond een 1.3.5-bevinding op
 nieuwsbriefformulier dat wel in de HTML-dump zit, maar in de zichtbare footer niet bestaat (die
 heeft alleen Gemeente Beverwijk, Meer informatie, Blijf op de hoogte en Denk mee). Frits: "waar
 zie jij nieuwsbrief?"
+
+## Technieken van W3C: voldoende, aanvullend of fout
+
+Bij elk succescriterium noemt W3C (Understanding-pagina, "How to Meet") drie soorten
+technieken. Ze hebben elk een andere status, en een oordeel mag alleen op de juiste soort
+rusten.
+
+| Soort | Wat het betekent | Wat je ermee doet |
+|---|---|---|
+| **Sufficient** (voldoende) | Correct toegepast voldoet de pagina aan het criterium. Het zijn voorbeelden, geen gesloten lijst: een andere aanpak kan ook voldoen als hij aantoonbaar aan de tekst van het criterium voldoet. | Een "voldoet" mag hierop rusten. Noem de techniek in de toelichting (bijvoorbeeld H78). |
+| **Advisory** (aanvullend) | Goede praktijk die de toegankelijkheid verbetert, maar op zichzelf niet bewijst dat aan het criterium is voldaan, vaak omdat hulpsoftware het wisselend ondersteunt. | Mag in een advies, nooit als grond voor "voldoet". |
+| **Failure** (fout) | Een bekende fout: komt dit voor, dan voldoet de pagina niet. | Een afkeuring mag hierop rusten. Noem de failure in de toelichting (bijvoorbeeld F63). |
+
+Twijfel je, kijk dan op de Understanding-pagina van het criterium onder welk kopje een
+techniek staat. Op de pagina van de techniek zelf staat het ook: "This technique relates to
+2.4.4 (Advisory)" of "(Sufficient)".
+
+Aanleiding: LEU-01 (2026-10-08). Bij het afwijzen van V033 (2.4.4) noemde ik H80, de kop
+boven een link, als extra grond voor "voldoet". H80 staat bij 2.4.4 onder Advisory; het
+oordeel rust terecht op H78, de alinea waarin de link staat.
