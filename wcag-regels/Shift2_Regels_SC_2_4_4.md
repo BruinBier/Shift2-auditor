@@ -135,6 +135,17 @@ klikbaarheid niet.
 - **Waar de context vandaan mag komen.** WCAG noemt: dezelfde zin, dezelfde alinea, hetzelfde lijstitem, dezelfde tabelcel, én de tabelkop(pen) van de cel waarin de link staat. Die laatste hoort erbij en stond hier tot 2026-08-26 niet: een `<th>` is programmatisch aan zijn cel gekoppeld, anders dan een kop bóven een kaartje. In een tarieventabel is het juist de RIJkop die de link betekenis geeft — "Paspoort | € 83,85 | Aanvragen". `get-links` zoekt die koppen op via `headers=`, anders via de eerste `<th>` in de rij plus de `<th>` op dezelfde kolompositie.
   Neem hier NIET de formulering van RAMP over ("the same paragraph, list or table cell"): die schrijft *lijst* waar WCAG *lijstitem* zegt, en zou context uit een naastliggend `<li>` toestaan.
 - Link in een eigen <p> of <li> krijgt GEEN programmatische context van een kop of alinea die erboven staat maar niet in hetzelfde element zit. "Lees meer..." in een eigen <p> is dus een AFKEURING, ook al oogt de kaart visueel als een geheel. Niet wegredeneren met "de kop staat er wel bij". QuickFinding d7494b0a-a187-4930-bef7-05083ff5705d.
+- **Lees de hele alinea als context, niet alleen de woorden vlak bij de link.** De definitie
+  van "door software bepaalde linkcontext" vraagt niet dat het onderwerp letterlijk bij de
+  link staat, maar dat het doel uit de linktekst samen met dezelfde zin, alinea, lijstitem of
+  tabelcel te begrijpen is. Beschrijft de alinea één persoon of één ding, dan is dat de
+  context, ook als de naam zelf alleen in de kop erboven staat. Voorbeeld: op LEU-01
+  (Samenstelling gemeenteraad, 2026-10-08) staat bij elk raadslid "Raadsvergaderingen
+  stemgedrag" in een alinea met functie, woonplaats, e-mailadres en partij van dat raadslid.
+  Die alinea maakt duidelijk wiens stemgedrag het is: voldoet. De agent keurde af omdat de
+  naam alleen in de h2 stond (V033, afgewezen door Frits). Dezelfde linktekst bij
+  verschillende bestemmingen is onder 2.4.4 geen fout zolang de context ze uit elkaar houdt;
+  zonder context is het 2.4.9 (AAA).
 - Advies bij generieke linktekst: 1) maak de linktekst specifiek ("Lees meer over Fysieke overlegtafel"), OF 2) plaats de link in dezelfde alinea als de beschrijvende tekst. NOOIT adviseren om de hele kaart of container klikbaar te maken.
 - **Telefoonnummer of e-mailadres als linktekst.** Een geformatteerd telefoonnummer als linktekst is geen bevinding onder 2.4.4 als de link **bedoeld is om te bellen**, ook niet bij een technisch ontbrekende of defecte `tel:`-koppeling. Echter, als de link verwijst naar een **volledig andere bestemming** (zoals een webpagina of een document), is er wél sprake van een bevinding onder 2.4.4, omdat de linktekst het daadwerkelijke doel onjuist voorspelt.
   Hetzelfde geldt voor een e-mailadres als linktekst. Het voorwoord doet niet ter zake ("Telefoon:", "Bel:", "Mail:").
