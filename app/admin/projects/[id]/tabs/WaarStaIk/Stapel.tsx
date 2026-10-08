@@ -3535,6 +3535,10 @@ export default function Stapel({
                       {soortFout}
                     </p>
                   )}
+                  {/* Zonder deze regel stond Opslaan uit zonder dat te zien was waarom. */}
+                  {soortType === 'bevinding' && (!soortImpact || !soortVerantw) && (
+                    <p className="mt-2 text-xs opacity-70">Kies eerst impact en verantwoordelijke.</p>
+                  )}
                   <div className="mt-2 flex gap-2">
                     <button
                       type="button"
