@@ -138,17 +138,19 @@ klikbaarheid niet.
 - **Op welke techniek rust het oordeel.** Bij 2.4.4 zijn dit de voldoende technieken (Sufficient) voor linktekst plus context: H77 (het lijstitem waarin de link staat), H78 (de alinea), H79 (de tabelcel met de bijbehorende tabelkoppen), H81 (in een geneste lijst: het lijstitem waaronder die lijst hangt) en G53 (de zin). ARIA7 en ARIA8 (`aria-labelledby`, `aria-label`) gelden ook.
   **H80, de kop boven de link, staat bij 2.4.4 onder Advisory** (aanvullend). Een kop boven de link is dus nooit de grond voor "voldoet"; dat is de reden voor de regel hieronder dat een kop geen context geeft.
   De bijbehorende fout is **F63**: context alleen in inhoud die niet met de link verbonden is, zoals een "Lees meer" in een eigen alinea onder een kop. Noem bij een afkeuring F63, bij een voldoet de techniek waar het op rust. Wat voldoende, aanvullend en fout betekenen staat in `Shift2_Bewijsvoering.md`.
-- **Lees de hele alinea als context, niet alleen de woorden vlak bij de link.** De definitie
-  van "door software bepaalde linkcontext" vraagt niet dat het onderwerp letterlijk bij de
-  link staat, maar dat het doel uit de linktekst samen met dezelfde zin, alinea, lijstitem of
-  tabelcel te begrijpen is. Beschrijft de alinea één persoon of één ding, dan is dat de
-  context, ook als de naam zelf alleen in de kop erboven staat. Voorbeeld: op LEU-01
-  (Samenstelling gemeenteraad, 2026-10-08) staat bij elk raadslid "Raadsvergaderingen
-  stemgedrag" in een alinea met functie, woonplaats, e-mailadres en partij van dat raadslid.
-  Die alinea maakt duidelijk wiens stemgedrag het is: voldoet. De agent keurde af omdat de
-  naam alleen in de h2 stond (V033, afgewezen door Frits). Dezelfde linktekst bij
-  verschillende bestemmingen is onder 2.4.4 geen fout zolang de context ze uit elkaar houdt;
-  zonder context is het 2.4.9 (AAA).
+- **De context moet zeggen wie of wat het doel is, niet alleen erover vertellen.** Lees de hele
+  zin, alinea, lijstitem of tabelcel waarin de link staat, en vraag: blijkt daaruit, samen met
+  de linktekst, waar de link naartoe gaat? Een alinea die een persoon of ding beschrijft zonder
+  het te noemen, is niet genoeg. Staat de naam alleen in de kop erboven, dan is het een
+  afkeuring (F63; H80 is advisory). Voorbeeld: op LEU-01 (Samenstelling gemeenteraad,
+  2026-10-08) staat bij elk raadslid "Raadsvergaderingen stemgedrag" in een alinea met functie,
+  woonplaats, e-mailadres en partij, maar de naam staat alleen in de h2. Uit linktekst en
+  alinea blijkt "het stemgedrag van een raadslid uit Nunhem", niet "het stemgedrag van Léon
+  Linssen": afkeuring (V033). Een e-mailadres waarin de achternaam zit, telt niet als naam. Ik
+  heb V033 eerst afgewezen met de redenering dat de beschrijvende alinea genoeg was; Frits
+  wees erop dat er nergens staat dat het om Léon Linssen gaat, en die redenering is
+  teruggedraaid. Dezelfde linktekst bij verschillende bestemmingen is onder 2.4.4 geen fout
+  zolang de context ze uit elkaar houdt, maar dan moet die context ze ook echt benoemen.
 - Advies bij generieke linktekst: 1) maak de linktekst specifiek ("Lees meer over Fysieke overlegtafel"), OF 2) plaats de link in dezelfde alinea als de beschrijvende tekst. NOOIT adviseren om de hele kaart of container klikbaar te maken.
 - **Telefoonnummer of e-mailadres als linktekst.** Een geformatteerd telefoonnummer als linktekst is geen bevinding onder 2.4.4 als de link **bedoeld is om te bellen**, ook niet bij een technisch ontbrekende of defecte `tel:`-koppeling. Echter, als de link verwijst naar een **volledig andere bestemming** (zoals een webpagina of een document), is er wél sprake van een bevinding onder 2.4.4, omdat de linktekst het daadwerkelijke doel onjuist voorspelt.
   Hetzelfde geldt voor een e-mailadres als linktekst. Het voorwoord doet niet ter zake ("Telefoon:", "Bel:", "Mail:").
