@@ -45,16 +45,20 @@ leudal.nl zit de schakelaar in het toegankelijkheidsmenu.
 schakelaar is een verborgen vinkje (`#high_contrast`, label "Contrast verhogen") in het
 toegankelijkheidsmenu, met daaronder "Keuze opslaan". `--klik="#high_contrast"` geeft "Node is
 either not clickable", `--klik="tekst:Contrast verhogen"` vindt geen knop, en een klik op het
-label plus "Keuze opslaan" laat de instelling op `false` staan. Wat wel werkt: de instelling
-die de site zelf bewaart, rechtstreeks zetten en de pagina herladen:
+label plus "Keuze opslaan" laat de instelling op `false` staan. Gebruik daarom
+`--hoogcontrast=simsite` in plaats van `--klik`:
 
 ```
-localStorage.setItem('accessibilitySettings', JSON.stringify({ contrast: true, largeFont: false, dyslexicFont: false }))
+npm run cli -- get-contrast <url> --hoogcontrast=simsite
+npm run cli -- get-screenshot <url> --selector='<afbeelding>' --voor=1.4.3 --hoogcontrast=simsite
 ```
 
-Daarna is de tekst zwart op wit, en krijgen afbeeldingen een grijsfilter (`filter:
-grayscale(1)`); ze schakelen dus niet mee. Zet de instelling na afloop terug op `false`, of
-meet headless, anders blijft hij in de auditsessie staan.
+Die optie zet de instelling die de site zelf bewaart (`accessibilitySettings` in
+localStorage, `contrast: true`), herlaadt de pagina en zet hem bij het sluiten terug, zodat
+hij niet in de auditsessie blijft staan. Hij werkt ook bij `get-nietteksten` en
+`get-pixelcontrast`, en het logboek noteert "hoogcontrastweergave (simsite)" als weergave.
+In die weergave is de tekst zwart op wit, en krijgen afbeeldingen een grijsfilter (`filter:
+grayscale(1)`); ze schakelen dus niet mee.
 
 **Tekst in een afbeelding in die weergave: reken het grijsfilter na op de volledige
 afbeelding.** Het filter zet elke beeldpunt om naar grijs met

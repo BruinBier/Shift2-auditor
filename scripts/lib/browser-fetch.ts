@@ -339,6 +339,40 @@ export async function accepteerCookies(page: Page): Promise<string[]> {
 }
 
 /**
+ * Hoe de hoogcontrastweergave per sitesjabloon aangaat.
+ *
+ * Op SIMsite (leudal.nl en de andere sites op dat sjabloon) is de schakelaar een verborgen
+ * vinkje in het toegankelijkheidsmenu. `--klik` krijgt het niet aan: het vinkje is "not
+ * clickable", en een klik op het label plus "Keuze opslaan" laat de instelling op false
+ * staan. De site leest de keuze uit localStorage, dus die zetten en herladen werkt wel.
+ * Op LEU-01 (2026-10-08) sloeg de agent de hoogcontrastweergave daardoor over, en mat ik
+ * met de hand een flyer die in die weergave wél voldeed.
+ */
+const HOOGCONTRAST: Record<string, { sleutel: string; aan: string; uit: string }> = {
+  simsite: {
+    sleutel: 'accessibilitySettings',
+    aan: JSON.stringify({ contrast: true, largeFont: false, dyslexicFont: false }),
+    uit: JSON.stringify({ contrast: false, largeFont: false, dyslexicFont: false }),
+  },
+};
+let hoogcontrastSoort: string | null = null;
+
+/** Zet de hoogcontrastweergave aan voor elke pagina die hierna wordt geopend. */
+export function zetHoogcontrast(soort: string): void {
+  if (!HOOGCONTRAST[soort]) {
+    throw new Error(
+      `Onbekend sjabloon voor --hoogcontrast: "${soort}". Bekend: ${Object.keys(HOOGCONTRAST).join(', ')}.`
+    );
+  }
+  hoogcontrastSoort = soort;
+}
+
+/** Welke hoogcontrastweergave aanstaat, voor het logboek. */
+export function actieveHoogcontrast(): string | null {
+  return hoogcontrastSoort;
+}
+
+/**
  * Open een verse tab op `url`, wacht tot het netwerk rustig is + 1s buffer
  * voor late JS-rendering. Geeft een cleanup-functie terug die alleen de tab
  * sluit (niet de hele browser).
@@ -356,6 +390,15 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
   await new Promise((r) => setTimeout(r, 1000));
   await maakWakker(page);
   const cookiesGeaccepteerd = await accepteerCookies(page);
+  // Hoog contrast pas na de cookies: herladen met een cookiemelding ervoor laat die
+  // melding opnieuw verschijnen.
+  const hc = hoogcontrastSoort ? HOOGCONTRAST[hoogcontrastSoort] : null;
+  if (hc) {
+    await page.evaluate((k: string, v: string) => localStorage.setItem(k, v), hc.sleutel, hc.aan);
+    await page.reload({ waitUntil: 'networkidle2', timeout: timeoutMs }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 1500));
+    process.stderr.write(`[browser] hoogcontrastweergave aan (${hoogcontrastSoort})\n`);
+  }
   const eindUrl = page.url();
   const dichtgeklapt = await telDichtgeklapt(page);
   // De waarschuwing hoort hier en niet in één commando: elk commando dat een pagina opent
@@ -383,6 +426,11 @@ export async function openPage(session: BrowserSession, url: string, timeoutMs =
     cookiesGeaccepteerd,
     omgeleid: !zelfdePagina(url, eindUrl),
     cleanup: async () => {
+      // Terugzetten, anders blijft de weergave in de auditsessie staan en vervuilt hij de
+      // volgende meting.
+      if (hc) {
+        await page.evaluate((k: string, v: string) => localStorage.setItem(k, v), hc.sleutel, hc.uit).catch(() => {});
+      }
       await page.close().catch(() => {});
     },
   };

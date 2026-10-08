@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { OUTPUT_DIR, ensureOutputDir } from './browser-fetch';
+import { OUTPUT_DIR, ensureOutputDir, actieveHoogcontrast } from './browser-fetch';
 
 /**
  * Het logboek van de audit-CLI: wat is er werkelijk gedraaid?
@@ -119,6 +119,14 @@ export function legVast(regel: Omit<LogRegel, 'tijd' | 'criteria'> & { criteria?
       criteria: regel.criteria ?? CRITERIA_PER_COMMANDO[regel.commando] ?? [],
       ...regel,
     };
+    // Met --hoogcontrast staat dat in elke regel, zonder dat elk commando het zelf moet
+    // melden: een meting in hoog contrast die als standaardweergave in het logboek staat,
+    // zegt iets anders dan wat er gemeten is.
+    const hc = actieveHoogcontrast();
+    if (hc) {
+      const w = (volledig as any).weergave;
+      (volledig as any).weergave = `${w && w !== 'standaardweergave' ? `${w}, ` : ''}hoogcontrastweergave (${hc})`;
+    }
     fs.appendFileSync(LOGBOEK, JSON.stringify(volledig) + '\n', 'utf8');
   } catch (err) {
     console.error(`[audit-cli] waarschuwing: kon niet naar het logboek schrijven — ${String(err)}`);

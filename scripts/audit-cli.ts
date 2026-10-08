@@ -38,6 +38,7 @@ import {
   getBrowser,
   openPage,
   accepteerCookies,
+  zetHoogcontrast,
   ensureOutputDir,
   slugifyUrl,
   timestamp,
@@ -10140,6 +10141,9 @@ async function getConsistentie(doel: string, flags: Flags) {
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { positional, flags } = parseArgs(rest);
+  // --hoogcontrast=simsite: elke pagina die dit commando opent, gaat in de
+  // hoogcontrastweergave van dat sjabloon. Zie zetHoogcontrast in browser-fetch.ts.
+  if (flags.hoogcontrast && flags.hoogcontrast !== 'true') zetHoogcontrast(flags.hoogcontrast);
 
   switch (command) {
     case 'list-projects':
