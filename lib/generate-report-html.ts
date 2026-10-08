@@ -23,7 +23,7 @@ import {
   kopRapport,
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
-import { samenvattingHtml } from '@/lib/samenvatting';
+import { samenvattingHtml, opgelosteBevindingenTekst } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
 
 function escapeHtml(text: string | null | undefined): string {
@@ -234,7 +234,8 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     isHeronderzoek,
     nulmetingFailedCriteria,
     eerderOnderzoek(project),
-    project.sampleItems?.length || 0
+    project.sampleItems?.length || 0,
+    opgelosteBevindingenTekst(project, project.findings ?? [])
   );
   const opmerkingenHtml = renderBevindingenSectie(
     grouped,
@@ -523,7 +524,9 @@ function renderBevindingenSectie(
   /** "de nulmeting", of bij een aanvullend onderzoek "het eerdere onderzoek". */
   eerder = 'de nulmeting',
   /** Aantal pagina's in de steekproef; staat een bevinding op alle, dan geen URL-lijst. */
-  aantalSamples = 0
+  aantalSamples = 0,
+  /** Bij een aanvullend onderzoek zonder afwijkingen: zie opgelosteBevindingenTekst. */
+  leegTekstAanvullend: string | null = null
 ): string {
   const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
@@ -622,7 +625,9 @@ ${findingsHtml}`);
   if (criteriaBlocks.length === 0) {
     const een = opgelostBijNulmeting === 1;
     let leegTekst = `Er zijn geen ${heading.toLowerCase()} vastgesteld.`;
-    if (isHeronderzoek && opgelostBijNulmeting > 0) {
+    if (leegTekstAanvullend) {
+      leegTekst = leegTekstAanvullend;
+    } else if (isHeronderzoek && opgelostBijNulmeting > 0) {
       leegTekst = isOpmerkingen
         ? `${een ? 'De opmerking die' : `De ${opgelostBijNulmeting} opmerkingen die`} bij ${eerder} ${een ? 'openstond' : 'openstonden'}, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`
         : `${een ? 'Het succescriterium dat' : `De ${opgelostBijNulmeting} succescriteria die`} bij ${eerder} ${een ? 'werd' : 'werden'} afgekeurd, ${een ? 'is' : 'zijn'} nu ${een ? '' : 'allemaal '}opgelost.`;

@@ -165,3 +165,39 @@ function samenvattingRuw(i: SamenvattingInvoer): string {
     `${slotZin ?? `Bij ${i.failedCriteria} ${criteriaWoord} zijn afwijkingen vastgesteld.`}</p>`
   );
 }
+
+const TELWOORDEN = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien', 'elf', 'twaalf'];
+
+/**
+ * De tekst onder "Bevindingen" bij een aanvullend onderzoek zonder afwijkingen.
+ *
+ * Daar stond "Er zijn geen bevindingen vastgesteld.", onder een inleiding die aankondigt
+ * dat de afwijkingen hieronder worden beschreven. Dat leest als een onderzoek waarin niets
+ * te vinden was, terwijl de punten uit het vorige onderzoek zijn opgelost. Frits,
+ * 2026-10-08 (MAAS-01).
+ *
+ * Het aantal is het aantal succescriteria met een opgeloste afkeuring in dit onderzoek: de
+ * bevindingen uit het vorige onderzoek staan er met status `resolved` in. Opmerkingen
+ * tellen niet mee, die keurden niets af. Geeft null als het geen aanvullend onderzoek is;
+ * dan geldt de bestaande tekst.
+ */
+export function opgelosteBevindingenTekst(
+  project: OnderzoekSoortInvoer,
+  findings: { type?: string | null; impact?: string | null; status?: string | null; wcagCriterionId?: string | null; wcagCriterion?: { id?: string; code?: string } | null }[],
+): string | null {
+  if (!isAanvullendOnderzoek(project)) return null;
+  const criteria = new Set(
+    findings
+      .filter((f) => (f.type != null ? f.type !== 'opmerking' : f.impact != null) && f.status === 'resolved')
+      .map((f) => f.wcagCriterionId ?? f.wcagCriterion?.id ?? f.wcagCriterion?.code)
+      .filter(Boolean),
+  );
+  const n = criteria.size;
+  const vorige = vorigOnderzoek(project);
+  const zin = `Alle bevindingen uit ${vorige} zijn opgelost.`;
+  if (n === 0) return zin;
+  if (n === 1) {
+    return `${zin} Het succescriterium waaraan toen niet werd voldaan, voldoet nu aan de toegankelijkheidseisen.`;
+  }
+  return `${zin} De ${TELWOORDEN[n] ?? n} succescriteria waaraan toen niet werd voldaan, voldoen nu allemaal aan de toegankelijkheidseisen.`;
+}

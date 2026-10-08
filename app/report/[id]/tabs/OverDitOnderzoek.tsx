@@ -20,7 +20,7 @@ import {
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
-import { samenvattingHtml } from '@/lib/samenvatting';
+import { samenvattingHtml, opgelosteBevindingenTekst } from '@/lib/samenvatting';
 import { marked } from 'marked';
 
 /**
@@ -69,6 +69,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const isHeronderzoekReport = bepaalHeronderzoek(project);
   // Waar het rapport naar terugverwijst: "de nulmeting" of "het eerdere onderzoek".
   const eerder = eerderOnderzoek(project);
+  // Aanvullend onderzoek zonder afwijkingen: zie opgelosteBevindingenTekst.
+  const aanvullendOpgelost = opgelosteBevindingenTekst(project, project.findings ?? []);
   const isOpenOpmerking = (f: any) =>
     isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
 
@@ -853,9 +855,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Bevindingen</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-gray-700 mb-6">
-              Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen, gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.
-            </p>
+            {/* Zonder afwijkingen kondigt deze zin iets aan dat niet komt; de generator
+                laat hem in dat geval ook weg. */}
+            {sortedCriteria.filter((a: any) => a.status === 'failed').length > 0 && (
+              <p className="text-gray-700 mb-6">
+                Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen, gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.
+              </p>
+            )}
 
             {/* Failed criteria */}
             <div className="space-y-6">
@@ -1020,7 +1026,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                   dan de uitkomst. Andersom valt het getal uit de lucht: "er is niets
                   gevonden" gevolgd door een aantal dat de lezer nergens kan plaatsen.
                 */}
-                {isHeronderzoekReport && (project.nulmetingFailedCriteria ?? 0) > 0
+                {aanvullendOpgelost
+                  ? aanvullendOpgelost
+                  : isHeronderzoekReport && (project.nulmetingFailedCriteria ?? 0) > 0
                   ? `${project.nulmetingFailedCriteria === 1 ? 'Het succescriterium dat' : `De ${project.nulmetingFailedCriteria} succescriteria die`} bij ${eerder} ${project.nulmetingFailedCriteria === 1 ? 'werd' : 'werden'} afgekeurd, ${project.nulmetingFailedCriteria === 1 ? 'is' : 'zijn'} nu ${project.nulmetingFailedCriteria === 1 ? '' : 'allemaal '}opgelost.`
                   : 'Er zijn geen bevindingen vastgesteld.'}
               </p>
