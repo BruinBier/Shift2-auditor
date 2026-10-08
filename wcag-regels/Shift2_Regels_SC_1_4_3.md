@@ -39,7 +39,33 @@ npm run cli -- get-screenshot <url> --selector='<afbeelding>' --voor=1.4.3 --kli
 ```
 
 De tekst achter `--klik` verschilt per site: op heuvelrug.nl is het "Contrast verhogen", op
-leudal.nl zit de schakelaar in het toegankelijkheidsmenu. Zet de knop daarna terug; de
+leudal.nl zit de schakelaar in het toegankelijkheidsmenu.
+
+**SIMsite (leudal.nl en andere sites op hetzelfde sjabloon): `--klik` werkt niet.** De
+schakelaar is een verborgen vinkje (`#high_contrast`, label "Contrast verhogen") in het
+toegankelijkheidsmenu, met daaronder "Keuze opslaan". `--klik="#high_contrast"` geeft "Node is
+either not clickable", `--klik="tekst:Contrast verhogen"` vindt geen knop, en een klik op het
+label plus "Keuze opslaan" laat de instelling op `false` staan. Wat wel werkt: de instelling
+die de site zelf bewaart, rechtstreeks zetten en de pagina herladen:
+
+```
+localStorage.setItem('accessibilitySettings', JSON.stringify({ contrast: true, largeFont: false, dyslexicFont: false }))
+```
+
+Daarna is de tekst zwart op wit, en krijgen afbeeldingen een grijsfilter (`filter:
+grayscale(1)`); ze schakelen dus niet mee. Zet de instelling na afloop terug op `false`, of
+meet headless, anders blijft hij in de auditsessie staan.
+
+**Tekst in een afbeelding in die weergave: reken het grijsfilter na op de volledige
+afbeelding.** Het filter zet elke beeldpunt om naar grijs met
+`0,2126·R + 0,7152·G + 0,0722·B`, toegepast op de sRGB-waarden. Neem de achtergrondkleur en
+de donkerste tekstkleur uit de afbeelding op ware grootte (het `src` van de grote variant,
+niet het galerijplaatje), zet beide om naar grijs en reken het contrast uit. Meet **niet** op
+een uitsnede van een verkleind plaatje: dunne tekst wordt daar lichter door het verkleinen.
+Op LEU-01 (Meldpunt Wet Goed Verhuurderschap, flyers, 2026-10-08) gaf het galerijplaatje van
+224 beeldpunten ongeveer 4,3:1 en leverde dat een onterechte afkeuring op; op de volledige
+afbeelding werd mintgroen #7CC5B1 grijs #B4B4B4 en de tekst #15553B grijs #464646, 4,55:1.
+Het grijsfilter verhoogde het contrast hier zelfs: in de normale weergave was het 4,38:1. Zet de knop daarna terug; de
 weergave blijft in de auditsessie staan. Die twee gebieden op
 `nvt` zetten met "hoort bij het homepage-sample" is fout zodra er zo'n afbeelding in de
 main-content staat. Alleen zonder afbeeldingen met tekst mag dat, en dan schrijf je dat er
