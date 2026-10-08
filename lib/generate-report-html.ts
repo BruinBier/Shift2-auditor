@@ -23,7 +23,7 @@ import {
   kopRapport,
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
-import { samenvattingHtml, opgelosteBevindingenTekst } from '@/lib/samenvatting';
+import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
 
 function escapeHtml(text: string | null | undefined): string {
@@ -243,7 +243,9 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     isHeronderzoek,
     opgelosteOpmerkingen,
     eerderOnderzoek(project),
-    project.sampleItems?.length || 0
+    project.sampleItems?.length || 0,
+    opmerkingenStandTekst(project, project.findings ?? []),
+    opmerkingenStandTekst(project, project.findings ?? [])
   );
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
@@ -526,12 +528,16 @@ function renderBevindingenSectie(
   /** Aantal pagina's in de steekproef; staat een bevinding op alle, dan geen URL-lijst. */
   aantalSamples = 0,
   /** Bij een aanvullend onderzoek zonder afwijkingen: zie opgelosteBevindingenTekst. */
-  leegTekstAanvullend: string | null = null
+  leegTekstAanvullend: string | null = null,
+  /** Vervangt de inleiding als er nog punten staan; zie opmerkingenStandTekst. */
+  introAanvullend: string | null = null
 ): string {
   const isOpmerkingen = kind === 'opmerking';
   const heading = isOpmerkingen ? 'Opmerkingen' : 'Bevindingen';
   const intro = isOpmerkingen
-    ? 'De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.'
+    ? introAanvullend
+      ? escapeHtml(introAanvullend)
+      : 'De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.'
     : 'Hieronder worden de vastgestelde afwijkingen beschreven. Per bevinding is de locatie en een beschrijving van het probleem opgenomen gevolgd door de impact op de gebruiker en een advies om de afwijking te verhelpen.';
   const resultLabel = isOpmerkingen
     ? 'Voldoet maar met opmerking'

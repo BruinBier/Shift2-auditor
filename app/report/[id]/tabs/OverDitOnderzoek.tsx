@@ -20,7 +20,7 @@ import {
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
-import { samenvattingHtml, opgelosteBevindingenTekst } from '@/lib/samenvatting';
+import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
 import { marked } from 'marked';
 
 /**
@@ -71,6 +71,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   const eerder = eerderOnderzoek(project);
   // Aanvullend onderzoek zonder afwijkingen: zie opgelosteBevindingenTekst.
   const aanvullendOpgelost = opgelosteBevindingenTekst(project, project.findings ?? []);
+  const opmerkingenStand = opmerkingenStandTekst(project, project.findings ?? []);
   const isOpenOpmerking = (f: any) =>
     isOpmerking(f) && !(isHeronderzoekReport && f.status === 'resolved');
 
@@ -1040,9 +1041,13 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Opmerkingen</h2>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-gray-700 mb-6">
-              De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.
-            </p>
+            {/* Zonder open opmerkingen staat de stand onder het lege blok; hier niet nog eens. */}
+            {project.findings?.some((f: any) => isOpenOpmerking(f)) && (
+              <p className="text-gray-700 mb-6">
+                {opmerkingenStand ??
+                  'De onderstaande opmerkingen leiden niet tot een afkeuring, maar bevatten suggesties die de toegankelijkheid of gebruiksvriendelijkheid verder kunnen verbeteren.'}
+              </p>
+            )}
 
             {/* Criteria met opmerkingen (impact leeg, ongeacht status) */}
             <div className="space-y-6">
@@ -1212,7 +1217,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             }).length === 0 && (
               <p className="text-sm text-gray-500 italic">
                 {/* Zelfde opbouw als bij de bevindingen: uitgangspunt, wat er is gedaan, uitkomst. */}
-                {opgelosteOpmerkingen > 0
+                {opmerkingenStand
+                  ? opmerkingenStand
+                  : opgelosteOpmerkingen > 0
                   ? `${opgelosteOpmerkingen === 1 ? 'De opmerking die' : `De ${opgelosteOpmerkingen} opmerkingen die`} bij ${eerder} ${opgelosteOpmerkingen === 1 ? 'openstond' : 'openstonden'}, ${opgelosteOpmerkingen === 1 ? 'is' : 'zijn'} nu ${opgelosteOpmerkingen === 1 ? '' : 'allemaal '}opgelost.`
                   : 'Er zijn geen opmerkingen vastgesteld.'}
               </p>

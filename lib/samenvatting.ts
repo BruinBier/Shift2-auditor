@@ -1,3 +1,4 @@
+import { isOpmerking, isOpgelosteOpmerking, hoortInRapport, type FindingLike } from '@/lib/finding-classification';
 import {
   isHeronderzoek,
   isAanvullendOnderzoek,
@@ -200,4 +201,44 @@ export function opgelosteBevindingenTekst(
     return `${zin} Het succescriterium waaraan toen niet werd voldaan, voldoet nu aan de toegankelijkheidseisen.`;
   }
   return `${zin} De ${TELWOORDEN[n] ?? n} succescriteria waaraan toen niet werd voldaan, voldoen nu allemaal aan de toegankelijkheidseisen.`;
+}
+
+/**
+ * De zin bovenaan "Opmerkingen" bij een aanvullend onderzoek: hoeveel van de opmerkingen
+ * uit het vorige onderzoek zijn opgelost en hoeveel er nog openstaan.
+ *
+ * Opgelost betekent hier: nagelopen en opgelost bevonden (`isOpgelosteOpmerking`, status
+ * resolved met interimReviewed). Een opmerking staat altijd op resolved, dus de status
+ * alleen zegt niets. Nog open is wat het rapport nog toont (`hoortInRapport`), zonder
+ * voorstellen en afgewezen punten. Frits, 2026-10-08 (MAAS-01): "Van de zes opmerkingen
+ * die bij het heronderzoek van 27 november 2025 nog openstonden, zijn er vijf opgelost.
+ * Eén opmerking staat nog open."
+ *
+ * Geeft null als het geen aanvullend onderzoek is of als er niets is opgelost; dan geldt
+ * de gewone inleiding.
+ */
+export function opmerkingenStandTekst(
+  project: OnderzoekSoortInvoer,
+  findings: FindingLike[],
+): string | null {
+  if (!isAanvullendOnderzoek(project)) return null;
+  const opmerkingen = findings.filter(
+    (f) => isOpmerking(f) && f.status !== 'voorstel' && f.status !== 'afgewezen',
+  );
+  const opgelost = opmerkingen.filter((f) => isOpgelosteOpmerking(f)).length;
+  const open = opmerkingen.filter((f) => hoortInRapport(f)).length;
+  if (opgelost === 0) return null;
+  const totaal = opgelost + open;
+  const tel = (n: number) => TELWOORDEN[n] ?? String(n);
+  const vorige = vorigOnderzoek(project);
+  if (open === 0) {
+    return totaal === 1
+      ? `De opmerking die bij ${vorige} nog openstond, is opgelost.`
+      : `Alle ${tel(totaal)} opmerkingen die bij ${vorige} nog openstonden, zijn opgelost.`;
+  }
+  const deel1 = `Van de ${tel(totaal)} opmerkingen die bij ${vorige} nog openstonden, ${
+    opgelost === 1 ? 'is er één' : `zijn er ${tel(opgelost)}`
+  } opgelost.`;
+  const deel2 = open === 1 ? 'Eén opmerking staat nog open.' : `Er staan er nog ${tel(open)} open.`;
+  return `${deel1} ${deel2}`;
 }
