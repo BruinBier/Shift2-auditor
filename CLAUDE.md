@@ -42,8 +42,18 @@ YouTube Studio (gemeente-account; dat doe jij niet).
 ```bash
 python scripts/video-analyse.py <video.mp4> [--hint "namen, vaktermen"]  # spraak, ruimtes, scènes, overzichtsvellen
 python scripts/video-stem.py <videomap>                                   # audiodescriptie.json -> mp3's (Azure, Maarten)
-python scripts/video-inmengen.py <video.mp4> [--droog] [--verleng 1.5]    # controleert overlap, mengt in; --verleng houdt het laatste beeld langer stil
+python scripts/video-inmengen.py <video.mp4> [--droog] [--verleng 1.5] [--tekst-in-beeld] [--zonder-muziek]  # controleert overlap, mengt in; --verleng houdt het laatste beeld langer stil
 ```
+
+`--zonder-muziek` haalt muziek en zang uit het origineel met Demucs (lokaal) en laat de
+sprekers alleen klinken binnen de tijden van `ondertiteling.json`; een regel die je daar weglaat
+is ook uit het geluid weg.
+
+Heeft de video ingebrande ondertiteling (open captions), maak dan geen `.srt`: die valt eroverheen.
+Meng dan met `--tekst-in-beeld`, zodat ook de zinnen van de audiodescriptie als tekst in beeld komen.
+Staat er naast de video een `ondertiteling.json` (`start_ms`, `eind_ms`, `spreker`, `tekst`, op de
+tijden van het origineel), dan dekt het script de oude ondertitelbalk af en zet alles opnieuw in
+beeld met de spreker ervoor: `SARAH: Mooi!`, en de audiodescriptie als `VOICE-OVER: ...`.
 
 Draai de analyse eerst zonder hint, lees de naambalkjes van de overzichtsvellen, en draai dan
 met `--hint`: zonder hint werd "ijzerpoeder" "IJspoede". Ruimte voor audiodescriptie is de tijd

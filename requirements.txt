@@ -26,6 +26,12 @@ pikepdf>=10.0
 faster-whisper>=1.2
 scenedetect[opencv]>=0.6
 
+# scripts/video-inmengen.py --zonder-muziek -- stemmen van muziek scheiden (Demucs,
+# lokaal). Vraagt PyTorch; de CPU-versie is genoeg en veel kleiner:
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+demucs>=4.0
+soundfile>=0.12
+
 # scripts/psb-naar-stukken.py -- een PSB/PSD-scrollopname van PAC's
 # Screen reader preview in leesbare stukken snijden
 psd-tools>=1.19

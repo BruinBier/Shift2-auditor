@@ -9,7 +9,8 @@ Leest <videomap>/audiodescriptie.json:
 
     [{"bestand": "0m18.mp3", "start_ms": 18300, "tekst": "Lars Boelen, Huisfluisteraar."}]
 
-en schrijft elk bestand naar <videomap>/audiodescriptie-mp3/. `start_ms` gebruikt dit script
+en schrijft elk bestand naar <videomap>/audiodescriptie-mp3/. Een woord tussen sterretjes
+(*haar*) krijgt de klemtoon, zie klemtoon(). `start_ms` gebruikt dit script
 niet; dat is voor scripts/video-inmengen.py.
 
 Waarom Azure
@@ -27,6 +28,7 @@ git. Dit script drukt de sleutel nergens af.
 """
 import argparse
 import json
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -41,6 +43,16 @@ def lees_env(pad: Path) -> dict:
             k, v = regel.split("=", 1)
             env[k.strip()] = v.strip().strip('"')
     return env
+
+
+def klemtoon(tekst: str) -> str:
+    """Een woord tussen sterretjes krijgt de klemtoon: *haar* wordt hoger, iets luider en trager.
+
+    Azure kent <emphasis> alleen voor Engelse en Chinese stemmen; Maarten negeert het. In "heeft
+    een kapster het haar gedaan" las hij "haar" als voornaamwoord ("Een tegen eenzaamheid",
+    okt 2026). video-inmengen.py haalt de sterretjes weg voor de tekst in beeld.
+    """
+    return re.sub(r"\*([^*]+)\*", r"<prosody pitch='+12%' volume='+25%' rate='-8%'>\1</prosody>", tekst)
 
 
 def main() -> None:
@@ -66,7 +78,7 @@ def main() -> None:
 
     for z in zinnen:
         ssml = (f"<speak version='1.0' xml:lang='{taal}'><voice name='{a.stem}'>"
-                f"{escape(z['tekst'])}</voice></speak>")
+                f"{klemtoon(escape(z['tekst']))}</voice></speak>")
         req = urllib.request.Request(
             f"https://{regio}.tts.speech.microsoft.com/cognitiveservices/v1",
             data=ssml.encode("utf-8"),
