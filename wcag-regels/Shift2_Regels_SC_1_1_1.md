@@ -58,6 +58,49 @@ Of een afbeelding decoratief is, bepaalt volgens W3C het doel waarvoor ze er sta
 author determines the purpose for the use of the image"). Twijfel je, leg de vraag dan aan
 de onderzoeker voor.
 
+## Technieken en fouten van W3C (aangevuld 2026-10-10)
+
+Uit de W3C-quickref voor 1.1.1 en de W3C-tutorial over afbeeldingen. Noem het nummer in de
+toelichting van het deelgebied (stap 19), niet in de tekst van de bevinding.
+
+- **Alt die geen alternatief is (F30).** Een bestandsnaam, "afbeelding1", "DSC_0123", "foto"
+  of "image" is geen tekstalternatief: afkeuring. Geldt voor elke afbeelding, niet alleen
+  voor kaarten.
+- **Geen alt-attribuut (F65)** is een afkeuring, ook als de afbeelding versiering is: dan
+  hoort er `alt=""` te staan.
+- **Versiering die toch wordt voorgelezen (F38, F39, H67).** Een decoratieve afbeelding met
+  een alt als "spacer" of "afbeelding", met `alt=" "`, of met een `title`: afkeuring onder de
+  snelle bevinding "Decoratieve afbeelding zonder lege alt-tekst".
+- **Achtergrondafbeelding met informatie (F3).** Tekst of informatie in een
+  `background-image` heeft geen tekstalternatief. Advies: de informatie als tekst op de
+  pagina, of de afbeelding als `<img>` met alt. Meestal ontwikkelaar, tenzij de redacteur de
+  afbeelding in het CMS kiest.
+- **SVG in de code.** Een informatieve SVG zonder `role="img"` en naam, of zonder `<title>`
+  met `aria-labelledby`, heeft geen tekstalternatief: afkeuring. Decoratief: `aria-hidden`.
+- **Afbeelding als verzendknop (H36).** `<input type="image">` krijgt een alt die de functie
+  noemt ("Zoeken", "Verzenden"), niet de tekening.
+- **Pictogram voor een bestandsformaat.** Een PDF- of Word-pictogram bij een link heeft een
+  alt nodig ("PDF") als het formaat niet in de linktekst staat. Staat het er wel, dan mag alt
+  leeg.
+- **Een groep afbeeldingen die samen één ding zegt (G196).** Beoordelingssterren, stappen in
+  een reeks: één afbeelding krijgt de alt voor het geheel ("Beoordeling: 3,5 van 5 sterren"),
+  de rest `alt=""`. Een galerij is iets anders: daar krijgt elke foto een eigen alt.
+- **Image map (H24).** De afbeelding krijgt een alt met de context ("Organogram gemeente X"),
+  elk aanklikbaar `<area>` een eigen alt met het doel.
+- **Kleur die informatie draagt (F13).** Draagt kleur in een grafiek of kaart betekenis (rood
+  is gesloten, groen is open), dan moet die betekenis ook in het tekstalternatief of de
+  beschrijving staan. Dit staat los van 1.4.1.
+- **Emoji, sierletters en ASCII-art (F71, F72, H86).** Tekst in sierletters uit Unicode, een
+  rij emoji die iets betekent of een tekening van leestekens wordt slecht of niet
+  voorgelezen: ernaast hoort de betekenis in gewone tekst. Komt voor in nieuwsberichten en
+  ingesloten sociale-mediaberichten.
+- **Afbeelding die door een script verandert (F20).** Wisselt een carrousel of schakelaar de
+  afbeelding, dan moet de alt meewisselen.
+- **Een goede alt** (W3C, Tips): zo kort mogelijk, het belangrijkste vooraan, zonder woorden
+  als "afbeelding van", "foto" of "icoon" (hulpsoftware zegt al dat het een afbeelding is).
+  Past het niet in een korte zin, dan is het een complex beeld en hoort de informatie ook als
+  tekst op de pagina.
+
 Aanleiding: op de homepage van duurzaam.beverwijk.nl (2026-07-27) stond in de hero-illustratie
 het embleem "Duurzaam Voordeel Beverwijk" met `alt=""`. Die naam stond nergens als tekst op de
 pagina. De auditor noemde het "decoratief sfeerbeeld" op basis van de HTML en miste de bevinding.
@@ -171,7 +214,7 @@ andere vorm. Vier beslissingen op één kaart.
 1. [agent] Maak een opname van de hele pagina en loop elk beeld langs: foto's, iconen,
    logo's, grafieken, kaarten, videoposters. Wat niet op de opname staat, is niet beoordeeld.
 2. [agent] Bepaal per beeld wat het doet: versiering, informatie, een link of knop, of een
-   complex beeld (schema, infographic, kaart met legenda).
+   complex beeld (schema, infographic, kaart met legenda). Volg de beslisvolgorde hierboven.
 3. [agent] Staat er niets op de pagina dat geen tekst is, dan is deze toets niet van
    toepassing. Dat kun je pas zeggen ná de opname, niet ervoor.
 4. [agent] Staat er leesbare tekst ín het beeld — merknaam, embleem, slogan, banner, poster?
@@ -185,29 +228,49 @@ andere vorm. Vier beslissingen op één kaart.
    het vaakst vergeten.
 6. [agent] Noteer wat een eigen route heeft: een CAPTCHA, een ingesloten videospeler, een PDF.
    Die beoordeel je niet op hun `alt`.
+7. [agent] Bekijk de pagina ook op 320 pixels breed (`get-screenshot --breedte=320`). Een knop
+   of link die daar alleen nog een pictogram toont (menu, zoeken, inloggen), moet dan zelf een
+   naam hebben. Op het bureaubladformaat zie je dat niet.
 
 #### Stap 2 — In de code
 
-7. [agent] Lees per beeld het tekstalternatief en waar het vandaan komt: `alt`, `aria-label`,
+8. [agent] Lees per beeld het tekstalternatief en waar het vandaan komt: `alt`, `aria-label`,
    `aria-labelledby`, of een `role="img"` met een naam.
-8. [agent] Bij een leeg `alt`: leg de opname ernaast. Concludeer nooit "versiering" uit de HTML
+9. [agent] Bij een leeg `alt`: leg de opname ernaast. Concludeer nooit "versiering" uit de HTML
    of uit de bestandsnaam.
-9. [agent] Zit het beeld in een link of knop, kijk dan of de naam over de bestemming gaat en
+10. [agent] Zoek `<img>` zonder alt-attribuut. Dat is iets anders dan `alt=""`: zonder
+    attribuut leest een schermlezer vaak de bestandsnaam voor (F65).
+11. [agent] Zoek `alt=" "` met een spatie of ander teken ertussen. Dat is niet leeg; alleen
+    `alt=""` zonder iets ertussen laat hulpsoftware de afbeelding overslaan.
+12. [agent] Heeft een afbeelding met `alt=""` ook een `title`? Dan wordt ze toch voorgelezen;
+    een afbeelding die genegeerd moet worden heeft een lege alt en geen title (H67).
+13. [agent] Zoek SVG's die rechtstreeks in de code staan (`<svg>` zonder `<img>`). Draagt zo'n
+    SVG informatie, dan heeft hij een naam nodig: `role="img"` met `aria-label`, of een
+    `<title>` waar `aria-labelledby` naar verwijst. Is hij versiering, dan `aria-hidden="true"`.
+14. [agent] Zoek achtergrondafbeeldingen uit de opmaak (`background-image` in de stijl van een
+    element). Staat er op de opname informatie of tekst in zo'n afbeelding, dan heeft die een
+    tekstalternatief nodig, en dat ontbreekt per definitie (F3).
+15. [agent] Zit het beeld in een link of knop, kijk dan of de naam over de bestemming gaat en
    niet over de tekening.
-10. [agent] Bij een complex beeld: staat de inhoud al elders op de pagina als tekst, ook in
+16. [agent] Bij een complex beeld: staat de inhoud al elders op de pagina als tekst, ook in
    uitklapsecties? Vergelijk, en noteer gericht wat ontbreekt. Een programmatische koppeling
    tussen beeld en beschrijving is hier niet vereist — zie de regel hieronder.
-11. [jij] Weeg per beeld of het alternatief hetzelfde doel dient als het beeld, en voeg een
+17. [jij] Weeg per beeld of het alternatief hetzelfde doel dient als het beeld, en voeg een
     afkeuring toe waar dat niet zo is.
 
 #### Stap 3 — Wegschrijven
 
-12. [agent] Stuur de elf deelgebieden hieronder mee met het oordeel, in hetzelfde
+18. [agent] Stuur de elf deelgebieden hieronder mee met het oordeel, in hetzelfde
     `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
     "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Staat een
     soort beeld niet op deze pagina, gebruik dan `nvt` met de zin waaróp je hebt gezocht — een
     leeg resultaat en een mislukte zoekactie zien er in een onderbouwing hetzelfde uit.
-13. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+19. [agent] Noem in de toelichting van een gebied waarop het oordeel rust: bij een afkeuring de
+    W3C-fout (bijvoorbeeld F30, F65), bij een voldoet die op een bijzondere afweging rust de
+    techniek (bijvoorbeeld G196, H67). Zie "Technieken en fouten van W3C" hieronder en
+    `Shift2_Bewijsvoering.md`. In de tekst van een bevinding komt dat nummer niet: die leest
+    de redacteur.
+20. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
     kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
     verder niets. Al het inhoudelijke gaat naar de deelgebieden: waaróp je hebt gezocht schrijf
     je bij het gebied waar je zocht, en een afweging bij het gebied waar hij over gaat. Er is
