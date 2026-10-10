@@ -5040,10 +5040,20 @@ async function getPdfNietTeksten(doel: string, flags: Flags) {
   // flink stuk vult en niet bijna wit is. Sorteren op de laagste verhouding alleen zette
   // een lichtgrijs vlakje van 1,05:1 bovenaan, en op LEU-01 vielen de cirkeldiagrammen
   // van pagina 71 -- vier segmenten onder 3:1 -- daardoor buiten de acht.
-  type Kleur = { kleur: string; tegenAchtergrond: number; aandeel?: number };
+  type Kleur = {
+    kleur: string;
+    tegenAchtergrond: number;
+    aandeel?: number;
+    rand?: { kleur: string; tegenAchtergrond: number };
+  };
+  // Een kleur met een rand die 3:1 haalt, is tegen de achtergrond wel te zien.
   const duidelijkOnder3 = (o: Onderdeel) =>
     ((o.kleuren || []) as Kleur[]).filter(
-      (k) => k.tegenAchtergrond < 3 && k.tegenAchtergrond >= 1.1 && (k.aandeel ?? 0) >= 0.01,
+      (k) =>
+        k.tegenAchtergrond < 3 &&
+        k.tegenAchtergrond >= 1.1 &&
+        (k.aandeel ?? 0) >= 0.01 &&
+        !(k.rand && k.rand.tegenAchtergrond >= 3),
     );
   const slechtste = (o: Onderdeel) =>
     Math.min(99, ...duidelijkOnder3(o).map((k) => k.tegenAchtergrond));
@@ -5088,6 +5098,8 @@ async function getPdfNietTeksten(doel: string, flags: Flags) {
     let_op: [
       'Dit keurt niets af. Een kleur onder 3:1 is alleen een bevinding als dat onderdeel nodig is om de informatie te begrijpen: een grafieksegment, een legendasymbool, een pictogram. Een sierlijn of een lichte achtergrond van een grafiekvlak valt er niet onder.',
       'Staat de informatie er ook op een andere manier, bijvoorbeeld een percentage of naam bij elk segment, dan hoeft de kleur geen 3:1 te halen.',
+      'Twee onderdelen moeten ook van ELKAAR te onderscheiden zijn (W3C Understanding 1.4.11, het voorbeeld met de taartgrafiek). Dat staat onder buren: onderling 3:1, of een scheiding die tegen allebei 3:1 haalt. Een witte lijn tussen geel en lichtblauw helpt niet. Een buur met onder3: true is een afkeuring als die twee onderdelen verschillende informatie dragen.',
+      'Een kleur met een rand die 3:1 haalt tegen de achtergrond, is tegen de achtergrond wel te zien, ook als de vulkleur dat niet is. De randkleur is voorzichtig geschat: een lijn van een half punt komt in het beeld als een reeks tinten uit.',
       'Een kaart valt onder de wettelijke uitzondering; meld hem niet als bevinding.',
       'Leg altijd de uitsnede naast het getal. Lees de lijst overgeslagen_met_reden na: daar staan tabellen en gekleurde vlakken achter tekst, die onder 1.4.3 vallen.',
     ],

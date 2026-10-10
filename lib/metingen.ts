@@ -183,7 +183,7 @@ export const METINGEN: Meetopdracht[] = [
     toegestaneVlaggen: ['paginas'],
     vanafDeKaart: true,
     wat: 'Zoekt in een PDF de grafieken, diagrammen en pictogrammen op en zet elke kleur erin tegen de achtergrond en tegen zijn buren, met een uitsnede per onderdeel.',
-    duurt: 'ongeveer een kwart minuut per honderd paginas',
+    duurt: 'ongeveer een halve minuut per honderd paginas',
   },
   {
     /**

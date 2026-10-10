@@ -184,6 +184,23 @@ knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
   nodig is om de informatie te begrijpen, en als die informatie er niet ook anders staat, zoals
   een percentage bij elk segment. Lichte tinten van een grafiekvlak, sierlijnen en het logo
   tellen niet mee; een kaart valt onder de wettelijke uitzondering.
+- **TEGEN DE ACHTERGROND ÉN TEGEN ELKAAR.** De onderdelen van een grafiek die nodig zijn om
+  de informatie te begrijpen, moeten 3:1 halen tegen de achtergrond, én tegen een aangrenzend
+  onderdeel als die twee van elkaar onderscheiden moeten worden (W3C Understanding 1.4.11, het
+  voorbeeld met de taartgrafiek: "sufficient contrast around and between the slices").
+  Twee buren zijn te onderscheiden als ze onderling 3:1 halen, of als de lijn ertussen tegen
+  allebei 3:1 haalt. Een witte scheidingslijn helpt dus alleen tussen donkere vlakken: tussen
+  geel (#FFC000) en lichtblauw is wit 1,64:1 tegen het geel, en dan telt de verhouding van de
+  twee kleuren zelf. `get-pdfnietteksten` zet dit onder `buren`, met de scheiding erbij.
+- **EEN RAND TELT MEE.** Heeft een licht vlak een donkere omlijning die 3:1 haalt tegen de
+  achtergrond, dan is het vlak tegen de achtergrond wél te zien; W3C geeft precies dat als
+  oplossing. Keur dan niet af op de vulkleur alleen. De rand helpt niet tussen twee buren als
+  hij niet ook tegen allebei 3:1 haalt.
+  Vastgelegd door Frits op 2026-10-10 bij LEU-01 (V047). De bevinding noemde eerst de grijze
+  balk op pagina 74 met 1,67:1 tegen wit, terwijl die een omlijning van #6B6B6B heeft (5,33:1).
+  Wat daar wél misgaat is het verschil tussen de buren: grijs tegen turquoise is 1,21:1. In
+  het cirkeldiagram op pagina 71 is het ergste paar lichtblauw tegen groen, 1,09:1; dat stond
+  er helemaal niet in, omdat er alleen tegen de achtergrond was gemeten.
   `get-pdfcontrast` meet alleen TEKST. Tot 2026-10-10 stond hier dat je 1.4.11 daarmee mat;
   op LEU-01 las de agent de kleuren van de cirkeldiagrammen daarom met een eigen stukje code
   uit, en de kaart toonde "niet gemeten" bij een oordeel dat wel op een meting rustte.
