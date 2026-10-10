@@ -366,9 +366,17 @@ dus naar het criterium waar hij thuishoort, meestal een van deze vier:
 | Formulierveld of link zonder naam | 4.1.2 |
 | Documenttitel ontbreekt of wordt niet getoond | 2.4.2 |
 | Documenttaal ontbreekt | 3.1.1 |
-
 | Tekst met onvoldoende contrast | 1.4.3 |
 | Onvoldoende contrast in een grafiek, diagram, kaart of betekenisvol pictogram | 1.4.11 |
+| Decoratieve afbeelding die als afbeelding is getagd (hoort een artefact te zijn) — W3C PDF4 | 1.1.1 |
+| Gescande pagina zonder tekstlaag: de tekst staat er als foto op (oplossen met tekstherkenning of het brondocument) — W3C PDF7 | 1.4.5 |
+| Stuk tekst in een andere taal zonder taalmarkering, zoals een Engelse alinea in een Nederlands document — W3C PDF19 | 3.1.2 |
+| Link die niet als link is getagd — W3C PDF11 | 1.3.1 |
+| Linktekst die het doel niet noemt, zoals "klik hier" of een kale URL — W3C PDF11, PDF13 | 2.4.4 |
+| Formulierveld zonder label — W3C PDF10 | 3.3.2 en 4.1.2 |
+| Niet aangegeven welke formuliervelden verplicht zijn — W3C PDF5 | 3.3.2 |
+| Geen duidelijke foutmelding bij verkeerde invoer in een formulier — W3C PDF22 | 3.3.1 en 3.3.3 |
+| Verzendknop van een formulier die het niet goed verstuurt — W3C PDF15 | 3.2.2 |
 
 **Contrast: PAC gaat voor, je eigen meting vult aan.** Hier stond eerder "PAC haalt contrast
 niet betrouwbaar uit een PDF", en dat klopt niet. PAC heeft een eigen contrastcheck en meldt
