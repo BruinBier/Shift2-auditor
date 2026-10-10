@@ -189,6 +189,20 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
   onderaan de pagina's 24 t/m 54 terecht niet getagd; het logo van Mobycon op de omslag van de
   bijlage (pagina 24) is het logo in de inhoud, en dat is niet als afbeelding aangemerkt:
   afkeuring (V042). Besluit Frits 2026-10-10.
+- **IN EEN PDF IS EEN LEEG ALT-VELD GEEN DECORATIE.** In HTML maakt `alt=""` een afbeelding
+  decoratief en slaat een schermlezer hem over. In een PDF bestaat dat niet: een afbeelding die als
+  afbeelding is getagd en een leeg veld voor alternatieve tekst heeft, is een afbeelding zonder
+  tekstalternatief. AFKEURING, ook als de afbeelding er alleen voor de sier staat of de informatie
+  al in de tekst staat. De enige manier om in een PDF iets decoratief te maken is het als artefact
+  aanmerken (W3C PDF4).
+  Schrijf zo'n afbeelding dus nooit op als "decoratieve afbeelding die getagd is". Beschrijf wat er
+  staat: als afbeelding aangemerkt, veld voor alternatieve tekst leeg. Zeg daarna waarom het advies
+  artefact is: de informatie staat ook in de omliggende tekst, of het beeld dient alleen als
+  versiering. Zonder die reden kan de redacteur net zo goed een alt-tekst invullen, en dan hoort
+  een schermlezer dezelfde informatie twee keer. Staat de informatie niet elders, dan is het advies
+  een tekstalternatief en geen artefact.
+  Vastgelegd door Frits op 2026-10-10 bij LEU-01 (V042, Uitvoeringsplan mobiliteit: schema op
+  pagina 7, STOP-principe op pagina 10, groene en blauwe achtergrondvlakken).
 - **WEL getagde PDF: concludeer niets over de tagkwaliteit uit de ruwe bytes.** Of een afbeelding als `/Figure` met een `/Alt` is opgenomen, staat meestal in een gecomprimeerde objectstroom en is zo niet te lezen. Vind je die markeringen niet, dan is dat géén bewijs dat ze ontbreken — maar het is ook geen bewijs dat ze er zijn.
   Zet het criterium dan op `niet_te_bepalen` met de vraag om PAC-output, of vraag de onderzoeker het in Acrobat na te kijken. Dat geldt óók voor een goedkeuring: schrijf niet "het is correct getagd" als je dat niet hebt gezien.
   Aanleiding: BEV-04 (2026-08-04). De audit concludeerde dat het logo als Artifact was gemarkeerd en dus correct werd overgeslagen, en zette 1.1.1 op `voldoet`. Er stonden nul `/Artifact`- en nul `/Figure`-voorkomens in de bytes, en bij controle in Acrobat bleek het logo helemaal niet getagd. Twee fouten in één: een aanname over wat er in het document stond, en een verkeerde regel over wat er hóórt te staan.
