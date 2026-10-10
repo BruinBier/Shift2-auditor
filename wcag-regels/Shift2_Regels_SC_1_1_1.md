@@ -17,10 +17,8 @@ ga dan na of diezelfde tekst elders op de pagina als echte tekst staat:
 - **Niet elders als tekst** → bevinding onder 1.1.1. Wie de pagina laat voorlezen, krijgt
   die tekst anders niet mee.
 
-**Een logo valt hier buiten: die vergelijking maak je niet.** Is het een logo, dan is een
-leeg tekstalternatief altijd een afkeuring, ongeacht wat er elders op de pagina staat. Ga
-dus niet zoeken in de footer, de paginatitel of de lopende tekst — dat maakt voor het
-oordeel niets uit. Zie "Een logo krijgt altijd een tekstalternatief" onderaan dit bestand.
+**Bij een logo kijk je alleen naar de direct bijbehorende tekst of knop**, niet naar de rest
+van de pagina. Zie "Een logo en zijn tekstalternatief" onderaan dit bestand.
 
 Dit geldt óók als de afbeelding verder puur illustratief oogt, en óók als de tekst een
 merknaam of logo is. Een logo mag onder 1.4.5 zijn uitgezonderd (afbeelding van tekst),
@@ -144,10 +142,10 @@ andere vorm. Vier beslissingen op één kaart.
 3. [agent] Staat er niets op de pagina dat geen tekst is, dan is deze toets niet van
    toepassing. Dat kun je pas zeggen ná de opname, niet ervoor.
 4. [agent] Staat er leesbare tekst ín het beeld — merknaam, embleem, slogan, banner, poster?
-   Zoek dan of diezelfde tekst elders op de pagina als echte tekst staat. Bij een LOGO maak je
-   die vergelijking niet: daar is een leeg tekstalternatief altijd een afkeuring, wat er
-   verder op de pagina staat. Zoek dus niet in de footer of de paginatitel; er valt niets af
-   te wegen.
+   Zoek dan of diezelfde tekst elders op de pagina als echte tekst staat. Bij een LOGO kijk je
+   alleen naar de direct bijbehorende tekst of knop: noemt die de organisatie volledig en
+   bevat het logo niets meer, dan mag alt leeg zijn. De footer of de paginatitel tellen niet.
+   Is het logo een zelfstandige link, beoordeel dan ook de naam van die link.
 5. [agent] Bij een kaart met een legenda: lees de legenda uit het beeld en vink item voor item
    af of elk gegeven ook in de tekst staat. Jaartallen, percentages en categorienamen worden
    het vaakst vergeten.
@@ -228,11 +226,17 @@ Aanleiding: 1.1.1 op Home (V010)
 
 ### 2026-08-15
 
-EEN LOGO KRIJGT ALTIJD EEN TEKSTALTERNATIEF. Is het een logo, dan doet het niet ter zake wat voor logo: header, footer, subsite, sponsor, partner, keurmerk, of hetzelfde logo voor de tweede keer op dezelfde pagina. Een leeg tekstalternatief is bij een logo altijd een afkeuring. Een logo is de afzender — het vertelt van wie deze pagina is — en die informatie mag voor niemand wegvallen.
+EEN LOGO EN ZIJN TEKSTALTERNATIEF (aangepast 2026-10-10).
 
-Let op hoe deze regel zich tot de norm verhoudt: hij is STRENGER dan WCAG, niet losser. 1.1.1 kent een uitzondering voor pure decoratie, en wie een logo decoratief noemt omdat de naam elders op de pagina staat, beroept zich op die uitzondering. Bij een logo mag dat beroep hier niet gedaan worden. Er wordt dus een uitzondering geschrapt, niet een toegevoegd — deze regel kan nooit tot een onterechte goedkeuring leiden, hooguit tot een strengere afkeuring dan een andere auditor zou geven. Dat is een bewuste keuze van het bureau en verdedigbaar richting de opdrachtgever.
+Een logo krijgt een tekstalternatief dat de organisatie identificeert, tenzij dezelfde informatie al volledig beschikbaar is in de direct bijbehorende tekst of knop en het logo geen aanvullende informatie bevat. In dat geval mag het alt-attribuut leeg zijn (alt=""). Dit geldt voor zowel het eigen logo als het logo van een andere organisatie.
 
-Dit stelt de checklistpassage "PASS: herhaling van logo elders op pagina → decoratief, alleen als de organisatienaam al elders prominent zichtbaar is" BUITEN WERKING. Ga dus niet na of de naam ergens anders op de pagina staat: dat maakt voor het oordeel niets uit. Die afweging leverde alleen maar grensgevallen op — telt de footer mee, telt een nieuwskop mee, telt de paginatitel mee — en verschillende auditors kwamen tot verschillende uitkomsten. Nu is er niets af te wegen.
+Is het logo een zelfstandige link, controleer dan of die link een toegankelijke naam heeft die het linkdoel beschrijft. Een aparte knop naast het logo vervangt die naam niet.
+
+Keur een logo met alt="" dus niet automatisch af: beoordeel eerst de bijbehorende tekst, eventuele aanvullende informatie en de functie van het logo.
+
+Wat "direct bijbehorend" is: de tekst of knop in hetzelfde blok als het logo, die je samen leest. De footer, de paginatitel of een kop elders op de pagina tellen niet. Op LEU-01 (Werken bij de gemeente, en.leudal.nl) staat het IGOM-logo met alt="" naast de tekst "All of our current job openings can be found through IGOM" en de knop "To the IGOM website": geen afkeuring (V063, afgewezen door Frits).
+
+Tot 2026-10-10 stond hier dat een logo ALTIJD een tekstalternatief krijgt, ongeacht wat ernaast staat. Die regel was strenger dan WCAG en leverde afkeuringen op voor logo's waarvan de informatie al in de tekst ernaast stond.
 
 Het tekstalternatief bevat ALLE tekst die op het logo staat. Niet alleen de organisatienaam: staat er ook een dorpsnaam, een woord als "gemeente", een slogan of een toevoeging onder het beeldmerk, dan hoort dat er allemaal in. Neem het over zoals het er staat, in de volgorde waarin je het leest. Wie alleen de naam overneemt laat informatie liggen die op het plaatje wél te zien is, en dat is precies wat 1.1.1 wil voorkomen.
 
