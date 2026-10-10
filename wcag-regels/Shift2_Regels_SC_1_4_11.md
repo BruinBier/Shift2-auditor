@@ -174,10 +174,19 @@ knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
   contrastmeldingen die over een afbeelding of grafisch element gaan in plaats van over tekst,
   dan is dat een afkeuring onder 1.4.11. Gaan de meldingen over tekst, dan horen ze onder
   1.4.3; PAC benoemt dat zelf ("Tekst met onvoldoende contrast").
-- Meet het met `npm run cli -- get-pdfcontrast <pdf-url>`. Dat geeft per kleurcombinatie de
-  uitkomst en de pagina's, en werkt onafhankelijk van de tagstructuur. Loopt het element over
-  een foto of een verloop, dan staat `achtergrondVlak` op false en geeft `formulering` de band
-  — "loopt van 1,70:1 tot 4,20:1". Toets aan het slechtste punt; één getal bestaat daar niet.
+- Meet het met `npm run cli -- get-pdfnietteksten <pdf-url>`. Dat zoekt per pagina de
+  afbeeldingen en groepen tekeningen op, telt de vlakke kleuren erin en zet elke kleur tegen de
+  achtergrond en tegen de kleur ernaast, met een uitsnede per onderdeel. Het werkt onafhankelijk
+  van de tagstructuur. Lees `overgeslagen_met_reden` na: tabelranden en gekleurde vlakken achter
+  tekst slaat het over, want die horen niet hier (een vlak achter tekst is 1.4.3). Een onderdeel
+  met `fotoOfVerloop` heeft geen vlakke kleuren; daar weeg je met de uitsnede.
+  Het commando keurt niets af. Een kleur onder 3:1 is alleen een afkeuring als het onderdeel
+  nodig is om de informatie te begrijpen, en als die informatie er niet ook anders staat, zoals
+  een percentage bij elk segment. Lichte tinten van een grafiekvlak, sierlijnen en het logo
+  tellen niet mee; een kaart valt onder de wettelijke uitzondering.
+  `get-pdfcontrast` meet alleen TEKST. Tot 2026-10-10 stond hier dat je 1.4.11 daarmee mat;
+  op LEU-01 las de agent de kleuren van de cirkeldiagrammen daarom met een eigen stukje code
+  uit, en de kaart toonde "niet gemeten" bij een oordeel dat wel op een meting rustte.
 - Bevat het document geen grafieken, diagrammen, kaarten of betekenisvolle pictogrammen, dan
   is 1.4.11 `niet_aanwezig`. Dat is een afgerond oordeel en vraagt geen PAC-uitvoer: dát er
   niets van die soort in staat, zie je aan de gerenderde pagina's. Schrijf wel waaróp je hebt

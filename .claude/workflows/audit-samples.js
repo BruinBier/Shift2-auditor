@@ -1061,7 +1061,9 @@ en LEEST, en dat staat er ook zonder tags. Geef er een echt oordeel over (voldoe
 zet ze niet op 'niet_te_bepalen' met "geen tags" als reden:
   - 1.4.3 contrast en 1.4.11 contrast van graphics → tags hebben hier niets mee te maken:
     lichtblauwe tekst op wit is even onleesbaar zonder tagstructuur. Meet het met
-    \`npm run cli -- get-pdfcontrast <pdf-url>\`; dat werkt onafhankelijk van de tagstructuur.
+    \`npm run cli -- get-pdfcontrast <pdf-url>\` voor tekst en
+    \`npm run cli -- get-pdfnietteksten <pdf-url>\` voor grafieken en pictogrammen; beide werken
+    onafhankelijk van de tagstructuur.
     PAC vraag je bij een ongetagd document niet.
   - 2.4.4 linkdoel → lees of de tekst van een link of webadres duidelijk maakt waar hij heen
     leidt. "Klik hier" of "lees meer" zonder context is ook in een PDF een afkeuring. Wat je
@@ -1091,6 +1093,12 @@ ALTIJD, ook bij een niet-getagd document:
 CONTRAST (1.4.3 en 1.4.11) — MEET HET, MET EEN EIGEN COMMANDO:
 
   npm run cli -- get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
+  npm run cli -- get-pdfnietteksten <pdf-url of pad> [--paginas=71,74]
+
+  Het eerste meet TEKST (1.4.3). Het tweede meet voor 1.4.11 de grafieken, diagrammen en
+  pictogrammen: per onderdeel de vlakke kleuren tegen de achtergrond en tegen elkaar, met een
+  uitsnede. Lees de kleuren niet zelf uit met eigen code: dan komt de meting niet in het
+  logboek en staat er op de kaart "niet gemeten".
 
   Draai dit ALTIJD bij een PDF. Het loopt het document af en geeft per kleurcombinatie de
   uitkomst, de pagina's en drie voorbeelden. Het werkt door twee bronnen te combineren: de

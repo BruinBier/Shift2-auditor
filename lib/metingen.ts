@@ -169,6 +169,24 @@ export const METINGEN: Meetopdracht[] = [
   },
   {
     /**
+     * Contrast van grafieken, diagrammen en pictogrammen in een PDF (SC 1.4.11).
+     *
+     * `get-pdfcontrast` hangt ook aan 1.4.11, maar meet alleen tekst. Daardoor stond er op
+     * LEU-01 een tekstmeting onder een oordeel over cirkeldiagrammen, terwijl de kleuren
+     * van die diagrammen met een eigen stukje code van de agent waren uitgelezen en nergens
+     * als meting stonden. Dit commando loopt het document zelf af, dus `vanafDeKaart`.
+     */
+    commando: 'get-pdfnietteksten',
+    naam: 'grafieken en pictogrammen in de PDF gemeten',
+    handeling: 'gemeten',
+    criteria: ['1.4.11'],
+    toegestaneVlaggen: ['paginas'],
+    vanafDeKaart: true,
+    wat: 'Zoekt in een PDF de grafieken, diagrammen en pictogrammen op en zet elke kleur erin tegen de achtergrond en tegen zijn buren, met een uitsnede per onderdeel.',
+    duurt: 'ongeveer een kwart minuut per honderd paginas',
+  },
+  {
+    /**
      * Consistente identificatie binnen één PDF (SC 3.2.4).
      *
      * `get-consistentie` staat hierboven ook voor 3.2.4, maar dat legt de pagina's van de

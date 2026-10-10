@@ -181,8 +181,8 @@ woord een eigennaam. Die leest niemand uit een bestand, en een meetcommando dat 
 levert een oordeel op dat er hard uitziet en het niet is. Op 19 september 2026 liepen drie
 agents op hetzelfde document uiteen bij zeven criteria; vijf daarvan staan in dit rijtje.
 
-Draai daarna `get-pdfcontrast` voor 1.4.3 en 1.4.11, en vraag de PAC-uitvoer voor de
-tagstructuur.
+Draai daarna `get-pdfcontrast` voor 1.4.3 en `get-pdfnietteksten` voor 1.4.11, en vraag de
+PAC-uitvoer voor de tagstructuur.
 
 1. Een scrollopname van de **Screen reader preview**. Dit is de belangrijkste van de drie, en
    dat was eerder andersom: hij stond hier als "bij twijfel over de leesvolgorde". Hij doet
@@ -459,5 +459,6 @@ Drie dingen die vastliggen:
 4. PAC-uitvoer binnen: meldingen ordenen op de vijf basisvereisten, terugbrengen tot
    oorzaken, vertalen naar WCAG-criteria, schrijven volgens de PDF-schrijfregels. Bij een
    onduidelijke melding het Matterhorn-protocol erbij.
-5. Contrast (1.4.3, 1.4.11): `get-pdfcontrast` draaien, ongeacht of er PAC-uitvoer ligt. Op
-   een foto of een verloop geef je de band en toets je aan het slechtste punt.
+5. Contrast (1.4.3, 1.4.11): `get-pdfcontrast` (tekst) en `get-pdfnietteksten` (grafieken,
+   diagrammen, pictogrammen) draaien, ongeacht of er PAC-uitvoer ligt. Op een foto of een
+   verloop geef je de band en toets je aan het slechtste punt.

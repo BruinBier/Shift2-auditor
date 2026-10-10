@@ -636,6 +636,7 @@ NIET GETAGD (of lege tagboom): 1.3.2 en 3.2.4 vervallen en 1.1.1 wordt een opmer
 
 CONTRAST (1.4.3, 1.4.11) MEET JE ZELF:
     npm run cli -- get-pdfcontrast <pdf-url> [--paginas=1,38]
+    npm run cli -- get-pdfnietteksten <pdf-url> [--paginas=71,74]   (1.4.11: grafieken en pictogrammen; get-pdfcontrast meet alleen tekst)
   Dat werkt onafhankelijk van de tagstructuur, dus ook bij een ongetagd document. Staat
   'achtergrondVlak' op false, dan ligt de tekst op een foto of verloop en is de uitkomst een
   BAND ("loopt van 1,46:1 tot 6,23:1"); neem die over en toets het slechtste punt. Keur nooit

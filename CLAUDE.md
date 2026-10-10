@@ -126,6 +126,7 @@ npm run cli -- get-pixelcontrast <url> --selector=css [--klik="tekst:Contrast ve
 npm run cli -- get-pdfstructuur <pdf-url of pad>   # PDF: media, scripts, formuliervelden, taal, titel, tagstructuur in een keer
 npm run cli -- get-pdfleesvolgorde <pdf-url of pad>  # 1.3.2 in een PDF: terugsprongen in de tagboom
 npm run cli -- get-pdfconsistentie <pdf-url of pad>  # 3.2.4 binnen een PDF: zelfde doel met twee linkteksten
+npm run cli -- get-pdfnietteksten <pdf-url of pad> [--paginas=71,74]  # 1.4.11 in een PDF: kleuren van grafieken en pictogrammen, met uitsneden
 
 # Write
 npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured [--voorgesteld=true] [--heeft-video=true|false] [--heeft-formulier=true|false]

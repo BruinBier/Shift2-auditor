@@ -21,6 +21,7 @@
  *   tsx scripts/audit-cli.ts get-pdfstructuur <pdf-url of pad>
  *   tsx scripts/audit-cli.ts get-pdfleesvolgorde <pdf-url of pad>
  *   tsx scripts/audit-cli.ts get-pdfconsistentie <pdf-url of pad>
+ *   tsx scripts/audit-cli.ts get-pdfnietteksten <pdf-url of pad> [--paginas=71,74]
  *   tsx scripts/audit-cli.ts get-reflow <url> [--breedte=320]
  *   tsx scripts/audit-cli.ts get-beweging <url> [--seconden=5] [--vanaf=3] [--klik=...]
  *   tsx scripts/audit-cli.ts get-flitsen <url> [--seconden=10] [--klik=...]
@@ -4982,6 +4983,114 @@ async function getPdfLeesvolgorde(doel: string, _flags: Flags) {
   print({
     ...meting,
     ...(opgehaald ? { opgehaaldNaar: opgehaald } : {}),
+  });
+}
+
+/**
+ * Contrast van grafieken, diagrammen en pictogrammen in een PDF (SC 1.4.11).
+ *
+ * `get-pdfcontrast` meet tekst. 1.4.11 gaat over de onderdelen die geen tekst zijn, en
+ * daar bestond geen commando voor: een agent die het wilde weten schreef er zelf een stukje
+ * code voor, de uitkomst kwam niet in het logboek, en de kaart zette "niet gemeten" naast
+ * een oordeel dat wel op een meting rustte. Op LEU-01 (2026-10-10) klopten de kleuren van
+ * de cirkeldiagrammen op pagina 71, maar niemand kon het nakijken.
+ *
+ * Het script zoekt per pagina de afbeeldingen en groepen tekeningen op, slaat met reden over
+ * wat er zeker niet onder valt (tabelranden, een vlak achter tekst), telt de vlakke kleuren
+ * en zet elke kleur tegen de achtergrond en tegen zijn buren. Van elk onderdeel komt een
+ * uitsnede. Het keurt niets af: of een kleur betekenis draagt, en of de informatie er ook
+ * op een andere manier staat, weegt de auditor met de uitsnede ernaast.
+ */
+async function getPdfNietTeksten(doel: string, flags: Flags) {
+  const { spawnSync } = await import('child_process');
+  const { bestand, opgehaald } = await haalPdfBinnen(doel);
+
+  // Een voorvoegsel, geen submap: /api/meting/artefact levert alleen bestanden uit
+  // tmp/audit-cli zelf, en zonder die route verschijnen de uitsneden niet op de kaart.
+  const voorvoegsel = path.join(ensureOutputDir(), `pdf-nietteksten-${slugifyUrl(doel)}-${timestamp()}`);
+  const script = path.join(process.cwd(), 'scripts', 'pdf-nietteksten.py');
+  const argumenten = [script, bestand, voorvoegsel];
+  if (flags.paginas) argumenten.push(`--paginas=${flags.paginas}`);
+  const uit = spawnSync('python', argumenten, {
+    encoding: 'utf-8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (uit.error || uit.status !== 0) {
+    throw new Error(
+      `pdf-nietteksten.py mislukte: ${uit.error?.message || uit.stderr || `exitcode ${uit.status}`}`,
+    );
+  }
+
+  const meting = JSON.parse(uit.stdout);
+  if (meting.fout) throw new Error(`pdf-nietteksten.py: ${meting.fout}`);
+
+  type Onderdeel = {
+    pagina: number;
+    soort: string;
+    kleuren?: { kleur: string; tegenAchtergrond: number }[];
+    kleurenOnder3: number;
+    burenOnder3: number;
+    uitsnede: string;
+  };
+  const onderdelen: Onderdeel[] = meting.onderdelen || [];
+  // De uitsneden waar het om draait als beeld bij de meting. Niet allemaal; een document
+  // met vijftig plaatjes levert anders een kaart vol beeld waar niemand meer doorheen komt.
+  //
+  // Eerst de onderdelen met de meeste DUIDELIJKE kleuren onder 3:1: een kleur die een
+  // flink stuk vult en niet bijna wit is. Sorteren op de laagste verhouding alleen zette
+  // een lichtgrijs vlakje van 1,05:1 bovenaan, en op LEU-01 vielen de cirkeldiagrammen
+  // van pagina 71 -- vier segmenten onder 3:1 -- daardoor buiten de acht.
+  type Kleur = { kleur: string; tegenAchtergrond: number; aandeel?: number };
+  const duidelijkOnder3 = (o: Onderdeel) =>
+    ((o.kleuren || []) as Kleur[]).filter(
+      (k) => k.tegenAchtergrond < 3 && k.tegenAchtergrond >= 1.1 && (k.aandeel ?? 0) >= 0.01,
+    );
+  const slechtste = (o: Onderdeel) =>
+    Math.min(99, ...duidelijkOnder3(o).map((k) => k.tegenAchtergrond));
+  // Een grafiek heeft weinig vlakke kleuren, meestal drie tot negen; een illustratie, foto
+  // of kaart heeft er tientallen. Die gaan achteraan, anders winnen ze op aantal.
+  const veelTinten = (o: Onderdeel) => ((o.kleuren || []).length > 12 ? 1 : 0);
+  const beelden = onderdelen
+    .filter((o) => duidelijkOnder3(o).length || o.burenOnder3)
+    .sort(
+      (a, b) =>
+        veelTinten(a) - veelTinten(b) ||
+        duidelijkOnder3(b).length - duidelijkOnder3(a).length ||
+        slechtste(a) - slechtste(b),
+    )
+    .slice(0, 8)
+    .map((o) => ({
+      pad: o.uitsnede,
+      bijschrift: `Pagina ${o.pagina}, ${o.soort}: laagste verhouding ${String(slechtste(o)).replace('.', ',')}:1 tegen de achtergrond`,
+    }));
+
+  legVast({
+    commando: 'get-pdfnietteksten',
+    argumenten: { ...(flags.paginas ? { paginas: flags.paginas } : {}) },
+    url: doel,
+    eindUrl: doel,
+    browser: 'geen',
+    weergave: 'document',
+    criteria: ['1.4.11'],
+    schermafdrukken: beelden,
+    uitkomst: {
+      paginas: meting.paginas,
+      onderdelenGemeten: meting.onderdelenGemeten,
+      onderdelenMetKleurOnder3: meting.onderdelenMetKleurOnder3,
+      fotoOfVerloop: meting.fotoOfVerloop,
+      overgeslagen: (meting.overgeslagen_met_reden || []).length,
+    },
+  });
+
+  print({
+    ...meting,
+    ...(opgehaald ? { opgehaaldNaar: opgehaald } : {}),
+    let_op: [
+      'Dit keurt niets af. Een kleur onder 3:1 is alleen een bevinding als dat onderdeel nodig is om de informatie te begrijpen: een grafieksegment, een legendasymbool, een pictogram. Een sierlijn of een lichte achtergrond van een grafiekvlak valt er niet onder.',
+      'Staat de informatie er ook op een andere manier, bijvoorbeeld een percentage of naam bij elk segment, dan hoeft de kleur geen 3:1 te halen.',
+      'Een kaart valt onder de wettelijke uitzondering; meld hem niet als bevinding.',
+      'Leg altijd de uitsnede naast het getal. Lees de lijst overgeslagen_met_reden na: daar staan tabellen en gekleurde vlakken achter tekst, die onder 1.4.3 vallen.',
+    ],
   });
 }
 
@@ -10244,6 +10353,8 @@ async function main() {
       return getPdfLeesvolgorde(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-pdfconsistentie':
       return getPdfConsistentie(requirePositional(positional, 0, 'pdf-url of pad'), flags);
+    case 'get-pdfnietteksten':
+      return getPdfNietTeksten(requirePositional(positional, 0, 'pdf-url of pad'), flags);
     case 'get-beweging':
       return getBeweging(requirePositional(positional, 0, 'url'), flags);
     case 'get-flitsen':
