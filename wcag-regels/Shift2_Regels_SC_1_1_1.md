@@ -178,6 +178,17 @@ een tekstalternatief invullen, dus daar blijft het normale alt-advies gelden.
 - **EEN LOGO IN EEN PDF MOET ALTIJD GETAGD ZIJN.** Het logo is geen versiering: het zegt van wie het document is, en bij een gemeentelijk document is dat de afzender. Die informatie hoort een schermlezer voor te lezen. Het logo moet dus als `/Figure` met een `/Alt` in de tagboom staan, niet als `/Artifact` (dat betekent "overslaan").
   Concludeer dus nooit dat een ongetagd of als Artifact gemarkeerd logo "correct wordt overgeslagen". Dat is een AFKEURING.
   Vastgelegd door Frits op 2026-08-04 bij BEV-04 (bevinding B016, Openbare besluitenlijst).
+  **Uitzondering: een logo in de kop- of voettekst.** Een logo dat in een terugkerende kop- of
+  voettekst staat, hoort juist een artefact te zijn en niet getagd: anders leest een schermlezer
+  het op elke pagina opnieuw voor (W3C PDF14: kop- en voetteksten als paginering-artefact; zo
+  ook PDF/UA). Dat is dus GEEN afkeuring. Maar daarmee staat er voor een schermlezer geen logo
+  meer, en daarom moet het logo ook in de inhoud staan, op de omslag of de eerste pagina, als
+  afbeelding met een tekstalternatief. Staat de afzender alleen in de kop- of voettekst, dan is
+  dát de afkeuring: niet het ontbrekende tagje in de voettekst, maar het ontbrekende logo in de
+  inhoud. Op LEU-01 (Uitvoeringsplan mobiliteit, 2026-10-10) staat het logo van gemeente Leudal
+  onderaan de pagina's 24 t/m 54 terecht niet getagd; het logo van Mobycon op de omslag van de
+  bijlage (pagina 24) is het logo in de inhoud, en dat is niet als afbeelding aangemerkt:
+  afkeuring (V042). Besluit Frits 2026-10-10.
 - **WEL getagde PDF: concludeer niets over de tagkwaliteit uit de ruwe bytes.** Of een afbeelding als `/Figure` met een `/Alt` is opgenomen, staat meestal in een gecomprimeerde objectstroom en is zo niet te lezen. Vind je die markeringen niet, dan is dat géén bewijs dat ze ontbreken — maar het is ook geen bewijs dat ze er zijn.
   Zet het criterium dan op `niet_te_bepalen` met de vraag om PAC-output, of vraag de onderzoeker het in Acrobat na te kijken. Dat geldt óók voor een goedkeuring: schrijf niet "het is correct getagd" als je dat niet hebt gezien.
   Aanleiding: BEV-04 (2026-08-04). De audit concludeerde dat het logo als Artifact was gemarkeerd en dus correct werd overgeslagen, en zette 1.1.1 op `voldoet`. Er stonden nul `/Artifact`- en nul `/Figure`-voorkomens in de bytes, en bij controle in Acrobat bleek het logo helemaal niet getagd. Twee fouten in één: een aanname over wat er in het document stond, en een verkeerde regel over wat er hóórt te staan.
