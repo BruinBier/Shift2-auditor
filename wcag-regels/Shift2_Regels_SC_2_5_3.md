@@ -80,7 +80,7 @@ De redenering, en let op dat het scharnier bij de lege alt zit:
 - met een leeg `alt` komt die tekst nergens in de toegankelijke naam terecht; die komt dan uit
   de `title` van de link, en die zegt iets anders ("Ga naar de homepage")
 - **krijgt het logo wél een tekstalternatief** — de reparatie uit 1.1.1 — dan wordt dát de naam
-  van de link, want de inhoud gaat vóór de `title`. De naam wordt "Logo gemeente X" en de
+  van de link, want de inhoud gaat vóór de `title`. De naam wordt "Gemeente X" en de
   zichtbare tekst staat er dan gewoon in. 2.5.3 is daarmee vanzelf hersteld.
 
 Eén reparatie dus, twee bevindingen. Vastgelegd door Frits op 2026-08-20 bij heuvelrug.nl, waar
