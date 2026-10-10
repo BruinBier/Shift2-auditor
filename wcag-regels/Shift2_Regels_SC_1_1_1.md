@@ -11,10 +11,14 @@ leesbare tekst IN de afbeelding staat. Concludeer nooit "decoratief" op basis va
 alleen, en niet op basis van de bestandsnaam.
 
 Staat er tekst in (merknaam, embleem, slogan, banner, poster, infographic, campagnelogo),
-ga dan na of diezelfde tekst elders op de pagina als echte tekst staat:
+ga dan na of diezelfde tekst **in de buurt van de afbeelding** als echte tekst staat: in
+hetzelfde blok, direct ervoor of erna, zodat je ze samen leest. De footer, de paginatitel of
+een alinea verderop tellen niet. Zo staat het ook in de beslisboom van W3C ("the same text
+appears as real text nearby"); tot 2026-10-10 was dit hier "elders op de pagina", en dat was
+soepeler dan W3C.
 
-- **Wel elders als tekst** → geen bevinding; de informatie is al beschikbaar.
-- **Niet elders als tekst** → bevinding onder 1.1.1. Wie de pagina laat voorlezen, krijgt
+- **Wel in de buurt als tekst** → geen bevinding; de informatie is al beschikbaar.
+- **Niet in de buurt als tekst** → bevinding onder 1.1.1. Wie de pagina laat voorlezen, krijgt
   die tekst anders niet mee.
 
 **Bij een logo kijk je alleen naar de direct bijbehorende tekst of knop**, niet naar de rest
@@ -24,6 +28,35 @@ Dit geldt óók als de afbeelding verder puur illustratief oogt, en óók als de
 merknaam of logo is. Een logo mag onder 1.4.5 zijn uitgezonderd (afbeelding van tekst),
 maar dat zegt niets over 1.1.1: de naam moet nog steeds voorleesbaar zijn. Beoordeel de
 twee criteria los van elkaar.
+
+W3C doet het net zo. In de tutorial *Images of text* is het eerste voorbeeld een slogan met
+sierlijke opmaak; het tekstalternatief bevat de woorden van de slogan, alleen de versiering
+(gestileerde letters, schaduw) wordt niet beschreven. Een slogan of campagnetekst is dus geen
+decoratie. "Tekst die alleen voor het visuele effect is" uit de W3C-beslisboom gaat over
+letters als versiering, niet over een tekst met een boodschap. Op LEU-01 (Werken bij de
+gemeente, en.leudal.nl, 2026-10-10) is zo de slogan 'leudal geeft ruimte' / 'Aan jou!' in de
+grote afbeelding afgekeurd (B031).
+
+## Beslisvolgorde (W3C-beslisboom)
+
+Loop bij elke afbeelding deze vragen af, in deze volgorde. Bron:
+https://www.w3.org/WAI/tutorials/images/decision-tree/
+
+1. **Staat er tekst in de afbeelding?** Staat dezelfde tekst als echte tekst in de buurt, dan
+   mag alt leeg. Staat hij er niet, dan horen de woorden in het tekstalternatief. Is het een
+   logo, zie "Een logo en zijn tekstalternatief" onderaan.
+2. **Zit de afbeelding in een link of knop, en is zonder haar niet te zien wat die doet?** Dan
+   moet het doel of de functie hoorbaar zijn; zie de regel over 1.1.1 en linkdoel onderaan.
+3. **Voegt de afbeelding betekenis toe aan de pagina?** Een eenvoudige foto of illustratie
+   krijgt een korte alt die die betekenis overbrengt; een grafiek, schema of kaart krijgt de
+   informatie ook als tekst op de pagina. Herhaalt de afbeelding alleen wat er in de tekst
+   ernaast al staat, dan mag alt leeg.
+4. **Is de afbeelding puur decoratief?** Een sierrand, een sfeerfoto, een illustratie die
+   niets toevoegt aan de tekst ernaast: alt leeg.
+
+Of een afbeelding decoratief is, bepaalt volgens W3C het doel waarvoor ze er staat ("The
+author determines the purpose for the use of the image"). Twijfel je, leg de vraag dan aan
+de onderzoeker voor.
 
 Aanleiding: op de homepage van duurzaam.beverwijk.nl (2026-07-27) stond in de hero-illustratie
 het embleem "Duurzaam Voordeel Beverwijk" met `alt=""`. Die naam stond nergens als tekst op de
@@ -142,7 +175,8 @@ andere vorm. Vier beslissingen op één kaart.
 3. [agent] Staat er niets op de pagina dat geen tekst is, dan is deze toets niet van
    toepassing. Dat kun je pas zeggen ná de opname, niet ervoor.
 4. [agent] Staat er leesbare tekst ín het beeld — merknaam, embleem, slogan, banner, poster?
-   Zoek dan of diezelfde tekst elders op de pagina als echte tekst staat. Bij een LOGO kijk je
+   Zoek dan of diezelfde tekst in de buurt van de afbeelding als echte tekst staat (hetzelfde
+   blok, direct ervoor of erna). Bij een LOGO kijk je
    alleen naar de direct bijbehorende tekst of knop: noemt die de organisatie volledig en
    bevat het logo niets meer, dan mag alt leeg zijn. De footer of de paginatitel tellen niet.
    Is het logo een zelfstandige link, beoordeel dan ook de naam van die link.
