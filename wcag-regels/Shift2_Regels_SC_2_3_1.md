@@ -54,7 +54,9 @@ kwart daarvan. G176, Formula 1: een flits voldoet als hij "smaller than a contig
 
 Vroeger stond hier "ongeveer 2,8% van het beeld". Dat klopt alleen bij een venster van 1024
 bij 768 pixels, het scherm waar W3C van uitging. Op een groter venster is 2,8% een veel groter
-vlak, en keurt de grens te mild. Besluit Frits 2026-10-11: volg W3C.
+vlak, en keurt de grens te mild. Besluit Frits 2026-10-11: volg W3C. `get-flitsen` rekent
+sindsdien de 21.824 pixels om naar het venster waarin het meet, en zet beide getallen in de
+uitkomst (`gebiedsgrens`).
 
 Twee regels uit dezelfde Understanding:
 
@@ -84,10 +86,10 @@ verzadigd rood. Het beeld wordt verkleind en samengeperst, en alleen wat in beel
 opgenomen. Meldt de zeef sprongen, laat het videobestand dan door PEAT halen voor een echt
 oordeel; keur nooit af op het getal alleen.
 
-Controleer welke gebiedsgrens de zeef gebruikt. Rekent hij met een percentage van het beeld,
-dan is dat alleen bij 1024 bij 768 gelijk aan de grens van W3C. Reken een gemeld vlak dan zelf
-om naar CSS-pixels en vergelijk met 21.824. En meet een video op volledig scherm als de speler
-dat toelaat.
+De zeef rekent de grens van 21.824 CSS-pixels om naar het venster waarin hij meet; het veld
+`gebiedsgrens` in de uitkomst noemt het percentage én het aantal pixels van het venster. Een
+gemeld aandeel van het beeld kun je zo terugrekenen naar pixels. Meet een video op volledig
+scherm als de speler dat toelaat.
 
 ## Op de kaart
 

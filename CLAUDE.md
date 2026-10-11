@@ -349,8 +349,8 @@ mee die de browser tekent en telt per blok de tegengestelde helderheidssprongen 
 schaal, donkerste onder 0,80), plus de aparte toets op verzadigd rood. De gebiedsgrens is een
 vaste maat: 21.824 CSS-pixels, een kwart van een gezichtsveld van tien graden (W3C G176), niet
 "een kwart van het scherm", want een klein flitsend vlakje zakt ook. Dat is alleen bij een venster
-van 1024 bij 768 ongeveer 2,8% van het beeld; `get-flitsen` rekent nog met dat percentage en is
-bij een groter venster dus te mild (zie `Shift2_Regels_SC_2_3_1.md`). Komen er geen beeldjes, dan heeft de
+van 1024 bij 768 ongeveer 2,8% van het beeld; `get-flitsen` rekent de grens sinds 2026-10-11
+om naar het venster waarin het meet, en noemt beide getallen in `gebiedsgrens`. Komen er geen beeldjes, dan heeft de
 pagina niet opnieuw getekend en kan er niets geflitst hebben: dat is `voldoet`, niet
 `niet_aanwezig`. Dit is een zeef en geen keuring: het beeld wordt verkleind en samengeperst,
 en alleen wat in beeld staat wordt opgenomen. Laat een videobestand door PEAT halen voor een

@@ -744,16 +744,13 @@ const PAGINAVINKJES = [
  *
  * Kopie van ALTIJD_NIET_AANWEZIG in lib/metingen.ts; een workflowscript kan niets
  * importeren. Verandert de lijst daar, dan moet hij hier mee.
+ *
+ * 2.2.2 stond hier van 2026-09-14 tot 2026-10-11. De reden ("de pagina staat stil tot de
+ * bezoeker iets doet") houdt geen stand: volgens W3C telt beweging die begint bij scrollen,
+ * focus of erover bewegen ook als "uit zichzelf". Sindsdien meet `get-beweging` het per
+ * pagina (besluit Frits 2026-10-11).
  */
 const ALTIJD_NIET_AANWEZIG = [
-  {
-    code: '2.2.2',
-    reden:
-      'Dit criterium gaat over inhoud die uit zichzelf beweegt, schuift of bijwerkt en '+
-      'langer dan vijf seconden doorgaat. Op deze websites staan geen carrousels, '+
-      'tellers of doorlopende animaties: de pagina staat stil tot de bezoeker iets '+
-      'doet. Vastgelegd voor dit soort websites, niet per pagina vastgesteld.',
-  },
   {
     code: '1.4.2',
     reden:

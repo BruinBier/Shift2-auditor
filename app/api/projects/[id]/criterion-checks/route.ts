@@ -261,7 +261,7 @@ export async function POST(
        *   dat er geen video of formulier op die pagina staat; dat dan per criterium nog
        *   eens bevestigen is dezelfde vaststelling zes keer afvinken.
        *
-       *   ALTIJD_NIET_AANWEZIG (1.2.4, 1.4.2, 2.2.2) -- één keer vastgelegd voor dit soort
+       *   ALTIJD_NIET_AANWEZIG (1.2.4, 1.4.2) -- één keer vastgelegd voor dit soort
        *   websites: ze zenden niet live uit, er start geen geluid vanzelf en er beweegt
        *   niets uit zichzelf. De reden zegt het zelf: "Vastgelegd voor dit soort websites,
        *   niet per pagina vastgesteld."

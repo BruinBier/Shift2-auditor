@@ -448,7 +448,12 @@ Let op:
     --heeft-video=true    als er een gebied bij staat uit "Video met geluid", "Video zonder
                           geluid, of een animerende GIF", of "Audio of podcast"
     --heeft-video=false   als geen van die drie erbij staat
-    --heeft-formulier=true als er een gebied "Formulier" bij staat, anders false
+    --heeft-formulier=true als er een gebied "Formulier" bij staat, anders false.
+                          Uitzondering: de HOMEPAGE met een zoekveld in de header krijgt
+                          altijd true. Dat zoekveld wordt op de homepage beoordeeld onder
+                          3.3.2 (en 1.3.5, 3.3.1), net als de rest van header en footer;
+                          met false vallen die criteria daar stil weg. Zie
+                          wcag-regels/Shift2_Regels_SC_3_3_2.md.
 
   Wat je op false zet, wordt straks NIET door een agent beoordeeld: 1.2.1 t/m 1.2.5 en
   2.1.4 bij video (1.2.4 en 1.4.2 vervallen sowieso), 1.3.5 en 3.3.1 t/m 3.3.7 bij formulier. Ze krijgen 'niet aanwezig' met jouw

@@ -6428,13 +6428,17 @@ async function getFlitsen(url: string, flags: Flags) {
   /**
    * Hoe groot een flitsend gebied moet zijn om mee te tellen.
    *
-   * WCAG rekent met een kwart van een gezichtsveld van tien graden: op een scherm van
-   * 1024 bij 768 is dat 21.824 beeldpunten, oftewel 2,8% van het beeld. Als aandeel van
-   * het venster gerekend, want een venster is niet altijd 1024 breed. "Een kwart van het
-   * scherm", zoals het vaak wordt naverteld, is veel te ruim: een klein flitsend vlakje
-   * zakt ook.
+   * WCAG rekent met een kwart van een gezichtsveld van tien graden: een vaste maat van
+   * 21.824 CSS-pixels (W3C G176), ongeacht hoe groot het venster is. Tot 2026-10-11 stond
+   * hier 21.824 / (1024 x 768), oftewel 2,8% van elk venster; in een groter venster liet
+   * dat een te groot vlak door. Het aandeel van het beeld wordt daarom pas uitgerekend als
+   * het venster bekend is, vlak voor de opname.
+   * "Een kwart van het scherm", zoals het vaak wordt naverteld, is veel te ruim: een klein
+   * flitsend vlakje zakt ook.
    */
-  const GEBIEDSGRENS = 21824 / (1024 * 768);
+  const GEBIEDSGRENS_PX = 21824;
+  let vensterPx = 1024 * 768;
+  let GEBIEDSGRENS = GEBIEDSGRENS_PX / vensterPx;
 
   // Is het gevraagde adres een video, dan gaat de meting naar de video zelf.
   const video = videoSpeeladres(url);
@@ -6648,6 +6652,15 @@ async function getFlitsen(url: string, flags: Flags) {
               MAX_VIDEO,
               Math.max(seconden, Math.ceil((videoBegin.duur ?? 60) - videoBegin.tijd) + 2)
             );
+
+      // De opname beslaat het hele venster; in CSS-pixels, want daarin is de grens gegeven.
+      const venster = await page
+        .evaluate(() => ({ b: window.innerWidth, h: window.innerHeight }))
+        .catch(() => null);
+      if (venster && venster.b > 0 && venster.h > 0) {
+        vensterPx = venster.b * venster.h;
+        GEBIEDSGRENS = GEBIEDSGRENS_PX / vensterPx;
+      }
 
       await cdp.send('Page.enable').catch(() => {});
       await cdp.send('Page.startScreencast', {
@@ -7122,7 +7135,7 @@ async function getFlitsen(url: string, flags: Flags) {
         snelheid_bruikbaar: genoegSnel,
         blokken_boven_3_per_seconde: blokkenBoven.size,
         aandeel_van_het_beeld: `${(aandeel * 100).toFixed(1)}%`,
-        gebiedsgrens: `${(GEBIEDSGRENS * 100).toFixed(1)}% van het beeld (een kwart van een gezichtsveld van 10 graden)`,
+        gebiedsgrens: `${(GEBIEDSGRENS * 100).toFixed(1)}% van het beeld: 21.824 CSS-pixels van ${vensterPx} (een kwart van een gezichtsveld van 10 graden, G176)`,
         boven_de_gebiedsgrens: teGroot,
         drukste_seconde: ergsteAantal,
         drukste_moment: ergsteInVideo !== null ? `${mmss(ergsteInVideo)} in de video` : `${ergsteMoment.toFixed(2)}s`,
@@ -9863,15 +9876,20 @@ async function getConsistentie(doel: string, flags: Flags) {
   /**
    * Twee namen op verschillende pagina's, of twee namen op dezelfde pagina?
    *
-   * Dat is hier het hele onderscheid. 3.2.4 gaat over een set pagina's: hetzelfde onderdeel
-   * dat op pagina A anders heet dan op pagina B. Twee links naast elkaar in dezelfde footer
-   * die allebei naar WhatsApp gaan en anders heten, is iets binnen één pagina -- en
-   * `Shift2_Regels_SC_3_2_4.md` sluit dat uitdrukkelijk uit.
+   * Allebei vallen onder 3.2.4: W3C Understanding noemt onderdelen die herhaald worden op
+   * meerdere pagina's, meerdere keren op dezelfde pagina, of allebei (besluit Frits
+   * 2026-10-11; tot dan sloot `Shift2_Regels_SC_3_2_4.md` het tweede uit). Ze blijven apart
+   * in de uitvoer, want de weging verschilt: twee links naast elkaar in dezelfde footer die
+   * allebei naar WhatsApp gaan en anders heten, vraagt om een andere afweging dan een logo
+   * dat op de ene pagina anders heet dan op de andere.
    *
    * Aan de namen alleen is dat niet te zien: allebei leveren ze twee namen over vier
    * pagina's op. Het verschil zit in de vraag of dezelfde pagina meer dan één naam draagt.
+   * Een onderdeel dat maar op één pagina staat, maar daar twee namen heeft, telt dus ook
+   * mee; dat viel tot 2026-10-11 weg omdat alleen onderdelen op meerdere pagina's werden
+   * vergeleken.
    */
-  const alleVerschillen = opMeerderePaginas
+  const alleVerschillen = Array.from(perSleutel.entries())
     .filter(([, namen]) => namen.size > 1)
     .map(([sleutel, namen]) => {
       const perPaginaAantal = new Map<string, number>();
@@ -9892,8 +9910,10 @@ async function getConsistentie(doel: string, flags: Flags) {
           paginas,
           aantal: paginas.length,
         })),
+        opPaginas: paginasVan(namen).size,
       };
-    });
+    })
+    .filter((v) => v.opPaginas > 1 || v.binnenEenPagina);
   const verschillend = alleVerschillen.filter((v) => !v.binnenEenPagina);
   const binnenEenPagina = alleVerschillen.filter((v) => v.binnenEenPagina);
 
@@ -10099,6 +10119,14 @@ async function getConsistentie(doel: string, flags: Flags) {
           ])
         : ['  geen']),
       '',
+      'ONDERDELEN DIE TWEE KEER OP DEZELFDE PAGINA STAAN EN ANDERS HETEN (ook 3.2.4)',
+      ...(binnenEenPagina.length
+        ? binnenEenPagina.flatMap((v) => [
+            `  ${v.onderdeel}`,
+            ...v.namen.map((n) => `      "${n.naam}" op ${n.paginas.join(', ')}`),
+          ])
+        : ['  geen']),
+      '',
       kentDrieTweeDrie
         ? 'STAAT NIET OP ELKE PAGINA (dat is 3.2.3, niet 3.2.4)'
         : 'STAAT NIET OP ELKE PAGINA (3.2.3; zit niet in dit onderzoek, dus alleen ter kennisgeving)',
@@ -10210,6 +10238,7 @@ async function getConsistentie(doel: string, flags: Flags) {
       pdfsOvergeslagen: pdfs.length,
       onderdelenOpMeerderePaginas: opMeerderePaginas.length,
       andersBenoemd: verschillend.length,
+      andersBenoemdBinnenEenPagina: binnenEenPagina.length,
       anderIcoon: anderIcoon.length,
       nietOveralAanwezig: kentDrieTweeDrie ? nietOveral.length : undefined,
       beslist,
@@ -10288,8 +10317,8 @@ async function getConsistentie(doel: string, flags: Flags) {
       : `${nietOveral.length} onderdelen staan niet op elke pagina. Dat is 3.2.3 en dat criterium zit niet in dit onderzoek; het staat alleen in het overzichtsbestand.`,
     overzicht,
     beslist,
-    let_op: verschillend.length
-      ? 'Deze onderdelen heten niet overal hetzelfde. Weeg zelf of het een inconsistentie is in de zin van 3.2.4: "Zoeken" en "Zoek" zijn twee tekenreeksen, maar of dat verschil telt is punt 1 van W3C-issue #5225. Knoppen zijn gekoppeld op hun id of klasse, dus controleer of het werkelijk hetzelfde onderdeel is.'
+    let_op: verschillend.length || binnenEenPagina.length
+      ? 'Deze onderdelen heten niet overal hetzelfde. Weeg zelf of het een inconsistentie is in de zin van 3.2.4: "Zoeken" en "Zoek" zijn twee tekenreeksen, maar of dat verschil telt is punt 1 van W3C-issue #5225. Knoppen zijn gekoppeld op hun id of klasse, dus controleer of het werkelijk hetzelfde onderdeel is. Een verschil binnen één pagina (anders_benoemd_binnen_een_pagina) valt ook onder 3.2.4; paginering, waar "2" en "Volgende" naar dezelfde pagina gaan, is geen herhaald onderdeel met dezelfde functie.'
       : 'Geen onderdeel dat op de ene pagina anders heet dan op de andere. Let op wat hier NIET in zit: onderdelen die maar op één pagina voorkomen zijn niet te vergelijken, en of iets overal aanwezig is valt onder 3.2.3.',
   });
 }
