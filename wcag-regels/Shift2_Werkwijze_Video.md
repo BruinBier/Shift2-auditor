@@ -140,14 +140,22 @@ en daarom hoort daar het bewijs bij. Een leeg `reden`-veld betekent: aangenomen,
 
 ### Audiodescriptie zelf vaststellen
 
-Audiodescriptie is een **tweede audiospoor**. Lees de `adaptiveFormats` uit
-`ytInitialPlayerResponse` en kijk of er formats met een `audioTrack` zijn; is er maar één spoor,
-dan is er geen audiodescriptie. Bij een andere speler: zoek een knop of menu-optie
-"audiodescriptie".
+Audiodescriptie kan op drie manieren aanwezig zijn (W3C G78, G173, G226):
 
-Let op wat dat wel en niet bewijst. Geen apart spoor betekent: geen audiodescriptie. Het betekent
-**niet** dat de tekst in beeld onhoorbaar is — de spreker kan hem gewoon zelf noemen. Zie
-`Shift2_Regels_SC_1_2_3.md` voor de drie routes die 1.2.3 accepteert.
+- een **tweede audiospoor** dat de bezoeker kan kiezen. Lees de `adaptiveFormats` uit
+  `ytInitialPlayerResponse` en kijk of er formats met een `audioTrack` zijn;
+- een **aparte versie** van de video met audiodescriptie, gelinkt vanaf de pagina;
+- beschrijving die in het **enige geluidsspoor** is gemengd: de video zelf vertelt wat er te zien is.
+
+Eén spoor betekent dus niet vanzelf: geen audiodescriptie. Zoek ook naar een link naar een
+beschreven versie, en luister of de beschrijving in het gewone geluid zit. Bij een andere speler:
+zoek een knop of menu-optie "audiodescriptie". Tot 2026-10-11 stond hier "is er maar één spoor,
+dan is er geen audiodescriptie"; besluit Frits: volg W3C.
+
+Let op wat een spoor wel en niet bewijst: het zegt niet of de tekst in beeld onhoorbaar is. De
+spreker kan hem gewoon zelf noemen. Zie `Shift2_Regels_SC_1_2_3.md` en
+`Shift2_Regels_SC_1_2_5.md` voor wat elk criterium accepteert; onder 1.2.5 is een transcript
+geen oplossing, ook niet als er weinig ruimte is (dan uitgebreide audiodescriptie, G8).
 
 ### Open ondertiteling beantwoordt de luistervraag
 

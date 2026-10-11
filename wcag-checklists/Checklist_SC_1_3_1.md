@@ -96,7 +96,7 @@ Raadpleeg `Richtlijnen_Grensgevallen_SC_1_3_1.md` voor bekende grensgevallen voo
 **Controleer:** `h1` → `h2` → `h3` → etc. Geen `h4` na `h2` zonder `h3` ertussen.
 
 ```html
-<!-- FAIL: niveau overgeslagen -->
+<!-- GEEN AFKEURING: niveau overgeslagen. G141 is Advisory; hooguit een opmerking (best practice). -->
 <h1>Geboorteaangifte doen</h1>
 <h2>Hoe werkt het</h2>
 <h4>Wie doet aangifte?</h4>  <!-- h3 overgeslagen -->
@@ -128,10 +128,10 @@ Raadpleeg `Richtlijnen_Grensgevallen_SC_1_3_1.md` voor bekende grensgevallen voo
 
 ### 4. KOPPEN GEVOLGD DOOR INHOUD
 
-**Regel:** Een kop moet worden gevolgd door inhoud (tekst, afbeeldingen, lijsten). Een kop zonder inhoud eronder heeft geen functie.
+**Regel:** Twee koppen van hetzelfde niveau direct achter elkaar zijn op zichzelf **geen afkeuring**: W3C kent er geen failure voor. Kijk wel of de bovenste kop eigenlijk een hoger niveau hoort te hebben dan de onderste (dan klopt de rangorde niet), of dat er inhoud verborgen is. Bij verschil gaat het regelbestand in `wcag-regels/` voor; dit is aangepast op 2026-10-11 (besluit Frits: volg W3C).
 
 ```html
-<!-- FAIL: kop zonder inhoud -->
+<!-- OPMERKING, GEEN AFKEURING: kop zonder inhoud -->
 <h2>Downloads</h2>
 <h2>Contact</h2>  <!-- "Downloads" heeft geen inhoud -->
 
@@ -212,13 +212,20 @@ Raadpleeg `Richtlijnen_Grensgevallen_SC_1_3_1.md` voor bekende grensgevallen voo
   </tbody>
 </table>
 
-<!-- FAIL: layout-tabel -->
+<!-- GEEN AFKEURING: opmaaktabel zonder tabelsemantiek (hooguit een opmerking) -->
 <table>
   <tr>
     <td><img src="logo.png"></td>
     <td>Gemeente IJsselstein</td>
   </tr>
 </table>
+
+<!-- FAIL (F46): opmaaktabel met th, caption of summary -->
+<table>
+  <tr><th>Gemeente IJsselstein</th></tr>
+  <tr><td><img src="logo.png" alt=""></td></tr>
+</table>
+<!-- Leest een opmaaktabel niet logisch in de codevolgorde: 1.3.2 (F49), niet 1.3.1 -->
 ```
 
 **Complexe tabellen:** bij tabellen met meerdere niveaus headers, gebruik `headers` en `id` attributen.

@@ -242,7 +242,7 @@ containers alleen visueel worden getoond]
 
 Dit is een veelvoorkomend probleem. Als er geen of onvoldoende ruimte in de video is om audiodescriptie in te voegen:
 
-- **Als de visuele informatie is opgenomen in een transcriptie → SC 1.2.5 is voldaan.** Wanneer audiodescriptie technisch niet mogelijk is vanwege gebrek aan pauzes, is een transcriptie met alle visuele en auditieve informatie een geaccepteerd alternatief, ook op niveau AA.
+- **Een transcriptie lost SC 1.2.5 niet op.** Ze voldoet aan 1.2.3, maar 1.2.5 vraagt audiodescriptie. Is er geen ruimte, dan is de oplossing uitgebreide audiodescriptie (G8): de video pauzeert op die momenten. Een aparte versie met audiodescriptie (G173) of beschrijving in het enige geluidsspoor (G226) voldoet ook. Bij verschil gaat het regelbestand in `wcag-regels/` voor; dit is aangepast op 2026-10-11 (besluit Frits: volg W3C).
 - F113: Het niet gebruiken van wél beschikbare pauzes is een failure — deze failure geldt alleen als er pauzes zijn die niet benut worden
 - Audio ducking (het dempen van achtergrondgeluid) is een techniek die kan helpen om toch ruimte te creëren
 - SC 1.2.7 (niveau AAA) biedt een aanvullende oplossing: uitgebreide audiodescriptie waarbij de video pauzeert
@@ -254,16 +254,16 @@ Situatie:   Video bevat visuele info niet in audio,
 
 Optie 1:    Transcriptie met visuele beschrijvingen beschikbaar
 SC 1.2.3:   PASS
-SC 1.2.5:   PASS — transcriptie is geaccepteerd alternatief
-             als audiodescriptie niet mogelijk is.
+SC 1.2.5:   FAIL — een transcriptie is voor 1.2.5 geen
+             alternatief, ook niet bij te weinig ruimte.
 
 Optie 2:    Geen transcriptie en geen audiodescriptie
 SC 1.2.3:   FAIL
 SC 1.2.5:   FAIL
 
-Aanbeveling: Bij voorkeur video opnieuw opnemen met pauzes,
-             of alternatieve versie maken met audiodescriptie.
-             Als minimum: transcriptie met alle visuele info.
+Aanbeveling: Uitgebreide audiodescriptie (video pauzeert),
+             een aparte versie met audiodescriptie, of de video
+             opnieuw opnemen met de beschrijving in het geluid.
 ```
 
 ---

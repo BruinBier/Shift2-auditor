@@ -56,7 +56,9 @@ Gebruik voor de opmaak van ongeordende lijsten het ul-element. De lijst-items mo
 
 ---
 
-## Voorbeeld 4 – Kop zonder inhoud door verkeerde hiërarchie (Fout)
+## Voorbeeld 4 – Verkeerde rangorde van koppen (Fout)
+
+> Let op: de afkeuring rust op de verkeerde rangorde ("Warmteoplossing" hoort onder de kop erboven), niet op een kop zonder inhoud. Twee koppen van hetzelfde niveau achter elkaar is op zichzelf geen afkeuring (W3C, besluit Frits 2026-10-11).
 
 - **SC:** 1.3.1
 - **Oordeel:** Afgekeurd

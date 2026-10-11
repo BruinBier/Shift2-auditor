@@ -48,6 +48,8 @@ macht van de auteur valt (WCAG 2.2, 5.4). Een sjabloon dat de organisatie zelf h
 valt daar niet onder. Hoe je het technische issue aanmaakt staat in
 `Shift2_Regels_SC_4_1_2.md`.
 
+Dit geldt bij een volledig onderzoek. Bij een onderzoek waarvan het onderzoekstype "content" in de naam heeft (deelonderzoek of aanvullend onderzoek content) valt templatecode buiten het onderzoek: geen bevinding, wel een technisch issue. Zie `Shift2_Scope_Per_Sample.md`, "Templatecode: hangt af van het soort onderzoek".
+
 > Gewijzigd op 2026-10-11. Besluit Frits 2026-10-11: volg W3C. Tot dan werd templatecode
 > alleen een technisch issue zonder bevinding, en kwam 3.3.1 op voldoet terwijl de fout er
 > stond.

@@ -60,22 +60,41 @@ toegankelijkheidsbalk valt buiten je beoordeling op een vervolgpagina.
 Twijfel je of een blok bij de main-content of bij de sitebrede template hoort? Kijk of het op
 de homepage ook voorkomt. Zo ja, dan is het template en sla je het over.
 
-## Templatecode van de formuliergenerator valt buiten het onderzoek
+## Templatecode: hangt af van het soort onderzoek
 
-Bij formulierstappen komt veel opmaak uit de formuliergenerator, niet uit wat de redacteur
-invult. Denk aan de voortgangsbalk, de sessie-waarschuwing, de knoppen en de tekenteller onder
-een invoerveld. Kan de redacteur er niets aan doen, dan hoort het **niet in het rapport**.
+Veel van wat je op een pagina ziet komt uit het sjabloon van de leverancier, niet uit wat de
+redacteur invult: de toegankelijkheidsbalk, het zoekveld in de header, en bij formulierstappen
+de voortgangsbalk, de sessie-waarschuwing, de knoppen en de tekenteller onder een invoerveld.
+Of dat in het rapport komt, hangt af van het onderzoekstype (`project.researchType` in
+`get-project`):
+
+| Onderzoekstype | Templatecode met een fout |
+|---|---|
+| Naam bevat **"content"** (deelonderzoek content, aanvullend onderzoek content, ook "met formulieren") | **Buiten het onderzoek.** Geen bevinding, geen opmerking. Wel een technisch issue voor de leverancier (zie `Shift2_Regels_SC_4_1_2.md`), zodat de fout niet verloren gaat. |
+| Elk ander type (volledig onderzoek, "WCAG 2.2 AA onderzoek", Mijn-omgeving) | **Bevinding** met verantwoordelijke ontwikkelaar **én** een technisch issue. |
+
+Waarom het verschil: een deelonderzoek content beoordeelt wat de redacteur kan aanpassen, en
+dat is met de klant zo afgesproken. Een volledig onderzoek is een uitspraak over de hele
+pagina, en het succescriterium kent geen uitzondering voor wie de code heeft gemaakt (WCAG
+2.2, 5.4 geldt alleen voor inhoud van derden die later wordt toegevoegd). W3C beslist dit
+niet: het is een keuze over de scope. Besluit Frits 2026-10-11.
 
 Voorbeeld: de tekst "U hebt nog 200 tekens over." onder een invoerveld staat in een `div` die
-niet met `aria-describedby` aan het veld is gekoppeld. Dat is een echte tekortkoming, maar hij
-zit in de generator. Geen bevinding, geen opmerking. Vastgelegd door Frits op 2026-08-03 bij
-UTHEU-01 (contactformulier stap 2).
+niet met `aria-describedby` aan het veld is gekoppeld. Dat is een echte tekortkoming in de
+generator. Bij een deelonderzoek content: geen bevinding, wel een technisch issue (vastgelegd
+door Frits op 2026-08-03 bij UTHEU-01, contactformulier stap 2; het technische issue is er op
+2026-10-11 bij gekomen). Bij een volledig onderzoek: een 1.3.1-bevinding voor de ontwikkelaar
+én een technisch issue.
+
+Twijfel je of iets templatecode is of redactioneel? Kijk of de redacteur het in het CMS of de
+formulierenbouwer kan aanpassen. Zo ja, dan is het redactioneel en beoordeel je het altijd.
 
 Wat je wél beoordeelt op een formulierstap: de labels, de veldnamen, de koppen en de teksten
 die de redacteur zelf invult. De stapnaam bijvoorbeeld: die is redactioneel en kan wél een
 bevinding of opmerking opleveren (zie UTHEU-01 B027).
 
-Zie ook `Shift2_Regels_SC_4_1_2.md` voor hetzelfde principe bij de toegankelijkheidsbalk.
+Zie ook `Shift2_Regels_SC_4_1_2.md` voor de toegankelijkheidsbalk en voor hoe je een
+technisch issue aanmaakt.
 
 ## Video die alleen gelinkt is, valt buiten de scope
 

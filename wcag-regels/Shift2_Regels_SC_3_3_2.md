@@ -66,6 +66,8 @@ verantwoordelijke **ontwikkelaar** én een technisch issue voor de leverancier, 
 SIMsite-galerijpatroon onder 1.1.1. Zie `Shift2_Regels_SC_4_1_2.md` voor het technische
 issue.
 
+Dit geldt bij een volledig onderzoek. Bij een onderzoek waarvan het onderzoekstype "content" in de naam heeft (deelonderzoek of aanvullend onderzoek content) valt templatecode buiten het onderzoek: geen bevinding, wel een technisch issue. Zie `Shift2_Scope_Per_Sample.md`, "Templatecode: hangt af van het soort onderzoek".
+
 Gevolg: een homepage met een zoekveld in de header heeft voor 3.3.2 wél een invoerveld. Zet
 op het homepage-sample het formulier-vinkje dus niet op "niet aanwezig" alleen omdat er
 verder geen formulier staat.

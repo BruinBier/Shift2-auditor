@@ -54,10 +54,9 @@ Speciale linkregel:
 │  ├─ NEE → FAIL (F73)
 │  └─ JA ↓
 │
-├─ Krijgt de link een extra visuele aanwijzing bij hover EN focus?
-│  (onderstreping, vet, cursief, etc.)
-│  ├─ NEE → FAIL (G183 niet volledig toegepast)
-│  └─ JA → PASS (maar onderstreping blijft de voorkeur)
+└─ JA → PASS (G183; onderstreping blijft de voorkeur)
+   Een extra aanwijzing bij hover of focus is GEEN eis:
+   de techniekpagina G183 noemt alleen de 3:1.
 ```
 
 ---
@@ -86,7 +85,7 @@ Voor elk element waar kleur informatie draagt:
 ### Stap 4: Test links specifiek
 Voor links in lopende tekst zonder onderstreping:
 - Meet de contrastverhouding tussen linktekst en omringende tekst (niet achtergrond)
-- Controleer of er een visuele aanwijzing verschijnt bij hover en focus
+- Noteer wat er bij hover en focus verandert; alleen een kleurwissel is onder 1.4.1 geen afkeuring (G183 stelt er geen eis aan, C15 is Advisory)
 
 ### Stap 5: Controleer afbeeldingen met kleurinformatie
 Voor afbeeldingen (grafieken, diagrammen, kaarten):
@@ -114,7 +113,7 @@ Dit is het meest voorkomende issue op gemeente-websites. Links die alleen door k
 **Optie B: 3:1 contrast + hover/focus indicatie (G183)**
 Als onderstreping niet wordt gebruikt, moet:
 1. De link minimaal 3:1 contrastverhouding hebben met de omringende tekst (niet de achtergrond)
-2. Er moet een extra visuele aanwijzing verschijnen bij hover EN focus (bijv. onderstreping, vet, cursief)
+2. Een extra visuele aanwijzing bij hover of focus is aanbevolen, maar geen eis. De quickref noemt hover nog, de techniekpagina G183 niet; wij volgen de techniekpagina.
 
 ```html
 <!-- PASS via G183: 3:1 contrast + underline on hover/focus -->
@@ -141,23 +140,23 @@ Als onderstreping niet wordt gebruikt, moet:
 <!-- Geen onderstreping, geen 3:1 contrast met tekst,
      geen hover/focus indicatie -->
 
-<!-- FAIL: visuele aanwijzing alleen bij hover -->
+<!-- GEEN AFKEURING onder 1.4.1: visuele aanwijzing alleen bij hover (focus valt onder 2.4.7) -->
 <style>
   a { color: blue; text-decoration: none; }
   a:hover { text-decoration: underline; }
   /* a:focus heeft GEEN visuele aanwijzing! */
 </style>
-<!-- Hover alleen is niet voldoende (ook focus nodig) -->
+<!-- Mits de link 3:1 haalt tegen de omringende tekst -->
 ```
 
 **Uitzondering: Visited links**
 Het onderscheid tussen bezochte en niet-bezochte links op basis van alleen kleur is GEEN failure van SC 1.4.1. Browsers beperken om privacyredenen welke stijlen auteurs kunnen toepassen op visited links. Omdat dit buiten de controle van de auteur valt, wordt het niet als een failure beschouwd.
 
-**Tabfocus mag ook niet alleen met kleur:**
-Als de focus op een link of ander interactief element komt en de kleur is het enige dat wijzigt, dan is dit niet voldoende. Naast kleur moet er een andere visuele aanwijzing zijn waardoor duidelijk wordt dat de focus op het element staat (bijv. outline, onderstreping, vetgedrukt).
+**Tabfocus alleen met kleur: niet onder 1.4.1.**
+Of de focus zichtbaar is, valt onder 2.4.7 (Focus zichtbaar). Een focus die alleen van kleur verandert, keur je onder 1.4.1 niet af. Bij verschil gaat het regelbestand in `wcag-regels/` voor; dit is aangepast op 2026-10-11 (besluit Frits: volg W3C). Onderstaand voorbeeld hoort bij 2.4.7.
 
 ```html
-<!-- FAIL: focus alleen via kleurverandering -->
+<!-- 2.4.7, niet 1.4.1: focus alleen via kleurverandering -->
 <style>
   a:focus { color: red; outline: none; }
 </style>

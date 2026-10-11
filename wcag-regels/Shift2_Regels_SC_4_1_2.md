@@ -4,7 +4,9 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_4_1_2.md` als ze elkaar tegenspreken.
 
-## Templatecode van de leverancier: bevinding én technisch issue
+## Templatecode van de leverancier: bevinding én technisch issue (volledig onderzoek)
+
+Dit geldt bij een volledig onderzoek. Bij een onderzoek waarvan het onderzoekstype "content" in de naam heeft (deelonderzoek of aanvullend onderzoek content) valt templatecode buiten het onderzoek: geen bevinding, wel een technisch issue. Zie `Shift2_Scope_Per_Sample.md`, "Templatecode: hangt af van het soort onderzoek".
 
 Een aan/uit-knop in de SIMsite-toegankelijkheidsbalk (zoals 'Contrast verhogen') zonder
 `aria-pressed` is templatecode van de leverancier. De gemeente kan er in het CMS niets aan
@@ -315,7 +317,8 @@ schakelknop die niet meldt of hij aanstaat: dat zijn de drie vragen. Kijk altijd
 logolink bovenaan; een naam die alleen uit `title` komt is voor 4.1.2 een naam.
 
 Een nietszeggende naam, of een naam die de bestemming niet dekt, is 2.4.4, niet 4.1.2.
-Templatecode van de leverancier is een bevinding (ontwikkelaar) én een technisch issue. Een
+Templatecode van de leverancier is bij een volledig onderzoek een bevinding (ontwikkelaar) én
+een technisch issue; bij een deelonderzoek content alleen een technisch issue. Een
 PDF zonder tags vervalt.
 
 ### Audit-instructies
@@ -370,6 +373,8 @@ meebeweegt. Dat vergt bedienen in de auditsessie.
 3. Toestand: schakelknoppen, uitklapknoppen en tabbladen melden hun stand en veranderen mee
 4. Eigen widgets: zoeksuggesties, dialoogvensters en accordeons hebben naam, rol en toestand
 5. Templatecode van de leverancier: een bevinding voor de ontwikkelaar én een technisch issue
+
+> Gebied 5 bij een onderzoekstype met "content" in de naam: templatecode valt buiten het onderzoek. Zet het gebied op `nvt` met die reden, en maak alleen een technisch issue. Zie `Shift2_Scope_Per_Sample.md`.
 
 > Gebied 5: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Tot dan werd templatecode alleen een technisch issue.
 > Gebied 1: een naam uit `title` of "(externe link)" is hier `ok`; of die de bestemming dekt,

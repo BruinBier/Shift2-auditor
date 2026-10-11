@@ -347,8 +347,10 @@ komt er een uitsnede vóór en ná; keur nooit af op het getal alleen. Beweegt e
 ertussen; een flits van drie per seconde zit dáártussen. `get-flitsen` leest daarom de beeldjes
 mee die de browser tekent en telt per blok de tegengestelde helderheidssprongen (10% van de
 schaal, donkerste onder 0,80), plus de aparte toets op verzadigd rood. De gebiedsgrens is een
-kwart van een gezichtsveld van tien graden — ongeveer 2,8% van het beeld, niet "een kwart van
-het scherm", want een klein flitsend vlakje zakt ook. Komen er geen beeldjes, dan heeft de
+vaste maat: 21.824 CSS-pixels, een kwart van een gezichtsveld van tien graden (W3C G176), niet
+"een kwart van het scherm", want een klein flitsend vlakje zakt ook. Dat is alleen bij een venster
+van 1024 bij 768 ongeveer 2,8% van het beeld; `get-flitsen` rekent nog met dat percentage en is
+bij een groter venster dus te mild (zie `Shift2_Regels_SC_2_3_1.md`). Komen er geen beeldjes, dan heeft de
 pagina niet opnieuw getekend en kan er niets geflitst hebben: dat is `voldoet`, niet
 `niet_aanwezig`. Dit is een zeef en geen keuring: het beeld wordt verkleind en samengeperst,
 en alleen wat in beeld staat wordt opgenomen. Laat een videobestand door PEAT halen voor een

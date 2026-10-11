@@ -31,7 +31,8 @@ Op dit moment vastgelegd:
 |---|---|---|
 | 1.3.5 | [#5213](https://github.com/w3c/wcag/issues/5213) | Browser-autocomplete is een bijwerking, niet het doel. "De browser vult het toch wel in" is geen geldig argument. |
 | 2.5.3 | [#5171](https://github.com/w3c/wcag/issues/5171) | Een slogan in een logo hoeft niet in de toegankelijke naam. F96 dekt dit geval niet. |
-| 3.2.4 | [#5225](https://github.com/w3c/wcag/issues/5225) | Vijf onduidelijkheden: consistent versus identiek, geldt het binnen één pagina, wat is een "component". |
+| 3.2.4 | [#5225](https://github.com/w3c/wcag/issues/5225) | Vijf onduidelijkheden: consistent versus identiek, geldt het binnen één pagina, wat is een "component". Het punt "binnen één pagina" is inmiddels beantwoord door de Understanding-tekst ("multiple times on the same page"): ja. |
+| 1.4.10 | [#814](https://github.com/w3c/wcag/issues/814) | Reflow bij een PDF. Geen besluit van de werkgroep; voorgestelde toets: openen in Acrobat met "Opnieuw plaatsen". Zo staat het in `Shift2_Regels_SC_1_4_10.md`. |
 
 Bronnen om periodiek te raadplegen:
 - [github.com/w3c/wcag/issues](https://github.com/w3c/wcag/issues) — hier staat waar de norm

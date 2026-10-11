@@ -111,7 +111,7 @@ Komt het doel van het veld voor in de lijst van WCAG Sectie 7 input purposes? Zo
 
 ### Stap 5: Controleer op ongeldige waarden
 - **`autocomplete="on"` is NIET voldoende.** De waarde "on" identificeert niet het specifieke doel van het veld. Er moet een gestandaardiseerde token worden gebruikt (bijv. `given-name`, `email`, `tel`).
-- **`autocomplete="off"`** is geen failure als het bewust wordt gebruikt voor gevoelige gegevens (bijv. wachtwoorden, OTP-codes). Maar voor gewone persoonlijke gegevens (naam, adres, e-mail) is het een gemiste kans en kan het als failure worden beschouwd.
+- **`autocomplete="off"`** is alleen goed bij een veld zonder doel uit de WCAG-lijst, zoals een eenmalige sms- of verificatiecode. Bij een veld met een doel uit de lijst, **ook een wachtwoordveld** (`current-password`, `new-password`), is `off` een afkeuring: het doel is dan niet meer programmatisch te bepalen (Understanding 1.3.5). Bij verschil gaat het regelbestand in `wcag-regels/` voor; dit is aangepast op 2026-10-11 (besluit Frits: volg W3C).
 
 ### Stap 6 (optioneel): Test met browser-autofill
 Zorg dat je in de browser al persoonlijke gegevens hebt opgeslagen en probeer deze automatisch in te vullen (bijv. in Chrome: klik op een invoerveld, dan verschijnt een suggestie met je opgeslagen gegevens).
