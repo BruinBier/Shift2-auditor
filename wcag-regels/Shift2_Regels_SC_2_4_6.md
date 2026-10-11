@@ -85,6 +85,33 @@ Let op: er zijn geen QuickFindings onder 2.4.6, dus je schrijft deze bevindingen
 
 - Bestandsnaam als bijschrift in een vergrote galerij-weergave (SIMsite-patroon): eigen bevinding onder 2.4.6, klein en redacteur, los van de 1.1.1-bevinding over de ontbrekende tekstalternatieven. Spreek hier over "onderschrift", bij 1.1.1 over "tekstalternatief".
 - NIET-GETAGDE PDF: 2.4.6 WEL gewoon beoordelen. Dit criterium gaat over de inhoudelijke kwaliteit van de koptekst, en die staat er ook zonder tags. Kijk naar de pagina: staan er koppen boven de paragrafen, en dekt die tekst de lading van wat eronder staat? Geef een echt oordeel (voldoet of afkeuring); zet het niet op niet_te_bepalen met "geen tags" als reden. Dat de kop technisch niet als kop is vastgelegd, is een 1.3.1-kwestie, niet een 2.4.6-kwestie. Vastgelegd door Frits op 2026-08-02 bij UTHEU-01.
+  W3C zegt het letterlijk: dit criterium "does not require that content acting as a heading or label be correctly marked up or identified -- that aspect is covered separately by 1.3.1", en een kop kan 2.4.6 halen terwijl hij 1.3.1 niet haalt (Understanding 2.4.6). In een PDF zonder tags gaat het deelgebied "Hoofdkoppen (h1 en h2)" dus over de koppen die je ziet staan: de grote titel en de tussenkoppen. Op LEU-01 (toestemmingsformulier, 2026-10-11) keurde 2.4.6 terecht af op de kop "Nog belangrijk!" (V053), in een document zonder tagstructuur.
+
+## Wat W3C nog meer zegt (Understanding 2.4.6)
+
+Naast deze regels gelegd op 2026-10-11. Elk punt noemt waar het staat.
+
+**Kort mag.** Een kop of label hoeft niet lang te zijn: "A word, or even a single character,
+may suffice if it provides an appropriate cue". Keur een kop dus niet af op zijn lengte. De
+vraag blijft of hij zegt waar het stuk eronder over gaat. "Overig" of "Nieuw" is een afkeuring
+als de lezer daaruit niet opmaakt wat er volgt, niet omdat het één woord is.
+
+**Een pictogram als label mag**, als het in die context algemeen begrepen wordt. W3C noemt het
+vergrootglas met als tekstalternatief "Zoeken" bij een zoekveld. Bij een afbeelding betekent
+hetzelfde vergrootglas iets anders, namelijk vergroten; ook dat is in die context duidelijk.
+
+**Ook een label dat alleen in de code staat moet kloppen.** Een veld met een `aria-label` heeft
+een toegankelijke naam en haalt daarmee 4.1.2. Zegt die naam niet duidelijk wat er gevraagd
+wordt, dan keurt het onder 2.4.6 af (Understanding 2.4.6, de alinea over labels en 4.1.2).
+
+**Geen koppen of labels is geen fout onder 2.4.6.** Het criterium eist niet dát er koppen of
+labels zijn, alleen dat de koppen en labels die er staan beschrijvend zijn. Of een veld een
+label hoort te hebben, valt onder 3.3.2; of de koppen als koppen zijn vastgelegd, onder 1.3.1.
+
+**De technieken.** Voldoende: G130, beschrijvende koppen, en G131, beschrijvende labels. W3C
+zet erbij dat koppen en labels onder 1.3.1 ook programmatisch vast te stellen moeten zijn. De
+twee W3C-testregels bij dit criterium zijn "Heading is descriptive" en "Form field label is
+descriptive". Een techniek is een manier om te voldoen, geen eis; zie `Shift2_Bewijsvoering.md`.
 
 ## Op de kaart
 

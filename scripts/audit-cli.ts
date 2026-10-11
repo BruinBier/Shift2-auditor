@@ -2925,7 +2925,24 @@ async function koppelLogboek(projectId: string, flags: Flags) {
         .map((g) => g.meting);
       // Van overzicht naar detail, volgens dezelfde regel als de meetknop op de kaart.
       const verantwoording = opLeesvolgorde([...algemeen, ...gericht]);
-      if (!verantwoording.length) return null;
+      if (!verantwoording.length) {
+        /*
+         * Niets meer om onder dit oordeel te hangen. Stond er wel iets, en komt dat allemaal
+         * van metingen die dit sample in het logboek heeft, dan is het achterhaald: maak het
+         * leeg. Anders bleef een meting staan die er niet meer onder hoort. Op LEU-01 hing
+         * get-pdfstructuur zo onder 2.4.6 van een ongetagde PDF, nadat dat commando 2.4.6
+         * bij een ongetagd document niet meer opgeeft (2026-10-11).
+         *
+         * Alleen als ALLES wat er stond uit dit logboek komt; een spoor van elders blijft.
+         */
+        const bestaand: any[] = Array.isArray(c.verantwoording) ? c.verantwoording : [];
+        const bekendeCommandos = new Set(
+          Array.from(gerichtPerSample.get(c.sampleItemId)?.values() ?? []).map((g) => g.meting.commando)
+        );
+        const allesUitLogboek =
+          bestaand.length > 0 && bestaand.every((m) => bekendeCommandos.has(m?.commando));
+        if (!allesUitLogboek) return null;
+      }
       return {
         sampleItemId: c.sampleItemId,
         criterionCode: c.criterionCode,
@@ -4898,9 +4915,16 @@ async function getPdfStructuur(doel: string, _flags: Flags) {
   // 2.4.6, en toonde de kaart daar "niet gemeten" terwijl het oordeel op deze uitvoer rustte.
   // 1.4.10 staat in de uitvoer maar niet in de registratie, en blijft er dus buiten.
   const geregistreerd = new Set(CRITERIA_PER_COMMANDO['get-pdfstructuur'] ?? []);
+  // 2.4.6 rust alleen op deze meting als er een tagstructuur is: dan levert hij de koppen.
+  // Zonder tags zegt hij niets over de tekst van een kop, en dan is het oordeel een
+  // afweging van de agent op de zichtbare tekst -- zo hoort de kaart het ook te tonen.
+  // 1.3.1 blijft wel: dat er geen tagstructuur is, is daar juist de vaststelling.
+  // Frits, 2026-10-11, bij het toestemmingsformulier van LEU-01 (V053).
+  const getagd = v.tagstructuur?.structTreeRootMetInhoud === true;
   const bediendeCriteria = Object.values(v)
     .flatMap((b: any) => b?.criteria || [])
-    .filter((c: string) => geregistreerd.has(c));
+    .filter((c: string) => geregistreerd.has(c))
+    .filter((c: string) => getagd || c !== '2.4.6');
 
   legVast({
     commando: 'get-pdfstructuur',
