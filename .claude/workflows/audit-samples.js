@@ -990,8 +990,24 @@ dan staat er "4" op het blad dat in de lezer pagina 8 is. Gebruik het nummer dat
 toont -- doc[i] met i+1 in PyMuPDF -- want de redacteur opent het bestand en springt naar een
 pagina. Op ZOET-01 Bijlage 2 scheelde dat vier pagina's.
 
-STAP 1 — HAAL HET DOCUMENT OP EN LEES DE STRUCTUUR UIT
-Download het bestand naar tmp/pdf/ en bepaal machinaal:
+STAP 1 — LEES DE STRUCTUUR UIT, MET DE MEETCOMMANDO'S OP HET WEBADRES
+Draai eerst deze commando's, ALTIJD met het webadres van de sample (de url hierboven), nooit
+met een bestand dat je zelf hebt gedownload:
+
+  npm run cli -- get-pdfstructuur <url van de sample>      (titel, taal, tags, media, formulieren)
+  npm run cli -- get-pdfleesvolgorde <url van de sample>   (1.3.2)
+  npm run cli -- get-pdfconsistentie <url van de sample>   (3.2.4)
+  npm run cli -- get-pdfcontrast <url van de sample>       (1.4.3)
+  npm run cli -- get-pdfnietteksten <url van de sample>    (1.4.11)
+
+Ze halen het bestand zelf op. Het webadres is de sleutel waarmee de meting aan deze sample
+wordt gekoppeld: draai je ze op tmp/pdf/eigen-naam.pdf, dan staat de meting in het logboek
+maar hangt ze aan niets, en toont de kaart "niet gemeten" bij een oordeel dat wel op een
+meting rust. Op LEU-01 (2026-10-11) stond zo 2.4.2 op "niet gemeten", terwijl de titel
+'M06679-R-E' gewoon was uitgelezen. Zelf uitlezen met Python of pdf-lib doe je alleen voor wat
+die commando's niet dekken, en dat schrijf je er dan bij.
+
+Wat get-pdfstructuur uitleest, en wat je zelf nog nakijkt:
   - Is het document GETAGD? Dit is TWEE controles, en de tweede is de belangrijkste:
       (a) heeft de catalog een /StructTreeRoot?
       (b) STAAT ER IETS IN? Volg de verwijzing en kijk of de wortel /K heeft (de kinderen
@@ -1092,8 +1108,10 @@ ALTIJD, ook bij een niet-getagd document:
 
 CONTRAST (1.4.3 en 1.4.11) — MEET HET, MET EEN EIGEN COMMANDO:
 
-  npm run cli -- get-pdfcontrast <pdf-url of pad> [--paginas=1,38]
-  npm run cli -- get-pdfnietteksten <pdf-url of pad> [--paginas=71,74]
+  npm run cli -- get-pdfcontrast <url van de sample> [--paginas=1,38]
+  npm run cli -- get-pdfnietteksten <url van de sample> [--paginas=71,74]
+
+  Met het webadres van de sample, niet met een eigen download: anders koppelt de meting niet.
 
   Het eerste meet TEKST (1.4.3). Het tweede meet voor 1.4.11 de grafieken, diagrammen en
   pictogrammen: per onderdeel de vlakke kleuren tegen de achtergrond en tegen elkaar, met een
