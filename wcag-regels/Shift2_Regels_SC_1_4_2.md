@@ -154,10 +154,12 @@ haalt de versie van vóór de cookiemuur op.
 1. Media-elementen in de code: audio en video met autoplay, gedempt of niet
 2. Ingesloten kaders van een ander domein: videospelers, kaarten en sociale media met autoplay in het adres of in het gedrag
 3. Geluid dat een script zelf start: geluidseffecten, meldingen en achtergrondmuziek zonder media-element
-4. Bediening als er geluid start: pauze, stop of een eigen volumeregelaar, vooraan in de tabvolgorde
+4. Bediening als er geluid start: pauze, stop of een eigen volumeregelaar; vooraan in de tabvolgorde is een advies
 
 > Aangemaakt op 2026-09-13 bij ZOET-01: 1.4.2 had geen regelbestand en dus geen kaartblok,
 > terwijl 1.4.1 er die dag een kreeg. De regels hierboven komen uit de checklist en uit
 > `Shift2_Voldoet_Of_Niet_Aanwezig.md`; er zitten nog geen correcties uit audits in. Zet
 > uitleg bij deze lijst altijd als blokcitaat: een gewone alinea eronder plakt de kaartlezer
 > aan het laatste gebied vast.
+>
+> Gebied 4: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. De plaats vooraan komt uit techniek G170 en is geen eis van het criterium.

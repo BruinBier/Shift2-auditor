@@ -204,7 +204,7 @@ de onderzoeker na.
 
 1. Links in lopende tekst: onderstreept of anders dan alleen door kleur te herkennen
 2. Links buiten lopende tekst: menu, kaarten, footer en knoppen
-3. Hover en focus: de verandering is niet alleen een andere kleur
+3. Hover en focus: draagt een kleurverandering informatie die nergens anders te zien is? Zichtbare focus zelf is 2.4.7
 4. Formulieren: verplichte velden en foutmeldingen
 5. Statusaanduidingen en pictogrammen met kleurcodering
 6. Grafieken, diagrammen, kaarten en legenda's, ook in de PDF's uit de steekproef
@@ -218,7 +218,5 @@ de onderzoeker na.
 > "selected states" ontbrak. Een actief menu-item dat alleen een andere kleur heeft, is het
 > geval dat het vaakst misgaat, en geen van de zes gebieden vroeg ernaar.
 >
-> Gebied 3 houdt zijn naam, maar is sinds 2026-10-11 geen afkeurgrond meer: een hover of
-> focus die alleen van kleur verandert, voldoet onder 1.4.1. G183 stelt geen eis aan hover of
-> focus, en zichtbare focus is 2.4.7. Schrijf bij dit gebied wat er verandert, met `ok` of
-> `nvt`. Besluit Frits 2026-10-11: volg W3C.
+> Gebied 3: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Een hover of focus die alleen van kleur verandert, is onder 1.4.1 geen
+> afkeuring: G183 stelt daar geen eis aan, en zichtbare focus is 2.4.7.

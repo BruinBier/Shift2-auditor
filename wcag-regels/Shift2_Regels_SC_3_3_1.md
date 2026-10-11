@@ -174,16 +174,15 @@ ook wordt aangekondigd. Dat laatste hoort bij 4.1.3.
 ### Deelgebieden
 
 1. Leeg verplicht veld: het veld wordt aangewezen en de fout staat in tekst
-2. Ongeldige waarde: de melding zegt wat er fout is, niet alleen wat er had gemoeten
-3. Foutoverzicht en meldingen tijdens het typen: in tekst, niet alleen kleur of een pictogram, en niet één fout per keer
-4. Ingevulde gegevens blijven staan na de foutmelding
+2. Ongeldige waarde: de melding zegt in tekst wat er fout is of wat er moet; een instructie bij het veld voldoet
+3. Foutoverzicht en meldingen tijdens het typen: in tekst, niet alleen kleur of een pictogram
+4. Mislukt versturen: de bezoeker krijgt te weten dát het niet gelukt is, ook als het formulier opnieuw verschijnt
 
-> Sinds 2026-10-11 (besluit Frits: volg W3C) lees je deze gebieden zo. Gebied 2: een
-> melding in instructievorm ("Vul een geldige plaats in") is `ok`; alleen een melding die
-> niet zegt wat er mis is of wat er moet, is `fout`. Gebied 3: fouten die één voor één
-> verschijnen zijn geen `fout`, hooguit een `opmerking` met advies. Gebied 4: hier komt nooit
-> `fout`. Verdwijnen de gegevens, schrijf dat dan bij 3.3.7 en zet dit gebied op `nvt` met
-> die verwijzing. De namen van de gebieden zijn bewust ongewijzigd gelaten.
+> Gebied 2, 3 en 4: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied.
+> Gebied 3 noemde ook "niet één fout per keer"; W3C eist niet dat alle fouten tegelijk
+> verschijnen. Gebied 4 ging over ingevulde gegevens die verdwijnen; dat valt onder 3.3.7
+> (W3C, voorbeeld 3 daar). In de plaats kwam een punt uit de Intent van 3.3.1: het formulier
+> opnieuw tonen zonder te melden dat het versturen mislukte, voldoet niet.
 >
 > Aangemaakt op 2026-09-13 bij ZOET-01, samen met de regelbestanden van 2.3.1, 2.4.2,
 > 3.1.1, 3.1.2, 3.3.3 en 3.3.7. De regels komen uit de checklist, de scheiding met 1.3.1

@@ -141,13 +141,12 @@ de agent aan de hand van de regels hierboven, en bij twijfel de onderzoeker.
 1. Afbeeldingen met leesbare tekst: gevonden op de opname en in de code, met wat erin staat
 2. Logo's en woordmerken: uitzondering, geen bevinding
 3. Posters, banners en kaarten: uitzondering of via 1.1.1, geen bevinding hier
-4. Tekstblokken die als schermafdruk zijn geplaatst: afkeuring
+4. Tekstblokken die als schermafdruk zijn geplaatst: afkeuring, tenzij dezelfde tekst ook als tekst op de pagina staat
 
 > Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
 > kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
 > regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
 > als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.
 >
-> Gebied 4 geldt sinds 2026-10-11 alleen als dezelfde tekst nergens zichtbaar als tekst op de
-> pagina staat. Staat hij er wel, dan is dat gebied `ok` (W3C, Note bij de Intent; besluit
-> Frits 2026-10-11: volg W3C).
+> Gebied 4: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Staat dezelfde tekst zichtbaar als tekst op de pagina, dan voldoet het
+> (W3C, Note bij de Intent).

@@ -123,10 +123,9 @@ velden met een vaste breedte, knoppen naast elkaar, en een voortgangsbalk met st
 - NOOIT concluderen uit CSS alleen of uit een schermafdruk op volle breedte. Een CMS kan
   responsive ogen en toch op 320px breken.
 - "Waarschijnlijk OK" of "lijkt responsive" is geen geldige onderbouwing.
-- Bij een PDF kan 1.4.10 wel van toepassing zijn. Zie "PDF: reflow kan, maar de meetwijze
-  ligt nog niet vast" hieronder.
+- Bij een PDF is 1.4.10 van toepassing. Zie "PDF: reflow kan, en zo toets je het" hieronder.
 
-## PDF: reflow kan, maar de meetwijze ligt nog niet vast
+## PDF: reflow kan, en zo toets je het
 
 Tot 2026-10-11 stond hier dat 1.4.10 bij een PDF niet van toepassing is. Dat klopt niet met
 W3C. Understanding 1.4.10 geeft als voorbeeld een PDF die volgens PDF/UA (ISO 14289) is
@@ -142,12 +141,33 @@ Wat dat betekent:
 - Een PDF zonder tagstructuur kan niet goed herschikken. Er is dan geen structuur waarop een
   lezer de tekst opnieuw kan opbouwen.
 
-Houd het oordeel voorzichtig. De meetwijze voor PDF ligt nog niet vast: er is geen commando
-dat reflow in een PDF meet, en welke lezer en welke instelling de toets is, is nog niet
-besloten. Zet bij een PDF dus geen automatische afkeuring neer, ook niet bij een ongetagde
-PDF. Zet 1.4.10 bij een PDF op `niet_te_bepalen` en schrijf erbij wat je wel weet: of het
-document een tagstructuur heeft (uit `get-pdfstructuur`), en dat de meetwijze voor reflow in
-een PDF nog niet vastligt. Zet het niet op `niet_aanwezig`.
+**De toets: Acrobat met "Opnieuw plaatsen".** Er is geen commando dat reflow in een PDF meet,
+dus de onderzoeker doet het met de hand. W3C heeft hier geen besluit over genomen, maar in de
+discussie bij W3C-issue #814 ("What is sufficient for SC 1.4.10? (PDF)", 2019-2024) is dit de
+testmethode die werd voorgesteld: de PDF openen in Acrobat op 320 pixels breed. Zo doe je het:
+
+1. Open de PDF in Acrobat (Reader of Pro), niet in de browser: de PDF-viewer van Chrome of
+   Edge herschikt niet.
+2. Zet "Opnieuw plaatsen" aan: Beeld > Zoomen > Opnieuw plaatsen, of Ctrl+4. In de nieuwe
+   vormgeving zit het menu Beeld onder de knop met de drie streepjes linksboven. Het werkt
+   alleen in de weergave met één pagina, en niet terwijl je een formulier invult.
+3. Vergroot naar 400%, of maak het venster smal. Dat komt overeen met 320 pixels bij een
+   website.
+4. Kijk of de tekst doorloopt naar de volgende regel, zodat je alleen naar beneden scrolt, en
+   of alles er nog staat in een logische volgorde. Tabellen en formuliervelden herschikken
+   nooit; die tellen niet mee (de uitzondering voor tweedimensionale opmaak).
+5. Zet het daarna weer uit met Ctrl+4.
+
+**Het oordeel:**
+- Een PDF zonder tagstructuur herschikt niet of door elkaar: afkeuring. De oorzaak, de
+  ontbrekende tagstructuur, staat al onder 1.3.1; noem dat in de bevinding en geef hetzelfde
+  advies.
+- Een getagde PDF die in Acrobat netjes herschikt: voldoet.
+- Een getagde PDF die in Acrobat tekst verliest of door elkaar zet: afkeuring.
+- Een getagde PDF die nog niemand in Acrobat heeft bekeken: `niet_te_bepalen`, met de vraag
+  aan de onderzoeker om de toets hierboven te doen. Nooit `niet_aanwezig`.
+
+Besluit Frits 2026-10-11.
 
 ## Technieken (W3C)
 
@@ -183,8 +203,8 @@ schuift is toegestaan.
 
 Dit is een meting, geen inschatting. "Lijkt responsive" is geen onderbouwing, en de meting
 moet echt op 320 staan, niet op 305 door een schuifbalk. Bij een PDF kan dit criterium wel
-van toepassing zijn: een getagde PDF kan herschikken in een lezer die dat ondersteunt (W3C).
-De meetwijze daarvoor ligt nog niet vast, dus geen automatische afkeuring.
+van toepassing zijn: je toetst het in Acrobat met "Opnieuw plaatsen". Een PDF zonder
+tagstructuur herschikt niet en keurt af.
 
 ### Audit-instructies
 
@@ -209,17 +229,20 @@ De meetwijze daarvoor ligt nog niet vast, dus geen automatische afkeuring.
    vak is toegestaan, inhoud in een dichtgeklapt blok staat niet in beeld. Geen afkeuring.
 6. [jij] Een formulierstap achter een sessie: `get-reflow` komt op stap 1 uit. Vul het
    formulier tot die stap in de auditsessie en zet dan het venster op 320.
-7. [agent] Bij een PDF: `get-reflow` meet geen PDF. Noteer of het document een tagstructuur
-   heeft en zet 1.4.10 op `niet_te_bepalen`, omdat de meetwijze voor reflow in een PDF nog
-   niet vastligt. Geen afkeuring, geen `niet_aanwezig`.
+7. [agent] Bij een PDF: `get-reflow` meet geen PDF. Heeft het document geen tagstructuur
+   (`get-pdfstructuur`), dan is het een afkeuring. Is het getagd, zet 1.4.10 dan op
+   `niet_te_bepalen` met de vraag om de Acrobat-toets. Nooit `niet_aanwezig`.
+8. [jij] Getagde PDF: open hem in Acrobat, zet "Opnieuw plaatsen" aan (Ctrl+4), vergroot naar
+   400% en kijk of alles zonder zijwaarts schuiven en in een logische volgorde te lezen is.
+   Tabellen en formuliervelden tellen niet mee.
 
 #### Stap 3 — Vastleggen
 
-8. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
+9. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
    gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
-9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+10. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
    verder niets. Al het inhoudelijke gaat naar de deelgebieden.
 

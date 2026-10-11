@@ -369,13 +369,10 @@ meebeweegt. Dat vergt bedienen in de auditsessie.
 2. Rol: elementen met een rol doen wat die rol belooft, en horen in de bijbehorende constructie
 3. Toestand: schakelknoppen, uitklapknoppen en tabbladen melden hun stand en veranderen mee
 4. Eigen widgets: zoeksuggesties, dialoogvensters en accordeons hebben naam, rol en toestand
-5. Templatecode van de leverancier: als technisch issue gemeld, niet als bevinding
+5. Templatecode van de leverancier: een bevinding voor de ontwikkelaar én een technisch issue
 
-> Sinds 2026-10-11 (besluit Frits: volg W3C) lees je gebied 5 zo: mankeert er iets aan
-> templatecode, dan is dat `fout` met een bevinding (verantwoordelijke ontwikkelaar), en
-> daarnaast een technisch issue voor de leverancier. De naam van het gebied is bewust
-> ongewijzigd gelaten; hij spreekt de regel nu tegen en moet door Frits worden aangepast.
-> Gebied 1: een naam uit `title` of "(externe link)" is hier `ok`; of die de bestemming dekt
+> Gebied 5: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Tot dan werd templatecode alleen een technisch issue.
+> Gebied 1: een naam uit `title` of "(externe link)" is hier `ok`; of die de bestemming dekt,
 > hoort bij 2.4.4.
 >
 > Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen

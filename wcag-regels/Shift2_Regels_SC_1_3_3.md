@@ -40,7 +40,7 @@ voor wie kijkt; "klik op de knop Verzenden" is voor iedereen te volgen.
 
 Verwijzen via de naam of het label van een element is altijd goed, ook als er "knop",
 "link" of "icoon" voor staat. Het gaat om aanvullen, niet om weglaten: een vorm of plek
-noemen mag, zolang de naam er ook bij staat. Kleur valt hier niet onder; dat is 1.4.1.
+noemen mag, zolang de naam er ook bij staat. Kleur hoort er ook bij: een instructie die alleen op kleur en vorm of plek leunt ("klik op de groene ronde knop") keurt af onder 1.3.3. Is kleur het enige verschil tussen twee dingen, zonder instructie, dan is het 1.4.1 (W3C Understanding 1.3.3, voorbeeld 1; besluit Frits 2026-10-11: volg W3C).
 
 ### Audit-instructies
 
@@ -94,7 +94,7 @@ kijken.
 
 1. Instructies en verwijzingen in de tekst, ook bij formuliervelden en foutmeldingen
 2. Verwijzingen die alleen op vorm, kleur, grootte of plek leunen, zonder naam of label erbij
-3. Richtingsaanduidingen: staat de bedoelde inhoud direct voor of na de verwijzing?
+3. Richtingsaanduidingen: staat de bedoelde inhoud op de juiste plek in de leesvolgorde, en is de verwijzing eenduidig?
 4. Symbolen die informatie dragen zonder tekst: vinkje, kruisje, pijl, woordgrootte
 5. Verwijzingen via geluid
 
@@ -103,6 +103,5 @@ kijken.
 > 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
 > hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.
 >
-> Gebied 3 houdt zijn naam, maar "direct voor of na" lees je sinds 2026-10-11 als: op de
-> juiste plek in de leesvolgorde, met een eenduidige verwijzing. Zo staat het in de Intent
-> van W3C; besluit Frits 2026-10-11: volg W3C.
+> Gebied 3: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Tot dan stond er "direct voor of na de verwijzing"; W3C vraagt alleen de
+> juiste plek in de leesvolgorde en een eenduidige verwijzing (Intent).

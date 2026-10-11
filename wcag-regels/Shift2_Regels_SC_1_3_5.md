@@ -163,7 +163,7 @@ auditsessie zelf heeft geopend.
 1. Alle invoervelden gevonden, ook in uitklapblokken en volgende formulierstappen
 2. Velden die om een gegeven van de bezoeker zelf vragen, afgezet tegen de WCAG-lijst
 3. De `autocomplete`-waarde per veld: aanwezig, en klopt hij met het gevraagde gegeven?
-4. `off` alleen bij gevoelige gegevens zoals een wachtwoord of een eenmalige code
+4. `off` alleen bij een veld zonder doel uit de WCAG-lijst, zoals een eenmalige code; een wachtwoord krijgt current-password of new-password
 5. Op de schermafdruk gecontroleerd dat het veld ook zichtbaar is
 
 > Aangemaakt op 2026-09-19 bij ZOET-01. Deze vier criteria waren de enige zonder
@@ -171,7 +171,4 @@ auditsessie zelf heeft geopend.
 > 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
 > hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.
 >
-> Gebied 4 houdt zijn naam, maar het wachtwoord hoort er sinds 2026-10-11 niet meer bij: een
-> wachtwoordveld krijgt `current-password` of `new-password`, en `off` is daar een afkeuring.
-> `off` is alleen goed bij een veld zonder doel uit de WCAG-lijst, zoals een eenmalige code.
-> Besluit Frits 2026-10-11: volg W3C.
+> Gebied 4: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Tot dan noemde de naam het wachtwoord als geval waarin `off` mocht.

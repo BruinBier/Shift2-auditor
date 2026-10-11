@@ -156,14 +156,13 @@ ook begrijpelijk is, weeg je onder 2.4.6.
 
 ### Deelgebieden
 
-1. Elk invoerveld heeft een zichtbaar label of instructie die zegt wat er wordt gevraagd
+1. Elk invoerveld heeft een zichtbaar label of een instructie; of het label duidelijk is, valt onder 2.4.6
 2. Uitleg bij velden waar het formaat niet vanzelf spreekt: datum, postcode, telefoonnummer
 3. Verplichte velden zijn aangeduid, met de uitleg vóór de velden
 4. Geen placeholder als enig label
 
-> Sinds 2026-10-11 (besluit Frits: volg W3C) lees je gebied 1 zo: is er een label of
-> instructie? Een label dat er staat maar niets zegt ("Veld 1") is hier `ok` en een
-> bevinding onder 2.4.6. De naam van het gebied is bewust ongewijzigd gelaten.
+> Gebied 1: Hernoemd op 2026-10-11 (besluit Frits: volg W3C); oordelen van daarvoor staan nog onder de oude naam en krijgen een open ring bij dit gebied. Een label dat er staat maar niets zegt ("Veld 1") is hier `ok` en een
+> bevinding onder 2.4.6.
 >
 > Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
 > kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de

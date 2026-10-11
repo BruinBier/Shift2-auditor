@@ -1147,8 +1147,12 @@ CONTRAST (1.4.3 en 1.4.11) — MEET HET, MET EEN EIGEN COMMANDO:
 
   Zie Shift2_Regels_SC_1_4_3.md en Shift2_Regels_SC_1_4_11.md, sectie Regels.
 
-NIET VAN TOEPASSING op een PDF: 1.4.10 reflow, 2.1.2 toetsenbordval, 2.5.3 label in naam,
-2.5.8 grootte aanwijsgebied. Zet die op 'niet_aanwezig'.
+NIET VAN TOEPASSING op een PDF: 2.1.2 toetsenbordval. Zet die op 'niet_aanwezig'.
+WEL VAN TOEPASSING op een PDF (besluit Frits 2026-10-11, volg W3C):
+  - 1.4.10 reflow: zonder tagstructuur een afkeuring; getagd 'niet_te_bepalen' met de vraag om
+    de toets in Acrobat met 'Opnieuw plaatsen' (zie Shift2_Regels_SC_1_4_10.md).
+  - 2.5.3 label in naam en 2.5.8 grootte aanwijsgebied: van toepassing op links en
+    formuliervelden in de PDF. Zijn die er niet, dan 'niet_aanwezig'. Zie de regelbestanden.
 
 IS HET DOCUMENT WEL GETAGD, dan gaat het om de KWALITEIT van de tags: leesvolgorde,
 koppenniveaus, tekstalternatieven, lijststructuur, tabelkoppen.
