@@ -5044,16 +5044,17 @@ async function getPdfNietTeksten(doel: string, flags: Flags) {
     kleur: string;
     tegenAchtergrond: number;
     aandeel?: number;
-    rand?: { kleur: string; tegenAchtergrond: number };
+    rand?: { kleur: string; tegenAchtergrond: number; tegenVulkleur?: number };
   };
-  // Een kleur met een rand die 3:1 haalt, is tegen de achtergrond wel te zien.
+  // Een rand telt alleen als hij 3:1 haalt tegen de vulkleur EN tegen de achtergrond
+  // (W3C-techniek G209: "at least a 3:1 color contrast with each color").
   const duidelijkOnder3 = (o: Onderdeel) =>
     ((o.kleuren || []) as Kleur[]).filter(
       (k) =>
         k.tegenAchtergrond < 3 &&
         k.tegenAchtergrond >= 1.1 &&
         (k.aandeel ?? 0) >= 0.01 &&
-        !(k.rand && k.rand.tegenAchtergrond >= 3),
+        !(k.rand && k.rand.tegenAchtergrond >= 3 && (k.rand.tegenVulkleur ?? 0) >= 3),
     );
   const slechtste = (o: Onderdeel) =>
     Math.min(99, ...duidelijkOnder3(o).map((k) => k.tegenAchtergrond));
@@ -5098,8 +5099,8 @@ async function getPdfNietTeksten(doel: string, flags: Flags) {
     let_op: [
       'Dit keurt niets af. Een kleur onder 3:1 is alleen een bevinding als dat onderdeel nodig is om de informatie te begrijpen: een grafieksegment, een legendasymbool, een pictogram. Een sierlijn of een lichte achtergrond van een grafiekvlak valt er niet onder.',
       'Staat de informatie er ook op een andere manier, bijvoorbeeld een percentage of naam bij elk segment, dan hoeft de kleur geen 3:1 te halen.',
-      'Twee onderdelen moeten ook van ELKAAR te onderscheiden zijn (W3C Understanding 1.4.11, het voorbeeld met de taartgrafiek). Dat staat onder buren: onderling 3:1, of een scheiding die tegen allebei 3:1 haalt. Een witte lijn tussen geel en lichtblauw helpt niet. Een buur met onder3: true is een afkeuring als die twee onderdelen verschillende informatie dragen.',
-      'Een kleur met een rand die 3:1 haalt tegen de achtergrond, is tegen de achtergrond wel te zien, ook als de vulkleur dat niet is. De randkleur is voorzichtig geschat: een lijn van een half punt komt in het beeld als een reeks tinten uit.',
+      'Twee onderdelen moeten ook van ELKAAR te onderscheiden zijn (W3C Understanding 1.4.11, het voorbeeld met de taartgrafiek; techniek G209). Dat staat onder buren. Raken ze elkaar (scheiding: null), dan telt de verhouding van de twee kleuren. Ligt er een lijn tussen, dan telt elke kleur tegen die lijn (scheiding.tegen), niet de twee kleuren tegen elkaar. Een buur met onder3: true is een afkeuring als die twee onderdelen verschillende informatie dragen.',
+      'Een rand telt alleen als hij 3:1 haalt met ELK van de twee kleuren die hij scheidt (W3C-techniek G209): bij rand.tegenVulkleur en rand.tegenAchtergrond allebei, bij een scheiding onder buren de twee getallen in scheiding.tegen. De randkleur is voorzichtig geschat: een lijn van een half punt komt in het beeld als een reeks tinten uit.',
       'Een kaart valt onder de wettelijke uitzondering; meld hem niet als bevinding.',
       'Leg altijd de uitsnede naast het getal. Lees de lijst overgeslagen_met_reden na: daar staan tabellen en gekleurde vlakken achter tekst, die onder 1.4.3 vallen.',
     ],

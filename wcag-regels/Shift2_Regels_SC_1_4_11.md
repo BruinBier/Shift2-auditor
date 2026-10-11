@@ -187,20 +187,45 @@ knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
 - **TEGEN DE ACHTERGROND ÉN TEGEN ELKAAR.** De onderdelen van een grafiek die nodig zijn om
   de informatie te begrijpen, moeten 3:1 halen tegen de achtergrond, én tegen een aangrenzend
   onderdeel als die twee van elkaar onderscheiden moeten worden (W3C Understanding 1.4.11, het
-  voorbeeld met de taartgrafiek: "sufficient contrast around and between the slices").
-  Twee buren zijn te onderscheiden als ze onderling 3:1 halen, of als de lijn ertussen tegen
-  allebei 3:1 haalt. Een witte scheidingslijn helpt dus alleen tussen donkere vlakken: tussen
-  geel (#FFC000) en lichtblauw is wit 1,64:1 tegen het geel, en dan telt de verhouding van de
-  twee kleuren zelf. `get-pdfnietteksten` zet dit onder `buren`, met de scheiding erbij.
-- **EEN RAND TELT MEE.** Heeft een licht vlak een donkere omlijning die 3:1 haalt tegen de
-  achtergrond, dan is het vlak tegen de achtergrond wél te zien; W3C geeft precies dat als
-  oplossing. Keur dan niet af op de vulkleur alleen. De rand helpt niet tussen twee buren als
-  hij niet ook tegen allebei 3:1 haalt.
-  Vastgelegd door Frits op 2026-10-10 bij LEU-01 (V047). De bevinding noemde eerst de grijze
-  balk op pagina 74 met 1,67:1 tegen wit, terwijl die een omlijning van #6B6B6B heeft (5,33:1).
-  Wat daar wél misgaat is het verschil tussen de buren: grijs tegen turquoise is 1,21:1. In
-  het cirkeldiagram op pagina 71 is het ergste paar lichtblauw tegen groen, 1,09:1; dat stond
-  er helemaal niet in, omdat er alleen tegen de achtergrond was gemeten.
+  voorbeeld met de taartgrafiek: "sufficient contrast around and between the slices"). De
+  voldoende techniek daarvoor is G209, "Provide sufficient contrast at the boundaries between
+  adjoining colors"; de quickref noemt hem voor situatie B, "Color is required to understand
+  graphical content".
+  WAT JE MEET HANGT AF VAN WAT ER TUSSEN LIGT. Raken twee vlakken elkaar, dan meet je de twee
+  kleuren tegen elkaar. Ligt er een lijn tussen, zoals de witte scheidingslijnen in een
+  cirkeldiagram, dan is die lijn de grens die je ziet: meet dan elke kleur tegen die lijn, en
+  NIET de twee kleuren tegen elkaar. Een cirkeldiagram met witte lijnen keur je dus af op
+  "geel tegen wit 1,64:1", niet op het onderlinge contrast van twee segmenten.
+  `get-pdfnietteksten` zet dit onder `buren`, met de scheiding erbij.
+  Besluit Frits 2026-10-11 bij LEU-01 (V047): de bevinding gaf eerst lichtblauw tegen groen
+  (1,09:1) als onderbouwing, terwijl daar een witte lijn tussen ligt.
+- **EEN RAND TELT ALLEEN ALS HIJ TEGEN BEIDE KANTEN 3:1 HAALT (G209).** Halen twee kleuren
+  die tegen elkaar aan liggen onderling geen 3:1, dan kan een rand ertussen dat oplossen, maar
+  alleen als die rand 3:1 haalt met elk van de twee kleuren. De test uit G209: meet elke kleur
+  tegen de kleur ernaast, of tegen de rand als die er is. Dat geldt ook voor de grens met de
+  achtergrond: een donkere omlijning om een lichte balk telt pas als hij 3:1 haalt tegen de
+  achtergrond én tegen de vulkleur van de balk. Een rand die alleen tegen de achtergrond
+  afsteekt, telt niet.
+  MEET DE LIJN ZELF, OP DE PLEK WAAR HIJ LIGT. Een lijn kan een grens duidelijker maken en
+  toch te weinig contrast hebben; schrijf daarom niet "de lijn maakt de grens niet duidelijker",
+  maar meet hem. Lees de kleur af in de bron: in de code of het document, of bij een plaatje
+  op de eigen resolutie van dat plaatje (niet op een vergrote weergave, die de lijn vervaagt).
+  Neem de kleur van de lijn op de grens zelf, niet die van de rand elders om hetzelfde vlak:
+  op pagina 74 van LEU-01 is de rand aan de bovenkant van de grijze balk #6B6B6B, maar tussen
+  grijs en turquoise ligt #4B8687, met één beeldpunt overgang (#AAAAAA) ernaast. Een eerdere
+  versie van V047 noemde 2,63:1 op grond van die #6B6B6B. Schrijf het zo:
+  "De scheidingslijn tussen deze delen (#4B8687) heeft tegenover het turquoise een contrast
+  van 2,05:1. Daardoor is ook met deze lijn de grens onvoldoende zichtbaar."
+  Noem de kant waar het misgaat, met de laagste verhouding. Besluit Frits 2026-10-11.
+  Vastgelegd door Frits op 2026-10-10 en 2026-10-11 bij LEU-01 (V047). Een rand telde eerst
+  mee zodra hij tegen wit afstak; volgens G209 is dat te mild. Op pagina 74 haalt de rand om
+  het turquoise 4,15:1 tegen wit, maar 2,05:1 tegen het turquoise zelf. Blauw en paars daar
+  zijn even donker (1,77:1); dat welk deel welke overtreding is alleen aan de kleur te zien is,
+  is 1.4.1 (V044), dat je de grens tussen de twee niet ziet is 1.4.11.
+- **ADVIES BIJ EEN GRAFIEK: LABELS ÉN WAARDEN.** Alleen een naam bij een segment vertelt niet
+  hoe groot het is. W3C noemt labels met waarden die dezelfde informatie overbrengen als
+  alternatief (Understanding 1.4.11, Figuur 47); de andere oplossingen zijn kleuren die onderling
+  3:1 halen, of contrasterende randen (G209). Besluit Frits 2026-10-11 bij V047.
   `get-pdfcontrast` meet alleen TEKST. Tot 2026-10-10 stond hier dat je 1.4.11 daarmee mat;
   op LEU-01 las de agent de kleuren van de cirkeldiagrammen daarom met een eigen stukje code
   uit, en de kaart toonde "niet gemeten" bij een oordeel dat wel op een meting rustte.

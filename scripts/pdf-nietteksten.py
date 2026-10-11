@@ -24,11 +24,14 @@ Hoe het meet
    het meest voorkomt in de rand om het onderdeel. Elke kleur die een deel van het
    onderdeel vult, zetten we tegen die achtergrond.
 5. Heeft een vlak een rand -- een donkere omlijning om een lichte balk -- dan meten we die
-   ook: met een rand die 3:1 haalt is het vlak tegen de achtergrond wel te zien.
+   ook. Volgens W3C-techniek G209 telt een rand pas als hij 3:1 haalt met ELK van de twee
+   kleuren die hij scheidt: de vulkleur en de achtergrond. Tot 2026-10-11 telde hier alleen
+   rand tegen achtergrond, en kwam het turquoise op LEU-01 pagina 74 ten onrechte door:
+   zijn rand haalt 4,15:1 tegen wit, maar 2,05:1 tegen het turquoise zelf.
 6. Vlakken die binnen anderhalve punt van elkaar liggen zijn buren, ook met een dun lijntje
-   ertussen. Die moeten van elkaar te onderscheiden zijn: onderling 3:1, of een scheiding
-   die tegen allebei 3:1 haalt (W3C Understanding 1.4.11, het voorbeeld met de
-   taartgrafiek). Tot 2026-10-10 telden alleen vlakken die elkaar raakten, en daardoor
+   ertussen. Die moeten van elkaar te onderscheiden zijn (W3C Understanding 1.4.11, het
+   voorbeeld met de taartgrafiek; techniek G209): raken ze elkaar, dan onderling 3:1; ligt
+   er een lijn tussen, dan elke kleur 3:1 tegen die lijn. Tot 2026-10-10 telden alleen vlakken die elkaar raakten, en daardoor
    zag het commando de buren in een cirkeldiagram met witte scheidingslijnen niet.
 7. Een foto heeft geen vlakke kleuren: dan geven we geen verhoudingen, alleen de melding.
 
@@ -347,7 +350,8 @@ def meet_gebied(pagina, rect):
                         break
         if randkleur is not None and n_ring and echte_randpunten / n_ring >= RAND_AANDEEL / 2:
             k["rand"] = {"kleur": hexkleur(randkleur),
-                         "tegenAchtergrond": round(verhouding(randkleur, achtergrond), 2)}
+                         "tegenAchtergrond": round(verhouding(randkleur, achtergrond), 2),
+                         "tegenVulkleur": round(verhouding(randkleur, kl), 2)}
 
     # Buren: kleuren die binnen BUREN_BINNEN_PT van elkaar liggen. Wat er tussen ligt is de
     # scheiding -- niets (ze raken elkaar), een witte lijn, een donkere lijn. Twee buren zijn
@@ -374,11 +378,18 @@ def meet_gebied(pagina, rect):
                     scheiding = {"kleur": hexkleur(sk),
                                  "tegen": [round(verhouding(sk, ka), 2), round(verhouding(sk, kb), 2)]}
             onderling = verhouding(ka, kb)
-            gescheiden = scheiding is not None and min(scheiding["tegen"]) >= 3
+            # G209: meet elke kleur tegen de kleur ernaast, OF tegen de rand als die er is.
+            # Ligt er een scheidingslijn tussen, dan is dat de grens die je ziet, en telt de
+            # lijn tegen elk van de twee kleuren -- niet de twee kleuren tegen elkaar. Frits,
+            # 2026-10-11, bij de witte lijnen in de cirkeldiagrammen van LEU-01 pagina 71.
+            if scheiding is not None:
+                onder3 = min(scheiding["tegen"]) < 3
+            else:
+                onder3 = onderling < 3
             buren.append({"kleuren": [hexkleur(ka), hexkleur(kb)],
                           "verhouding": round(onderling, 2),
                           "scheiding": scheiding,
-                          "onder3": not (onderling >= 3 or gescheiden)})
+                          "onder3": onder3})
     buren.sort(key=lambda b: b["verhouding"])
 
     return {"fotoOfVerloop": False, "achtergrond": hexkleur(achtergrond),
@@ -455,7 +466,8 @@ def meet_document(pad, voorvoegsel, paginas=None):
             # Een kleur met een rand die 3:1 haalt, is tegen de achtergrond wel te zien.
             onder = [k for k in meting.get("kleuren", [])
                      if k["tegenAchtergrond"] < 3
-                     and not (k.get("rand") and k["rand"]["tegenAchtergrond"] >= 3)]
+                     and not (k.get("rand") and k["rand"]["tegenAchtergrond"] >= 3
+                              and k["rand"]["tegenVulkleur"] >= 3)]
             onderdelen.append({
                 "pagina": p,
                 **({"terugkerendOpPaginas": op_paginas} if op_paginas else {}),
