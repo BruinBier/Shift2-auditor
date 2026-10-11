@@ -21,20 +21,40 @@ hebt gezocht, ook in de verborgen teksten.
 
 Geen markering nodig bij:
 
-1. **Eigennamen**: "Microsoft Teams", "Nederland Fietsland", een straatnaam.
-2. **Technische termen**: een codewoord, een bestandsnaam, "PDF".
+1. **Eigennamen**: "Microsoft Teams", "Nederland Fietsland", een straatnaam. Ook merknamen,
+   namen van personen en plaatsen, en een naam die uit een ander schrift is overgezet. W3C:
+   "Albert Camus" hoeft in een Engelse tekst niet als Frans gemarkeerd.
+2. **Technische termen**: een codewoord, een bestandsnaam, "PDF". De voorbeelden van W3C zijn
+   Homo sapiens, Alpha Centauri, hertz en habeas corpus. Een Latijnse soortnaam is dus een
+   technische term en hoeft geen markering. Op 19 september 2026 liepen drie agents op
+   hetzelfde document juist daarover uiteen.
 3. **Ingeburgerde woorden**, de Van Dale-toets: "online", "e-mail", "website", "download",
    "cookies", "app". Staat het in Van Dale en wordt het op zijn Nederlands uitgesproken, dan
-   is het Nederlands geworden.
+   is het Nederlands geworden. Twijfel je, stel dan de vraag van W3C: spreek je het woord in
+   een Nederlandse zin hetzelfde uit, op het accent na? Dan hoort het bij de omringende
+   tekst ("consider whether the word would be pronounced the same (except for accent or
+   intonation) in the language of the immediately surrounding text").
 4. **Woorden waarvan de taal niet te bepalen is**.
+
+## Ook één woord kan een afkeuring zijn
+
+W3C: "even an individual word can be subject to the requirements of this criterion, unless it
+falls under one of the exceptions". Een los woord telt standaard als deel van de omringende
+taal, tenzij duidelijk is dat er bewust van taal gewisseld wordt. Is dat duidelijk en valt het
+woord onder geen van de vier uitzonderingen, dan is een ontbrekende markering een afkeuring,
+ook bij één woord. Daarom keurt een knop met alleen "Submit" af, en een taalwissel-link
+"English" zonder `lang="en"`.
+
+Tot 2026-10-11 stond op de kaart "Losse Engelse woorden zijn geen passage". Dat sprak de
+regel over "Submit" tegen en klopt niet met W3C. Besluit Frits: volg W3C.
 
 ## Wat wél een afkeuring is
 
 - **Een zin of alinea in een andere taal zonder `lang`**, ook een citaat en ook een
   tekst die alleen een schermlezer hoort (`sr-only`, `aria-label`).
 - **Een verzameling anderstalige woorden zonder markering op het omsluitende element**: een
-  menu met "Home", "News", "Contact", "About". Losse woorden zijn geen passage, maar samen
-  vormen ze er een.
+  menu met "Home", "News", "Contact", "About". Samen maken ze duidelijk dat er bewust Engels
+  staat; markeer dan het omsluitende element, niet elk woord apart.
 - **Een taalwissel-link** "English" of "Deutsch" zonder `lang="en"` of `lang="de"`. Hetzelfde
   geldt voor een knop met alleen "Submit" of "Search".
 - **Een Friese passage zonder `lang="fy"`** op een site die verder Nederlands is.
@@ -47,9 +67,41 @@ voor menu, knoppen en sjabloon.
 
 ## Wat GEEN bevinding is
 
-- **Ingeburgerde woorden gemarkeerd**: "e-mail" met `lang="en"` is overbodig, geeft een rare
-  wisseling van stem, maar is geen afkeuring. Noem het hooguit als opmerking.
+- **Een ingeburgerd woord of een eigennaam met een taalmarkering**: dat is toegestaan, en geen
+  bevinding, ook geen opmerking. W3C noemt het juist aanbevolen om de brontaal ook dan aan te
+  geven, omdat de uitspraak er beter van wordt ("it's a best practice to programmatically
+  indicate the source language of these words"). Tot 2026-10-11 stond hier dat het overbodig
+  was en hooguit een opmerking; besluit Frits: volg W3C.
 - **Een enkel Engels woord in een Nederlandse zin** dat onder een van de uitzonderingen valt.
+
+## Wat W3C nog meer zegt (Understanding 3.1.2)
+
+Naast deze regels gelegd op 2026-10-11. Elk punt noemt waar het staat.
+
+**Beoordeel de code, niet wat de schermlezer zegt.** In een toegankelijke naam, zoals een
+`aria-label` of de lijst met links die een schermlezer opsomt, geeft hulpsoftware een taalwissel
+vaak niet door: de naam is een platte tekst zonder taal. Dat ligt aan de software en is geen
+fout van de site. Staat de `lang` goed in de code, dan voldoet het, ook als de schermlezer het
+woord toch met Nederlandse klanken uitspreekt (Understanding, de noot over "accessible names").
+Een `lang` op het element zelf werkt in die gevallen vaak beter dan op een kindelement; dat
+kan in een advies.
+
+**Een ander schrift.** Staat er tekst in een ander schrift, zoals Arabisch of Chinees, of een
+overgezette vorm daarvan, dan is een taalmarkering extra belangrijk: de uitspraak en de weergave
+hangen ervan af (Understanding, "different writing system").
+
+**Een ongeldige taalcode is een fout.** `lang="english"` of `lang="nederlands"` is geen geldige
+code; de schermlezer wisselt dan niet. Het moet `lang="en"` of `lang="nl"` zijn. Dat is een van
+de twee W3C-testregels bij dit criterium ("Element with lang attribute has valid language
+tag").
+
+**Inhoud en attribuut mogen in verschillende talen zijn.** Een link met `title="Spaans"` en de
+tekst "Español" is goed, als die tekst `lang="es"` heeft (Understanding, het laatste
+voorbeeld).
+
+**De technieken.** Voldoende: H58, een `lang`-attribuut op de passage; PDF19, een Lang-waarde
+bij de passage in een PDF. Een techniek is een manier om te voldoen, geen eis; zie
+`Shift2_Bewijsvoering.md`.
 
 ## Op de kaart
 
@@ -69,8 +121,9 @@ taalkenmerk hebben, anders leest een schermlezer hem met Nederlandse klanken voo
 geldt ook voor wat je niet ziet: verborgen teksten en labels. Eigennamen, technische
 termen en ingeburgerde woorden als "e-mail" en "online" hoeven niet.
 
-Staat er geen anderstalige tekst, dan voldoet de pagina. Losse Engelse woorden zijn geen
-passage; een menu vol Engelse woorden wel.
+Staat er geen anderstalige tekst, dan voldoet de pagina. Een los woord hoort standaard bij de
+omringende taal, maar wordt er duidelijk van taal gewisseld, zoals bij een knop "Submit", dan
+geldt de eis ook voor dat ene woord.
 
 ### Audit-instructies
 
@@ -91,10 +144,12 @@ passage; een menu vol Engelse woorden wel.
    element of op een omsluitend element?
 4. [agent] Zoek losse anderstalige woorden in knoppen, links en menu's: "English", "Submit",
    "Search". Een taalwissel-link krijgt het kenmerk van zijn eigen taal.
-5. [agent] Pas de uitzonderingen toe: eigennamen, technische termen, ingeburgerde woorden en
-   woorden van onbepaalde taal. Schrijf per twijfelgeval op welke uitzondering je toepast.
+5. [agent] Pas de uitzonderingen toe: eigennamen, technische termen (ook een Latijnse
+   soortnaam), ingeburgerde woorden en woorden van onbepaalde taal. Schrijf per twijfelgeval
+   op welke uitzondering je toepast. Controleer ook of elke `lang`-code geldig is.
 6. [jij] Twijfelgevallen van de Van Dale-toets: is een woord Nederlands geworden of niet?
-   Dat is een weging, geen meting.
+   Spreek je het in een Nederlandse zin hetzelfde uit, op het accent na? Dat is een weging,
+   geen meting.
 
 #### Stap 3 — Vastleggen
 
