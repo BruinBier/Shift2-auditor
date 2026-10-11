@@ -163,6 +163,150 @@ Aanleiding: BEV-03 (2026-08-04), Financiële wegwijzer. De blauwe opsommingsboll
 de indeling in subsidies en leningen blijkt al uit de kolommen. Ook de omranding van de acht
 knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
 
+## Grafieken: tegen de achtergrond én tegen elkaar (G209)
+
+Dit geldt voor elke grafiek, op een website en in een PDF. Tot 2026-10-11 stond het alleen bij
+de PDF-regels.
+
+**TEGEN DE ACHTERGROND ÉN TEGEN ELKAAR.** De onderdelen van een grafiek die nodig zijn om
+de informatie te begrijpen, moeten 3:1 halen tegen de achtergrond, én tegen een aangrenzend
+onderdeel als die twee van elkaar onderscheiden moeten worden (W3C Understanding 1.4.11, het
+voorbeeld met de taartgrafiek: "sufficient contrast around and between the slices"). De
+voldoende techniek daarvoor is G209, "Provide sufficient contrast at the boundaries between
+adjoining colors"; W3C noemt hem bij de situatie "Color is required to understand
+graphical content".
+WAT JE MEET HANGT AF VAN WAT ER TUSSEN LIGT. Raken twee vlakken elkaar, dan meet je de twee
+kleuren tegen elkaar. Ligt er een lijn tussen, zoals de witte scheidingslijnen in een
+cirkeldiagram, dan is die lijn de grens die je ziet: meet dan elke kleur tegen die lijn, en
+NIET de twee kleuren tegen elkaar. Een cirkeldiagram met witte lijnen keur je dus af op
+"geel tegen wit 1,64:1", niet op het onderlinge contrast van twee segmenten.
+`get-pdfnietteksten` zet dit onder `buren`, met de scheiding erbij.
+Besluit Frits 2026-10-11 bij LEU-01 (V047): de bevinding gaf eerst lichtblauw tegen groen
+(1,09:1) als onderbouwing, terwijl daar een witte lijn tussen ligt.
+
+**EEN RAND TELT ALLEEN ALS HIJ TEGEN BEIDE KANTEN 3:1 HAALT (G209).** Halen twee kleuren
+die tegen elkaar aan liggen onderling geen 3:1, dan kan een rand ertussen dat oplossen, maar
+alleen als die rand 3:1 haalt met elk van de twee kleuren. De test uit G209: meet elke kleur
+tegen de kleur ernaast, of tegen de rand als die er is. Dat geldt ook voor de grens met de
+achtergrond: een donkere omlijning om een lichte balk telt pas als hij 3:1 haalt tegen de
+achtergrond én tegen de vulkleur van de balk. Een rand die alleen tegen de achtergrond
+afsteekt, telt niet.
+MEET DE LIJN ZELF, OP DE PLEK WAAR HIJ LIGT. Een lijn kan een grens duidelijker maken en
+toch te weinig contrast hebben; schrijf daarom niet "de lijn maakt de grens niet duidelijker",
+maar meet hem. Lees de kleur af in de bron: in de code of het document, of bij een plaatje
+op de eigen resolutie van dat plaatje (niet op een vergrote weergave, die de lijn vervaagt).
+Neem de kleur van de lijn op de grens zelf, niet die van de rand elders om hetzelfde vlak:
+op pagina 74 van LEU-01 is de rand aan de bovenkant van de grijze balk #6B6B6B, maar tussen
+grijs en turquoise ligt #4B8687, met één beeldpunt overgang (#AAAAAA) ernaast. Een eerdere
+versie van V047 noemde 2,63:1 op grond van die #6B6B6B. Schrijf het zo:
+"De scheidingslijn tussen deze delen (#4B8687) heeft tegenover het turquoise een contrast
+van 2,05:1. Daardoor is ook met deze lijn de grens onvoldoende zichtbaar."
+Noem de kant waar het misgaat, met de laagste verhouding. Besluit Frits 2026-10-11.
+Vastgelegd door Frits op 2026-10-10 en 2026-10-11 bij LEU-01 (V047). Een rand telde eerst
+mee zodra hij tegen wit afstak; volgens G209 is dat te mild. Op pagina 74 haalt de rand om
+het turquoise 4,15:1 tegen wit, maar 2,05:1 tegen het turquoise zelf. Blauw en paars daar
+zijn even donker (1,77:1); dat welk deel welke overtreding is alleen aan de kleur te zien is,
+is 1.4.1 (V044), dat je de grens tussen de twee niet ziet is 1.4.11.
+
+**ADVIES BIJ EEN GRAFIEK: LABELS ÉN WAARDEN.** Alleen een naam bij een segment vertelt niet
+hoe groot het is. W3C noemt labels met waarden die dezelfde informatie overbrengen als
+alternatief (Understanding 1.4.11, Figuur 47); de andere oplossingen zijn kleuren die onderling
+3:1 halen, of contrasterende randen (G209). Besluit Frits 2026-10-11 bij V047.
+
+**EEN LIJNGRAFIEK IS ANDERS DAN VLAKKEN.** De lijnen van een lijngrafiek moeten 3:1 halen tegen
+de achtergrond, maar niet tegen elkaar: ze overlappen elkaar weinig, en waar ze elkaar kruisen
+vult het oog de lijn aan (W3C Understanding 1.4.11, Figuur 20, en de "law of continuity"). Wel
+moeten de rasterlijnen 3:1 halen als je ze nodig hebt om de waarden af te lezen; W3C rekent ze
+in dat voorbeeld uitdrukkelijk tot de onderdelen die nodig zijn. "Tegen elkaar" geldt dus voor
+vlakken die aan elkaar grenzen -- segmenten van een cirkel, delen van een gestapelde balk,
+gebieden op een kaart -- en niet voor lijnen die elkaar kruisen.
+
+## Uitzonderingen en grensgevallen volgens W3C
+
+Uit W3C Understanding 1.4.11, naast deze regels gelegd op 2026-10-11. Elk punt noemt waar het
+staat, zodat je het kunt nalezen.
+
+**Niet afronden.** 3:1 is een drempel: 2,999:1 haalt hem niet. Schrijf de verhouding met twee
+decimalen en keur af onder 3,00 (Understanding, eerste noot).
+
+**Uitgezonderd: inactieve elementen.** Een knop die zichtbaar is maar nog niet bediend kan
+worden, zoals een verzendknop die pas werkt als alle velden zijn ingevuld, hoeft geen 3:1 te
+halen (Understanding, "Inactive User Interface Components").
+
+**Uitgezonderd: de browser zelf.** Wat de browser tekent en de site niet aanpast, valt erbuiten,
+ook de standaard focusrand. Die moet onder 2.4.7 wel zichtbaar zijn. Past de site de weergave
+aan, dan geldt de eis wel (Understanding, Figuur 29, en de tekst van het criterium zelf).
+
+**Uitgezonderd: logo's.** Een logo wordt in de huiskleuren getoond en hoeft geen 3:1 te halen.
+Behalve als de site het zelf flets weergeeft, bijvoorbeeld grijs tot je erover beweegt: die
+weergave is een keuze van de site en niet van de huisstijl, en dan geldt de eis wel
+(Understanding, "Logos", Figuur 22 en 27). Is het logo een link, dan is een logo met meer
+contrast een aanbeveling en geen afkeuring.
+
+**Uitgezonderd: wat alleen in deze vorm kan.** Vlaggen, foto's van mensen en landschappen,
+schermafdrukken van een website, medische afbeeldingen in de kleuren van het lichaam, en
+heatmaps waarin de kleur de meetwaarde is (Understanding, "Essential exception"). Kaarten
+vallen voor ons onder de wettelijke uitzondering voor de overheid.
+
+**Niet nodig voor het begrip.** Een grafisch onderdeel hoeft geen 3:1 te halen als dezelfde
+informatie er als tekst staat (labels én waarden bij de grafiek), als hij er alleen voor de
+sier staat, of als de informatie er ook in een andere vorm is, zoals een tabel of een lange
+beschrijving (Understanding, "Required for understanding"). De tekst in of bij de grafiek valt
+dan onder 1.4.3.
+
+**Een teken als symbool is geen tekst.** Een X als sluitknop of een > als pijl wordt gebruikt
+om zijn vorm, niet als woord. Dat is niet-tekstuele content: 3:1 onder 1.4.11, niet 4,5:1
+onder 1.4.3 (Understanding, "Symbolic or graphical text characters", Figuur 26). Een sterk
+gestileerde letter die als beeld werkt valt hier ook onder.
+
+**Welke kleuren je meet bij een bedieningselement.** Een invulveld meet je tegen de kleur
+buiten het veld: wit veld, donkere rand, witte pagina betekent dat de rand moet afsteken tegen
+de witte pagina (Understanding, "Adjacent colors", Figuur 2). Ligt een veld met een lichte
+binnenkant op een donkere achtergrond, dan is dat verschil genoeg en hoeft een rand ertussen
+niet zelf te contrasteren: hij hoort bij de kleur waar hij het meest op lijkt (Figuur 3). Een
+toestandsaanduiding binnen het element, zoals het vinkje in een selectievakje of de knop van
+een schuifregelaar, meet je tegen de kleur van het element zelf (Figuur 4).
+
+**Waar de focusrand tegen moet afsteken hangt af van waar hij ligt.** Buiten het element: tegen
+de achtergrond. Binnen het element: tegen de kleur van het element. Op de rand van het element:
+tegen allebei. Deels binnen en deels buiten: één van de twee delen is genoeg (Understanding,
+"Relationship with Focus Visible", Figuur 8 tot 14). Een focusrand die door de opmaak verdwijnt
+of onzichtbaar wordt, is fout-techniek F78. Een focusrand in twee kleuren, zodat hij op elke
+achtergrond afsteekt, is voldoende techniek C40.
+
+**Zweven en andere toestanden.** Een extra effect bij zweven, zoals een lichtgrijze achtergrond,
+hoeft zelf geen 3:1 te halen: de muisaanwijzer laat al zien waar je bent. Het element mag door
+dat effect wel zijn eigen contrast niet verliezen (Understanding, "Hover states", Figuur 40).
+Dat is wat `get-nietteksten` meet: het pictogram of de rand in de zweefstand, tegen wat er dan
+omheen ligt. Of de focus- of zweefstand genoeg verschilt van de ruststand, valt niet onder
+1.4.11; verschilt alleen de kleur, dan is dat 1.4.1 (Figuur 15).
+
+**Een gekleurde onderstreping als enige kenmerk van een link** moet 3:1 halen tegen de
+achtergrond (Understanding, Figuur 41). De gewone onderstreping in de tekstkleur voldoet altijd,
+want die tekst haalt al 4,5:1 onder 1.4.3 (Figuur 28).
+
+**Een grafiek die pas bij aanwijzen iets laat zien.** Geeft een grafiek de waarden of meer
+contrast pas als je met de muis of het toetsenbord op een onderdeel staat, dan moet de
+standaardweergave al genoeg contrast of tekst hebben: anders weet niemand dat er iets aan te
+wijzen valt (Understanding, "Interactive changes in contrast", Figuur 24).
+
+**Alleen een andere tint is 1.4.1, niet 1.4.11.** Sterren die geel of wit gevuld zijn met
+dezelfde zwarte omtrek verschillen alleen in tint; dat is een afkeuring onder 1.4.1. Zijn ze
+geel tegen wit met 1,2:1 en zonder omtrek, dan is het 1.4.11 (Understanding, "Relationship
+with Use of Color", Figuur 7). Een link die 3:1 verschilt van de lopende tekst voldoet aan
+1.4.1 (techniek G183).
+
+**De technieken.** Voldoende volgens W3C (Understanding 1.4.11, "Techniques"):
+
+| Situatie | Techniek |
+|---|---|
+| Kleur wijst een bedieningselement aan | G174: een knop naar een weergave met genoeg contrast. Dat is onze hoogcontrastregel. |
+| Kleur wijst de focus aan | G195: een eigen, zichtbare focusrand. C40: een focusrand in twee kleuren. |
+| Kleur is nodig om een graphic te begrijpen | G207: 3:1 voor pictogrammen. G209: genoeg contrast op de grens tussen aangrenzende kleuren. |
+
+Fout-techniek: F78, een focusrand die door de opmaak verdwijnt of onzichtbaar wordt. Een
+techniek is een manier om te voldoen, geen eis; zie `Shift2_Bewijsvoering.md`.
+
 ## Regels
 
 - Zelfde hoogcontrast-werkwijze als 1.4.3: heeft de site een hoogcontrast-knop met voldoende eigen contrast, dan een opmerking op het homepage-sample (status resolved, impact en responsibility leeg), QuickFinding 0a811ca3-e7b3-4909-846a-68525eb55948, en daarna HTML-paginas niet meer inhoudelijk checken.
@@ -183,49 +327,8 @@ knoppen viel af, want de knoppen hebben tekst. Vastgesteld door Frits.
   Het commando keurt niets af. Een kleur onder 3:1 is alleen een afkeuring als het onderdeel
   nodig is om de informatie te begrijpen, en als die informatie er niet ook anders staat, zoals
   een percentage bij elk segment. Lichte tinten van een grafiekvlak, sierlijnen en het logo
-  tellen niet mee; een kaart valt onder de wettelijke uitzondering.
-- **TEGEN DE ACHTERGROND ÉN TEGEN ELKAAR.** De onderdelen van een grafiek die nodig zijn om
-  de informatie te begrijpen, moeten 3:1 halen tegen de achtergrond, én tegen een aangrenzend
-  onderdeel als die twee van elkaar onderscheiden moeten worden (W3C Understanding 1.4.11, het
-  voorbeeld met de taartgrafiek: "sufficient contrast around and between the slices"). De
-  voldoende techniek daarvoor is G209, "Provide sufficient contrast at the boundaries between
-  adjoining colors"; de quickref noemt hem voor situatie B, "Color is required to understand
-  graphical content".
-  WAT JE MEET HANGT AF VAN WAT ER TUSSEN LIGT. Raken twee vlakken elkaar, dan meet je de twee
-  kleuren tegen elkaar. Ligt er een lijn tussen, zoals de witte scheidingslijnen in een
-  cirkeldiagram, dan is die lijn de grens die je ziet: meet dan elke kleur tegen die lijn, en
-  NIET de twee kleuren tegen elkaar. Een cirkeldiagram met witte lijnen keur je dus af op
-  "geel tegen wit 1,64:1", niet op het onderlinge contrast van twee segmenten.
-  `get-pdfnietteksten` zet dit onder `buren`, met de scheiding erbij.
-  Besluit Frits 2026-10-11 bij LEU-01 (V047): de bevinding gaf eerst lichtblauw tegen groen
-  (1,09:1) als onderbouwing, terwijl daar een witte lijn tussen ligt.
-- **EEN RAND TELT ALLEEN ALS HIJ TEGEN BEIDE KANTEN 3:1 HAALT (G209).** Halen twee kleuren
-  die tegen elkaar aan liggen onderling geen 3:1, dan kan een rand ertussen dat oplossen, maar
-  alleen als die rand 3:1 haalt met elk van de twee kleuren. De test uit G209: meet elke kleur
-  tegen de kleur ernaast, of tegen de rand als die er is. Dat geldt ook voor de grens met de
-  achtergrond: een donkere omlijning om een lichte balk telt pas als hij 3:1 haalt tegen de
-  achtergrond én tegen de vulkleur van de balk. Een rand die alleen tegen de achtergrond
-  afsteekt, telt niet.
-  MEET DE LIJN ZELF, OP DE PLEK WAAR HIJ LIGT. Een lijn kan een grens duidelijker maken en
-  toch te weinig contrast hebben; schrijf daarom niet "de lijn maakt de grens niet duidelijker",
-  maar meet hem. Lees de kleur af in de bron: in de code of het document, of bij een plaatje
-  op de eigen resolutie van dat plaatje (niet op een vergrote weergave, die de lijn vervaagt).
-  Neem de kleur van de lijn op de grens zelf, niet die van de rand elders om hetzelfde vlak:
-  op pagina 74 van LEU-01 is de rand aan de bovenkant van de grijze balk #6B6B6B, maar tussen
-  grijs en turquoise ligt #4B8687, met één beeldpunt overgang (#AAAAAA) ernaast. Een eerdere
-  versie van V047 noemde 2,63:1 op grond van die #6B6B6B. Schrijf het zo:
-  "De scheidingslijn tussen deze delen (#4B8687) heeft tegenover het turquoise een contrast
-  van 2,05:1. Daardoor is ook met deze lijn de grens onvoldoende zichtbaar."
-  Noem de kant waar het misgaat, met de laagste verhouding. Besluit Frits 2026-10-11.
-  Vastgelegd door Frits op 2026-10-10 en 2026-10-11 bij LEU-01 (V047). Een rand telde eerst
-  mee zodra hij tegen wit afstak; volgens G209 is dat te mild. Op pagina 74 haalt de rand om
-  het turquoise 4,15:1 tegen wit, maar 2,05:1 tegen het turquoise zelf. Blauw en paars daar
-  zijn even donker (1,77:1); dat welk deel welke overtreding is alleen aan de kleur te zien is,
-  is 1.4.1 (V044), dat je de grens tussen de twee niet ziet is 1.4.11.
-- **ADVIES BIJ EEN GRAFIEK: LABELS ÉN WAARDEN.** Alleen een naam bij een segment vertelt niet
-  hoe groot het is. W3C noemt labels met waarden die dezelfde informatie overbrengen als
-  alternatief (Understanding 1.4.11, Figuur 47); de andere oplossingen zijn kleuren die onderling
-  3:1 halen, of contrasterende randen (G209). Besluit Frits 2026-10-11 bij V047.
+  tellen niet mee; een kaart valt onder de wettelijke uitzondering. Wat je bij een grafiek
+  meet en hoe je het opschrijft, staat in de sectie "Grafieken" hierboven.
   `get-pdfcontrast` meet alleen TEKST. Tot 2026-10-10 stond hier dat je 1.4.11 daarmee mat;
   op LEU-01 las de agent de kleuren van de cirkeldiagrammen daarom met een eigen stukje code
   uit, en de kaart toonde "niet gemeten" bij een oordeel dat wel op een meting rustte.
@@ -284,10 +387,16 @@ een uitsnede, geen "ruim boven 3:1".
 5. [agent] Per element onder de eis: leg de uitsnede ernaast. Precies 1:1 is eerst een
    verdachte meting, daarna pas een afkeuring. Bij een pictogram telt de tekening, bij een
    veld de rand.
-6. [agent] Decoratief of nodig? Denk het element weg; verdwijnt er geen informatie, dan valt
-   het erbuiten.
+6. [agent] Decoratief, nodig of uitgezonderd? Denk het element weg; verdwijnt er geen
+   informatie, dan valt het erbuiten. Uitgezonderd zijn inactieve elementen, wat de browser
+   zelf tekent, logo's (tenzij de site ze zelf flets maakt) en wat alleen in deze vorm kan;
+   staat dezelfde informatie er als tekst, dan is het onderdeel niet nodig. Zie
+   "Uitzonderingen en grensgevallen volgens W3C". Een X of > als knop telt als pictogram.
+   Bij een grafiek: de sectie "Grafieken".
 7. [jij] Focustoestanden zitten nog niet in de meting. Tab in de auditsessie langs de
-   bedienbare elementen en kijk of de focusrand 3:1 haalt.
+   bedienbare elementen en kijk of de focusrand 3:1 haalt: buiten het element tegen de
+   achtergrond, binnen het element tegen het element, op de rand tegen allebei. De
+   ongewijzigde focusrand van de browser valt erbuiten.
 
 #### Stap 3 — Vastleggen
 
