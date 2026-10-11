@@ -121,7 +121,12 @@ levert dan ten onrechte "voldoet" op.
 
 `get-contrast` meldt dit: ligt er een achtergrondafbeelding achter het element, dan komt er een
 waarschuwing bij dat de gemeten achtergrondkleur niet is wat je ziet. Maak in dat geval een
-uitsnede van de knop, tel de pixels, en toets het **slechtste** punt, niet het gemiddelde.
+uitsnede van de knop en tel de pixels. Hoe je weegt, hangt af van wat de knop is:
+- **Tekst op de knop:** elke letter moet de eis halen tegen de achtergrond direct erachter
+  (W3C G18 en F83, zie "Wat W3C nog meer zegt" hieronder). Eén letter eronder is een afkeuring.
+- **Alleen een pictogram:** dat is 1.4.11, en daar volgen we sinds 2026-10-11 de W3C-werkwijze:
+  haalt het deel met het minste contrast geen 3:1, denk het dan weg en kijk of het pictogram
+  herkenbaar blijft. Zie `Shift2_Regels_SC_1_4_11.md`, "Foto, verloop en dunne lijnen".
 
 Bij een knop met een vaste achtergrondkleur is het gemiddelde wel de juiste maat; de lichtste
 randpixels zijn daar antialiasing van het icoon, geen achtergrond.
@@ -132,10 +137,13 @@ Voorbeelden (2026-08-02):
 |---|---|---|---|---|---|
 | heuvelrug.nl | tekst "Contrast verhogen" | vast `#007373` | 5,68:1 | 4,5:1 | voldoet |
 | ijsselstein.nl | alleen icoon | vast `#003C49` | 9,65:1 | 3:1 | voldoet |
-| shift2.nl | alleen icoon | verloop over foto | 2,05:1 (slechtst 1,26:1) | 3:1 | VOLDOET NIET |
+| shift2.nl | alleen icoon | verloop over foto | 2,05:1 (slechtst 1,26:1) | 3:1 | toen: voldoet niet |
 
 Bij shift2.nl staat in de CSS `background: transparent`. Alleen een pixelmeting laat zien dat
-het witte icoon tegen een lichte foto wegvalt.
+het witte icoon op een licht stuk foto wegvalt. Het oordeel "voldoet niet" is uit 2026-08-02 en
+rustte op het slechtste punt. Sinds 2026-10-11 volgen we voor een pictogram W3C: de vraag is of
+je het mannetje nog herkent als je het stuk onder de 3:1 wegdenkt, en dat is toen niet
+beoordeeld.
 
 ### Blijven logo's en afbeeldingen met tekst leesbaar in die weergave?
 
@@ -201,12 +209,83 @@ redacteur in de footertekst is geplaatst en in de hoogcontrastweergave volledig 
 de tekst "gemeente beverwijk" valt weg. Het header-logo (SVG) schakelt wel correct mee.
 Bevinding B006 in BEV-03.
 
+## Wat W3C nog meer zegt (Understanding 1.4.3)
+
+Naast deze regels gelegd op 2026-10-11. Elk punt noemt waar het staat.
+
+**Niet afronden.** 4,5:1 en 3:1 zijn drempels: 4,499:1 haalt 4,5:1 niet. Schrijf de verhouding met
+twee decimalen.
+
+**Wat grote tekst is.** 18 punt, of 14 punt vet. In beeldpunten op een website is dat 24px, en
+voor vet ongeveer 18,7px (1pt = 1,333px). Neem de lettergrootte uit de browser, zoals
+`get-contrast` doet, niet uit een schatting op het oog. Heel dunne of ongebruikelijke letters
+tellen niet als groot, ook niet op die maat (Understanding 1.4.3, en de definitie van "large
+scale"). Voor tekst in een afbeelding: zie de regel onder "Regels".
+
+**Uitgezonderd, zonder contrasteis:**
+- tekst op een inactief element, zoals een verzendknop die pas werkt als alles is ingevuld;
+- puur decoratieve tekst, zoals willekeurige woorden als achtergrondpatroon die je zonder
+  betekenisverlies kunt verwisselen;
+- tekst die voor niemand zichtbaar is;
+- tekst die toevallig in een foto staat, zoals een straatnaambord; de foto bevat dan veel meer
+  dan die tekst ("part of a picture that contains significant other visual content");
+- tekst in een logo of merknaam. Behalve als de site het logo zelf flets weergeeft,
+  bijvoorbeeld grijs tot je erover beweegt: dat is een keuze van de site en dan geldt de eis
+  wel (Understanding, "Logos", Figuur 3). Is het logo een link, dan is een variant met meer
+  contrast een aanbeveling, geen afkeuring.
+
+**Een huisstijlkleur is géén uitzondering.** Alleen het logo zelf is uitgezonderd. Tekst die te
+weinig contrast heeft omdat de huisstijl dat voorschrijft, keurt gewoon af ("Beyond logos and
+logotypes, text that has insufficient contrast due to corporate identity or brand guidelines
+is not exempted").
+
+**Het geldt voor alle tekst op de pagina**, ook de voorbeeldtekst in een invulveld
+(placeholder) en tekst die pas verschijnt als je ergens met de muis op staat of het toetsenbord
+op zet, zoals een tooltip.
+
+**Een teken als symbool is geen tekst.** Een X als sluitknop, een > als pijl, of een letter die
+zo gestileerd is dat hij als beeld werkt: dat is niet-tekstuele content en valt onder 1.4.11,
+met een eis van 3:1 (Understanding 1.4.3, Figuur 1 en 2).
+
+**Tekst op een foto of verloop: zo meet W3C.** Eerst een snelle check: het donkerste deel van de
+afbeelding achter donkere tekst, of het lichtste deel achter lichte tekst. Haalt dat de eis, dan
+is het goed. Zo niet, dan moet de achtergrond direct achter en naast elke letter genoeg contrast
+hebben met die letter (fout-techniek F83, voldoende techniek G18). Eén letter die het niet haalt
+is een afkeuring; daarom geef je de band en toets je aan het slechtste punt. Bij vervaagde
+letters in een afbeelding meet je de letterkleur twee beeldpunten van de rand van de letter
+(G18). Op een website of in een PDF neem je de ingestelde tekstkleur, niet de vervaagde
+weergave op het scherm (Understanding 1.4.3, de noot over anti-aliasing); dat doen
+`get-contrast` en `get-pdfcontrast` al.
+
+**Een instelling voor minder contrast mag.** Sommige mensen lezen beter met kleuren die weinig
+contrast hebben. Biedt de site een instelling waarmee de bezoeker zelf zulke kleuren kiest, dan is
+dat geen afkeuring, zolang je terug kunt naar de standaardweergave die wel voldoet.
+
+**De technieken** (Understanding 1.4.3, "Techniques"):
+
+| Soort | Techniek |
+|---|---|
+| Voldoende | G18: 4,5:1 tussen tekst en achtergrond. G145: 3:1 voor grote tekst. G148: geen tekst- en achtergrondkleur instellen, zodat de standaard van de browser blijft. G174: een knop naar een weergave met genoeg contrast; dat is onze hoogcontrastregel. |
+| Aanvullend | G156: een techniek waarin de bezoeker voor- en achtergrondkleur zelf kan aanpassen. Rood op zwart vermijden: wie rood slecht ziet, ziet het als zwart op zwart. |
+| Fout | F24: alleen een tekstkleur instellen zonder achtergrondkleur, of andersom; met andere instellingen van de bezoeker kan de tekst dan wegvallen. F83: tekst op een achtergrondafbeelding met te weinig contrast. |
+
+Een techniek is een manier om te voldoen, geen eis; zie `Shift2_Bewijsvoering.md`.
+
 ## Regels
 
 - Heeft de site een hoogcontrast-knop of toegankelijkheidsmenu met hoog-contrast-optie? Dan wordt de standaardversie niet meer inhoudelijk op contrast getoetst, mits die knop zelf voldoende contrast heeft. Dat meet je zelf; zie de meetmethode hierboven.
 - Meet de knop op het homepage-sample. Haalt hij de eis, dan een opmerking op dat sample (status resolved, impact en responsibility leeg), QuickFinding 0dd88736-4c57-421b-b45c-af8fd46cfc38. Op de vervolgpagina's zet je 1.4.3 op `voldoet` met als reden dat de knop op de homepage is gemeten en de main-content geen afbeeldingen met tekst bevat; herhaal die meting niet.
 - Haalt de knop de eis NIET, dan is de hoogcontrast-route geen geldig alternatief en toets je de standaardversie alsnog inhoudelijk op contrast.
-- UITZONDERING: tekst IN een afbeelding (poster, infographic, banner) schakelt NIET mee met de hoogcontrast-knop. Die toets je WEL op 1.4.3, ook op paginas waar je de reguliere contrastcheck overslaat. Toets aan 4,5:1 (niet 3:1), want bij een afbeelding is de font-size niet uitleesbaar en kun je niet vaststellen of het als grote tekst telt.
+- UITZONDERING: tekst IN een afbeelding (poster, infographic, banner) schakelt NIET mee met de hoogcontrast-knop. Die toets je WEL op 1.4.3, ook op paginas waar je de reguliere contrastcheck overslaat.
+  GROTE TEKST IN EEN AFBEELDING MAG 3:1 (W3C). Ook in een afbeelding geldt voor grote tekst 3:1.
+  De lettergrootte is daar niet uit te lezen, dus vergelijk je met de gewone tekst op dezelfde
+  pagina: is de tekst in de afbeelding ongeveer 150% van de gewone tekst, of 120% als hij vet
+  is, dan telt hij als groot (Understanding 1.4.3, de noot over afbeeldingen van grote tekst).
+  Meet de hoogte van een hoofdletter in de afbeelding op ware grootte en die van een hoofdletter
+  in de lopende tekst, en schrijf beide op. Twijfel je, of is de afbeelding verkleind
+  weergegeven zonder dat je de ware grootte kent, toets dan aan 4,5:1.
+  Tot 2026-10-11 stond hier dat tekst in een afbeelding altijd 4,5:1 moest halen, omdat de
+  lettergrootte niet uitleesbaar is. Besluit Frits: volg W3C.
 - Staat de informatie van de afbeelding VOLLEDIG als echte tekst op de pagina, dan is de afbeelding niet meer de enige drager en valt de tekst-in-afbeelding onder een 1.4.3-uitzondering. Is het alternatief incompleet, dan blijft de contrasteis gelden.
 - PDF-documenten: 1.4.3 wel per stuk inhoudelijk checken. De hoogcontrast-knop op de website geldt niet voor PDFs.
 - CONTRAST IN EEN PDF MEET JE MET `npm run cli -- get-pdfcontrast <pdf-url of pad>`. Dat
@@ -297,8 +376,10 @@ zwijgt meet je op de beeldpunten, en op een foto of verloop geef je de band.
    3:1 onder 1.4.11.
 2. [agent] Staat de knop op een foto, een verloop of een half-transparante laag, dan zijn de
    CSS-waarden onbruikbaar — de achtergrond leest dan uit als `rgba(0,0,0,0)` en rekenen
-   levert ten onrechte "voldoet" op. `get-contrast` waarschuwt daarvoor. Toets dan het
-   slechtste punt van een uitsnede, niet het gemiddelde.
+   levert ten onrechte "voldoet" op. `get-contrast` waarschuwt daarvoor. Meet dan op een
+   uitsnede. Bij tekst moet elke letter de eis halen tegen wat er direct achter ligt; bij een
+   pictogram volg je de werkwijze van 1.4.11 (deel onder de 3:1 wegdenken, herkenbaar blijft
+   voldoet).
 3. [agent] Haalt de knop de eis niet, dan is de hoogcontrastroute geen geldig alternatief en
    toets je de standaardversie alsnog volledig op contrast. Sla deze stap nooit over.
 
@@ -317,8 +398,8 @@ zwijgt meet je op de beeldpunten, en op een foto of verloop geef je de band.
 
 7. [agent] Tekst ín een afbeelding — poster, infographic, banner — schakelt niet mee met de
    knop en wordt apart getoetst, ook op pagina's waar je de reguliere contrastcheck overslaat.
-   Toets aan 4,5:1 en niet aan 3:1: in een afbeelding is de lettergrootte niet uitleesbaar,
-   dus je kunt niet vaststellen dat het als grote tekst telt.
+   Grote tekst mag ook daar 3:1: vergelijk de letterhoogte met de gewone tekst op de pagina
+   (ongeveer 150%, of 120% bij vet). Twijfel je, toets dan aan 4,5:1.
 8. [agent] Staat de informatie van die afbeelding volledig als echte tekst op de pagina, dan
    is het beeld niet meer de enige drager en vervalt de contrasteis. Is dat alternatief
    incompleet, dan geldt hij gewoon.
@@ -326,7 +407,8 @@ zwijgt meet je op de beeldpunten, en op een foto of verloop geef je de band.
    onvoldoende contrast" zijn een afkeuring onder 1.4.3, met de pagina's die PAC noemt. Zwijgt
    PAC over een plek waar je zelf ziet dat het misgaat, meet die dan op de beeldpunten van de
    gerenderde pagina. Staat de tekst op een foto of een verloop, geef dan de band van slechtste
-   tot beste punt en toets aan het slechtste.
+   tot beste punt en toets aan het slechtste: elke letter moet de eis halen tegen wat er direct
+   achter ligt (W3C F83).
 
 #### Stap 4 — Vastleggen
 

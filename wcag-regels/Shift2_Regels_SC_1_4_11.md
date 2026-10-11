@@ -25,11 +25,14 @@ onder 1.4.11. Heeft de knop wél zichtbare tekst, dan geldt 1.4.3 met 4,5:1.
 
 Meet op de werkelijke pixels wanneer de knop op een foto of verloop staat; `getComputedStyle`
 geeft dan `rgba(0,0,0,0)` en een berekening op de CSS-waarden levert ten onrechte "voldoet"
-op. Neem in dat geval het slechtste punt, niet het gemiddelde.
+op. Hoe je de uitkomst weegt, staat in "Foto, verloop en dunne lijnen: zo toetst W3C"
+hieronder: niet het slechtste punt beslist, maar of het pictogram herkenbaar blijft.
 
 Voorbeeld (2026-08-02): shift2.nl heeft een wit mannetje-icoon op een verloop over een foto.
-Gemeten 2,05:1, op het slechtste punt 1,26:1. Dat haalt de 3:1 niet. Ijsselstein.nl gebruikt
-hetzelfde icoon op een vaste donkerblauwe achtergrond `#003C49` en komt op 9,65:1.
+Gemeten 2,05:1, op het slechtste punt 1,26:1. Toen keurden we af op dat slechtste punt. Volgens
+W3C is de vraag of je het mannetje nog herkent als je het stuk onder de 3:1 wegdenkt; dat is
+toen niet beoordeeld. Ijsselstein.nl gebruikt hetzelfde icoon op een vaste donkerblauwe
+achtergrond `#003C49` en komt op 9,65:1.
 
 De volledige testvolgorde (eerst de knop in de normale weergave, daarna de pagina in de
 hoogcontrastweergave) staat in `Shift2_Regels_SC_1_4_3.md`.
@@ -129,6 +132,39 @@ zijn alle drie de **zoekknop**, die in die weergave zwart is en tegen een donker
 staat; het witte veld zelf haalt de eis. De knop blijft aanwijsbaar: het witte vergrootglas erop
 en de grens met het witte veld ernaast halen allebei 21:1. Zonder de uitsplitsing per zijde zou
 hier "1,93:1, valt af" hebben gestaan over een balk die het grotendeels goed doet.
+
+## Foto, verloop en dunne lijnen: zo toetst W3C
+
+Besluit Frits 2026-10-11: hier volgen we W3C, ook waar onze eerdere regel strenger was. Het is
+hun eigen testprocedure, en een afkeuring die strenger is dan W3C kan een leverancier met de
+W3C-tekst in de hand aanvechten.
+
+**Op een foto of verloop beslist niet het slechtste punt, maar de herkenbaarheid.** Neem het
+deel van het onderdeel met het minste contrast. Haalt dat 3:1, dan voldoet het. Haalt het dat
+niet, denk dat deel dan weg, alsof je het niet ziet. Herken je het onderdeel nog aan wat
+overblijft, dan voldoet het; valt het weg of wordt het onherkenbaar, dan is het een afkeuring
+(Understanding 1.4.11, "Testing principles" en "Gradients", Figuur 23). Een wit pictogram
+waarvan de onderste helft op een licht stuk foto staat, kan dus voldoen als de bovenste helft
+de vorm al duidelijk maakt. Schrijf in de toelichting welk deel onder de 3:1 viel en waarom het
+onderdeel daarna nog wel of niet herkenbaar is, met de uitsnede ernaast. `get-pixelcontrast`
+blijft de meting: die geeft het slechtste punt per zijde, en daarmee weet je wélk deel je
+moet wegdenken.
+
+**Beoordeel de ingestelde kleur, niet de vervaagde weergave.** Een dunne lijn wordt door het
+scherm vaak lichter getekend dan de kleur die de site of het document heeft ingesteld. W3C zegt:
+gebruik de kleur uit de code of het document, niet wat er op het scherm verschijnt
+(Understanding 1.4.11, tweede noot). Een veldrand die in de CSS #767676 is (4,54:1) voldoet dus,
+ook als de beeldpunten op het scherm #A0A0A0 laten zien. Dunne lijnen raadt W3C wel af; dat
+kan in het advies, niet als afkeuring.
+- Op een website: de kleur uit de opgemaakte stijl (`get-contrast`, `get-nietteksten`). Meet
+  alleen op de beeldpunten waar er geen bruikbare stijlkleur is: een foto, een verloop, een
+  halfdoorzichtige laag, of een achtergrond die `rgba(0,0,0,0)` geeft.
+- In een PDF met een getekende grafiek (vectoren): de vul- en lijnkleur uit het document.
+  `get-pdfnietteksten` leest nog beeldpunten; bij een dunne lijn onder de 3:1 kijk je daarom
+  de kleur in het document na voordat je afkeurt.
+- Bij een plaatje of foto, ook een grafiek die als afbeelding in een PDF staat: daar zijn de
+  beeldpunten van het plaatje zelf de bron. Lees ze af op de eigen resolutie van het plaatje,
+  niet op een vergrote weergave.
 
 ## Alleen wat je NODIG hebt om iets te begrijpen of te bedienen
 
@@ -376,7 +412,7 @@ een uitsnede, geen "ruim boven 3:1".
    vallen en meet die in ruststand én met de muis erop.
 2. [meting] `get-pixelcontrast <url> --selector=<css>` voor elk element dat op een foto, een
    verloop of een halfdoorzichtige laag staat: de werkelijke beeldpunten, per zijde, met een
-   uitsnede.
+   uitsnede. Alleen daar: waar een stijlkleur bestaat, telt die.
 3. [meting] De hoogcontrastknop zelf, één keer op de homepage: als icoon zonder tekst geldt
    3:1 onder dit criterium; met zichtbare tekst is het 1.4.3.
 
@@ -386,7 +422,9 @@ een uitsnede, geen "ruim boven 3:1".
    eronder. Staat er iets tussen dat betekenis draagt, meet dat alsnog.
 5. [agent] Per element onder de eis: leg de uitsnede ernaast. Precies 1:1 is eerst een
    verdachte meting, daarna pas een afkeuring. Bij een pictogram telt de tekening, bij een
-   veld de rand.
+   veld de rand. Op een foto of verloop: denk het deel onder de 3:1 weg en kijk of het
+   element herkenbaar blijft. Bij een dunne lijn: de ingestelde kleur telt, niet de vervaagde
+   weergave. Zie "Foto, verloop en dunne lijnen: zo toetst W3C".
 6. [agent] Decoratief, nodig of uitgezonderd? Denk het element weg; verdwijnt er geen
    informatie, dan valt het erbuiten. Uitgezonderd zijn inactieve elementen, wat de browser
    zelf tekent, logo's (tenzij de site ze zelf flets maakt) en wat alleen in deze vorm kan;
@@ -414,8 +452,9 @@ een uitsnede, geen "ruim boven 3:1".
 is overgeslagen en waarom, en meet rust en hover. `get-pixelcontrast` meet op de
 beeldpunten waar stijlwaarden niets zeggen, per zijde en met hoekronding overgeslagen.
 
-Wat hier niet uit blijkt: de focustoestand, en of een gemeten element werkelijk nodig is om
-iets te begrijpen. Dat weegt de agent, en de uitsnede beslist bij twijfel over het getal.
+Wat hier niet uit blijkt: de focustoestand, of een gemeten element werkelijk nodig is om
+iets te begrijpen, en of een element op een foto herkenbaar blijft als je het deel onder de
+3:1 wegdenkt. Dat weegt de agent, en de uitsnede beslist bij twijfel over het getal.
 
 ### Deelgebieden
 
