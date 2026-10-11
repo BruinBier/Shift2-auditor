@@ -7,8 +7,9 @@
 ## De vraag
 
 Flitst er iets op de pagina vaker dan drie keer per seconde? Dat mag niet, tenzij het
-flitsende vlak klein genoeg is (ongeveer 2,8% van het beeld, een kwart van een gezichtsveld
-van tien graden) of de helderheidssprong te zwak is om iets te doen. Dit is een van de vier
+flitsende vlak klein genoeg is (samen kleiner dan 21.824 CSS-pixels in het vierkant, een
+kwart van een gezichtsveld van tien graden) of de helderheidssprong te zwak is om iets te
+doen. Dit is een van de vier
 criteria met **non-interferentie**: ook een video die de bezoeker zelf start en een kader van
 een ander domein tellen mee, en één flitsend onderdeel keurt de hele pagina af.
 
@@ -41,8 +42,39 @@ video of afbeelding, **ontwikkelaar** bij een animatie in de code.
 - **Beweging zonder helderheidssprongen**: een vloeiende overgang, een langzame fade, een
   carrousel die schuift. Of dat te pauzeren is, hoort bij 2.2.2.
 - **Een knipperende cursor** of een knipperend pictogram van één keer per seconde.
-- **Een flitsend vlakje dat kleiner is dan de gebiedsgrens**. Let op: dat is 2,8% van het
-  beeld, niet een kwart van het scherm.
+- **Een flitsend vlakje dat kleiner is dan de gebiedsgrens**. Let op: dat is een vaste maat
+  van 21.824 CSS-pixels in het vierkant, niet een kwart van het scherm. Zie hieronder.
+
+## De gebiedsgrens is een vaste maat, geen percentage
+
+Een gezichtsveld van tien graden is volgens W3C een rechthoek van 341 bij 256 CSS-pixels,
+ergens op het scherm: 87.296 pixels in het vierkant (Understanding 2.3.1). De grens is een
+kwart daarvan. G176, Formula 1: een flits voldoet als hij "smaller than a contiguous area of
+21,824 sq pixels (any shape)" is. De vorm maakt niet uit.
+
+Vroeger stond hier "ongeveer 2,8% van het beeld". Dat klopt alleen bij een venster van 1024
+bij 768 pixels, het scherm waar W3C van uitging. Op een groter venster is 2,8% een veel groter
+vlak, en keurt de grens te mild. Besluit Frits 2026-10-11: volg W3C.
+
+Twee regels uit dezelfde Understanding:
+
+- **Tel aangrenzende vlakken op die tegelijk flitsen.** Het gaat om het totale aaneengesloten
+  oppervlak dat tegelijk flitst binnen één gezichtsveld van tien graden. Tien kleine vlakjes
+  naast elkaar die samen flitsen, zijn samen één vlak.
+- **Meet op de grootste weergave die de bezoeker kan kiezen.** W3C: "Content should be
+  analyzed at the largest scale at which a user may view the content", bij de standaardzoom
+  van de browser. Een video die op volledig scherm kan, beoordeel je op volledig scherm. Een
+  vlak dat in de ingesloten speler klein is, kan op volledig scherm boven de grens komen.
+
+## Technieken (W3C)
+
+- Voldoende: G19 (geen onderdeel flitst vaker dan drie keer per seconde), G176 (het flitsende
+  vlak klein genoeg houden), G15 (een hulpmiddel gebruiken dat de flitsdrempels toetst, zoals
+  PEAT).
+- Aanvullend: geen.
+- Fout: Understanding 2.3.1 noemt er geen.
+
+Bron: Understanding 2.3.1, "Techniques".
 
 ## De meting is een zeef, geen keuring
 
@@ -51,6 +83,11 @@ helderheidssprongen (10% van de schaal, donkerste onder 0,80), met een aparte to
 verzadigd rood. Het beeld wordt verkleind en samengeperst, en alleen wat in beeld staat wordt
 opgenomen. Meldt de zeef sprongen, laat het videobestand dan door PEAT halen voor een echt
 oordeel; keur nooit af op het getal alleen.
+
+Controleer welke gebiedsgrens de zeef gebruikt. Rekent hij met een percentage van het beeld,
+dan is dat alleen bij 1024 bij 768 gelijk aan de grens van W3C. Reken een gemeld vlak dan zelf
+om naar CSS-pixels en vergelijk met 21.824. En meet een video op volledig scherm als de speler
+dat toelaat.
 
 ## Op de kaart
 
@@ -96,8 +133,10 @@ verbod, en een stille pagina houdt zich eraan. Een PDF kan niet flitsen en voldo
 4. [agent] Geen beeldjes of geen sprongen: `voldoet`. Schrijf bij de deelgebieden op wat er
    gemeten is, ook als de uitkomst nul was.
 5. [agent] Meldt de zeef sprongen, kijk dan naar het blok: hoe groot is het vlak, en zit het
-   in een video, een afbeelding, een animatie of een kader? Een vlakje onder de gebiedsgrens
-   is geen afkeuring.
+   in een video, een afbeelding, een animatie of een kader? De grens is 21.824 CSS-pixels in
+   het vierkant, met aangrenzende vlakken die tegelijk flitsen opgeteld, gemeten op de
+   grootste weergave die de bezoeker kan kiezen (bij een video: volledig scherm). Een vlakje
+   daaronder is geen afkeuring.
 6. [jij] Bij een video waar de zeef sprongen meldt, of die zichtbaar bliksem, stroboscoop of
    explosies bevat: laat het videobestand door PEAT halen. De zeef is geen keuring.
 
@@ -119,7 +158,8 @@ eigen pagina met de speler aan. `get-beweging` zegt wat er beweegt en dus kan fl
 
 Wat hier niet uit blijkt: het beeld wordt verkleind en samengeperst, en alleen wat in beeld
 staat wordt opgenomen. Een video achter een toestemmingsscherm is niet gemeten zolang dat
-scherm er staat. Dit is een zeef die zegt waar je moet kijken; een echt oordeel over een
+scherm er staat. W3C meet een video op volledig scherm en rekent met een vaste maat van
+21.824 CSS-pixels; of de zeef dat ook doet, controleert de agent. Dit is een zeef die zegt waar je moet kijken; een echt oordeel over een
 video komt uit PEAT.
 
 ### Deelgebieden

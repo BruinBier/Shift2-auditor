@@ -4,25 +4,28 @@
 > wanneer een opmerking, en wanneer juist geen bevinding.
 > Deze regels gaan **voor** `wcag-checklists/Checklist_SC_4_1_2.md` als ze elkaar tegenspreken.
 
-## Schakelknop in de toegankelijkheidsbalk: technisch issue, geen bevinding
+## Templatecode van de leverancier: bevinding én technisch issue
 
 Een aan/uit-knop in de SIMsite-toegankelijkheidsbalk (zoals 'Contrast verhogen') zonder
-`aria-pressed` is templatecode van de leverancier, niet iets wat de gemeente kan oplossen.
+`aria-pressed` is templatecode van de leverancier. De gemeente kan er in het CMS niets aan
+veranderen. Toch is het een **4.1.2-bevinding**, met verantwoordelijke **ontwikkelaar**, en
+daarnaast een **technisch issue** voor de leverancier. Zo gaat het al bij het
+SIMsite-galerijpatroon onder 1.1.1.
 
-Meld dit als **technisch issue** voor de leverancier en maak er **geen 4.1.2-bevinding** van
-in het project. De gemeente kan er niets mee, en het hoort niet in hun rapport thuis.
+Het succescriterium kent geen uitzondering voor wie de code heeft gemaakt. WCAG 2.2 kent
+alleen een verklaring van gedeeltelijke conformiteit voor inhoud van derden die later wordt
+toegevoegd en buiten de macht van de auteur valt (WCAG 2.2, 5.4). Een sitesjabloon dat de
+organisatie zelf heeft gekozen valt daar niet onder. Laat je de bevinding weg, dan komt 4.1.2
+op voldoet terwijl de fout op de pagina staat. Besluit Frits 2026-10-11: volg W3C.
 
-Vastgelegd door Frits op 2026-07-27 naar aanleiding van duurzaam.beverwijk.nl. Het technische
-issue staat onder "SIMsite: knop 'Contrast verhogen' in toegankelijkheidsbalk geeft toestand
-niet door".
+Dit geldt voor alle templatecode: de toegankelijkheidsbalk, het zoekveld in de header, de
+formuliergenerator. Het technische issue zorgt dat de leverancier het voor alle gemeenten
+oplost; de bevinding zorgt dat het rapport klopt.
 
-Let op het verschil met het SIMsite-galerijpatroon: daar wordt het CMS-gedrag wél als
-technisch issue gemeld én als bevinding gerapporteerd, omdat de redacteur daar zelf iets aan
-kan doen (bijschrift aanpassen). Bij pure templatecode zonder redactionele ingang vervalt de
-bevinding.
-
-De vraag die beslist: kan een redacteur hier iets aan doen? Nee, dan alleen een technisch
-issue. Ja, dan ook een bevinding.
+> Gewijzigd op 2026-10-11. Tot dan gold het besluit van Frits van 2026-07-27
+> (duurzaam.beverwijk.nl): templatecode zonder redactionele ingang werd alleen een technisch
+> issue, zonder 4.1.2-bevinding. Het technische issue van toen staat onder "SIMsite: knop
+> 'Contrast verhogen' in toegankelijkheidsbalk geeft toestand niet door".
 
 ### Zo maak je het technische issue aan
 
@@ -33,7 +36,7 @@ velden, zoals `app/api/technical-issues/route.ts` ze leest:
 | Veld | Verplicht | Wat erin staat |
 |---|---|---|
 | `title` | ja | Herkenbaar met de leverancier voorop: "SIMsite: knop 'Contrast verhogen' in toegankelijkheidsbalk geeft toestand niet door" |
-| `description` | ja | Wat er mis is. Vermeld hierin altijd **dat het templatecode is** en **op welke site je het hebt gezien**, met het element erbij. Zonder die twee is later niet na te gaan waar het vandaan kwam of waarom het geen bevinding werd. |
+| `description` | ja | Wat er mis is. Vermeld hierin altijd **dat het templatecode is** en **op welke site je het hebt gezien**, met het element erbij. Zonder die twee is later niet na te gaan waar het vandaan kwam. |
 | `request` | nee | Wat je de leverancier vraagt te doen (bij een bevinding zou dit het advies zijn) |
 | `wcagCriterionId` | nee | Het id van het criterium uit `npm run cli -- list-criteria`, dus de UUID en niet de code "4.1.2" |
 | `impact` | nee | `klein`, `matig`, `serieus`, `kritiek` of `onbekend` |
@@ -56,7 +59,7 @@ met in `issue.json` bijvoorbeeld:
 ```json
 {
   "title": "SIMsite: knop 'Contrast verhogen' in toegankelijkheidsbalk geeft toestand niet door",
-  "description": "Templatecode van SIMsite, gezien op duurzaam.beverwijk.nl. De knop 'Contrast verhogen' in de toegankelijkheidsbalk is een aan/uit-knop, maar geeft niet door of hij aanstaat: er ontbreekt een aria-pressed. Wie een schermlezer gebruikt hoort na het drukken niet of het contrast nu hoger staat. De redacteur kan hier niets aan doen.",
+  "description": "Templatecode van SIMsite, gezien op duurzaam.beverwijk.nl. De knop 'Contrast verhogen' in de toegankelijkheidsbalk is een aan/uit-knop, maar geeft niet door of hij aanstaat: er ontbreekt een aria-pressed. Wie een schermlezer gebruikt hoort na het drukken niet of het contrast nu hoger staat. De redacteur kan hier niets aan doen; in het project staat er ook een 4.1.2-bevinding voor.",
   "request": "Geef de knop aria-pressed mee en zet die op true zodra het hoge contrast aanstaat.",
   "wcagCriterionId": "<id van 4.1.2 uit list-criteria>",
   "impact": "matig",
@@ -67,9 +70,9 @@ met in `issue.json` bijvoorbeeld:
 
 Er is ook een route via de onderzoeker: een voorstel dat in "Waar sta ik" wordt doorgezet
 naar een technisch issue, maakt dat issue zelf aan (beschrijving wordt beschrijving, advies
-wordt verzoek) en zet het voorstel op afgewezen. Weet je bij het beoordelen al dat het
-templatecode is, maak dan geen voorstel om te laten doorzetten, maar het issue rechtstreeks;
-een voorstel dat nergens toe leidt kost de onderzoeker alleen aandacht.
+wordt verzoek) en zet het voorstel op afgewezen. Gebruik die route niet voor templatecode:
+dan verdwijnt de bevinding, en die hoort sinds 2026-10-11 te blijven. Maak bij templatecode
+het voorstel (`create-finding`, verantwoordelijke `ontwikkelaar`) én het issue rechtstreeks.
 
 ## Altijd actief checken: de logo-link boven aan de pagina
 
@@ -87,41 +90,44 @@ screenshot.
 
 Bevat de link alleen een `<img>` met `alt=""` en verder geen tekst, `aria-label` of `title`,
 dan is dat een **afkeuring** (matig, ontwikkelaar). Een `alt` die alleen een bestandsnaam
-bevat ("logo.png") telt niet als bruikbare naam. Is er wél een `title`, lees dan eerst de
-paragraaf hieronder: dan hangt het oordeel ervan af of die naam de bestemming dekt.
+bevat ("logo.png") telt niet als bruikbare naam. Is er wél een `title`, lees dan de
+paragraaf hieronder.
 
-### Een naam die alleen uit `title` komt: beoordeel of die naam zijn werk doet
+### Een naam die alleen uit `title` komt: voor 4.1.2 is er een naam
 
-Komt de toegankelijke naam uitsluitend uit een `title` op de link (dus: leeg `alt`, geen
-tekst, geen `aria-label`), dan is dat **niet automatisch een afkeuring**. 4.1.2 vraagt of het
-element een naam, een rol en zo nodig een waarde heeft. Die naam is er, en de browser rekent
-hem ook zo uit; dat is in de toegankelijkheidsboom na te lezen.
+4.1.2 vraagt alleen of naam en rol programmatisch te bepalen zijn: "the name and role can be
+programmatically determined" (WCAG 2.2, tekst van 4.1.2). Understanding 4.1.2 eist niet dat
+de naam de bestemming of het doel beschrijft. Komt de toegankelijke naam uitsluitend uit een
+`title` op de link (leeg `alt`, geen tekst, geen `aria-label`), dan heeft de link een naam;
+de browser rekent hem zo uit en dat is in de toegankelijkheidsboom na te lezen. Voor 4.1.2
+voldoet dat. Besluit Frits 2026-10-11: volg W3C.
 
-De vraag is dus of die naam zijn werk doet: zegt hij waar de link heen gaat?
+Of die naam zijn werk doet, dus of hij zegt waar de link heen gaat, is **2.4.4**:
 
-| Situatie | Oordeel |
-|---|---|
-| Logo-link naar de eigen homepage, `title="Ga naar de homepage"` | **voldoet** — de naam zegt waar de link heen gaat |
-| Logo-link op een SUBSITE (duurzaam., open., mijn.) met dezelfde title | **afkeuring** — de gebruiker denkt naar de hoofdsite te gaan |
-| Een title die de bestemming niet dekt, of een lege of nietszeggende title | **afkeuring** |
-| Een naam die alleen het linktype noemt, zoals "(externe link)" of "PDF" | **afkeuring** — dat is geen naam voor de link maar een aanduiding erbij |
+| Situatie | 4.1.2 | 2.4.4 |
+|---|---|---|
+| Logo-link naar de eigen homepage, `title="Ga naar de homepage"` | voldoet: er is een naam | voldoet: de naam zegt waar de link heen gaat |
+| Logo-link op een SUBSITE (duurzaam., open., mijn.) met dezelfde title | voldoet: er is een naam | afkeuring: de gebruiker denkt naar de hoofdsite te gaan |
+| Een title die de bestemming niet dekt, of een nietszeggende title | voldoet: er is een naam | afkeuring |
+| Een naam die alleen het linktype noemt, zoals "(externe link)" of "PDF" | voldoet: er is een naam | afkeuring: dat is een aanduiding, geen doel |
+| Een lege `title` en verder niets | **afkeuring**: geen naam | afkeuring (F89) |
 
-Schrijf een afkeuring dan niet als "deze link heeft geen naam", want dat is aanvechtbaar
-zodra iemand op de `title` wijst. Benoem dat de naam de bestemming niet dekt.
+4.1.2 keurt alleen af als er **geen naam** is, of als de **rol** of de **toestand** ontbreekt
+of niet klopt. Zie de sectie over de rol hieronder.
 
 Let op waar zo'n naam vandaan komt. Een afbeelding-link met `alt=""` lijkt naamloos, maar
 staat er een span met `aria-label="(externe link)"` naast het plaatje binnen dezelfde `<a>`,
-dan is dát de naam. Schrijf dan niet "de link heeft geen naam" maar benoem welke naam er
-wél is en waarom die niets zegt.
+dan is dát de naam. Voor 4.1.2 is er dan een naam. Schrijf onder 2.4.4 niet "de link heeft
+geen naam", maar benoem welke naam er wél is en waarom die niets zegt.
 
 Voorbeeld (heuvelrug.nl/werken-bij-de-gemeente, 2026-08-18): een foto van drie collega's
 linkt naar een video op YouTube. De foto heeft `alt=""`, en het externe-link-icoontje
 ernaast draagt `aria-label="(externe link)"`. De toegankelijke naam van de link is daarmee
-"(externe link)".
+"(externe link)". Dat is een 2.4.4-afkeuring, geen 4.1.2-afkeuring.
 
 **Wat hier los van staat:** een logo met een leeg tekstalternatief blijft een 1.1.1-afkeuring,
-en staat de organisatienaam zichtbaar in het logo dan ook een 2.5.3-afkeuring. Die twee eisen
-allebei dezelfde reparatie, dus er gaat geen verbetering verloren als 4.1.2 hier voldoet.
+en staat de organisatienaam zichtbaar in het logo dan ook een 2.5.3-afkeuring. Die eisen
+dezelfde reparatie, dus er gaat geen verbetering verloren als 4.1.2 hier voldoet.
 
 Geschiedenis van deze regel, want hij is een keer gedraaid:
 
@@ -133,12 +139,14 @@ Geschiedenis van deze regel, want hij is een keer gedraaid:
   de homepage" en "in dit geval is het geen issue, want de link gaat naar de homepage van
   utrechtse heuvelrug". Daarmee is de categorische regel vervangen door de beoordeling
   hierboven: kijk of de naam de bestemming dekt.
+- 2026-10-11. Besluit Frits: volg W3C. Of de naam de bestemming dekt is 2.4.4, niet 4.1.2.
+  Een naam uit `title` voldoet voor 4.1.2 altijd; de afweging uit de tabel gebeurt onder 2.4.4.
 
 ### Vaste formulering (UTHEU-01, 2026-08-03)
 
-Gebruik deze tekst alleen wanneer de link werkelijk geen bruikbare naam heeft, of wanneer de
-naam de bestemming niet dekt (zie de paragraaf hierboven). Bij een logo-link naar de eigen
-homepage met `title="Ga naar de homepage"` is 4.1.2 voldaan en schrijf je deze bevinding niet.
+Gebruik deze tekst alleen wanneer de link werkelijk geen naam heeft. Heeft de link een naam
+uit `title`, dan is 4.1.2 voldaan en schrijf je deze bevinding niet; dekt die naam de
+bestemming niet, dan is dat een 2.4.4-bevinding.
 
 Description:
 
@@ -263,6 +271,29 @@ Vastgelegd door Frits op 2026-08-26.
 - Focus verschilt van 2.4.4: 4.1.2 gaat erover dat hulpsoftware een interactief element kan herkennen (naam, rol, waarde), 2.4.4 gaat erover of de gebruiker het linkdoel begrijpt.
 - Link met wel tekst maar niet-beschrijvend ("klik hier", "lees meer"): dat is ALLEEN 2.4.4, niet 4.1.2, want de link heeft wel een naam.
 - Link, knop of formulierveld zonder enige naam: wel 4.1.2. Bij een afbeelding-link zonder alt gelden 2.4.4 en 4.1.2 allebei, als twee aparte bevindingen.
+- Een naam die er is maar de bestemming niet dekt (een `title`, "(externe link)", een logo op een subsite met "Ga naar de homepage"): ALLEEN 2.4.4. Besluit Frits 2026-10-11: volg W3C.
+
+## Technieken (W3C)
+
+- Voldoende, situatie A (standaardelement in HTML): ARIA14 (`aria-label` waar geen zichtbaar
+  label kan), ARIA16 (`aria-labelledby`), G108 (naam en rol via de opmaak), met H91
+  (HTML-formulierelementen en links), H44 (`label`-element), H64 (`title` op een `iframe`),
+  H65 (`title` op een formulierveld als `label` niet kan) of H88 (HTML volgens de
+  specificatie).
+- Voldoende, situatie B (script dat een standaardelement anders inzet): ARIA16.
+- Voldoende, situatie C (standaardelement in een andere techniek): G135, met PDF10 (labels
+  in een PDF-formulier) of PDF12 (naam, rol en waarde van PDF-formuliervelden).
+- Voldoende, situatie D (eigen widget): G10, met ARIA4 (een ARIA-rol), ARIA5 (ARIA-toestanden
+  en -eigenschappen) of ARIA16.
+- Aanvullend: Understanding 4.1.2 noemt er geen.
+- Fout: F59 (een `div` of `span` als bedieningselement zonder rol), F15 (een eigen widget die
+  de toegankelijkheidsinterface niet of half gebruikt), F20 (tekstalternatief dat niet
+  meeverandert), F42 (een nagebootste link), F68 (een bedieningselement zonder programmatisch
+  bepaalde naam), F79 (focustoestand niet programmatisch te bepalen), F86 (geen naam voor elk
+  deel van een veld in meerdere delen), F89 (een afbeelding als enige inhoud van een link,
+  zonder naam), F111 (een element met zichtbare tekst maar zonder toegankelijke naam).
+
+Bron: Understanding 4.1.2, "Techniques".
 - Schrijf dat de link of knop GEEN naam heeft, niet "geen duidelijke naam". Niet beweren dat de schermlezer het webadres voorleest.
 
 ## Op de kaart
@@ -281,11 +312,11 @@ Elk bedienbaar element heeft een naam, een rol en een toestand
 Hulpsoftware moet van elke link, knop en elk veld kunnen zeggen wat het is, hoe het heet en
 in welke stand het staat. Een link zonder naam, een link die als knop is gecodeerd, een
 schakelknop die niet meldt of hij aanstaat: dat zijn de drie vragen. Kijk altijd naar de
-logolink bovenaan; een naam die alleen uit `title` komt is er wel, en dan weeg je of hij zijn
-werk doet.
+logolink bovenaan; een naam die alleen uit `title` komt is voor 4.1.2 een naam.
 
-Een nietszeggende naam is 2.4.4, niet 4.1.2. Templatecode van de leverancier zonder
-redactionele ingang is een technisch issue, geen bevinding. Een PDF zonder tags vervalt.
+Een nietszeggende naam, of een naam die de bestemming niet dekt, is 2.4.4, niet 4.1.2.
+Templatecode van de leverancier is een bevinding (ontwikkelaar) én een technisch issue. Een
+PDF zonder tags vervalt.
 
 ### Audit-instructies
 
@@ -303,11 +334,12 @@ redactionele ingang is een technisch issue, geen bevinding. Een PDF zonder tags 
 #### Stap 2 — Beoordelen
 
 3. [agent] De logolink: welke naam heeft hij, en waar komt die vandaan? Geen naam is een
-   afkeuring; alleen een `title` is te wegen op of hij de bestemming dekt.
+   afkeuring. Een naam uit `title` voldoet voor 4.1.2; of hij de bestemming dekt, is 2.4.4.
 4. [agent] Per anker met een rol: doet het wat de rol belooft, hoort het gedrag erbij, en
    verdwijnt het uit een lijst waar de gebruiker het zoekt?
 5. [agent] Per schakel- en uitklapknop: wordt de toestand gemeld en verandert hij mee? Zit
-   de knop in de toegankelijkheidsbalk van de leverancier, dan technisch issue.
+   de knop in de toegankelijkheidsbalk van de leverancier, dan een bevinding (ontwikkelaar)
+   én een technisch issue.
 6. [agent] Een PDF zonder tags: `niet_te_bepalen`, behalve bij een echt invulbaar formulier.
 7. [jij] Een rol is pas te beoordelen als je het element bedient: doet de "knop" wat een knop
    doet, werkt het menu met de pijltjestoetsen?
@@ -339,6 +371,13 @@ meebeweegt. Dat vergt bedienen in de auditsessie.
 4. Eigen widgets: zoeksuggesties, dialoogvensters en accordeons hebben naam, rol en toestand
 5. Templatecode van de leverancier: als technisch issue gemeld, niet als bevinding
 
+> Sinds 2026-10-11 (besluit Frits: volg W3C) lees je gebied 5 zo: mankeert er iets aan
+> templatecode, dan is dat `fout` met een bevinding (verantwoordelijke ontwikkelaar), en
+> daarnaast een technisch issue voor de leverancier. De naam van het gebied is bewust
+> ongewijzigd gelaten; hij spreekt de regel nu tegen en moet door Frits worden aangepast.
+> Gebied 1: een naam uit `title` of "(externe link)" is hier `ok`; of die de bestemming dekt
+> hoort bij 2.4.4.
+>
 > Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
 > kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
 > regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd

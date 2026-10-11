@@ -126,6 +126,11 @@ export function legVast(regel: Omit<LogRegel, 'tijd' | 'criteria'> & { criteria?
     if (hc) {
       const w = (volledig as any).weergave;
       (volledig as any).weergave = `${w && w !== 'standaardweergave' ? `${w}, ` : ''}hoogcontrastweergave (${hc})`;
+      // Ook in de argumenten. Daarop bepaalt koppel-logboek of twee metingen dezelfde zijn
+      // (vormVanMeting); zonder de vlag erin verving een meting in hoogcontrast de meting in
+      // de gewone weergave onder de kaart, terwijl het twee verschillende metingen zijn. Op
+      // LEU-01 (2026-10-11) gebeurde dat bij 1.4.3 en 1.4.11 op zeventien pagina's.
+      volledig.argumenten = { ...(volledig.argumenten ?? {}), hoogcontrast: hc };
     }
     fs.appendFileSync(LOGBOEK, JSON.stringify(volledig) + '\n', 'utf8');
   } catch (err) {

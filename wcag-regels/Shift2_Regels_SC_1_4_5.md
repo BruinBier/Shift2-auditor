@@ -10,6 +10,7 @@
 - Gestileerde evenementen-/promotieposter (drukwerk waarin tekst grafisch vormgegeven onderdeel is): valt onder de 1.4.5-uitzondering "essentieel voor de gewenste presentatie". GEEN bevinding en GEEN opmerking. Zet op niet_aanwezig of voldoet.
 - Het toegankelijkheidsprobleem van zon poster loopt via 1.1.1 (tekstalternatief) en het aanvullen van ontbrekende info als echte tekst.
 - Let op het verschil: een uitgetypt tekstblok dat zonder reden als screenshot is geplaatst valt NIET onder de uitzondering en kan wel een 1.4.5-bevinding zijn.
+- AFBEELDING MET TEKST, EN DIEZELFDE TEKST STAAT OOK ALS TEKST OP DE PAGINA: VOLDOET. W3C zegt dat letterlijk in de Note bij de Intent van Understanding 1.4.5: "Where images of text are used in addition to text to convey the same information, and where both are presented to the user, this success criterion is met." Het voorbeeld van de evenementenposter in dezelfde Understanding zegt hetzelfde: de poster plus de tekst eruit, naast de poster op de pagina. Voorwaarde: dezelfde informatie, en zichtbaar voor iedereen. Tekst die alleen in een alt-attribuut of een verborgen element staat, telt niet. Alleen de afbeelding met tekst die nergens anders als tekst staat, is een afkeuring. Besluit Frits 2026-10-11: volg W3C. Dit vervangt de eerdere stap 4, die zo'n afbeelding afkeurde en alleen noemde of de tekst elders stond.
 - 1.4.5 en 1.4.3 zijn aparte toetsingen. Dat een poster onder de 1.4.5-uitzondering valt, maakt hem niet immuun voor 1.4.3.
 - PDF: DE VRAAG IS OF DE TEKST ER ALS TEKST STAAT, NIET OF HIJ GETAGD IS.
 
@@ -53,6 +54,16 @@ onderzoeker nog moet uitzoeken. Zet in `reden` wat je hebt gemeten:
 > is selecteerbaar en doorzoekbaar: 18.755 tekens, en zoeken op een zichtbaar woord geeft
 > treffers. De tekst staat er dus als echte tekst en niet als afbeelding van tekst.
 
+## Technieken (W3C)
+
+- Voldoende: C22 (CSS voor de opmaak van tekst), C30 (CSS die tekst vervangt door een
+  afbeelding van tekst, met een knop om terug te schakelen), G140 (inhoud en structuur
+  gescheiden van de presentatie), PDF7 (OCR op een gescande PDF, zodat er echte tekst is).
+- Aanvullend: C12, C13, C14 (lettergrootte in procenten, benoemde maten of em), C8
+  (letterafstand met CSS), C6 (positie op basis van structuur).
+- Fout: Understanding 1.4.5 noemt er geen.
+
+Bron: Understanding 1.4.5, "Techniques".
 
 ## Op de kaart
 
@@ -71,7 +82,8 @@ Staat er leesbare tekst in een afbeelding, dan kan wie inzoomt, een eigen letter
 instelt of hoog contrast aanzet daar niets mee. Tekst hoort als tekst op de pagina te staan.
 Uitzonderingen: een logo of woordmerk, en een poster of banner waarin de vormgeving van de
 tekst het punt is. Een uitgetypt tekstblok dat als schermafdruk is geplaatst valt daar niet
-onder.
+onder. Staat dezelfde tekst ook zichtbaar als tekst op de pagina, dan voldoet het (W3C,
+Note bij de Intent).
 
 Kaarten met labels erin zijn hier geen bevinding: dat loopt via 1.1.1. Bij een PDF telt of de
 tekst selecteerbaar en doorzoekbaar is; een scan met OCR voldoet, een scan zonder tekstlaag
@@ -95,9 +107,10 @@ niet. Of het document getagd is, doet hier niet ter zake.
 
 3. [agent] Per afbeelding met tekst erin: is het een logo of woordmerk, een poster of banner
    waarin de vormgeving essentieel is, of een kaart? Dan geen bevinding hier.
-4. [agent] Blijft er een afbeelding over met gewone tekst die net zo goed als tekst had kunnen
-   staan, dan is dat een afkeuring. Noem wat erin staat en of die tekst elders op de pagina
-   als tekst staat.
+4. [agent] Blijft er een afbeelding over met gewone tekst: staat dezelfde tekst ook zichtbaar
+   als tekst op de pagina, bijvoorbeeld naast of onder de afbeelding? Dan voldoet het (W3C,
+   Note bij de Intent). Een alt-attribuut telt daar niet voor. Staat de tekst nergens anders
+   als tekst, dan is het een afkeuring. Noem wat erin staat.
 5. [agent] Bij een PDF: lees de tekstlaag uit en zoek er een woord in dat zichtbaar op de
    pagina staat. Komt dat terug, dan staat de tekst er als tekst en voldoet 1.4.5 -- ook bij
    een scan met OCR, en ongeacht of het document getagd is. Komt er niets terug, dan is de
@@ -117,7 +130,8 @@ niet. Of het document getagd is, doet hier niet ter zake.
 
 `get-html` geeft de afbeeldingen met hun tekstalternatief; de opname van de hele pagina
 laat zien waar leesbare tekst in een afbeelding staat. Of die tekst ook als echte tekst op
-de pagina staat, blijkt uit dezelfde HTML.
+de pagina staat, blijkt uit dezelfde HTML. Staat hij er zichtbaar, dan voldoet die
+afbeelding.
 
 Wat hier niet uit blijkt: of de vormgeving van een poster werkelijk essentieel is. Dat weegt
 de agent aan de hand van de regels hierboven, en bij twijfel de onderzoeker.
@@ -133,3 +147,7 @@ de agent aan de hand van de regels hierboven, en bij twijfel de onderzoeker.
 > kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
 > regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd
 > als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste gebied vast.
+>
+> Gebied 4 geldt sinds 2026-10-11 alleen als dezelfde tekst nergens zichtbaar als tekst op de
+> pagina staat. Staat hij er wel, dan is dat gebied `ok` (W3C, Note bij de Intent; besluit
+> Frits 2026-10-11: volg W3C).

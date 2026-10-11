@@ -41,6 +41,25 @@ Een meting die je wilt kunnen herhalen, hoort niet in tmp.
 4. **Mismatch = AFKEURING.** Het meest voorkomende geval is een `aria-label` die de zichtbare
    tekst overschrijft: de knop toont "Zoeken", maar `aria-label="Vind informatie op deze site"`.
    Spraakgestuurde gebruikers kunnen het element dan niet activeren met wat ze zien staan.
+   Dat is fout-techniek F96.
+
+5. **Zichtbaar label, maar geen toegankelijke naam = ook AFKEURING onder 2.5.3.** Een knop
+   toont "Verzenden" en heeft programmatisch geen naam. Dan zit de zichtbare tekst ook niet in
+   de naam. Dat is fout-techniek F111, en die geldt voor 1.3.1, 2.5.3 én 4.1.2. Bron: W3C
+   Understanding 2.5.3, Intent. Besluit Frits 2026-10-11: volg W3C.
+
+### Uitzonderingen bij de vergelijking (W3C)
+
+Bron: W3C Understanding 2.5.3, Intent. Besluit Frits 2026-10-11: volg W3C.
+
+- **Symbolische tekens zijn geen label.** Een teken dat als pictogram dient, telt niet als
+  zichtbare tekst: ">" als pijl voor "volgende", "B" en "I" voor vet en cursief in een
+  editor. De naam beschrijft dan de functie ("Volgende", "Vet"). Geen afkeuring.
+- **Tekst tussen haakjes mag uit de naam.** "Naam (verplicht)" mag de naam "Naam" hebben.
+  Wat tussen haakjes staat, geldt als beschrijving. Verplicht of een formaat moet dan wel
+  programmatisch beschikbaar zijn, met `required` of `aria-describedby`. Ontbreekt dat, dan
+  is het geen 2.5.3-kwestie maar een vraag voor 1.3.1 of 3.3.2.
+- **Leestekens en hoofdletters tellen niet mee.** "Zoeken:" in de naam "zoeken" is goed.
 
 ### Wat deze meting NIET dekt — altijd melden
 
@@ -57,9 +76,14 @@ staan (zie de algemene regel: kun je iets niet beoordelen, meld het).
 
 ### Let op het verschil met 2.4.4 en 4.1.2
 
-- **2.5.3** — er is zichtbare tekst, maar de toegankelijke naam bevat die niet
+- **2.5.3**: er is zichtbare tekst, maar de toegankelijke naam bevat die niet. Ook als er
+  helemaal geen naam is (F111).
 - **2.4.4** — de link heeft wel een naam, maar die maakt het linkdoel niet duidelijk
 - **4.1.2** — het element heeft helemaal geen (betrouwbare) naam
+
+Een element met zichtbare tekst en zonder naam is dus een afkeuring onder 2.5.3 én onder
+4.1.2: twee bevindingen. Een element zonder zichtbare tekst en zonder naam is alleen 4.1.2.
+Bron: W3C Understanding 2.5.3, failure F111. Besluit Frits 2026-10-11: volg W3C.
 
 Een X/Twitter-mismatch in de footer (X-logo zichtbaar, naam zegt nog "Twitter") is géén
 2.5.3-kwestie: 2.5.3 vereist zichtbare **tekst**, en een logo is dat niet. Die hoort als
@@ -143,7 +167,23 @@ laten omdat de reparatie dezelfde is; Frits: "ik denk wel het zijn 2 verschillen
   ontbreekt de zichtbare tekst.
 - Bij een deelonderzoek content: beperk je tot de main-content. Hoofdmenu, hoofdnavigatie en
   toegankelijkheidsbalk vallen buiten de scope.
-- Bij PDF-samples is 2.5.3 niet van toepassing.
+- Bij een PDF geldt 2.5.3 voor de bedienbare elementen erin: links en formuliervelden. Een
+  PDF zonder zulke elementen is `niet_aanwezig`. Bron: WCAG2ICT, 2.5.3 geldt rechtstreeks
+  voor documenten. Besluit Frits 2026-10-11: volg W3C. De meetwijze voor een PDF is nog niet
+  vastgelegd; `get-labelinnaam` meet alleen webpagina's. Kun je het niet vergelijken, zet het
+  dan op `niet_te_bepalen` met een concrete vraag.
+- Symbolische tekens, tekst tussen haakjes, leestekens en hoofdletters: zie de uitzonderingen
+  onder de werkwijze.
+
+## Technieken (W3C)
+
+Bron: W3C Understanding 2.5.3 en de Quick Reference, opgehaald op 2026-10-11.
+
+- **Voldoende:** G208 (de zichtbare labeltekst zit in de toegankelijke naam), G211 (de
+  toegankelijke naam is gelijk aan het zichtbare label).
+- **Aanvullend:** G162 (labels op een voorspelbare plek bij hun bedieningselement).
+- **Fout:** F96 (de toegankelijke naam bevat de zichtbare labeltekst niet), F111 (zichtbare
+  labeltekst, maar geen toegankelijke naam).
 
 ## Op de kaart
 
@@ -160,8 +200,12 @@ De zichtbare tekst zit in de toegankelijke naam
 
 Wie met spraak bedient, zegt wat er op de knop staat: "klik Zoeken". Dat werkt alleen als
 die zichtbare tekst ook in de toegankelijke naam zit. Een `aria-label` dat de zichtbare
-tekst overschrijft is de klassieke afkeuring. Een element zonder zichtbare tekst valt
-erbuiten; dat is 4.1.2.
+tekst overschrijft is de klassieke afkeuring. Zichtbare tekst zonder enige naam ook (F111).
+Een element zonder zichtbare tekst valt erbuiten; dat is 4.1.2. Een symbool als ">" is geen
+label, en tekst tussen haakjes mag uit de naam.
+
+Bij een PDF geldt het voor links en formuliervelden; zonder die elementen is het niet
+aanwezig.
 
 Het logo: staat de organisatienaam zichtbaar in het logo en niet in de naam van de link,
 dan is dat een 2.5.3-afkeuring naast de 1.1.1. Een slogan hoeft niet in de naam.
@@ -181,7 +225,9 @@ dan is dat een 2.5.3-afkeuring naast de 1.1.1. Een slogan hoeft niet in de naam.
 #### Stap 2 — Beoordelen
 
 2. [agent] Per mismatch: zit de zichtbare tekst volledig in de naam? "Zoeken" in "Zoeken op
-   deze website" is goed; "Zoek" in "Zoeken" niet.
+   deze website" is goed; "Zoek" in "Zoeken" niet. Zichtbare tekst zonder naam is ook een
+   afkeuring. Geen afkeuring: een symbool als ">" of "B", tekst tussen haakjes die uit de
+   naam is gelaten, en verschillen in leestekens of hoofdletters.
 3. [agent] Het logo, op de homepage: welke tekst toont het, en komt de organisatienaam terug
    in de naam van de link? Een lege alt met alleen een title is een afkeuring hier én onder
    1.1.1; een ontbrekende slogan niet.
@@ -206,7 +252,8 @@ dan is dat een 2.5.3-afkeuring naast de 1.1.1. Een slogan hoeft niet in de naam.
 ze genormaliseerd.
 
 Wat hier niet uit blijkt: zichtbare tekst in een afbeelding en een samengestelde
-`aria-labelledby`. Die staan apart in het overzicht en zijn met de hand na te kijken.
+`aria-labelledby`. Die staan apart in het overzicht en zijn met de hand na te kijken. Ook
+links en formuliervelden in een PDF meet het commando niet.
 
 ### Deelgebieden
 

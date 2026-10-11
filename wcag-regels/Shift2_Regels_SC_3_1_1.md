@@ -19,8 +19,11 @@ horen bij 3.1.2.
 
 - **Geen `lang` op het `html`-element**, of een leeg attribuut. Een `lang` op `body` alleen
   telt niet.
-- **Een ongeldige code**: `dutch`, `nederlands`, `NL-nl` met een streepje op de verkeerde
-  plek. Geldig is `nl`, `nl-NL`, `en`, `fy`.
+- **Een ongeldige code**: `dutch`, `nederlands`, of `nl_NL` met een liggend streepje in plaats
+  van een koppelteken. Geldig is `nl`, `nl-NL`, `en`, `fy`. Hoofdletters maken niet uit:
+  `NL-nl` en `NL` zijn ook geldig. Bron: BCP 47 (RFC 5646, 2.1 en 2.1.1: alleen het
+  koppelteken scheidt, hoofdletters dragen geen betekenis), waar techniek H57 naar verwijst.
+  Besluit Frits 2026-10-11: volg W3C.
 - **Een code die niet klopt met de tekst**: `lang="nl"` op de Engelse versie van de site, of
   `lang="en"` op een Nederlandse pagina.
 - **Een PDF zonder documenttaal** (QuickFinding "PDF - Documenttaal niet ingesteld", 9bf0e100,
@@ -38,6 +41,16 @@ homepage. Zit het in een SIMsite-sjabloon, meld het dan ook in Template-monitori
   geen invloed op. Een kader van het eigen domein moet het wél hebben.
 - **Een Friese pagina met `lang="fy"`**, of een Nederlandse pagina met `lang="nl-NL"`: beide
   zijn correct.
+- **Een code met afwijkende hoofdletters**, zoals `NL-nl` of `nl-nl`. Dat is geldig.
+
+## Technieken (W3C)
+
+Bron: W3C Understanding 3.1.1 en de Quick Reference, opgehaald op 2026-10-11.
+
+- **Voldoende:** H57 (`lang` op het `html`-element), PDF16 (de documenttaal via `/Lang` in de
+  catalogus van een PDF), PDF19 (de taal van een passage via `Lang` in een PDF).
+- **Aanvullend:** SVR5 (de standaardtaal in de HTTP-header).
+- **Fout:** geen genoemd.
 
 ## Op de kaart
 

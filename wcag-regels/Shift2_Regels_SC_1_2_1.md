@@ -7,7 +7,7 @@ gevallen. Voor de onderzoeksmethode zie `Shift2_Werkwijze_Video.md`.
 
 | Type | Wat er nodig is |
 |---|---|
-| **Louter geluid** — podcast, audiofragment, ingesproken bericht zonder beeld | Een transcript op de pagina |
+| **Louter geluid** — podcast, audiofragment, ingesproken bericht zonder beeld | Een transcript, op de pagina of via een link direct bij het fragment |
 | **Louter videobeeld** — video zonder geluid, animatie, GIF met informatie | Een tekstalternatief óf een audiodescriptie |
 
 Video met beeld én geluid valt hier **buiten**. Die loopt via 1.2.2 (ondertiteling), 1.2.3 en
@@ -30,7 +30,8 @@ ondertussen op `niet_te_bepalen` met die vraag erbij (zie
 |---|---|
 | Geen louter-geluid en geen louter-videobeeld op de pagina | `niet_aanwezig` |
 | Audiofragment met transcript op de pagina | `voldoet` |
-| Audiofragment zonder transcript | `afgekeurd` |
+| Audiofragment met een link direct bij het fragment naar het transcript | `voldoet` |
+| Audiofragment zonder transcript, of met een transcript dat je vanaf de speler niet vindt | `afgekeurd` |
 | Video zonder geluid met tekst eronder die dezelfde informatie geeft | `voldoet` |
 | Video zonder geluid, puur decoratief, geen informatie | `niet_aanwezig` |
 | Video zonder geluid met informatie, zonder tekstalternatief | `afgekeurd` |
@@ -45,7 +46,32 @@ audiofragment volledig; wie niet kan zien mist de inhoud van een geluidloze vide
 Impact `serieus`, verantwoordelijkheid `redacteur`.
 
 Adviseer een transcript **op de pagina zelf**, niet als los te downloaden bestand: dan komt er
-een PDF-beoordeling bij en dat is voor de bezoeker omslachtiger.
+een PDF-beoordeling bij en dat is voor de bezoeker omslachtiger. Dat is een advies, geen
+afkeurgrond.
+
+## Een gelinkt transcript voldoet
+
+Een transcript hoeft niet op de pagina zelf te staan. Een link direct bij het fragment naar het
+transcript voldoet ook. Bron: W3C Understanding 1.2.1, voorbeeld 1 ("A link to a text transcript
+is provided immediately after the link to the audio clip"), en techniek G158, stap 5: staat het
+alternatief op een andere pagina, dan moet er een link naartoe zijn. Besluit Frits 2026-10-11:
+volg W3C.
+
+Tot die datum keurde Shift2 een transcript af dat niet op de pagina zelf stond. Dat is geen
+afkeurgrond meer. Wel blijft gelden: de link staat direct bij de speler, en het transcript achter
+de link geeft inhoudelijk dezelfde informatie. Staat het transcript in een PDF, dan beoordeel je
+die PDF ook.
+
+## Technieken (W3C)
+
+| Soort | Techniek |
+|---|---|
+| Voldoende, louter geluid | G158 Alternatief voor louter geluid (transcript) |
+| Voldoende, louter videobeeld | G159 Alternatief voor louter videobeeld |
+| Voldoende, louter videobeeld | G166 Geluid dat de belangrijke beeldinhoud beschrijft, en als zodanig aangeduid |
+| Aanvullend | H96 `track`-element voor audiodescriptie |
+| Fout | F30 Tekstalternatief dat geen alternatief is (bestandsnaam, plaatshouder) |
+| Fout | F67 Lange beschrijving die niet hetzelfde doel dient |
 
 ## Op de kaart
 
@@ -68,7 +94,8 @@ Gewone video met beeld én geluid valt hier buiten. Die loopt via 1.2.2 voor de 
 en 1.2.3 en 1.2.5 voor de audiodescriptie. Verwar het niet: dit criterium gaat over media die
 maar één van beide heeft.
 
-De vraag is telkens dezelfde. Staat de inhoud ook ergens als tekst op de pagina?
+De vraag is telkens dezelfde. Staat de inhoud ook als tekst op de pagina, of achter een link
+direct bij de speler? Een gelinkt transcript voldoet (W3C, voorbeeld 1).
 
 ### Audit-instructies
 
@@ -91,7 +118,8 @@ De vraag is telkens dezelfde. Staat de inhoud ook ergens als tekst op de pagina?
 #### Stap 2 — Het type vaststellen
 
 4. [agent] Een `audio`-element of een ingesloten podcast is louter-geluid. Daar hoort een
-   transcript bij, op de pagina zelf.
+   transcript bij: op de pagina, of via een link direct bij de speler. Een gelinkt transcript
+   voldoet (W3C Understanding 1.2.1, voorbeeld 1; G158). Besluit Frits 2026-10-11: volg W3C.
 5. [agent] Bij een video: stel vast of er een audiospoor is. Speel af met `muted = false` en
    lees `webkitAudioDecodedByteCount` uit, of kijk of het bestand een audiospoor heeft. Geen
    audio betekent louter-videobeeld. Kijk hier niet naar, meet het — een stille passage aan het
@@ -105,10 +133,12 @@ De vraag is telkens dezelfde. Staat de inhoud ook ergens als tekst op de pagina?
    decoratieve achtergrondvideo is `niet aanwezig` voor dit criterium; een animatie die iets
    uitlegt niet. Kijk voor die afweging naar wat er in beeld gebeurt, niet naar de
    bestandsnaam.
-8. [agent] Staat de inhoud al als tekst op de pagina, dan voldoet het. Vergelijk inhoudelijk:
-   een kopje boven de speler is geen transcript.
+8. [agent] Staat de inhoud al als tekst op de pagina, of achter een link direct bij de speler,
+   dan voldoet het. Vergelijk inhoudelijk: een kopje boven de speler is geen transcript. Volg
+   een link en lees wat erachter staat.
 9. [jij] Bij een afkeuring: impact `serieus`, verantwoordelijkheid `redacteur`. Adviseer een
-   transcript op de pagina zelf, niet als los te downloaden bestand.
+   transcript op de pagina zelf, niet als los te downloaden bestand. Dat is advies: een gelinkt
+   transcript keur je niet af.
 
 #### Stap 4 — Wegschrijven
 

@@ -6,9 +6,11 @@
 
 ## 3.3.2 gaat over wat er staat, niet over hoe het gekoppeld is
 
-Beoordeel of er een label of instructie **aanwezig** is bij een invoerveld, en of die de
-gebruiker vertelt wat er wordt gevraagd. Dit is een oordeel over de inhoud die iemand ziet
-en leest.
+Beoordeel of er een label of instructie **aanwezig** is bij een invoerveld. Dit is een
+oordeel over wat iemand ziet en leest. Of dat label duidelijk en beschrijvend genoeg is,
+beoordeel je onder **2.4.6** (Koppen en labels), niet hier. Understanding 3.3.2 (Intent):
+"whether or not labels (if used) are accurate, sufficiently clear, or descriptive is covered
+separately by 2.4.6 Headings and Labels". Besluit Frits 2026-10-11: volg W3C.
 
 De programmatische koppeling — `for`, `aria-labelledby`, `aria-describedby` — hoort bij
 **1.3.1** (Info en relaties). Die koppeling is **geen bewijs voor 3.3.2** en hoort niet in
@@ -19,7 +21,8 @@ de onderbouwing van dit criterium thuis.
 De twee criteria kunnen los van elkaar slagen en zakken:
 
 - `<label for="f1">Veld 1</label>` — perfect gekoppeld, maar het label zegt niets.
-  Voldoet aan 1.3.1, **niet** aan 3.3.2.
+  Voldoet aan 1.3.1 en aan 3.3.2 (er is een label), **niet** aan 2.4.6 (het label
+  beschrijft het doel niet).
 - Een duidelijk zichtbaar label "Uw postcode" dat niet aan het veld is gekoppeld.
   Voldoet aan 3.3.2, **niet** aan 1.3.1.
 
@@ -28,8 +31,11 @@ antwoord geven — en dat valt niet op, want er staat een geloofwaardige zin.
 
 ### Wat je bij 3.3.2 wél beoordeelt
 
-- Heeft elk invoerveld een zichtbaar label of een instructie?
-- Zegt dat label wat er wordt gevraagd? "Veld 1", "Tekst" of alleen een sterretje is niet genoeg.
+- Heeft elk invoerveld een zichtbaar label of een instructie? Alleen een sterretje is geen
+  label. Een pictogram dat het doel aangeeft, zoals een loep bij een zoekveld, mag als
+  zichtbaar label dienen (Understanding 3.3.2, voorbeeld 4).
+- Een label als "Veld 1" of "Tekst" is er wél. Of het iets zegt, is **2.4.6**: rapporteer het
+  daar en niet hier.
 - Staat er uitleg waar het formaat niet vanzelf spreekt (datumnotatie, postcode, verplichte velden)?
 - Is duidelijk welke velden verplicht zijn, en staat die uitleg vóór de velden?
 - Verdwijnt de enige aanduiding zodra er iets is ingevuld? Een tijdelijke aanduiding in het
@@ -41,21 +47,48 @@ antwoord geven — en dat valt niet op, want er staat een geloofwaardige zin.
 - `for`, `id`, `aria-labelledby`, `aria-describedby` → 1.3.1
 - `autocomplete` op naam-, adres- en contactvelden → 1.3.5
 - De foutmelding die verschijnt ná een verkeerde invoer → 3.3.1 en 3.3.3
-- **Het zoekveld in de header, altijd en op elke pagina.** Dat is templatecode: het staat er
-  op elke pagina van het sitesjabloon en een redacteur kan er niets aan veranderen. Net als
-  de voorleesknop, de knop "Eenvoudige tekst" en de hoogcontrastknop valt het buiten de
-  beoordeling. Mankeert er iets aan, dan is het een technisch issue voor de leverancier en
-  geen bevinding; zie `/technische-issues` en de scheidingsregel in CLAUDE.md.
-
-  Gevolg voor het formulier-vinkje op het tabblad Steekproef: een pagina waar alleen het
-  zoekveld op staat, heeft **geen** formulier. Zet dat vinkje dus op "niet aanwezig", dan
-  vervallen 1.3.5, 3.3.1, 3.3.2, 3.3.3 en 3.3.7 voor die pagina.
-
-Vastgelegd door Frits op 2026-09-14.
+- Of een label duidelijk en beschrijvend is ("Veld 1", "Tekst") → 2.4.6
 
 Vastgelegd door Frits op 2026-08-15, naar aanleiding van heuvelrug.nl. Daar onderbouwde de
 auditor 3.3.2 op twee pagina's met "een zichtbaar label met een for-koppeling" — het bewijs
 van 1.3.1, gebruikt voor het verkeerde criterium.
+
+### Het zoekveld in de header valt eronder, op het homepage-sample
+
+Het zoekveld in de header is een invoerveld en valt onder 3.3.2. Understanding 3.3.2
+beoordeelt in voorbeeld 4 juist zo'n zoekveld: een loep naast het veld mag als zichtbaar
+label dienen. Besluit Frits 2026-10-11: volg W3C.
+
+Beoordeel het één keer, op het homepage-sample, net als de rest van header en footer. Op de
+andere pagina's laat je het liggen; daar gaat het om de formulieren in de main-content.
+Mankeert er iets aan, dan is het templatecode van de leverancier: maak een bevinding met
+verantwoordelijke **ontwikkelaar** én een technisch issue voor de leverancier, zoals bij het
+SIMsite-galerijpatroon onder 1.1.1. Zie `Shift2_Regels_SC_4_1_2.md` voor het technische
+issue.
+
+Gevolg: een homepage met een zoekveld in de header heeft voor 3.3.2 wél een invoerveld. Zet
+op het homepage-sample het formulier-vinkje dus niet op "niet aanwezig" alleen omdat er
+verder geen formulier staat.
+
+> Gewijzigd op 2026-10-11. Tot dan viel het zoekveld in de header altijd en op elke pagina
+> buiten de beoordeling, als templatecode (vastgelegd door Frits op 2026-09-14). Een pagina
+> met alleen een zoekveld kreeg zo "niet aanwezig", terwijl W3C het zoekveld juist
+> beoordeelt.
+
+## Technieken (W3C)
+
+- Voldoende: G131 (beschrijvende labels), samen met één van ARIA1 (`aria-describedby`),
+  ARIA9 (`aria-labelledby` uit meerdere teksten), ARIA17 (groeperingsrollen), G89 (verwacht
+  formaat met voorbeeld), G184 (instructie aan het begin van het formulier), G162 (labels op
+  een voorspelbare plek), G83 (tekst bij een niet ingevuld verplicht veld), H90 (verplicht
+  aangeven in `label` of `legend`) of PDF5. Verder H44 (`label`-element), PDF10 (labels in
+  een PDF-formulier), H71 (`fieldset` en `legend`) en G167 (een knop naast het veld die het
+  doel aangeeft, zoals bij een zoekveld).
+- Aanvullend: G13 (vooraf zeggen wat er gebeurt bij een contextwijziging), ARIA2
+  (`aria-required`).
+- Fout: F82 (telefoonnummervelden die visueel bij elkaar staan zonder tekstlabel).
+
+Bron: Understanding 3.3.2, "Techniques".
 
 ## Op de kaart
 
@@ -70,14 +103,14 @@ Elk invoerveld zegt wat er wordt gevraagd
 
 ### In het kort
 
-Bij elk veld hoort een zichtbaar label of een instructie die zegt wat er ingevuld moet
-worden. "Veld 1" of alleen een sterretje is niet genoeg. Waar het formaat niet vanzelf
-spreekt (datum, postcode) staat uitleg, en welke velden verplicht zijn staat vóór de
-velden. Een tijdelijke tekst in het veld zelf als enig label is een afkeuring: zodra je
-typt is hij weg.
+Bij elk veld hoort een zichtbaar label of een instructie. Alleen een sterretje is niet
+genoeg; een loep bij een zoekveld wel. Waar het formaat niet vanzelf spreekt (datum,
+postcode) staat uitleg, en welke velden verplicht zijn staat vóór de velden. Een tijdelijke
+tekst in het veld zelf als enig label is een afkeuring: zodra je typt is hij weg.
 
-Dit gaat over wat er staat. Of het label in de code aan het veld hangt, is 1.3.1 en geen
-bewijs voor dit criterium. Zonder formulier is dit criterium niet aanwezig.
+Dit gaat over of er een label staat. Of het duidelijk is ("Veld 1"), is 2.4.6. Of het in de
+code aan het veld hangt, is 1.3.1. Het zoekveld in de header telt mee, op het
+homepage-sample. Zonder invoerveld is dit criterium niet aanwezig.
 
 ### Audit-instructies
 
@@ -94,8 +127,9 @@ bewijs voor dit criterium. Zonder formulier is dit criterium niet aanwezig.
 
 #### Stap 2 — Beoordelen
 
-3. [agent] Per veld: is er een zichtbaar label of instructie, en zegt die wat er wordt
-   gevraagd?
+3. [agent] Per veld: is er een zichtbaar label of instructie? Een vaag label ("Veld 1") is
+   2.4.6, niet 3.3.2. Op het homepage-sample hoort het zoekveld in de header erbij; op de
+   andere pagina's niet.
 4. [agent] Staat er uitleg bij velden met een formaat, en is duidelijk welke velden verplicht
    zijn, met die uitleg vóór de velden?
 5. [agent] Is een placeholder ergens het enige label?
@@ -117,8 +151,8 @@ bewijs voor dit criterium. Zonder formulier is dit criterium niet aanwezig.
 `get-html` geeft per veld wat er in de code bij staat; de opname laat zien wat er zichtbaar
 bij staat. Het oordeel gaat over dat tweede.
 
-Wat hier niet uit blijkt: een formulierstap achter een sessie, en of een label dat er staat
-ook begrijpelijk is voor wie het formulier invult. Dat weegt de agent.
+Wat hier niet uit blijkt: een formulierstap achter een sessie. Of een label dat er staat
+ook begrijpelijk is, weeg je onder 2.4.6.
 
 ### Deelgebieden
 
@@ -127,6 +161,10 @@ ook begrijpelijk is voor wie het formulier invult. Dat weegt de agent.
 3. Verplichte velden zijn aangeduid, met de uitleg vóór de velden
 4. Geen placeholder als enig label
 
+> Sinds 2026-10-11 (besluit Frits: volg W3C) lees je gebied 1 zo: is er een label of
+> instructie? Een label dat er staat maar niets zegt ("Veld 1") is hier `ok` en een
+> bevinding onder 2.4.6. De naam van het gebied is bewust ongewijzigd gelaten.
+>
 > Kaartblok toegevoegd op 2026-09-13 bij ZOET-01: dit bestand had wel regels maar geen
 > kaartblok, en Frits wilde voor elk criterium dezelfde opmaak als 1.4.1. Het blok is uit de
 > regels hierboven samengevat; er staat niets nieuws in. Zet uitleg bij deze lijst altijd

@@ -35,6 +35,11 @@ zichzelf opbouwt, en het scrollen dat de paginabrede opname zelf veroorzaakt. Ve
 in de vijf seconden dáárna nog steeds iets, dan duurt het langer dan vijf seconden en is de
 eis van 2.2.2 niet leeg.
 
+Die vijf seconden gelden alleen voor bewegen, knipperen en scrollen. Voor inhoud die zichzelf
+bijwerkt (een teller, een nieuwsticker, een feed) bestaat geen grens van vijf seconden. Zie
+"Bijwerkende inhoud" hieronder. Het bezinken van drie seconden is een meettechnische keuze om
+inladen uit te filteren, geen uitzondering uit het criterium.
+
 Beeld en code worden op precies dezelfde twee momenten geknipt. Dat staat in het overzicht
 ("het venster loopt van 5,7s tot 11,2s"). Zonder die gelijkloop viel op heuvelrug.nl de
 ReadSpeaker-balk, die nog aan het inladen was, in het venster dat telt.
@@ -68,11 +73,34 @@ zien of de carrousel is doorgeschoven of dat er alleen een lui geladen foto is i
   voordat je een afkeuring schrijft. Op heuvelrug.nl wisselden `name` en `type` van het
   zoekveld zes keer terwijl er op het beeld geen enkel vakje veranderde.
 
-- **Beweegt er wel iets, dan is dat nog geen afkeuring.** Drie vragen daarna, en die
+- **Beweegt er wel iets, dan is dat nog geen afkeuring.** Vier vragen daarna, en die
   beantwoordt het commando niet:
-  1. Begon het uit zichzelf, of na een handeling van de bezoeker?
+  1. Begon het uit zichzelf? Dat is alles wat niet het directe gevolg is van een bewuste
+     activering door de bezoeker. Ook beweging die begint bij focus, bij erover bewegen met
+     de muis of bij het in beeld scrollen van een element, start automatisch.
   2. Staat het naast andere inhoud (een filmpje op een lege pagina valt er niet onder)?
-  3. Is er een manier om het te pauzeren, te stoppen of te verbergen?
+  3. Bij bewegen, knipperen of scrollen: duurt het langer dan vijf seconden? Bij inhoud die
+     zichzelf bijwerkt telt deze vraag niet.
+  4. Is er een manier om het te pauzeren, te stoppen of te verbergen? Bij bijwerkende inhoud
+     telt ook een manier om de verversingsfrequentie te regelen.
+
+  Is de beweging of het bijwerken essentieel voor de activiteit, dan geldt de eis niet.
+  Essentieel betekent: zonder deze beweging verandert de informatie of functie wezenlijk, en
+  het kan niet op een andere manier die wel voldoet. Dat is een smalle uitzondering.
+
+- **Beweging die start bij scrollen, focus of erover bewegen valt eronder.** W3C
+  (Understanding 2.2.2, Intent): "starts automatically" omvat ook beweging die begint "as a
+  result of an indirect interaction (such as focusing/hovering over an element, or scrolling
+  an element into view)". Een animatie die afspeelt zodra een blok in beeld schuift, is dus
+  automatisch. Besluit Frits 2026-10-11: volg W3C. Dit vervangt de eerdere regel dat zulke
+  beweging buiten 2.2.2 viel.
+
+- **Bijwerkende inhoud: geen grens van vijf seconden.** W3C (Understanding 2.2.2, Intent):
+  "there is no five second exception for auto-updating". Voor een teller, ticker of feed
+  gelden alleen twee voorwaarden: hij start automatisch en staat naast andere inhoud. Dan moet
+  de bezoeker hem kunnen pauzeren, stoppen of verbergen, of de verversingsfrequentie kunnen
+  regelen. Ook een teller die na drie seconden stopt, valt eronder. Besluit Frits 2026-10-11:
+  volg W3C.
 
   Het commando noemt kandidaat-knoppen op naam ("pauze", "stop", "carrousel"), maar loopt
   ze niet na. Dat doe je zelf: een knop die zo heet hoeft niet te werken en hoeft niet bij
@@ -97,8 +125,28 @@ zien of de carrousel is doorgeschoven of dat er alleen een lui geladen foto is i
 
 Geluid dat uit zichzelf begint valt onder 1.4.2 en flitsen onder 2.3.1. De mediaspelers die
 dit commando opsomt zijn voor 1.4.2 bruikbaar als **aanwijzing**, maar niet als meting: het
-autoplay-beleid van de browser vertekent precies dat. Bewegen dat pas begint als de bezoeker
-scrolt of ergens overheen gaat, valt buiten 2.2.2 — dat start niet automatisch.
+autoplay-beleid van de browser vertekent precies dat.
+
+Beweging die pas begint als de bezoeker scrolt, focus geeft of ergens overheen gaat, valt wél
+onder 2.2.2 (zie de regels hierboven). `get-beweging` scrolt en beweegt niet zelf over
+elementen, behalve bij de paginabrede opname. Zulke beweging zie je dus niet altijd in de
+meting. Scrol in de auditsessie langs de pagina als er blokken zijn die bij het in beeld
+komen lijken te animeren.
+
+## Technieken (W3C)
+
+- Voldoende: G4 (pauzeren en verder vanaf dezelfde plek), SCR33 (scrollende inhoud met een
+  pauzemechanisme), G11 (knipperen korter dan vijf seconden), G152 (geanimeerde GIF stopt
+  binnen vijf seconden), SCR22 (script stopt het knipperen binnen vijf seconden), G186 (een
+  knop die bewegende, knipperende of bijwerkende inhoud stopt), G191 (een link of knop die de
+  pagina laadt zonder knipperende inhoud).
+- Aanvullend: geen.
+- Fout: F16 (scrollende inhoud zonder pauze, terwijl de beweging niet essentieel is), F112
+  (knipperen langer dan vijf seconden zonder stopmogelijkheid), F50 (script laat iets
+  knipperen zonder stop binnen vijf seconden), F7 (object of applet dat langer dan vijf
+  seconden beweegt of knippert zonder pauze).
+
+Bron: Understanding 2.2.2, "Techniques".
 
 ## Aanleiding
 
@@ -125,14 +173,16 @@ Wat uit zichzelf beweegt, is te pauzeren, te stoppen of te verbergen
 
 ### In het kort
 
-Een carrousel die doorschuift, een teller die bijwerkt, een animatie die doorloopt: begint
-het uit zichzelf, duurt het langer dan vijf seconden en staat het naast andere inhoud, dan
-moet de bezoeker het kunnen pauzeren, stoppen of verbergen. Of er iets beweegt is uit de
-code niet te lezen; je laat tijd verstrijken en kijkt.
+Een carrousel die doorschuift of een animatie die doorloopt: begint het uit zichzelf, duurt
+het langer dan vijf seconden en staat het naast andere inhoud, dan moet de bezoeker het
+kunnen pauzeren, stoppen of verbergen. Een teller, ticker of feed die zichzelf bijwerkt kent
+geen grens van vijf seconden; daar mag de bediening ook de verversingsfrequentie regelen.
+Uit zichzelf is ook: beginnen bij scrollen, focus of erover bewegen (W3C). Of er iets beweegt
+is uit de code niet te lezen; je laat tijd verstrijken en kijkt.
 
 Beweegt er niets, dan is dit criterium niet aanwezig, geen "voldoet". Beweegt er wel
-iets, dan is dat nog geen afkeuring: dan volgen drie vragen. Bij een PDF is het niet van
-toepassing.
+iets, dan is dat nog geen afkeuring: dan volgen vier vragen. Essentiële beweging valt
+erbuiten. Bij een PDF is het niet van toepassing.
 
 Sinds 2026-09-14 wordt dit niet meer per pagina uitgezocht. 2.2.2 staat in `ALTIJD_NIET_AANWEZIG` (`lib/metingen.ts`) en krijgt op elke pagina `niet_aanwezig` met bron `steekproef`. Op deze websites staan geen carrousels, tellers of doorlopende animaties; de pagina staat stil tot de bezoeker iets doet. `get-beweging` blijft bestaan en is vanaf de kaart te draaien als je het wilt nameten.
 
@@ -155,10 +205,13 @@ Sinds 2026-09-14 wordt dit niet meer per pagina uitgezocht. 2.2.2 staat in `ALTI
 
 3. [agent] Leg per veranderd gebied de uitsnede vóór en ná naast elkaar. Een lui geladen
    foto is geen beweging; een doorgeschoven carrousel wel. Loop de lijst `telt`/`niet` na.
-4. [agent] Beweegt er iets: begon het uit zichzelf, staat het naast andere inhoud, duurt het
-   langer dan vijf seconden? Alleen dan geldt de eis.
-5. [agent] Zoek de pauze-, stop- of verbergknop en probeer hem in de auditsessie. Een knop
-   die "pauze" heet hoeft niet te werken; `prefers-reduced-motion` telt niet als knop.
+4. [agent] Beweegt er iets: begon het uit zichzelf (ook bij scrollen, focus of erover
+   bewegen), en staat het naast andere inhoud? Bij bewegen, knipperen of scrollen ook: duurt
+   het langer dan vijf seconden? Bij bijwerkende inhoud geldt die grens niet. Is het
+   essentieel voor de activiteit, dan geldt de eis niet.
+5. [agent] Zoek de pauze-, stop- of verbergknop, of bij bijwerkende inhoud een regeling van de
+   verversingsfrequentie, en probeer hem in de auditsessie. Een knop die "pauze" heet hoeft
+   niet te werken; `prefers-reduced-motion` telt niet als knop.
 
 #### Stap 3 — Vastleggen
 
@@ -177,9 +230,10 @@ een ander domein), de bijwerkingen in de code, de verplaatsingen van elementen, 
 pagina zelf opgeeft aan CSS-animaties en spelende media. Van elk veranderd gebied komt een
 uitsnede vóór en ná.
 
-Wat hier niet uit blijkt: of een beweging uit zichzelf begon of na een handeling, en of een
-gevonden pauzeknop werkt en bij die beweging hoort. Dat loopt de agent na. Geluid is 1.4.2,
-flitsen is 2.3.1.
+Wat hier niet uit blijkt: of een beweging uit zichzelf begon of na een bewuste handeling,
+en of een gevonden pauzeknop werkt en bij die beweging hoort. Dat loopt de agent na.
+Beweging die pas start bij scrollen of erover bewegen telt ook als automatisch, maar de
+meting scrolt en beweegt daar niet zelf voor. Geluid is 1.4.2, flitsen is 2.3.1.
 
 ### Deelgebieden
 

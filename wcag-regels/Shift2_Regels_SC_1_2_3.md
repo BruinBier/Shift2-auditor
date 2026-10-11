@@ -12,20 +12,40 @@ helemaal rond. Zie `Shift2_Werkwijze_Video.md` voor de methode.
 1.2.3 accepteert **drie** manieren om visuele informatie beschikbaar te maken. Loop ze in deze
 volgorde af; de eerste twee stel je altijd zelf vast.
 
-**1. Audiodescriptie — een apart audiospoor.** Lees de `adaptiveFormats` uit
-`ytInitialPlayerResponse` en kijk of er formats met een `audioTrack` zijn. Is er maar één spoor,
-dan is er geen audiodescriptie. Bij een andere speler: is er een knop of menu-optie
-"audiodescriptie"?
+**1. Audiodescriptie, in een van drie vormen.** W3C kent er drie, en alle drie voldoen:
 
-**2. Een transcript op de pagina of bij de speler.** Is die er, dan is er een geldig alternatief
-en vervalt de bevinding (zie ook 1.1.1).
+- Een tweede, te kiezen audiospoor met audiodescriptie (G78). Lees de `adaptiveFormats` uit
+  `ytInitialPlayerResponse` en kijk of er meer dan één `audioTrack` is. Bij een andere speler:
+  is er een knop of menu-optie "audiodescriptie"?
+- Een aparte versie van de video met audiodescriptie (G173). Staat die op een andere pagina,
+  dan moet er een link naartoe zijn bij de video (G173, stap 4).
+- Beschrijving die in het enige geluidsspoor is ingesproken (G226, onderdeel van G173). De
+  video heeft dan één spoor, maar de vertelstem of extra ingesproken tekst in de pauzes noemt
+  wat er in beeld staat.
+
+Eén audiospoor betekent dus níét automatisch geen audiodescriptie. Het sluit alleen de eerste
+vorm uit. Bron: W3C Understanding 1.2.3, sufficient techniques G78, G173 en G226. Besluit Frits
+2026-10-11: volg W3C.
+
+**2. Een tekstalternatief op de pagina of bij de speler.** Een volledig transcript (G69, met
+een link direct bij de video volgens G58) is een geldig alternatief, en dan vervalt de
+bevinding (zie ook 1.1.1). Bij een video met **één pratend persoon** voor een vaste achtergrond,
+zonder andere belangrijke beeldinformatie, volstaat ook een korte statische tekst bij de video
+met wat in beeld staat en niet gezegd wordt: de naam en functie uit het naambalkje, de setting,
+eventuele begin- en eindtitels (G203). Die tekst hoort programmatisch aan de video gekoppeld te
+zijn, bijvoorbeeld een alinea onder de video met `aria-describedby`. G203 geldt niet bij
+meerdere sprekers die alleen met tekst in beeld worden voorgesteld. Bron: W3C Understanding
+1.2.3, G203. Besluit Frits 2026-10-11: volg W3C.
 
 **3. De spreker zegt het gewoon zelf.** Dit is bij gemeentevideo's de meest voorkomende situatie:
 iemand die zichzelf voorstelt met "Ik ben Suzanne Klaassen, wethouder in Beverwijk" maakt de
 naam-in-beeld hoorbaar, en dan is er geen bevinding.
 
 > Let op: uit "geen audiodescriptie-knop" volgt NIET dat de tekst onhoorbaar is. Dat bewijst
-> alleen dat route 1 dicht is. Route 3 blijft open, en die is in de praktijk de belangrijkste.
+> alleen dat de eerste vorm van route 1 dicht is. Een gelinkte beschreven versie, ingesproken
+> beschrijving en route 3 blijven open, en route 3 is in de praktijk de belangrijkste. W3C zegt
+> het zelf: staat alle belangrijke beeldinformatie al in het geluid, dan is geen extra
+> audiodescriptie nodig (Understanding 1.2.5, Intent).
 
 ### Route 3 zelf beantwoorden: lees de open ondertiteling
 
@@ -90,10 +110,23 @@ het ook wordt verteld.
 
 - Video met visuele informatie die niet hoorbaar wordt overgebracht (naam-in-beeld, lower thirds, locatie-labels, logos): rapporteer als TWEE aparte bevindingen, een onder 1.2.3 (niveau A) en een onder 1.2.5 (niveau AA). Beide impact matig, responsibility redacteur.
 - Gebruik de vaste QuickFinding-tekst ed3a4d2a-ce67-4474-88a0-edba1c124624. Beschrijving: "Op de pagina staat de video 'X'. In deze video komt visuele informatie voor die niet beschikbaar is voor mensen die blind of slechtziend zijn." Daarna "Voorbeelden:" met bullets in de vorm MM:SS "tekst in beeld". De volledige titel, beschrijving en het advies staan hieronder onder "Vaste teksten uit de QuickFinding-bibliotheek".
-- Het advies bij 1.2.3 is VASTE standaardtekst uit de QuickFinding. Niet zelf herformuleren of "verbeteren", ook niet als de tekst feitelijk onjuist lijkt. Dat geldt in het bijzonder voor de zin over 1.2.5 in het advies van de8bf36c-495a-4bad-90b9-63b3f8f833be; zie hieronder waarom die blijft staan.
+- Het advies bij 1.2.3 is VASTE standaardtekst uit de QuickFinding. Niet zelf herformuleren of "verbeteren", ook niet als de tekst feitelijk onjuist lijkt. De zin over 1.2.5 in het advies van de8bf36c-495a-4bad-90b9-63b3f8f833be volgt een lezing die op 2026-10-11 is losgelaten; zie hieronder wat je dan doet.
 - Woordkeuze die vastligt: "beschrijft" niet "vertelt"; "is opgenomen" niet "wordt beschreven"; geen "namelijk" in de doelgroep-zin; "onder de video" niet "onder of naast de video".
 - Maximaal twee a drie voorbeelden met tijdstip. Geen lange opsomming.
 - Check eerst of de speler een transcript-knop heeft (zie 1.1.1). Is die er, dan is er een geldig alternatief.
+- Check ook of er een gelinkte versie met audiodescriptie is (G173), of de beschrijving in het geluidsspoor is ingesproken (G226), en bij één pratend persoon of er een statische tekst bij de video staat (G203). Dan is er geen bevinding.
+
+## Technieken (W3C)
+
+| Soort | Techniek |
+|---|---|
+| Voldoende | G69 Media-alternatief (volledig transcript), met G58 (link direct naast de video) of H53 (inhoud van `object`) |
+| Voldoende | G78 Tweede, te kiezen audiospoor met audiodescriptie |
+| Voldoende | G173 Versie van de video met audiodescriptie, ook via SM6/SM7 of G226 (beschrijving ingesproken in het geluidsspoor) |
+| Voldoende | G8 Video met uitgebreide audiodescriptie (SM1/SM2) |
+| Voldoende | G203 Statische tekst bij een video met één pratend persoon |
+| Aanvullend | H96 `track`-element voor audiodescriptie |
+| Fout | W3C noemt bij 1.2.3 geen fout-technieken |
 
 ## Vaste teksten uit de QuickFinding-bibliotheek
 
@@ -172,20 +205,37 @@ Advies:
 > alles wat je ziet. Dit kan door een tweede audiospoor toe te voegen aan de video dat zowel
 > de normale audio bevat als de audiodescriptie. Andere oplossingen zijn ook mogelijk.
 
-### Het 1.2.3-advies blijft ongewijzigd, ook als de zin over 1.2.5 onjuist lijkt
+### De zin over 1.2.5 in de QuickFinding-adviezen botst sinds 2026-10-11 met de regels
 
+Onder 1.2.3 (niveau A) is een transcript een geldig alternatief. Onder 1.2.5 (niveau AA) niet:
+daar is audiodescriptie nodig, en is er te weinig ruimte in de pauzes, dan uitgebreide
+audiodescriptie (G8). W3C kent voor 1.2.5 geen terugval op een transcript (Understanding
+1.2.5: "under Success Criterion 1.2.5 authors must provide an audio description"). De enige
+uitzondering is één pratend persoon met een statische tekst (G203). Besluit Frits 2026-10-11:
+volg W3C. Zie de ruimte-tabel in `Shift2_Regels_SC_1_2_5.md`.
+
+Tot die datum hield Shift2 bewust een andere lezing aan: audiodescriptie onder 1.2.5 alleen
+waar ruimte is, en op momenten zonder ruimte mocht de visuele informatie in het transcript.
 De zin "Voor succescriterium 1.2.5 is een transcript echter niet meer toegestaan als er
-voldoende ruimte is voor audiodescriptie" ziet er vanuit de W3C-tekst uit als een fout:
-1.2.5 kent geen transcript-uitzondering. Toch is dit een vaste Shift2-formulering en hij
-blijft staan. Inhoudelijk klopt hij zoals Shift2 het leest: onder 1.2.3 (niveau A) is een
-transcript een geldig alternatief; onder 1.2.5 (niveau AA) eist Shift2 audiodescriptie zodra
-er ruimte voor is in de natuurlijke pauzes, en alleen op de momenten waar er géén ruimte is,
-mag de visuele informatie voor dát moment in het transcript. Zie de ruimte-tabel in
-`Shift2_Regels_SC_1_2_5.md`.
+voldoende ruimte is voor audiodescriptie" (de8bf36c) en de zin "Is er in het audiospoor écht
+geen ruimte? Neem de visuele informatie dan als alternatief op in een teksttranscript"
+(ed3a4d2a, en ook in 50baed61 voor 1.2.5) volgen die oude lezing.
 
-Aanleiding: op 2026-05-26 markeerde Claude de zin als feitelijk onjuist, stelde voor hem te
-vervangen door "een transcript is nooit voldoende voor 1.2.5", en werkte vervolgens B008,
-B015 én de QuickFinding bij. Frits draaide alle drie de wijzigingen terug.
+Wat dat nu betekent:
+
+- Voor de 1.2.3-bevinding zelf klopt het advies van ed3a4d2a nog: een transcript voldoet
+  onder 1.2.3. Neem hem letterlijk over, zoals hieronder staat.
+- De bibliotheektekst pas je niet zelf aan, en je herformuleert hem niet in een bevinding.
+  Dat blijft de beslissing van Frits. Meld wel bij elke video-afkeuring aan de onderzoeker dat
+  de transcript-terugval in het advies botst met het besluit van 2026-10-11, zodat hij kan
+  kiezen.
+- Bestaande bevindingen (zoals B008 en B015) houden hun tekst.
+
+Aanleiding van de oude regel: op 2026-05-26 markeerde Claude de zin als feitelijk onjuist,
+stelde voor hem te vervangen door "een transcript is nooit voldoende voor 1.2.5", en werkte
+vervolgens B008, B015 én de QuickFinding bij. Frits draaide alle drie de wijzigingen terug.
+Het eigenhandig aanpassen van vaste teksten blijft verboden; de inhoudelijke lezing is op
+2026-10-11 wel losgelaten.
 
 Algemener: een advies dat rechtstreeks uit een QuickFinding komt, is standaardtekst. Ga er
 niet vanuit de eigen W3C-leeswijze kritisch op in en stel geen wijziging voor. Wil de
@@ -210,13 +260,18 @@ Wie blind of slechtziend is, mist wat er alleen te zien is. Een naambalkje onder
 spreker, een titelkaart, een kaart die wordt aangewezen, een handeling die wordt
 voorgedaan zonder dat iemand zegt wat er gebeurt.
 
-Er zijn **drie** manieren waarop dat toch aankomt, en de eerste twee stel je zelf vast: een
-apart audiospoor met audiodescriptie, een transcript op de pagina, of -- veruit het meest
-voorkomend -- de spreker die het gewoon zelf zegt. "Ik ben Suzanne Klaassen, wethouder in
-Beverwijk" maakt het naambalkje hoorbaar, en dan is er geen bevinding.
+Er zijn **drie** manieren waarop dat toch aankomt, en de eerste twee stel je zelf vast:
+audiodescriptie, een tekstalternatief bij de video, of -- veruit het meest voorkomend -- de
+spreker die het gewoon zelf zegt. "Ik ben Suzanne Klaassen, wethouder in Beverwijk" maakt het
+naambalkje hoorbaar, en dan is er geen bevinding.
 
-Uit "geen audiodescriptie-knop" volgt dus niet dat de tekst onhoorbaar is. Dat bewijst
-alleen dat de eerste route dicht is.
+Audiodescriptie kan een tweede spoor zijn, een gelinkte aparte versie (G173), of beschrijving
+die in het enige geluidsspoor is ingesproken (G226). Een tekstalternatief is een volledig
+transcript, of bij één pratend persoon een korte tekst met naam, functie en setting (G203).
+Besluit Frits 2026-10-11: volg W3C.
+
+Uit "één audiospoor" volgt dus niet dat er geen audiodescriptie is, en ook niet dat de tekst
+onhoorbaar is.
 
 ### Audit-instructies
 
@@ -242,10 +297,14 @@ alleen dat de eerste route dicht is.
 
 #### Stap 3 -- De drie routes aflopen
 
-5. [agent] **Audiodescriptie.** Lees de audiosporen met `get-videosporen`. Eén spoor betekent
-   geen audiodescriptie.
-6. [agent] **Transcript.** Staat er een uitgeschreven tekst op de pagina of een transcript-knop
-   bij de speler? Dan is er een geldig alternatief en vervalt de bevinding.
+5. [agent] **Audiodescriptie.** Lees de audiosporen met `get-videosporen`. Een tweede spoor
+   met audiodescriptie voldoet (G78). Eén spoor sluit audiodescriptie niet uit: kijk of er bij
+   de video een link staat naar een versie met audiodescriptie (G173), en of de vertelstem
+   beschrijft wat er in beeld staat (G226). Besluit Frits 2026-10-11: volg W3C.
+6. [agent] **Tekstalternatief.** Staat er een uitgeschreven tekst op de pagina of een
+   transcript-knop bij de speler? Dan is er een geldig alternatief en vervalt de bevinding. Is
+   het een video met één pratend persoon voor een vaste achtergrond, dan volstaat ook een korte
+   tekst bij de video met naam, functie en setting (G203).
 7. [agent] **De spreker zelf.** Heeft de video ondertiteling, lees die dan op de tijdstippen
    waar iets in beeld staat. Zegt de ondertiteling op dat moment iets anders, dan wordt het niet
    uitgesproken: afkeuring, zonder vraag. Komt de tekst terug in de ondertiteling, dan is hij
@@ -283,8 +342,10 @@ alleen dat de eerste route dicht is.
 ### Zo is het vastgesteld
 
 `get-videosporen` leest de audio- en ondertitelsporen per video en legt drie beeldjes vast,
-verspreid over de duur. Dat is het middel voor route 1 en voor het lezen van open
-ondertiteling bij route 3.
+verspreid over de duur. Dat is het middel voor de eerste vorm van route 1 (een tweede spoor)
+en voor het lezen van open ondertiteling bij route 3. Een gelinkte versie met audiodescriptie
+(G173) of beschrijving die in het enige spoor is ingesproken (G226) ziet het commando niet: die
+zoek je op de pagina en hoor je in de video.
 
 Wat het niet doet: het beoordeelt niet wat er in beeld gebeurt. Handelingen, aanwijzingen en
 apparaten moet je zelf op de beeldjes zien. En drie beeldjes over een video van vijf minuten

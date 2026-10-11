@@ -33,18 +33,46 @@ hij zegt wat er fout is.
   en zonder melding bij het veld.
 - **Een melding die niet zegt wat er fout is**: "Fout", "Ongeldige invoer", "Dit is een
   vereiste vraag" bij een veld waar niet te zien is welke vraag dat is.
-- **Een instructie in plaats van een foutmelding**: "Vul een geldige plaats in" zegt niet dát
-  er iets fout ging. De melding hoort te beschrijven wat er misging: "U heeft geen geldige
-  plaats ingevuld".
-- **Fouten één voor één tonen** terwijl er meer zijn: na elke correctie verschijnt de
-  volgende. De bezoeker weet dan niet hoeveel er nog komen.
-- **Ingevulde gegevens verdwijnen** na de foutmelding, zodat alles opnieuw moet.
 
 Impact **serieus**, verantwoordelijkheid **ontwikkelaar**: foutmeldingen zitten in het
 formulieronderdeel van het sjabloon. Maakt de redacteur het formulier zelf in een
-formulierenbouwer en kan hij de meldingsteksten aanpassen, dan **redacteur**. Zit het in de
-formulierengenerator van de leverancier zonder redactionele ingang, dan is het een
-technisch issue en geen bevinding; zie `Shift2_Regels_SC_4_1_2.md`.
+formulierenbouwer en kan hij de meldingsteksten aanpassen, dan **redacteur**.
+
+**Templatecode van de leverancier is ook een bevinding.** Zit de fout in de
+formulierengenerator van de leverancier, zonder redactionele ingang, dan maak je een
+bevinding met verantwoordelijke **ontwikkelaar** én een technisch issue voor de leverancier.
+Zo gaat het al bij het SIMsite-galerijpatroon onder 1.1.1. Het succescriterium kent geen
+uitzondering voor wie de code heeft gemaakt; WCAG 2.2 kent alleen een verklaring van
+gedeeltelijke conformiteit voor inhoud van derden die later wordt toegevoegd en buiten de
+macht van de auteur valt (WCAG 2.2, 5.4). Een sjabloon dat de organisatie zelf heeft gekozen
+valt daar niet onder. Hoe je het technische issue aanmaakt staat in
+`Shift2_Regels_SC_4_1_2.md`.
+
+> Gewijzigd op 2026-10-11. Besluit Frits 2026-10-11: volg W3C. Tot dan werd templatecode
+> alleen een technisch issue zonder bevinding, en kwam 3.3.1 op voldoet terwijl de fout er
+> stond.
+
+## Wat W3C uitdrukkelijk toelaat
+
+Besluit Frits 2026-10-11: volg W3C. Deze twee punten waren tot die datum een afkeuring.
+
+- **Een melding in instructievorm voldoet.** Verschijnt na het versturen bij het veld "Vul
+  een geldige plaats in", dan weet de bezoeker welk veld het is en wat er moet. Dat is genoeg.
+  Understanding 3.3.1 (Intent) noemt "Please provide a valid email address in the format
+  name@domain.com" als melding die aan 3.3.1 én 3.3.3 voldoet. Een melding die alleen
+  "Ongeldige invoer" zegt, blijft een afkeuring: die zegt niet wat er mis is.
+- **Fouten één voor één tonen is geen afkeuring.** Understanding 3.3.1 schrijft geen manier
+  van tonen voor: "This criterion does not mandate any particular way in which errors should
+  be displayed." Elke melding die verschijnt, moet wel aan de eisen hierboven voldoen. Alle
+  fouten tegelijk tonen mag je als advies meegeven, in een opmerking.
+
+## Ingevulde gegevens die verdwijnen: 3.3.7, niet 3.3.1
+
+Verdwijnen de ingevulde gegevens na de foutmelding, dan rapporteer je dat onder **3.3.7**
+(Overbodige invoer), niet hier. Understanding 3.3.7 geeft precies dit als voorbeeld 3: een
+afrekenformulier met een fout creditcardnummer toont een foutmelding, en wat er was
+ingevuld wordt niet gewist. Zie `Shift2_Regels_SC_3_3_7.md`. Besluit Frits 2026-10-11: volg
+W3C.
 
 ## Wat GEEN bevinding is
 
@@ -54,6 +82,24 @@ technisch issue en geen bevinding; zie `Shift2_Regels_SC_4_1_2.md`.
 - **Een melding die pas na het verlaten van het veld verschijnt**, of juist meteen tijdens
   het typen. Het moment is geen eis, de tekst wel.
 - **Een foutoverzicht bovenaan zonder links naar de velden.** Dat is een best practice.
+- **Een melding in instructievorm** bij het veld, zoals "Vul een geldige plaats in". Zie
+  hierboven.
+- **Fouten die één voor één verschijnen.** Zie hierboven; hooguit een opmerking als advies.
+
+## Technieken (W3C)
+
+- Voldoende, situatie A (verplicht veld niet ingevuld): G83 (tekst die zegt welk verplicht
+  veld niet is ingevuld), ARIA21 (`aria-invalid` op het foute veld), SCR18 (controle in de
+  browser met een melding), PDF5 (verplichte velden in een PDF-formulier).
+- Voldoende, situatie B (formaat of waarde vereist): ARIA18 (`aria-alertdialog`), ARIA19
+  (`role="alert"` of een live region), ARIA21, G84 (tekst bij een waarde buiten de lijst),
+  G85 (tekst bij invoer buiten het formaat), SCR18, SCR32 (melding via de DOM toevoegen),
+  PDF22 (hetzelfde in een PDF-formulier).
+- Aanvullend: G139 (een manier om naar de fouten te springen), G199 (melding dat het
+  versturen gelukt is), ARIA2 (`aria-required`).
+- Fout: Understanding 3.3.1 noemt er geen.
+
+Bron: Understanding 3.3.1, "Techniques".
 
 ## Op de kaart
 
@@ -70,7 +116,9 @@ Een opgemerkte invoerfout wordt aangewezen en in tekst beschreven
 
 Merkt het formulier een fout op, dan moet de bezoeker twee dingen te weten komen: welk
 veld het is en wat er mis is. Allebei in tekst. Een rode rand alleen zegt niets aan wie
-kleuren niet ziet, en niets aan wie een schermlezer gebruikt.
+kleuren niet ziet, en niets aan wie een schermlezer gebruikt. Een melding als "Vul een
+geldige plaats in" bij het veld voldoet, en fouten mogen één voor één verschijnen (W3C).
+Gegevens die na de fout verdwijnen horen bij 3.3.7.
 
 Zonder formulier, of met een formulier dat niets controleert, is dit criterium niet
 aanwezig. Of de melding ook in de code aan het veld hangt, is 1.3.1; hier gaat het om wat
@@ -94,10 +142,12 @@ er staat.
 
 #### Stap 2 — Beoordelen
 
-4. [agent] Per melding: staat hij bij het veld of noemt hij de veldnaam? Zegt hij wat er fout
-   is, en niet alleen wat er had gemoeten?
+4. [agent] Per melding: staat hij bij het veld of noemt hij de veldnaam? Zegt hij wat er mis
+   is of wat er moet? Een instructie als "Vul een geldige plaats in" voldoet; "Ongeldige
+   invoer" niet.
 5. [agent] Is er iets dat alleen met kleur of een pictogram wordt aangegeven?
-6. [agent] Staan de ingevulde gegevens er nog na de foutmelding?
+6. [agent] Staan de ingevulde gegevens er nog na de foutmelding? Zo niet, dan is dat een
+   bevinding onder 3.3.7, niet onder 3.3.1.
 7. [jij] Een formulier achter DigiD of achter een stap die niet zonder echte gegevens te
    nemen is: doorloop het zelf in de auditsessie.
 
@@ -128,6 +178,13 @@ ook wordt aangekondigd. Dat laatste hoort bij 4.1.3.
 3. Foutoverzicht en meldingen tijdens het typen: in tekst, niet alleen kleur of een pictogram, en niet één fout per keer
 4. Ingevulde gegevens blijven staan na de foutmelding
 
+> Sinds 2026-10-11 (besluit Frits: volg W3C) lees je deze gebieden zo. Gebied 2: een
+> melding in instructievorm ("Vul een geldige plaats in") is `ok`; alleen een melding die
+> niet zegt wat er mis is of wat er moet, is `fout`. Gebied 3: fouten die één voor één
+> verschijnen zijn geen `fout`, hooguit een `opmerking` met advies. Gebied 4: hier komt nooit
+> `fout`. Verdwijnen de gegevens, schrijf dat dan bij 3.3.7 en zet dit gebied op `nvt` met
+> die verwijzing. De namen van de gebieden zijn bewust ongewijzigd gelaten.
+>
 > Aangemaakt op 2026-09-13 bij ZOET-01, samen met de regelbestanden van 2.3.1, 2.4.2,
 > 3.1.1, 3.1.2, 3.3.3 en 3.3.7. De regels komen uit de checklist, de scheiding met 1.3.1
 > uit `Shift2_Regels_SC_3_3_2.md`, en "Dit is een vereiste vraag" en fouten één voor één uit

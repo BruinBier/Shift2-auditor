@@ -123,8 +123,45 @@ velden met een vaste breedte, knoppen naast elkaar, en een voortgangsbalk met st
 - NOOIT concluderen uit CSS alleen of uit een schermafdruk op volle breedte. Een CMS kan
   responsive ogen en toch op 320px breken.
 - "Waarschijnlijk OK" of "lijkt responsive" is geen geldige onderbouwing.
-- Bij PDF-samples is 1.4.10 niet van toepassing.
-- Bij PDF-samples is 1.4.10 niet van toepassing.
+- Bij een PDF kan 1.4.10 wel van toepassing zijn. Zie "PDF: reflow kan, maar de meetwijze
+  ligt nog niet vast" hieronder.
+
+## PDF: reflow kan, maar de meetwijze ligt nog niet vast
+
+Tot 2026-10-11 stond hier dat 1.4.10 bij een PDF niet van toepassing is. Dat klopt niet met
+W3C. Understanding 1.4.10 geeft als voorbeeld een PDF die volgens PDF/UA (ISO 14289) is
+gemaakt: die kan herschikt en vergroot worden, zodat iemand met een visuele beperking hem kan
+lezen. Bij de voldoende technieken staat "Using PDF/UA when creating PDFs", nog zonder
+nummer. Besluit Frits 2026-10-11: volg W3C.
+
+Wat dat betekent:
+
+- Een getagde PDF kan herschikken in een lezer die dat ondersteunt, zoals de leesmodus
+  "Opnieuw plaatsen" (Reflow) van Acrobat Reader. De tagstructuur bepaalt dan de volgorde en
+  de opbouw van de herschikte tekst.
+- Een PDF zonder tagstructuur kan niet goed herschikken. Er is dan geen structuur waarop een
+  lezer de tekst opnieuw kan opbouwen.
+
+Houd het oordeel voorzichtig. De meetwijze voor PDF ligt nog niet vast: er is geen commando
+dat reflow in een PDF meet, en welke lezer en welke instelling de toets is, is nog niet
+besloten. Zet bij een PDF dus geen automatische afkeuring neer, ook niet bij een ongetagde
+PDF. Zet 1.4.10 bij een PDF op `niet_te_bepalen` en schrijf erbij wat je wel weet: of het
+document een tagstructuur heeft (uit `get-pdfstructuur`), en dat de meetwijze voor reflow in
+een PDF nog niet vastligt. Zet het niet op `niet_aanwezig`.
+
+## Technieken (W3C)
+
+- Voldoende: C32 (mediaqueries en CSS-grid om kolommen te herschikken), C31 (CSS Flexbox),
+  C33 (reflow bij lange adressen en woorden), C38 (CSS-breedte en flexbox voor labels en
+  velden), SCR34 (grootte en positie die meeschalen met de tekstgrootte), G206 (een keuze
+  voor een opmaak zonder horizontaal schuiven), G224 (betekenisvolle inspringing bij reflow),
+  G225 (horizontaal schuivende panelen die binnen 320 CSS-pixels passen), en zonder nummer
+  "Using PDF/UA when creating PDFs".
+- Aanvullend: C34 (vaste kop- en voetbalken losmaken met mediaqueries), C37 (CSS max-width en
+  height voor afbeeldingen).
+- Fout: F102 (inhoud verdwijnt en is niet meer beschikbaar na herschikken).
+
+Bron: Understanding 1.4.10, "Techniques".
 
 ## Op de kaart
 
@@ -145,8 +182,9 @@ niet meer opengaat is verlies van functionaliteit. Een brede tabel in een vak da
 schuift is toegestaan.
 
 Dit is een meting, geen inschatting. "Lijkt responsive" is geen onderbouwing, en de meting
-moet echt op 320 staan, niet op 305 door een schuifbalk. Bij een PDF is dit criterium niet
-van toepassing.
+moet echt op 320 staan, niet op 305 door een schuifbalk. Bij een PDF kan dit criterium wel
+van toepassing zijn: een getagde PDF kan herschikken in een lezer die dat ondersteunt (W3C).
+De meetwijze daarvoor ligt nog niet vast, dus geen automatische afkeuring.
 
 ### Audit-instructies
 
@@ -171,14 +209,17 @@ van toepassing.
    vak is toegestaan, inhoud in een dichtgeklapt blok staat niet in beeld. Geen afkeuring.
 6. [jij] Een formulierstap achter een sessie: `get-reflow` komt op stap 1 uit. Vul het
    formulier tot die stap in de auditsessie en zet dan het venster op 320.
+7. [agent] Bij een PDF: `get-reflow` meet geen PDF. Noteer of het document een tagstructuur
+   heeft en zet 1.4.10 op `niet_te_bepalen`, omdat de meetwijze voor reflow in een PDF nog
+   niet vastligt. Geen afkeuring, geen `niet_aanwezig`.
 
 #### Stap 3 — Vastleggen
 
-7. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
+8. [agent] Stuur de vijf deelgebieden hieronder mee met het oordeel, in hetzelfde
    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
    gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
-8. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
    verder niets. Al het inhoudelijke gaat naar de deelgebieden.
 

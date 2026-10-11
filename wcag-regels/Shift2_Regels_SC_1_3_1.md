@@ -50,13 +50,17 @@ gekeken" hebben betekend, precies de stilte die deze lijst moet wegnemen.
 
 ## Regels
 
-- KOP ZONDER INHOUD: loop de koppenlijst van de pagina na en kijk of er twee koppen van HETZELFDE niveau direct achter elkaar staan, zonder tekst ertussen. Dat is een AFKEURING (klein tot matig, redacteur), QuickFinding a3fe111f-e625-4891-99b2-8b7792be6a4e.
-  FORMULEER DIT ALS EEN LEGE SECTIE, NIET ALS EEN REGEL OVER KOPPEN. WCAG eist niet dat elke kop inhoud heeft: een `<h2>Tekst</h2>` is technisch correct, ook als er direct een andere h2 op volgt. Schrijf dus NOOIT "Een kop moet altijd inhoud hebben" — dat is een onjuiste WCAG-uitspraak. Beschrijf in plaats daarvan dat er geen content tussen de twee koppen staat, dat dit een lege sectie in de paginastructuur creëert, en dat wie via de koppen navigeert op een kop landt waar geen informatie onder staat.
-  Kijk of de eerste kop bedoeld is als groepstitel boven de onderwerpen die erna komen: adviseer dan die volgende koppen een niveau lager te maken. Zijn de koppen IDENTIEK, dan is er meestal een dubbele kop die weg kan; speculeer niet over de oorzaak ("fout in de invoer") maar benoem wat er staat. Bij een uitklapblok: de titel van het blok is al een kop, en een tweede kop met dezelfde tekst daarbinnen kan weg.
-  Voorbeelden: BEV-03 B023 (energietransitie), waar "Wat speelt er allemaal in de gemeente?" als h2 direct gevolgd werd door de h2 "Energietransitie (aardgasvrij Beverwijk)". UTHEU-01 B014 (Paspoort), waar de kop "Spoedaanvraag" twee keer achter elkaar stond in een uitklapblok.
+- KOP ZONDER INHOUD: loop de koppenlijst van de pagina na en kijk of er twee koppen van HETZELFDE niveau direct achter elkaar staan, zonder tekst ertussen. Dat is op zichzelf GEEN afkeuring. W3C kent hiervoor geen failure (Understanding 1.3.1, lijst met failures), en H42 schrijft geen kopniveau voor. Besluit Frits 2026-10-11: volg W3C.
+  AFKEURING (klein tot matig, redacteur) alleen als de visuele structuur niet in de code staat: de eerste kop ziet eruit als groepstitel boven de onderwerpen die erna komen, maar staat op hetzelfde niveau als die onderwerpen. Dan zegt de code iets anders dan het scherm. QuickFinding a3fe111f-e625-4891-99b2-8b7792be6a4e past alleen bij dat geval. Adviseer dan de volgende koppen een niveau lager te maken. Voorbeeld: BEV-03 B023 (energietransitie), waar "Wat speelt er allemaal in de gemeente?" als h2 direct gevolgd werd door de h2 "Energietransitie (aardgasvrij Beverwijk)".
+  In alle andere gevallen hooguit een OPMERKING (impact en responsibility leeg, advies eindigt met "Dit is een best practice."). Dat geldt ook voor twee IDENTIEKE koppen achter elkaar, of een kop in een uitklapblok die de titel van het blok herhaalt: dat is een dubbele kop die weg kan, maar geen structuur die in de code ontbreekt. Benoem wat er staat en speculeer niet over de oorzaak. Voorbeeld: UTHEU-01 B014 (Paspoort), "Spoedaanvraag" twee keer achter elkaar in een uitklapblok; volgens deze regel een opmerking.
+  FORMULEER HET ALS EEN LEGE SECTIE, NIET ALS EEN REGEL OVER KOPPEN. Schrijf NOOIT "Een kop moet altijd inhoud hebben": dat is een onjuiste WCAG-uitspraak. Beschrijf dat er geen inhoud tussen de twee koppen staat, en dat wie via de koppen navigeert op een kop landt waar niets onder staat.
+- OVERGESLAGEN KOPNIVEAU (bijvoorbeeld een h4 direct onder een h2): op zichzelf GEEN afkeuring. Netjes geneste koppen (G141) is bij 1.3.1 een aanvullende techniek (Advisory), geen eis, en H42 vraagt alleen dat het niveau past bij de inhoud. Besluit Frits 2026-10-11: volg W3C. AFKEURING alleen als het niveau de visuele structuur tegenspreekt: een kop die er op het scherm uitziet als onderdeel van de kop erboven, staat in de code op een hoger of gelijk niveau. Klopt de rangorde wel en ontbreekt er alleen een tussenniveau, dan hooguit een OPMERKING (impact en responsibility leeg, advies eindigt met "Dit is een best practice.").
 - KOPPEN: 1.3.1 gaat over het kopniveau, de nesting en of het wel een echt kop-element is. Of de KOPTEKST beschrijft waar het onderdeel over gaat, hoort onder 2.4.6. Kom je een kop tegen die zowel niet-beschrijvend is als verkeerd genest ("TIP!" als h3 onder een niet-passende h2), maak dan BEIDE bevindingen. Zie Shift2_Regels_SC_2_4_6.md.
 - TABELLEN ZIJN ALTIJD REDACTIE. Zowel een tabel zonder tabelkoppen als een tabel die voor vormgeving wordt gebruikt: responsibility is **redacteur**, niet ontwikkelaar. De redacteur maakt de tabel in het CMS en kan hem daar ook aanpassen. Vastgelegd door Frits op 2026-08-03 bij UTHEU-01 (B017 en B021).
-- TABEL VOOR VORMGEVING: staan er afbeeldingen of tekstblokken in een tabel zonder dat er gegevens in rijen en kolommen aan elkaar gerelateerd zijn, dan is dat een AFKEURING (matig, redacteur). Formuleer het concreet: "Een tabel is bedoeld om gegevens te tonen die in rijen en kolommen bij elkaar horen, zoals openingstijden of tarieven." Schrijf niet alleen "een tabel is niet voor vormgeving" — dat is te abstract. Er bestaat hiervoor alleen een PDF-QuickFinding (a61a6bfd-...), geen HTML-variant. Voorbeeld: UTHEU-01 B017 (zes foto's in een tabel).
+- TABEL VOOR VORMGEVING: staan er afbeeldingen of tekstblokken in een tabel zonder dat er gegevens in rijen en kolommen aan elkaar gerelateerd zijn, dan is dat een opmaaktabel. Een opmaaktabel is op zichzelf GEEN afkeuring. W3C F46: "Although WCAG 2 does not prohibit the use of layout tables". Besluit Frits 2026-10-11: volg W3C.
+  AFKEURING onder 1.3.1 (matig, redacteur) alleen als de opmaaktabel tabelsemantiek draagt: een `th`, een `caption`, een niet-leeg `summary`, of `headers`/`scope` (F46). Dan kondigt hulpsoftware een gegevenstabel met koppen aan die er niet is.
+  Leest de opmaaktabel in de volgorde van de code niet meer als een logisch geheel (cel voor cel, rij voor rij), dan is dat een afkeuring onder 1.3.2 en niet onder 1.3.1 (F49). Zie Shift2_Regels_SC_1_3_2.md.
+  In alle andere gevallen hooguit een OPMERKING (impact en responsibility leeg, advies eindigt met "Dit is een best practice."): opmaak hoort in de stijl en niet in een tabel. Formuleer het concreet: "Een tabel is bedoeld om gegevens te tonen die in rijen en kolommen bij elkaar horen, zoals openingstijden of tarieven." Schrijf niet alleen "een tabel is niet voor vormgeving": dat is te abstract. Er bestaat alleen een PDF-QuickFinding (a61a6bfd-...), geen HTML-variant. Voorbeeld: UTHEU-01 B017 (zes foto's in een tabel); onder deze regel alleen een afkeuring als die tabel `th`, `caption` of `summary` had.
 - TABELKOPPEN ONTBREKEN: is de bovenste rij visueel een koprij maar in de code gewone `td`-cellen, dan is dat een AFKEURING (klein, redacteur). QuickFindings fc7eeab0-... en e1dfc0a8-... (die twee overlappen). Voorbeeld: UTHEU-01 B021.
   RIJKOPPEN: eis die alleen als de eerste kolom de rij BENOEMT en de overige cellen eigenschappen daarvan zijn (bijvoorbeeld "Paspoort" met daarnaast kosten en geldigheidsduur). Is de eerste kolom een volgnummer of gewoon het eerste gegeven, dan zijn er geen rijkoppen nodig; dan zou hulpsoftware bij elke cel dat nummer voorlezen.
 - LEGE KOP: concludeer nooit "lege kop" op basis van een regex als <h2></h2>. Check de werkelijke inhoud, want de tekst kan in een geneste <span>, <a> of <i18n> staan. Extra alert bij koppen met id="main-content" of vergelijkbare skip-targets.
@@ -125,6 +129,21 @@ dat. Bij 1.4.1 ging het om de cirkeldiagrammen op pagina 8 van de Groenvisie, wa
 geen labels hebben en twee groentinten nauwelijks van elkaar verschillen.
 - Zelfde issue op meerdere paginas: NIET telkens een nieuwe bevinding. Bestaande bevinding uitbreiden met het extra sample-item.
 
+## Technieken (W3C)
+
+Bron: Understanding 1.3.1 en de quickref voor WCAG 2.2, nagekeken op 2026-10-11. Alleen een
+failure is grond voor een afkeuring; een aanvullende techniek (Advisory) is hooguit een
+opmerking.
+
+- **Voldoende, situatie A (de technologie heeft structuur):** ARIA11, H101, ARIA12, ARIA13,
+  ARIA16, ARIA17, ARIA20, G115 met H49, G117, G140, ARIA24, ARIA26, G138, H51, PDF6, PDF20,
+  H39, H63, H43, H44, H65, PDF10, PDF12, H71, H85, H48, H42, PDF9, PDF11, PDF17, PDF21, H97.
+- **Voldoende, situatie B (de technologie heeft geen structuur):** G117, T1, T2, T3.
+- **Aanvullend (Advisory):** C22, G162, ARIA1, ARIA2, G141 (koppen netjes genest).
+- **Failures:** F2, F33, F34, F42, F43, F46 (`th`, `caption` of `summary` in een opmaaktabel),
+  F48, F90, F91, F92, F111. Er is geen failure voor een kop zonder inhoud of een overgeslagen
+  kopniveau.
+
 ## Op de kaart
 
 > Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
@@ -159,20 +178,25 @@ om een zin die geen nadruk draagt.
 2. [agent] Noteer wat er visueel structuur aangeeft: koppen en hun niveaus, opsommingen,
    tabellen, alinea's, en tekst die dik of schuin staat.
 3. [agent] Kijk of er twee koppen van hetzelfde niveau direct op elkaar volgen zonder tekst
-   ertussen. Dat is een lege sectie: wie via de koppen navigeert, landt op niets.
+   ertussen. Ziet de eerste eruit als groepstitel boven de koppen erna, dan staat de
+   structuur niet in de code: afkeuring. Anders hooguit een opmerking (W3C heeft er geen
+   failure voor; besluit Frits 2026-10-11).
 4. [agent] Op de homepage hoort de footer erbij. Loop elke kolom af en elke rij links apart —
    ook de rij met verticale streepjes ertussen — en kijk hoe het adres zich verhoudt tot de
    contactopties.
 
 #### Stap 2 — In de code
 
-5. [agent] Leg de koppenlijst naast de niveaus die je zag: zijn het echte kop-elementen, klopt
-   het niveau, en is de nesting sluitend?
+5. [agent] Leg de koppenlijst naast de niveaus die je zag: zijn het echte kop-elementen, en
+   volgt de rangorde in de code de rangorde op het scherm? Een overgeslagen niveau bij een
+   kloppende rangorde is hooguit een opmerking (G141 is Advisory).
 6. [agent] Staat elke opsomming in `ul` of `ol`, heeft elke koprij `th`, en staat elke alinea
    in een `p` — of zijn het losse regels met `br`?
 7. [agent] Kijk ook de andere kant op: is er iets als lijst, tabel of kop gecodeerd dat het
-   niet is? Een `blockquote` om tekst in te springen, een tabel om beeld te plaatsen, een `ul`
-   om drie losse links. Beide richtingen zijn een afkeuring.
+   niet is? Een `blockquote` om tekst in te springen, een `ul` om drie losse links. Beide
+   richtingen zijn een afkeuring. Een tabel om beeld te plaatsen is een uitzondering: alleen
+   een afkeuring als hij `th`, `caption` of `summary` heeft (F46), anders hooguit een
+   opmerking.
 8. [agent] Lees `strong` en `em` in de hoofdinhoud: draagt die tekst werkelijk belang of
    nadruk, of staat hij er alleen vet of schuin? Alleen vormgeving is een afkeuring. `b` en
    `i` zijn juist wél toegestaan — keur die niet af. Sla pictogramlettertypen over: die zitten

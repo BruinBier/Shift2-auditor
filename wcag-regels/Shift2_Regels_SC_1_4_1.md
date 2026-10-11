@@ -42,6 +42,23 @@ Er is een QuickFinding voor de PDF-variant: "PDF - grafieken en diagrammen enkel
 kleur" (1576c63f), impact **klein**, responsibility **redacteur**. Gebruik die tekst en vul de
 paginanummers en grafieknamen in; ga niet zelf herformuleren.
 
+## Link zonder onderstreping: 3:1 tegen de tekst is genoeg
+
+Een link in lopende tekst die alleen door kleur afwijkt, voldoet als de linkkleur minstens
+3:1 haalt tegen de kleur van de omringende tekst (G183). Er is geen extra eis voor hover of
+focus. De techniekpagina G183 noemt hover en focus niet: procedure en verwachte uitkomst
+gaan alleen over de 3:1. Focus staat bij 1.4.1 alleen als aanvullende techniek C15
+(Advisory). Of de focus zichtbaar is, valt onder 2.4.7, en dat zit niet in het onderzoekstype.
+Een hover of focus die alleen van kleur verandert, is onder 1.4.1 dus geen afkeuring.
+Besluit Frits 2026-10-11: volg W3C.
+
+Let op: de quickref omschrijft G183 nog als 3:1 "and providing additional visual cues on
+hover". De techniekpagina zelf stelt die eis niet. We volgen de techniekpagina.
+
+Haalt de link geen 3:1 tegen de omringende tekst en is hij niet onderstreept of anders te
+herkennen, dan is het een afkeuring (F73). Vergeet niet dat elke link ook 4,5:1 tegen de
+achtergrond moet halen; dat is 1.4.3.
+
 ## Wat GEEN bevinding is
 
 - **Kleur als extra ondersteuning** naast tekst of vorm. Een rode knop met het woord
@@ -83,6 +100,20 @@ De twee werken verschillend: arcering maakt de segmenten onderling te onderschei
 nog steeds naar de legenda; percentages bij de segmenten maken die koppeling overbodig. Elk van
 beide lost het probleem op.
 
+## Technieken (W3C)
+
+Bron: Understanding 1.4.1, de techniekpagina's en de quickref voor WCAG 2.2, nagekeken op
+2026-10-11.
+
+- **Voldoende, situatie A (kleur van tekst, achtergrond of ander inhoud draagt informatie):**
+  G14 (informatie ook in tekst), G205 (tekstuele aanwijzing bij gekleurde veldlabels), G182
+  (extra visuele aanwijzing bij tekstkleur), G183 (3:1 tussen inlinelink en omringende tekst).
+- **Voldoende, situatie B (kleur in een afbeelding draagt informatie):** G111 (kleur plus
+  patroon), G14.
+- **Aanvullend (Advisory):** C15 (opmaak wijzigen bij focus).
+- **Failures:** F13 (tekstalternatief laat informatie uit kleur weg, ook 1.1.1), F73 (link
+  zonder kleurzien niet te herkennen), F81 (verplichte of foute velden alleen met kleur).
+
 ## Op de kaart
 
 > Dit blok staat in het scherm van "Waar sta ik". De kaart leest het rechtstreeks uit dit
@@ -115,11 +146,13 @@ kenmerk, en dan schrijf je dát op.
 1. [agent] Zoek elke link die in lopende tekst staat: in een alinea of lijstitem met gewone
    tekst eromheen. Lees uit de opgemaakte pagina of hij onderstreept is of een ander verschil
    heeft dan alleen de kleur. Alleen kleur is een afkeuring (F73), tenzij hij 3:1 tegen de
-   omringende tekst haalt én bij hover en focus iets anders krijgt dan een kleur (G183).
+   omringende tekst haalt (G183). Een extra eis voor hover of focus is er niet.
 2. [agent] Benoem apart de links buiten lopende tekst — menu, kaarten, footer, knoppen — en
    schrijf op waaraan ze daar herkenbaar zijn: de menubalk, de kaart, de lijst, de knopvorm.
-3. [agent] Lees van de niet-onderstreepte links de hover- en focustoestand uit. Een focus die
-   alleen van kleur verandert is niet genoeg; een rand of onderstreping wel.
+3. [agent] Lees van de niet-onderstreepte links de hover- en focustoestand uit en schrijf op
+   wat er verandert. Verandert alleen de kleur, dan is dat onder 1.4.1 geen afkeuring: G183
+   stelt geen eis aan hover of focus, en focus (C15) is alleen Advisory. Zichtbare focus is
+   2.4.7. Besluit Frits 2026-10-11: volg W3C.
 
 #### Stap 2 — De rest van de pagina
 
@@ -154,7 +187,8 @@ kenmerk, en dan schrijf je dát op.
 Er is nog geen eigen meetcommando voor 1.4.1. Wat er wel is: `get-html` voor de links en de
 tekst eromheen, de full-page opname van `get-screenshot` om te zien wat onderstreept is en
 wat in een kaart of menu staat, en een uitsnede per element met `--selector` en `--voor=1.4.1`.
-De hover- en focustoestand leest de agent uit in de auditsessie.
+De hover- en focustoestand leest de agent uit in de auditsessie; die is beschrijving en geen
+afkeurgrond.
 
 Met `get-screenshot <url> --zicht=grijs --voor=1.4.1` komt er een opname zonder kleur: de
 browser tekent de pagina zoals iemand met achromatopsie hem ziet. Dat is de proef die het
@@ -183,3 +217,8 @@ de onderzoeker na.
 > Gebied 7 is van 2026-09-13. De checks uit de RAMP-video over 1.4.1 lagen naast deze lijst;
 > "selected states" ontbrak. Een actief menu-item dat alleen een andere kleur heeft, is het
 > geval dat het vaakst misgaat, en geen van de zes gebieden vroeg ernaar.
+>
+> Gebied 3 houdt zijn naam, maar is sinds 2026-10-11 geen afkeurgrond meer: een hover of
+> focus die alleen van kleur verandert, voldoet onder 1.4.1. G183 stelt geen eis aan hover of
+> focus, en zichtbare focus is 2.4.7. Schrijf bij dit gebied wat er verandert, met `ok` of
+> `nvt`. Besluit Frits 2026-10-11: volg W3C.

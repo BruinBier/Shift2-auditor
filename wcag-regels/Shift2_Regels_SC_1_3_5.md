@@ -77,6 +77,17 @@ postcode had correct `postal-code`, dus het criterium voldoet.
 
 - Iets dat alleen in de HTML zit maar niet zichtbaar is op de pagina: check eerst de full-page screenshot voordat je rapporteert. HTML-only betekent niet automatisch zichtbaar voor de gebruiker.
 - Geen URL's in het advies. De QuickFinding `a3e675f7-...` eindigt met een link naar de W3C-vertaling; laat die weg in de bevinding zelf, conform `writing/FRITS-WRITING-GUIDE.md`.
+- WACHTWOORDVELD: hoort `autocomplete="current-password"` (inloggen) of `autocomplete="new-password"` (aanmaken of wijzigen) te hebben. Beide staan in de WCAG-lijst met invoerdoelen. `autocomplete="off"` op een wachtwoordveld is een AFKEURING: `off` vervangt de waarde, dus het doel is niet meer programmatisch te bepalen. Understanding 1.3.5: wie automatisch invullen wil tegenhouden, moet het doel van het veld toch programmatisch laten bepalen ("input purposes still need to be programmatically determinable"). Besluit Frits 2026-10-11: volg W3C.
+- `off` IS ALLEEN GOED bij een veld zonder doel uit de WCAG-lijst, zoals een eenmalige code (sms-code, verificatiecode). Zo'n veld valt sowieso buiten dit criterium. Bij een veld met een doel uit de lijst is `off` net zo fout als geen waarde.
+
+## Technieken (W3C)
+
+Bron: Understanding 1.3.5 en de quickref voor WCAG 2.2, nagekeken op 2026-10-11.
+
+- **Voldoende:** H98 (HTML-attribuut `autocomplete` met een geldige waarde die past bij het
+  label).
+- **Aanvullend (Advisory):** geen.
+- **Failures:** F107 (onjuiste `autocomplete`-waarde).
 
 ## Op de kaart
 
@@ -118,8 +129,9 @@ invult telt niet: de waarde moet in de code staan.
    staan niet in die lijst en tellen niet mee.
 3. [agent] Kijk per overgebleven veld of er een `autocomplete`-waarde staat en of die klopt
    met het gevraagde gegeven. Geen waarde, `on`, of een verkeerde of verzonnen waarde is een
-   afkeuring. `off` is alleen goed bij gevoelige gegevens zoals een wachtwoord of een
-   eenmalige code.
+   afkeuring. Een wachtwoordveld hoort `current-password` of `new-password` te hebben; `off`
+   is daar een afkeuring. `off` is alleen goed bij een veld zonder doel uit de lijst, zoals
+   een eenmalige code (W3C, Understanding 1.3.5; besluit Frits 2026-10-11).
 
 #### Stap 2 — Op het scherm
 
@@ -158,3 +170,8 @@ auditsessie zelf heeft geopend.
 > deelgebieden; hun kaarten in "Waar sta ik" misten daardoor het blok dat de andere
 > 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
 > hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.
+>
+> Gebied 4 houdt zijn naam, maar het wachtwoord hoort er sinds 2026-10-11 niet meer bij: een
+> wachtwoordveld krijgt `current-password` of `new-password`, en `off` is daar een afkeuring.
+> `off` is alleen goed bij een veld zonder doel uit de WCAG-lijst, zoals een eenmalige code.
+> Besluit Frits 2026-10-11: volg W3C.

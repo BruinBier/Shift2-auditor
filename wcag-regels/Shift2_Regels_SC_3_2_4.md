@@ -6,15 +6,21 @@
 
 ## Waar de norm zelf nog onduidelijk is
 
-Bij het W3C loopt issue **#5225** ("3.2.4 Consistent Identification: ambiguities in the
-Understanding document require clarification"). Het benoemt vijf onduidelijkheden die ook bij
-onze beoordelingen spelen:
+Bij het W3C liep issue **#5225** ("3.2.4 Consistent Identification: ambiguities in the
+Understanding document require clarification"). Het benoemde vijf onduidelijkheden. Twee
+daarvan beantwoordt de huidige Understanding-tekst (WCAG 2.2) zelf; die zijn hier bijgewerkt.
+De andere drie spelen nog bij onze beoordelingen:
 
-1. **Consistent versus identiek.** De Understanding-tekst zegt bij het ene voorbeeld dat labels
-   "consistent, niet identiek" hoeven te zijn, en rekent bij het andere voorbeeld synoniemen
-   als "zoeken" en "vinden" juist af. Waar de grens ligt, staat er niet.
-2. **Geldt het binnen één pagina?** Het criterium spreekt van een "set webpagina's". Of
-   herhaalde onderdelen bínnen één pagina eronder vallen, is niet uitgesproken.
+1. **Consistent versus identiek.** De Understanding-tekst zegt nu uitdrukkelijk dat consistent
+   niet identiek hoeft te zijn: een link "Pagina 4" mag op de volgende pagina "Vorige pagina"
+   heten, omdat de naam de context volgt. Synoniemen als "zoeken" en "vinden" voor dezelfde
+   functie blijven een afkeuring (F31). Waar precies de grens ligt, blijft een oordeel.
+2. **Geldt het binnen één pagina? Ja.** De Understanding-tekst zegt dat herhaalde onderdelen
+   op verschillende pagina's kunnen staan, meerdere keren op dezelfde pagina, of allebei.
+   Voorbeeld 3 is een zoekknop in de header én in de footer van één pagina, die allebei
+   "Zoeken" heten. Dezelfde functie twee keer op één pagina met een andere naam valt dus wel
+   onder 3.2.4. Dit was punt 2 van #5225; dat punt is achterhaald. Besluit Frits 2026-10-11:
+   volg W3C.
 3. **Zelfde functie of zelfde betekenis?** De definitie gaat over "hetzelfde resultaat bij
    gebruik", maar een voorbeeld behandelt een niet-interactief vinkje. Onduidelijk of statische
    beelden meetellen.
@@ -22,8 +28,8 @@ onze beoordelingen spelen:
    gebruikers met een cognitieve beperking op herkenbare iconen en patronen varen.
 5. **Wat is een "component"?** De term is niet gedefinieerd.
 
-Praktische lijn zolang dat zo is: beoordeel 3.2.4 **over de samples heen**, op onderdelen die
-op meerdere pagina's terugkomen en dezelfde functie hebben. Twijfel je of iets binnen dit
+Praktische lijn: beoordeel 3.2.4 **over de samples heen én binnen elke pagina**, op onderdelen
+die vaker dan één keer voorkomen en dezelfde functie hebben. Twijfel je of iets binnen dit
 criterium valt, meld het dan als open vraag in plaats van het stil te laten vallen.
 
 ## Zo meet je het
@@ -55,8 +61,12 @@ staat.
 Het commando scheidt twee dingen die er in de uitkomst hetzelfde uitzien:
 
 - **anders benoemd tussen pagina's** — dat is 3.2.4
-- **anders benoemd binnen één pagina** — dat valt er volgens de regel hierboven buiten, en
-  staat apart in de uitvoer
+- **anders benoemd binnen één pagina**: dat staat apart in de uitvoer
+  (`anders_benoemd_binnen_een_pagina`). Ook dat valt onder 3.2.4, als het om dezelfde functie
+  gaat: twee links in dezelfde footer die allebei naar WhatsApp gaan en anders heten, of een
+  zoekknop die in de header "Zoeken" heet en in de footer "Vind". Bron: W3C Understanding
+  3.2.4, Intent en voorbeeld 3. Besluit Frits 2026-10-11: volg W3C. Tot die datum sloten
+  deze regels dat uit; de uitvoer apart houden blijft nuttig, want de weging verschilt.
 
 Wat er niet in kan: of "Zoeken" en "Zoek" werkelijk van elkaar verschillen in de zin van dit
 criterium. Dat is punt 1 hierboven en blijft een oordeel. Het commando zet ze naast elkaar met
@@ -72,7 +82,10 @@ logo in de header.
 **Voor de webpagina's**: op het homepage-sample, net als de andere sitebrede onderdelen (zie
 `Shift2_Scope_Per_Sample.md`). Op de overige HTML-samples komt 3.2.4 op `niet_aanwezig` met
 als reden dat het sitebreed is beoordeeld. Een oordeel per pagina is daar geen
-onnauwkeurigheid maar een categoriefout: aan één pagina is consistentie niet te zien.
+onnauwkeurigheid maar een categoriefout: consistentie tussen pagina's is aan één pagina niet
+te zien. Een verschil binnen één pagina hoort ook bij dat sitebrede oordeel: `get-consistentie`
+meet het op elke pagina van de steekproef, en de bevinding koppel je aan de pagina's waar het
+staat.
 
 **Voor een PDF: een eigen oordeel per document.** Een PDF is geen pagina van de website maar
 een document op zichzelf, met zijn eigen interne consistentie. Of dezelfde koppeling in een
@@ -161,9 +174,27 @@ namen te zijn, en dat is precies de valse melding waar je niet op moet afkeuren.
   structuur. Dat het achterste deel geen tags heeft, is een 1.3.1-bevinding en verandert
   niets aan de vraag of er iets herhaald wordt. Vastgelegd door Frits op 2026-09-19 bij
   ZOET-01.
-- Bij webpagina's gaat 3.2.4 over dezelfde functie die op verschillende pagina's anders wordt
-  aangeduid (een zoekknop die op de ene pagina "Zoeken" heet en op de andere "Vind"). Beoordeel
-  dat over de samples heen, niet binnen één pagina.
+
+  Let op, nog niet besloten: de webregel "twee keer op één pagina telt mee" (2026-10-11) is
+  hier niet doorgetrokken. WCAG2ICT zegt bij 3.2.4, noot 2, dat consistente identificatie
+  binnen één document niet vereist is door dit criterium, wel goede praktijk. Een los
+  document is geen set. Of een getagde PDF met dezelfde functie onder twee namen toch kan
+  afkeuren, ligt bij Frits.
+- Bij webpagina's gaat 3.2.4 over dezelfde functie die anders wordt aangeduid: op
+  verschillende pagina's (een zoekknop die op de ene pagina "Zoeken" heet en op de andere
+  "Vind") of twee keer op dezelfde pagina (in de header "Zoeken", in de footer "Vind").
+  Beoordeel het over de samples heen én binnen elke pagina. Bron: W3C Understanding 3.2.4,
+  Intent en voorbeeld 3. Besluit Frits 2026-10-11: volg W3C.
+
+## Technieken (W3C)
+
+Bron: W3C Understanding 3.2.4 en de Quick Reference, opgehaald op 2026-10-11.
+
+- **Voldoende:** G197 (labels, namen en tekstalternatieven consistent gebruiken voor inhoud
+  met dezelfde functie), samen met de voldoende technieken van 1.1.1 en 4.1.2.
+- **Aanvullend:** geen genoemd.
+- **Fout:** F31 (twee verschillende labels voor dezelfde functie op verschillende pagina's
+  binnen een set).
 
 ## Op de kaart
 
@@ -189,9 +220,10 @@ op dezelfde manier worden benoemd.
 
 #### Stap 1 — In de auditsessie
 
-1. [meting] Loop de site door en zoek onderdelen die op meerdere pagina's voorkomen: knoppen,
-   iconen, links, terugkerende formuliervelden.
-2. [meting] Komen er geen onderdelen op meerdere pagina's voor, dan is deze toets niet van
+1. [meting] Loop de site door en zoek onderdelen die vaker dan één keer voorkomen, op
+   meerdere pagina's of twee keer op één pagina: knoppen, iconen, links, terugkerende
+   formuliervelden.
+2. [meting] Komt er geen enkel onderdeel vaker dan één keer voor, dan is deze toets niet van
    toepassing.
 3. [agent] Klik erop en stel vast of ze werkelijk dezelfde functie hebben. Doen ze iets anders,
    dan mogen de namen juist verschillen.
@@ -219,7 +251,8 @@ Per onderdeel worden drie dingen uitgelezen uit de DOM: de zichtbare tekst zoals
 die leest, de toegankelijke naam in de volgorde `aria-labelledby` → `aria-label` → de tekst in
 het element plus het `alt` van een afbeelding erin → `title`, en waaraan het beeld te herkennen
 is. Een onderdeel dat op meer dan de helft van de pagina's staat geldt als sjabloononderdeel;
-daar gaat dit criterium over.
+daar gaat dit criterium over. Dezelfde functie twee keer op één pagina onder een andere naam
+staat apart in de uitvoer en telt ook mee.
 
 Bewaard wordt: een overzichtsbestand met de matrix van onderdelen tegen pagina's, een uitsnede
 van elk onderdeel dat afwijkt, en een kopie van de afbeeldingen zoals ze op het meetmoment
@@ -341,7 +374,11 @@ Wat het bewust laat liggen:
 - sleutels die op één pagina meer dan één element aanwijzen. Twintig uitklapkoppen met
   dezelfde sjabloonklasse zijn niet één onderdeel met twintig namen. Daaronder valt ook het
   logo naast “Home” in het kruimelpad: twee onderdelen, dezelfde bestemming, en op vrijwel
-  elke site aanwezig.
+  elke site aanwezig. Let op: sinds 2026-10-11 telt dezelfde functie twee keer op één pagina
+  wel mee (zie boven). Wat het commando hier laat liggen, is dus niet vanzelf in orde. Twee
+  verschillende onderdelen met dezelfde bestemming, zoals logo en kruimelpad, blijven buiten
+  beschouwing. Twee exemplaren van hetzelfde onderdeel, zoals een zoekknop in header en
+  footer, weeg je wel.
 - onderdelen die op een handvol pagina’s staan; die gelden als redactioneel en staan apart
   onder "ter kennisgeving".
 - pagina’s die zijn omgeleid, en pagina’s van een eigen applicatie met een eigen sjabloon.
@@ -403,8 +440,8 @@ Voorbeelden van wat een afkeuring is:
 #### 2.4 Weeg
 
 Verschillen ze, dan is de vraag: **aanvaardbare variatie of een afkeuring volgens F31?**
-Consistent hoeft niet identiek te zijn; waar die grens ligt staat niet in de norm. Dat is punt
-1 van W3C-issue #5225 en blijft een oordeel van de onderzoeker.
+Consistent hoeft niet identiek te zijn, zegt de Understanding-tekst; een naam mag de context
+volgen. Waar precies de grens ligt, staat er niet. Dat blijft een oordeel van de onderzoeker.
 
 Weeg ze los van elkaar. Vier verschillen kunnen vier verschillende antwoorden verdienen: een
 sjabloon van een andere applicatie weegt anders dan dezelfde link die op drie pagina's drie
@@ -425,6 +462,7 @@ Dan:
 
 - geen afkeuringen, instructies afgelopen → klaar, en het criterium voldoet
 - wel afkeuringen → klaar, en het criterium voldoet niet
-- geen enkel onderdeel dat op meerdere pagina's voorkomt → niet van toepassing
+- geen enkel onderdeel dat vaker dan één keer voorkomt, op meerdere pagina's of op één
+  pagina → niet van toepassing
 - PDF zonder tags → `niet_te_bepalen`, nooit "voldoet"
 - PDF mét tags, niets herhaald → `niet_aanwezig`; dat is een afgerond oordeel

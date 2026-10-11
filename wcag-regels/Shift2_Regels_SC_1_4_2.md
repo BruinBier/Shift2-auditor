@@ -29,8 +29,7 @@ is geen handeling van de bezoeker. Begint er geluid na die beweging, dan is dat 
 ## Wat wél een afkeuring is
 
 - **Video of audio met `autoplay` en met geluid**, langer dan drie seconden, zonder pauze-,
-  stop- of volumeknop die vóór de content in de tabvolgorde staat. Een knop die pas ná de
-  hele pagina te bereiken is, helpt de schermlezergebruiker niet: die hoort ondertussen niets.
+  stop- of volumeknop. Is er geen enkel mechanisme, dan is het een afkeuring (F23, F93).
 - **Ingesloten kader dat uit zichzelf begint te spelen met geluid**: een YouTube- of
   Vimeo-speler met `autoplay=1` zonder `mute=1`, een sociale-mediawidget met video.
 - **Achtergrondmuziek of een geluidseffect uit een script**, zonder media-element in de code.
@@ -38,6 +37,29 @@ is geen handeling van de bezoeker. Begint er geluid na die beweging, dan is dat 
 
 Impact **serieus**, verantwoordelijkheid **ontwikkelaar**: het probleem raakt elke
 schermlezergebruiker op de hele pagina, niet alleen bij de speler.
+
+## Waar de knop staat: advies, geen afkeurgrond
+
+Het criterium eist dat er een mechanisme is om het geluid te pauzeren, te stoppen of het
+volume los te regelen. Waar dat mechanisme staat, eist het niet. "Near the beginning of the
+web page" komt uit de voldoende techniek G170, niet uit de tekst van het criterium. Een
+techniek is één manier om te voldoen, geen extra eis.
+
+Staat de knop pas ná de hele pagina in de tabvolgorde, dan voldoet 1.4.2 dus wel. Adviseer
+wel om de knop vooraan te zetten: wie een schermlezer gebruikt, hoort zijn hulpsoftware niet
+zolang het geluid speelt, en moet de knop dan op de tast vinden. Dat advies hoort in de
+toelichting bij het deelgebied, niet in een afkeuring.
+
+Bron: Understanding 1.4.2 (tekst van het criterium) en G170. Besluit Frits 2026-10-11: volg
+W3C. Dit vervangt de eerdere regel dat een knop achter de hele pagina een afkeuring was.
+
+## Technieken (W3C)
+
+- Voldoende: G60 (geluid stopt vanzelf binnen drie seconden), G170 (een knop vooraan op de
+  pagina die automatisch geluid uitzet), G171 (geluid alleen op verzoek van de bezoeker).
+- Aanvullend: geen.
+- Fout: F23 (geluid langer dan drie seconden zonder manier om het uit te zetten), F93 (een
+  HTML5-media-element met autoplay zonder manier om het te pauzeren of te stoppen).
 
 ## Wat GEEN bevinding is
 
@@ -62,9 +84,10 @@ Geluid dat uit zichzelf start, is te stoppen
 ### In het kort
 
 Begint er geluid zonder dat de bezoeker erom vroeg, en duurt dat langer dan drie
-seconden, dan moet er een pauze- of stopknop zijn, of een eigen volumeregelaar. Die
-bediening hoort vooraan op de pagina, want wie een schermlezer gebruikt hoort zijn eigen
-hulpsoftware niet meer zolang het geluid speelt.
+seconden, dan moet er een pauze- of stopknop zijn, of een eigen volumeregelaar. Waar die
+knop staat, eist het criterium niet. Vooraan op de pagina is een advies (W3C G170), geen
+afkeurgrond: wie een schermlezer gebruikt hoort zijn hulpsoftware niet zolang het geluid
+speelt.
 
 Start er niets uit zichzelf, dan is dit criterium niet aanwezig. Dat is geen "voldoet": er
 was niets om te bedienen. Een voorleesknop of een afspeelknop telt niet; die zet de
@@ -96,9 +119,9 @@ Sinds 2026-09-14 wordt dit niet meer per pagina uitgezocht. 1.4.2 staat in `ALTI
    leveren anders dezelfde zin op.
 5. [agent] Speelt er iets: is het gedempt? Een `muted`-video is geen geluid. Zo niet, duurt het
    langer dan drie seconden of herhaalt het zich?
-6. [agent] Langer dan drie seconden: zoek de pauze-, stop- of volumeknop, en kijk waar die in
-   de tabvolgorde staat. Een knop achter de hele pagina is geen bediening voor wie de pagina
-   met een schermlezer opent.
+6. [agent] Langer dan drie seconden: zoek de pauze-, stop- of volumeknop. Is er geen, dan is
+   het een afkeuring. Is er wel een, dan voldoet het, waar hij ook staat. Staat hij ver achter
+   in de tabvolgorde, adviseer dan in de toelichting om hem vooraan te zetten (G170).
 7. [jij] Geluid uit een kader van een ander domein waarvan de speler niet uit te lezen is:
    open de pagina in de auditsessie en luister. Dat is de enige manier om zeker te weten
    dat een speler die "speelt" ook geluid geeft.

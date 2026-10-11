@@ -11,8 +11,15 @@ en dat lees je uit de gerenderde pagina met `getBoundingClientRect()`. Dat is ge
 maar een meting, inclusief padding.
 
 Beoordeel 2.5.8 dus zelf; vul geen "voldoet" in zonder gemeten te hebben. De test draait via
-de Chrome achter "Audit-sessie starten" (debugpoort 9222). Zie `tmp/targetsize.mjs` voor het
-werkende voorbeeld.
+de Chrome achter "Audit-sessie starten" (debugpoort 9222). Er stond hier een verwijzing naar
+`tmp/targetsize.mjs` als werkend voorbeeld. Dat script bestond op 2026-10-11 nog, maar de map
+`tmp/` wordt opgeruimd. Reken er dus niet op dat het er nog is. Een meting die je wilt kunnen
+herhalen, hoort niet in tmp.
+
+**Breedte en hoogte zijn niet genoeg.** Er moet een massief vierkant van 24 bij 24 pixels
+in het doel passen, recht op de pagina. Een smal, schuin of hol doel kan een omsluitend vak
+van 24 bij 24 hebben en toch te klein zijn. Bron: W3C Understanding 2.5.8, Intent. Besluit
+Frits 2026-10-11: volg W3C.
 
 ### Werkwijze
 
@@ -24,14 +31,22 @@ werkende voorbeeld.
    kandidaat, nog geen afkeuring.
 3. **Toets de uitzonderingen** voordat je afkeurt:
    - **Inline** — de link staat middenin een lopende zin, of de grootte wordt bepaald door de
-     regelhoogte van omringende tekst. Dan geldt de eis niet.
-   - **Ruimte** — leg een cirkel van 24px diameter op het midden van het target; raakt die
-     geen ander target (of de cirkel van een ander klein target), dan voldoet het. Praktisch:
-     bereken de afstand tussen de middens; is die minstens 24px, dan is er genoeg ruimte.
+     regelhoogte van omringende tekst. Dan geldt de eis niet. Breekt een link over twee
+     regels af, meet hem dan alsof hij op één regel staat (W3C-definitie "minimum bounding
+     box").
+   - **Ruimte**: leg een cirkel van 24px doorsnede op het midden van het omsluitende vak van
+     elk te klein doel. Die cirkel mag geen ander doel snijden, en ook niet de cirkel van een
+     ander te klein doel. Twee te kleine doelen naast elkaar: de middens liggen minstens 24px
+     uit elkaar. Een te klein doel naast een doel dat groot genoeg is: het midden ligt
+     minstens 12px van de rand van dat grote doel. Bron: W3C, SC-tekst 2.5.8, uitzondering
+     Spacing. Besluit Frits 2026-10-11: volg W3C. De oude vuistregel "afstand tussen de
+     middens minstens 24px" gold ook naast een groot doel, en dat klopt niet.
    - **Gelijkwaardig** — dezelfde functie is elders op de pagina bereikbaar via een target dat
      wél groot genoeg is.
-   - **Bepaald door user agent** — de auteur heeft de grootte niet gewijzigd (bv. een kale
-     `<input type="checkbox">` zonder eigen CSS).
+   - **Bepaald door user agent**: de grootte komt van de browser en de auteur heeft er niets
+     aan veranderd (bv. een kale `<input type="checkbox">` zonder eigen CSS). Heeft de auteur
+     iets aan de maat of de opmaak veranderd, dan geldt de uitzondering niet. Bron: W3C
+     Understanding 2.5.8. Besluit Frits 2026-10-11: volg W3C.
    - **Essentieel** — de presentatie is essentieel of wettelijk vereist.
 4. Wat na die filters overblijft, is een **afkeuring** (impact klein tot matig,
    responsibility redacteur of ontwikkelaar).
@@ -56,8 +71,16 @@ issue op dat niemand meer terugvindt. Meld het liever als open vraag.
 Is er niets te klein gemeten, dan is dit oordeel niet nodig en kun je gewoon `voldoet`
 invullen.
 
-Bedekte of overlapte targets (dropdown over andere content, modal, cookiebalk) vallen buiten
-dit criterium; die hoef je niet te meten.
+### Bedekt, nieuw verschenen en overlappend
+
+Bron: W3C Understanding 2.5.8, Intent en definitie "target". Besluit Frits 2026-10-11: volg W3C.
+
+- **Bedekte doelen** vallen erbuiten zolang ze bedekt zijn door iets dat na een handeling van
+  de gebruiker verscheen: de links onder een uitgeklapt menu of onder een modal.
+- **De knoppen in die nieuwe laag tellen wel mee.** De knoppen in een modal, een uitklapmenu
+  of een cookiebalk zelf meet je gewoon.
+- **Overlappende doelen:** het stuk dat overlapt telt niet mee voor de maat. Doen beide
+  doelen hetzelfde of gaan ze naar dezelfde pagina, dan telt het wel mee.
 
 ### Noteer de gemeten waarden
 
@@ -78,7 +101,20 @@ onderbouwing ontbrak. Frits vroeg hoe dit getest wordt.
 - CSS-pixels veranderen niet bij zoom. Een te klein target wordt niet goed door in te zoomen.
 - Bij een deelonderzoek content: beperk je tot de main-content. Hoofdmenu, hoofdnavigatie en
   toegankelijkheidsbalk vallen buiten de scope.
-- Bij PDF-samples is 2.5.8 niet van toepassing.
+- Bij een PDF geldt 2.5.8 voor de bedienbare elementen erin: links en formuliervelden. Een
+  PDF zonder zulke elementen is `niet_aanwezig`. Bron: WCAG2ICT, 2.5.8 geldt rechtstreeks
+  voor documenten, met als aanwijzing: meet op de zoom waarop het document bedoeld is.
+  Besluit Frits 2026-10-11: volg W3C. De meetwijze voor een PDF is nog niet vastgelegd. Kun
+  je het niet meten, zet het dan op `niet_te_bepalen` met een concrete vraag.
+
+## Technieken (W3C)
+
+Bron: W3C Understanding 2.5.8 en de Quick Reference, opgehaald op 2026-10-11.
+
+- **Voldoende:** C42 (`min-height` en `min-width` op de container van het doel, zodat er
+  genoeg ruimte is).
+- **Aanvullend:** geen genoemd.
+- **Fout:** geen genoemd.
 
 ## Op de kaart
 
@@ -100,7 +136,8 @@ genoeg ruimte om zich heen, een gelijkwaardig alternatief of een standaardelemen
 browser is uitgezonderd.
 
 Meet het; vul geen "voldoet" in op het oog. En zet de gemeten maten in de bevinding, anders
-is hij aanvechtbaar. Bij een PDF is dit criterium niet van toepassing.
+is hij aanvechtbaar. Bij een PDF geldt het voor links en formuliervelden; zonder die
+elementen is het niet aanwezig.
 
 ### Audit-instructies
 
@@ -117,10 +154,12 @@ is hij aanvechtbaar. Bij een PDF is dit criterium niet van toepassing.
 
 #### Stap 2 — Beoordelen
 
-3. [agent] Per element onder 24 aan een van beide kanten: staat het in lopende tekst, of is
-   de afstand tot het midden van het dichtstbijzijnde andere element minstens 24 pixels? Dan
-   voldoet het.
-4. [agent] Is het een kaal browserelement zonder eigen opmaak? Dan uitgezonderd.
+3. [agent] Per element onder 24 aan een van beide kanten: staat het in lopende tekst? Dan
+   voldoet het. Anders: leg een cirkel van 24 pixels doorsnede op zijn midden. Snijdt die
+   geen ander doel en geen cirkel van een ander te klein doel, dan voldoet het. Naast een
+   groot doel betekent dat: minstens 12 pixels van het midden tot de rand van dat doel.
+4. [agent] Is het een kaal browserelement waaraan de auteur niets heeft veranderd? Dan
+   uitgezonderd.
 5. [jij] Gelijkwaardig of essentieel: doet een grotere knop elders hetzelfde, of is de
    vormgeving noodzakelijk? Dat is een weging; het element blijft als open vraag staan met
    zijn maten erbij.
@@ -143,7 +182,7 @@ bij zoom.
 
 Wat hier niet uit blijkt: of een te klein element een gelijkwaardig alternatief heeft en of
 de vormgeving essentieel is. Bedekte elementen, zoals onder een cookiebalk, vallen buiten
-het criterium.
+het criterium; de knoppen in de cookiebalk zelf niet.
 
 ### Deelgebieden
 

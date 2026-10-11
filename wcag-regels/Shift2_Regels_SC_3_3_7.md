@@ -17,9 +17,11 @@ twee dagen zijn twee processen.
 
 ## Geen meerstapsproces is `niet_aanwezig`
 
-De eis geldt pas als er in een proces iets voor de tweede keer wordt gevraagd. Een formulier
-van één pagina, of een proces waarin niets terugkomt, levert `niet_aanwezig` op. Schrijf bij
-de deelgebieden op welke stappen je hebt doorlopen.
+De eis geldt pas als er in een proces iets voor de tweede keer wordt gevraagd. Een proces
+waarin niets terugkomt levert `niet_aanwezig` op. Een formulier van één pagina valt er wél
+onder zodra het een fout kan opmerken: na een foutmelding wordt het formulier opnieuw
+getoond, en dan moet wat er was ingevuld blijven staan (Understanding 3.3.7, voorbeeld 3).
+Schrijf bij de deelgebieden op welke stappen je hebt doorlopen.
 
 ## De uitzonderingen
 
@@ -48,11 +50,37 @@ uit de vorige stap komt en niet uit de browser.
   opnieuw in plaats van ze te tonen.
 - **Het zoekveld op de resultatenpagina is leeg**, zodat de zoekterm opnieuw getypt moet
   worden om de zoekopdracht aan te passen.
-- **Na inloggen met DigiD worden bekende gegevens niet overgenomen** in het formulier.
+- **Ingevulde gegevens verdwijnen na een foutmelding**, zodat alles opnieuw moet. Understanding
+  3.3.7 geeft dit als voorbeeld 3: na een fout creditcardnummer verschijnt een foutmelding en
+  wordt wat er was ingevuld niet gewist. Tot 2026-10-11 stond dit onder 3.3.1. Besluit Frits
+  2026-10-11: volg W3C. Een wachtwoord of beveiligingscode die na de fout leeg is, valt onder
+  de beveiligingsuitzondering.
+- **Na inloggen met DigiD wordt iets opnieuw gevraagd dat eerder in hetzelfde proces al is
+  getoond of ingevuld.** Bijvoorbeeld: stap 1 toont de naam en het adres uit DigiD, en stap 3
+  vraagt ze opnieuw leeg.
+
+### Gegevens die de organisatie kent, maar niet heeft getoond
+
+Het criterium gaat over informatie "previously entered by or provided to the user" in
+hetzelfde proces (WCAG 2.2, tekst van 3.3.7). Gegevens die de organisatie wel kent, uit DigiD,
+de BRP of een eerder account, maar in dit proces niet aan de bezoeker heeft getoond, vallen
+er niet onder. Vraagt het formulier na inloggen met DigiD om een adres dat nergens in het
+proces is getoond, dan is dat geen afkeuring onder 3.3.7. Understanding 3.3.7 zegt ook: het
+criterium "does not add a requirement to store information between sessions". Overnemen
+mag je als advies meegeven, in een opmerking. Besluit Frits 2026-10-11: volg W3C.
 
 Impact **matig**, verantwoordelijkheid **ontwikkelaar**: dit zit in de formulierengenerator
-of de sessieafhandeling. Zit het in de generator van de leverancier zonder redactionele
-ingang, dan is het een technisch issue en geen bevinding; zie `Shift2_Regels_SC_4_1_2.md`.
+of de sessieafhandeling.
+
+**Templatecode van de leverancier is ook een bevinding.** Zit het in de generator van de
+leverancier, zonder redactionele ingang, dan maak je een bevinding met verantwoordelijke
+**ontwikkelaar** én een technisch issue voor de leverancier, zoals bij het
+SIMsite-galerijpatroon onder 1.1.1. Het succescriterium kent geen uitzondering voor wie de
+code heeft gemaakt (WCAG 2.2, 5.4 geldt alleen voor inhoud van derden die later wordt
+toegevoegd). Hoe je het technische issue aanmaakt staat in `Shift2_Regels_SC_4_1_2.md`.
+
+> Gewijzigd op 2026-10-11. Besluit Frits 2026-10-11: volg W3C. Tot dan werd templatecode
+> alleen een technisch issue zonder bevinding.
 
 ## Wat GEEN bevinding is
 
@@ -61,6 +89,18 @@ ingang, dan is het een technisch issue en geen bevinding; zie `Shift2_Regels_SC_
   precies wat het criterium wil.
 - **Twee verschillende formulieren die allebei om een naam vragen.** Dat is niet hetzelfde
   proces.
+- **Gegevens die de organisatie kent maar in dit proces niet heeft getoond**, zoals een adres
+  uit de BRP na inloggen met DigiD. Zie hierboven.
+
+## Technieken (W3C)
+
+- Voldoende: G221 (gegevens uit een eerdere stap van het proces aanbieden). Understanding
+  3.3.7 noemt daarnaast "niet twee keer om dezelfde informatie vragen" als mogelijke
+  toekomstige techniek.
+- Aanvullend: Understanding 3.3.7 noemt er geen.
+- Fout: Understanding 3.3.7 noemt er geen.
+
+Bron: Understanding 3.3.7, "Techniques".
 
 ## Op de kaart
 
@@ -77,7 +117,9 @@ Wat de bezoeker al invulde, hoeft niet opnieuw
 
 Vraagt een proces met meer stappen in stap 3 om de naam die in stap 1 al is ingevuld, dan
 moet die er al staan of te kiezen zijn. Opnieuw intypen is de last die dit criterium
-wegneemt. Ook een zoekterm hoort in het zoekveld te blijven staan op de resultatenpagina.
+wegneemt. Ook een zoekterm hoort in het zoekveld te blijven staan op de resultatenpagina,
+en wat er was ingevuld blijft staan na een foutmelding. Gegevens die de organisatie kent
+maar niet heeft getoond, tellen niet mee.
 
 Een wachtwoord ter bevestiging mag wel opnieuw. Wat de browser zelf invult telt niet mee:
 het moet van de site komen. Zonder proces waarin iets voor de tweede keer wordt gevraagd,
@@ -97,23 +139,26 @@ is dit criterium niet aanwezig.
    lees met `get-html` per stap uit welke velden gevuld zijn en waar de waarde vandaan komt.
    Bij een zoekfunctie: zoek op een woord en lees het zoekveld op de resultatenpagina.
 3. [agent] Ga vanuit een latere stap terug en lees of de velden er nog staan.
+4. [agent] Verstuur een stap met een fout (dezelfde handeling als bij 3.3.1) en lees of de
+   ingevulde velden er na de foutmelding nog staan.
 
 #### Stap 2 — Beoordelen
 
-4. [agent] Wordt er in een latere stap iets gevraagd dat eerder al is ingevuld? Staat het er
-   dan al, of is het te kiezen?
-5. [agent] Valt een herhaling onder een uitzondering: essentieel, beveiliging, verlopen? Een
+5. [agent] Wordt er in een latere stap iets gevraagd dat eerder al is ingevuld of getoond?
+   Staat het er dan al, of is het te kiezen?
+6. [agent] Valt een herhaling onder een uitzondering: essentieel, beveiliging, verlopen? Een
    bevestigingsveld voor een e-mailadres valt daar bij Shift2 niet onder.
-6. [jij] Een proces achter DigiD of achter een betaalstap: doorloop het zelf, en let op of de
-   bekende gegevens na het inloggen zijn overgenomen.
+7. [jij] Een proces achter DigiD of achter een betaalstap: doorloop het zelf, en let op of
+   gegevens die eerder in het proces zijn getoond of ingevuld later opnieuw worden gevraagd.
+   Wat de organisatie kent maar niet heeft getoond, telt niet.
 
 #### Stap 3 — Vastleggen
 
-7. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+8. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
    `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
    "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Kon je een
    gebied niet beoordelen, gebruik dan `nvt` met een toelichting.
-8. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
    verder niets. Al het inhoudelijke gaat naar de deelgebieden.
 
@@ -135,6 +180,10 @@ achter DigiD blijft werk voor de onderzoeker.
 3. Zoekfunctie: de zoekterm staat in het zoekveld op de resultatenpagina
 4. Uitzonderingen: wachtwoord ter bevestiging, beveiliging, verlopen gegevens; een bevestigingsveld voor e-mail hoort er niet bij
 
+> Sinds 2026-10-11 (besluit Frits: volg W3C): ingevulde gegevens die verdwijnen na een
+> foutmelding schrijf je bij gebied 1, ook in een formulier van één stap. De namen van de
+> gebieden zijn bewust ongewijzigd gelaten.
+>
 > Aangemaakt op 2026-09-13 bij ZOET-01, samen met de regelbestanden van 2.3.1, 2.4.2,
 > 3.1.1, 3.1.2, 3.3.1 en 3.3.3. De regels komen uit de checklist; het bevestigingsveld
 > voor e-mail komt uit de intakelijst van QuickFindings en is nog niet als regel door Frits

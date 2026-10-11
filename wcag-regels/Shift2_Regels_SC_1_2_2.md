@@ -20,16 +20,38 @@ API. Vind je geen gesloten spoor, dan moet je frames bekijken voordat je iets co
 > terwijl de video van begin tot eind ingebrande ondertiteling toont. Alleen op de API afgaan
 > had een onterechte afkeuring opgeleverd.
 
-Beide vormen voldoen aan 1.2.2. Er is dus geen afkeuring als je open ondertiteling vindt.
+Beide vormen voldoen aan 1.2.2. De vorm is dus nooit een afkeurgrond. De inhoud wel: zie
+hieronder.
+
+## Wat de ondertiteling moet bevatten
+
+Ondertiteling is meer dan de gesproken tekst. Volgens W3C bevat hij ook wie er spreekt en de
+geluiden die betekenis dragen. Bron: W3C Understanding 1.2.2, Intent ("identify who is speaking
+and include non-speech information conveyed through sound, including meaningful sound effects")
+en de definitie van captions (geluidseffecten, muziek, gelach, spreker en locatie). Besluit
+Frits 2026-10-11: volg W3C.
+
+Toets daarom, naast de dekking over de hele video:
+
+- **Dialoog.** Staat alle gesproken tekst erin, letterlijk of naar de kern? Inkorten voor de
+  leessnelheid mag. Ontbreekt er dialoog, dan is dat een afkeuring op F8.
+- **Betekenisvolle geluiden.** Een deurbel, een alarm, applaus, muziek die de stemming draagt.
+  Ontbreekt een geluid dat nodig is om de video te volgen, dan is dat een afkeuring op F8.
+- **Sprekers.** Is te volgen wie er spreekt? Spreekt iemand buiten beeld, is er een voice-over,
+  of wisselen sprekers zonder dat dat in beeld te zien is, dan moet de ondertiteling de spreker
+  noemen. Ontbreekt dat, dan is dat een afkeuring op de definitie van captions. F8 noemt
+  sprekers niet; noem in de bevinding dus de Intent van 1.2.2 als bron, niet F8.
 
 ## Beoordeling
 
 | Situatie | Status |
 |---|---|
-| Gesloten ondertiteling, handmatig gemaakt | `voldoet` |
-| Open ondertiteling, hele video | `voldoet` |
+| Gesloten ondertiteling, handmatig gemaakt, volledig | `voldoet` |
+| Open ondertiteling, hele video, volledig | `voldoet` |
 | Automatisch gegenereerde ondertiteling (`kind: 'asr'`) | `afgekeurd` |
 | Ondertiteling maar over een deel van de video | `afgekeurd` |
+| Ondertiteling laat dialoog of betekenisvolle geluiden weg | `afgekeurd` (F8) |
+| Ondertiteling noemt de spreker niet waar dat niet uit beeld blijkt | `afgekeurd` (definitie captions) |
 | Geen van beide | `afgekeurd` |
 | Video start niet, of frames niet vast te leggen | `niet_te_bepalen` + concrete vraag |
 
@@ -47,9 +69,21 @@ verantwoordelijkheid `redacteur`.
 
 ## Als je open ondertiteling vindt
 
-Zet 1.2.2 op `voldoet`, maar loop 1.2.3 en 1.2.5 gewoon door: ondertiteling dekt de gesproken
-tekst, niet de **visuele** informatie zoals naambalkjes en tekst in beeld. Dat zijn losse
+Zet 1.2.2 op `voldoet` als hij volledig is (dialoog, geluiden, sprekers; zie hierboven), maar
+loop 1.2.3 en 1.2.5 gewoon door: ondertiteling dekt het geluid, niet de **visuele** informatie zoals naambalkjes en tekst in beeld. Dat zijn losse
 criteria met losse bevindingen.
+
+## Technieken (W3C)
+
+| Soort | Techniek |
+|---|---|
+| Voldoende | G93 Open ondertiteling (altijd zichtbaar) |
+| Voldoende | G87 Gesloten ondertiteling, bijvoorbeeld met H95 (`track`-element), SM11/SM12 (SMIL) of een speler die gesloten ondertiteling ondersteunt |
+| Fout | F8 Ondertiteling laat dialoog of belangrijke geluidseffecten weg |
+| Fout | F74 Media-alternatief voor tekst niet als alternatief aangeduid |
+| Fout | F75 Video zonder ondertiteling die meer informatie geeft dan de tekst op de pagina |
+
+W3C noemt bij 1.2.2 geen aanvullende technieken.
 
 ## Op de kaart
 
@@ -74,6 +108,10 @@ dus geen conclusie maar een reden om te gaan kijken.
 
 Automatisch gegenereerde ondertiteling telt niet mee. Die bevat fouten en volgt de spreker
 niet betrouwbaar, en in de sporen is hij te herkennen aan `kind: "asr"`.
+
+Ondertiteling is ook meer dan de gesproken tekst. Hij noemt wie er spreekt als dat niet uit
+beeld blijkt, en beschrijft geluiden die betekenis dragen. Ontbreekt dialoog of een belangrijk
+geluid, dan is dat een afkeuring op F8 (W3C). Besluit Frits 2026-10-11: volg W3C.
 
 ### Audit-instructies
 
@@ -104,20 +142,26 @@ niet betrouwbaar, en in de sporen is hij te herkennen aan `kind: "asr"`.
 
 7. [jij] Dekt de ondertiteling de hele video, of stopt hij halverwege? Een deel is een
    afkeuring.
-8. [jij] Bij een afkeuring: check eerst de bibliotheek met `search-quick-findings ondertiteling`.
+8. [jij] Is de ondertiteling volledig? Staat alle dialoog erin, worden betekenisvolle geluiden
+   beschreven, en wordt de spreker genoemd als die niet in beeld te zien is? Ontbreekt dialoog
+   of een belangrijk geluid, dan is dat een afkeuring op F8. Ontbreekt de spreker, dan is dat
+   een afkeuring op de definitie van captions (Understanding 1.2.2, Intent). Schrijf het bij
+   gebied 4, met een tijdstip. Besluit Frits 2026-10-11: volg W3C.
+9. [jij] Bij een afkeuring: check eerst de bibliotheek met `search-quick-findings ondertiteling`.
    Impact `serieus`, verantwoordelijkheid `redacteur`. Noem de videotitel, niet het adres. Staat
    er automatische ondertiteling, schrijf dat dan expliciet — anders denkt de redacteur dat het
    geregeld is.
-9. [jij] Vond je open ondertiteling, dan voldoet 1.2.2. Loop 1.2.3 en 1.2.5 wél door:
-   ondertiteling dekt de gesproken tekst, niet wat er in beeld te zien is.
+10. [jij] Vond je open ondertiteling, dan voldoet de vorm. Toets de inhoud zoals in stap 8. Loop
+    1.2.3 en 1.2.5 wél door: ondertiteling dekt het geluid, niet wat er in beeld te zien is.
 
 #### Stap 4 — Wegschrijven
 
-10. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
+11. [agent] Stuur de vier deelgebieden hieronder mee met het oordeel, in hetzelfde
     `save-checks`-bericht: `"gebieden": [{ "gebied": "...", "uitkomst": "ok|nvt|fout|opmerking",
     "toelichting": "..." }]`. Zonder een complete lijst wordt het oordeel geweigerd. Staat er
-    geen video op de pagina, gebruik dan `nvt` met de zin waaróp je hebt gezocht.
-11. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
+    geen video op de pagina, gebruik dan `nvt` met de zin waaróp je hebt gezocht. Of de
+    ondertiteling dialoog, geluiden en sprekers bevat, schrijf je bij gebied 4.
+12. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
     kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
     verder niets. Al het inhoudelijke gaat naar de deelgebieden.
 
@@ -148,3 +192,5 @@ ingebrande ondertiteling in beeld staat. Wie op de API afgaat keurt die video te
 
 Wat hier niet uit blijkt: of de ondertiteling inhoudelijk deugt. Dat de sporen er zijn zegt
 niets over de kwaliteit van de vertaling, en dat is met geen enkel commando vast te stellen.
+Of er dialoog ontbreekt, of geluiden beschreven worden en of sprekers genoemd worden (F8 en
+de definitie van captions), stel je vast door de video met ondertiteling te bekijken.

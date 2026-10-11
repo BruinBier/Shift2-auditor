@@ -33,8 +33,18 @@ elkaar raken: beoordeel ze samen, maar rapporteer maar één keer.
 
 Impact **matig**, verantwoordelijkheid **ontwikkelaar**: de suggesties zitten in het
 formulieronderdeel. Kan de redacteur de meldingsteksten zelf aanpassen in een
-formulierenbouwer, dan **redacteur**. Templatecode zonder redactionele ingang is een technisch
-issue, geen bevinding; zie `Shift2_Regels_SC_4_1_2.md`.
+formulierenbouwer, dan **redacteur**.
+
+**Templatecode van de leverancier is ook een bevinding.** Zit de fout in de
+formulierengenerator van de leverancier, zonder redactionele ingang, dan maak je een
+bevinding met verantwoordelijke **ontwikkelaar** én een technisch issue voor de leverancier,
+zoals bij het SIMsite-galerijpatroon onder 1.1.1. Het succescriterium kent geen uitzondering
+voor wie de code heeft gemaakt (WCAG 2.2, 5.4 geldt alleen voor inhoud van derden die later
+wordt toegevoegd). Hoe je het technische issue aanmaakt staat in
+`Shift2_Regels_SC_4_1_2.md`.
+
+> Gewijzigd op 2026-10-11. Besluit Frits 2026-10-11: volg W3C. Tot dan werd templatecode
+> alleen een technisch issue zonder bevinding.
 
 ## Wat GEEN bevinding is
 
@@ -42,8 +52,22 @@ issue, geen bevinding; zie `Shift2_Regels_SC_4_1_2.md`.
   Een formaateis ("minimaal 8 tekens") mag wel, hoeft niet.
 - **"Dit veld is verplicht" bij een veld waarvan de naam al zegt wat erin moet**, zoals
   "Uw naam".
-- **Verlies van ingevulde gegevens na een fout.** Dat rapporteer je onder 3.3.1, niet hier
-  ook nog eens.
+- **Verlies van ingevulde gegevens na een fout.** Dat rapporteer je onder 3.3.7 (Understanding
+  3.3.7, voorbeeld 3), niet hier. Besluit Frits 2026-10-11: volg W3C.
+
+## Technieken (W3C)
+
+- Voldoende, situatie A (formaat vereist): ARIA18 (`aria-alertdialog`), G85 (tekst bij invoer
+  buiten het formaat), G177 (een voorgestelde verbetering), PDF22 (hetzelfde in een
+  PDF-formulier).
+- Voldoende, situatie B (beperkte set waarden): ARIA18, G84 (tekst bij een waarde buiten de
+  lijst), G177, PDF22.
+- Aanvullend: G139 (een manier om naar de fouten te springen), G199 (melding dat het
+  versturen gelukt is), SCR18 (controle in de browser met een melding), SCR32 (melding via de
+  DOM toevoegen).
+- Fout: Understanding 3.3.3 noemt er geen.
+
+Bron: Understanding 3.3.3, "Techniques".
 
 ## Op de kaart
 
@@ -118,7 +142,7 @@ helpt. "Vul een geldige waarde in" is een zin, geen suggestie; dat weegt de agen
 
 > Aangemaakt op 2026-09-13 bij ZOET-01, samen met de regelbestanden van 2.3.1, 2.4.2,
 > 3.1.1, 3.1.2, 3.3.1 en 3.3.7. De regels komen uit de checklist; het verlies van
-> ingevulde gegevens is bewust alleen bij 3.3.1 ondergebracht, zodat het niet twee keer in
-> het rapport komt. Er zitten nog geen correcties uit audits in. Zet uitleg bij deze lijst
+> ingevulde gegevens is bewust maar bij één criterium ondergebracht, zodat het niet twee keer
+> in het rapport komt. Sinds 2026-10-11 is dat 3.3.7 (was 3.3.1). Er zitten nog geen correcties uit audits in. Zet uitleg bij deze lijst
 > altijd als blokcitaat: een gewone alinea eronder plakt de kaartlezer aan het laatste
 > gebied vast.

@@ -8,6 +8,17 @@
 
 - Verwijzing naar een UI-element via zijn NAAM of label ("via de knop melding zorg") is CORRECT en geen bevinding, ook als er "knop", "link" of "icoon" voor staat.
 - Alleen afkeuren bij verwijzingen die uitsluitend op vorm, kleur, locatie of geluid leunen: "klik op de groene knop", "gebruik het icoon rechtsboven".
+- "HIERBOVEN" EN "HIERONDER" zijn goed als de bedoelde inhoud op de juiste plek in de leesvolgorde staat (hierboven: eerder in de code, hieronder: later) en de verwijzing eenduidig is. De inhoud hoeft NIET direct ervoor of erna te staan. Afkeuren alleen als de inhoud in de leesvolgorde aan de andere kant staat dan de verwijzing zegt, of als niet duidelijk is welk onderdeel bedoeld wordt. Bron: Understanding 1.3.3, Intent ("the content being referenced is in the appropriate place in the reading order and the references are unambiguous"). Besluit Frits 2026-10-11: volg W3C.
+
+## Technieken (W3C)
+
+Bron: Understanding 1.3.3 en de quickref voor WCAG 2.2, nagekeken op 2026-10-11.
+
+- **Voldoende:** G96 (het onderdeel ook in tekst benoemen, niet alleen via een zintuiglijk
+  kenmerk).
+- **Aanvullend (Advisory):** geen.
+- **Failures:** F14 (inhoud alleen aanduiden met vorm of plek), F26 (alleen een grafisch
+  symbool om informatie over te brengen).
 
 ## Op de kaart
 
@@ -45,8 +56,9 @@ noemen mag, zolang de naam er ook bij staat. Kleur valt hier niet onder; dat is 
    mee.
 2. [agent] Kijk per verwijzing waarop ze leunt: vorm, grootte, plek op het scherm, richting
    of geluid. Staat er daarnaast de naam of het label van het element, dan is het in orde.
-   "Hierboven" en "hieronder" zijn goed als de bedoelde inhoud ook direct ervoor of erna
-   staat.
+   "Hierboven" en "hieronder" zijn goed als de bedoelde inhoud op de juiste plek in de
+   leesvolgorde staat en de verwijzing eenduidig is. Direct ervoor of erna hoeft niet (W3C,
+   Intent 1.3.3; besluit Frits 2026-10-11).
 
 #### Stap 2 — Symbolen
 
@@ -90,3 +102,7 @@ kijken.
 > deelgebieden; hun kaarten in "Waar sta ik" misten daardoor het blok dat de andere
 > 29 wel hebben. De gebieden zijn afgeleid uit de audit-instructies en de regels
 > hierboven, en door Frits doorgenomen voordat ze hier kwamen te staan.
+>
+> Gebied 3 houdt zijn naam, maar "direct voor of na" lees je sinds 2026-10-11 als: op de
+> juiste plek in de leesvolgorde, met een eenduidige verwijzing. Zo staat het in de Intent
+> van W3C; besluit Frits 2026-10-11: volg W3C.
