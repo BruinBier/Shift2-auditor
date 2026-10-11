@@ -52,7 +52,15 @@ gaat?
 | Logolink naar de eigen homepage, `title="Ga naar de homepage"` | **voldoet** — de naam zegt waar de link heen gaat |
 | Dezelfde logolink op een SUBSITE (duurzaam., open., mijn.) | **afkeuring** — de bezoeker denkt naar de hoofdsite te gaan |
 | Een title die de bestemming niet dekt, of leeg of nietszeggend is | **afkeuring** |
-| Een naam die alleen het linktype noemt, zoals "(externe link)" of "PDF" | **afkeuring** — dat is geen naam voor de link |
+| Een naam die alleen het linktype noemt, zoals "(externe link)" of "PDF", zonder het onderwerp in dezelfde zin, alinea, hetzelfde lijstitem of dezelfde tabelcel | **afkeuring** — dat is geen naam voor de link |
+| Dezelfde naam ("PDF", "mp3") met het onderwerp in hetzelfde element, bijvoorbeeld in één lijstitem "Max Havelaar · PDF · mp3" | **voldoet** — de context staat in hetzelfde lijstitem (H77) |
+
+Een linktype als naam is dus niet altijd een afkeuring. W3C geeft in Understanding 2.4.4 juist
+dit voorbeeld: een lijst boeken, per boek de titel als link naar de webversie en daarachter de
+links "PDF" en "mp3", zodat je de titel niet drie keer hoort. Dat voldoet, omdat de titel in
+hetzelfde lijstitem staat. Afkeuren doe je alleen als het onderwerp niet in hetzelfde element
+staat; een kop erboven telt niet (F63). Tot 2026-10-11 stond hier een afkeuring zonder die
+voorwaarde. Besluit Frits.
 
 Hier stond tot 20 augustus 2026 de categorische regel dat een naam uit alleen `title`
 onvoldoende is en een afkeuring blijft. Die is op 18 augustus vervangen door de beoordeling
@@ -96,12 +104,6 @@ de werkelijke situatie.
 Advies: vul de toegankelijke naam aan met de organisatie, bijvoorbeeld "Facebook-pagina
 gemeente X" en "Instagram-pagina gemeente X".
 
-Gebruik QuickFinding `5b18790a-b634-4c99-8fee-d1c5d8952aea` ("Sociale-media-link zonder
-organisatie in linktekst"). Pas de kop en de platformnamen aan op de werkelijke situatie.
-
-Advies: vul de toegankelijke naam aan met de organisatie, bijvoorbeeld "Facebook-pagina
-gemeente X" en "Instagram-pagina gemeente X".
-
 Let op: dit is een ANDERE bevinding dan 1.3.1 over dezelfde links. Die gaat erover dat ze
 niet in een lijst staan; deze gaat over de linktekst. Beide kunnen tegelijk gelden op
 dezelfde footerkolom. Zie ook de X/Twitter-regel hieronder, waar de naam niet meer klopt
@@ -129,6 +131,62 @@ Geef dus een echt oordeel (voldoet of afkeuring op de linktekst); zet 2.4.4 niet
 Vastgelegd door Frits op 2026-08-02 bij UTHEU-01. Eerst stond 2.4.4 in de vervallijst voor
 ongetagde PDF's; Frits corrigeerde dat: de linktekst is visueel te toetsen, alleen de
 klikbaarheid niet.
+
+## Wat W3C nog meer zegt (Understanding 2.4.4)
+
+Naast deze regels gelegd op 2026-10-11. Elk punt noemt waar het staat.
+
+**De naam van een document of webtoepassing is genoeg.** Leidt een link naar een document of
+een webtoepassing, dan is de naam daarvan een voldoende linktekst ("the name of the document or
+web application would be sufficient"). Een webadres als linktekst is daarom geen fout op
+zichzelf. De vraag is dezelfde als bij elke linktekst: blijkt eruit, samen met de context in
+hetzelfde element, waar je uitkomt? "www.verkeersveiligheidsmonitor.nl" doet dat. Een lang adres
+vol cijfers en codes zegt hooguit het domein; weeg dan of de zin of alinea eromheen het doel
+noemt. Een kale URL is dus niet automatisch een afkeuring; tot 2026-10-11 stond dat wel in de
+vertaaltabel van `Shift2_Werkwijze_PDF.md`, zonder grond in W3C.
+
+**Een doel dat voor iedereen onduidelijk is, is geen fout.** Het criterium zondert links uit
+waarvan het doel voor alle bezoekers onduidelijk is, omdat de pagina zelf die informatie niet
+geeft, of omdat het zo bedoeld is: "deur 1, deur 2, deur 3" in een spel. Wie een beperking
+heeft, mist dan niets wat een ander wel weet. Maar alle context die de pagina wél geeft, moet
+in de linktekst staan of er programmatisch aan vastzitten (Understanding, de uitzondering en de
+noot erbij).
+
+**Dezelfde naam in dezelfde context moet naar hetzelfde gaan.** Twee links die met hun context
+precies hetzelfde voorlezen, bijvoorbeeld twee keer "Lees meer" in één alinea, maar naar
+verschillende pagina's gaan, zijn niet uit elkaar te houden: afkeuring. Dat is een van de drie
+W3C-testregels bij dit criterium ("Links with identical accessible names and same context serve
+equivalent purpose"). Dezelfde linktekst in verschillende alinea's met elk hun eigen context is
+geen fout; zie de regel hierboven over context die het doel moet benoemen.
+
+**Aanbevelingen, geen afkeuring.** Deze kunnen in een advies of een opmerking, niet als grond
+voor een afkeuring:
+- zet de context bij voorkeur vóór de link: wie de pagina van boven naar beneden laat voorlezen,
+  hoort dan eerst waar het over gaat (Understanding, "This context will be most usable if it
+  precedes the link");
+- geef links met hetzelfde doel dezelfde tekst, en links met verschillende doelen verschillende
+  tekst; binnen een set pagina's is dat eerste een eis onder 3.2.4;
+- laat in de linktekst naar een toegankelijke alternatieve versie zien dat die versie
+  toegankelijker is;
+- waarschuw vooraf als een link een nieuw venster opent (G201, SCR24);
+- voeg een afbeelding en een tekst die naast elkaar naar hetzelfde gaan samen tot één link
+  (H2).
+
+**PDF: de link als link aanmerken.** Voor een PDF noemt W3C twee voldoende technieken naast
+G91: PDF11, de link als Link annotation én met een /Link-tag in de tagstructuur, en PDF13, een
+vervangende tekst in /Alt bij de link. Ontbreekt de /Link-tag omdat dat deel van het document
+niet getagd is, dan blijft dat onder 1.3.1 (zie "Niet-getagde PDF" hierboven); onder 2.4.4
+beoordeel je de linktekst.
+
+**De technieken** (Understanding 2.4.4, "Techniques"):
+
+| Soort | Techniek |
+|---|---|
+| Voldoende | G91 en H30: een linktekst die het doel beschrijft. H24: tekstalternatieven bij een image map. G189 en SCR30: een knop waarmee de bezoeker kiest tussen korte en lange linkteksten. G53: de zin waarin de link staat. H33: een `title` als aanvulling op de linktekst. C7: een deel van de linktekst met CSS verbergen (`sr-only`). ARIA7 en ARIA8: `aria-labelledby` en `aria-label`. H77, H78, H79, H81: het lijstitem, de alinea, de tabelcel met koppen, het bovenliggende lijstitem. PDF11 en PDF13 voor PDF. |
+| Aanvullend | H2: afbeelding en tekst samen in één link. H80: de kop boven de link. G201 en SCR24: vooraf melden dat een nieuw venster opent. |
+| Fout | F63: context alleen in inhoud die niet met de link verbonden is. F89: een afbeelding als enige inhoud van een link, zonder toegankelijke naam. |
+
+Een techniek is een manier om te voldoen, geen eis; zie `Shift2_Bewijsvoering.md`.
 
 ## Regels
 

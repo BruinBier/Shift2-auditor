@@ -372,7 +372,7 @@ dus naar het criterium waar hij thuishoort, meestal een van deze vier:
 | Gescande pagina zonder tekstlaag: de tekst staat er als foto op (oplossen met tekstherkenning of het brondocument) — W3C PDF7 | 1.4.5 |
 | Stuk tekst in een andere taal zonder taalmarkering, zoals een Engelse alinea in een Nederlands document — W3C PDF19 | 3.1.2 |
 | Link die niet als link is getagd — W3C PDF11 | 1.3.1 |
-| Linktekst die het doel niet noemt, zoals "klik hier" of een kale URL — W3C PDF11, PDF13 | 2.4.4 |
+| Linktekst die het doel niet noemt, zoals "klik hier" zonder context in dezelfde zin of alinea | 2.4.4 |
 | Formulierveld zonder label — W3C PDF10 | 3.3.2 en 4.1.2 |
 | Niet aangegeven welke formuliervelden verplicht zijn — W3C PDF5 | 3.3.2 |
 | Geen duidelijke foutmelding bij verkeerde invoer in een formulier — W3C PDF22 | 3.3.1 en 3.3.3 |

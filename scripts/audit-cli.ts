@@ -45,7 +45,7 @@ import {
   timestamp,
 } from './lib/browser-fetch';
 import { legVast, leesLogboek } from './lib/audit-log';
-import { ALTIJD_NIET_AANWEZIG, leesbareAanroep } from '../lib/metingen';
+import { ALTIJD_NIET_AANWEZIG, CRITERIA_PER_COMMANDO, leesbareAanroep } from '../lib/metingen';
 import {
   lintFinding,
   formatLintIssues,
@@ -4892,11 +4892,15 @@ async function getPdfStructuur(doel: string, _flags: Flags) {
   if (meting.fout) throw new Error(`pdf-structuur.py: ${meting.fout}`);
 
   const v = meting.vaststellingen || {};
-  // Alleen de criteria waarvan dit commando het antwoord hard geeft, komen in het logboek
-  // als bediend criterium. De tellingen dienen een oordeel, maar vellen het niet.
-  const hardeCriteria = Object.values(v)
-    .filter((b: any) => b?.hard)
-    .flatMap((b: any) => b.criteria || []);
+  // In het logboek komen de criteria die dit commando bedient volgens lib/metingen.ts: de
+  // harde antwoorden én de tellingen (figuren zonder alt, tagstructuur, links). Tot
+  // 2026-10-11 alleen de harde; dan koppelde de meting niet aan 1.1.1, 1.3.1, 2.4.4 en
+  // 2.4.6, en toonde de kaart daar "niet gemeten" terwijl het oordeel op deze uitvoer rustte.
+  // 1.4.10 staat in de uitvoer maar niet in de registratie, en blijft er dus buiten.
+  const geregistreerd = new Set(CRITERIA_PER_COMMANDO['get-pdfstructuur'] ?? []);
+  const bediendeCriteria = Object.values(v)
+    .flatMap((b: any) => b?.criteria || [])
+    .filter((c: string) => geregistreerd.has(c));
 
   legVast({
     commando: 'get-pdfstructuur',
@@ -4905,7 +4909,7 @@ async function getPdfStructuur(doel: string, _flags: Flags) {
     eindUrl: doel,
     browser: 'geen',
     weergave: 'document',
-    criteria: Array.from(new Set(hardeCriteria)) as string[],
+    criteria: Array.from(new Set(bediendeCriteria)) as string[],
     uitkomst: {
       paginas: meting.paginas,
       media: v.media?.aanwezig,
@@ -8421,9 +8425,15 @@ async function getLinks(url: string, flags: Flags) {
             !l.opEenSubsite,
           titelNaamOpEenSubsite:
             !!naam && l.bron === 'title' && l.naarEigenHomepage && l.opEenSubsite,
-          // Een naam die alleen het linktype noemt is geen naam voor de link.
+          // Een naam die alleen het linktype noemt is geen naam voor de link -- tenzij het
+          // onderwerp in hetzelfde element staat, net als bij een generieke tekst. W3C
+          // (Understanding 2.4.4) geeft het voorbeeld "Max Havelaar · PDF · mp3" in één
+          // lijstitem, en dat voldoet. Tot 2026-10-11 werd dat hier altijd gemeld.
           naamNoemtAlleenHetLinktype:
-            !!naam && /^\(?(externe link|nieuw venster|pdf|link|document|download)\)?\.?$/i.test(naam),
+            !!naam &&
+            /^\(?(externe link|nieuw venster|pdf|mp3|word|link|document|download)\)?\.?$/i.test(naam) &&
+            !l.contextInHouder &&
+            !l.contextUitTabelkop,
           // Generiek, en de vraag is dan of er context in HETZELFDE element staat.
           generiek: GENERIEK.test(naam),
           // Context komt uit hetzelfde element OF uit de tabelkoppen van de cel. Een kop

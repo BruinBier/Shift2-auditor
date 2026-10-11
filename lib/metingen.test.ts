@@ -110,8 +110,9 @@ test('dragendeCommandos valt terug op de eigen meting', () => {
   assert.deepEqual(dragendeCommandos('1.3.2').sort(), ['get-leesvolgorde', 'get-pdfleesvolgorde']);
   // 1.4.5 heeft er geen en rust op de code en de opname.
   assert.deepEqual(dragendeCommandos('1.4.5').sort(), ['get-html', 'get-screenshot']);
-  // 2.4.6 rust alleen op de code: koppen met niveau en tekst.
-  assert.deepEqual(dragendeCommandos('2.4.6'), ['get-html']);
+  // 2.4.6 rust op de code: koppen met niveau en tekst. Bij een PDF op de tagstructuur die
+  // get-pdfstructuur uitleest (sinds 2026-10-11 geregistreerd).
+  assert.deepEqual(dragendeCommandos('2.4.6').sort(), ['get-html', 'get-pdfstructuur']);
   // Een criterium dat nergens in staat, weegt alles -- leeg dus.
   assert.deepEqual(dragendeCommandos('2.4.3'), []);
 });

@@ -232,10 +232,14 @@ export const METINGEN: Meetopdracht[] = [
      * documenten" maar uitputtende zoekacties: de verzameling manieren waarop een PDF dit
      * kan doen is eindig.
      *
-     * Hier staan alleen de criteria waarvan het commando het antwoord HARD geeft. De
-     * tellingen die het daarnaast levert (getagde pagina's, figuren zonder alt, links)
-     * dienen 1.1.1, 1.3.1, 1.3.2 en 2.4.4, maar vellen daar geen oordeel -- die zou een
-     * knop "gemeten" geven aan een vraag die een mens moet wegen.
+     * Daarnaast staan hier de criteria die het commando met een TELLING bedient: 1.1.1
+     * (figuren zonder tekstalternatief), 1.3.1 en 2.4.6 (de tagstructuur en de koppen) en
+     * 2.4.4 (de linkannotaties met hun tekst). Die tellingen vellen geen oordeel, net zo min
+     * als `get-links` of `get-pdfnietteksten`; ze zijn wel de meting waar het oordeel op
+     * rust. Tot 2026-10-11 stonden ze er bewust niet in. Op LEU-01 toonde de kaart daardoor
+     * "niet gemeten" bij 2.4.4 en 1.1.1 van het Uitvoeringsplan, terwijl de agent de links
+     * en de figuren uit deze uitvoer had gehaald. 1.3.2 hoort er niet bij: dat heeft een
+     * eigen commando, `get-pdfleesvolgorde`.
      *
      * Om dezelfde reden staat 1.4.10 er NIET in, al lijkt het erbij te horen. Reflow is in
      * een PDF niet van toepassing, maar dat volgt uit de aard van het formaat en niet uit
@@ -253,6 +257,8 @@ export const METINGEN: Meetopdracht[] = [
       '1.4.2', '2.2.2', '2.3.1',
       '1.3.5', '3.3.1', '3.3.2', '3.3.3', '3.3.7', '2.1.2', '2.5.3', '2.5.8',
       '3.1.1', '2.4.2',
+      // De tellingen; zie hierboven.
+      '1.1.1', '1.3.1', '2.4.6', '2.4.4',
     ],
     toegestaneVlaggen: [],
     vanafDeKaart: true,
