@@ -15,12 +15,17 @@ export default function EngelseVersie({
   descriptionEn,
   vertaaldOp,
   nietOpgeslagen,
+  urlEn,
+  onUrlEn,
 }: {
   id: string;
   titleEn: string | null;
   descriptionEn: string | null;
   vertaaldOp: string | null;
   nietOpgeslagen: boolean;
+  /** Hoort bij het formulier en wordt met Opslaan bewaard, niet met de vertaalknop. */
+  urlEn: string;
+  onUrlEn: (waarde: string) => void;
 }) {
   const [titel, setTitel] = useState(titleEn);
   const [beschrijving, setBeschrijving] = useState(descriptionEn);
@@ -88,6 +93,20 @@ export default function EngelseVersie({
           </div>
         </div>
       )}
+
+      <div className="mt-3">
+        <label htmlFor="issue-url-en" className="mb-1 block text-sm font-medium text-gray-700">
+          URL (English)
+        </label>
+        <input
+          id="issue-url-en"
+          type="url"
+          value={urlEn}
+          onChange={(e) => onUrlEn(e.target.value)}
+          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-shift2-primary"
+          placeholder="https://..."
+        />
+      </div>
     </div>
   );
 }

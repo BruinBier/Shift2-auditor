@@ -31,7 +31,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (body.impact !== undefined) data.impact = body.impact || null;
     if (body.supplier !== undefined) data.supplier = body.supplier || null;
     if (body.status !== undefined) data.status = body.status;
-    if (body.githubIssueUrl !== undefined) data.githubIssueUrl = body.githubIssueUrl || null;
+    if (body.url !== undefined) data.url = body.url?.trim() || null;
+    if (body.urlEn !== undefined) data.urlEn = body.urlEn?.trim() || null;
 
     const issue = await prisma.technicalIssue.update({
       where: { id: params.id },

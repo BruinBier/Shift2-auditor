@@ -21,10 +21,11 @@ export interface TechnicalIssueFormValues {
   impact: string | null;
   supplier: string | null;
   status: 'open' | 'resolved';
-  githubIssueUrl: string | null;
   titleEn?: string | null;
   descriptionEn?: string | null;
   vertaaldOp?: string | null;
+  url?: string | null;
+  urlEn?: string | null;
 }
 
 interface Props {
@@ -40,11 +41,12 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
   const [title, setTitle] = useState(initial?.title || '');
   const [description, setDescription] = useState(initial?.description || '');
   const [request, setRequest] = useState(initial?.request || '');
+  const [url, setUrl] = useState(initial?.url || '');
+  const [urlEn, setUrlEn] = useState(initial?.urlEn || '');
   const [wcagCriterionId, setWcagCriterionId] = useState(initial?.wcagCriterionId || '');
   const [impact, setImpact] = useState(initial?.impact || '');
   const [supplier, setSupplier] = useState(initial?.supplier || '');
   const [status, setStatus] = useState<'open' | 'resolved'>(initial?.status || 'open');
-  const [githubIssueUrl, setGithubIssueUrl] = useState(initial?.githubIssueUrl || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,11 +59,12 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
       title: title.trim(),
       description: description.trim(),
       request: request.trim() || null,
+      // Alleen op de detailpagina; bij aanmaken bestaan de velden niet.
+      ...(mode === 'edit' ? { url: url.trim() || null, urlEn: urlEn.trim() || null } : {}),
       wcagCriterionId: wcagCriterionId || null,
       impact: impact || null,
       supplier: supplier.trim() || null,
       status,
-      githubIssueUrl: githubIssueUrl.trim() || null,
     };
 
     if (!payload.title || !payload.description) {
@@ -137,8 +140,26 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
         />
       </div>
 
+      {mode === 'edit' && (
+        <div>
+          <label htmlFor="issue-url" className="block text-sm font-medium text-gray-700 mb-1">
+            URL
+          </label>
+          <input
+            id="issue-url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-shift2-primary"
+            placeholder="https://..."
+          />
+        </div>
+      )}
+
       {mode === 'edit' && initial?.id && (
         <EngelseVersie
+          urlEn={urlEn}
+          onUrlEn={setUrlEn}
           id={initial.id}
           titleEn={initial.titleEn ?? null}
           descriptionEn={initial.descriptionEn ?? null}
@@ -148,7 +169,7 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
       )}
 
       {/* Niet op de detailpagina (besluit Frits 2026-10-12). Een verzoek dat er al staat
-          blijft bewaard en gaat nog steeds mee naar GitHub; het veld is alleen weg. */}
+          blijft bewaard; het veld is alleen weg. */}
       {mode !== 'edit' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -220,17 +241,6 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
             <option value="open">Open</option>
             <option value="resolved">Opgelost</option>
           </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">GitHub-issue URL</label>
-          <input
-            type="url"
-            value={githubIssueUrl}
-            onChange={(e) => setGithubIssueUrl(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-            placeholder="https://github.com/..."
-          />
         </div>
       </div>
 

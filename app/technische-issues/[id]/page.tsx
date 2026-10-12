@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
-import { fetchGithubComments, GithubComment } from '@/lib/github';
 import TechnicalIssueDetail from './TechnicalIssueDetail';
 
 export const dynamic = 'force-dynamic';
@@ -27,16 +26,6 @@ export default async function TechnicalIssueDetailPage({
 
   if (!issue) notFound();
 
-  let comments: GithubComment[] = [];
-  let commentsError: string | null = null;
-  if (issue.githubIssueUrl) {
-    try {
-      comments = await fetchGithubComments(issue.githubIssueUrl);
-    } catch (err) {
-      commentsError = err instanceof Error ? err.message : 'Comments ophalen mislukt';
-    }
-  }
-
   const initial = {
     id: issue.id,
     title: issue.title,
@@ -46,10 +35,11 @@ export default async function TechnicalIssueDetailPage({
     impact: issue.impact,
     supplier: issue.supplier,
     status: issue.status,
-    githubIssueUrl: issue.githubIssueUrl,
     titleEn: issue.titleEn,
     descriptionEn: issue.descriptionEn,
     vertaaldOp: issue.vertaaldOp ? issue.vertaaldOp.toISOString() : null,
+    url: issue.url,
+    urlEn: issue.urlEn,
   };
 
   return (
@@ -62,13 +52,7 @@ export default async function TechnicalIssueDetailPage({
           </Link>
         </div>
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">{issue.title}</h1>
-        <TechnicalIssueDetail
-          initial={initial}
-          criteria={criteria}
-          wcagCriterion={issue.wcagCriterion}
-          comments={comments}
-          commentsError={commentsError}
-        />
+        <TechnicalIssueDetail initial={initial} criteria={criteria} />
       </main>
     </div>
   );

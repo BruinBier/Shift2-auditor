@@ -517,7 +517,7 @@ aanmaken van een project. Niet vragen welke naam, en de bovenmap niet opnieuw aa
 Functionele fouten die geen WCAG-bevinding zijn maar wel naar de leverancier moeten, staan
 op de pagina `/technische-issues`, los van de projecten. Aanmaken met
 `POST /api/technical-issues` en `{ title, description, request?, wcagCriterionId?, impact?,
-supplier?, status?, githubIssueUrl? }`; `title` en `description` zijn verplicht, `status` is
+supplier?, status? }`; `title` en `description` zijn verplicht, `status` is
 `open` of `resolved` (standaard `open`), `impact` kent dezelfde waarden als bij bevindingen.
 `supplier` is het filter: het domein van de klantsite (`beverwijk.nl`) voor fouten op de site,
 `shift2-auditor` voor verbeterpunten aan de tool zelf.
@@ -528,7 +528,8 @@ vertaalt de opgeslagen tekst via Azure Translator (`lib/azure-translator.ts`, ro
 `descriptionEn`, `vertaaldOp`). Dat is een eigen Translator-resource in Azure, niet de
 spraaksleutel van de video's: `AZURE_TRANSLATOR_KEY` en `AZURE_TRANSLATOR_REGION` in `.env`,
 nooit in de repo en nooit tonen. In de lijst zelf kun je de status wijzigen en een issue
-verwijderen; een issue dat ook op GitHub staat, komt na verwijderen terug via de sync.
+verwijderen. De GitHub-koppeling (plaatsen, reacties, sync) is op 2026-10-12 weggehaald;
+de kolom `github_issue_url` staat nog in de database, maar niets gebruikt hem meer.
 
 De scheidingsregel: alles wat onder een succescriterium valt blijft een bevinding, ook als
 opmerking (een `strong` op een knoptekst is een 1.3.1-opmerking, geen technisch issue). Een

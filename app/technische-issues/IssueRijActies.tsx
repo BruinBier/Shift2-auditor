@@ -52,17 +52,12 @@ export function IssueStatus({ id, status, titel }: { id: string; status: string;
   );
 }
 
-export function IssueVerwijderen({ id, titel, opGithub }: { id: string; titel: string; opGithub: boolean }) {
+export function IssueVerwijderen({ id, titel }: { id: string; titel: string }) {
   const router = useRouter();
   const [bezig, setBezig] = useState(false);
 
   const verwijder = async () => {
-    // Een issue dat ook op GitHub staat, komt bij de volgende keer laden terug: de
-    // GitHub-sync importeert elk issue waarvan de link hier nog niet bestaat.
-    const vraag = opGithub
-      ? `"${titel}" verwijderen?\n\nDit issue staat ook op GitHub. Sluit of verwijder het daar ook, anders importeert de GitHub-sync het bij de volgende keer laden opnieuw.`
-      : `"${titel}" verwijderen? Dit kan niet ongedaan worden gemaakt.`;
-    if (!confirm(vraag)) return;
+    if (!confirm(`"${titel}" verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
     setBezig(true);
     try {
       const res = await fetch(`/api/technical-issues/${id}`, { method: 'DELETE' });

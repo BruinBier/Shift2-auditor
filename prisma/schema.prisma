@@ -1164,6 +1164,9 @@ model TechnicalIssue {
   descriptionEn   String?               @db.Text @map("description_en")
   /// Wanneer de vertaling is gemaakt; een latere wijziging van het Nederlands maakt haar oud.
   vertaaldOp      DateTime?             @map("vertaald_op")
+  /// Voorbeeldpagina bij het issue (Nederlandse site) en de Engelse tegenhanger.
+  url             String?
+  urlEn           String?               @map("url_en")
   createdAt       DateTime              @default(now()) @map("created_at")
   updatedAt       DateTime              @updatedAt @map("updated_at")
 

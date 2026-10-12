@@ -1,14 +1,11 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
-import { syncGithubIssuesToShift2 } from '@/lib/github-sync';
 import { IssueStatus, IssueVerwijderen } from './IssueRijActies';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TechnischeIssuesPage() {
-  const sync = await syncGithubIssuesToShift2();
-
   const issues = await prisma.technicalIssue.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
@@ -35,17 +32,6 @@ export default async function TechnischeIssuesPage() {
           </Link>
         </div>
 
-        {sync.errors.length > 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 px-4 py-2 rounded text-sm mb-4">
-            GitHub-sync mislukt: {sync.errors.join(' / ')}
-          </div>
-        )}
-        {sync.imported > 0 && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-2 rounded text-sm mb-4">
-            {sync.imported} {sync.imported === 1 ? 'issue' : 'issues'} geïmporteerd vanaf GitHub.
-          </div>
-        )}
-
         {issues.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-500">
             Nog geen issues. Klik op &quot;Nieuw issue&quot; om er één toe te voegen.
@@ -60,7 +46,6 @@ export default async function TechnischeIssuesPage() {
                   <th className="px-4 py-3">WCAG</th>
                   <th className="px-4 py-3">Impact</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">GitHub</th>
                   <th className="px-4 py-3">Aangemaakt</th>
                   <th className="px-4 py-3"><span className="sr-only">Acties</span></th>
                 </tr>
@@ -84,25 +69,11 @@ export default async function TechnischeIssuesPage() {
                     <td className="px-4 py-3">
                       <IssueStatus id={issue.id} status={issue.status} titel={issue.title} />
                     </td>
-                    <td className="px-4 py-3">
-                      {issue.githubIssueUrl ? (
-                        <a
-                          href={issue.githubIssueUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-shift2-primary hover:underline"
-                        >
-                          Link
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
                     <td className="px-4 py-3 text-gray-600 text-xs">
                       {new Date(issue.createdAt).toLocaleDateString('nl-NL')}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <IssueVerwijderen id={issue.id} titel={issue.title} opGithub={!!issue.githubIssueUrl} />
+                      <IssueVerwijderen id={issue.id} titel={issue.title} />
                     </td>
                   </tr>
                 ))}
