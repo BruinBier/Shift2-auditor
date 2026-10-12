@@ -1173,10 +1173,30 @@ model TechnicalIssue {
   wcagCriterion   WCAGCriterion?         @relation(fields: [wcagCriterionId], references: [id])
   /// De voorstellen die hierheen zijn doorgezet.
   findings        Finding[]
+  /// Gekoppelde werkitems: koppelingen naar andere technische issues. Een koppeling geldt
+  /// twee kanten op; toon dus beide lijsten samen (zie /api/technical-issues/[id]/koppelingen).
+  koppelingenVan  TechnicalIssueKoppeling[] @relation("KoppelingVan")
+  koppelingenNaar TechnicalIssueKoppeling[] @relation("KoppelingNaar")
 
   @@index([status])
   @@index([wcagCriterionId])
   @@map("technical_issues")
+}
+
+/// Een koppeling tussen twee technische issues ("Gekoppelde werkitems"). Eén rij per paar,
+/// ongeacht de richting: de route legt de kleinste id in vanId.
+model TechnicalIssueKoppeling {
+  id        String         @id @default(uuid())
+  vanId     String         @map("van_id")
+  naarId    String         @map("naar_id")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  van       TechnicalIssue @relation("KoppelingVan", fields: [vanId], references: [id], onDelete: Cascade)
+  naar      TechnicalIssue @relation("KoppelingNaar", fields: [naarId], references: [id], onDelete: Cascade)
+
+  @@unique([vanId, naarId])
+  @@index([naarId])
+  @@map("technical_issue_koppelingen")
 }
 
 /// Volgorde in de keuzelijst: open, ingediend, in_behandeling, resolved (lib/technical-issue-status.ts).

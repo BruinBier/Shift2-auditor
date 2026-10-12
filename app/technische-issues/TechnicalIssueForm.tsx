@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import EngelseVersie from './EngelseVersie';
+import GekoppeldeWerkitems from './GekoppeldeWerkitems';
 import { TECHNICAL_ISSUE_STATUSSEN, TechnicalIssueStatusWaarde } from '@/lib/technical-issue-status';
 
 interface Criterion {
@@ -246,6 +247,7 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
             ))}
           </select>
         </div>
+        {mode === 'edit' && initial?.id && <GekoppeldeWerkitems id={initial.id} />}
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
