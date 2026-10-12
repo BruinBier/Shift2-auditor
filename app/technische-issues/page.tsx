@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
 import { IssueStatus, IssueVerwijderen } from './IssueRijActies';
+import { tiCode } from '@/lib/technical-issue-code';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +11,16 @@ export default async function TechnischeIssuesPage() {
     orderBy: { createdAt: 'desc' },
     include: {
       wcagCriterion: { select: { code: true, titleNl: true, level: true } },
+      // Gekoppelde werkitems: een koppeling geldt twee kanten op, dus beide richtingen.
+      koppelingenVan: { select: { naar: { select: { id: true, title: true, nummer: true } } } },
+      koppelingenNaar: { select: { van: { select: { id: true, title: true, nummer: true } } } },
     },
   });
+
+  const gekoppeldAan = (issue: (typeof issues)[number]) =>
+    [...issue.koppelingenVan.map((k) => k.naar), ...issue.koppelingenNaar.map((k) => k.van)].sort(
+      (a, b) => a.nummer - b.nummer
+    );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,6 +67,7 @@ export default async function TechnischeIssuesPage() {
                         href={`/technische-issues/${issue.id}`}
                         className="text-shift2-primary hover:underline font-medium"
                       >
+                        <span className="font-mono text-xs text-gray-500">{tiCode(issue.nummer)}</span>{' '}
                         {issue.title}
                       </Link>
                       {/* De Engelse URL van de detailpagina, om meteen door te klikken. */}
@@ -75,6 +85,31 @@ export default async function TechnischeIssuesPage() {
                           </a>
                         </div>
                       )}
+                      {gekoppeldAan(issue).length > 0 && (
+                        <ul className="mt-1 space-y-0.5">
+                          {gekoppeldAan(issue).map((g) => (
+                            <li key={g.id} className="flex items-start gap-1 text-xs">
+                              <svg
+                                aria-hidden="true"
+                                className="mt-0.5 h-3 w-3 shrink-0 text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              </svg>
+                              <Link
+                                href={`/technische-issues/${g.id}`}
+                                className="text-gray-600 hover:text-shift2-primary hover:underline"
+                              >
+                                <span className="sr-only">Gekoppeld aan </span>
+                                <span className="font-mono font-medium">{tiCode(g.nummer)}</span> {g.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-700">{issue.supplier || '—'}</td>
                     <td className="px-4 py-3 text-gray-700">
@@ -82,7 +117,32 @@ export default async function TechnischeIssuesPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-700">{issue.impact || '—'}</td>
                     <td className="px-4 py-3">
-                      <IssueStatus id={issue.id} status={issue.status} titel={issue.title} />
+                      <div className="flex items-center gap-2 whitespace-nowrap">
+                        <IssueStatus
+                          id={issue.id}
+                          status={issue.status}
+                          titel={issue.title}
+                          aantalGekoppeld={gekoppeldAan(issue).length}
+                        />
+                        {/* Gekoppeld is geen status: het staat ernaast, zodat de voortgang
+                            zichtbaar blijft. De titels staan onder de issuetitel. */}
+                        {gekoppeldAan(issue).length > 0 && (
+                          <span className="inline-flex items-center gap-0.5 rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-xs text-gray-700">
+                            <svg
+                              aria-hidden="true"
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                            <span className="sr-only">Gekoppeld aan </span>
+                            <span className="font-mono">{gekoppeldAan(issue).map((g) => tiCode(g.nummer)).join(', ')}</span>
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600 text-xs">
                       {new Date(issue.createdAt).toLocaleDateString('nl-NL')}

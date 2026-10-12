@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
 import TechnicalIssueDetail from './TechnicalIssueDetail';
+import { tiCode } from '@/lib/technical-issue-code';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,10 @@ export default async function TechnicalIssueDetailPage({
             ← Terug naar Technische issues
           </Link>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">{issue.title}</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+          <span className="font-mono text-lg text-gray-500">{tiCode(issue.nummer)}</span>{' '}
+          {issue.title}
+        </h1>
         <TechnicalIssueDetail initial={initial} criteria={criteria} />
       </main>
     </div>

@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TECHNICAL_ISSUE_STATUSSEN, statusKleur } from '@/lib/technical-issue-status';
+import { tiCode } from '@/lib/technical-issue-code';
 
 interface Item {
   id: string;
+  nummer: number;
   title: string;
   status: string;
   supplier: string | null;
@@ -43,7 +45,7 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
     const al = new Set(gekoppeld.map((g) => g.id));
     return alle
       .filter((i) => i.id !== id && !al.has(i.id))
-      .filter((i) => `${i.title} ${i.supplier ?? ''}`.toLowerCase().includes(term))
+      .filter((i) => `${tiCode(i.nummer)} ${i.nummer} ${i.title} ${i.supplier ?? ''}`.toLowerCase().includes(term))
       .slice(0, 8);
   }, [zoek, alle, gekoppeld, id]);
 
@@ -86,7 +88,7 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
                 {label(g.status)}
               </span>
               <Link href={`/technische-issues/${g.id}`} className="flex-1 text-shift2-primary hover:underline">
-                {g.title}
+                <span className="font-mono font-medium">{tiCode(g.nummer)}</span> {g.title}
               </Link>
               <button
                 type="button"
@@ -112,7 +114,7 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
         type="search"
         value={zoek}
         onChange={(e) => setZoek(e.target.value)}
-        placeholder="Zoek een issue om te koppelen…"
+        placeholder="Zoek op nummer, titel of leverancier…"
         autoComplete="off"
         className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
       />
@@ -126,7 +128,7 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
                 disabled={bezig}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50"
               >
-                {k.title}
+                <span className="font-mono text-gray-500">{tiCode(k.nummer)}</span> {k.title}
                 {k.supplier && <span className="text-gray-500"> · {k.supplier}</span>}
               </button>
             </li>

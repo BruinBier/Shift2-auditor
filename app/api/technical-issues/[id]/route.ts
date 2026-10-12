@@ -48,7 +48,25 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       },
     });
 
-    return NextResponse.json(issue);
+    // Op verzoek dezelfde status voor de gekoppelde werkitems. Alleen als de gebruiker
+    // daar in het scherm ja op zei: gekoppelde issues worden vaak los opgelost.
+    let gekoppeldBijgewerkt = 0;
+    if (body.ookGekoppeld === true && data.status) {
+      const koppelingen = await prisma.technicalIssueKoppeling.findMany({
+        where: { OR: [{ vanId: params.id }, { naarId: params.id }] },
+        select: { vanId: true, naarId: true },
+      });
+      const anderen = koppelingen.map((k) => (k.vanId === params.id ? k.naarId : k.vanId));
+      if (anderen.length) {
+        const r = await prisma.technicalIssue.updateMany({
+          where: { id: { in: anderen } },
+          data: { status: data.status as never },
+        });
+        gekoppeldBijgewerkt = r.count;
+      }
+    }
+
+    return NextResponse.json({ ...issue, gekoppeldBijgewerkt });
   } catch (error) {
     console.error('Failed to update technical issue:', error);
     return NextResponse.json({ error: 'Failed to update technical issue' }, { status: 500 });

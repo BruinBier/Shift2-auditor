@@ -75,13 +75,30 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
       return;
     }
 
+    // Status gewijzigd en er zijn gekoppelde werkitems? Dan vragen of die meegaan.
+    let ookGekoppeld = false;
+    if (mode === 'edit' && initial?.id && status !== initial.status) {
+      const gekoppeld = await fetch(`/api/technical-issues/${initial.id}/koppelingen`)
+        .then((r) => r.json())
+        .catch(() => []);
+      const aantal = Array.isArray(gekoppeld) ? gekoppeld.length : 0;
+      if (aantal > 0) {
+        const label = TECHNICAL_ISSUE_STATUSSEN.find((s) => s.waarde === status)?.label ?? status;
+        ookGekoppeld = confirm(
+          `Ook ${aantal === 1 ? 'het gekoppelde issue' : `de ${aantal} gekoppelde issues`} op "${label}" zetten?
+
+OK: ja, ook ${aantal === 1 ? 'dat issue' : 'die issues'}. Annuleren: alleen dit issue.`
+        );
+      }
+    }
+
     try {
       const url = mode === 'create' ? '/api/technical-issues' : `/api/technical-issues/${initial?.id}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(mode === 'edit' ? { ...payload, ookGekoppeld } : payload),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

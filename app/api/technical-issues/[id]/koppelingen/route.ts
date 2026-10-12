@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma';
 
 const paar = (a: string, b: string) => (a < b ? { vanId: a, naarId: b } : { vanId: b, naarId: a });
 
-const kort = { select: { id: true, title: true, status: true, supplier: true } } as const;
+const kort = { select: { id: true, nummer: true, title: true, status: true, supplier: true } } as const;
 
 async function gekoppeld(id: string) {
   const rijen = await prisma.technicalIssueKoppeling.findMany({

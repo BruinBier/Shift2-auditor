@@ -10,20 +10,39 @@ import { TECHNICAL_ISSUE_STATUSSEN, statusKleur } from '@/lib/technical-issue-st
  * Kon eerst alleen via de detailpagina (het bewerkformulier), dus voor elk issue dat je
  * wilde afsluiten een pagina heen en terug.
  */
-export function IssueStatus({ id, status, titel }: { id: string; status: string; titel: string }) {
+export function IssueStatus({
+  id,
+  status,
+  titel,
+  aantalGekoppeld = 0,
+}: {
+  id: string;
+  status: string;
+  titel: string;
+  aantalGekoppeld?: number;
+}) {
   const router = useRouter();
   const [waarde, setWaarde] = useState(status);
   const [bezig, setBezig] = useState(false);
 
   const wijzig = async (nieuw: string) => {
     const oud = waarde;
+    // Gekoppelde issues gaan alleen mee als je daar ja op zegt.
+    const label = TECHNICAL_ISSUE_STATUSSEN.find((s) => s.waarde === nieuw)?.label ?? nieuw;
+    const ookGekoppeld =
+      aantalGekoppeld > 0 &&
+      confirm(
+        `Ook ${aantalGekoppeld === 1 ? 'het gekoppelde issue' : `de ${aantalGekoppeld} gekoppelde issues`} op "${label}" zetten?
+
+OK: ja, ook ${aantalGekoppeld === 1 ? 'dat issue' : 'die issues'}. Annuleren: alleen dit issue.`
+      );
     setWaarde(nieuw);
     setBezig(true);
     try {
       const res = await fetch(`/api/technical-issues/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({ status: nieuw }),
+        body: JSON.stringify({ status: nieuw, ookGekoppeld }),
       });
       if (!res.ok) throw new Error();
       router.refresh();

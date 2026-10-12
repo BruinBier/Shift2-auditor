@@ -1151,6 +1151,8 @@ model InventarisKandidaat {
 
 model TechnicalIssue {
   id              String                @id @default(uuid())
+  /// Vast volgnummer, getoond als TI-<nummer>. Schuift niet op bij verwijderen.
+  nummer          Int                   @unique @default(autoincrement())
   title           String
   description     String                @db.Text
   request         String?               @db.Text
