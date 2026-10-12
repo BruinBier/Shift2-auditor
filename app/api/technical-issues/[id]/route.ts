@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isTechnicalIssueStatus } from '@/lib/technical-issue-status';
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -30,7 +31,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (body.wcagCriterionId !== undefined) data.wcagCriterionId = body.wcagCriterionId || null;
     if (body.impact !== undefined) data.impact = body.impact || null;
     if (body.supplier !== undefined) data.supplier = body.supplier || null;
-    if (body.status !== undefined) data.status = body.status;
+    if (body.status !== undefined) {
+      if (!isTechnicalIssueStatus(body.status)) {
+        return NextResponse.json({ error: `Onbekende status: ${body.status}` }, { status: 400 });
+      }
+      data.status = body.status;
+    }
     if (body.url !== undefined) data.url = body.url?.trim() || null;
     if (body.urlEn !== undefined) data.urlEn = body.urlEn?.trim() || null;
 

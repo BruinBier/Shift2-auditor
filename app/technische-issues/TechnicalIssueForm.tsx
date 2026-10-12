@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import EngelseVersie from './EngelseVersie';
+import { TECHNICAL_ISSUE_STATUSSEN, TechnicalIssueStatusWaarde } from '@/lib/technical-issue-status';
 
 interface Criterion {
   id: string;
@@ -20,7 +21,7 @@ export interface TechnicalIssueFormValues {
   wcagCriterionId: string | null;
   impact: string | null;
   supplier: string | null;
-  status: 'open' | 'resolved';
+  status: TechnicalIssueStatusWaarde;
   titleEn?: string | null;
   descriptionEn?: string | null;
   vertaaldOp?: string | null;
@@ -46,7 +47,7 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
   const [wcagCriterionId, setWcagCriterionId] = useState(initial?.wcagCriterionId || '');
   const [impact, setImpact] = useState(initial?.impact || '');
   const [supplier, setSupplier] = useState(initial?.supplier || '');
-  const [status, setStatus] = useState<'open' | 'resolved'>(initial?.status || 'open');
+  const [status, setStatus] = useState<TechnicalIssueStatusWaarde>(initial?.status || 'open');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -235,11 +236,14 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as 'open' | 'resolved')}
+            onChange={(e) => setStatus(e.target.value as TechnicalIssueStatusWaarde)}
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           >
-            <option value="open">Open</option>
-            <option value="resolved">Opgelost</option>
+            {TECHNICAL_ISSUE_STATUSSEN.map((s) => (
+              <option key={s.waarde} value={s.waarde}>
+                {s.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

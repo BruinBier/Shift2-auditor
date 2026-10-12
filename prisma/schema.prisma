@@ -1179,9 +1179,12 @@ model TechnicalIssue {
   @@map("technical_issues")
 }
 
+/// Volgorde in de keuzelijst: open, ingediend, in_behandeling, resolved (lib/technical-issue-status.ts).
 enum TechnicalIssueStatus {
   open
   resolved
+  ingediend
+  in_behandeling
 }
 
 model CmsParagraph {

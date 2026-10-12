@@ -60,6 +60,21 @@ export default async function TechnischeIssuesPage() {
                       >
                         {issue.title}
                       </Link>
+                      {/* De Engelse URL van de detailpagina, om meteen door te klikken. */}
+                      {issue.urlEn && (
+                        <div className="mt-1">
+                          <a
+                            href={issue.urlEn}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-gray-600 hover:text-shift2-primary hover:underline break-all"
+                          >
+                            {issue.urlEn}
+                            <span className="sr-only"> (opent in een nieuw tabblad)</span>
+                            <span aria-hidden="true"> ↗</span>
+                          </a>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-700">{issue.supplier || '—'}</td>
                     <td className="px-4 py-3 text-gray-700">

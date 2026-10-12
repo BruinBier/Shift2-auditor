@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { TECHNICAL_ISSUE_STATUSSEN, statusKleur } from '@/lib/technical-issue-status';
 
 /**
  * Status wijzigen en verwijderen, rechtstreeks in de lijst.
@@ -40,14 +41,13 @@ export function IssueStatus({ id, status, titel }: { id: string; status: string;
       value={waarde}
       disabled={bezig}
       onChange={(e) => wijzig(e.target.value)}
-      className={`rounded border px-2 py-0.5 text-xs font-medium ${
-        waarde === 'open'
-          ? 'border-yellow-300 bg-yellow-100 text-yellow-900'
-          : 'border-green-300 bg-green-100 text-green-900'
-      }`}
+      className={`rounded border px-2 py-0.5 text-xs font-medium ${statusKleur(waarde)}`}
     >
-      <option value="open">Open</option>
-      <option value="resolved">Opgelost</option>
+      {TECHNICAL_ISSUE_STATUSSEN.map((s) => (
+        <option key={s.waarde} value={s.waarde}>
+          {s.label}
+        </option>
+      ))}
     </select>
   );
 }
