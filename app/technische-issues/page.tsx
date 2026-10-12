@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
 import { IssueStatus, IssueVerwijderen } from './IssueRijActies';
-import { tiCode } from '@/lib/technical-issue-code';
+import NummerBadge from './NummerBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,20 +59,20 @@ export default async function TechnischeIssuesPage() {
                   <th className="px-4 py-3"><span className="sr-only">Acties</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-200">
                 {issues.map((issue) => (
                   <tr key={issue.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-5 align-top">
                       <Link
                         href={`/technische-issues/${issue.id}`}
                         className="text-shift2-primary hover:underline font-medium"
                       >
-                        <span className="font-mono text-xs text-gray-500">{tiCode(issue.nummer)}</span>{' '}
+                        <NummerBadge nummer={issue.nummer} />{' '}
                         {issue.title}
                       </Link>
                       {/* De Engelse URL van de detailpagina, om meteen door te klikken. */}
                       {issue.urlEn && (
-                        <div className="mt-1">
+                        <div className="mt-2">
                           <a
                             href={issue.urlEn}
                             target="_blank"
@@ -86,12 +86,12 @@ export default async function TechnischeIssuesPage() {
                         </div>
                       )}
                       {gekoppeldAan(issue).length > 0 && (
-                        <ul className="mt-1 space-y-0.5">
+                        <ul className="mt-2 space-y-1.5">
                           {gekoppeldAan(issue).map((g) => (
                             <li key={g.id} className="flex items-start gap-1 text-xs">
                               <svg
                                 aria-hidden="true"
-                                className="mt-0.5 h-3 w-3 shrink-0 text-gray-500"
+                                className="mt-0.5 h-3 w-3 shrink-0 text-orange-700"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth={2}
@@ -104,19 +104,19 @@ export default async function TechnischeIssuesPage() {
                                 className="text-gray-600 hover:text-shift2-primary hover:underline"
                               >
                                 <span className="sr-only">Gekoppeld aan </span>
-                                <span className="font-mono font-medium">{tiCode(g.nummer)}</span> {g.title}
+                                <NummerBadge nummer={g.nummer} gekoppeld /> {g.title}
                               </Link>
                             </li>
                           ))}
                         </ul>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{issue.supplier || '—'}</td>
-                    <td className="px-4 py-3 text-gray-700">
+                    <td className="px-4 py-5 align-top text-gray-700">{issue.supplier || '—'}</td>
+                    <td className="px-4 py-5 align-top text-gray-700">
                       {issue.wcagCriterion ? `${issue.wcagCriterion.code} (${issue.wcagCriterion.level})` : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{issue.impact || '—'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-5 align-top text-gray-700">{issue.impact || '—'}</td>
+                    <td className="px-4 py-5 align-top">
                       <div className="flex items-center gap-2 whitespace-nowrap">
                         <IssueStatus
                           id={issue.id}
@@ -127,7 +127,7 @@ export default async function TechnischeIssuesPage() {
                         {/* Gekoppeld is geen status: het staat ernaast, zodat de voortgang
                             zichtbaar blijft. De titels staan onder de issuetitel. */}
                         {gekoppeldAan(issue).length > 0 && (
-                          <span className="inline-flex items-center gap-0.5 rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-xs text-gray-700">
+                          <span className="inline-flex items-center gap-0.5 rounded border border-orange-300 bg-orange-100 px-1.5 py-0.5 text-xs text-orange-900">
                             <svg
                               aria-hidden="true"
                               className="h-3 w-3"
@@ -139,15 +139,19 @@ export default async function TechnischeIssuesPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                             </svg>
                             <span className="sr-only">Gekoppeld aan </span>
-                            <span className="font-mono">{gekoppeldAan(issue).map((g) => tiCode(g.nummer)).join(', ')}</span>
+                            {gekoppeldAan(issue).map((g, i) => (
+                              <span key={g.id} className="font-mono font-semibold">
+                                {i > 0 && ', '}#{g.nummer}
+                              </span>
+                            ))}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">
+                    <td className="px-4 py-5 align-top text-gray-600 text-xs">
                       {new Date(issue.createdAt).toLocaleDateString('nl-NL')}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-5 align-top text-right">
                       <IssueVerwijderen id={issue.id} titel={issue.title} />
                     </td>
                   </tr>

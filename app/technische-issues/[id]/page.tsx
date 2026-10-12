@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
 import TechnicalIssueDetail from './TechnicalIssueDetail';
-import { tiCode } from '@/lib/technical-issue-code';
+import NummerBadge from '../NummerBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +53,7 @@ export default async function TechnicalIssueDetailPage({
           </Link>
         </div>
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-          <span className="font-mono text-lg text-gray-500">{tiCode(issue.nummer)}</span>{' '}
+          <NummerBadge nummer={issue.nummer} groot />{' '}
           {issue.title}
         </h1>
         <TechnicalIssueDetail initial={initial} criteria={criteria} />

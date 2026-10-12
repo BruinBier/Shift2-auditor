@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TECHNICAL_ISSUE_STATUSSEN, statusKleur } from '@/lib/technical-issue-status';
 import { tiCode } from '@/lib/technical-issue-code';
+import NummerBadge from './NummerBadge';
 
 interface Item {
   id: string;
@@ -81,14 +82,14 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
       </p>
 
       {gekoppeld.length > 0 ? (
-        <ul aria-labelledby="werkitems-kop" className="mb-2 space-y-1">
+        <ul aria-labelledby="werkitems-kop" className="mb-3 space-y-2">
           {gekoppeld.map((g) => (
             <li key={g.id} className="flex items-start gap-2 text-sm">
               <span className={`mt-0.5 shrink-0 rounded border px-1.5 text-xs ${statusKleur(g.status)}`}>
                 {label(g.status)}
               </span>
               <Link href={`/technische-issues/${g.id}`} className="flex-1 text-shift2-primary hover:underline">
-                <span className="font-mono font-medium">{tiCode(g.nummer)}</span> {g.title}
+                <NummerBadge nummer={g.nummer} gekoppeld /> {g.title}
               </Link>
               <button
                 type="button"
@@ -128,7 +129,7 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
                 disabled={bezig}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50"
               >
-                <span className="font-mono text-gray-500">{tiCode(k.nummer)}</span> {k.title}
+                <NummerBadge nummer={k.nummer} /> {k.title}
                 {k.supplier && <span className="text-gray-500"> · {k.supplier}</span>}
               </button>
             </li>
