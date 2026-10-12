@@ -47,6 +47,9 @@ export default async function TechnicalIssueDetailPage({
     supplier: issue.supplier,
     status: issue.status,
     githubIssueUrl: issue.githubIssueUrl,
+    titleEn: issue.titleEn,
+    descriptionEn: issue.descriptionEn,
+    vertaaldOp: issue.vertaaldOp ? issue.vertaaldOp.toISOString() : null,
   };
 
   return (

@@ -522,6 +522,14 @@ supplier?, status?, githubIssueUrl? }`; `title` en `description` zijn verplicht,
 `supplier` is het filter: het domein van de klantsite (`beverwijk.nl`) voor fouten op de site,
 `shift2-auditor` voor verbeterpunten aan de tool zelf.
 
+Op de detailpagina staat onder titel en beschrijving de knop "Vertaal naar Engels". Die
+vertaalt de opgeslagen tekst via Azure Translator (`lib/azure-translator.ts`, route
+`/api/technical-issues/[id]/vertaal`) en bewaart de uitkomst bij het issue (`titleEn`,
+`descriptionEn`, `vertaaldOp`). Dat is een eigen Translator-resource in Azure, niet de
+spraaksleutel van de video's: `AZURE_TRANSLATOR_KEY` en `AZURE_TRANSLATOR_REGION` in `.env`,
+nooit in de repo en nooit tonen. In de lijst zelf kun je de status wijzigen en een issue
+verwijderen; een issue dat ook op GitHub staat, komt na verwijderen terug via de sync.
+
 De scheidingsregel: alles wat onder een succescriterium valt blijft een bevinding, ook als
 opmerking (een `strong` op een knoptekst is een 1.3.1-opmerking, geen technisch issue). Een
 kapotte `href` op een mail- of telefoonlink is het omgekeerde: een functioneel probleem dat

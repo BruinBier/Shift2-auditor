@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import Navigation from '@/app/components/Navigation';
 import { syncGithubIssuesToShift2 } from '@/lib/github-sync';
+import { IssueStatus, IssueVerwijderen } from './IssueRijActies';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +62,7 @@ export default async function TechnischeIssuesPage() {
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">GitHub</th>
                   <th className="px-4 py-3">Aangemaakt</th>
+                  <th className="px-4 py-3"><span className="sr-only">Acties</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -80,15 +82,7 @@ export default async function TechnischeIssuesPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-700">{issue.impact || '—'}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          issue.status === 'open'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}
-                      >
-                        {issue.status === 'open' ? 'Open' : 'Opgelost'}
-                      </span>
+                      <IssueStatus id={issue.id} status={issue.status} titel={issue.title} />
                     </td>
                     <td className="px-4 py-3">
                       {issue.githubIssueUrl ? (
@@ -106,6 +100,9 @@ export default async function TechnischeIssuesPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-600 text-xs">
                       {new Date(issue.createdAt).toLocaleDateString('nl-NL')}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <IssueVerwijderen id={issue.id} titel={issue.title} opGithub={!!issue.githubIssueUrl} />
                     </td>
                   </tr>
                 ))}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import EngelseVersie from './EngelseVersie';
 
 interface Criterion {
   id: string;
@@ -21,6 +22,9 @@ export interface TechnicalIssueFormValues {
   supplier: string | null;
   status: 'open' | 'resolved';
   githubIssueUrl: string | null;
+  titleEn?: string | null;
+  descriptionEn?: string | null;
+  vertaaldOp?: string | null;
 }
 
 interface Props {
@@ -133,18 +137,32 @@ export default function TechnicalIssueForm({ initial, criteria, mode }: Props) {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Verzoek <span className="text-gray-400 font-normal">(optioneel)</span>
-        </label>
-        <textarea
-          value={request}
-          onChange={(e) => setRequest(e.target.value)}
-          rows={4}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-shift2-primary font-mono"
-          placeholder="Wat is het verzoek aan het ontwikkelteam / de leverancier? Markdown ondersteund."
+      {mode === 'edit' && initial?.id && (
+        <EngelseVersie
+          id={initial.id}
+          titleEn={initial.titleEn ?? null}
+          descriptionEn={initial.descriptionEn ?? null}
+          vertaaldOp={initial.vertaaldOp ?? null}
+          nietOpgeslagen={title.trim() !== initial.title.trim() || description.trim() !== initial.description.trim()}
         />
-      </div>
+      )}
+
+      {/* Niet op de detailpagina (besluit Frits 2026-10-12). Een verzoek dat er al staat
+          blijft bewaard en gaat nog steeds mee naar GitHub; het veld is alleen weg. */}
+      {mode !== 'edit' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Verzoek <span className="text-gray-400 font-normal">(optioneel)</span>
+          </label>
+          <textarea
+            value={request}
+            onChange={(e) => setRequest(e.target.value)}
+            rows={4}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-shift2-primary font-mono"
+            placeholder="Wat is het verzoek aan het ontwikkelteam / de leverancier? Markdown ondersteund."
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>

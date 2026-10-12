@@ -1159,6 +1159,11 @@ model TechnicalIssue {
   supplier        String?
   status          TechnicalIssueStatus  @default(open)
   githubIssueUrl  String?               @map("github_issue_url")
+  /// Engelse vertaling van titel en beschrijving, via Azure Translator (knop op de detailpagina).
+  titleEn         String?               @map("title_en")
+  descriptionEn   String?               @db.Text @map("description_en")
+  /// Wanneer de vertaling is gemaakt; een latere wijziging van het Nederlands maakt haar oud.
+  vertaaldOp      DateTime?             @map("vertaald_op")
   createdAt       DateTime              @default(now()) @map("created_at")
   updatedAt       DateTime              @updatedAt @map("updated_at")
 
