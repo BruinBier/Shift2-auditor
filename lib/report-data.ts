@@ -29,6 +29,11 @@ export async function getReportData(projectId: string) {
       },
       criterionAssessments: { include: { wcagCriterion: true } },
       findings: {
+        // Alleen wat de onderzoeker heeft goedgekeurd. Een voorstel telt pas mee na
+        // akkoord (ADR 0001), en een afgewezen voorstel nooit. Tot 2026-10-13 kwamen
+        // ze hier allebei mee, en stonden er in het rapport van LEU-01 achttien
+        // afgewezen voorstellen tussen de bevindingen.
+        where: { status: { notIn: ['voorstel', 'afgewezen'] } },
         include: {
           wcagCriterion: true,
           occurrences: { include: { sampleItem: true } },

@@ -106,8 +106,12 @@ export async function PUT(
       const issues = lintFinding({
         description: updateData.description ?? existingFinding.description,
         advice: updateData.advice ?? existingFinding.advice,
-        impact: updateData.impact ?? existingFinding.impact,
-        responsibility: updateData.responsibility ?? existingFinding.responsibility,
+        // `in`, niet `??`: een meegestuurde null (impact leegmaken, bevinding wordt opmerking)
+        // viel met `??` terug op de oude waarde, en dan keurde de linter de opmerking af
+        // omdat er nog een impact op stond.
+        impact: 'impact' in updateData ? updateData.impact : existingFinding.impact,
+        responsibility:
+          'responsibility' in updateData ? updateData.responsibility : existingFinding.responsibility,
         status: updateData.status ?? existingFinding.status,
         type: updateData.type ?? existingFinding.type,
         criterionCode: criterion?.code,
