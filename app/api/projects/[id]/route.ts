@@ -66,7 +66,7 @@ async function ensureReinspectionChild(parentId: string) {
       dateStart: reinspectionStart,
       dateEnd: reinspectionEnd,
       researchStartedOn: null,
-      reportDate: reinspectionEnd ?? new Date(),
+      reportDate: reinspectionEnd ?? null,
       description: parent.description,
       isAnonymous: parent.isAnonymous,
       isPrivate: parent.isPrivate,
@@ -171,10 +171,10 @@ export async function PUT(
         researchStartedOn: body.researchStartedOn ? new Date(body.researchStartedOn) : null,
         // Default the rapportdatum to the deadline (dateEnd) rather than "today",
         // so editing a project without an explicit reportDate doesn't reset it
-        // to the current date. Falls back to today only when there is no deadline.
+        // to the current date. Zonder deadline blijft hij leeg (sinds 2026-10-14 optioneel).
         reportDate: body.reportDate
           ? new Date(body.reportDate)
-          : (body.dateEnd ? new Date(body.dateEnd) : new Date()),
+          : (body.dateEnd ? new Date(body.dateEnd) : null),
         description: body.description,
         isAnonymous: body.isAnonymous || false,
         isPrivate: body.isPrivate || false,

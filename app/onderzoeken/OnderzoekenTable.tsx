@@ -22,7 +22,7 @@ interface Project {
   controllerName: string | null;
   dateStart: string | null;
   dateEnd: string | null;
-  reportDate: string;
+  reportDate: string | null;
   auditedByOrg: string;
   plannedTime: string | null;
   researchStartedOn: string | null;
@@ -109,7 +109,9 @@ export default function OnderzoekenTable({ projects }: Props) {
   // Een extern bureau (Cardan) levert op zijn eigen moment op; wij leggen daar geen
   // deadline op vast. Bij een eigen onderzoek blijft de deadline verplicht, behalve
   // zolang het in de wacht staat.
-  const deadlineVereist = formData.status !== 'In de wacht' && !isExternBureau(formData.researcherName);
+  // Bij Intake en In de wacht is er nog geen planning: dan zijn de data nog niet bekend.
+  const startdatumVereist = formData.status !== 'In de wacht' && formData.status !== 'Intake';
+  const deadlineVereist = startdatumVereist && !isExternBureau(formData.researcherName);
   const [showAnonymousTooltip, setShowAnonymousTooltip] = useState(false);
   const [showPrivateTooltip, setShowPrivateTooltip] = useState(false);
   const [filters, setFilters] = useState({
@@ -519,7 +521,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       planningSent: formData.planningSent ? new Date(formData.planningSent).toISOString() : null,
       planningApproved: formData.planningApproved ? new Date(formData.planningApproved).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
-      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : new Date().toISOString(),
+      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : null,
       // Bij een extern bureau geeft de klant de datum van de herinspectie door; de
       // wekenlijst is dan niet van toepassing en mag niet stiekem meerekenen.
       reinspectionWeeks: extern ? null : formData.reinspectionWeeks,
@@ -561,7 +563,7 @@ export default function OnderzoekenTable({ projects }: Props) {
       planningSent: formData.planningSent ? new Date(formData.planningSent).toISOString() : null,
       planningApproved: formData.planningApproved ? new Date(formData.planningApproved).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
-      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : new Date().toISOString(),
+      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : null,
       // Bij een extern bureau geeft de klant de datum van de herinspectie door; de
       // wekenlijst is dan niet van toepassing en mag niet stiekem meerekenen.
       reinspectionWeeks: extern ? null : formData.reinspectionWeeks,
@@ -788,8 +790,9 @@ export default function OnderzoekenTable({ projects }: Props) {
     const projectsFromSameOrg = projects
       .filter(p => p.auditedByOrg === project.auditedByOrg)
       .sort((a, b) => {
-        const dateA = new Date(a.reportDate).getTime();
-        const dateB = new Date(b.reportDate).getTime();
+        // Zonder rapportdatum (intake) achteraan, niet als 1 januari 1970 vooraan.
+        const dateA = a.reportDate ? new Date(a.reportDate).getTime() : Infinity;
+        const dateB = b.reportDate ? new Date(b.reportDate).getTime() : Infinity;
         return dateA - dateB;
       });
 
@@ -2798,11 +2801,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startdatum {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
+                      Startdatum {startdatumVereist && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required={formData.status !== 'In de wacht'}
+                      required={startdatumVereist}
                       value={formData.dateStart}
                       onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -2850,20 +2853,35 @@ export default function OnderzoekenTable({ projects }: Props) {
                   </div>
                 </div>
 
-                {/* Herinspectie */}
+                {/* Soort onderzoek: nulmeting, of nulmeting met herinspectie. Eerst een
+                    schakelaar "Herinspectie inplannen", die niet als die keuze herkenbaar was;
+                    nu dezelfde twee keuzes als op de intakepagina. */}
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasReinspection}
-                        onChange={(e) => setFormData({ ...formData, hasReinspection: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
-                    </label>
-                    <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
-                  </div>
+                  <fieldset className="mb-3">
+                    <legend className="text-sm font-medium text-gray-700 mb-2">Soort onderzoek</legend>
+                    <div className="flex flex-wrap gap-6">
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="soort-onderzoek"
+                          checked={!formData.hasReinspection}
+                          onChange={() => setFormData({ ...formData, hasReinspection: false })}
+                          className="h-4 w-4 text-shift2-primary focus:ring-shift2-primary"
+                        />
+                        Nulmeting
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="soort-onderzoek"
+                          checked={!!formData.hasReinspection}
+                          onChange={() => setFormData({ ...formData, hasReinspection: true })}
+                          className="h-4 w-4 text-shift2-primary focus:ring-shift2-primary"
+                        />
+                        Nulmeting met herinspectie
+                      </label>
+                    </div>
+                  </fieldset>
                   {formData.hasReinspection && isExternBureau(formData.researcherName) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -3349,11 +3367,11 @@ export default function OnderzoekenTable({ projects }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startdatum {formData.status !== 'In de wacht' && <span className="text-gray-400">vereist</span>}
+                      Startdatum {startdatumVereist && <span className="text-gray-400">vereist</span>}
                     </label>
                     <input
                       type="date"
-                      required={formData.status !== 'In de wacht'}
+                      required={startdatumVereist}
                       value={formData.dateStart}
                       onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-shift2-primary focus:border-shift2-primary"
@@ -3401,20 +3419,35 @@ export default function OnderzoekenTable({ projects }: Props) {
                   </div>
                 </div>
 
-                {/* Herinspectie */}
+                {/* Soort onderzoek: nulmeting, of nulmeting met herinspectie. Eerst een
+                    schakelaar "Herinspectie inplannen", die niet als die keuze herkenbaar was;
+                    nu dezelfde twee keuzes als op de intakepagina. */}
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasReinspection}
-                        onChange={(e) => setFormData({ ...formData, hasReinspection: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-shift2-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-shift2-primary"></div>
-                    </label>
-                    <span className="text-sm font-medium text-gray-700">Herinspectie inplannen</span>
-                  </div>
+                  <fieldset className="mb-3">
+                    <legend className="text-sm font-medium text-gray-700 mb-2">Soort onderzoek</legend>
+                    <div className="flex flex-wrap gap-6">
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="soort-onderzoek"
+                          checked={!formData.hasReinspection}
+                          onChange={() => setFormData({ ...formData, hasReinspection: false })}
+                          className="h-4 w-4 text-shift2-primary focus:ring-shift2-primary"
+                        />
+                        Nulmeting
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="soort-onderzoek"
+                          checked={!!formData.hasReinspection}
+                          onChange={() => setFormData({ ...formData, hasReinspection: true })}
+                          className="h-4 w-4 text-shift2-primary focus:ring-shift2-primary"
+                        />
+                        Nulmeting met herinspectie
+                      </label>
+                    </div>
+                  </fieldset>
                   {formData.hasReinspection && isExternBureau(formData.researcherName) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">

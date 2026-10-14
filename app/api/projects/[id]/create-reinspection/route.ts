@@ -88,7 +88,7 @@ export async function POST(
         plannedTime: parent.plannedTime,
         dateStart: null,
         dateEnd: null,
-        reportDate: new Date(),
+        reportDate: null,
         description: parent.description,
         notes: parent.notes,
         isAnonymous: parent.isAnonymous,

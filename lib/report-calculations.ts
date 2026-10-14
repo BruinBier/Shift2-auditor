@@ -28,7 +28,7 @@ export interface ProjectWithRelations {
   researchType: string;
   dateStart: Date | null;
   dateEnd: Date | null;
-  reportDate: Date;
+  reportDate: Date | null;
   clientName: string | null;
   commissionedBy: string | null;
   auditedByOrg: string;

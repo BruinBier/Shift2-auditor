@@ -87,7 +87,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
     version: parseFloat(String(project.version)),
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
-    reportDate: project.reportDate.toISOString(),
+    reportDate: project.reportDate ? project.reportDate.toISOString() : null,
     userAgents: project.userAgents || null,
     nulmetingDates,
     nulmetingFailedCriteria: data.nulmetingFailedCriteria,

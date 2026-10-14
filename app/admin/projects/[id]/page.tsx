@@ -199,7 +199,7 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
     researchStartedOn: project.researchStartedOn?.toISOString() || null,
-    reportDate: project.reportDate.toISOString(),
+    reportDate: project.reportDate ? project.reportDate.toISOString() : null,
     findings: project.findings.map((f: any) => ({
       ...f,
       createdAt: f.createdAt.toISOString(),
@@ -216,7 +216,7 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
     dateStart: p.dateStart?.toISOString() || null,
     dateEnd: p.dateEnd?.toISOString() || null,
     researchStartedOn: p.researchStartedOn?.toISOString() || null,
-    reportDate: p.reportDate.toISOString(),
+    reportDate: p.reportDate ? p.reportDate.toISOString() : null,
   }));
 
   // De uitleg boven aan een kaart in "Waar sta ik" komt uit het regelbestand van het

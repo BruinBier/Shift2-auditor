@@ -123,7 +123,7 @@ export default function NewProjectPage() {
       dateStart: formData.dateStart ? new Date(formData.dateStart).toISOString() : null,
       dateEnd: formData.dateEnd ? new Date(formData.dateEnd).toISOString() : null,
       researchStartedOn: formData.researchStartedOn ? new Date(formData.researchStartedOn).toISOString() : null,
-      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : new Date().toISOString(),
+      reportDate: formData.reportDate ? new Date(formData.reportDate).toISOString() : null,
     };
 
     const response = await fetch('/api/projects', {

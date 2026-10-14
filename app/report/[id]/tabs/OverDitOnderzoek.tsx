@@ -176,7 +176,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
   // Use researchStartedOn instead of dateStart for the report
   const dateStart = project.researchStartedOn ? new Date(project.researchStartedOn) : (project.dateStart ? new Date(project.dateStart) : null);
   const dateEnd = project.dateEnd ? new Date(project.dateEnd) : null;
-  const reportDate = new Date(project.reportDate);
+  // Leeg zolang er geen rapportdatum is (intake); dan staat er een streepje.
+  const reportDate = project.reportDate ? new Date(project.reportDate) : null;
 
   // Prepare criteria data sorted by code (numerically)
   const sortedCriteria = [...project.criterionAssessments].sort((a: any, b: any) => {
@@ -598,7 +599,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
               <dt className="font-medium text-gray-600">Rapportversie:</dt>
               <dd className="text-gray-900">{Number(project.version).toFixed(1)}</dd>
               <dt className="font-medium text-gray-600">Datum:</dt>
-              <dd className="text-gray-900">{format(reportDate, 'd MMMM yyyy', { locale: nl })}</dd>
+              <dd className="text-gray-900">{reportDate ? format(reportDate, 'd MMMM yyyy', { locale: nl }) : '-'}</dd>
             </dl>
           </div>
         </section>
@@ -1687,7 +1688,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
             <dd>{project.commissionedBy || 'n.v.t.'}</dd>
             <dt>Rapportdatum</dt>
             <dd>
-              {format(reportDate, 'd MMMM yyyy', { locale: nl })}
+              {reportDate ? format(reportDate, 'd MMMM yyyy', { locale: nl }) : '-'}
             </dd>
             <dt>Onderzocht door</dt>
             <dd>{teamName}</dd>

@@ -147,7 +147,7 @@ export async function POST(request: Request) {
         accountmanager: opdrachtgever.accountmanager,
         hasReinspection: hertest,
         reinspectionWeeks: hertest ? Number(body.reinspectionWeeks) || 12 : null,
-        reportDate: new Date(),
+        // Geen rapportdatum: die is bij een intake nog niet bekend.
         scopeInScope: volledigeUrl,
       },
     });

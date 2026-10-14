@@ -133,7 +133,8 @@ model Project {
   dateStart               DateTime?      @map("date_start")
   dateEnd                 DateTime?      @map("date_end")
   researchStartedOn       DateTime?      @map("research_started_on")
-  reportDate              DateTime       @default(now()) @map("report_date")
+  /// Leeg tot de rapportdatum bekend is (bij intake nog niet). Was tot 2026-10-14 verplicht met now() als standaard.
+  reportDate              DateTime?      @map("report_date")
   description             String?        @db.Text
   notes                   String?        @db.Text
   isAnonymous             Boolean        @default(false) @map("is_anonymous")

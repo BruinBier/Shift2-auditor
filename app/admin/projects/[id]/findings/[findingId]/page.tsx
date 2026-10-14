@@ -71,7 +71,7 @@ export default async function FindingDetailPage({
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
     researchStartedOn: project.researchStartedOn?.toISOString() || null,
-    reportDate: project.reportDate.toISOString(),
+    reportDate: project.reportDate ? project.reportDate.toISOString() : null,
   };
 
   return <FindingDetailView project={projectData} finding={findingData} allCriteria={allCriteria} findingIndex={findingIndex} sampleItems={sampleItems} />;

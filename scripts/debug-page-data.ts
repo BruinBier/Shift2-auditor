@@ -87,7 +87,7 @@ async function main() {
     version: parseFloat(String(project.version)),
     dateStart: project.dateStart?.toISOString() || null,
     dateEnd: project.dateEnd?.toISOString() || null,
-    reportDate: project.reportDate.toISOString(),
+    reportDate: project.reportDate?.toISOString() || null,
     userAgents: project.userAgents || null,
     findings: project.findings.map((f: any) => ({
       ...f,
