@@ -1409,7 +1409,8 @@ is een keurige, werkende pagina met de goede titel. Op heuvelrug.nl leiden zowel
 stap 3 van het contactformulier terug naar stap 1.
 
 \`get-html\` geeft een veld \`gehydrateerd\` terug. Normaal staat dat op true: de CLI haalt
-de pagina met een echte browser op, dus de JavaScript van de site draait.
+de pagina met een echte browser op, dus de JavaScript van de site draait. Ook een site zonder
+React of Vue krijgt true (veld \`javascript\`: 'geen-framework'); dat is geen reden tot twijfel.
 
 Staat het op false, dan is er iets mis met de pagina zelf — een scriptfout, een geblokkeerd
 bestand. De HTML is er dan wel, maar er hangt geen enkele klikafhandelaar aan. Een knop

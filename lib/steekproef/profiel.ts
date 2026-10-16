@@ -14,7 +14,7 @@ import { PROFIELKEUZE_VERSIE, type Reden } from './profielkeuze';
  */
 
 /** Verhoog bij elke wijziging aan wat er gemeten wordt (profiel-meting.browser.js). */
-export const PROFIEL_VERSIE = 2; // 2: geen kaartjes in uitklapblokken, geen galerij in een overzicht, geen banner als foto in tekst
+export const PROFIEL_VERSIE = 3; // 3: `gehydrateerd` komt van de CLI (lib/javascript-leeft.ts), niet meer uit de pagina. 2: 2: geen kaartjes in uitklapblokken, geen galerij in een overzicht, geen banner als foto in tekst
 
 export const PROFIEL_VERSIES = {
   profiel: PROFIEL_VERSIE,
@@ -33,7 +33,6 @@ export interface PaginaMeting {
   titel: string;
   bereik: 'main' | 'body';
   htmlTaal: string | null;
-  gehydrateerd: boolean;
   cookiescherm: { tekst: string; dekking: number } | null;
   kenmerken: any;
 }

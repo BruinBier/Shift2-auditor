@@ -599,7 +599,8 @@ browserpaneel: daar hydrateert React niet, en een knop die niets doet ziet er pr
 als een echte bevinding.
 
 Geeft \`get-html\` \`gehydrateerd: false\` terug, trek dan geen conclusies over toetsenbord,
-menu's, schakelknoppen of zoeksuggesties — meld dat in \`openVragen\`.${
+menu's, schakelknoppen of zoeksuggesties — meld dat in \`openVragen\`. Een site zonder React
+of Vue krijgt gewoon true (\`javascript: 'geen-framework'\`).${
         isPdf(sample)
           ? `
 

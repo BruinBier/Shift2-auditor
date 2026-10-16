@@ -44,6 +44,7 @@ import {
   slugifyUrl,
   timestamp,
 } from './lib/browser-fetch';
+import { meetJavascript } from './lib/javascript-meting';
 import { legVast, leesLogboek } from './lib/audit-log';
 import { ALTIJD_NIET_AANWEZIG, CRITERIA_PER_COMMANDO, leesbareAanroep } from '../lib/metingen';
 import {
@@ -619,6 +620,9 @@ async function steekproefProfiel(projectId: string, flags: Flags) {
           );
           try {
             const meting = await page.evaluate(`(${script})(${JSON.stringify({ maxBewijs: 5 })})`);
+            // Dezelfde controle als bij get-html; de meting in de pagina kan de
+            // klikafhandelaars niet tellen.
+            const js = await meetJavascript(page);
             const dir = ensureOutputDir();
             const beeld = path.join(dir, `${timestamp()}-${slugifyUrl(eindUrl)}-profiel.png`);
             try {
@@ -631,7 +635,7 @@ async function steekproefProfiel(projectId: string, flags: Flags) {
               eindUrl,
               titel: (meting as any).titel,
               browser: session.mode,
-              gehydrateerd: (meting as any).gehydrateerd,
+              gehydrateerd: js.gehydrateerd,
               cookiescherm: (meting as any).cookiescherm,
               dichtgeklapt: dichtgeklapt.aantal,
               bereik: (meting as any).bereik,
@@ -1343,12 +1347,10 @@ async function getHtml(url: string, flags: Flags) {
       // toets levert dan een vals negatief op dat er precies uitziet als een
       // echte bevinding: de knop doet niets, de suggesties verschijnen niet, het
       // menu klapt niet uit. Zonder dit veld is dat niet te onderscheiden van
-      // een site die werkelijk stuk is.
-      const gehydrateerd = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('body *')).some((e) =>
-          Object.keys(e).some((k) => k.startsWith('__react') || k.startsWith('__vue')),
-        ),
-      );
+      // een site die werkelijk stuk is. Een site zonder framework krijgt geen
+      // `false` meer omdat er geen React-sleutels zijn: zie lib/javascript-leeft.ts.
+      const js = await meetJavascript(page);
+      const gehydrateerd = js.gehydrateerd;
 
       const dir = ensureOutputDir();
       const ext = wantText ? 'txt' : 'html';
@@ -1412,6 +1414,7 @@ async function getHtml(url: string, flags: Flags) {
           bytes: content.length,
           dichtgeklapt: dichtgeklapt.aantal,
           gehydrateerd,
+          javascript: js.javascript,
         },
       });
 
@@ -1432,9 +1435,11 @@ async function getHtml(url: string, flags: Flags) {
           ? `De server stuurde door van ${gevraagdeUrl} naar ${eindUrl}. Dit is een andere pagina dan gevraagd; beoordeel hem niet als de gevraagde. Bij een formulier met stappen kom je hier terecht als de vorige stap niet is ingevuld.`
           : undefined,
         gehydrateerd,
-        waarschuwing: gehydrateerd
-          ? undefined
-          : 'De JavaScript van deze pagina draait niet: er hangen geen klikafhandelaars aan. Trek hieruit GEEN conclusies over interactieve criteria (toetsenbord, uitklapmenu, zoeksuggesties, schakelknoppen). Start de audit-Chrome met `npm run chrome:debug` en haal de pagina opnieuw op.',
+        // Waarom: 'gehydrateerd' (framework draait), 'niet-gehydrateerd' (framework-HTML zonder
+        // afhandelaars), 'geen-framework' (gewone JavaScript of geen), 'geen-afhandelaars'.
+        javascript: js.javascript,
+        javascript_toelichting: js.toelichting,
+        waarschuwing: js.waarschuwing,
         // Hoeveel inhoud er dichtgeklapt staat, en dus niet in deze meting zit. Nul is een
         // uitkomst en geen leegte: dan is vastgesteld dat er niets verborgen was.
         dichtgeklapt: dichtgeklapt.aantal,
