@@ -15,6 +15,7 @@ const NIEUW: CasusVelden = {
   correcteCode: '',
   uitleg: '',
   isValkuil: false,
+  categorie: '',
   oefensets: [],
   volgorde: 0,
 };
@@ -23,10 +24,12 @@ export default function Casussen({
   patroon,
   casussen,
   oefensets,
+  categorieen,
 }: {
   patroon: { id: string; oordeel: string; criteria: string[] };
   casussen: CasusVelden[];
   oefensets: Oefenset[];
+  categorieen: string[];
 }) {
   const router = useRouter();
   const [bewerkt, setBewerkt] = useState<string | null>(null);
@@ -57,7 +60,7 @@ export default function Casussen({
         {casussen.map((c) => (
           <li key={c.id} className="bg-white rounded-lg border border-gray-200 p-4">
             {bewerkt === c.id ? (
-              <Casuseditor patroonId={patroon.id} casus={c} oefensets={oefensets} onKlaar={klaar}
+              <Casuseditor patroonId={patroon.id} casus={c} oefensets={oefensets} categorieen={categorieen} onKlaar={klaar}
                 onAnnuleer={() => setBewerkt(null)} />
             ) : (
               <div className="flex flex-wrap items-center gap-3">
@@ -86,7 +89,7 @@ export default function Casussen({
 
       {bewerkt === 'nieuw' ? (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <Casuseditor patroonId={patroon.id} casus={NIEUW} oefensets={oefensets} onKlaar={klaar}
+          <Casuseditor patroonId={patroon.id} casus={NIEUW} oefensets={oefensets} categorieen={categorieen} onKlaar={klaar}
             onAnnuleer={() => setBewerkt(null)} />
         </div>
       ) : (

@@ -1492,6 +1492,9 @@ model Casus {
   correcteCode String   @default("") @map("correcte_code") @db.Text
   uitleg       String   @default("") @db.Text
   isValkuil    Boolean  @default(false) @map("is_valkuil")
+  /// Kop waaronder de casus in de oefenmodus staat ('Koppen', 'Valkuilen').
+  /// Komt uit de prototypes (scripts/vul-casuscategorieen.ts). Leeg = 'Overig'.
+  categorie    String?
   /// Ids van Oefenset; gecontroleerd door de app, zoals de criteria.
   oefensets    String[]
   volgorde     Int      @default(0)

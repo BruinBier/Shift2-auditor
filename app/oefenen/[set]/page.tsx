@@ -45,6 +45,7 @@ export default async function OefenenPage({ params }: { params: { set: string } 
       correcteCode: c.correcteCode,
       uitleg: c.uitleg,
       isValkuil: c.isValkuil,
+      categorie: c.categorie,
       oordeel,
       criteria: c.patroon.criteria,
       technieken: c.patroon.technieken,

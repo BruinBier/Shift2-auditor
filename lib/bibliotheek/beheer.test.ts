@@ -5,6 +5,7 @@ import path from 'path';
 import { hoofddomein, zoekKlantdata } from './klantdata';
 import { casusId, controleerCasus, controleerPatroon, lijst, patroonId } from './validatie';
 import type { Seed } from './seed';
+import { categorieenUitPrototype, groepeer, PROTOTYPEN } from './categorieen';
 
 /**
  * De controles van het beheer: klantdata (besluit 13), criteria tegen
@@ -87,4 +88,21 @@ test('ids volgen de seed en botsen niet', () => {
 test('casus: onbekende oefenset en lege HTML worden geweigerd', () => {
   const { fouten } = controleerCasus({ titel: 'x', html: ' ', oefensets: ['XYZ'] }, new Set(['131']));
   assert.equal(fouten.length, 2);
+});
+
+test('categorieën: elke casus uit de seed staat in een categorie van zijn prototype', () => {
+  const gevonden = new Map<string, string>();
+  for (const [set, bestand] of Object.entries(PROTOTYPEN)) {
+    const html = readFileSync(path.join(__dirname, '../../docs/bibliotheek/prototypes', bestand), 'utf8');
+    categorieenUitPrototype(html, set).forEach((kop, id) => gevonden.set(id, kop));
+  }
+  assert.equal(gevonden.size, 78);
+  for (const c of seed.casussen) assert.ok(gevonden.has(c.id), c.id);
+  assert.equal(gevonden.get('131-K1'), 'Koppen');
+  assert.equal(gevonden.get('131-V1'), 'Valkuilen');
+});
+
+test('groeperen: volgorde van eerste voorkomen, leeg wordt Overig', () => {
+  const g = groepeer([{ categorie: 'Koppen' }, { categorie: null }, { categorie: 'Koppen' }, { categorie: 'Lijsten' }]);
+  assert.deepEqual(g.map((x) => [x.titel, x.casussen.length]), [['Koppen', 2], ['Overig', 1], ['Lijsten', 1]]);
 });

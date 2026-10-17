@@ -121,6 +121,7 @@ export type CasusData = {
   correcteCode: string;
   uitleg: string;
   isValkuil: boolean;
+  categorie: string | null;
   oefensets: string[];
   volgorde: number;
 };
@@ -145,6 +146,7 @@ export function controleerCasus(ruw: Ruw, bekendeOefensets: Set<string>): { fout
       correcteCode: tekst(ruw.correcteCode),
       uitleg: tekst(ruw.uitleg),
       isValkuil: ruw.isValkuil === true,
+      categorie: tekst(ruw.categorie).trim() || null,
       oefensets,
       volgorde: Number.isInteger(volgorde) ? volgorde : 0,
     },

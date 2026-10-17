@@ -35,10 +35,12 @@ export default async function PatroonPage({
   });
   if (!patroon) notFound();
 
-  const [criteria, oefensets] = await Promise.all([
+  const [criteria, oefensets, categorieRijen] = await Promise.all([
     prisma.wCAGCriterion.findMany({ select: { code: true, titleNl: true }, orderBy: { code: 'asc' } }),
     prisma.oefenset.findMany({ select: { id: true, titel: true, paginaCss: true }, orderBy: { id: 'asc' } }),
+    prisma.casus.findMany({ where: { categorie: { not: null } }, select: { categorie: true }, distinct: ['categorie'] }),
   ]);
+  const categorieen = categorieRijen.map((r) => r.categorie!).sort((a, b) => a.localeCompare(b, 'nl'));
 
   const tab = TABS.some((t) => t.id === searchParams.tab) ? searchParams.tab! : 'oordeel';
   const href = (t: string) => `/admin/bibliotheek/${encodeURIComponent(patroon.id)}?tab=${t}`;
@@ -133,10 +135,12 @@ export default async function PatroonPage({
               correcteCode: c.correcteCode,
               uitleg: c.uitleg,
               isValkuil: c.isValkuil,
+              categorie: c.categorie ?? '',
               oefensets: c.oefensets,
               volgorde: c.volgorde,
             }))}
             oefensets={oefensets}
+            categorieen={categorieen}
           />
         )}
         {tab === 'rapporten' && <InRapporten rapporten={rapporten} />}

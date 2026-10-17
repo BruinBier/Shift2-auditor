@@ -14,7 +14,10 @@ import assert from 'node:assert/strict';
 import puppeteer, { type Browser, type Page } from 'puppeteer';
 import axeCore from 'axe-core';
 import { PrismaClient } from '@prisma/client';
+import { readFileSync } from 'fs';
+import path from 'path';
 import { juistAntwoord, oordeelUitDatabase, teltMee } from '../lib/bibliotheek/oefenen';
+import { PROTOTYPEN } from '../lib/bibliotheek/categorieen';
 
 const BASIS = process.env.AUDIT_CLI_BASE_URL ?? 'http://localhost:3000';
 const prisma = new PrismaClient();
@@ -130,6 +133,19 @@ test('broncode: bestandsnamen, geen data-URI, geen horizontale scroll bij 320 px
       breedte: document.documentElement.clientWidth,
     }));
     assert.ok(scroll <= breedte, `oefenset ${set.id}: ${scroll}px breed bij ${breedte}px`);
+    await page.close();
+  }
+});
+
+test('categorieën en hun volgorde zoals in het prototype', async () => {
+  for (const set of sets) {
+    const bestand = PROTOTYPEN[set.id];
+    if (!bestand) continue;
+    const proto = readFileSync(path.join('docs', 'bibliotheek', 'prototypes', bestand), 'utf8');
+    const verwacht = Array.from(proto.matchAll(/<section class="cat"[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>/g)).map((m) => m[1].trim());
+    const page = await open(set.id);
+    const koppen = await page.$$eval('section.cat > h2', (els) => els.map((e) => e.textContent?.trim()));
+    assert.deepEqual(koppen, verwacht, `oefenset ${set.id}`);
     await page.close();
   }
 });

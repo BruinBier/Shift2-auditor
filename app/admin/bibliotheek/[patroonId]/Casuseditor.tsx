@@ -19,6 +19,7 @@ export type CasusVelden = {
   correcteCode: string;
   uitleg: string;
   isValkuil: boolean;
+  categorie: string;
   oefensets: string[];
   volgorde: number;
 };
@@ -40,12 +41,15 @@ export default function Casuseditor({
   patroonId,
   casus,
   oefensets,
+  categorieen,
   onKlaar,
   onAnnuleer,
 }: {
   patroonId: string;
   casus: CasusVelden;
   oefensets: { id: string; titel: string; paginaCss: string }[];
+  /** Bestaande categorieën, als suggestie. */
+  categorieen: string[];
   onKlaar: () => void;
   onAnnuleer: () => void;
 }) {
@@ -170,6 +174,20 @@ export default function Casuseditor({
           <input type="checkbox" checked={v.isValkuil} onChange={(e) => zet('isValkuil', e.target.checked)} />
           Valkuil
         </label>
+      </div>
+
+      <div>
+        <label htmlFor={`${prefix}-categorie`} className={label}>Categorie in de oefenmodus</label>
+        <input id={`${prefix}-categorie`} className={invoer} value={v.categorie} list={`${prefix}-categorieen`}
+          onChange={(e) => zet('categorie', e.target.value)} aria-describedby={`${prefix}-categorie-hulp`} />
+        <datalist id={`${prefix}-categorieen`}>
+          {categorieen.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+        <p id={`${prefix}-categorie-hulp`} className="text-xs text-gray-600 mt-1">
+          De kop waaronder de casus staat, bijvoorbeeld Koppen of Valkuilen. Leeg is Overig.
+        </p>
       </div>
 
       <fieldset>

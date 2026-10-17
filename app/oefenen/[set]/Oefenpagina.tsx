@@ -13,6 +13,7 @@ import {
   type Antwoord,
 } from '@/lib/bibliotheek/oefenen';
 import type { OordeelWaarde } from '@/lib/bibliotheek/overeenstemming';
+import { groepeer } from '@/lib/bibliotheek/categorieen';
 
 export type OefenCasus = {
   id: string;
@@ -23,6 +24,7 @@ export type OefenCasus = {
   correcteCode: string;
   uitleg: string;
   isValkuil: boolean;
+  categorie: string | null;
   oordeel: OordeelWaarde;
   criteria: string[];
   technieken: string[];
@@ -86,14 +88,15 @@ export default function Oefenpagina({ set, casussen, buitenBeschouwing }: Props)
     return () => window.removeEventListener('message', ontvang);
   }, []);
 
-  const groepen = useMemo(() => {
-    const gewoon = casussen.filter((c) => !c.isValkuil);
-    const valkuilen = casussen.filter((c) => c.isValkuil);
-    return [
-      { id: 'casussen', titel: 'Casussen', casussen: gewoon },
-      { id: 'valkuilen', titel: 'Valkuilen', casussen: valkuilen },
-    ].filter((g) => g.casussen.length > 0);
-  }, [casussen]);
+  // Categorieën zoals in de prototypes; het anker is een slug van de kop.
+  const groepen = useMemo(
+    () =>
+      groepeer(casussen).map((g, i) => ({
+        ...g,
+        id: `cat-${i + 1}-${g.titel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
+      })),
+    [casussen],
+  );
 
   const beoordeeld = casussen.filter((c) => antwoorden[c.id]).length;
   const goed = casussen.filter((c) => antwoorden[c.id] && antwoorden[c.id] === juistAntwoord(c.oordeel)).length;
