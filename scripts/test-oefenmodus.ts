@@ -134,6 +134,15 @@ test('broncode: bestandsnamen, geen data-URI, geen horizontale scroll bij 320 px
   }
 });
 
+test('casussen gebruiken de volle kolom, net als de kop', async () => {
+  const page = await open(sets[0].id);
+  const [kop, casus] = await page.$$eval('header.intro, article.case', (els) =>
+    els.slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().width)),
+  );
+  assert.equal(casus, kop);
+  await page.close();
+});
+
 test('oefenmodus zelf: geen axe-fouten, koppen alleen van de pagina', async () => {
   for (const set of sets) {
     const page = await open(set.id);

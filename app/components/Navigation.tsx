@@ -279,6 +279,19 @@ export default function Navigation() {
                     </svg>
                   </Link>
                   <Link
+                    href="/admin/bibliotheek"
+                    onClick={() => setShowBeheerMenu(false)}
+                    className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
+                    style={{ transition: 'background-color 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F0F0'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    Patronen
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </Link>
+                  <Link
                     href="/admin/pdf-bouwer"
                     onClick={() => setShowBeheerMenu(false)}
                     className="beheer-menu-item flex items-center justify-between px-4 py-2 text-sm text-gray-700"
