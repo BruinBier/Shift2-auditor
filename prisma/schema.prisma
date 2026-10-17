@@ -1388,3 +1388,221 @@ model Urenregel {
   @@index([projectId])
   @@map("urenregels")
 }
+
+// ---------------------------------------------------------------------------
+// Patronenbibliotheek (docs/bibliotheek/SPEC.md, fase 1)
+//
+// Staat naast de QuickFindings en raakt ze niet; of die erin opgaan is een
+// vraag voor fase 2 (besluit 4). Criteria zijn codes uit `wcag_criteria`; de app
+// controleert ze bij import en opslaan, er is geen tweede lijst (besluit 5).
+// Ids komen uit de seed ('P-131-rijkop-als-td', 'HUW-R3', 'cardan').
+// ---------------------------------------------------------------------------
+
+/// Het Shift2-oordeel over een patroon. `advies` is geen afkeur; in de
+/// oefenmodus is Geen afkeur daar het juiste antwoord (besluit 6).
+enum Oordeel {
+  afkeur
+  geen_afkeur @map("geen-afkeur")
+  advies
+  twijfel
+}
+
+/// Waar de fout vandaan komt: de leverancier (template), de redacteur
+/// (content), de instellingen (configuratie) of een dienst van buiten (extern).
+enum Herkomst {
+  template
+  content
+  configuratie
+  extern
+}
+
+enum WcagVersie {
+  wcag_2_0 @map("2.0")
+  wcag_2_1 @map("2.1")
+  wcag_2_2 @map("2.2")
+}
+
+enum PatroonStatus {
+  concept
+  vastgesteld
+}
+
+enum BronStatus {
+  gevonden
+  gedownload
+  verwerkt
+}
+
+enum Rapportvorm {
+  pdf
+  online
+}
+
+enum Overeenstemming {
+  eens
+  ander_criterium @map("ander-criterium")
+  te_streng       @map("te-streng")
+  te_soepel       @map("te-soepel")
+}
+
+/// Een terugkerend type fout of twijfelgeval, met één Shift2-oordeel. Oordeel en
+/// criteria staan alleen hier, nooit op de casus.
+///
+/// Mag pas naar `vastgesteld` als het niet botst met het regelbestand van zijn
+/// criterium in wcag-regels/; dat regelbestand is leidend (besluit 8). Alleen
+/// Frits stelt vast; dat is een afspraak, de app kent geen gebruikers (besluit 1).
+model Patroon {
+  id              String        @id
+  titel           String
+  omschrijving    String        @default("") @db.Text
+  criteria        String[]
+  oordeel         Oordeel
+  onderbouwing    String        @default("") @db.Text
+  /// W3C-technieken en -failures, vrij: 'F91', 'H51', 'Situatie A: G94 met H37'.
+  technieken      String[]      @default([])
+  herkomst        Herkomst
+  wcag            WcagVersie[]
+  standaardTekst  String        @default("") @map("standaard_tekst") @db.Text
+  advies          String        @default("") @db.Text
+  /// Onderwerpen ('kop', 'tabel'), geen template- of CMS-namen (besluit 3).
+  tags            String[]      @default([])
+  status          PatroonStatus @default(concept)
+  vastgesteldDoor String?       @map("vastgesteld_door")
+  vastgesteldOp   DateTime?     @map("vastgesteld_op")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  casussen           Casus[]
+  rapportBevindingen RapportBevinding[]
+
+  @@index([status])
+  @@map("bibliotheek_patronen")
+}
+
+/// Een werkend testgebied bij een patroon. Rendert alleen in een sandboxed
+/// iframe zonder allow-same-origin, nooit in de DOM van de app.
+model Casus {
+  id           String   @id
+  patroonId    String   @map("patroon_id")
+  titel        String
+  html         String   @db.Text
+  css          String?  @db.Text
+  js           String?  @db.Text
+  /// Leeg = de code is in orde.
+  correcteCode String   @default("") @map("correcte_code") @db.Text
+  uitleg       String   @default("") @db.Text
+  isValkuil    Boolean  @default(false) @map("is_valkuil")
+  /// Ids van Oefenset; gecontroleerd door de app, zoals de criteria.
+  oefensets    String[]
+  volgorde     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  /// Restrict: een patroon met casussen verdwijnt niet ongemerkt.
+  patroon            Patroon            @relation(fields: [patroonId], references: [id], onDelete: Restrict)
+  rapportBevindingen RapportBevinding[]
+
+  @@index([patroonId])
+  @@map("bibliotheek_casussen")
+}
+
+/// Een verzameling casussen om te oefenen, per criterium ('131') of per
+/// bronrapport ('HUW'). `paginaCss` is de CSS van de prototypepagina; de
+/// regels die testgebieden nodig hebben worden de basisstijl in het iframe.
+model Oefenset {
+  id        String   @id
+  titel     String
+  paginaCss String   @default("") @map("pagina_css") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("bibliotheek_oefensets")
+}
+
+/// Het bureau achter een extern rapport.
+model Auditor {
+  id               String      @id
+  naam             String
+  rapportvorm      Rapportvorm
+  rapportOverzicht String?     @map("rapport_overzicht")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  bronnen Bron[]
+
+  @@map("bibliotheek_auditors")
+}
+
+/// Een extern of eigen auditrapport. Bij `vertrouwelijk` verschijnt de
+/// organisatie nergens buiten het register.
+model Bron {
+  id            String       @id
+  organisatie   String
+  onderdeel     String       @default("")
+  auditorId     String?      @map("auditor_id")
+  /// false als de auditor alleen uit de bestandsnaam is afgeleid.
+  auditorZeker  Boolean      @default(true) @map("auditor_zeker")
+  /// Vrij: volledig, content, hercontrole, ...
+  type          String       @default("")
+  /// Lijst, want een rapport kan meer versies noemen ('2.0 en 2.1').
+  wcag          WcagVersie[] @default([])
+  /// Tekst zoals in het rapport ('jul 2026'); vaak onbekend.
+  datum         String?
+  url           String       @default("")
+  bestand       String?
+  hoofdsite     Boolean      @default(false)
+  cms           String?
+  vertrouwelijk Boolean      @default(false)
+  status        BronStatus   @default(gevonden)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  auditor            Auditor?           @relation(fields: [auditorId], references: [id], onDelete: SetNull)
+  rapportBevindingen RapportBevinding[]
+
+  @@index([auditorId])
+  @@map("bibliotheek_bronnen")
+}
+
+/// Wat één rapport over één patroon zei, met de vergelijking tegen het
+/// Shift2-oordeel. `overeenstemming` volgt uit de rekenregel in SPEC.md, tenzij
+/// `overeenstemmingHandmatig` aanstaat.
+model RapportBevinding {
+  id                       String          @id
+  bronId                   String          @map("bron_id")
+  patroonId                String          @map("patroon_id")
+  casusId                  String?         @map("casus_id")
+  /// Codes zoals het rapport ze noemt; mag later een code buiten 2.2 bevatten.
+  rapportCriteria          String[]        @map("rapport_criteria")
+  rapportOordeel           Oordeel         @map("rapport_oordeel")
+  rapportSamenvatting      String?         @map("rapport_samenvatting")
+  shift2Samenvatting       String?         @map("shift2_samenvatting")
+  citaat                   String          @default("") @db.Text
+  pagina                   String?
+  overeenstemming          Overeenstemming
+  overeenstemmingHandmatig Boolean         @default(false) @map("overeenstemming_handmatig")
+  toelichting              String?         @db.Text
+  createdAt                DateTime        @default(now()) @map("created_at")
+  updatedAt                DateTime        @updatedAt @map("updated_at")
+
+  bron    Bron    @relation(fields: [bronId], references: [id], onDelete: Cascade)
+  patroon Patroon @relation(fields: [patroonId], references: [id], onDelete: Restrict)
+  casus   Casus?  @relation(fields: [casusId], references: [id], onDelete: SetNull)
+
+  @@index([bronId])
+  @@index([patroonId])
+  @@map("bibliotheek_rapportbevindingen")
+}
+
+/// Afbeeldingen van casussen. In de database en niet in public/uploads/, omdat
+/// alleen de database gedeeld is tussen de twee computers (besluit 12). In de
+/// casus-HTML staat de bestandsnaam; de app serveert hem op een vast adres.
+model BibliotheekAfbeelding {
+  naam      String   @id
+  mimeType  String   @map("mime_type")
+  data      Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("bibliotheek_afbeeldingen")
+}
