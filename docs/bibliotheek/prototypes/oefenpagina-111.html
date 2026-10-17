@@ -1,0 +1,969 @@
+<title>Oefenpagina 1.1.1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: één leeskolom; elke casus = kop-regel, gestippeld testgebied, ingeklapte bevinding */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --paper: #fbfcfd;
+  --fg: #17202a;
+  --muted: #55626f;
+  --line: #c9d1d9;
+  --accent: #1e5a85;
+  --accent-soft: #e3edf5;
+  --fail: #b42318;
+  --fail-soft: #fdecea;
+  --pass: #1a7a4a;
+  --pass-soft: #e5f4ec;
+  --code-bg: #eef1f4;
+  --spec-red: #c0261b;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+    --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+    --accent: #7db6e3; --accent-soft: #1d3346;
+    --fail: #ff8a7f; --fail-soft: #3a1d1b;
+    --pass: #6fd3a0; --pass-soft: #163327;
+    --code-bg: #0f1419; --spec-red: #ff7b70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+  --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+  --accent: #7db6e3; --accent-soft: #1d3346;
+  --fail: #ff8a7f; --fail-soft: #3a1d1b;
+  --pass: #6fd3a0; --pass-soft: #163327;
+  --code-bg: #0f1419; --spec-red: #ff7b70;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+}
+.wrap {
+  max-width: 52rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2rem 4rem;
+  display: grid; gap: 2.5rem;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Kop van de pagina */
+.intro { display: grid; gap: .9rem; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); margin: 0;
+}
+h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; max-width: 65ch; }
+.howto { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; color: var(--muted); }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+  padding: .75rem 1rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.score { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: auto; }
+.btn {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  padding: .4rem .85rem; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--surface); color: var(--accent);
+}
+.btn:hover { background: var(--accent-soft); }
+.cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.cats a {
+  display: inline-block; padding: .25rem .7rem; border-radius: 999px;
+  background: var(--accent-soft); text-decoration: none; font-size: .9rem;
+}
+
+/* Categorieën en casussen */
+.cat { display: grid; gap: 1.25rem; }
+.cat > h2 {
+  font-size: 1.5rem; margin: 0; padding-bottom: .4rem;
+  border-bottom: 2px solid var(--fg); text-wrap: balance;
+}
+.cat-note { margin: -.5rem 0 0; color: var(--muted); max-width: 65ch; }
+.case {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 1rem; display: grid; gap: .8rem; min-width: 0;
+}
+.case-head { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: baseline; }
+.case-id {
+  font-family: var(--font-mono); font-weight: 600; font-size: .85rem;
+  color: var(--accent);
+}
+.case-title { margin: 0; font-weight: 700; margin-right: auto; }
+.done { font-size: .9rem; display: inline-flex; gap: .35rem; align-items: center; color: var(--muted); }
+.done input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.case.is-done { opacity: .78; }
+
+.spec-label {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 -.5rem;
+}
+.specimen {
+  background: var(--paper); border: 2px dashed var(--line); border-radius: 6px;
+  padding: 1rem; overflow-x: auto; min-width: 0;
+}
+.specimen > :first-child { margin-top: 0; }
+.specimen > :last-child { margin-bottom: 0; }
+.specimen h2 { font-size: 1.35rem; margin: .2rem 0 .4rem; }
+.specimen h3 { font-size: 1.15rem; margin: .2rem 0 .4rem; }
+.specimen h4 { font-size: 1rem; margin: .2rem 0 .4rem; }
+.specimen p { margin: .3rem 0 .6rem; }
+.specimen table { border-collapse: collapse; margin: .2rem 0; }
+.specimen th, .specimen td {
+  border: 1px solid var(--line); padding: .35rem .7rem; text-align: left;
+  vertical-align: top;
+}
+.specimen th { background: var(--accent-soft); }
+.specimen input[type="text"], .specimen input[type="email"] {
+  font: inherit; padding: .35rem .5rem; border: 1px solid var(--muted);
+  border-radius: 4px; background: var(--surface); color: var(--fg);
+  max-width: 100%;
+}
+.specimen pre { font-family: var(--font-mono); font-size: .9rem; margin: 0; }
+/* opmaakklassen die de fouten zichtbaar maken */
+.fake-h { font-size: 1.35rem; font-weight: 700; margin: .2rem 0 .4rem; }
+.fake-h-sm { font-size: 1.1rem; font-weight: 700; margin: .6rem 0 .3rem; }
+.paginatitel { font-size: 1.6rem !important; }
+.th-look { font-weight: 700; background: var(--accent-soft); }
+.layout td, .layout th { border: 0 !important; background: none !important; padding: .2rem 1rem .2rem 0 !important; }
+.layout th { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.grid-table { display: grid; grid-template-columns: max-content max-content; border: 1px solid var(--line); width: max-content; }
+.grid-table > div { padding: .35rem .7rem; border-bottom: 1px solid var(--line); }
+.grid-table .gh { font-weight: 700; background: var(--accent-soft); }
+.kv { display: flex; gap: 2rem; }
+.kv > div { display: grid; gap: .3rem; }
+.kv-label { color: var(--muted); }
+.radio-row { display: flex; gap: .4rem; align-items: center; margin: .2rem 0; }
+.plain-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .3rem; }
+.plain-list li::before { content: "→ "; color: var(--accent); }
+
+/* Bevinding */
+details { border-top: 1px solid var(--line); padding-top: .6rem; }
+summary {
+  cursor: pointer; font-weight: 700; color: var(--accent);
+  list-style-position: outside;
+}
+.finding { display: grid; gap: .7rem; margin-top: .7rem; min-width: 0; }
+.finding p { margin: 0; max-width: 65ch; }
+.verdict {
+  display: inline-block; width: max-content; font-weight: 700; font-size: .85rem;
+  padding: .15rem .6rem; border-radius: 4px;
+}
+.verdict.fail { background: var(--fail-soft); color: var(--fail); }
+.verdict.pass { background: var(--pass-soft); color: var(--pass); }
+.ref { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+.code-pair { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.code-pair > div { min-width: 0; display: grid; gap: .3rem; align-content: start; }
+.code-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.code-label.bad { color: var(--fail); }
+.code-label.good { color: var(--pass); }
+.code-pair pre {
+  margin: 0; padding: .7rem .8rem; background: var(--code-bg); border-radius: 6px;
+  font-family: var(--font-mono); font-size: .78rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<style>
+.specimen img { display: block; max-width: 100%; height: auto; }
+.specimen img.inline { display: inline-block; vertical-align: middle; }
+.status-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.status-list li { padding-left: 1.8rem; background-repeat: no-repeat; background-size: 1.2rem; background-position: 0 .15rem; }
+.status-ok { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%231f9d55'/%3E%3Cpath d='M5.5 10.5 L8.8 13.5 L14.5 6.8' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3C/svg%3E"); }
+.status-nok { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23d0342c'/%3E%3Cpath d='M6.5 6.5 L13.5 13.5 M13.5 6.5 L6.5 13.5' stroke='%23fff' stroke-width='2.4'/%3E%3C/svg%3E"); }
+.golf-band {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='80' viewBox='0 0 400 80'%3E%3Crect width='400' height='80' fill='%231e4f74'/%3E%3Cpath d='M0 20 Q50 8 100 20 T200 20 T300 20 T400 20' fill='none' stroke='%232d6a96' stroke-width='6'/%3E%3Cpath d='M0 45 Q50 33 100 45 T200 45 T300 45 T400 45' fill='none' stroke='%232d6a96' stroke-width='6'/%3E%3Cpath d='M0 70 Q50 58 100 70 T200 70 T300 70 T400 70' fill='none' stroke='%232d6a96' stroke-width='6'/%3E%3C/svg%3E"); background-size: cover;
+  padding: 1.5rem 1rem; border-radius: 6px; color: #fff; font-weight: 700;
+}
+.golf-band p { margin: 0 !important; }
+.teasers { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.teasers article { display: grid; gap: .3rem; }
+.teasers h3 { margin: 0 !important; font-size: 1rem !important; }
+.navlink { display: inline-flex; gap: .5rem; align-items: center; }
+.navlink svg { width: 1.3rem; height: 1.3rem; }
+.queue { display: grid; gap: .4rem; }
+.queue div { display: flex; gap: .5rem; align-items: center; }
+.mathbold { font-size: 1.05rem; }
+.searchbar { display: flex; gap: .4rem; align-items: center; }
+</style>
+
+<div class="wrap">
+<header class="intro">
+  <p class="eyebrow">WCAG 2.2 · Succescriterium 1.1.1 Niet-tekstuele content · Niveau A</p>
+  <h1>Oefenpagina 1.1.1</h1>
+  <p>Elk testgebied bevat echte afbeeldingen, iconen en tekens. Achttien voorbeelden zijn een afkeur op 1.1.1; vijf valkuilen lijken fout maar zijn het niet. De casussen volgen het Understanding-document bij 1.1.1 (situaties A t/m F en de faaltechnieken F3 t/m F72).</p>
+  <ul class="howto">
+    <li>Bekijk eerst de gerenderde afbeelding zelf: wat draagt hij over? Beoordeel daarna pas het alternatief.</li>
+    <li>Bepaal per afbeelding de functie: informatief, functioneel (link of knop), decoratief, complex, of een uitzondering (CAPTCHA, sensory).</li>
+    <li>Controleer de toegankelijke naam in de toegankelijkheidsboom of met een screenreader.</li>
+    <li>Bij een afbeelding in een link: beoordeel onder 1.1.1 alleen of de informatie in de afbeelding overkomt. Of de link zijn doel duidelijk maakt, is 2.4.4 of 4.1.2.</li>
+  </ul>
+  <div class="toolbar">
+    <span class="score" id="score" aria-live="polite">0 van 23 beoordeeld · 0 goed</span>
+    <button class="btn" type="button" id="toggle-all">Alle bevindingen openen</button>
+    <button class="btn" type="button" id="reset">Antwoorden wissen</button>
+  </div>
+  <nav aria-label="Categorieën">
+    <ul class="cats">
+      <li><a href="#informatief">Informatief</a></li>
+      <li><a href="#decoratief">Decoratief</a></li>
+      <li><a href="#functioneel">Links en knoppen</a></li>
+      <li><a href="#tekens">Tekst-look-alikes</a></li>
+      <li><a href="#uitzonderingen">Uitzonderingen</a></li>
+      <li><a href="#valkuilen">Valkuilen</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="wrap" style="padding:0;">
+
+<!-- ============ INFORMATIEF ============ -->
+<section class="cat" id="informatief" aria-labelledby="h-info">
+<h2 id="h-info">Informatieve en complexe afbeeldingen</h2>
+<p class="cat-note">Situatie A (korte beschrijving volstaat) en situatie B (korte en lange beschrijving nodig).</p>
+
+<article class="case" id="I1">
+  <div class="case-head"><span class="case-id">I1</span><p class="case-title">Nieuwsbericht nieuwe speeltuin</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180' viewBox='0 0 320 180'%3E%3Crect width='320' height='180' fill='%23bfe3f5'/%3E%3Ccircle cx='270' cy='40' r='22' fill='%23f6c445'/%3E%3Crect y='140' width='320' height='40' fill='%236fb36a'/%3E%3Cpath d='M60 140 L60 60 L80 60 L80 140' fill='%23d9534f'/%3E%3Cpath d='M80 62 Q140 70 170 140 L150 140 Q125 90 80 80Z' fill='%23e9a23b'/%3E%3Crect x='200' y='80' width='80' height='8' fill='%233a6ea5'/%3E%3Crect x='205' y='80' width='6' height='60' fill='%233a6ea5'/%3E%3Crect x='269' y='80' width='6' height='60' fill='%233a6ea5'/%3E%3Crect x='225' y='88' width='2' height='35' fill='%23555'/%3E%3Crect x='250' y='88' width='2' height='35' fill='%23555'/%3E%3Crect x='220' y='120' width='37' height='6' fill='%23333'/%3E%3C/svg%3E" data-file="speeltuin-parkkwartier.jpg"
+  width="320" height="180">
+<p>Zaterdag is de nieuwe speeltuin in het
+Parkkwartier geopend.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Het <code>alt</code>-attribuut ontbreekt helemaal. Veel screenreaders lezen dan de bestandsnaam voor. De foto toont de glijbaan en het klimrek van de nieuwe speeltuin en is informatief binnen het bericht.</p>
+    <p class="ref">F65 · Situatie A: G94 met H37</p>
+    <script type="text/plain" class="fix">
+<img src="speeltuin-parkkwartier.jpg"
+  alt="De nieuwe speeltuin met
+  glijbaan en klimrek"
+  width="320" height="180">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="I2">
+  <div class="case-head"><span class="case-id">I2</span><p class="case-title">Werkzaamheden Kerkstraat</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180' viewBox='0 0 320 180'%3E%3Crect width='320' height='180' fill='%23cfe3ee'/%3E%3Crect y='110' width='320' height='70' fill='%23555b61'/%3E%3Crect y='142' width='320' height='4' fill='%23eee' stroke-dasharray='20 14'/%3E%3Cpath d='M40 140 L50 105 L60 140Z' fill='%23f07d22'/%3E%3Crect x='44' y='122' width='12' height='5' fill='%23fff'/%3E%3Cpath d='M100 140 L110 105 L120 140Z' fill='%23f07d22'/%3E%3Crect x='104' y='122' width='12' height='5' fill='%23fff'/%3E%3Cpath d='M160 140 L170 105 L180 140Z' fill='%23f07d22'/%3E%3Crect x='164' y='122' width='12' height='5' fill='%23fff'/%3E%3Crect x='225' y='55' width='70' height='45' fill='%23f6c445' stroke='%23222' stroke-width='3'/%3E%3Crect x='256' y='100' width='6' height='40' fill='%23777'/%3E%3Ctext x='260' y='84' font-family='Verdana,Arial,sans-serif' font-size='13' font-weight='bold' text-anchor='middle'%3EOMLEIDING%3C/text%3E%3C/svg%3E" data-file="IMG_4382.jpg"
+  alt="IMG_4382.jpg" width="320" height="180">
+<p>Vanaf maandag 2 november is de Kerkstraat
+afgesloten voor autoverkeer.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een bestandsnaam is geen tekstalternatief. Hetzelfde geldt voor ‘afbeelding’, ‘foto’ of een placeholder uit het CMS. Is de foto informatief, beschrijf dan wat hij toont; voegt hij niets toe aan de tekst, gebruik dan <code>alt=""</code>.</p>
+    <p class="ref">F30</p>
+    <script type="text/plain" class="fix">
+<img src="IMG_4382.jpg"
+  alt="Afzetting met pionnen en
+  een omleidingsbord in de
+  Kerkstraat"
+  width="320" height="180">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="I3">
+  <div class="case-head"><span class="case-id">I3</span><p class="case-title">Banner op de homepage</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='120' viewBox='0 0 480 120'%3E%3Crect width='480' height='120' fill='%231e4f74'/%3E%3Crect x='0' y='0' width='12' height='120' fill='%23f6c445'/%3E%3Ctext x='32' y='52' font-family='Verdana,Arial,sans-serif' font-size='26' font-weight='bold' fill='%23fff'%3EStadhuis gesloten op%3C/text%3E%3Ctext x='32' y='86' font-family='Verdana,Arial,sans-serif' font-size='26' font-weight='bold' fill='%23f6c445'%3Emaandag 26 oktober%3C/text%3E%3Ctext x='32' y='108' font-family='Verdana,Arial,sans-serif' font-size='13' fill='%23dfe9f2'%3EOp 27 oktober zijn we weer open.%3C/text%3E%3C/svg%3E" data-file="banner-oktober.png"
+  alt="Banner" width="480" height="120">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een afbeelding van tekst is niet-tekstuele content. De belangrijke informatie (sluiting op 26 oktober) staat alleen in de afbeelding; ‘Banner’ geeft daar niets van weer. Gebruik bij voorkeur echte tekst; dat valt ook onder 1.4.5 Afbeeldingen van tekst.</p>
+    <p class="ref">F30 · Situatie A: G94 · zie ook 1.4.5</p>
+    <script type="text/plain" class="fix">
+<img src="banner-oktober.png"
+  alt="Stadhuis gesloten op
+  maandag 26 oktober.
+  Op 27 oktober zijn we weer
+  open."
+  width="480" height="120">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="I4">
+  <div class="case-head"><span class="case-id">I4</span><p class="case-title">Mijn aanvragen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<ul class="status-list">
+  <li class="status-ok">Paspoort</li>
+  <li class="status-nok">Rijbewijs</li>
+</ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Het vinkje en kruis (goedgekeurd of afgewezen) zijn CSS-achtergrondafbeeldingen. Achtergrondafbeeldingen hebben geen tekstalternatief, dus de status bestaat alleen visueel.</p>
+    <p class="ref">F3</p>
+    <script type="text/plain" class="fix">
+<ul class="status-list">
+  <li class="status-ok">Paspoort:
+    goedgekeurd</li>
+  <li class="status-nok">Rijbewijs:
+    afgewezen</li>
+</ul>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="I5">
+  <div class="case-head"><span class="case-id">I5</span><p class="case-title">Wachttijd publiekshal</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Groen is kort wachten, rood is lang wachten.</p>
+<div class="queue">
+  <div><img class="inline" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%231f9d55'/%3E%3C/svg%3E" data-file="stip-groen.svg"
+    alt="Status" width="16" height="16"> Burgerzaken</div>
+  <div><img class="inline" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23d0342c'/%3E%3C/svg%3E" data-file="stip-rood.svg"
+    alt="Status" width="16" height="16"> Parkeren</div>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>De stip draagt de informatie ‘kort’ of ‘lang wachten’ via kleur. Het tekstalternatief ‘Status’ geeft die informatie niet. Zonder tekstuele status is dit ook een afkeur op 1.4.1 Gebruik van kleur.</p>
+    <p class="ref">F13 · zie ook 1.4.1</p>
+    <script type="text/plain" class="fix">
+<div>
+  <img src="stip-groen.svg"
+    alt="Kort wachten"
+    width="16" height="16">
+  Burgerzaken
+</div>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="I6">
+  <div class="case-head"><span class="case-id">I6</span><p class="case-title">Jaarverslag afvalscheiding</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='220' viewBox='0 0 360 220'%3E%3Crect width='360' height='220' fill='%23ffffff'/%3E%3Cline x1='40' y1='20' x2='40' y2='180' stroke='%23333'/%3E%3Cline x1='40' y1='180' x2='340' y2='180' stroke='%23333'/%3E%3Crect x='60' y='55.2' width='44' height='124.8' fill='%233a7fb8'/%3E%3Ctext x='82' y='47.2' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E52%25%3C/text%3E%3Ctext x='82' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2022%3C/text%3E%3Crect x='130' y='48.0' width='44' height='132.0' fill='%233a7fb8'/%3E%3Ctext x='152' y='40.0' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E55%25%3C/text%3E%3Ctext x='152' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2023%3C/text%3E%3Crect x='200' y='40.80000000000001' width='44' height='139.2' fill='%233a7fb8'/%3E%3Ctext x='222' y='32.80000000000001' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E58%25%3C/text%3E%3Ctext x='222' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2024%3C/text%3E%3Crect x='270' y='33.599999999999994' width='44' height='146.4' fill='%233a7fb8'/%3E%3Ctext x='292' y='25.599999999999994' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E61%25%3C/text%3E%3Ctext x='292' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2025%3C/text%3E%3Ctext x='190' y='214' font-family='Verdana,Arial,sans-serif' font-size='11' text-anchor='middle' fill='%23555'%3EGescheiden afval%3C/text%3E%3C/svg%3E" data-file="grafiek-afval.png"
+  alt="Grafiek" width="360" height="220">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een complexe afbeelding (situatie B). ‘Grafiek’ identificeert hem niet eens, en de cijfers (52, 55, 58 en 61 procent gescheiden afval in 2022 t/m 2025) staan nergens in tekst. Nodig: een korte beschrijving en een lange beschrijving, bijvoorbeeld een datatabel of tekst bij de grafiek.</p>
+    <p class="ref">Situatie B: G95 met H37 en G74 of G73</p>
+    <script type="text/plain" class="fix">
+<figure>
+  <img src="grafiek-afval.png"
+    alt="Staafdiagram: gescheiden
+    afval stijgt van 52% in 2022
+    naar 61% in 2025">
+  <figcaption>Gegevens staan in de
+    tabel hieronder.</figcaption>
+</figure>
+<table>...</table>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ DECORATIEF ============ -->
+<section class="cat" id="decoratief" aria-labelledby="h-deco">
+<h2 id="h-deco">Decoratieve afbeeldingen</h2>
+<p class="cat-note">Situatie F: decoratie moet zo zijn gemaakt dat hulptechnologie haar negeert.</p>
+
+<article class="case" id="D1">
+  <div class="case-head"><span class="case-id">D1</span><p class="case-title">Scheidingslijn in een artikel</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Lees hieronder meer over de inspraakavond.</p>
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='12' viewBox='0 0 300 12'%3E%3Cpath d='M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 T270 6 T300 6' fill='none' stroke='%233a7fb8' stroke-width='2'/%3E%3C/svg%3E" data-file="lijn.gif"
+  alt="spacer" width="300" height="12">
+<p>De inspraakavond is op 12 november.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een puur decoratieve lijn met een niet-lege alt. De screenreader zegt ‘spacer’. Decoratieve afbeeldingen krijgen <code>alt=""</code>, of komen via CSS.</p>
+    <p class="ref">F39 · Situatie F: H67 of C9</p>
+    <script type="text/plain" class="fix">
+<img src="lijn.gif" alt=""
+  width="300" height="12">
+<!-- of: CSS border /
+  background -->
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="D2">
+  <div class="case-head"><span class="case-id">D2</span><p class="case-title">Menu-item met icoon</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<a class="navlink" href="#D2">
+  <svg role="img" aria-label="icon-trash-24" viewBox="0 0 24 24">
+    <path d="M5 7h14l-1.2 13H6.2z" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M3 7h18M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2"/>
+  </svg>
+  Afval
+</a>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Het prullenbakicoon herhaalt alleen wat het woord ‘Afval’ al zegt en is dus decoratief. Toch heeft het een rol en naam, waardoor de link wordt voorgelezen als ‘icon-trash-24 Afval’. Decoratie moet verborgen zijn voor hulptechnologie.</p>
+    <p class="ref">F39 · Situatie F</p>
+    <script type="text/plain" class="fix">
+<a href="/afval">
+  <svg aria-hidden="true"
+    focusable="false" ...>
+    ...
+  </svg>
+  Afval
+</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="D3">
+  <div class="case-head"><span class="case-id">D3</span><p class="case-title">Nieuwsoverzicht met teasers</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="teasers">
+  <article>
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='135' viewBox='0 0 240 135'%3E%3Crect width='240' height='135' fill='%23cfe3ee'/%3E%3Cpath d='M20 70 L45 45 L70 70Z' fill='%23d0342c'/%3E%3Crect x='24' y='70' width='42' height='35' fill='%23f3ead8'/%3E%3Cpath d='M90 70 L115 45 L140 70Z' fill='%232e7d4f'/%3E%3Crect x='94' y='70' width='42' height='35' fill='%23f3ead8'/%3E%3Cpath d='M160 70 L185 45 L210 70Z' fill='%23e9a23b'/%3E%3Crect x='164' y='70' width='42' height='35' fill='%23f3ead8'/%3E%3Crect y='105' width='240' height='30' fill='%23b9a68a'/%3E%3C/svg%3E" data-file="teaser-markt.jpg"
+      alt="" width="240" height="135">
+    <h3><a href="#D3">Weekmarkt verhuist naar het Marktplein</a></h3>
+  </article>
+  <article>
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='135' viewBox='0 0 240 135'%3E%3Crect width='240' height='135' fill='%23d7ecf7'/%3E%3Crect y='100' width='240' height='35' fill='%237a5a3a'/%3E%3Crect x='38' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='40' cy='60' r='18' fill='%233f8f45'/%3E%3Crect x='98' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='100' cy='60' r='24' fill='%233f8f45'/%3E%3Crect x='158' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='160' cy='60' r='16' fill='%233f8f45'/%3E%3Crect x='208' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='210' cy='60' r='20' fill='%233f8f45'/%3E%3C/svg%3E" data-file="teaser-bomen.jpg"
+      alt="foto" width="240" height="135">
+    <h3><a href="#D3">Bewoners planten 200 nieuwe bomen</a></h3>
+  </article>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>De tweede teaserfoto heeft <code>alt="foto"</code>. Dat is geen alternatief. Kop en teasertekst geven al de context en de foto’s bevatten geen eigen tekst, dus de teaserfoto’s zijn decoratief. Advies: in het hele overzicht consequent <code>alt=""</code>. De eerste teaser is in orde.</p>
+    <p class="ref">F30 · Situatie F: H67</p>
+    <script type="text/plain" class="fix">
+<img src="teaser-bomen.jpg"
+  alt=""
+  width="240" height="135">
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ FUNCTIONEEL ============ -->
+<section class="cat" id="functioneel" aria-labelledby="h-func">
+<h2 id="h-func">Afbeeldingen in links en knoppen</h2>
+<p class="cat-note">Situatie C: bij een control beschrijft het tekstalternatief het doel.</p>
+
+<article class="case" id="C1">
+  <div class="case-head"><span class="case-id">C1</span><p class="case-title">Logo in de header</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<a href="#C1"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='56' viewBox='0 0 220 56'%3E%3Crect width='220' height='56' fill='%23ffffff'/%3E%3Cpath d='M8 44 Q18 34 28 44 T48 44' fill='none' stroke='%231e5a85' stroke-width='4'/%3E%3Cpath d='M8 32 Q18 22 28 32 T48 32' fill='none' stroke='%233a9ad9' stroke-width='4'/%3E%3Ctext x='60' y='25' font-family='Verdana,Arial,sans-serif' font-size='12' fill='%231e5a85'%3EGemeente%3C/text%3E%3Ctext x='60' y='46' font-family='Verdana,Arial,sans-serif' font-size='20' font-weight='bold' fill='%231e5a85'%3EWaterdam%3C/text%3E%3C/svg%3E" data-file="logo.svg"
+  alt="logo" width="220" height="56"></a>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Het logo bevat de tekst ‘Gemeente Waterdam’. Het alternatief ‘logo’ geeft die informatie niet weer. Het alternatief moet minimaal de tekst in het logo bevatten.</p>
+    <p class="ref">F30 · Situatie C: G82, H30</p>
+    <script type="text/plain" class="fix">
+<a href="/">
+  <img src="logo.svg"
+    alt="Gemeente Waterdam"
+    width="220" height="56">
+</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="C2">
+  <div class="case-head"><span class="case-id">C2</span><p class="case-title">Pagina delen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Deel deze pagina:</p>
+<a href="#C2"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect x='3' y='7' width='26' height='18' rx='2' fill='%231e5a85'/%3E%3Cpath d='M4 9 L16 18 L28 9' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E" data-file="icon-mail.svg"
+  alt="" width="32" height="32"></a>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Het envelopicoon is de enige inhoud van de link en draagt de functie ‘delen via e-mail’. Met <code>alt=""</code> gaat die informatie verloren. De link heeft daardoor ook geen naam: tevens afkeur op 2.4.4 en 4.1.2.</p>
+    <p class="ref">Situatie C: G82, H30 · ook 2.4.4, 4.1.2</p>
+    <script type="text/plain" class="fix">
+<a href="mailto:?subject=...">
+  <img src="icon-mail.svg"
+    alt="Delen via e-mail"
+    width="32" height="32">
+</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="C3">
+  <div class="case-head"><span class="case-id">C3</span><p class="case-title">Logo in de footer</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<a href="#C3" aria-label="Naar de homepage"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='56' viewBox='0 0 220 56'%3E%3Crect width='220' height='56' fill='%23ffffff'/%3E%3Cpath d='M8 44 Q18 34 28 44 T48 44' fill='none' stroke='%231e5a85' stroke-width='4'/%3E%3Cpath d='M8 32 Q18 22 28 32 T48 32' fill='none' stroke='%233a9ad9' stroke-width='4'/%3E%3Ctext x='60' y='25' font-family='Verdana,Arial,sans-serif' font-size='12' fill='%231e5a85'%3EGemeente%3C/text%3E%3Ctext x='60' y='46' font-family='Verdana,Arial,sans-serif' font-size='20' font-weight='bold' fill='%231e5a85'%3EWaterdam%3C/text%3E%3C/svg%3E"
+  data-file="logo.svg" alt="" width="220" height="56"></a>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>De afbeelding is als decoratief gemarkeerd, terwijl hij de tekst ‘Gemeente Waterdam’ bevat. Het <code>aria-label</code> hoort bij de link, niet bij de afbeelding, en bevat de gemeentenaam ook niet. Tekst aan de link (<code>aria-label</code>, <code>title</code>, verborgen tekst) repareert geen ontbrekend tekstalternatief. Of de link zijn doel duidelijk maakt, beoordeel je apart onder 2.4.4 en 4.1.2.</p>
+    <p class="ref">Werkregel Shift2 · Situatie C</p>
+    <script type="text/plain" class="fix">
+<a href="/">
+  <img src="logo.svg"
+    alt="Gemeente Waterdam,
+    naar de homepage"
+    width="220" height="56">
+</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="C4">
+  <div class="case-head"><span class="case-id">C4</span><p class="case-title">Zoekbalk</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<form class="searchbar" onsubmit="return false">
+  <label for="c4-q">Zoeken</label>
+  <input type="text" id="c4-q">
+  <input type="image" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='4' fill='%231e5a85'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M16.5 16.5 L22 22' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E" data-file="loep.png"
+    width="28" height="28">
+</form>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een afbeeldingsknop (<code>input type="image"</code>) zonder <code>alt</code>. De knop heeft geen naam die het doel beschrijft; ook afkeur op 4.1.2.</p>
+    <p class="ref">F65 · Situatie C: H36</p>
+    <script type="text/plain" class="fix">
+<input type="image"
+  src="loep.png"
+  alt="Zoeken"
+  width="28" height="28">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="C5">
+  <div class="case-head"><span class="case-id">C5</span><p class="case-title">Videospeler op de homepage</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>De video speelt af.</p>
+<button type="button"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Crect x='6' y='4' width='4' height='16' fill='%231e5a85'/%3E%3Crect x='14' y='4' width='4' height='16' fill='%231e5a85'/%3E%3C/svg%3E" data-file="icon-pauze.svg"
+  alt="Afspelen" width="24" height="24"></button>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Het icoon is gewisseld naar ‘pauze’ (twee strepen), maar het tekstalternatief is niet meegewisseld en zegt nog ‘Afspelen’. Het alternatief dient niet meer hetzelfde doel. Ook afkeur op 4.1.2.</p>
+    <p class="ref">F20 · ook 4.1.2</p>
+    <script type="text/plain" class="fix">
+// bij elke wissel van icoon
+img.src = "icon-pauze.svg";
+img.alt = "Pauzeren";
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ TEKENS ============ -->
+<section class="cat" id="tekens" aria-labelledby="h-tekens">
+<h2 id="h-tekens">Tekst-look-alikes en ASCII-art</h2>
+<p class="cat-note">Tekens die geen menselijke taal vormen, zijn ook niet-tekstuele content.</p>
+
+<article class="case" id="T1">
+  <div class="case-head"><span class="case-id">T1</span><p class="case-title">Melding inschrijving</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p class="mathbold">𝗟𝗲𝘁 𝗼𝗽: schrijf u in vóór 1 december.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>‘Let op’ is geschreven met wiskundige Unicode-tekens (vette sans-serif) om er vette tekst van te maken. Dit zijn geen letters; screenreaders lezen ze letter voor letter, als symbool of helemaal niet. Gebruik gewone tekst met opmaak.</p>
+    <p class="ref">F71</p>
+    <script type="text/plain" class="fix">
+<p><strong>Let op:</strong>
+  schrijf u in vóór
+  1 december.</p>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="T2">
+  <div class="case-head"><span class="case-id">T2</span><p class="case-title">Route naar de parkeergarage</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<pre>   Stadhuis
+      |
+      |  200 m
+      v
+ Parkeergarage</pre>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een routeschets in ASCII-art. Voorgelezen klinkt het als losse streepjes en een ‘v’. Geef een tekstalternatief of vervang de schets door tekst.</p>
+    <p class="ref">F72</p>
+    <script type="text/plain" class="fix">
+<figure role="img"
+  aria-label="Route: vanaf het
+  stadhuis 200 meter rechtdoor
+  naar de parkeergarage">
+  <pre aria-hidden="true">
+  ...
+  </pre>
+</figure>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ UITZONDERINGEN ============ -->
+<section class="cat" id="uitzonderingen" aria-labelledby="h-uitz">
+<h2 id="h-uitz">Uitzonderingen: CAPTCHA en sensory</h2>
+<p class="cat-note">Ook bij de uitzonderingen geldt een minimumeis: een beschrijvende identificatie of beschrijving van het doel.</p>
+
+<article class="case" id="X1">
+  <div class="case-head"><span class="case-id">X1</span><p class="case-title">Contactformulier met controle</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='64' viewBox='0 0 200 64'%3E%3Crect width='200' height='64' fill='%23e8e8e0'/%3E%3Cpath d='M0 40 Q50 10 100 38 T200 30' stroke='%23999' fill='none' stroke-width='2'/%3E%3Ctext x='18' y='40' font-family='Verdana,Arial,sans-serif' font-size='28' fill='%23444' transform='rotate%28-14 28 36%29'%3EW%3C/text%3E%3Ctext x='48' y='48' font-family='Verdana,Arial,sans-serif' font-size='28' fill='%23444' transform='rotate%2810 58 36%29'%3E7%3C/text%3E%3Ctext x='78' y='40' font-family='Verdana,Arial,sans-serif' font-size='28' fill='%23444' transform='rotate%28-6 88 36%29'%3Ek%3C/text%3E%3Ctext x='108' y='48' font-family='Verdana,Arial,sans-serif' font-size='28' fill='%23444' transform='rotate%2816 118 36%29'%3EQ%3C/text%3E%3Ctext x='138' y='40' font-family='Verdana,Arial,sans-serif' font-size='28' fill='%23444' transform='rotate%28-10 148 36%29'%3E2%3C/text%3E%3Ctext x='168' y='48' font-family='Verdana,Arial,sans-serif' font-size='28' fill='%23444' transform='rotate%288 178 36%29'%3Em%3C/text%3E%3C/svg%3E" data-file="captcha.php"
+  alt="captcha" width="200" height="64">
+<label for="x1-code">Code</label>
+<input type="text" id="x1-code">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Twee problemen. Het alternatief ‘captcha’ beschrijft het doel niet. En er is geen alternatieve vorm in een andere zintuiglijke modaliteit, zoals een audiocode. Beide zijn vereist.</p>
+    <p class="ref">Situatie E: G143 en G144</p>
+    <script type="text/plain" class="fix">
+<img src="captcha.php"
+  alt="Typ de tekens uit deze
+  afbeelding om te bevestigen
+  dat u geen robot bent">
+<button type="button">
+  Code laten voorlezen</button>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="X2">
+  <div class="case-head"><span class="case-id">X2</span><p class="case-title">Kunstwerk in de raadszaal</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Uit de gemeentelijke kunstcollectie:</p>
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='200' viewBox='0 0 280 200'%3E%3Crect width='280' height='200' fill='%23efe6d2'/%3E%3Ccircle cx='210' cy='50' r='28' fill='%23d9a441'/%3E%3Cpath d='M0 110 Q70 80 140 110 T280 105 V200 H0Z' fill='%232f6f8f'/%3E%3Cpath d='M0 140 Q70 115 140 142 T280 135 V200 H0Z' fill='%233f9b7a'/%3E%3Cpath d='M0 170 Q70 150 140 172 T280 165 V200 H0Z' fill='%231d4a66'/%3E%3C/svg%3E" data-file="kunst-getijde.jpg"
+  alt="" width="280" height="200">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1</span>
+    <p>Een kunstwerk is sensory content: niet decoratief, maar ook niet volledig in woorden te vangen. Minimaal is een beschrijvende identificatie nodig, zoals titel en maker, aangevuld met een beschrijving waar mogelijk. Met <code>alt=""</code> mist de gebruiker het werk volledig.</p>
+    <p class="ref">Situatie D: G100</p>
+    <script type="text/plain" class="fix">
+<img src="kunst-getijde.jpg"
+  alt="Schilderij ‘Getijde’:
+  golvende blauwe en groene
+  banen onder een okergele zon"
+  width="280" height="200">
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ VALKUILEN ============ -->
+<section class="cat" id="valkuilen" aria-labelledby="h-valk">
+<h2 id="h-valk">Valkuilen</h2>
+<p class="cat-note">Deze voorbeelden lijken op een 1.1.1-fout. Oordeel zelf voordat je de bevinding opent.</p>
+
+<article class="case" id="V1">
+  <div class="case-head"><span class="case-id">V1</span><p class="case-title">Hero op de homepage</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='160' viewBox='0 0 480 160'%3E%3Crect x='0' y='0' width='480' height='160' fill='%239fbf86'/%3E%3Crect x='0' y='70' width='480' height='20' fill='%234f86b5'/%3E%3Crect x='30' y='15' width='60' height='40' fill='%23c9b79a'/%3E%3Crect x='110' y='20' width='40' height='35' fill='%23b8452f'/%3E%3Crect x='170' y='10' width='80' height='45' fill='%23d9cbb3'/%3E%3Crect x='270' y='15' width='50' height='40' fill='%23c9b79a'/%3E%3Crect x='340' y='8' width='90' height='48' fill='%23b8452f'/%3E%3Crect x='40' y='100' width='70' height='45' fill='%23d9cbb3'/%3E%3Crect x='130' y='105' width='50' height='40' fill='%23b8452f'/%3E%3Crect x='210' y='98' width='90' height='50' fill='%23c9b79a'/%3E%3Crect x='330' y='102' width='60' height='42' fill='%23d9cbb3'/%3E%3C/svg%3E" data-file="hero-centrum.jpg"
+  alt="Luchtfoto van het centrum van Waterdam"
+  width="480" height="160">
+<h2>Welkom in Waterdam</h2>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.1.1</span>
+    <p>De hero voegt geen eigen informatie toe en is dus decoratief. Een beschrijvende alt is overbodig, maar beschrijft wel juist wat er te zien is. Dat is geen afkeur. Advies: <code>alt=""</code>, consequent voor alle hero’s.</p>
+    <p class="ref">Advies · werkregel Shift2</p>
+    <script type="text/plain" class="fix">
+<img src="hero-centrum.jpg"
+  alt=""
+  width="480" height="160">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V2">
+  <div class="case-head"><span class="case-id">V2</span><p class="case-title">Snelkoppeling Afvalwijzer</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<a class="navlink" href="#V2"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Crect x='4' y='3' width='16' height='18' rx='2' fill='none' stroke='%231e5a85' stroke-width='2'/%3E%3Cpath d='M8 9h8M8 13h8M8 17h5' stroke='%231e5a85' stroke-width='2'/%3E%3C/svg%3E"
+  data-file="icon-afvalwijzer.svg" alt="Afvalwijzer"
+  width="24" height="24"> Afvalwijzer</a>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.1.1</span>
+    <p>Het icoon en de tekst staan in dezelfde link en zeggen hetzelfde. Voorgelezen wordt ‘Afvalwijzer Afvalwijzer’. Dat is dubbelop maar geen afkeur. Advies: <code>alt=""</code> op het icoon.</p>
+    <p class="ref">Advies · Techniek H2</p>
+    <script type="text/plain" class="fix">
+<a href="/afvalwijzer">
+  <img src="icon-afvalwijzer.svg"
+    alt="">
+  Afvalwijzer
+</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V3">
+  <div class="case-head"><span class="case-id">V3</span><p class="case-title">Welkomstband</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="golf-band">
+  <p>Welkom bij gemeente Waterdam</p>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.1.1</span>
+    <p>Het golfpatroon is een CSS-achtergrond en puur decoratief. Hulptechnologie negeert het, precies zoals bedoeld. Vergelijk met I4, waar de achtergrond wél informatie draagt. Controleer wel apart het contrast van de witte tekst op de achtergrond (1.4.3).</p>
+    <p class="ref">Correct · Situatie F: C9</p>
+    <script type="text/plain" class="fix">
+<!-- in orde zoals het is -->
+<div class="golf-band">
+  <p>Welkom bij gemeente
+    Waterdam</p>
+</div>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V4">
+  <div class="case-head"><span class="case-id">V4</span><p class="case-title">Grafiek met tabel</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='220' viewBox='0 0 360 220'%3E%3Crect width='360' height='220' fill='%23ffffff'/%3E%3Cline x1='40' y1='20' x2='40' y2='180' stroke='%23333'/%3E%3Cline x1='40' y1='180' x2='340' y2='180' stroke='%23333'/%3E%3Crect x='60' y='55.2' width='44' height='124.8' fill='%233a7fb8'/%3E%3Ctext x='82' y='47.2' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E52%25%3C/text%3E%3Ctext x='82' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2022%3C/text%3E%3Crect x='130' y='48.0' width='44' height='132.0' fill='%233a7fb8'/%3E%3Ctext x='152' y='40.0' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E55%25%3C/text%3E%3Ctext x='152' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2023%3C/text%3E%3Crect x='200' y='40.80000000000001' width='44' height='139.2' fill='%233a7fb8'/%3E%3Ctext x='222' y='32.80000000000001' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E58%25%3C/text%3E%3Ctext x='222' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2024%3C/text%3E%3Crect x='270' y='33.599999999999994' width='44' height='146.4' fill='%233a7fb8'/%3E%3Ctext x='292' y='25.599999999999994' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E61%25%3C/text%3E%3Ctext x='292' y='198' font-family='Verdana,Arial,sans-serif' font-size='12' text-anchor='middle'%3E2025%3C/text%3E%3Ctext x='190' y='214' font-family='Verdana,Arial,sans-serif' font-size='11' text-anchor='middle' fill='%23555'%3EGescheiden afval%3C/text%3E%3C/svg%3E" data-file="grafiek-afval.png"
+  alt="Staafdiagram gescheiden afval 2022 tot 2025.
+  De cijfers staan in de tabel hieronder."
+  width="360" height="220">
+<table>
+  <tr><th scope="col">Jaar</th><th scope="col">Gescheiden</th></tr>
+  <tr><td>2022</td><td>52%</td></tr>
+  <tr><td>2023</td><td>55%</td></tr>
+  <tr><td>2024</td><td>58%</td></tr>
+  <tr><td>2025</td><td>61%</td></tr>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.1.1</span>
+    <p>Een korte alt die de grafiek identificeert en verwijst naar de lange beschrijving: de datatabel direct eronder. Dat voldoet aan situatie B. Vergelijk met I6.</p>
+    <p class="ref">Correct · G95 met H37 en G74</p>
+    <script type="text/plain" class="fix">
+<!-- in orde zoals het is -->
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V5">
+  <div class="case-head"><span class="case-id">V5</span><p class="case-title">Teaserfoto’s zonder alt-tekst</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="teasers">
+  <article>
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='135' viewBox='0 0 240 135'%3E%3Crect width='240' height='135' fill='%23cfe3ee'/%3E%3Cpath d='M20 70 L45 45 L70 70Z' fill='%23d0342c'/%3E%3Crect x='24' y='70' width='42' height='35' fill='%23f3ead8'/%3E%3Cpath d='M90 70 L115 45 L140 70Z' fill='%232e7d4f'/%3E%3Crect x='94' y='70' width='42' height='35' fill='%23f3ead8'/%3E%3Cpath d='M160 70 L185 45 L210 70Z' fill='%23e9a23b'/%3E%3Crect x='164' y='70' width='42' height='35' fill='%23f3ead8'/%3E%3Crect y='105' width='240' height='30' fill='%23b9a68a'/%3E%3C/svg%3E" data-file="teaser-markt.jpg"
+      alt="" width="240" height="135">
+    <h3><a href="#V5">Weekmarkt verhuist naar het Marktplein</a></h3>
+  </article>
+  <article>
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='135' viewBox='0 0 240 135'%3E%3Crect width='240' height='135' fill='%23d7ecf7'/%3E%3Crect y='100' width='240' height='35' fill='%237a5a3a'/%3E%3Crect x='38' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='40' cy='60' r='18' fill='%233f8f45'/%3E%3Crect x='98' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='100' cy='60' r='24' fill='%233f8f45'/%3E%3Crect x='158' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='160' cy='60' r='16' fill='%233f8f45'/%3E%3Crect x='208' y='70' width='5' height='32' fill='%235a3d22'/%3E%3Ccircle cx='210' cy='60' r='20' fill='%233f8f45'/%3E%3C/svg%3E" data-file="teaser-bomen.jpg"
+      alt="" width="240" height="135">
+    <h3><a href="#V5">Bewoners planten 200 nieuwe bomen</a></h3>
+  </article>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.1.1</span>
+    <p>Een lege alt is hier juist: de foto’s bevatten geen tekst of informatie die niet al in de kop staat. Consequent <code>alt=""</code> in het hele overzicht. Een lege alt is dus niet automatisch een fout.</p>
+    <p class="ref">Correct · Situatie F: H67</p>
+    <script type="text/plain" class="fix">
+<!-- in orde zoals het is -->
+    </script>
+  </div></details>
+</article>
+</section>
+</main>
+
+<footer>Oefenmateriaal Shift2 · Gebaseerd op <a href="https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html">Understanding SC 1.1.1 Non-text Content (W3C, WCAG 2.2)</a>. Alle afbeeldingen zijn zelfgemaakte illustraties.</footer>
+</div>
+
+<style>
+.src { border: 1px solid var(--line); border-radius: 6px; background: var(--code-bg); }
+.src > summary { padding: .5rem .8rem; color: var(--fg); font-size: .9rem; }
+.src pre {
+  margin: 0; padding: 0 .8rem .8rem; font-family: var(--font-mono);
+  font-size: .78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.judge { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.judge legend { font-weight: 700; padding: 0; margin-bottom: .3rem; float: left; width: 100%; }
+.judge label {
+  display: inline-flex; gap: .4rem; align-items: center; cursor: pointer;
+  padding: .35rem .8rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+}
+.judge input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); margin: 0; }
+.judge label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.feedback { margin: 0; font-weight: 700; padding: .4rem .7rem; border-radius: 6px; width: max-content; max-width: 100%; }
+.feedback.ok { background: var(--pass-soft); color: var(--pass); }
+.feedback.nok { background: var(--fail-soft); color: var(--fail); }
+.case.is-done { opacity: 1; }
+.case.right { border-left: 4px solid var(--pass); }
+.case.wrong { border-left: 4px solid var(--fail); }
+</style>
+<script>
+(function () {
+  var SC = "1.1.1";
+  function dedent(s) {
+    var lines = s.replace(/\t/g, "  ").split("\n");
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    var min = Infinity;
+    lines.forEach(function (l) { if (l.trim()) min = Math.min(min, l.match(/^ */)[0].length); });
+    if (!isFinite(min)) min = 0;
+    return lines.map(function (l) { return l.slice(min); }).join("\n");
+  }
+  function codeBlock(label, cls, text) {
+    var d = document.createElement("div");
+    var p = document.createElement("p");
+    p.className = "code-label " + cls; p.textContent = label;
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = text; pre.appendChild(code);
+    d.appendChild(p); d.appendChild(pre);
+    return d;
+  }
+  function source(spec) {
+    var clone = spec.cloneNode(true);
+    clone.querySelectorAll("[data-file]").forEach(function (el) {
+      el.setAttribute("src", el.getAttribute("data-file"));
+      el.removeAttribute("data-file");
+    });
+    return dedent(clone.innerHTML);
+  }
+  var cases = Array.prototype.slice.call(document.querySelectorAll(".case"));
+  var KEY = "oefen111-v2";
+  var answers = {};
+  try { answers = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { answers = {}; }
+  if (typeof answers !== "object" || Array.isArray(answers)) answers = {};
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} }
+  var score = document.getElementById("score");
+  function truth(c) { return c.querySelector(".verdict.pass") ? "pass" : "fail"; }
+  function updateScore() {
+    var n = 0, good = 0;
+    cases.forEach(function (c) {
+      var a = answers[c.id];
+      if (a === "fail" || a === "pass") { n++; if (a === truth(c)) good++; }
+    });
+    score.textContent = n + " van " + cases.length + " beoordeeld · " + good + " goed";
+  }
+  function showFeedback(c, fb, a, openFinding) {
+    c.classList.remove("right", "wrong");
+    if (a !== "fail" && a !== "pass") { fb.hidden = true; return; }
+    var ok = a === truth(c);
+    c.classList.add(ok ? "right" : "wrong");
+    fb.hidden = false;
+    fb.className = "feedback " + (ok ? "ok" : "nok");
+    fb.textContent = ok
+      ? "Goed beoordeeld. Lees de bevinding hieronder."
+      : "Niet goed: dit is " + (truth(c) === "fail" ? "een afkeur op " + SC : "geen afkeur op " + SC) + ". Lees de bevinding.";
+    if (openFinding) c.querySelector("details.finding-box").open = true;
+  }
+  cases.forEach(function (c) {
+    var spec = c.querySelector(".specimen");
+    var fix = c.querySelector("script.fix");
+    var finding = c.querySelector(".finding");
+    var details = finding.closest("details");
+    details.classList.add("finding-box");
+    var isPass = truth(c) === "pass";
+
+    // 1. broncode direct onder het testgebied
+    var src = document.createElement("details");
+    src.className = "src"; src.open = true;
+    var sum = document.createElement("summary");
+    sum.textContent = "Broncode testgebied";
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = source(spec);
+    pre.appendChild(code);
+    src.appendChild(sum); src.appendChild(pre);
+    spec.insertAdjacentElement("afterend", src);
+
+    // 2. eigen oordeel
+    var fs = document.createElement("fieldset");
+    fs.className = "judge";
+    var lg = document.createElement("legend");
+    lg.textContent = "Jouw oordeel " + c.id;
+    fs.appendChild(lg);
+    [["fail", "Afkeur " + SC], ["pass", "Geen afkeur"]].forEach(function (o) {
+      var lab = document.createElement("label");
+      var r = document.createElement("input");
+      r.type = "radio"; r.name = "oordeel-" + c.id; r.value = o[0];
+      r.id = "oordeel-" + c.id + "-" + o[0];
+      r.checked = answers[c.id] === o[0];
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(o[1]));
+      fs.appendChild(lab);
+    });
+    var fb = document.createElement("p");
+    fb.className = "feedback"; fb.hidden = true;
+    fb.setAttribute("role", "status");
+    src.insertAdjacentElement("afterend", fs);
+    fs.insertAdjacentElement("afterend", fb);
+    fs.addEventListener("change", function (e) {
+      answers[c.id] = e.target.value; save();
+      showFeedback(c, fb, e.target.value, true);
+      updateScore();
+    });
+    showFeedback(c, fb, answers[c.id], false);
+
+    // 3. correcte code in de bevinding
+    var fixText = dedent(fix.textContent);
+    if (fixText.indexOf("in orde zoals het is") === -1) {
+      var pair = document.createElement("div");
+      pair.className = "code-pair";
+      pair.appendChild(codeBlock(isPass ? "Beter (advies)" : "Correct", "good", fixText));
+      finding.appendChild(pair);
+    }
+  });
+  updateScore();
+
+  var toggle = document.getElementById("toggle-all");
+  var open = false;
+  toggle.addEventListener("click", function () {
+    open = !open;
+    document.querySelectorAll("details.finding-box").forEach(function (d) { d.open = open; });
+    toggle.textContent = open ? "Alle bevindingen sluiten" : "Alle bevindingen openen";
+  });
+  var reset = document.getElementById("reset");
+  reset.textContent = "Antwoorden wissen";
+  reset.addEventListener("click", function () {
+    answers = {}; save();
+    cases.forEach(function (c) {
+      c.querySelectorAll(".judge input").forEach(function (r) { r.checked = false; });
+      showFeedback(c, c.querySelector(".feedback"), null, false);
+    });
+    updateScore();
+  });
+})();
+</script>

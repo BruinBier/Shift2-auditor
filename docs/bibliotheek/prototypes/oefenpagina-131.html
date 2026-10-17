@@ -1,0 +1,1057 @@
+<title>Oefenpagina 1.3.1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: één leeskolom; elke casus = kop-regel, gestippeld testgebied, ingeklapte bevinding */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --paper: #fbfcfd;
+  --fg: #17202a;
+  --muted: #55626f;
+  --line: #c9d1d9;
+  --accent: #1e5a85;
+  --accent-soft: #e3edf5;
+  --fail: #b42318;
+  --fail-soft: #fdecea;
+  --pass: #1a7a4a;
+  --pass-soft: #e5f4ec;
+  --code-bg: #eef1f4;
+  --spec-red: #c0261b;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+    --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+    --accent: #7db6e3; --accent-soft: #1d3346;
+    --fail: #ff8a7f; --fail-soft: #3a1d1b;
+    --pass: #6fd3a0; --pass-soft: #163327;
+    --code-bg: #0f1419; --spec-red: #ff7b70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+  --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+  --accent: #7db6e3; --accent-soft: #1d3346;
+  --fail: #ff8a7f; --fail-soft: #3a1d1b;
+  --pass: #6fd3a0; --pass-soft: #163327;
+  --code-bg: #0f1419; --spec-red: #ff7b70;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+}
+.wrap {
+  max-width: 52rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2rem 4rem;
+  display: grid; gap: 2.5rem;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Kop van de pagina */
+.intro { display: grid; gap: .9rem; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); margin: 0;
+}
+h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; max-width: 65ch; }
+.howto { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; color: var(--muted); }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+  padding: .75rem 1rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.score { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: auto; }
+.btn {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  padding: .4rem .85rem; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--surface); color: var(--accent);
+}
+.btn:hover { background: var(--accent-soft); }
+.cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.cats a {
+  display: inline-block; padding: .25rem .7rem; border-radius: 999px;
+  background: var(--accent-soft); text-decoration: none; font-size: .9rem;
+}
+
+/* Categorieën en casussen */
+.cat { display: grid; gap: 1.25rem; }
+.cat > h2 {
+  font-size: 1.5rem; margin: 0; padding-bottom: .4rem;
+  border-bottom: 2px solid var(--fg); text-wrap: balance;
+}
+.cat-note { margin: -.5rem 0 0; color: var(--muted); max-width: 65ch; }
+.case {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 1rem; display: grid; gap: .8rem; min-width: 0;
+}
+.case-head { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: baseline; }
+.case-id {
+  font-family: var(--font-mono); font-weight: 600; font-size: .85rem;
+  color: var(--accent);
+}
+.case-title { margin: 0; font-weight: 700; margin-right: auto; }
+.done { font-size: .9rem; display: inline-flex; gap: .35rem; align-items: center; color: var(--muted); }
+.done input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.case.is-done { opacity: .78; }
+
+.spec-label {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 -.5rem;
+}
+.specimen {
+  background: var(--paper); border: 2px dashed var(--line); border-radius: 6px;
+  padding: 1rem; overflow-x: auto; min-width: 0;
+}
+.specimen > :first-child { margin-top: 0; }
+.specimen > :last-child { margin-bottom: 0; }
+.specimen h2 { font-size: 1.35rem; margin: .2rem 0 .4rem; }
+.specimen h3 { font-size: 1.15rem; margin: .2rem 0 .4rem; }
+.specimen h4 { font-size: 1rem; margin: .2rem 0 .4rem; }
+.specimen p { margin: .3rem 0 .6rem; }
+.specimen table { border-collapse: collapse; margin: .2rem 0; }
+.specimen th, .specimen td {
+  border: 1px solid var(--line); padding: .35rem .7rem; text-align: left;
+  vertical-align: top;
+}
+.specimen th { background: var(--accent-soft); }
+.specimen input[type="text"], .specimen input[type="email"] {
+  font: inherit; padding: .35rem .5rem; border: 1px solid var(--muted);
+  border-radius: 4px; background: var(--surface); color: var(--fg);
+  max-width: 100%;
+}
+.specimen pre { font-family: var(--font-mono); font-size: .9rem; margin: 0; }
+/* opmaakklassen die de fouten zichtbaar maken */
+.fake-h { font-size: 1.35rem; font-weight: 700; margin: .2rem 0 .4rem; }
+.fake-h-sm { font-size: 1.1rem; font-weight: 700; margin: .6rem 0 .3rem; }
+.paginatitel { font-size: 1.6rem !important; }
+.th-look { font-weight: 700; background: var(--accent-soft); }
+.layout td, .layout th { border: 0 !important; background: none !important; padding: .2rem 1rem .2rem 0 !important; }
+.layout th { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.grid-table { display: grid; grid-template-columns: max-content max-content; border: 1px solid var(--line); width: max-content; }
+.grid-table > div { padding: .35rem .7rem; border-bottom: 1px solid var(--line); }
+.grid-table .gh { font-weight: 700; background: var(--accent-soft); }
+.kv { display: flex; gap: 2rem; }
+.kv > div { display: grid; gap: .3rem; }
+.kv-label { color: var(--muted); }
+.radio-row { display: flex; gap: .4rem; align-items: center; margin: .2rem 0; }
+.plain-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .3rem; }
+.plain-list li::before { content: "→ "; color: var(--accent); }
+
+/* Bevinding */
+details { border-top: 1px solid var(--line); padding-top: .6rem; }
+summary {
+  cursor: pointer; font-weight: 700; color: var(--accent);
+  list-style-position: outside;
+}
+.finding { display: grid; gap: .7rem; margin-top: .7rem; min-width: 0; }
+.finding p { margin: 0; max-width: 65ch; }
+.verdict {
+  display: inline-block; width: max-content; font-weight: 700; font-size: .85rem;
+  padding: .15rem .6rem; border-radius: 4px;
+}
+.verdict.fail { background: var(--fail-soft); color: var(--fail); }
+.verdict.pass { background: var(--pass-soft); color: var(--pass); }
+.ref { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+.code-pair { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.code-pair > div { min-width: 0; display: grid; gap: .3rem; align-content: start; }
+.code-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.code-label.bad { color: var(--fail); }
+.code-label.good { color: var(--pass); }
+.code-pair pre {
+  margin: 0; padding: .7rem .8rem; background: var(--code-bg); border-radius: 6px;
+  font-family: var(--font-mono); font-size: .78rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+<header class="intro">
+  <p class="eyebrow">WCAG 2.2 · Succescriterium 1.3.1 Info en relaties · Niveau A</p>
+  <h1>Oefenpagina 1.3.1</h1>
+  <p>Elk testgebied hieronder bevat echte, werkende code. Twintig voorbeelden zijn een afkeur op 1.3.1; vier valkuilen lijken fout maar zijn het niet (of horen bij een ander criterium). Onderzoek het testgebied en de broncode, kies je oordeel en lees daarna de bevinding.</p>
+  <ul class="howto">
+    <li>Koppen: koppenlijst in NVDA (Insert+F7) of HeadingsMap.</li>
+    <li>Tabellen en lijsten: navigeer met T en L, luister naar wat wordt aangekondigd.</li>
+    <li>Formulieren: tab naar elk veld en controleer naam, groep en status.</li>
+    <li>Of open de toegankelijkheidsboom in de ontwikkeltools.</li>
+  </ul>
+  <p>Let op: de categoriekoppen van deze pagina zijn h2. Koppen binnen de testgebieden horen bij de oefening.</p>
+  <div class="toolbar">
+    <span class="score" id="score" aria-live="polite">0 van 24 beoordeeld · 0 goed</span>
+    <button class="btn" type="button" id="toggle-all">Alle bevindingen openen</button>
+    <button class="btn" type="button" id="reset">Antwoorden wissen</button>
+  </div>
+  <nav aria-label="Categorieën">
+    <ul class="cats">
+      <li><a href="#koppen">Koppen</a></li>
+      <li><a href="#lijsten">Lijsten</a></li>
+      <li><a href="#tabellen">Tabellen</a></li>
+      <li><a href="#formulieren">Formulieren</a></li>
+      <li><a href="#opmaak">Tekst en opmaak</a></li>
+      <li><a href="#valkuilen">Valkuilen</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="wrap" style="padding:0;">
+
+<!-- ============ KOPPEN ============ -->
+<section class="cat" id="koppen" aria-labelledby="h-koppen">
+<h2 id="h-koppen">Koppen</h2>
+
+<article class="case" id="K1">
+  <div class="case-head"><span class="case-id">K1</span><p class="case-title">Blok ‘Afval’ op de homepage</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="fake-h">Afval en recycling</div>
+<p>Bekijk de ophaaldagen voor uw adres.</p>
+<div class="fake-h-sm">Grofvuil laten ophalen</div>
+<p>U kunt 4 keer per jaar gratis grofvuil
+laten ophalen.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Twee teksten zien eruit als kop (groot en vet), maar zijn opgemaakt met een <code>div</code>. In de koppenlijst van een screenreader ontbreken ze.</p>
+    <p class="ref">F2 · Techniek H42</p>
+    <script type="text/plain" class="fix">
+<h2>Afval en recycling</h2>
+<p>Bekijk de ophaaldagen voor uw adres.</p>
+<h3>Grofvuil laten ophalen</h3>
+<p>U kunt 4 keer per jaar gratis
+grofvuil laten ophalen.</p>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="K2">
+  <div class="case-head"><span class="case-id">K2</span><p class="case-title">Contactblok in de zijkolom</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<h3>Contact</h3>
+<p>Bel ons op</p>
+<h3>14 010</h3>
+<p>Maandag tot en met vrijdag
+van 8.30 tot 17.00 uur.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Het telefoonnummer is als kop opgemaakt om het groot te tonen. Het nummer is geen kop van een sectie; de kopmarkering geeft een relatie aan die er niet is. ‘Contact’ is wel terecht een kop.</p>
+    <p class="ref">F43 · Techniek H42</p>
+    <script type="text/plain" class="fix">
+<h3>Contact</h3>
+<p>Bel ons op
+  <span class="groot">14 010</span>
+</p>
+<p>Maandag tot en met vrijdag
+van 8.30 tot 17.00 uur.</p>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="K3">
+  <div class="case-head"><span class="case-id">K3</span><p class="case-title">Productpagina paspoort</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<h3 class="paginatitel">Paspoort aanvragen</h3>
+<p>U vraagt een paspoort aan in het stadhuis.</p>
+<h2>Kosten</h2>
+<p>De kosten staan in de tarieventabel.</p>
+<h2>Meenemen</h2>
+<p>Neem uw oude paspoort en een pasfoto mee.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Visueel is ‘Paspoort aanvragen’ de hoofdkop met twee subkoppen. Programmatisch is het andersom: ‘Kosten’ en ‘Meenemen’ (h2) staan hoger dan de paginatitel (h3). De hiërarchie in de code spreekt de visuele hiërarchie tegen.</p>
+    <p class="ref">F43 · Techniek H42</p>
+    <script type="text/plain" class="fix">
+<h1>Paspoort aanvragen</h1>
+<p>U vraagt een paspoort aan
+in het stadhuis.</p>
+<h2>Kosten</h2>
+<p>De kosten staan in de
+tarieventabel.</p>
+<h2>Meenemen</h2>
+<p>Neem uw oude paspoort en
+een pasfoto mee.</p>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ LIJSTEN ============ -->
+<section class="cat" id="lijsten" aria-labelledby="h-lijsten">
+<h2 id="h-lijsten">Lijsten</h2>
+
+<article class="case" id="L1">
+  <div class="case-head"><span class="case-id">L1</span><p class="case-title">Verhuizing doorgeven</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Neem mee:<br>
+• Geldig identiteitsbewijs<br>
+• Huurcontract of koopakte<br>
+• Toestemming van de hoofdbewoner</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Een opsomming die is nagemaakt met bolletjes en regeleinden. De screenreader meldt geen lijst en geen aantal items.</p>
+    <p class="ref">F2 · Techniek H48</p>
+    <script type="text/plain" class="fix">
+<p>Neem mee:</p>
+<ul>
+  <li>Geldig identiteitsbewijs</li>
+  <li>Huurcontract of koopakte</li>
+  <li>Toestemming van de
+    hoofdbewoner</li>
+</ul>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="L2">
+  <div class="case-head"><span class="case-id">L2</span><p class="case-title">Bezwaar maken</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>1. Vul het bezwaarformulier in.</p>
+<p>2. Voeg een kopie van het besluit toe.</p>
+<p>3. Verstuur uw bezwaar binnen 6 weken.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Stappen in een vaste volgorde, maar opgemaakt als losse alinea’s met handmatige nummers. Gebruik een genummerde lijst.</p>
+    <p class="ref">F2 · Techniek H48</p>
+    <script type="text/plain" class="fix">
+<ol>
+  <li>Vul het bezwaarformulier
+    in.</li>
+  <li>Voeg een kopie van het
+    besluit toe.</li>
+  <li>Verstuur uw bezwaar
+    binnen 6 weken.</li>
+</ol>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="L3">
+  <div class="case-head"><span class="case-id">L3</span><p class="case-title">Links in de footer</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<ul class="plain-list"><li><a href="#L3">Over de gemeente</a></li></ul>
+<ul class="plain-list"><li><a href="#L3">Werken bij</a></li></ul>
+<ul class="plain-list"><li><a href="#L3">Privacyverklaring</a></li></ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Visueel één lijst van drie links. In de code drie aparte lijsten van elk één item, dus de screenreader meldt drie keer ‘lijst, 1 item’. De samenhang gaat verloren.</p>
+    <p class="ref">Techniek H48</p>
+    <script type="text/plain" class="fix">
+<ul>
+  <li><a href="/over">
+    Over de gemeente</a></li>
+  <li><a href="/werken">
+    Werken bij</a></li>
+  <li><a href="/privacy">
+    Privacyverklaring</a></li>
+</ul>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ TABELLEN ============ -->
+<section class="cat" id="tabellen" aria-labelledby="h-tabellen">
+<h2 id="h-tabellen">Tabellen</h2>
+
+<article class="case" id="T1">
+  <div class="case-head"><span class="case-id">T1</span><p class="case-title">Openingstijden publiekshal</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table>
+  <tr>
+    <td class="th-look">Dag</td>
+    <td class="th-look">Open</td>
+    <td class="th-look">Gesloten</td>
+  </tr>
+  <tr><td>Maandag</td><td>8.30</td><td>17.00</td></tr>
+  <tr><td>Donderdag</td><td>8.30</td><td>20.00</td></tr>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>De bovenste rij ziet eruit als kolomkoppen, maar bestaat uit gewone <code>td</code>-cellen. Bij het navigeren door de tabel worden geen koppen voorgelezen.</p>
+    <p class="ref">F91 · Techniek H51</p>
+    <script type="text/plain" class="fix">
+<table>
+  <caption>Openingstijden
+    publiekshal</caption>
+  <tr>
+    <th scope="col">Dag</th>
+    <th scope="col">Open</th>
+    <th scope="col">Gesloten</th>
+  </tr>
+  <tr>
+    <td>Maandag</td>
+    <td>8.30</td><td>17.00</td>
+  </tr>
+</table>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="T2">
+  <div class="case-head"><span class="case-id">T2</span><p class="case-title">Tarieven parkeervergunning</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table>
+  <tr>
+    <td></td>
+    <th scope="col">Eerste vergunning</th>
+    <th scope="col">Tweede vergunning</th>
+  </tr>
+  <tr>
+    <td><strong>Centrum</strong></td>
+    <td>€ 120 per jaar</td>
+    <td>€ 240 per jaar</td>
+  </tr>
+  <tr>
+    <td><strong>Overig gebied</strong></td>
+    <td>€ 60 per jaar</td>
+    <td>€ 120 per jaar</td>
+  </tr>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Een tabel met twee assen. De kolomkoppen zijn goed, maar de rijkoppen (‘Centrum’, ‘Overig gebied’) zijn vetgedrukte <code>td</code>-cellen. Bij ‘€ 240 per jaar’ hoort de gebruiker niet voor welk gebied dat geldt. De lege hoekcel is geen probleem.</p>
+    <p class="ref">F91 · Technieken H51, H63</p>
+    <script type="text/plain" class="fix">
+<tr>
+  <th scope="row">Centrum</th>
+  <td>€ 120 per jaar</td>
+  <td>€ 240 per jaar</td>
+</tr>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="T3">
+  <div class="case-head"><span class="case-id">T3</span><p class="case-title">Nieuwsbericht in een oude template</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table class="layout">
+  <tr>
+    <th>12 oktober 2026</th>
+    <td>Nieuwe speeltuin geopend
+    in het Parkkwartier.</td>
+  </tr>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Een tabel die alleen voor de opmaak wordt gebruikt, maar wel een <code>th</code> bevat. Daardoor wordt het een datatabel met een kop ‘12 oktober 2026’ die er niet is. Een layouttabel zonder <code>th</code>, <code>caption</code> of <code>summary</code> is op zich geen afkeur (zie V4).</p>
+    <p class="ref">F46</p>
+    <script type="text/plain" class="fix">
+<article class="nieuws">
+  <p class="datum">
+    <time datetime="2026-10-12">
+      12 oktober 2026</time>
+  </p>
+  <p>Nieuwe speeltuin geopend
+  in het Parkkwartier.</p>
+</article>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="T4">
+  <div class="case-head"><span class="case-id">T4</span><p class="case-title">Afvalkalender</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="grid-table">
+  <div class="gh">Soort afval</div>
+  <div class="gh">Ophaaldag</div>
+  <div>GFT</div><div>Dinsdag</div>
+  <div>Papier</div><div>Donderdag</div>
+  <div>Restafval</div><div>Vrijdag</div>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Visueel een tabel, in de code alleen <code>div</code>’s met CSS-grid. Er is geen tabelstructuur, geen kopcellen en geen rij-kolomrelatie.</p>
+    <p class="ref">F91 · Techniek H51 (of ARIA-tabelrollen)</p>
+    <script type="text/plain" class="fix">
+<table>
+  <tr>
+    <th scope="col">Soort afval</th>
+    <th scope="col">Ophaaldag</th>
+  </tr>
+  <tr>
+    <td>GFT</td><td>Dinsdag</td>
+  </tr>
+</table>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="T5">
+  <div class="case-head"><span class="case-id">T5</span><p class="case-title">Bezoekers bibliotheek</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table role="presentation">
+  <tr>
+    <th>Vestiging</th>
+    <th>Bezoekers 2025</th>
+  </tr>
+  <tr><td>Centrale bibliotheek</td><td>182.400</td></tr>
+  <tr><td>Wijkfiliaal Noord</td><td>41.050</td></tr>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Een echte datatabel met correcte <code>th</code>’s, maar <code>role="presentation"</code> haalt alle tabelsemantiek weg. Vaak een overblijfsel van een CMS-template of een kopieerfout.</p>
+    <p class="ref">F92</p>
+    <script type="text/plain" class="fix">
+<table>
+  <tr>
+    <th scope="col">Vestiging</th>
+    <th scope="col">
+      Bezoekers 2025</th>
+  </tr>
+  ...
+</table>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="T6">
+  <div class="case-head"><span class="case-id">T6</span><p class="case-title">Inzameldagen per wijk</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<pre>Wijk      Papier    Plastic
+Noord     ma        do
+Zuid      di        vr</pre>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Een tabel opgebouwd met spaties in een <code>pre</code>-blok. De kolommen bestaan alleen visueel; voorgelezen is het een rij losse woorden.</p>
+    <p class="ref">F34 · F48</p>
+    <script type="text/plain" class="fix">
+<table>
+  <tr>
+    <th scope="col">Wijk</th>
+    <th scope="col">Papier</th>
+    <th scope="col">Plastic</th>
+  </tr>
+  <tr>
+    <th scope="row">Noord</th>
+    <td>ma</td><td>do</td>
+  </tr>
+</table>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ FORMULIEREN ============ -->
+<section class="cat" id="formulieren" aria-labelledby="h-formulieren">
+<h2 id="h-formulieren">Formulieren</h2>
+
+<article class="case" id="F1">
+  <div class="case-head"><span class="case-id">F1</span><p class="case-title">Zoeken in de afvalkalender</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<span>Postcode</span><br>
+<input type="text" id="f1-postcode">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>De tekst ‘Postcode’ staat zichtbaar bij het veld, maar is er niet aan gekoppeld. Het veld heeft daardoor ook geen toegankelijke naam, dus dit is tegelijk een afkeur op 4.1.2.</p>
+    <p class="ref">Techniek H44 · ook 4.1.2</p>
+    <script type="text/plain" class="fix">
+<label for="postcode">
+  Postcode</label>
+<input type="text"
+  id="postcode"
+  autocomplete="postal-code">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="F2">
+  <div class="case-head"><span class="case-id">F2</span><p class="case-title">Ontvangst paspoort</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Hoe wilt u het paspoort ontvangen?</p>
+<div class="radio-row">
+  <input type="radio" id="f2-a" name="f2-ontv">
+  <label for="f2-a">Ophalen in het stadhuis</label>
+</div>
+<div class="radio-row">
+  <input type="radio" id="f2-b" name="f2-ontv">
+  <label for="f2-b">Thuisbezorgen</label>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>De keuzerondjes hebben elk een goed label, maar de vraag erboven is niet als groepslabel gekoppeld. Wie naar ‘Thuisbezorgen’ tabt, hoort niet waarover de keuze gaat.</p>
+    <p class="ref">Techniek H71 (of ARIA17)</p>
+    <script type="text/plain" class="fix">
+<fieldset>
+  <legend>Hoe wilt u het
+    paspoort ontvangen?</legend>
+  <input type="radio" id="a"
+    name="ontv">
+  <label for="a">Ophalen in
+    het stadhuis</label>
+  ...
+</fieldset>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="F3">
+  <div class="case-head"><span class="case-id">F3</span><p class="case-title">Contactformulier</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<style>
+  .f3-req { color: var(--spec-red); }
+  .f3-req + br + input {
+    border: 2px solid var(--spec-red);
+  }
+</style>
+<p>Rode velden zijn verplicht.</p>
+<label for="f3-naam" class="f3-req">Naam</label><br>
+<input type="text" id="f3-naam"><br>
+<label for="f3-tel">Telefoonnummer</label><br>
+<input type="text" id="f3-tel">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Dat ‘Naam’ verplicht is, blijkt alleen uit rode kleur. Het veld heeft geen <code>required</code> of <code>aria-required</code> en ook geen tekst als ‘(verplicht)’. Omdat de informatie alleen in kleur zit, is dit ook een afkeur op 1.4.1.</p>
+    <p class="ref">F2 · Technieken H90, ARIA2 · ook 1.4.1</p>
+    <script type="text/plain" class="fix">
+<label for="naam">Naam
+  (verplicht)</label>
+<input type="text" id="naam"
+  required
+  autocomplete="name">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="F4">
+  <div class="case-head"><span class="case-id">F4</span><p class="case-title">Geboortedatum invullen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<label for="f4-gd">Geboortedatum</label><br>
+<input type="text" id="f4-gd">
+<p><small>Gebruik dd-mm-jjjj,
+bijvoorbeeld 05-03-1980.</small></p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>De formaatinstructie hoort bij het veld, maar is er niet aan gekoppeld en staat er in de code ná. In formuliermodus mist een screenreadergebruiker de instructie. Over dit type wordt verschillend geoordeeld; omdat het formaat nodig is om het veld goed in te vullen, keuren de meeste auditors af.</p>
+    <p class="ref">Techniek ARIA1</p>
+    <script type="text/plain" class="fix">
+<label for="gd">
+  Geboortedatum</label>
+<input type="text" id="gd"
+  aria-describedby="gd-uitleg">
+<p id="gd-uitleg">Gebruik
+  dd-mm-jjjj, bijvoorbeeld
+  05-03-1980.</p>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ TEKST EN OPMAAK ============ -->
+<section class="cat" id="opmaak" aria-labelledby="h-opmaak">
+<h2 id="h-opmaak">Tekst en opmaak</h2>
+
+<article class="case" id="O1">
+  <div class="case-head"><span class="case-id">O1</span><p class="case-title">Openingstijden deze week</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Donderdag 8.30 – 20.00 uur<br>
+<b>Vrijdag 8.30 – 17.00 uur</b><br>
+Zaterdag gesloten</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>De vetgedrukte regel betekent ‘vandaag’, maar dat staat nergens in tekst. De betekenis zit alleen in de opmaak.</p>
+    <p class="ref">F2 · Techniek G117</p>
+    <script type="text/plain" class="fix">
+<ul>
+  <li>Donderdag 8.30 – 20.00
+    uur</li>
+  <li aria-current="date">
+    <b>Vrijdag (vandaag)
+    8.30 – 17.00 uur</b></li>
+  <li>Zaterdag gesloten</li>
+</ul>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="O2">
+  <div class="case-head"><span class="case-id">O2</span><p class="case-title">Subsidieaanvraag</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>U kunt subsidie aanvragen voor
+activiteiten in uw wijk.</p>
+<blockquote><p>De aanvraag moet uiterlijk
+1 december binnen zijn.</p></blockquote>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Een <code>blockquote</code> wordt gebruikt om een alinea te laten inspringen. Het is geen citaat, maar de screenreader meldt het wel zo.</p>
+    <p class="ref">F43 · Techniek H49</p>
+    <script type="text/plain" class="fix">
+<p class="let-op">
+  <strong>Let op:</strong>
+  de aanvraag moet uiterlijk
+  1 december binnen zijn.
+</p>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="O3">
+  <div class="case-head"><span class="case-id">O3</span><p class="case-title">Nieuwsoverzicht</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<style>
+  .o3-nieuw::before {
+    content: "Nieuw";
+    font-size: .75rem; font-weight: 700;
+    color: var(--fail); margin-right: .5rem;
+  }
+</style>
+<ul class="plain-list">
+  <li class="o3-nieuw">Werkzaamheden Stationsplein</li>
+  <li>Inloopavond nieuwe woonwijk</li>
+</ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Het label ‘Nieuw’ draagt informatie, maar wordt via CSS <code>::before</code> ingevoegd. Het zit niet in de DOM; sommige screenreaders lezen het, andere niet, en zonder CSS verdwijnt het.</p>
+    <p class="ref">F87</p>
+    <script type="text/plain" class="fix">
+<li>
+  <span class="label">Nieuw</span>
+  Werkzaamheden Stationsplein
+</li>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="O4">
+  <div class="case-head"><span class="case-id">O4</span><p class="case-title">Status van uw aanvraag</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="kv">
+  <div>
+    <div class="kv-label">Zaaknummer</div>
+    <div class="kv-label">Status</div>
+    <div class="kv-label">Ingediend op</div>
+  </div>
+  <div>
+    <div>Z-2026-04418</div>
+    <div>In behandeling</div>
+    <div>3 oktober 2026</div>
+  </div>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <p>Visueel staan label en waarde naast elkaar. In de code staan eerst alle labels en daarna alle waarden, zonder onderlinge relatie. Voorgelezen: ‘Zaaknummer, Status, Ingediend op, Z-2026-04418…’. Ook een afkeur op 1.3.2.</p>
+    <p class="ref">Techniek H40 (definitielijst) · ook 1.3.2</p>
+    <script type="text/plain" class="fix">
+<dl>
+  <dt>Zaaknummer</dt>
+  <dd>Z-2026-04418</dd>
+  <dt>Status</dt>
+  <dd>In behandeling</dd>
+  <dt>Ingediend op</dt>
+  <dd>3 oktober 2026</dd>
+</dl>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ VALKUILEN ============ -->
+<section class="cat" id="valkuilen" aria-labelledby="h-valkuilen">
+<h2 id="h-valkuilen">Valkuilen</h2>
+<p class="cat-note">Deze voorbeelden lijken op een 1.3.1-fout. Oordeel zelf voordat je de bevinding opent.</p>
+
+<article class="case" id="V1">
+  <div class="case-head"><span class="case-id">V1</span><p class="case-title">Overgeslagen kopniveau</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<h2>Afval</h2>
+<p>Alles over afval scheiden en ophalen.</p>
+<h4>Grofvuil</h4>
+<p>Maak online een afspraak.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.3.1</span>
+    <p>Van h2 naar h4 springen is slordig, maar WCAG eist geen opeenvolgende niveaus. De relatie (Grofvuil valt onder Afval) klopt nog. Noteer het als advies, niet als afkeur.</p>
+    <p class="ref">Advies · Techniek H42</p>
+    <script type="text/plain" class="fix">
+<h2>Afval</h2>
+<p>...</p>
+<h3>Grofvuil</h3>
+<p>...</p>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V2">
+  <div class="case-head"><span class="case-id">V2</span><p class="case-title">Nieuwsbrief aanmelden</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<input type="email" id="v2-mail" placeholder="E-mailadres">
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.3.1</span>
+    <p>Er is geen zichtbare tekst die niet gekoppeld is: de placeholder levert de toegankelijke naam. De placeholder verdwijnt wel tijdens het typen, dus keur af op 3.3.2 Labels of instructies, niet op 1.3.1.</p>
+    <p class="ref">Wel afkeur 3.3.2</p>
+    <script type="text/plain" class="fix">
+<label for="mail">
+  E-mailadres</label>
+<input type="email" id="mail"
+  autocomplete="email">
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V3">
+  <div class="case-head"><span class="case-id">V3</span><p class="case-title">Lijst zonder bolletjes</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<ul class="plain-list">
+  <li>Melding openbare ruimte</li>
+  <li>Vergunning aanvragen</li>
+  <li>Afspraak maken</li>
+</ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.3.1</span>
+    <p>Een echte <code>ul</code> met <code>list-style: none</code> en een pijltje via CSS. Het pijltje is decoratief, de lijststructuur is intact. Dat Safari/VoiceOver zulke lijsten soms niet als lijst meldt, is browsergedrag en geen fout van de auteur.</p>
+    <p class="ref">Correct · Techniek H48</p>
+    <script type="text/plain" class="fix">
+<!-- in orde zoals het is -->
+<ul class="plain-list">
+  <li>Melding openbare
+    ruimte</li>
+  ...
+</ul>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="V4">
+  <div class="case-head"><span class="case-id">V4</span><p class="case-title">Layouttabel zonder kopcellen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table class="layout">
+  <tr>
+    <td>12 oktober 2026</td>
+    <td>Nieuwe speeltuin geopend
+    in het Parkkwartier.</td>
+  </tr>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur 1.3.1</span>
+    <p>Een tabel voor opmaak zonder <code>th</code>, <code>caption</code> of <code>summary</code>, die logisch voorleest. Dat is verouderd en niet aan te raden, maar geen afkeur. Vergelijk met T3. Voeg bij voorkeur <code>role="presentation"</code> toe.</p>
+    <p class="ref">Advies · vergelijk F46</p>
+    <script type="text/plain" class="fix">
+<table role="presentation">
+  <tr>
+    <td>12 oktober 2026</td>
+    <td>Nieuwe speeltuin ...</td>
+  </tr>
+</table>
+    </script>
+  </div></details>
+</article>
+</section>
+</main>
+
+<footer>Oefenmateriaal Shift2 · Faaltechnieken en technieken volgens de W3C Understanding- en Techniques-documenten bij WCAG 2.2.</footer>
+</div>
+
+<style>
+.src { border: 1px solid var(--line); border-radius: 6px; background: var(--code-bg); }
+.src > summary { padding: .5rem .8rem; color: var(--fg); font-size: .9rem; }
+.src pre {
+  margin: 0; padding: 0 .8rem .8rem; font-family: var(--font-mono);
+  font-size: .78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.judge { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.judge legend { font-weight: 700; padding: 0; margin-bottom: .3rem; float: left; width: 100%; }
+.judge label {
+  display: inline-flex; gap: .4rem; align-items: center; cursor: pointer;
+  padding: .35rem .8rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+}
+.judge input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); margin: 0; }
+.judge label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.feedback { margin: 0; font-weight: 700; padding: .4rem .7rem; border-radius: 6px; width: max-content; max-width: 100%; }
+.feedback.ok { background: var(--pass-soft); color: var(--pass); }
+.feedback.nok { background: var(--fail-soft); color: var(--fail); }
+.case.is-done { opacity: 1; }
+.case.right { border-left: 4px solid var(--pass); }
+.case.wrong { border-left: 4px solid var(--fail); }
+</style>
+<script>
+(function () {
+  var SC = "1.3.1";
+  function dedent(s) {
+    var lines = s.replace(/\t/g, "  ").split("\n");
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    var min = Infinity;
+    lines.forEach(function (l) { if (l.trim()) min = Math.min(min, l.match(/^ */)[0].length); });
+    if (!isFinite(min)) min = 0;
+    return lines.map(function (l) { return l.slice(min); }).join("\n");
+  }
+  function codeBlock(label, cls, text) {
+    var d = document.createElement("div");
+    var p = document.createElement("p");
+    p.className = "code-label " + cls; p.textContent = label;
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = text; pre.appendChild(code);
+    d.appendChild(p); d.appendChild(pre);
+    return d;
+  }
+  function source(spec) {
+    var clone = spec.cloneNode(true);
+    clone.querySelectorAll("[data-file]").forEach(function (el) {
+      el.setAttribute("src", el.getAttribute("data-file"));
+      el.removeAttribute("data-file");
+    });
+    return dedent(clone.innerHTML);
+  }
+  var cases = Array.prototype.slice.call(document.querySelectorAll(".case"));
+  var KEY = "oefen131-v2";
+  var answers = {};
+  try { answers = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { answers = {}; }
+  if (typeof answers !== "object" || Array.isArray(answers)) answers = {};
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} }
+  var score = document.getElementById("score");
+  function truth(c) { return c.querySelector(".verdict.pass") ? "pass" : "fail"; }
+  function updateScore() {
+    var n = 0, good = 0;
+    cases.forEach(function (c) {
+      var a = answers[c.id];
+      if (a === "fail" || a === "pass") { n++; if (a === truth(c)) good++; }
+    });
+    score.textContent = n + " van " + cases.length + " beoordeeld · " + good + " goed";
+  }
+  function showFeedback(c, fb, a, openFinding) {
+    c.classList.remove("right", "wrong");
+    if (a !== "fail" && a !== "pass") { fb.hidden = true; return; }
+    var ok = a === truth(c);
+    c.classList.add(ok ? "right" : "wrong");
+    fb.hidden = false;
+    fb.className = "feedback " + (ok ? "ok" : "nok");
+    fb.textContent = ok
+      ? "Goed beoordeeld. Lees de bevinding hieronder."
+      : "Niet goed: dit is " + (truth(c) === "fail" ? "een afkeur op " + SC : "geen afkeur op " + SC) + ". Lees de bevinding.";
+    if (openFinding) c.querySelector("details.finding-box").open = true;
+  }
+  cases.forEach(function (c) {
+    var spec = c.querySelector(".specimen");
+    var fix = c.querySelector("script.fix");
+    var finding = c.querySelector(".finding");
+    var details = finding.closest("details");
+    details.classList.add("finding-box");
+    var isPass = truth(c) === "pass";
+
+    // 1. broncode direct onder het testgebied
+    var src = document.createElement("details");
+    src.className = "src"; src.open = true;
+    var sum = document.createElement("summary");
+    sum.textContent = "Broncode testgebied";
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = source(spec);
+    pre.appendChild(code);
+    src.appendChild(sum); src.appendChild(pre);
+    spec.insertAdjacentElement("afterend", src);
+
+    // 2. eigen oordeel
+    var fs = document.createElement("fieldset");
+    fs.className = "judge";
+    var lg = document.createElement("legend");
+    lg.textContent = "Jouw oordeel " + c.id;
+    fs.appendChild(lg);
+    [["fail", "Afkeur " + SC], ["pass", "Geen afkeur"]].forEach(function (o) {
+      var lab = document.createElement("label");
+      var r = document.createElement("input");
+      r.type = "radio"; r.name = "oordeel-" + c.id; r.value = o[0];
+      r.id = "oordeel-" + c.id + "-" + o[0];
+      r.checked = answers[c.id] === o[0];
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(o[1]));
+      fs.appendChild(lab);
+    });
+    var fb = document.createElement("p");
+    fb.className = "feedback"; fb.hidden = true;
+    fb.setAttribute("role", "status");
+    src.insertAdjacentElement("afterend", fs);
+    fs.insertAdjacentElement("afterend", fb);
+    fs.addEventListener("change", function (e) {
+      answers[c.id] = e.target.value; save();
+      showFeedback(c, fb, e.target.value, true);
+      updateScore();
+    });
+    showFeedback(c, fb, answers[c.id], false);
+
+    // 3. correcte code in de bevinding
+    var fixText = dedent(fix.textContent);
+    if (fixText.indexOf("in orde zoals het is") === -1) {
+      var pair = document.createElement("div");
+      pair.className = "code-pair";
+      pair.appendChild(codeBlock(isPass ? "Beter (advies)" : "Correct", "good", fixText));
+      finding.appendChild(pair);
+    }
+  });
+  updateScore();
+
+  var toggle = document.getElementById("toggle-all");
+  var open = false;
+  toggle.addEventListener("click", function () {
+    open = !open;
+    document.querySelectorAll("details.finding-box").forEach(function (d) { d.open = open; });
+    toggle.textContent = open ? "Alle bevindingen sluiten" : "Alle bevindingen openen";
+  });
+  var reset = document.getElementById("reset");
+  reset.textContent = "Antwoorden wissen";
+  reset.addEventListener("click", function () {
+    answers = {}; save();
+    cases.forEach(function (c) {
+      c.querySelectorAll(".judge input").forEach(function (r) { r.checked = false; });
+      showFeedback(c, c.querySelector(".feedback"), null, false);
+    });
+    updateScore();
+  });
+})();
+</script>

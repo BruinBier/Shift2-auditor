@@ -1,0 +1,517 @@
+<title>Oefenpagina contact en bevestiging</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: één leeskolom; elke casus = kop-regel, gestippeld testgebied, ingeklapte bevinding */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --paper: #fbfcfd;
+  --fg: #17202a;
+  --muted: #55626f;
+  --line: #c9d1d9;
+  --accent: #1e5a85;
+  --accent-soft: #e3edf5;
+  --fail: #b42318;
+  --fail-soft: #fdecea;
+  --pass: #1a7a4a;
+  --pass-soft: #e5f4ec;
+  --code-bg: #eef1f4;
+  --spec-red: #c0261b;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+    --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+    --accent: #7db6e3; --accent-soft: #1d3346;
+    --fail: #ff8a7f; --fail-soft: #3a1d1b;
+    --pass: #6fd3a0; --pass-soft: #163327;
+    --code-bg: #0f1419; --spec-red: #ff7b70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+  --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+  --accent: #7db6e3; --accent-soft: #1d3346;
+  --fail: #ff8a7f; --fail-soft: #3a1d1b;
+  --pass: #6fd3a0; --pass-soft: #163327;
+  --code-bg: #0f1419; --spec-red: #ff7b70;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+}
+.wrap {
+  max-width: 52rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2rem 4rem;
+  display: grid; gap: 2.5rem;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Kop van de pagina */
+.intro { display: grid; gap: .9rem; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); margin: 0;
+}
+h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; max-width: 65ch; }
+.howto { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; color: var(--muted); }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+  padding: .75rem 1rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.score { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: auto; }
+.btn {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  padding: .4rem .85rem; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--surface); color: var(--accent);
+}
+.btn:hover { background: var(--accent-soft); }
+.cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.cats a {
+  display: inline-block; padding: .25rem .7rem; border-radius: 999px;
+  background: var(--accent-soft); text-decoration: none; font-size: .9rem;
+}
+
+/* Categorieën en casussen */
+.cat { display: grid; gap: 1.25rem; }
+.cat > h2 {
+  font-size: 1.5rem; margin: 0; padding-bottom: .4rem;
+  border-bottom: 2px solid var(--fg); text-wrap: balance;
+}
+.cat-note { margin: -.5rem 0 0; color: var(--muted); max-width: 65ch; }
+.case {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 1rem; display: grid; gap: .8rem; min-width: 0;
+}
+.case-head { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: baseline; }
+.case-id {
+  font-family: var(--font-mono); font-weight: 600; font-size: .85rem;
+  color: var(--accent);
+}
+.case-title { margin: 0; font-weight: 700; margin-right: auto; }
+.done { font-size: .9rem; display: inline-flex; gap: .35rem; align-items: center; color: var(--muted); }
+.done input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.case.is-done { opacity: .78; }
+
+.spec-label {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 -.5rem;
+}
+.specimen {
+  background: var(--paper); border: 2px dashed var(--line); border-radius: 6px;
+  padding: 1rem; overflow-x: auto; min-width: 0;
+}
+.specimen > :first-child { margin-top: 0; }
+.specimen > :last-child { margin-bottom: 0; }
+.specimen h2 { font-size: 1.35rem; margin: .2rem 0 .4rem; }
+.specimen h3 { font-size: 1.15rem; margin: .2rem 0 .4rem; }
+.specimen h4 { font-size: 1rem; margin: .2rem 0 .4rem; }
+.specimen p { margin: .3rem 0 .6rem; }
+.specimen table { border-collapse: collapse; margin: .2rem 0; }
+.specimen th, .specimen td {
+  border: 1px solid var(--line); padding: .35rem .7rem; text-align: left;
+  vertical-align: top;
+}
+.specimen th { background: var(--accent-soft); }
+.specimen input[type="text"], .specimen input[type="email"] {
+  font: inherit; padding: .35rem .5rem; border: 1px solid var(--muted);
+  border-radius: 4px; background: var(--surface); color: var(--fg);
+  max-width: 100%;
+}
+.specimen pre { font-family: var(--font-mono); font-size: .9rem; margin: 0; }
+/* opmaakklassen die de fouten zichtbaar maken */
+.fake-h { font-size: 1.35rem; font-weight: 700; margin: .2rem 0 .4rem; }
+.fake-h-sm { font-size: 1.1rem; font-weight: 700; margin: .6rem 0 .3rem; }
+.paginatitel { font-size: 1.6rem !important; }
+.th-look { font-weight: 700; background: var(--accent-soft); }
+.layout td, .layout th { border: 0 !important; background: none !important; padding: .2rem 1rem .2rem 0 !important; }
+.layout th { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.grid-table { display: grid; grid-template-columns: max-content max-content; border: 1px solid var(--line); width: max-content; }
+.grid-table > div { padding: .35rem .7rem; border-bottom: 1px solid var(--line); }
+.grid-table .gh { font-weight: 700; background: var(--accent-soft); }
+.kv { display: flex; gap: 2rem; }
+.kv > div { display: grid; gap: .3rem; }
+.kv-label { color: var(--muted); }
+.radio-row { display: flex; gap: .4rem; align-items: center; margin: .2rem 0; }
+.plain-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .3rem; }
+.plain-list li::before { content: "→ "; color: var(--accent); }
+
+/* Bevinding */
+details { border-top: 1px solid var(--line); padding-top: .6rem; }
+summary {
+  cursor: pointer; font-weight: 700; color: var(--accent);
+  list-style-position: outside;
+}
+.finding { display: grid; gap: .7rem; margin-top: .7rem; min-width: 0; }
+.finding p { margin: 0; max-width: 65ch; }
+.verdict {
+  display: inline-block; width: max-content; font-weight: 700; font-size: .85rem;
+  padding: .15rem .6rem; border-radius: 4px;
+}
+.verdict.fail { background: var(--fail-soft); color: var(--fail); }
+.verdict.pass { background: var(--pass-soft); color: var(--pass); }
+.ref { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+.code-pair { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.code-pair > div { min-width: 0; display: grid; gap: .3rem; align-content: start; }
+.code-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.code-label.bad { color: var(--fail); }
+.code-label.good { color: var(--pass); }
+.code-pair pre {
+  margin: 0; padding: .7rem .8rem; background: var(--code-bg); border-radius: 6px;
+  font-family: var(--font-mono); font-size: .78rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<style>
+.compare {
+  display: grid; grid-template-columns: max-content 1fr; gap: .2rem .8rem;
+  font-size: .9rem; padding: .6rem .8rem; border-radius: 6px; background: var(--code-bg);
+}
+.compare dt { color: var(--muted); }
+.compare dd { margin: 0; font-weight: 700; }
+.contact-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.contact-list a { display: inline-flex; gap: .5rem; align-items: center; }
+.contact-list img { display: inline-block; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+</style>
+
+<div class="wrap">
+<header class="intro">
+  <p class="eyebrow">Casussen uit een extern contentrapport (WCAG 2.1 AA) · Gemeentelijke website</p>
+  <h1>Oefenpagina contact en bevestiging</h1>
+  <p>Drie bevindingen uit één auditrapport, nagebouwd in de fictieve gemeente Waterdam. Er zijn twee extra varianten toegevoegd om te laten zien waar de grens van een afkeur ligt. Beoordeel elke casus zelf; in de bevinding zie je het oordeel van het rapport naast ons oordeel.</p>
+  <ul class="howto">
+    <li>Bij 2.4.4 telt ook de context: tekst in dezelfde zin, alinea of hetzelfde lijstitem als de link.</li>
+    <li>Een reparatie kan zelf een nieuwe fout veroorzaken. Let daarom ook op 2.5.3 Label in naam.</li>
+  </ul>
+  <div class="toolbar">
+    <span class="score" id="score" aria-live="polite">0 van 5 beoordeeld · 0 goed</span>
+    <button class="btn" type="button" id="toggle-all">Alle bevindingen openen</button>
+    <button class="btn" type="button" id="reset">Antwoorden wissen</button>
+  </div>
+  <nav aria-label="Categorieën">
+    <ul class="cats">
+      <li><a href="#bevestiging">Bevestigingspagina</a></li>
+      <li><a href="#contact">Contactgegevens</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="wrap" style="padding:0;">
+
+<section class="cat" id="bevestiging" aria-labelledby="h-bev">
+<h2 id="h-bev">Bevestigingspagina na een formulier</h2>
+
+<article class="case" id="M1" data-sc="1.3.1">
+  <div class="case-head"><span class="case-id">M1</span><p class="case-title">Aanvraag gft-keukenbakje ontvangen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<h2>Bedankt voor uw aanvraag</h2>
+<p><strong>Uw gegevens</strong></p>
+<p>Postcode: 1234 AB, huisnummer 12</p>
+<p><strong>Wat gebeurt er nu?</strong></p>
+<p>Binnen twee weken bezorgen wij het keukenbakje aan huis.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 1.3.1</dd><dt>Ons oordeel</dt><dd>Afkeur 1.3.1</dd></dl>
+    <p>‘Uw gegevens’ en ‘Wat gebeurt er nu?’ werken visueel als tussenkoppen, maar zijn vetgedrukte alinea’s. In de koppenlijst ontbreken ze. Let op: een vette zin is niet automatisch een kop. Beoordeel of de tekst echt een sectie inleidt, zoals hier.</p>
+    <p class="ref">F2 · Techniek H42</p>
+    <script type="text/plain" class="fix">
+<h2>Bedankt voor uw aanvraag</h2>
+<h3>Uw gegevens</h3>
+<p>Postcode: 1234 AB,
+  huisnummer 12</p>
+<h3>Wat gebeurt er nu?</h3>
+<p>Binnen twee weken ...</p>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="M2" data-sc="1.3.1">
+  <div class="case-head"><span class="case-id">M2</span><p class="case-title">Witregels in de bevestiging</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Bedankt voor uw aanvraag.<br>
+<br>
+U ontvangt een bevestiging per e-mail.<br>
+<br>
+Heeft u vragen? Bel 14 0123.</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 1.3.1</dd><dt>Ons oordeel</dt><dd>Geen afkeur, wel advies</dd></dl>
+    <p>Dubbele <code>br</code>-elementen zorgen voor witruimte. Sommige screenreaders melden daardoor in de leesmodus ‘leeg’. Dat is hinderlijk, maar er gaat geen informatie, structuur of relatie verloren: de tekst en de volgorde zijn volledig beschikbaar. WCAG eist niet dat alinea’s als <code>p</code> zijn gemarkeerd. Advies: losse alinea’s en witruimte via CSS.</p>
+    <p class="ref">Advies · geen faaltechniek van toepassing</p>
+    <script type="text/plain" class="fix">
+<p>Bedankt voor uw aanvraag.</p>
+<p>U ontvangt een bevestiging
+  per e-mail.</p>
+<p>Heeft u vragen?
+  Bel 14 0123.</p>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<section class="cat" id="contact" aria-labelledby="h-con">
+<h2 id="h-con">Contactgegevens</h2>
+<p class="cat-note">Het rapport keurde af omdat twee telefoonlinks ‘alleen als het nummer’ werden voorgelezen. Of dat een afkeur is, hangt af van de context rond de link. Drie varianten:</p>
+
+<article class="case" id="M3" data-sc="2.4.4">
+  <div class="case-head"><span class="case-id">M3</span><p class="case-title">Contact, variant met tekstlabel</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<ul class="contact-list">
+  <li>WhatsApp: <a href="#M3">06 12 34 56 78</a></li>
+  <li>Bellen vanuit het buitenland: <a href="#M3">+31 123 456 789</a></li>
+</ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 2.4.4</dd><dt>Ons oordeel</dt><dd>Geen afkeur</dd></dl>
+    <p>De linktekst is alleen het nummer, maar het doel staat in hetzelfde lijstitem: ‘WhatsApp:’ en ‘Bellen vanuit het buitenland:’. Dat is programmatisch bepaalbare context, en 2.4.4 laat linktekst samen met context toe. Een screenreadergebruiker kan die context opvragen. Als het rapport deze situatie bedoelde, is de afkeur te streng. Wel een advies: het doel in de link zelf zetten helpt in een lijst met links (zie 2.4.9, niveau AAA).</p>
+    <p class="ref">Correct · Techniek H77, G53</p>
+    <script type="text/plain" class="fix">
+<!-- advies (niet verplicht) -->
+<li>
+  <a href="https://wa.me/...">
+    WhatsApp: 06 12 34 56 78
+  </a>
+</li>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="M4" data-sc="2.4.4 en 1.1.1">
+  <div class="case-head"><span class="case-id">M4</span><p class="case-title">Contact, variant met iconen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<ul class="contact-list">
+  <li><a href="#M4"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 4h16v11H9l-4 4v-4H3z' fill='%231e5a85'/%3E%3Ccircle cx='8' cy='9.5' r='1.3' fill='%23fff'/%3E%3Ccircle cx='11' cy='9.5' r='1.3' fill='%23fff'/%3E%3Ccircle cx='14' cy='9.5' r='1.3' fill='%23fff'/%3E%3C/svg%3E" data-file="icon-chat.svg"
+    alt="" width="22" height="22"> 06 12 34 56 78</a></li>
+  <li><a href="#M4"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5' fill='none' stroke='%231e5a85' stroke-width='2'/%3E%3Cellipse cx='11' cy='11' rx='3.8' ry='8.5' fill='none' stroke='%231e5a85' stroke-width='1.6'/%3E%3Cpath d='M2.5 11h17M4 6.5h14M4 15.5h14' stroke='%231e5a85' stroke-width='1.4'/%3E%3C/svg%3E" data-file="icon-wereld.svg"
+    alt="" width="22" height="22"> +31 123 456 789</a></li>
+</ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 2.4.4 en 1.1.1</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 2.4.4</dd><dt>Ons oordeel</dt><dd>Afkeur 2.4.4 en 1.1.1</dd></dl>
+    <p>Hier staat het verschil tussen de nummers alleen in de iconen (chat en wereldbol), en die hebben <code>alt=""</code>. Er is geen tekstuele context, dus het doel van de link is niet te bepalen: afkeur 2.4.4. De iconen dragen informatie (WhatsApp of buitenland), dus de lege alt is ook een afkeur op 1.1.1.</p>
+    <p class="ref">F30 · Techniek H30, H37</p>
+    <script type="text/plain" class="fix">
+<a href="https://wa.me/...">
+  <img src="icon-chat.svg"
+    alt="WhatsApp:">
+  06 12 34 56 78
+</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="M5" data-sc="2.5.3">
+  <div class="case-head"><span class="case-id">M5</span><p class="case-title">Contact, variant na een snelle reparatie</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<ul class="contact-list">
+  <li><a href="#M5" aria-label="Stuur ons een WhatsApp-bericht"><img
+    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 4h16v11H9l-4 4v-4H3z' fill='%231e5a85'/%3E%3Ccircle cx='8' cy='9.5' r='1.3' fill='%23fff'/%3E%3Ccircle cx='11' cy='9.5' r='1.3' fill='%23fff'/%3E%3Ccircle cx='14' cy='9.5' r='1.3' fill='%23fff'/%3E%3C/svg%3E" data-file="icon-chat.svg" alt="" width="22"
+    height="22"> 06 12 34 56 78</a></li>
+</ul>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 2.5.3</span>
+    <dl class="compare"><dt>Rapport</dt><dd>(niet in rapport)</dd><dt>Ons oordeel</dt><dd>Afkeur 2.5.3</dd></dl>
+    <p>Iemand heeft de bevinding uit M4 opgelost met een <code>aria-label</code>. Daardoor is het linkdoel nu wel duidelijk, maar de toegankelijke naam bevat het zichtbare nummer niet meer. Wie spraakbesturing gebruikt en ‘klik 06 12 34 56 78’ zegt, bereikt de link niet. Het rapport adviseerde ‘tekst alleen voor schermlezers toevoegen’; doe dat als aanvulling op de zichtbare tekst, niet als vervanging ervan.</p>
+    <p class="ref">F96 · Techniek G208</p>
+    <script type="text/plain" class="fix">
+<a href="https://wa.me/...">
+  <img src="icon-chat.svg" alt="">
+  <span class="visually-hidden">
+    WhatsApp:</span>
+  06 12 34 56 78
+</a>
+    </script>
+  </div></details>
+</article>
+</section>
+</main>
+
+<footer>Oefenmateriaal Shift2 · Nagebouwd op basis van bevindingen uit een extern auditrapport, geanonimiseerd. Alle namen, nummers en afbeeldingen zijn fictief.</footer>
+</div>
+
+<style>
+.src { border: 1px solid var(--line); border-radius: 6px; background: var(--code-bg); }
+.src > summary { padding: .5rem .8rem; color: var(--fg); font-size: .9rem; }
+.src pre {
+  margin: 0; padding: 0 .8rem .8rem; font-family: var(--font-mono);
+  font-size: .78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.judge { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.judge legend { font-weight: 700; padding: 0; margin-bottom: .3rem; float: left; width: 100%; }
+.judge label {
+  display: inline-flex; gap: .4rem; align-items: center; cursor: pointer;
+  padding: .35rem .8rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+}
+.judge input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); margin: 0; }
+.judge label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.feedback { margin: 0; font-weight: 700; padding: .4rem .7rem; border-radius: 6px; width: max-content; max-width: 100%; }
+.feedback.ok { background: var(--pass-soft); color: var(--pass); }
+.feedback.nok { background: var(--fail-soft); color: var(--fail); }
+.case.is-done { opacity: 1; }
+.case.right { border-left: 4px solid var(--pass); }
+.case.wrong { border-left: 4px solid var(--fail); }
+</style>
+<script>
+(function () {
+  var SC = "";
+  function dedent(s) {
+    var lines = s.replace(/\t/g, "  ").split("\n");
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    var min = Infinity;
+    lines.forEach(function (l) { if (l.trim()) min = Math.min(min, l.match(/^ */)[0].length); });
+    if (!isFinite(min)) min = 0;
+    return lines.map(function (l) { return l.slice(min); }).join("\n");
+  }
+  function codeBlock(label, cls, text) {
+    var d = document.createElement("div");
+    var p = document.createElement("p");
+    p.className = "code-label " + cls; p.textContent = label;
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = text; pre.appendChild(code);
+    d.appendChild(p); d.appendChild(pre);
+    return d;
+  }
+  function source(spec) {
+    var clone = spec.cloneNode(true);
+    clone.querySelectorAll("[data-file]").forEach(function (el) {
+      el.setAttribute("src", el.getAttribute("data-file"));
+      el.removeAttribute("data-file");
+    });
+    return dedent(clone.innerHTML);
+  }
+  var cases = Array.prototype.slice.call(document.querySelectorAll(".case"));
+  var KEY = "oefen-contact-v1";
+  var answers = {};
+  try { answers = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { answers = {}; }
+  if (typeof answers !== "object" || Array.isArray(answers)) answers = {};
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} }
+  var score = document.getElementById("score");
+  function truth(c) { return c.querySelector(".verdict.pass") ? "pass" : "fail"; }
+  function updateScore() {
+    var n = 0, good = 0;
+    cases.forEach(function (c) {
+      var a = answers[c.id];
+      if (a === "fail" || a === "pass") { n++; if (a === truth(c)) good++; }
+    });
+    score.textContent = n + " van " + cases.length + " beoordeeld · " + good + " goed";
+  }
+  function showFeedback(c, fb, a, openFinding) {
+    c.classList.remove("right", "wrong");
+    if (a !== "fail" && a !== "pass") { fb.hidden = true; return; }
+    var ok = a === truth(c);
+    c.classList.add(ok ? "right" : "wrong");
+    fb.hidden = false;
+    fb.className = "feedback " + (ok ? "ok" : "nok");
+    fb.textContent = ok
+      ? "Goed beoordeeld. Lees de bevinding hieronder."
+      : "Niet goed: dit is " + (truth(c) === "fail" ? "een afkeur (" + (c.getAttribute("data-sc") || SC) + ")" : "geen afkeur") + ". Lees de bevinding.";
+    if (openFinding) c.querySelector("details.finding-box").open = true;
+  }
+  cases.forEach(function (c) {
+    var spec = c.querySelector(".specimen");
+    var fix = c.querySelector("script.fix");
+    var finding = c.querySelector(".finding");
+    var details = finding.closest("details");
+    details.classList.add("finding-box");
+    var isPass = truth(c) === "pass"; var csc = c.getAttribute("data-sc") || SC;
+
+    // 1. broncode direct onder het testgebied
+    var src = document.createElement("details");
+    src.className = "src"; src.open = true;
+    var sum = document.createElement("summary");
+    sum.textContent = "Broncode testgebied";
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = source(spec);
+    pre.appendChild(code);
+    src.appendChild(sum); src.appendChild(pre);
+    spec.insertAdjacentElement("afterend", src);
+
+    // 2. eigen oordeel
+    var fs = document.createElement("fieldset");
+    fs.className = "judge";
+    var lg = document.createElement("legend");
+    lg.textContent = "Jouw oordeel " + c.id;
+    fs.appendChild(lg);
+    [["fail", "Afkeur"], ["pass", "Geen afkeur"]].forEach(function (o) {
+      var lab = document.createElement("label");
+      var r = document.createElement("input");
+      r.type = "radio"; r.name = "oordeel-" + c.id; r.value = o[0];
+      r.id = "oordeel-" + c.id + "-" + o[0];
+      r.checked = answers[c.id] === o[0];
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(o[1]));
+      fs.appendChild(lab);
+    });
+    var fb = document.createElement("p");
+    fb.className = "feedback"; fb.hidden = true;
+    fb.setAttribute("role", "status");
+    src.insertAdjacentElement("afterend", fs);
+    fs.insertAdjacentElement("afterend", fb);
+    fs.addEventListener("change", function (e) {
+      answers[c.id] = e.target.value; save();
+      showFeedback(c, fb, e.target.value, true);
+      updateScore();
+    });
+    showFeedback(c, fb, answers[c.id], false);
+
+    // 3. correcte code in de bevinding
+    var fixText = dedent(fix.textContent);
+    if (fixText.indexOf("in orde zoals het is") === -1) {
+      var pair = document.createElement("div");
+      pair.className = "code-pair";
+      pair.appendChild(codeBlock(isPass ? "Beter (advies)" : "Correct", "good", fixText));
+      finding.appendChild(pair);
+    }
+  });
+  updateScore();
+
+  var toggle = document.getElementById("toggle-all");
+  var open = false;
+  toggle.addEventListener("click", function () {
+    open = !open;
+    document.querySelectorAll("details.finding-box").forEach(function (d) { d.open = open; });
+    toggle.textContent = open ? "Alle bevindingen sluiten" : "Alle bevindingen openen";
+  });
+  var reset = document.getElementById("reset");
+  reset.textContent = "Antwoorden wissen";
+  reset.addEventListener("click", function () {
+    answers = {}; save();
+    cases.forEach(function (c) {
+      c.querySelectorAll(".judge input").forEach(function (r) { r.checked = false; });
+      showFeedback(c, c.querySelector(".feedback"), null, false);
+    });
+    updateScore();
+  });
+})();
+</script>

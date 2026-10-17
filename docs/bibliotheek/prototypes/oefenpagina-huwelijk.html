@@ -1,0 +1,776 @@
+<title>Oefenpagina huwelijk plannen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: één leeskolom; elke casus = kop-regel, gestippeld testgebied, ingeklapte bevinding */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --paper: #fbfcfd;
+  --fg: #17202a;
+  --muted: #55626f;
+  --line: #c9d1d9;
+  --accent: #1e5a85;
+  --accent-soft: #e3edf5;
+  --fail: #b42318;
+  --fail-soft: #fdecea;
+  --pass: #1a7a4a;
+  --pass-soft: #e5f4ec;
+  --code-bg: #eef1f4;
+  --spec-red: #c0261b;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+    --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+    --accent: #7db6e3; --accent-soft: #1d3346;
+    --fail: #ff8a7f; --fail-soft: #3a1d1b;
+    --pass: #6fd3a0; --pass-soft: #163327;
+    --code-bg: #0f1419; --spec-red: #ff7b70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+  --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+  --accent: #7db6e3; --accent-soft: #1d3346;
+  --fail: #ff8a7f; --fail-soft: #3a1d1b;
+  --pass: #6fd3a0; --pass-soft: #163327;
+  --code-bg: #0f1419; --spec-red: #ff7b70;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+}
+.wrap {
+  max-width: 52rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2rem 4rem;
+  display: grid; gap: 2.5rem;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Kop van de pagina */
+.intro { display: grid; gap: .9rem; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); margin: 0;
+}
+h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; max-width: 65ch; }
+.howto { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; color: var(--muted); }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+  padding: .75rem 1rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.score { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: auto; }
+.btn {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  padding: .4rem .85rem; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--surface); color: var(--accent);
+}
+.btn:hover { background: var(--accent-soft); }
+.cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.cats a {
+  display: inline-block; padding: .25rem .7rem; border-radius: 999px;
+  background: var(--accent-soft); text-decoration: none; font-size: .9rem;
+}
+
+/* Categorieën en casussen */
+.cat { display: grid; gap: 1.25rem; }
+.cat > h2 {
+  font-size: 1.5rem; margin: 0; padding-bottom: .4rem;
+  border-bottom: 2px solid var(--fg); text-wrap: balance;
+}
+.cat-note { margin: -.5rem 0 0; color: var(--muted); max-width: 65ch; }
+.case {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 1rem; display: grid; gap: .8rem; min-width: 0;
+}
+.case-head { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: baseline; }
+.case-id {
+  font-family: var(--font-mono); font-weight: 600; font-size: .85rem;
+  color: var(--accent);
+}
+.case-title { margin: 0; font-weight: 700; margin-right: auto; }
+.done { font-size: .9rem; display: inline-flex; gap: .35rem; align-items: center; color: var(--muted); }
+.done input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.case.is-done { opacity: .78; }
+
+.spec-label {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 -.5rem;
+}
+.specimen {
+  background: var(--paper); border: 2px dashed var(--line); border-radius: 6px;
+  padding: 1rem; overflow-x: auto; min-width: 0;
+}
+.specimen > :first-child { margin-top: 0; }
+.specimen > :last-child { margin-bottom: 0; }
+.specimen h2 { font-size: 1.35rem; margin: .2rem 0 .4rem; }
+.specimen h3 { font-size: 1.15rem; margin: .2rem 0 .4rem; }
+.specimen h4 { font-size: 1rem; margin: .2rem 0 .4rem; }
+.specimen p { margin: .3rem 0 .6rem; }
+.specimen table { border-collapse: collapse; margin: .2rem 0; }
+.specimen th, .specimen td {
+  border: 1px solid var(--line); padding: .35rem .7rem; text-align: left;
+  vertical-align: top;
+}
+.specimen th { background: var(--accent-soft); }
+.specimen input[type="text"], .specimen input[type="email"] {
+  font: inherit; padding: .35rem .5rem; border: 1px solid var(--muted);
+  border-radius: 4px; background: var(--surface); color: var(--fg);
+  max-width: 100%;
+}
+.specimen pre { font-family: var(--font-mono); font-size: .9rem; margin: 0; }
+/* opmaakklassen die de fouten zichtbaar maken */
+.fake-h { font-size: 1.35rem; font-weight: 700; margin: .2rem 0 .4rem; }
+.fake-h-sm { font-size: 1.1rem; font-weight: 700; margin: .6rem 0 .3rem; }
+.paginatitel { font-size: 1.6rem !important; }
+.th-look { font-weight: 700; background: var(--accent-soft); }
+.layout td, .layout th { border: 0 !important; background: none !important; padding: .2rem 1rem .2rem 0 !important; }
+.layout th { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.grid-table { display: grid; grid-template-columns: max-content max-content; border: 1px solid var(--line); width: max-content; }
+.grid-table > div { padding: .35rem .7rem; border-bottom: 1px solid var(--line); }
+.grid-table .gh { font-weight: 700; background: var(--accent-soft); }
+.kv { display: flex; gap: 2rem; }
+.kv > div { display: grid; gap: .3rem; }
+.kv-label { color: var(--muted); }
+.radio-row { display: flex; gap: .4rem; align-items: center; margin: .2rem 0; }
+.plain-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .3rem; }
+.plain-list li::before { content: "→ "; color: var(--accent); }
+
+/* Bevinding */
+details { border-top: 1px solid var(--line); padding-top: .6rem; }
+summary {
+  cursor: pointer; font-weight: 700; color: var(--accent);
+  list-style-position: outside;
+}
+.finding { display: grid; gap: .7rem; margin-top: .7rem; min-width: 0; }
+.finding p { margin: 0; max-width: 65ch; }
+.verdict {
+  display: inline-block; width: max-content; font-weight: 700; font-size: .85rem;
+  padding: .15rem .6rem; border-radius: 4px;
+}
+.verdict.fail { background: var(--fail-soft); color: var(--fail); }
+.verdict.pass { background: var(--pass-soft); color: var(--pass); }
+.ref { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+.code-pair { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.code-pair > div { min-width: 0; display: grid; gap: .3rem; align-content: start; }
+.code-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.code-label.bad { color: var(--fail); }
+.code-label.good { color: var(--pass); }
+.code-pair pre {
+  margin: 0; padding: .7rem .8rem; background: var(--code-bg); border-radius: 6px;
+  font-family: var(--font-mono); font-size: .78rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<style>
+.specimen dl { margin: 0; display: grid; gap: .5rem; }
+.specimen dt { font-weight: 700; }
+.specimen dd { margin: 0; }
+.slot-btn {
+  font: inherit; font-size: .85rem; padding: .25rem .6rem; cursor: pointer;
+  border: 1px solid var(--muted); border-radius: 4px; background: var(--surface); color: var(--fg);
+}
+.r4-cal { background: #1e4f74; padding: .8rem; border-radius: 6px; width: max-content; }
+.r4-cal p { color: #ffffff; margin: 0 0 .5rem !important; font-weight: 700; }
+.r4-grid { display: grid; grid-template-columns: repeat(7, 2.4rem); gap: .3rem; }
+.r4-grid button {
+  font: inherit; background: transparent; border: 1px solid #3d6d93; border-radius: 4px;
+  height: 2.2rem; cursor: pointer;
+}
+.r4-ok { color: #ffffff; }
+.r4-no { color: #8fa6ba; }
+.carousel { display: grid; gap: .5rem; width: max-content; max-width: 100%; }
+.carousel-nav { display: flex; gap: .5rem; }
+.carousel-nav a {
+  display: inline-block; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  background-color: var(--accent); background-repeat: no-repeat; background-position: center;
+  background-size: 1rem;
+}
+.nav-prev { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M10 3 L5 8 L10 13' fill='none' stroke='%23ffffff' stroke-width='2.5'/%3E%3C/svg%3E"); }
+.nav-next { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M6 3 L11 8 L6 13' fill='none' stroke='%23ffffff' stroke-width='2.5'/%3E%3C/svg%3E"); }
+.nav-dot { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='4' fill='%23ffffff'/%3E%3C/svg%3E"); }
+.info-rows { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; }
+.upload { display: flex; gap: .8rem; align-items: center; }
+.upload button { background: none; border: 0; padding: .2rem; cursor: pointer; }
+.r9-head { display: flex; gap: 1rem; align-items: center; padding: .5rem .8rem; background: var(--accent-soft); border-radius: 6px; }
+.r9-annuleren { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.r9-msg { margin: .5rem 0 0 !important; }
+.r10-pop {
+  border: 1px solid var(--line); border-radius: 8px; padding: 1rem; background: var(--surface);
+  max-width: 22rem; position: relative; box-shadow: 0 4px 14px rgba(0,0,0,.12);
+}
+.r10-pop p { margin: 0 2rem .8rem 0 !important; }
+.r10-kruis {
+  position: absolute; top: .5rem; right: .5rem; width: 2rem; height: 2rem;
+  border: 0; background: none; font-size: 1.3rem; line-height: 1; cursor: pointer; color: var(--fg);
+}
+.r10-kruis:focus, .r10-kruis:focus-visible { outline: none; }
+.r10-acties { display: flex; gap: .5rem; }
+.r11-veld { display: grid; gap: .2rem; margin-bottom: .7rem; }
+.r11-fout { color: var(--fail); font-size: .9rem; margin: 0 !important; }
+.compare {
+  display: grid; grid-template-columns: max-content 1fr; gap: .2rem .8rem;
+  font-size: .9rem; padding: .6rem .8rem; border-radius: 6px; background: var(--code-bg);
+}
+.compare dt { color: var(--muted); }
+.compare dd { margin: 0; font-weight: 700; }
+</style>
+
+<div class="wrap">
+<header class="intro">
+  <p class="eyebrow">Casussen uit een extern contentrapport (WCAG 2.1 AA) · Gemeentelijke huwelijksmodule</p>
+  <h1>Oefenpagina huwelijk plannen</h1>
+  <p>Elf bevindingen en opmerkingen uit één auditrapport, nagebouwd in de fictieve gemeente Waterdam. Beoordeel elke casus zelf. In de bevinding zie je daarna wat het rapport concludeerde en of dat volgens ons klopt. Let daarbij op twee dingen: is het een afkeur, en onder welk succescriterium?</p>
+  <ul class="howto">
+    <li>Bij vijf casussen wijkt ons oordeel af van het rapport, of hoort de bevinding bij een ander criterium.</li>
+    <li>Het rapport toetste op WCAG 2.1. De oordelen hier gelden ook voor 2.2; 4.1.1 Parsen bestaat in 2.2 niet meer.</li>
+  </ul>
+  <div class="toolbar">
+    <span class="score" id="score" aria-live="polite">0 van 11 beoordeeld · 0 goed</span>
+    <button class="btn" type="button" id="toggle-all">Alle bevindingen openen</button>
+    <button class="btn" type="button" id="reset">Antwoorden wissen</button>
+  </div>
+  <nav aria-label="Categorieën">
+    <ul class="cats">
+      <li><a href="#structuur">Structuur en tabellen</a></li>
+      <li><a href="#namen">Links en knoppen</a></li>
+      <li><a href="#bediening">Toetsenbord en focus</a></li>
+      <li><a href="#formulier">Formulier</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="wrap" style="padding:0;">
+
+<!-- ============ STRUCTUUR ============ -->
+<section class="cat" id="structuur" aria-labelledby="h-struct">
+<h2 id="h-struct">Structuur, tabellen en kleur</h2>
+
+<article class="case" id="R1" data-sc="1.3.1">
+  <div class="case-head"><span class="case-id">R1</span><p class="case-title">Locatie-informatie Stadhuis</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<dl class="tab-info">
+  <div class="row">
+    <dt>Omschrijving</dt>
+    <dd>Let op: het stadhuis is niet rolstoeltoegankelijk.
+    Neem vooraf contact op met de burgerlijke stand.</dd>
+  </div>
+  <div class="row">
+    <dt>Capaciteit</dt>
+    <dd>Maximaal 40 gasten</dd>
+  </div>
+</dl>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 1.3.1</dd><dt>Ons oordeel</dt><dd>Geen afkeur</dd></dl>
+    <p>Het rapport stelt dat een <code>dl</code> alleen direct <code>dt</code> en <code>dd</code> mag bevatten. Dat klopt niet meer: de HTML-standaard (WHATWG) staat sinds 2017 een <code>div</code> toe om een groep <code>dt</code>/<code>dd</code> heen. De relatie tussen term en omschrijving blijft programmatisch bepaalbaar.</p>
+    <p class="ref">Geen afkeur · HTML Living Standard, element dl</p>
+    <script type="text/plain" class="fix">
+<!-- in orde zoals het is -->
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R2" data-sc="1.3.1">
+  <div class="case-head"><span class="case-id">R2</span><p class="case-title">Gegevens ouders</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th scope="col">Ouder 1</th>
+      <th scope="col">Ouder 2</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Naam</th><td>J. de Vries</td><td>M. Jansen</td></tr>
+    <tr><th scope="row">Geboortedatum</th><td>12-04-1961</td><td>03-09-1963</td></tr>
+  </tbody>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 1.3.1 (lege kopcel)</dd><dt>Ons oordeel</dt><dd>Geen afkeur, wel advies</dd></dl>
+    <p>De lege hoekcel is een <code>th</code> zonder tekst. Alle rij- en kolomkoppen zijn correct gemarkeerd, dus de relaties in de tabel zijn bepaalbaar. Een lege hoekcel wordt soms als ‘leeg’ voorgelezen; dat is hinderlijk maar geen verlies van informatie of relatie. Advies: maak de hoekcel een <code>td</code>.</p>
+    <p class="ref">Advies · Techniek H51, H63</p>
+    <script type="text/plain" class="fix">
+<tr>
+  <td></td>
+  <th scope="col">Ouder 1</th>
+  <th scope="col">Ouder 2</th>
+</tr>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R3" data-sc="1.3.1">
+  <div class="case-head"><span class="case-id">R3</span><p class="case-title">Tijdslot kiezen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th scope="col">09:00 – 10:00</th>
+      <th scope="col">10:00 – 11:00</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Stadhuis</strong></td>
+      <td><button class="slot-btn" type="button">Niet gekozen</button></td>
+      <td><button class="slot-btn" type="button">Niet gekozen</button></td>
+    </tr>
+    <tr>
+      <td><strong>Molenzaal</strong></td>
+      <td><button class="slot-btn" type="button">Niet gekozen</button></td>
+      <td><button class="slot-btn" type="button">Niet gekozen</button></td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 1.3.1</dd><dt>Ons oordeel</dt><dd>Afkeur 1.3.1</dd></dl>
+    <p>De locaties in de eerste kolom zijn de rijkoppen, maar ze zijn gemarkeerd als <code>td</code> met vette tekst. Wie door de tabel navigeert, hoort bij een knop wel het tijdslot, maar niet de locatie. Alle knoppen heten ‘Niet gekozen’, dus de tabelstructuur is de enige bron van context. Advies daarnaast: geef de knoppen een naam met locatie en tijd.</p>
+    <p class="ref">F91 · Techniek H51, H63 · advies 2.4.6</p>
+    <script type="text/plain" class="fix">
+<tr>
+  <th scope="row">Stadhuis</th>
+  <td>
+    <button type="button"
+      aria-pressed="false">
+      Stadhuis 09:00
+    </button>
+  </td>
+  ...
+</tr>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R4" data-sc="1.4.1">
+  <div class="case-head"><span class="case-id">R4</span><p class="case-title">Datum kiezen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="r4-cal">
+  <p>November 2026</p>
+  <div class="r4-grid">
+    <button class="r4-no" type="button">2</button>
+    <button class="r4-ok" type="button">3</button>
+    <button class="r4-no" type="button">4</button>
+    <button class="r4-ok" type="button">5</button>
+    <button class="r4-ok" type="button">6</button>
+    <button class="r4-no" type="button">7</button>
+    <button class="r4-no" type="button">8</button>
+  </div>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.4.1</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 1.4.1</dd><dt>Ons oordeel</dt><dd>Afkeur 1.4.1, ook 1.3.1 en 4.1.2</dd></dl>
+    <p>Beschikbare dagen zijn wit, niet-beschikbare dagen lichtgrijs. Het verschil zit alleen in kleur: afkeur 1.4.1. Kijk ook in de code: de niet-beschikbare dagen zijn gewone, klikbare knoppen zonder <code>disabled</code> of <code>aria-disabled</code>. Voor een screenreadergebruiker is de status dus helemaal niet bepaalbaar.</p>
+    <p class="ref">Techniek G14 · ook 1.3.1, 4.1.2</p>
+    <script type="text/plain" class="fix">
+<button type="button"
+  class="r4-no"
+  aria-disabled="true">
+  <s>2</s>
+  <span class="visually-hidden">
+    niet beschikbaar</span>
+</button>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ NAMEN ============ -->
+<section class="cat" id="namen" aria-labelledby="h-namen">
+<h2 id="h-namen">Links en knoppen zonder naam</h2>
+
+<article class="case" id="R5" data-sc="2.4.4 en 4.1.2">
+  <div class="case-head"><span class="case-id">R5</span><p class="case-title">Foto’s van de locatie</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="carousel">
+  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='160' viewBox='0 0 280 160'%3E%3Crect width='280' height='160' fill='%23efe6d2'/%3E%3Crect y='110' width='280' height='50' fill='%238a5a3b'/%3E%3Crect x='30' y='20' width='50' height='80' rx='25' fill='%23cfe3ee' stroke='%23b39b74' stroke-width='4'/%3E%3Crect x='200' y='20' width='50' height='80' rx='25' fill='%23cfe3ee' stroke='%23b39b74' stroke-width='4'/%3E%3Crect x='105' y='70' width='70' height='40' fill='%236b3f2a'/%3E%3Ccircle cx='140' cy='55' r='10' fill='%23e9c46a'/%3E%3Crect x='20' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='52' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='84' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='116' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='148' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='180' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='212' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3Crect x='244' y='118' width='16' height='22' rx='3' fill='%23c9b79a'/%3E%3C/svg%3E" data-file="stadhuis-trouwzaal.jpg"
+    alt="Trouwzaal in het stadhuis" width="280" height="160">
+  <div class="carousel-nav">
+    <a href="#R5" class="nav-prev"></a>
+    <a href="#R5" class="nav-dot"></a>
+    <a href="#R5" class="nav-next"></a>
+  </div>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 2.4.4 en 4.1.2</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 2.4.4</dd><dt>Ons oordeel</dt><dd>Afkeur 2.4.4 en 4.1.2</dd></dl>
+    <p>De drie navigatielinks bevatten alleen een CSS-achtergrondicoon en hebben geen toegankelijke naam. Screenreaders vallen terug op de URL; in het rapport hoorde de auditor drie keer ‘StartHuwelijk’. De pijlen zijn bovendien knoppen en geen links, want ze wisselen de foto en gaan nergens naartoe.</p>
+    <p class="ref">Techniek ARIA8 · ACT-regel ‘Link has non-empty accessible name’</p>
+    <script type="text/plain" class="fix">
+<button type="button"
+  class="nav-prev">
+  <span class="visually-hidden">
+    Vorige foto</span>
+</button>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R6" data-sc="2.4.4 en 4.1.2">
+  <div class="case-head"><span class="case-id">R6</span><p class="case-title">Info over de locatie</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="info-rows">
+  <span>Adres</span><span>Grote Markt 1, Waterdam</span>
+  <span>Website</span><a href="https://" title=""></a>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 2.4.4 en 4.1.2</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 2.4.4 en 4.1.2</dd><dt>Ons oordeel</dt><dd>Afkeur 2.4.4 en 4.1.2</dd></dl>
+    <p>Bij ‘Website’ staat een lege link: geen tekst, een lege <code>title</code> en een onvolledige URL. Visueel zie je niets, maar met Tab kom je er wel op uit en de screenreader meldt ‘link’ zonder naam. Waarschijnlijk is het CMS-veld voor de website leeg gelaten en rendert de template toch een link. Oplossing in de template: geen link tonen als het veld leeg is.</p>
+    <p class="ref">Techniek H30 · ACT-regel ‘Link has non-empty accessible name’</p>
+    <script type="text/plain" class="fix">
+<!-- alleen tonen als
+     het veld gevuld is -->
+<span>Website</span>
+<a href="https://www.waterdam.nl">
+  www.waterdam.nl</a>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R7" data-sc="1.1.1 en 4.1.2">
+  <div class="case-head"><span class="case-id">R7</span><p class="case-title">Foto uploaden</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="upload">
+  <span>pasfoto-partner.jpg</span>
+  <button type="button"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M5 7h12l-1 12H6z' fill='%23d0342c'/%3E%3Cpath d='M3 6h16M8 6V3h6v3' stroke='%23d0342c' stroke-width='2' fill='none'/%3E%3C/svg%3E" data-file="icon-delete.svg"
+    alt="" width="22" height="22"></button>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.1.1 en 4.1.2</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 2.4.4 (1.1.1 voldoet)</dd><dt>Ons oordeel</dt><dd>Afkeur 1.1.1 en 4.1.2</dd></dl>
+    <p>De rode prullenbak is een knop zonder toegankelijke naam: afkeur 4.1.2. Het rapport plaatst dit onder 2.4.4, maar dat criterium gaat over links, niet over knoppen. Het icoon is de enige inhoud van de knop en draagt de functie ‘verwijderen’. Met <code>alt=""</code> gaat die informatie verloren, dus dit is ook een afkeur op 1.1.1.</p>
+    <p class="ref">Situatie C: G82, H37 · F68 (4.1.2)</p>
+    <script type="text/plain" class="fix">
+<button type="button">
+  <img src="icon-delete.svg"
+    alt="Verwijder
+    pasfoto-partner.jpg"
+    width="22" height="22">
+</button>
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ BEDIENING ============ -->
+<section class="cat" id="bediening" aria-labelledby="h-bed">
+<h2 id="h-bed">Toetsenbord en focus</h2>
+<p class="cat-note">Het rapport was een contentonderzoek en noemde deze twee als opmerking buiten de scope. In een volledige audit zijn het afkeuren.</p>
+
+<article class="case" id="R8" data-sc="2.1.1">
+  <div class="case-head"><span class="case-id">R8</span><p class="case-title">Annuleren in de kopbalk</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="r9-head">
+  <strong>Huwelijk plannen</strong>
+  <div class="r9-annuleren"
+    onclick="this.parentNode.nextElementSibling.hidden=false">Annuleren</div>
+</div>
+<p class="r9-msg" hidden>Weet u zeker dat u wilt stoppen?</p>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 2.1.1</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Opmerking, buiten scope</dd><dt>Ons oordeel</dt><dd>Afkeur 2.1.1, ook 4.1.2</dd></dl>
+    <p>‘Annuleren’ ziet eruit als een link, maar is een <code>div</code> met een klikfunctie. Met Tab kom je er niet op en met Enter gebeurt niets. Probeer het: met de muis werkt het wel. Zonder rol en naam is het ook een afkeur op 4.1.2.</p>
+    <p class="ref">F54 · Techniek G202</p>
+    <script type="text/plain" class="fix">
+<button type="button"
+  class="r9-annuleren">
+  Annuleren
+</button>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R9" data-sc="2.4.7">
+  <div class="case-head"><span class="case-id">R9</span><p class="case-title">Pop-up bij annuleren</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="r10-pop" role="dialog" aria-label="Stoppen met plannen">
+  <button class="r10-kruis" type="button" aria-label="Sluiten">×</button>
+  <p>Weet u zeker dat u wilt stoppen? Uw gegevens worden niet bewaard.</p>
+  <div class="r10-acties">
+    <button class="slot-btn" type="button">Ja, stoppen</button>
+    <button class="slot-btn" type="button">Nee, verder</button>
+  </div>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 2.4.7</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Opmerking, buiten scope</dd><dt>Ons oordeel</dt><dd>Afkeur 2.4.7</dd></dl>
+    <p>Tab door de pop-up: de knoppen ‘Ja, stoppen’ en ‘Nee, verder’ tonen een focusrand, maar het sluitkruis niet. De CSS zet <code>outline: none</code> zonder vervanging. Dat zie je niet in de HTML hieronder, alleen bij testen met het toetsenbord.</p>
+    <p class="ref">F78 · Techniek C45</p>
+    <script type="text/plain" class="fix">
+.r10-kruis:focus-visible {
+  outline: 3px solid
+    currentColor;
+  outline-offset: 2px;
+}
+    </script>
+  </div></details>
+</article>
+</section>
+
+<!-- ============ FORMULIER ============ -->
+<section class="cat" id="formulier" aria-labelledby="h-form">
+<h2 id="h-form">Formulier</h2>
+
+<article class="case" id="R10" data-sc="1.3.1">
+  <div class="case-head"><span class="case-id">R10</span><p class="case-title">Soort verbintenis</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<p>Wat wilt u plannen?</p>
+<div class="radio-row">
+  <input type="radio" id="r10-a" name="r10-soort">
+  <label for="r10-a">Huwelijk</label>
+</div>
+<div class="radio-row">
+  <input type="radio" id="r10-b" name="r10-soort">
+  <label for="r10-b">Partnerschap</label>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict fail">Afkeur 1.3.1</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 2.4.4</dd><dt>Ons oordeel</dt><dd>Afkeur 1.3.1</dd></dl>
+    <p>De vraag ‘Wat wilt u plannen?’ is niet als groepslabel aan de keuzerondjes gekoppeld. De bevinding klopt, maar hoort niet onder 2.4.4: hier staan geen links. Een ontbrekende groepering van zichtbare relaties is 1.3.1. Volgens het rapport gaat het bij andere vragen in de module wel goed; dat maakt het een fout in de configuratie van deze ene vraag.</p>
+    <p class="ref">Techniek H71 · ARIA17</p>
+    <script type="text/plain" class="fix">
+<fieldset>
+  <legend>Wat wilt u
+    plannen?</legend>
+  <input type="radio" id="a"
+    name="soort">
+  <label for="a">Huwelijk</label>
+  ...
+</fieldset>
+    </script>
+  </div></details>
+</article>
+
+<article class="case" id="R11" data-sc="3.3.1">
+  <div class="case-head"><span class="case-id">R11</span><p class="case-title">Contactgegevens met foutmeldingen</p></div>
+  <p class="spec-label">Testgebied</p>
+  <div class="specimen">
+<div class="r11-veld">
+  <label for="r11-tel">Telefoonnummer</label>
+  <input type="text" id="r11-tel" aria-invalid="true"
+    aria-describedby="r11-tel-fout">
+  <p class="r11-fout" id="r11-tel-fout">Fout: dit veld is verplicht.</p>
+</div>
+<div class="r11-veld">
+  <label for="r11-mail">E-mailadres</label>
+  <input type="email" id="r11-mail" aria-invalid="true"
+    aria-describedby="r11-mail-fout">
+  <p class="r11-fout" id="r11-mail-fout">Fout: dit veld is verplicht.</p>
+</div>
+  </div>
+  <details><summary>Bevinding</summary><div class="finding">
+    <span class="verdict pass">Geen afkeur</span>
+    <dl class="compare"><dt>Rapport</dt><dd>Afkeur 3.3.1 (dezelfde foutmelding)</dd><dt>Ons oordeel</dt><dd>Geen afkeur, wel advies</dd></dl>
+    <p>Twijfelgeval. 3.3.1 vraagt dat het veld met de fout wordt geïdentificeerd en dat de fout in tekst wordt beschreven. Beide gebeurt hier: elke melding staat direct onder het veld, is met <code>aria-describedby</code> gekoppeld en het veld heeft <code>aria-invalid</code>. Dezelfde tekst bij elk veld is op zich geen afkeur. Wél een afkeur zou het zijn als de meldingen niet gekoppeld zijn of op een andere plek staan, bijvoorbeeld bovenaan zonder veldnaam. Controleer dus de code en baseer het oordeel niet alleen op de tekst. Advies: noem het veld in de melding.</p>
+    <p class="ref">Advies · Technieken G83, ARIA21</p>
+    <script type="text/plain" class="fix">
+<p id="tel-fout">
+  Fout: vul uw
+  telefoonnummer in.
+</p>
+    </script>
+  </div></details>
+</article>
+</section>
+</main>
+
+<footer>Oefenmateriaal Shift2 · Nagebouwd op basis van bevindingen uit een extern auditrapport, geanonimiseerd. Alle namen, adressen en afbeeldingen zijn fictief.</footer>
+</div>
+
+<style>
+.src { border: 1px solid var(--line); border-radius: 6px; background: var(--code-bg); }
+.src > summary { padding: .5rem .8rem; color: var(--fg); font-size: .9rem; }
+.src pre {
+  margin: 0; padding: 0 .8rem .8rem; font-family: var(--font-mono);
+  font-size: .78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.judge { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.judge legend { font-weight: 700; padding: 0; margin-bottom: .3rem; float: left; width: 100%; }
+.judge label {
+  display: inline-flex; gap: .4rem; align-items: center; cursor: pointer;
+  padding: .35rem .8rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+}
+.judge input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); margin: 0; }
+.judge label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.feedback { margin: 0; font-weight: 700; padding: .4rem .7rem; border-radius: 6px; width: max-content; max-width: 100%; }
+.feedback.ok { background: var(--pass-soft); color: var(--pass); }
+.feedback.nok { background: var(--fail-soft); color: var(--fail); }
+.case.is-done { opacity: 1; }
+.case.right { border-left: 4px solid var(--pass); }
+.case.wrong { border-left: 4px solid var(--fail); }
+</style>
+<script>
+(function () {
+  var SC = "";
+  function dedent(s) {
+    var lines = s.replace(/\t/g, "  ").split("\n");
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    var min = Infinity;
+    lines.forEach(function (l) { if (l.trim()) min = Math.min(min, l.match(/^ */)[0].length); });
+    if (!isFinite(min)) min = 0;
+    return lines.map(function (l) { return l.slice(min); }).join("\n");
+  }
+  function codeBlock(label, cls, text) {
+    var d = document.createElement("div");
+    var p = document.createElement("p");
+    p.className = "code-label " + cls; p.textContent = label;
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = text; pre.appendChild(code);
+    d.appendChild(p); d.appendChild(pre);
+    return d;
+  }
+  function source(spec) {
+    var clone = spec.cloneNode(true);
+    clone.querySelectorAll("[data-file]").forEach(function (el) {
+      el.setAttribute("src", el.getAttribute("data-file"));
+      el.removeAttribute("data-file");
+    });
+    return dedent(clone.innerHTML);
+  }
+  var cases = Array.prototype.slice.call(document.querySelectorAll(".case"));
+  var KEY = "oefen-huwelijk-v1";
+  var answers = {};
+  try { answers = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { answers = {}; }
+  if (typeof answers !== "object" || Array.isArray(answers)) answers = {};
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} }
+  var score = document.getElementById("score");
+  function truth(c) { return c.querySelector(".verdict.pass") ? "pass" : "fail"; }
+  function updateScore() {
+    var n = 0, good = 0;
+    cases.forEach(function (c) {
+      var a = answers[c.id];
+      if (a === "fail" || a === "pass") { n++; if (a === truth(c)) good++; }
+    });
+    score.textContent = n + " van " + cases.length + " beoordeeld · " + good + " goed";
+  }
+  function showFeedback(c, fb, a, openFinding) {
+    c.classList.remove("right", "wrong");
+    if (a !== "fail" && a !== "pass") { fb.hidden = true; return; }
+    var ok = a === truth(c);
+    c.classList.add(ok ? "right" : "wrong");
+    fb.hidden = false;
+    fb.className = "feedback " + (ok ? "ok" : "nok");
+    fb.textContent = ok
+      ? "Goed beoordeeld. Lees de bevinding hieronder."
+      : "Niet goed: dit is " + (truth(c) === "fail" ? "een afkeur (" + (c.getAttribute("data-sc") || SC) + ")" : "geen afkeur") + ". Lees de bevinding.";
+    if (openFinding) c.querySelector("details.finding-box").open = true;
+  }
+  cases.forEach(function (c) {
+    var spec = c.querySelector(".specimen");
+    var fix = c.querySelector("script.fix");
+    var finding = c.querySelector(".finding");
+    var details = finding.closest("details");
+    details.classList.add("finding-box");
+    var isPass = truth(c) === "pass"; var csc = c.getAttribute("data-sc") || SC;
+
+    // 1. broncode direct onder het testgebied
+    var src = document.createElement("details");
+    src.className = "src"; src.open = true;
+    var sum = document.createElement("summary");
+    sum.textContent = "Broncode testgebied";
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = source(spec);
+    pre.appendChild(code);
+    src.appendChild(sum); src.appendChild(pre);
+    spec.insertAdjacentElement("afterend", src);
+
+    // 2. eigen oordeel
+    var fs = document.createElement("fieldset");
+    fs.className = "judge";
+    var lg = document.createElement("legend");
+    lg.textContent = "Jouw oordeel " + c.id;
+    fs.appendChild(lg);
+    [["fail", "Afkeur"], ["pass", "Geen afkeur"]].forEach(function (o) {
+      var lab = document.createElement("label");
+      var r = document.createElement("input");
+      r.type = "radio"; r.name = "oordeel-" + c.id; r.value = o[0];
+      r.id = "oordeel-" + c.id + "-" + o[0];
+      r.checked = answers[c.id] === o[0];
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(o[1]));
+      fs.appendChild(lab);
+    });
+    var fb = document.createElement("p");
+    fb.className = "feedback"; fb.hidden = true;
+    fb.setAttribute("role", "status");
+    src.insertAdjacentElement("afterend", fs);
+    fs.insertAdjacentElement("afterend", fb);
+    fs.addEventListener("change", function (e) {
+      answers[c.id] = e.target.value; save();
+      showFeedback(c, fb, e.target.value, true);
+      updateScore();
+    });
+    showFeedback(c, fb, answers[c.id], false);
+
+    // 3. correcte code in de bevinding
+    var fixText = dedent(fix.textContent);
+    if (fixText.indexOf("in orde zoals het is") === -1) {
+      var pair = document.createElement("div");
+      pair.className = "code-pair";
+      pair.appendChild(codeBlock(isPass ? "Beter (advies)" : "Correct", "good", fixText));
+      finding.appendChild(pair);
+    }
+  });
+  updateScore();
+
+  var toggle = document.getElementById("toggle-all");
+  var open = false;
+  toggle.addEventListener("click", function () {
+    open = !open;
+    document.querySelectorAll("details.finding-box").forEach(function (d) { d.open = open; });
+    toggle.textContent = open ? "Alle bevindingen sluiten" : "Alle bevindingen openen";
+  });
+  var reset = document.getElementById("reset");
+  reset.textContent = "Antwoorden wissen";
+  reset.addEventListener("click", function () {
+    answers = {}; save();
+    cases.forEach(function (c) {
+      c.querySelectorAll(".judge input").forEach(function (r) { r.checked = false; });
+      showFeedback(c, c.querySelector(".feedback"), null, false);
+    });
+    updateScore();
+  });
+})();
+</script>

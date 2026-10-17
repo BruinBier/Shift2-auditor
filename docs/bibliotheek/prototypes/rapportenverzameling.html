@@ -1,0 +1,294 @@
+<title>Rapportenverzameling WCAG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: één leeskolom; elke casus = kop-regel, gestippeld testgebied, ingeklapte bevinding */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --paper: #fbfcfd;
+  --fg: #17202a;
+  --muted: #55626f;
+  --line: #c9d1d9;
+  --accent: #1e5a85;
+  --accent-soft: #e3edf5;
+  --fail: #b42318;
+  --fail-soft: #fdecea;
+  --pass: #1a7a4a;
+  --pass-soft: #e5f4ec;
+  --code-bg: #eef1f4;
+  --spec-red: #c0261b;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+    --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+    --accent: #7db6e3; --accent-soft: #1d3346;
+    --fail: #ff8a7f; --fail-soft: #3a1d1b;
+    --pass: #6fd3a0; --pass-soft: #163327;
+    --code-bg: #0f1419; --spec-red: #ff7b70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --paper: #1d262f;
+  --fg: #e6ebf0; --muted: #9aa7b4; --line: #34414e;
+  --accent: #7db6e3; --accent-soft: #1d3346;
+  --fail: #ff8a7f; --fail-soft: #3a1d1b;
+  --pass: #6fd3a0; --pass-soft: #163327;
+  --code-bg: #0f1419; --spec-red: #ff7b70;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+}
+.wrap {
+  max-width: 52rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2rem 4rem;
+  display: grid; gap: 2.5rem;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Kop van de pagina */
+.intro { display: grid; gap: .9rem; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); margin: 0;
+}
+h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; max-width: 65ch; }
+.howto { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; color: var(--muted); }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+  padding: .75rem 1rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.score { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: auto; }
+.btn {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  padding: .4rem .85rem; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--surface); color: var(--accent);
+}
+.btn:hover { background: var(--accent-soft); }
+.cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.cats a {
+  display: inline-block; padding: .25rem .7rem; border-radius: 999px;
+  background: var(--accent-soft); text-decoration: none; font-size: .9rem;
+}
+
+/* Categorieën en casussen */
+.cat { display: grid; gap: 1.25rem; }
+.cat > h2 {
+  font-size: 1.5rem; margin: 0; padding-bottom: .4rem;
+  border-bottom: 2px solid var(--fg); text-wrap: balance;
+}
+.cat-note { margin: -.5rem 0 0; color: var(--muted); max-width: 65ch; }
+.case {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 1rem; display: grid; gap: .8rem; min-width: 0;
+}
+.case-head { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: baseline; }
+.case-id {
+  font-family: var(--font-mono); font-weight: 600; font-size: .85rem;
+  color: var(--accent);
+}
+.case-title { margin: 0; font-weight: 700; margin-right: auto; }
+.done { font-size: .9rem; display: inline-flex; gap: .35rem; align-items: center; color: var(--muted); }
+.done input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.case.is-done { opacity: .78; }
+
+.spec-label {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 -.5rem;
+}
+.specimen {
+  background: var(--paper); border: 2px dashed var(--line); border-radius: 6px;
+  padding: 1rem; overflow-x: auto; min-width: 0;
+}
+.specimen > :first-child { margin-top: 0; }
+.specimen > :last-child { margin-bottom: 0; }
+.specimen h2 { font-size: 1.35rem; margin: .2rem 0 .4rem; }
+.specimen h3 { font-size: 1.15rem; margin: .2rem 0 .4rem; }
+.specimen h4 { font-size: 1rem; margin: .2rem 0 .4rem; }
+.specimen p { margin: .3rem 0 .6rem; }
+.specimen table { border-collapse: collapse; margin: .2rem 0; }
+.specimen th, .specimen td {
+  border: 1px solid var(--line); padding: .35rem .7rem; text-align: left;
+  vertical-align: top;
+}
+.specimen th { background: var(--accent-soft); }
+.specimen input[type="text"], .specimen input[type="email"] {
+  font: inherit; padding: .35rem .5rem; border: 1px solid var(--muted);
+  border-radius: 4px; background: var(--surface); color: var(--fg);
+  max-width: 100%;
+}
+.specimen pre { font-family: var(--font-mono); font-size: .9rem; margin: 0; }
+/* opmaakklassen die de fouten zichtbaar maken */
+.fake-h { font-size: 1.35rem; font-weight: 700; margin: .2rem 0 .4rem; }
+.fake-h-sm { font-size: 1.1rem; font-weight: 700; margin: .6rem 0 .3rem; }
+.paginatitel { font-size: 1.6rem !important; }
+.th-look { font-weight: 700; background: var(--accent-soft); }
+.layout td, .layout th { border: 0 !important; background: none !important; padding: .2rem 1rem .2rem 0 !important; }
+.layout th { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.grid-table { display: grid; grid-template-columns: max-content max-content; border: 1px solid var(--line); width: max-content; }
+.grid-table > div { padding: .35rem .7rem; border-bottom: 1px solid var(--line); }
+.grid-table .gh { font-weight: 700; background: var(--accent-soft); }
+.kv { display: flex; gap: 2rem; }
+.kv > div { display: grid; gap: .3rem; }
+.kv-label { color: var(--muted); }
+.radio-row { display: flex; gap: .4rem; align-items: center; margin: .2rem 0; }
+.plain-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .3rem; }
+.plain-list li::before { content: "→ "; color: var(--accent); }
+
+/* Bevinding */
+details { border-top: 1px solid var(--line); padding-top: .6rem; }
+summary {
+  cursor: pointer; font-weight: 700; color: var(--accent);
+  list-style-position: outside;
+}
+.finding { display: grid; gap: .7rem; margin-top: .7rem; min-width: 0; }
+.finding p { margin: 0; max-width: 65ch; }
+.verdict {
+  display: inline-block; width: max-content; font-weight: 700; font-size: .85rem;
+  padding: .15rem .6rem; border-radius: 4px;
+}
+.verdict.fail { background: var(--fail-soft); color: var(--fail); }
+.verdict.pass { background: var(--pass-soft); color: var(--pass); }
+.ref { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+.code-pair { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.code-pair > div { min-width: 0; display: grid; gap: .3rem; align-content: start; }
+.code-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.code-label.bad { color: var(--fail); }
+.code-label.good { color: var(--pass); }
+.code-pair pre {
+  margin: 0; padding: .7rem .8rem; background: var(--code-bg); border-radius: 6px;
+  font-family: var(--font-mono); font-size: .78rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<style>
+.filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.filters button { font: inherit; font-size: .9rem; padding: .3rem .8rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.reports { list-style: none; padding: 0; margin: 0; display: grid; gap: .6rem; }
+.rep { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: .8rem 1rem;
+  display: grid; gap: .4rem; min-width: 0; }
+.rep.done { border-left: 4px solid var(--pass); }
+.rep-top { display: flex; flex-wrap: wrap; gap: .3rem .8rem; align-items: baseline; }
+.rep-g { font-weight: 700; }
+.rep-o { color: var(--muted); overflow-wrap: anywhere; }
+.tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+.tag { font-size: .78rem; padding: .1rem .5rem; border-radius: 4px; background: var(--accent-soft); }
+.tag.v22 { background: var(--pass-soft); color: var(--pass); font-weight: 700; }
+.tag.main { background: var(--fail-soft); color: var(--fail); font-weight: 700; }
+.rep-actions { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: center; font-size: .9rem; }
+.rep-actions label { display: inline-flex; gap: .35rem; align-items: center; }
+.rep-actions input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); }
+.empty { color: var(--muted); }
+</style>
+<div class="wrap">
+<header class="intro">
+  <p class="eyebrow">Openbaar gepubliceerde WCAG-onderzoeken · gemeenten</p>
+  <h1>Rapportenverzameling WCAG</h1>
+  <p>80 openbaar gepubliceerde rapporten van gemeenten en andere overheden, gevonden op 16 oktober 2026, waarvan 15 van Proper Access en 26 van Swink. Swink heeft nog veel meer rapporten online, ook van gemeentelijke subsites: zie <a href="https://toegankelijkheidsrapport.swink.nl/" target="_blank" rel="noopener">hun overzicht</a>. Open een rapport, download het en voeg het in de chat toe; vink daarna af wat je hebt gedaan.</p>
+  <ul class="howto">
+    <li><strong>Hoofdwebsite</strong> = onderzoek van de gemeentelijke hoofdsite; het meest vergelijkbaar met jullie templates.</li>
+    <li>De auditor staat alleen vermeld als die uit de bestandsnaam blijkt; ‘vermoedelijk’ is een gok op basis van de naamgeving. Controleer dit in het rapport.</li>
+    <li>Rapporten van Proper Access en Swink zijn webpagina’s, geen PDF. Die hoef je niet te downloaden: stuur de link of noem de rapporten, dan lees ik ze zelf.</li>
+    <li>Tip: het rapport over iBurgerzaken van Ede is goed te vergelijken met de casussen op de oefenpagina ‘Huwelijk plannen’.</li>
+  </ul>
+  <div class="toolbar">
+    <span class="score" id="score" aria-live="polite"></span>
+  </div>
+  <div class="filters" role="group" aria-label="Filter">
+    <button type="button" data-f="all" aria-pressed="true">Alle</button>
+    <button type="button" data-f="v22" aria-pressed="false">WCAG 2.2</button>
+    <button type="button" data-f="main" aria-pressed="false">Hoofdwebsite</button>
+    <button type="button" data-f="pa" aria-pressed="false">Proper Access</button>
+    <button type="button" data-f="sw" aria-pressed="false">Swink</button>
+    <button type="button" data-f="todo" aria-pressed="false">Nog niet verwerkt</button>
+  </div>
+</header>
+<main>
+  <ul class="reports" id="list"></ul>
+  <p class="empty" id="empty" hidden>Geen rapporten in deze selectie.</p>
+</main>
+<footer>Links verwijzen naar de websites van de gemeenten zelf. Een link kan inmiddels verlopen zijn; zoek dan op de toegankelijkheidspagina van die gemeente.</footer>
+</div>
+<script>
+(function () {
+  var DATA = [{"id": "r01", "g": "Stein", "o": "gemeentestein.nl", "t": "Volledig", "w": "2.2", "d": "jul 2026", "a": "Vermoedelijk Cardan", "h": 1, "u": "https://www.gemeentestein.nl/data/downloadables/4/1/0/6/wcag-22-aa-onderzoek-gemeentesteinnl-11-202607061043.pdf"}, {"id": "r02", "g": "Groningen", "o": "gemeente.groningen.nl", "t": "Techniek", "w": "onbekend", "d": "onbekend", "a": "", "h": 1, "u": "https://gemeente.groningen.nl/file/deelonderzoek-techniek"}, {"id": "r03", "g": "Ede", "o": "iBurgerzaken", "t": "Volledig", "w": "2.2", "d": "dec 2025", "a": "", "h": 0, "u": "https://www.ede.nl/fileadmin/ede.nl/Pdf-en/Toegankelijkheidsverklaringen/20251223_Toegankelijkheidsonderzoek_WCAG_2.2_Iburgerzaken_Ede.pdf"}, {"id": "r04", "g": "Ede", "o": "Belastingbalie", "t": "Inspectie", "w": "2.2", "d": "jul 2026", "a": "", "h": 0, "u": "https://www.ede.nl/fileadmin/ede.nl/Pdf-en/Toegankelijkheidsverklaringen/Inspectie_WCAG_2-2_Belastingbalie_Ede_20-07-2026.pdf"}, {"id": "r05", "g": "Ede", "o": "gemeentearchief.ede.nl", "t": "Inspectie", "w": "2.2", "d": "onbekend", "a": "", "h": 0, "u": "https://gemeentearchief.ede.nl/fileadmin/gemeentearchief/Toegankelijkheidsverklaring/Inspectie_WCAG_2-2_Gemeentearchief-ede-nl.pdf"}, {"id": "r06", "g": "Stein", "o": "opengemeentestein.nl", "t": "Content", "w": "2.2", "d": "jun 2026", "a": "Vermoedelijk Cardan", "h": 0, "u": "https://www.gemeentestein.nl/data/downloadables/4/1/1/2/wcag-22-aa-deelonderzoek-content-opengemeentesteinnl-11-202606231044.pdf"}, {"id": "r07", "g": "Stein", "o": "datmaaktsteinvoormij.nl", "t": "Content", "w": "2.2", "d": "jul 2026", "a": "Vermoedelijk Cardan", "h": 0, "u": "https://www.gemeentestein.nl/data/downloadables/4/1/0/9/wcag-22-aa-deelonderzoek-content-datmaaktsteinvoormijnl-202607061341.pdf"}, {"id": "r08", "g": "Westland", "o": "Loket", "t": "Content", "w": "2.2", "d": "nov 2025", "a": "Vermoedelijk Cardan", "h": 0, "u": "https://www.gemeentewestland.nl/fileadmin/Gemeente_Westland/site_assets/Footer/Toegankelijkheid_documenten/wcag-22-aa-deelonderzoek-content-loket-gemeente-westland-20251118.pdf"}, {"id": "r09", "g": "Westland", "o": "sktwestland.nl", "t": "Volledig", "w": "2.2", "d": "dec 2025", "a": "", "h": 0, "u": "https://www.gemeentewestland.nl/fileadmin/Gemeente_Westland/site_assets/Footer/Toegankelijkheid_documenten/WCAG-22-aa-onderzoek-wwwsktwestlandnl-december-2025.pdf"}, {"id": "r10", "g": "Westland", "o": "westlandwoontduurzaam.nl", "t": "Inspectie content", "w": "2.2", "d": "nov 2024", "a": "", "h": 0, "u": "https://www.gemeentewestland.nl/fileadmin/Gemeente_Westland/site_assets/Footer/Toegankelijkheid_documenten/WCAG-22-AA-inspectie-content-westlandwoontduurzaamnl-11-2024.pdf"}, {"id": "r11", "g": "Venlo", "o": "werkenbijvenlo.nl", "t": "Content", "w": "2.2", "d": "jul 2026", "a": "Vermoedelijk Cardan", "h": 0, "u": "https://www.venlo.nl/sites/default/files/2026-07/wcag-22-aa-deelonderzoek-content-werkenbijvenlonl-202607031219-1.pdf"}, {"id": "r12", "g": "Wijchen", "o": "Bestuurlijke informatie", "t": "Content", "w": "2.2", "d": "mrt 2025", "a": "Vermoedelijk Cardan", "h": 0, "u": "https://www.wijchen.nl/data/downloadables/1/8/4/2/wcag-22-aa-deelonderzoek-content-wijchenbestuurlijkeinformatienl-10-202503241537.pdf"}, {"id": "r13", "g": "Tubbergen", "o": "bestuur.tubbergen.nl", "t": "Content", "w": "2.2", "d": "nov 2025", "a": "", "h": 0, "u": "https://www.tubbergen.nl/sites/tubbergen/files/2025-11/deelonderzoek-content-bestuur.tubbergen.nl-wcag-2.2-aa-1.pdf"}, {"id": "r14", "g": "Dantumadiel", "o": "Bestuurlijke informatie", "t": "Content", "w": "2.2", "d": "apr 2025", "a": "", "h": 0, "u": "https://www.dantumadiel.frl/sites/default/files/2025-04/deelonderzoek-content-gemeentedantumadiel.bestuurlijkeinformatie.nl-wcag-2.2-aa.pdf"}, {"id": "r15", "g": "Tholen", "o": "Begrotingsapp", "t": "Content", "w": "2.2", "d": "2026", "a": "", "h": 0, "u": "https://www.tholen.nl/fileadmin/tholen/Toegankelijkheidsverklaringen/2026/Contentonderzoek_tholen.begrotingsapp.nl_WCAG_2.2.pdf"}, {"id": "r16", "g": "Rotterdam", "o": "gemeenteraad.rotterdam.nl", "t": "Heronderzoek techniek", "w": "2.2", "d": "onbekend", "a": "", "h": 0, "u": "https://info.ibabs.com/hubfs/3.%20iBabs/Documents/Heronderzoek%20Deelonderzoek%20Techniek%20gemeenteraad.rotterdam.nl%20WCAG%202.2.pdf"}, {"id": "r17", "g": "Vijfheerenlanden", "o": "Maatje", "t": "Hercontrole", "w": "onbekend", "d": "jun 2026", "a": "", "h": 0, "u": "https://www.vijfheerenlanden.nl/data/downloadables/6/7/9/hercontrole-toegankelijkheidsonderzoek-19-juni-2026-maatje-vijfheerenlanden.pdf"}, {"id": "r18", "g": "Haarlemmermeer", "o": "gemeenteraad.haarlemmermeer.nl", "t": "Content", "w": "onbekend", "d": "onbekend", "a": "", "h": 0, "u": "https://haarlemmermeergemeente.nl/file/contentonderzoek-gemeenteraadhaarlemmermeernl"}, {"id": "r19", "g": "Helmond", "o": "Rekentool", "t": "Onbekend", "w": "onbekend", "d": "okt 2024", "a": "", "h": 0, "u": "https://helmond.nl//Media%20Helmond.nl/Documenten%20Helmond/Actueel/Digitale%20Toegankelijkheid/Toetsingsrapporten/onderzoek-rekentoolhelmondnl-10-2024%20(1).pdf"}, {"id": "r20", "g": "Nieuwkoop", "o": "denkmee.nieuwkoop.nl", "t": "Content", "w": "onbekend", "d": "onbekend", "a": "Vermoedelijk Accessy", "h": 0, "u": "https://denkmee.nieuwkoop.nl/uploads/0e3aaced-ac10-49ae-9d83-772da6d28b54/static_page_file/file/a0de6938-dfed-414e-9b06-c6b6a700abba/Toegankelijkheidsonderzoek-content-denkmee.nieuwkoop.nl_.pdf"}, {"id": "r21", "g": "Groningen", "o": "gemeenteraad.groningen.nl", "t": "Content", "w": "onbekend", "d": "onbekend", "a": "", "h": 0, "u": "https://documenten.groningen.nl/Rapporten%20WCAG%20audit/Rapport%20WCAG-audit%20content%20gemeenteraad.groningen.nl.pdf"}, {"id": "r22", "g": "Groningen", "o": "wijsgroningen.nl", "t": "Onbekend", "w": "onbekend", "d": "onbekend", "a": "", "h": 0, "u": "https://documenten.groningen.nl/Rapporten%20WCAG%20audit/Rapport%20WCAG-audit%20wijsgroningen.nl.pdf"}, {"id": "r23", "g": "Groningen", "o": "rekentool.groningen.nl", "t": "Onbekend", "w": "onbekend", "d": "onbekend", "a": "", "h": 0, "u": "https://documenten.groningen.nl/Rapporten%20WCAG%20audit/Rapport%20WCAG-audit%20rekentool.groningen.nl.pdf"}, {"id": "r24", "g": "Groningen", "o": "LIAS InControl", "t": "Content", "w": "onbekend", "d": "onbekend", "a": "", "h": 0, "u": "https://documenten.groningen.nl/Rapporten%20WCAG%20audit/Rapport%20WCAG-audit%20content%20LIAS%20InControl%20gemeente%20Groningen.pdf"}, {"id": "r25", "g": "Zeist", "o": "zekerinzeist.nl", "t": "Onbekend", "w": "onbekend", "d": "onbekend", "a": "", "h": 0, "u": "https://www.zeist.nl/fileadmin/bestanden/Verklaringen/Zekerinzeist-rapport.pdf"}, {"id": "r26", "g": "Middelburg", "o": "middelburg.nl", "t": "Volledig", "w": "2.1", "d": "onbekend", "a": "Stichting Accessibility", "h": 1, "u": "https://www.middelburg.nl/_flysystem/media/onderzoek-stichting-accessibility-www.middelburg.nl-wcag2.1-aa.pdf"}, {"id": "r27", "g": "Delft", "o": "delft.nl", "t": "Volledig", "w": "onbekend", "d": "2024", "a": "", "h": 1, "u": "https://delft.nl/sites/default/files/2024-08/Onderzoeksrapport-toegankelijkheid-website-gemeente-Delft-2024.pdf"}, {"id": "r28", "g": "Woerden", "o": "woerden.nl", "t": "Volledig", "w": "2.1", "d": "onbekend", "a": "", "h": 1, "u": "https://www.woerden.nl/Documenten/Toegankelijkheid/Onderzoek_Gemeente_Woerden_WCAG_2_1_AA.pdf"}, {"id": "r29", "g": "Krimpenerwaard", "o": "krimpenerwaard.nl", "t": "Volledig", "w": "2.1", "d": "sep 2024", "a": "", "h": 1, "u": "https://www.krimpenerwaard.nl/sites/default/files/2024-09/onderzoek-www.krimpenerwaard.nl-wcag-2.1.pdf"}, {"id": "r30", "g": "Epe", "o": "epe.nl", "t": "Volledig", "w": "onbekend", "d": "mrt 2023", "a": "", "h": 1, "u": "https://www.epe.nl/sites/default/files/2023-04/2023-03-13%20Toegankelijkheidsonderzoek%20Gemeente%20Epe%20%28epe.nl%29%20versie%202.0.pdf"}, {"id": "r31", "g": "Gennep", "o": "gennep.nl", "t": "Volledig", "w": "onbekend", "d": "2022", "a": "", "h": 1, "u": "https://www.gennep.nl/sites/default/files/2022-11/Toegankelijkheidsonderzoek%20Gemeente%20Gennep%20%28www.gennep.nl%29%20versie%201.0.pdf"}, {"id": "r32", "g": "Midden-Groningen", "o": "midden-groningen.nl", "t": "Volledig", "w": "onbekend", "d": "sep 2021", "a": "", "h": 1, "u": "https://www.midden-groningen.nl/sites/default/files/2022-01/2021-09-16%20Toegankelijkheidsonderzoek%20Gemeente%20Midden-Groningen%20%28www.midden-groningen.nl%29%20versie%202.0.pdf"}, {"id": "r33", "g": "Oostzaan", "o": "oostzaan.nl", "t": "Managementrapport", "w": "onbekend", "d": "onbekend", "a": "", "h": 1, "u": "https://oostzaan.nl/sites/default/files/documents/bijlage%20-%20managementrapport%20toegankelijkheidsonderzoek%20www.oostzaan.nl_.pdf"}, {"id": "r34", "g": "IJsselgemeenten", "o": "Webformulieren", "t": "Formulieren", "w": "2.0 en 2.1", "d": "onbekend", "a": "", "h": 0, "u": "https://www.ijsselgemeenten.nl/_flysystem/media/wcag-2.0-en-2.1-rapporten-webformulieren-ijsselgemeenten.pdf"}, {"id": "r35", "g": "Amersfoort", "o": "afspraken.amersfoort.nl", "t": "Content", "w": "onbekend", "d": "mrt 2026", "a": "Proper Access", "h": 0, "u": "https://www.properaccess.nl/rapporten/202603_afspraken.amersfoort.nl/"}, {"id": "r36", "g": "Provincie Zuid-Holland", "o": "veenweidenkrimpenerwaard.nl", "t": "Volledig", "w": "2.2", "d": "dec 2025", "a": "Proper Access", "h": 0, "u": "https://www.properaccess.nl/rapporten/202512_veenweidenkrimpenerwaard.nl/"}, {"id": "r37", "g": "'s-Hertogenbosch", "o": "Makelpunt", "t": "Content", "w": "onbekend", "d": "mrt 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202503_shertogenbosch_makelpunt/"}, {"id": "r38", "g": "Kerkrade", "o": "kerkradewijzer.nl", "t": "Content", "w": "onbekend", "d": "mei 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202505_kerkradewijzer.nl/"}, {"id": "r39", "g": "Provincie Noord-Holland", "o": "Bestuurlijke informatie", "t": "Content", "w": "onbekend", "d": "aug 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202508_noord-holland.bestuurlijkeinformatie/"}, {"id": "r40", "g": "Provincie Noord-Holland", "o": "leidraadlc.noord-holland.nl", "t": "Volledig", "w": "onbekend", "d": "okt 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202510_leidraadlc.noord-holland.nl/"}, {"id": "r41", "g": "Noordzeekanaalgebied", "o": "noordzeekanaalgebied.nl", "t": "Volledig", "w": "onbekend", "d": "nov 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202511_nzkg/"}, {"id": "r42", "g": "Regio Amersfoort", "o": "doorstroompuntregioamersfoort.nl", "t": "Hertest", "w": "onbekend", "d": "sep 2024", "a": "Proper Access", "h": 0, "u": "https://rapport.properaccess.nl/reports/202409_retest_doorstroompunt/"}, {"id": "r43", "g": "Noordoost-Brabant", "o": "werkcentrumnoordoostbrabant.nl", "t": "Volledig", "w": "onbekend", "d": "jul 2024", "a": "Proper Access", "h": 0, "u": "https://rapport.properaccess.nl/reports/202407_werkcentrum/"}, {"id": "r44", "g": "Overheid (overig)", "o": "geldwijzerwinkel.nl", "t": "Volledig", "w": "onbekend", "d": "jun 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202506_geldwijzerwinkel/"}, {"id": "r45", "g": "Overheid (overig)", "o": "mijnbin.nl", "t": "Volledig", "w": "onbekend", "d": "feb 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202502_mijnbin.nl/"}, {"id": "r46", "g": "Overheid (overig)", "o": "Mijn Wrb", "t": "Volledig", "w": "onbekend", "d": "jul 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202507_mijn_wrb/"}, {"id": "r47", "g": "Overheid (overig)", "o": "rechtwijzer.nl", "t": "Volledig", "w": "onbekend", "d": "mei 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202505_rechtwijzer/"}, {"id": "r48", "g": "Overheid (overig)", "o": "rvr.org", "t": "Volledig", "w": "onbekend", "d": "jan 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202501_rvr.org/"}, {"id": "r49", "g": "Overheid (overig)", "o": "bureauwsnp.nl", "t": "Volledig", "w": "onbekend", "d": "feb 2025", "a": "Proper Access", "h": 0, "u": "https://audit.properaccess.nl/reports/202502_bureauwsnp/"}, {"id": "r50", "g": "Kampen", "o": "belastingkampen.nl", "t": "Content", "w": "2.2", "d": "onbekend", "a": "", "h": 0, "u": "https://www.kampen.nl/file/rapport-onderzoek-wcag-22-belastingkampennl-contentpdf"}, {"id": "r51", "g": "Purmerend", "o": "raad.purmerend.nl", "t": "Volledig", "w": "onbekend", "d": "jan 2026", "a": "", "h": 0, "u": "https://raad.purmerend.nl/sites/default/files/2026-01/Rapport%20toegankelijkheid%20website%20gemeenteraad%20Purmerend%20januari%202026.pdf"}, {"id": "r52", "g": "Voorst", "o": "bezoekvoorst.nl", "t": "Volledig", "w": "2.1", "d": "onbekend", "a": "", "h": 0, "u": "https://www.voorst.nl/fileadmin/user_upload/Toegankelijkheidsverklaringen/www.bezoekvoorst.nl_Onderzoek_WCAG_2.1AA_gemeente_Voorst.pdf"}, {"id": "r53", "g": "Goes", "o": "plein6.grdebevelanden.nl", "t": "Volledig", "w": "2.1", "d": "dec 2023", "a": "", "h": 0, "u": "https://www.goes.nl/sites/goes/files/2023-12/Onderzoek%20https_plein6.grdebevelanden.nl%20WCAG%202.1.pdf"}, {"id": "r54", "g": "Waddinxveen", "o": "waddinxveen.nl (archiefkopie)", "t": "Volledig", "w": "2.1", "d": "okt 2022", "a": "", "h": 1, "u": "https://publiek.pagefreezer.nl:443/content/Gemeente%20Waddinxveen/19-10-2022T13:58/https://www.waddinxveen.nl/_flysystem/media/wcag-2.1-aa-onderzoek-voor-gemeente-waddinxveen-volledig-rapport.pdf"}, {"id": "r55", "g": "Veendam", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-veendam-hercontrole/"}, {"id": "r56", "g": "Wageningen", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/wageningen.nl/"}, {"id": "r57", "g": "Zandvoort", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-zandvoort-hercontrole/"}, {"id": "r58", "g": "Haarlem", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-haarlem-hercontrole/"}, {"id": "r59", "g": "Altena", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-altena-hercontrole/"}, {"id": "r60", "g": "Apeldoorn", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-apeldoorn/"}, {"id": "r61", "g": "Baarn", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/baarn.nl/"}, {"id": "r62", "g": "Beverwijk", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/beverwijk.nl/"}, {"id": "r63", "g": "Capelle aan den IJssel", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/capelleaandenijssel.nl-hercontrole/"}, {"id": "r64", "g": "Deurne", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/deurne.nl/"}, {"id": "r65", "g": "Eemsdelta", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/eemsdelta.nl/"}, {"id": "r66", "g": "Gennep", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gennep.nl/"}, {"id": "r67", "g": "Hardenberg", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-hardenberg-hercontrole/"}, {"id": "r68", "g": "Hilvarenbeek", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/hilvarenbeek.nl/"}, {"id": "r69", "g": "Krimpen aan den IJssel", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-krimpen-aan-den-ijssel-her-hercontrole/"}, {"id": "r70", "g": "Leiden", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente.leiden.nl/"}, {"id": "r71", "g": "Meppel", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/meppel.nl/"}, {"id": "r72", "g": "Moerdijk", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/moerdijk.nl/"}, {"id": "r73", "g": "Putten", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/putten.nl-hercontrole/"}, {"id": "r74", "g": "Rucphen", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-rucphen/"}, {"id": "r75", "g": "Súdwest-Fryslân", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/sudwest-frysland-gemeente-hercontrole/"}, {"id": "r76", "g": "Tynaarlo", "o": "Hoofdwebsite", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/gemeente-tynaarlo-hercontrole/"}, {"id": "r77", "g": "Schiedam", "o": "Hoofdwebsite", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 1, "u": "https://toegankelijkheidsrapport.swink.nl/schiedam2024/"}, {"id": "r78", "g": "Capelle aan den IJssel en IJsselgemeenten", "o": "Formulieren", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 0, "u": "https://toegankelijkheidsrapport.swink.nl/formulieren-capelle-hercontrole/"}, {"id": "r79", "g": "Amsterdam", "o": "formulieren.amsterdam.nl", "t": "Volledig", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 0, "u": "https://toegankelijkheidsrapport.swink.nl/formulieren.amsterdam.nl/"}, {"id": "r80", "g": "Kaag en Braassem", "o": "Afsprakenmodule", "t": "Hercontrole", "w": "onbekend", "d": "onbekend", "a": "Swink", "h": 0, "u": "https://toegankelijkheidsrapport.swink.nl/afsprakenmodule-gemeente-kaag-en-braassem-hercontrole/"}];
+  var KEY = "rapportenverzameling-v1";
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { st = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var filter = "all";
+  var list = document.getElementById("list");
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function render() {
+    list.textContent = "";
+    var shown = 0, dl = 0, pr = 0;
+    DATA.forEach(function (r) {
+      var s = st[r.id] || {};
+      if (s.dl) dl++; if (s.pr) pr++;
+      if (filter === "v22" && r.w !== "2.2") return;
+      if (filter === "main" && !r.h) return;
+      if (filter === "todo" && s.pr) return;
+      if (filter === "pa" && r.a !== "Proper Access") return;
+      if (filter === "sw" && r.a !== "Swink") return;
+      shown++;
+      var li = el("li", "rep" + (s.pr ? " done" : ""));
+      var top = el("div", "rep-top");
+      top.appendChild(el("span", "rep-g", r.g));
+      top.appendChild(el("span", "rep-o", r.o));
+      li.appendChild(top);
+      var tags = el("div", "tags");
+      if (r.h) tags.appendChild(el("span", "tag main", "Hoofdwebsite"));
+      tags.appendChild(el("span", "tag" + (r.w === "2.2" ? " v22" : ""), "WCAG " + r.w));
+      tags.appendChild(el("span", "tag", r.t));
+      tags.appendChild(el("span", "tag", r.d));
+      if (r.a) tags.appendChild(el("span", "tag", r.a));
+      if (r.a === "Proper Access" || r.a === "Swink") tags.appendChild(el("span", "tag v22", "Online rapport: stuur mij de link"));
+      li.appendChild(tags);
+      var act = el("div", "rep-actions");
+      var a = el("a", null, "Rapport openen");
+      a.href = r.u; a.target = "_blank"; a.rel = "noopener";
+      act.appendChild(a);
+      [["dl", "Gedownload"], ["pr", "Verwerkt in oefenpagina"]].forEach(function (o) {
+        var lab = el("label");
+        var cb = document.createElement("input");
+        cb.type = "checkbox"; cb.id = r.id + "-" + o[0]; cb.checked = !!s[o[0]];
+        cb.addEventListener("change", function () {
+          st[r.id] = st[r.id] || {}; st[r.id][o[0]] = cb.checked; save(); render();
+          var again = document.getElementById(cb.id); if (again) again.focus();
+        });
+        lab.appendChild(cb); lab.appendChild(document.createTextNode(o[1] + " (" + r.g + ")"));
+        act.appendChild(lab);
+      });
+      li.appendChild(act);
+      list.appendChild(li);
+    });
+    document.getElementById("empty").hidden = shown > 0;
+    document.getElementById("score").textContent = DATA.length + " rapporten · " + dl + " gedownload · " + pr + " verwerkt";
+  }
+  document.querySelectorAll(".filters button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      filter = b.getAttribute("data-f");
+      document.querySelectorAll(".filters button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      render();
+    });
+  });
+  render();
+})();
+</script>
