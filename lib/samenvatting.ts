@@ -76,23 +76,16 @@ function samenvattingRuw(i: SamenvattingInvoer): string {
   //
   // Zijn er pagina's vervangen, dan is "dezelfde" niet waar. Dat zei de samenvatting van
   // BEV-01 v1.1 terwijl Groene verhalen (404) en het oude Wmo-formulier vervangen waren.
-  // Frits, 2026-10-20.
+  // De zin noemt alleen het aantal; welke pagina's en waarom staat in de feedback van de
+  // onderzoeker eronder, anders staat het er twee keer. "Ten opzichte van de nulmeting"
+  // als die in de tool staat, zodat er niet "de nulmeting" en "het vorige onderzoek" door
+  // elkaar staan. Frits, 2026-10-20.
   const nieuw = i.steekproefNieuw ?? 0;
-  const vervallen = i.steekproefVervallen ?? 0;
-  const wijzigingZin =
-    nieuw === 0
-      ? ''
-      : vervallen > 0
-        ? nieuw === 1
-          ? ` Daarvan is er 1 nieuw: die vervangt een pagina uit ${vorige} die niet meer bestond.`
-          : ` Daarvan zijn er ${nieuw} nieuw: ze vervangen pagina's uit ${vorige} die niet meer bestonden.`
-        : nieuw === 1
-          ? ' Daarvan is er 1 nieuw toegevoegd.'
-          : ` Daarvan zijn er ${nieuw} nieuw toegevoegd.`;
+  const tenOpzichteVan = i.nulmetingPeriode ? 'de nulmeting' : vorige;
   const steekproefZin = aanvullend
     ? `Daarbij zijn dezelfde {totalPages} pagina's onderzocht als in ${vorige}.`
     : nieuw > 0
-      ? `Voor dit ${ditWoord} zijn {totalPages} gepubliceerde webpagina's beoordeeld.${wijzigingZin}`
+      ? `Voor dit ${ditWoord} zijn {totalPages} gepubliceerde webpagina's beoordeeld, waarvan ${nieuw} nieuw ten opzichte van ${tenOpzichteVan}.`
       : `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`;
   const eerder = eerderOnderzoek(i.project);
   const nulmetingFailed = i.nulmetingFailedCriteria ?? 0;

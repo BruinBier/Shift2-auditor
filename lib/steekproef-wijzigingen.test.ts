@@ -79,8 +79,9 @@ test('samenvatting heronderzoek: "dezelfde" alleen zonder vervangen pagina\'s', 
 
   const met = samenvattingHtml({ ...basis, steekproefNieuw: 2, steekproefVervallen: 2 });
   assert.doesNotMatch(met, /dezelfde 21/);
-  assert.match(met, /zijn 21 gepubliceerde webpagina's beoordeeld\. Daarvan zijn er 2 nieuw: ze vervangen pagina's uit/);
+  assert.match(met, /zijn 21 gepubliceerde webpagina's beoordeeld, waarvan 2 nieuw ten opzichte van het vorige onderzoek\./);
 
-  const een = samenvattingHtml({ ...basis, steekproefNieuw: 1, steekproefVervallen: 1 });
-  assert.match(een, /Daarvan is er 1 nieuw: die vervangt een pagina uit .* die niet meer bestond\./);
+  // Met de periode van de nulmeting erbij: "de nulmeting", net als de zin ervoor.
+  const metNulmeting = samenvattingHtml({ ...basis, nulmetingPeriode: '1 juli 2026 en 15 juli 2026', steekproefNieuw: 2 });
+  assert.match(metNulmeting, /waarvan 2 nieuw ten opzichte van de nulmeting\./);
 });
