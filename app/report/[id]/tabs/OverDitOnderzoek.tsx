@@ -303,10 +303,14 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           dangerouslySetInnerHTML={{ __html: hoofdHtml }}
         />
 
-        {/* Researcher feedback if available */}
+        {/* Researcher feedback if available.
+            whitespace-normal: het blok eromheen staat op pre-line, en dan werd elk
+            regeleinde dat de editor tussen <p>, <ul> en <li> zet een lege regel op het
+            scherm (BEV-01, 2026-10-20). Hetzelfde probleem als bij de samenvatting op
+            MAAS-01; zie samenvattingHtml in lib/samenvatting.ts. */}
         {project.researcherFeedback && (
           <div
-            className="mt-4 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-2"
+            className="mt-4 prose prose-sm max-w-none whitespace-normal [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_p]:mb-2"
             dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
           />
         )}
