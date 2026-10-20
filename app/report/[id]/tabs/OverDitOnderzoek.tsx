@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation';
 import { getDriveFolderUrl } from '@/lib/drive-folders';
 import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
+import { STATUS_VERVALLEN } from '@/lib/steekproef-wijzigingen';
 import {
   isHeronderzoek as bepaalHeronderzoek,
   naarHeronderzoek,
@@ -47,6 +48,8 @@ function renderFindingHtml(input: string): string {
 }
 
 export default function OverDitOnderzoek({ project }: { project: any }) {
+  // Uit getReportData; zonder (oudere aanroep) de gewone steekproef zonder labels.
+  const steekproef = project.steekproef ?? (project.sampleItems ?? []).map((item: any) => ({ item, status: null }));
   const searchParams = useSearchParams();
   const isPdfMode = searchParams.get('pdf') === 'true';
 
@@ -1455,50 +1458,37 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                       </div>
                     )}
 
-                    {/* Volledige steekproef */}
+                    {/* Volledige steekproef. Bij een herinspectie staan vervallen en toegevoegde pagina's
+                        erbij, zodat zichtbaar is waarom de lijst afwijkt van de nulmeting
+                        (lib/steekproef-wijzigingen.ts). Een vervallen pagina is offline: geen link. */}
                     <h4 className="text-base font-semibold text-gray-900 mb-3">Volledige steekproef</h4>
-                    {project.sampleItems && project.sampleItems.length > 0 ? (
+                    {steekproef.length > 0 ? (
                       <ul className="list-disc list-outside ml-5 text-sm text-gray-700 space-y-2">
-                        {project.sampleItems.map((item: any, index: number) => (
-                          <li key={item.id}>
-                            {project.researchTypeData?.type === 'formulieren' ? (
-                              <>
-                                <div className="font-medium text-gray-900">{item.title}</div>
-                                {item.url && (
-                                  <a
-                                    href={item.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 underline inline-flex items-center gap-1"
-                                  >
-                                    {item.url}
-                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                  </a>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                {item.url ? (
-                                  <a
-                                    href={item.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 underline inline-flex items-center gap-1"
-                                  >
-                                    {item.url}
-                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                  </a>
-                                ) : (
-                                  <span>{item.title}</span>
-                                )}
-                              </>
-                            )}
-                          </li>
-                        ))}
+                        {steekproef.map(({ item, status }: any) => {
+                          const isFormulieren = project.researchTypeData?.type === 'formulieren';
+                          const link = item.url && status !== STATUS_VERVALLEN;
+                          return (
+                            <li key={(status ?? '') + item.id}>
+                              {isFormulieren && <div className="font-medium text-gray-900">{item.title}</div>}
+                              {link ? (
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 underline inline-flex items-center gap-1"
+                                >
+                                  {item.url}
+                                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </a>
+                              ) : (
+                                (item.url || !isFormulieren) && <span>{item.url || item.title}</span>
+                              )}
+                              {status && <span className="font-medium text-gray-900">, status: {status}</span>}
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : (
                       <p className="text-sm text-gray-500 italic">Geen steekproef items toegevoegd</p>

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { isHeronderzoek as bepaalHeronderzoek } from '@/lib/onderzoek-soort';
+import { steekproefMetWijzigingen } from '@/lib/steekproef-wijzigingen';
 
 /**
  * Alle gegevens die een rapport nodig heeft, in één keer opgehaald.
@@ -79,6 +80,24 @@ export async function getReportData(projectId: string) {
         })
       : 0;
 
+  /**
+   * De steekproef voor de lijst in Onderzoeksdetails, met bij een herinspectie de
+   * pagina's die zijn vervallen of toegevoegd ten opzichte van de nulmeting.
+   * Zie lib/steekproef-wijzigingen.ts.
+   */
+  const nulmetingSteekproef =
+    isHeronderzoek && project.parentProjectId
+      ? await prisma.sampleItem.findMany({
+          where: { projectId: project.parentProjectId },
+          orderBy: { orderIndex: 'asc' },
+          select: { id: true, url: true, title: true },
+        })
+      : null;
+  const steekproef = steekproefMetWijzigingen(
+    project.sampleItems.map((s) => ({ id: s.id, url: s.url, title: s.title })),
+    nulmetingSteekproef
+  );
+
   // Onderzoekstype bepaalt welke succescriteria in het rapport horen.
   let researchTypeData: any = null;
   let filteredAssessments = project.criterionAssessments;
@@ -113,6 +132,7 @@ export async function getReportData(projectId: string) {
     isHeronderzoek,
     nulmeting,
     nulmetingFailedCriteria,
+    steekproef,
   };
 }
 

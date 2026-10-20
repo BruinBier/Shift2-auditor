@@ -436,6 +436,22 @@ en dan verandert een serieuze afkeuring stilletjes in een opmerking. Bij Heerlen
 dat met tien bevindingen. De API beschermt hier inmiddels tegen, maar wijzig het type nooit met
 de hand bij een opgelost punt.
 
+### Een pagina uit de steekproef bestaat niet meer
+
+Geeft een pagina uit de steekproef bij de herinspectie een 404, vervang hem dan door een
+vergelijkbare pagina (dezelfde soort inhoud, bijvoorbeeld weer een pagina met video). Haal de
+oude pagina uit de steekproef van de herinspectie en verwijder de bevindingen die alleen daar
+hingen; in de nulmeting (versie 1.0) blijven ze staan. Laat je ze staan, dan keuren ze het
+criterium af zonder pagina; zet je ze op opgelost, dan krijgt het criterium "Voldoet" zonder
+dat er iets is bekeken. Beoordeel de criteria van die bevindingen op de nieuwe pagina.
+
+In de lijst "Volledige steekproef" van het rapport staat de oude pagina dan met "status:
+Vervallen / Offline" en de nieuwe met "status: Toegevoegd (Herinspectie)", zodat Logius ziet
+waarom de lijst afwijkt van de nulmeting. Dat volgt vanzelf uit de vergelijking met de
+steekproef van de nulmeting (`lib/steekproef-wijzigingen.ts`); er hoeft niets bij te worden
+gezet. BEV-01, 20 oktober 2026: Groene verhalen vervangen door Wat te doen bij een
+noodsituatie.
+
 ### Per opmerking
 
 Opmerkingen blijven staan. Is er iets mee gedaan, vink dan `interimReviewed` aan en noteer in

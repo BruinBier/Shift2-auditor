@@ -25,6 +25,7 @@ import {
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
+import { STATUS_VERVALLEN, type SteekproefRegel } from '@/lib/steekproef-wijzigingen';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -192,7 +193,6 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   }
   allCriteriaRows.sort((a, b) => compareWcagCodes(a.code, b.code));
 
-  const sampleItems = project.sampleItems.filter((s) => s.url || s.title);
   const scopeIn = project.scopeUrls.filter(
     (s) => s.inScope === true && !s.parentUrlId
   );
@@ -250,7 +250,7 @@ export async function generateReportHtml(projectId: string): Promise<string> {
   const borgingHtml = renderBorging();
   const detailsHtml = renderOnderzoeksdetails(
     project,
-    sampleItems,
+    data.steekproef.filter((r) => r.item.url || r.item.title),
     scopeIn,
     scopeOut
   );
@@ -661,7 +661,8 @@ function renderBorging(): string {
 
 function renderOnderzoeksdetails(
   project: any,
-  sampleItems: any[],
+  /** De steekproef met, bij een herinspectie, vervallen en toegevoegde pagina's. */
+  steekproef: SteekproefRegel<{ url?: string | null; title?: string | null }>[],
   scopeIn: any[],
   scopeOut: any[]
 ): string {
@@ -689,14 +690,16 @@ function renderOnderzoeksdetails(
           .join('')}</ul>`
       : '';
 
+  // Een vervallen pagina is offline: de URL staat er als tekst, niet als link.
   const sampleHtml =
-    sampleItems.length > 0
-      ? `<ul>${sampleItems
-          .map((s: any) => {
-            if (s.url) {
-              return `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.url)}</a></li>`;
+    steekproef.length > 0
+      ? `<ul>${steekproef
+          .map(({ item: s, status }) => {
+            const label = status ? `, status: ${escapeHtml(status)}` : '';
+            if (s.url && status !== STATUS_VERVALLEN) {
+              return `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.url)}</a>${label}</li>`;
             }
-            return `<li>${escapeHtml(s.title || 'Onbenoemd')}</li>`;
+            return `<li>${escapeHtml(s.url || s.title || 'Onbenoemd')}${label}</li>`;
           })
           .join('')}</ul>`
       : '<p>Geen sample-items vastgelegd.</p>';
