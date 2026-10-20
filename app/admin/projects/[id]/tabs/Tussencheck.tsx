@@ -386,13 +386,23 @@ export default function Tussencheck({ project }: TussencheckProps) {
                         />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={f.status === 'resolved'}
-                          disabled={isBusy}
-                          onChange={() => toggleResolved(f)}
-                          className="w-4 h-4 cursor-pointer accent-green-600"
-                        />
+                        {/* Een opmerking staat altijd op resolved: zo wordt hij opgeslagen, niet
+                            omdat er iets is opgelost. Een vinkje leek dan "opgelost", en uitklikken
+                            zette hem op open. Bij een opmerking telt alleen Nagelopen. */}
+                        {opmerking ? (
+                          <span className="text-gray-400" title="Niet van toepassing bij een opmerking">
+                            <span aria-hidden="true">–</span>
+                            <span className="sr-only">Niet van toepassing bij een opmerking</span>
+                          </span>
+                        ) : (
+                          <input
+                            type="checkbox"
+                            checked={f.status === 'resolved'}
+                            disabled={isBusy}
+                            onChange={() => toggleResolved(f)}
+                            className="w-4 h-4 cursor-pointer accent-green-600"
+                          />
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <a
