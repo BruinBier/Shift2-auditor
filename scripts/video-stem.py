@@ -10,7 +10,9 @@ Leest <videomap>/audiodescriptie.json:
     [{"bestand": "0m18.mp3", "start_ms": 18300, "tekst": "Lars Boelen, Huisfluisteraar."}]
 
 en schrijft elk bestand naar <videomap>/audiodescriptie-mp3/. Een woord tussen sterretjes
-(*haar*) krijgt de klemtoon, zie klemtoon(). `start_ms` gebruikt dit script
+(*haar*) krijgt de klemtoon, zie klemtoon(). Spreekt Maarten een woord verkeerd uit, zet dan
+"uitspraak" naast "tekst": hij zegt de uitspraak, de tekst blijft voor ondertiteling en
+transcript ("woonhof dun Hertog" voor "d'n Hertog", dat hij als "de Hertog" las). `start_ms` gebruikt dit script
 niet; dat is voor scripts/video-inmengen.py.
 
 Waarom Azure
@@ -78,7 +80,7 @@ def main() -> None:
 
     for z in zinnen:
         ssml = (f"<speak version='1.0' xml:lang='{taal}'><voice name='{a.stem}'>"
-                f"{klemtoon(escape(z['tekst']))}</voice></speak>")
+                f"{klemtoon(escape(z.get('uitspraak') or z['tekst']))}</voice></speak>")
         req = urllib.request.Request(
             f"https://{regio}.tts.speech.microsoft.com/cognitiveservices/v1",
             data=ssml.encode("utf-8"),

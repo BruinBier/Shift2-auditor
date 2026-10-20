@@ -55,11 +55,18 @@ Staat er naast de video een `ondertiteling.json` (`start_ms`, `eind_ms`, `spreke
 tijden van het origineel), dan dekt het script de oude ondertitelbalk af en zet alles opnieuw in
 beeld met de spreker ervoor: `SARAH: Mooi!`, en de audiodescriptie als `VOICE-OVER: ...`.
 
+Een video zonder gesproken tekst maar met muziek krijgt audiodescriptie, niet alleen een
+tekstbeschrijving: er is geluid, dus geldt op AA 1.2.5, en daar vervangt een transcript de
+audiodescriptie niet. Alleen een video zonder geluidsspoor valt onder 1.2.1 (Ommetje Hoef,
+oktober 2026).
+
 Draai de analyse eerst zonder hint, lees de naambalkjes van de overzichtsvellen, en draai dan
 met `--hint`: zonder hint werd "ijzerpoeder" "IJspoede". Ruimte voor audiodescriptie is de tijd
 tussen gesproken zinnen, niet stilte: er ligt bijna altijd muziek onder. `audiodescriptie.json`
 naast de video (`bestand`, `start_ms`, `tekst`) schrijf jij; de onderzoeker leest de zinnen na
-vóór het inspreken. De Azure-sleutel staat in `Downloads\video A2-gemeenten\azure.env`; nooit
+vóór het inspreken. Spreekt de stem een woord verkeerd uit, zet dan `uitspraak` naast `tekst`:
+die wordt ingesproken, `tekst` blijft voor ondertiteling en transcript ("woonhof dun Hertog"
+voor "d'n Hertog", dat als "de Hertog" werd gelezen). De Azure-sleutel staat in `Downloads\video A2-gemeenten\azure.env`; nooit
 tonen of in de repo zetten. De stappen per video en wie wat doet staan in de app op
 `/admin/video-a2-gemeenten`.
 

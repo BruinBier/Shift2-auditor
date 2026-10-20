@@ -27,6 +27,8 @@ export default function VideoA2GemeentenPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [gemeenteFilter, setGemeenteFilter] = useState<string>('');
+  const [standFilter, setStandFilter] = useState<Stand | ''>('');
+  const [zoek, setZoek] = useState('');
 
   // Live-tik voor de lopende timer.
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
@@ -150,7 +152,11 @@ export default function VideoA2GemeentenPage() {
   // Afgeronde video's (elke fase klaar of n.v.t.) bovenaan; binnen elke groep blijft de volgorde gelijk.
   const isAfgerond = (v: Video) =>
     v.phases.length > 0 && v.phases.every((p) => p.status === 'klaar' || p.status === 'nvt');
-  const filtered = (gemeenteFilter ? videos.filter((v) => v.gemeente === gemeenteFilter) : videos)
+  const zoekterm = zoek.trim().toLowerCase();
+  const filtered = videos
+    .filter((v) => !gemeenteFilter || v.gemeente === gemeenteFilter)
+    .filter((v) => !standFilter || standVan(v) === standFilter)
+    .filter((v) => !zoekterm || v.titel.toLowerCase().includes(zoekterm))
     .map((v, i) => ({ v, i }))
     .sort((a, b) => Number(isAfgerond(b.v)) - Number(isAfgerond(a.v)) || a.i - b.i)
     .map(({ v }) => v);
@@ -217,26 +223,58 @@ export default function VideoA2GemeentenPage() {
         <VideoStats videos={videos} nowTick={nowTick} />
 
         {/* Filter */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-gray-700">Gemeente:</label>
-          <select
-            value={gemeenteFilter}
-            onChange={(e) => setGemeenteFilter(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-          >
-            <option value="">Alle</option>
-            {GEMEENTEN.map((g) => (
-              <option key={g} value={g}>
-                {GEMEENTE_LABELS[g]}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-sm text-gray-700 flex items-center gap-2">
+            Gemeente:
+            <select
+              value={gemeenteFilter}
+              onChange={(e) => setGemeenteFilter(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Alle</option>
+              {GEMEENTEN.map((g) => (
+                <option key={g} value={g}>
+                  {GEMEENTE_LABELS[g]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-gray-700 flex items-center gap-2">
+            Stand:
+            <select
+              value={standFilter}
+              onChange={(e) => setStandFilter(e.target.value as Stand | '')}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Alle</option>
+              {(Object.keys(STAND_LABELS) as Stand[]).map((s) => (
+                <option key={s} value={s}>
+                  {STAND_LABELS[s]} ({videos.filter((v) => (!gemeenteFilter || v.gemeente === gemeenteFilter) && standVan(v) === s).length})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-gray-700 flex items-center gap-2">
+            Zoeken:
+            <input
+              type="search"
+              value={zoek}
+              onChange={(e) => setZoek(e.target.value)}
+              placeholder="Titel"
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm w-56"
+            />
+          </label>
+          <span className="text-sm text-gray-500" aria-live="polite">
+            {filtered.length} van {videos.length}
+          </span>
         </div>
 
         {/* Video-lijst */}
         {filtered.length === 0 ? (
           <div className="text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg p-10 text-center">
-            Nog geen video's. Voeg er een toe via "Nieuwe video", "Bulk toevoegen" of "Excel importeren".
+            {videos.length === 0
+              ? 'Nog geen video\'s. Voeg er een toe via "Nieuwe video", "Bulk toevoegen" of "Excel importeren".'
+              : 'Geen video\'s die bij dit filter passen.'}
           </div>
         ) : (
           <div className="space-y-4">
@@ -339,6 +377,44 @@ export default function VideoA2GemeentenPage() {
   );
 }
 
+/* ---------- Stand van een video, voor het filter en het label ---------- */
+
+type Stand = 'te_doen' | 'bezig' | 'klaar' | 'terug' | 'bespreken' | 'derden';
+const STAND_LABELS: Record<Stand, string> = {
+  te_doen: 'Te doen',
+  bezig: 'Bezig',
+  klaar: 'Klaar',
+  terug: 'Terug naar de maker',
+  bespreken: 'Nog te bespreken',
+  derden: 'Content van derden',
+};
+
+// "Terug naar de maker" heeft geen eigen veld: het staat als kop "TERUGSTUREN" in de notitie,
+// met de punten voor de maker eronder. Die kop gaat vóór de fasen, want zo'n video is half af.
+function terugNaarMaker(v: Video): boolean {
+  return /TERUGSTUREN/.test(v.notities ?? '');
+}
+
+// Content van derden (een video van een ministerie, alleen ingesloten) hoeft niet toegankelijk
+// gemaakt te worden; wel komt er een tekst bij op de pagina. Ook dit staat als kop in de notitie.
+function contentVanDerden(v: Video): boolean {
+  return /INHOUD VAN DERDEN|CONTENT VAN DERDEN/.test(v.notities ?? '');
+}
+
+// Een open vraag voor het overleg met de gemeente: kop "NOG TE BESPREKEN" of "NAGAAN" in de notitie.
+function nogTeBespreken(v: Video): boolean {
+  return /NOG TE BESPREKEN|NAGAAN/.test(v.notities ?? '');
+}
+
+function standVan(v: Video): Stand {
+  if (terugNaarMaker(v)) return 'terug';
+  if (nogTeBespreken(v)) return 'bespreken';
+  if (contentVanDerden(v)) return 'derden';
+  if (v.phases.length > 0 && v.phases.every((p) => p.status === 'klaar' || p.status === 'nvt')) return 'klaar';
+  if (v.phases.every((p) => p.status === 'todo')) return 'te_doen';
+  return 'bezig';
+}
+
 /* ---------- Labels per video: platform, gepubliceerd, op website, open captions ---------- */
 
 // Het platform volgt uit de link; daar hoeft niemand iets voor in te vullen.
@@ -387,6 +463,15 @@ function VideoLabels({ video, onSaved }: { video: Video; onSaved: (v: Video) => 
   return (
     <div className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-9">
       <span className={`text-xs px-2 py-0.5 rounded ${platform.klasse}`}>{platform.label}</span>
+      {terugNaarMaker(video) && (
+        <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-800 font-medium">Terug naar de maker</span>
+      )}
+      {nogTeBespreken(video) && (
+        <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-medium">Nog te bespreken</span>
+      )}
+      {contentVanDerden(video) && (
+        <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-medium">Content van derden</span>
+      )}
       {gepubliceerd && (
         <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">Gepubliceerd</span>
       )}
