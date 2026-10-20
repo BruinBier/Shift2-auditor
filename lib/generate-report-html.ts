@@ -25,7 +25,7 @@ import {
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
-import { STATUS_VERVALLEN, type SteekproefRegel } from '@/lib/steekproef-wijzigingen';
+import { STATUS_VERVALLEN, telWijzigingen, type SteekproefRegel } from '@/lib/steekproef-wijzigingen';
 
 function escapeHtml(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
@@ -203,7 +203,8 @@ export async function generateReportHtml(projectId: string): Promise<string> {
     stats,
     researchTypeData,
     nulmetingPeriode,
-    nulmetingFailedCriteria
+    nulmetingFailedCriteria,
+    telWijzigingen(data.steekproef)
   );
   const overOnderzoekHtml = renderOverOnderzoek(project, researchTypeData);
   const overzichtHtml = renderOverzichtResultaten(
@@ -295,7 +296,9 @@ function renderSamenvatting(
   researchTypeData: any,
   nulmetingPeriode?: string | null,
   /** Hoeveel succescriteria bij de nulmeting werden afgekeurd; 0 bij een nulmeting zelf. */
-  nulmetingFailedCriteria: number = 0
+  nulmetingFailedCriteria: number = 0,
+  /** Hoeveel pagina's nieuw en vervallen zijn t.o.v. de nulmeting; zie telWijzigingen. */
+  steekproefTelling: { nieuw: number; vervallen: number } = { nieuw: 0, vervallen: 0 }
 ): string {
   // Heronderzoek of aanvullend onderzoek: zie lib/samenvatting.ts en lib/onderzoek-soort.ts.
   const dateStartFormatted = project.dateStart
@@ -334,6 +337,8 @@ function renderSamenvatting(
         niveau: researchTypeData?.level,
         nulmetingPeriode,
         nulmetingFailedCriteria,
+        steekproefNieuw: steekproefTelling.nieuw,
+        steekproefVervallen: steekproefTelling.vervallen,
       });
 
   const feedbackHtml = project.researcherFeedback

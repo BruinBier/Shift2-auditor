@@ -42,6 +42,21 @@ function sleutel(p: Pagina): string | null {
 }
 
 /**
+ * Hoeveel pagina's er bij een herinspectie zijn bijgekomen en weggevallen. De samenvatting
+ * zei "dezelfde 21 pagina's opnieuw beoordeeld", ook als er twee waren vervangen (BEV-01,
+ * 2026-10-20); zie `samenvattingHtml` in lib/samenvatting.ts.
+ */
+export function telWijzigingen(regels: { status: SteekproefStatus }[]): {
+  nieuw: number;
+  vervallen: number;
+} {
+  return {
+    nieuw: regels.filter((r) => r.status === STATUS_TOEGEVOEGD).length,
+    vervallen: regels.filter((r) => r.status === STATUS_VERVALLEN).length,
+  };
+}
+
+/**
  * De steekproef zoals het rapport hem toont: de huidige pagina's in hun eigen volgorde,
  * met de vervallen pagina's van de nulmeting erachter.
  *

@@ -10,7 +10,7 @@ import { useSearchParams } from 'next/navigation';
 import { getDriveFolderUrl } from '@/lib/drive-folders';
 import { isOpmerking, isOpenBevinding } from '@/lib/finding-classification';
 import { formatUserAgentsHtml } from '@/lib/format-user-agents';
-import { STATUS_VERVALLEN } from '@/lib/steekproef-wijzigingen';
+import { STATUS_VERVALLEN, telWijzigingen } from '@/lib/steekproef-wijzigingen';
 import {
   isHeronderzoek as bepaalHeronderzoek,
   naarHeronderzoek,
@@ -294,6 +294,8 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           niveau: project.researchTypeData?.level,
           nulmetingPeriode,
           nulmetingFailedCriteria: project.nulmetingFailedCriteria ?? 0,
+          steekproefNieuw: telWijzigingen(steekproef).nieuw,
+          steekproefVervallen: telWijzigingen(steekproef).vervallen,
         });
 
     return (

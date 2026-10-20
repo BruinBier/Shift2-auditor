@@ -25,6 +25,9 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
           scopeInScope: true,
           scopeOutOfScope: true,
           sampleClientPages: true,
+          // Voor de samenvatting op het tabblad Conclusie: welke pagina's van de
+          // steekproef nieuw zijn ten opzichte van de nulmeting.
+          sampleItems: { select: { id: true, url: true, title: true } },
         },
       },
       clientProject: {

@@ -39,6 +39,12 @@ export type SamenvattingInvoer = {
   nulmetingPeriode?: string | null;
   /** Afgekeurde criteria bij de nulmeting; 0 als die niet in de tool staat. */
   nulmetingFailedCriteria?: number;
+  /**
+   * Bij een herinspectie: hoeveel pagina's nieuw zijn ten opzichte van de nulmeting, en
+   * hoeveel er zijn vervallen. Zie telWijzigingen in lib/steekproef-wijzigingen.ts.
+   */
+  steekproefNieuw?: number;
+  steekproefVervallen?: number;
 };
 
 function escapeHtml(s: string): string {
@@ -67,9 +73,27 @@ function samenvattingRuw(i: SamenvattingInvoer): string {
   const vorige = escapeHtml(vorigOnderzoek(i.project));
   // De steekproef is overgenomen uit het eerdere onderzoek; er wordt geen nieuwe
   // samengesteld. "Samengesteld" zou de lezer op het verkeerde been zetten.
+  //
+  // Zijn er pagina's vervangen, dan is "dezelfde" niet waar. Dat zei de samenvatting van
+  // BEV-01 v1.1 terwijl Groene verhalen (404) en het oude Wmo-formulier vervangen waren.
+  // Frits, 2026-10-20.
+  const nieuw = i.steekproefNieuw ?? 0;
+  const vervallen = i.steekproefVervallen ?? 0;
+  const wijzigingZin =
+    nieuw === 0
+      ? ''
+      : vervallen > 0
+        ? nieuw === 1
+          ? ` Daarvan is er 1 nieuw: die vervangt een pagina uit ${vorige} die niet meer bestond.`
+          : ` Daarvan zijn er ${nieuw} nieuw: ze vervangen pagina's uit ${vorige} die niet meer bestonden.`
+        : nieuw === 1
+          ? ' Daarvan is er 1 nieuw toegevoegd.'
+          : ` Daarvan zijn er ${nieuw} nieuw toegevoegd.`;
   const steekproefZin = aanvullend
     ? `Daarbij zijn dezelfde {totalPages} pagina's onderzocht als in ${vorige}.`
-    : `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`;
+    : nieuw > 0
+      ? `Voor dit ${ditWoord} zijn {totalPages} gepubliceerde webpagina's beoordeeld.${wijzigingZin}`
+      : `Voor dit ${ditWoord} zijn dezelfde {totalPages} gepubliceerde webpagina's opnieuw beoordeeld.`;
   const eerder = eerderOnderzoek(i.project);
   const nulmetingFailed = i.nulmetingFailedCriteria ?? 0;
   const percentage =
