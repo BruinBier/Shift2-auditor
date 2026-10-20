@@ -104,6 +104,7 @@ export default async function PatroonPage({
         {tab === 'oordeel' && (
           <Patroonformulier
             criteria={criteria}
+            voorbeelden={patroon.casussen.map((c) => ({ id: c.id, titel: c.titel, html: c.html, correcteCode: c.correcteCode }))}
             patroon={{
               id: patroon.id,
               titel: patroon.titel,
