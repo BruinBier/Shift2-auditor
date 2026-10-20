@@ -352,6 +352,10 @@ Voorbeeld van de toon (Heerlen-01): "Tijdens het onderzoek viel op dat de websit
 - **Geen aannames over het gedrag van de opdrachtgever.** De bevindingen zijn de waarneming van de onderzoeker, niet een reactie van de klant; schrijf dus niet "er wordt actief op gereageerd" of iets vergelijkbaars
 - **Wijs niet "de redactie" aan** als de plek waar het opgelost moet worden. Houd het neutraal: "bij het publiceren", "bij het plaatsen van documenten"
 - Korte zinnen, geen lange bijzinnen
+- **Geen opsomming in één zin.** Drie of meer dingen achter elkaar met komma's ("afbeeldingen
+  hebben nu tekstalternatieven, informatie staat ook als tekst op de pagina, de koppen staan in
+  de juiste volgorde en tabellen zijn beter opgebouwd") wordt één zin per ding. Twee dingen
+  met "en" mag. Vastgesteld door Frits op 2026-10-20 bij de feedback van BEV-01 v1.1.
 - Geen gedachtestreepjes (geen — of –)
 - "PDF-documenten" (niet "PDFs" en niet "PDF-bijlagen")
 - HTML met `<p>`-tags, twee korte alinea's (~500-900 tekens totaal). Eerste alinea = wat gaat goed, tweede alinea = wat kan beter. PDF-issues als afsluiting van de tweede alinea, en eindigen met een korte adviezin in gewone taal
