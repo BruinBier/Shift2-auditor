@@ -2999,7 +2999,7 @@ export default function Stapel({
    * Verandert alleen de tekst. Het akkoord gaat over het hele criterium en zeg je met
    * "Akkoord" onderaan; een voorstel blijft dus een voorstel.
    */
-  const slaBevindingOp = async (b: Bevinding) => {
+  const slaBevindingOp = async (b: { id: string }) => {
     setBewerkBezig(true);
     setBewerkFout(null);
     try {
@@ -6054,18 +6054,81 @@ export default function Stapel({
             {huidig.voorstel.code} — {critTitel(huidig.voorstel.code)} ·{' '}
             {paginaLink(huidig.voorstel.sampleId)}
           </p>
-          <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
-            {huidig.voorstel.description}
-          </p>
-          {huidig.voorstel.advice && (
-            <div className="rounded bg-gray-50 p-3">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-                Advies
-              </p>
-              <p className="whitespace-pre-line leading-relaxed text-gray-800">
-                {huidig.voorstel.advice}
-              </p>
+          {/* Dezelfde "Tekst aanpassen" als op de oordeelkaart (bevindingRegel). Deze kaart
+              krijgt een voorstel zonder oordeel per pagina -- een bevinding die niet uit een
+              auditronde kwam, zoals bij een herinspectie -- en daar was de tekst alleen te
+              lezen. Op BEV-01 (2026-10-20) kon de onderzoeker V001-V008 zo niet aanpassen,
+              terwijl dat bij LEU-01 op de oordeelkaart wel kon. */}
+          {bewerkt === huidig.voorstel.id ? (
+            <div className="mb-4">
+              <label className="mb-1 block text-xs font-medium text-gray-500">Bevinding</label>
+              <textarea
+                value={bewerkTekst}
+                onChange={(e) => setBewerkTekst(e.target.value)}
+                rows={6}
+                className="w-full rounded border border-blue-300 p-2 text-sm leading-relaxed"
+              />
+              <label className="mb-1 mt-2 block text-xs font-medium text-gray-500">Advies</label>
+              <textarea
+                value={bewerkAdvies}
+                onChange={(e) => setBewerkAdvies(e.target.value)}
+                rows={4}
+                className="w-full rounded border border-blue-300 p-2 text-sm leading-relaxed"
+              />
+              {bewerkFout && (
+                <p className="mt-2 whitespace-pre-line rounded bg-red-50 px-2 py-1 text-xs text-red-800">
+                  {bewerkFout}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={bewerkBezig || !bewerkTekst.trim()}
+                  onClick={() => slaBevindingOp(huidig.voorstel)}
+                  className="rounded bg-blue-700 px-3 py-1 text-xs font-medium text-white hover:bg-blue-800 disabled:opacity-40"
+                >
+                  {bewerkBezig ? 'Bezig…' : 'Opslaan'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBewerkt(null);
+                    setBewerkFout(null);
+                  }}
+                  className="rounded px-3 py-1 text-xs text-gray-500 hover:bg-gray-50"
+                >
+                  Annuleren
+                </button>
+              </div>
             </div>
+          ) : (
+            <>
+              <p className="mb-4 whitespace-pre-line leading-relaxed text-gray-900">
+                {huidig.voorstel.description}
+              </p>
+              {huidig.voorstel.advice && (
+                <div className="rounded bg-gray-50 p-3">
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Advies
+                  </p>
+                  <p className="whitespace-pre-line leading-relaxed text-gray-800">
+                    {huidig.voorstel.advice}
+                  </p>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setBewerkt(huidig.voorstel.id);
+                  setBewerkTekst(huidig.voorstel.description ?? '');
+                  setBewerkAdvies(huidig.voorstel.advice ?? '');
+                  setBewerkFout(null);
+                }}
+                className="mt-3 rounded border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100"
+              >
+                Tekst aanpassen
+              </button>
+            </>
           )}
 
           {verwerktMelding}
@@ -6185,15 +6248,9 @@ export default function Stapel({
                   het kopieerde een blok naar een chatdienst om de tekst te laten
                   herschrijven, en die tekst is nu gewoon te bewerken. */}
 
-              {/* Het moment waarop je merkt dat de tekst niet deugt, is juist dit
-                  moment. Eerst akkoord geven en daarna herstellen zou betekenen
-                  dat je iets goedkeurt waarvan je weet dat het niet klopt. */}
-              <a
-                href={`/admin/projects/${projectId}/findings/${huidig.voorstel.id}`}
-                className="rounded px-4 py-2 text-sm text-gray-500 underline hover:bg-gray-50"
-              >
-                Tekst aanpassen
-              </a>
+              {/* Hier stond een link "Tekst aanpassen" naar de losse bevindingpagina. De
+                  tekst is nu op deze kaart zelf te bewerken, onder het advies; een tweede
+                  "Tekst aanpassen" die naar een ander scherm springt, zou verwarren. */}
             </div>
           )}
         </div>
