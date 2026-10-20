@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import { GIDS_PAD } from '@/lib/schrijfstijl/gids';
+import {
+  haalWcagRegelbronnen,
+  regelBestandsnaam,
+  WCAG_CODE,
+  WCAG_REGELS_MAP,
+} from '@/lib/wcag-regelbronnen';
 
 /**
  * De Shift2-huisregels voor één succescriterium, als tekst.
@@ -15,43 +20,31 @@ import { GIDS_PAD } from '@/lib/schrijfstijl/gids';
  * GET /api/wcag-regels?code=1.1.1
  */
 
-const MAP = path.join(process.cwd(), 'wcag-regels');
-
-/** Alleen een echte SC-code. Zonder deze controle is dit een leesbaar bestandssysteem. */
-const CODE = /^\d{1}\.\d{1,2}\.\d{1,2}$/;
-
 async function lees(bestand: string): Promise<string | null> {
   try {
-    return await readFile(path.join(MAP, bestand), 'utf8');
-  } catch {
+    return await readFile(path.join(WCAG_REGELS_MAP, bestand), 'utf8');
+  } catch (error: any) {
     // Niet elk criterium heeft een regelbestand; dat is geen fout.
-    return null;
+    if (error?.code === 'ENOENT') return null;
+    throw error;
   }
 }
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code') ?? '';
-  if (!CODE.test(code)) {
+  if (!WCAG_CODE.test(code)) {
     return NextResponse.json({ error: 'Ongeldige criteriumcode' }, { status: 400 });
   }
 
-  const bestandsnaam = `Shift2_Regels_SC_${code.replace(/\./g, '_')}.md`;
-  const [regels, schrijfregels, scope, bewijsvoering] = await Promise.all([
-    lees(bestandsnaam),
-    // De schrijfgids staat sinds 2026-09-28 in writing/, niet meer in wcag-regels/.
-    readFile(GIDS_PAD, 'utf8').catch(() => null),
-    lees('Shift2_Scope_Per_Sample.md'),
-    lees('Shift2_Bewijsvoering.md'),
-  ]);
-
-  return NextResponse.json({
-    code,
-    bestandsnaam,
-    regels,
-    schrijfregels,
-    scope,
-    bewijsvoering,
-  });
+  try {
+    return NextResponse.json(await haalWcagRegelbronnen(code));
+  } catch (error: any) {
+    console.error('Fout bij lezen WCAG-bronnen:', error);
+    return NextResponse.json(
+      { error: 'De WCAG-bronnen konden niet veilig worden gelezen.' },
+      { status: 500 }
+    );
+  }
 }
 
 const KOP = '## Vastgelegd tijdens overleg';
@@ -78,15 +71,15 @@ export async function POST(request: NextRequest) {
     const regel: string = (body.regel ?? '').trim();
     const aanleiding: string = (body.aanleiding ?? '').trim();
 
-    if (!CODE.test(code)) {
+    if (!WCAG_CODE.test(code)) {
       return NextResponse.json({ error: 'Ongeldige criteriumcode' }, { status: 400 });
     }
     if (!regel) {
       return NextResponse.json({ error: 'Geen regel meegegeven' }, { status: 400 });
     }
 
-    const bestandsnaam = `Shift2_Regels_SC_${code.replace(/\./g, '_')}.md`;
-    const pad = path.join(MAP, bestandsnaam);
+    const bestandsnaam = regelBestandsnaam(code);
+    const pad = path.join(WCAG_REGELS_MAP, bestandsnaam);
     const bestaand = await lees(bestandsnaam);
     const datum = new Date().toISOString().slice(0, 10);
 
