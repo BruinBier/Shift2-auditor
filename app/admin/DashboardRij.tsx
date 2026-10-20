@@ -19,6 +19,10 @@ export type DashboardRegel = {
   uitvoerder: string;
   /** Link naar het onderzoek in het portaal van het bureau, als die er is. */
   uitvoerderUrl?: string | null;
+  /** Status van het onderzoek (Intake, Gepland, In uitvoering...). Getoond bij een extern bureau. */
+  status?: string | null;
+  /** Laatst afgevinkte stap met datum, bijvoorbeeld "Scope doorgegeven aan Cardan, 3 okt.". */
+  laatsteStap?: string | null;
   crmNummer?: string | null;
   /** Bespreekpunten voor het scopegesprek die nog niet zijn afgevinkt, als tekst. */
   bespreekpunten?: string[];
@@ -115,6 +119,18 @@ export default function DashboardRij({ regel }: { regel: DashboardRegel }) {
             </a>
           ) : (
             regel.uitvoerder
+          )}
+          {/* Bij een extern bureau zie je hier niet aan de stappen hoe ver het is: dat
+              bureau voert uit. De status van het onderzoek zegt het wel. */}
+          {regel.uitvoerder !== 'Shift2' && regel.status && (
+            <div className="text-xs text-gray-600">{regel.status}</div>
+          )}
+          {regel.uitvoerder !== 'Shift2' && regel.laatsteStap && (
+            <div className="text-xs text-gray-600 whitespace-normal">
+              <span aria-hidden="true">✓ </span>
+              <span className="sr-only">Laatst afgerond: </span>
+              {regel.laatsteStap}
+            </div>
           )}
         </td>
         <td className={`${cel} whitespace-nowrap`}>

@@ -181,6 +181,32 @@ export default async function AdminPage() {
         : p.hasReinspection
           ? 'Nulmeting, met hertest'
           : 'Nulmeting';
+    // De laatst afgevinkte stap, in de volgorde van het routekaartje op de projectpagina
+    // (VoorbereidingStappen). Alleen getoond bij een extern bureau: daar zeggen de
+    // stappen in de kolom Actie weinig, omdat het bureau uitvoert.
+    const extBureau = p.externalBureau || 'het bureau';
+    const stappen: { label: string; datum: Date | null; klaar: boolean }[] = [
+      { label: p.isExternalProject ? `Planningsverzoek ingediend bij ${extBureau}` : 'Uitnodiging verstuurd', datum: p.invitationSent, klaar: !!p.invitationSent },
+      { label: 'Scopegesprek gepland', datum: p.scopeCallPlanned, klaar: !!p.scopeCallPlanned },
+      { label: 'Scopegesprek gevoerd', datum: p.scopeCallHeld, klaar: !!p.scopeCallHeld },
+      { label: 'Gesprek verwerkt', datum: p.gespreksverslagGemaakt, klaar: !!p.gespreksverslagGemaakt },
+      { label: `Scope doorgegeven aan ${extBureau}`, datum: p.scopeSentToBureau, klaar: !!p.scopeSentToBureau },
+      // Een startdatum is geen afvinkmoment maar een plandatum; daarom zonder datum.
+      { label: 'Startdatum bekend', datum: null, klaar: !!p.dateStart },
+      { label: 'Planningsmail verstuurd', datum: p.planningSent, klaar: !!p.planningSent },
+      { label: 'Planning akkoord', datum: p.planningApproved, klaar: !!p.planningApproved },
+      { label: 'Rapport opgeleverd', datum: p.reportSentAt, klaar: !!p.reportSentAt },
+      { label: 'Uitnodiging adviesgesprek verstuurd', datum: p.adviceCallInvited, klaar: !!p.adviceCallInvited },
+      { label: 'Uitnodiging adviesgesprek geaccepteerd', datum: p.adviceCallAccepted, klaar: !!p.adviceCallAccepted },
+      { label: 'Adviesgesprek gevoerd', datum: p.adviceCallHeld, klaar: !!p.adviceCallHeld },
+    ];
+    const laatste = [...stappen].reverse().find((s) => s.klaar);
+    const laatsteStap = laatste
+      ? laatste.datum
+        ? `${laatste.label}, ${new Date(laatste.datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}`
+        : laatste.label
+      : null;
+
     const basis = {
       id: p.id,
       // Altijd het versienummer erbij, ook bij een nulmeting. Nulmeting en herinspectie
@@ -202,6 +228,8 @@ export default async function AdminPage() {
       // dubbelzinnig, dus dan staat er Shift2.
       uitvoerder: p.externalBureau || 'Shift2',
       uitvoerderUrl: p.cardanOnderzoekUrl,
+      status: p.status,
+      laatsteStap,
       crmNummer: p.clientProject?.projectnummer ?? null,
       // Alleen de open punten: dit is de uitklapper "wat moet je nog vragen". De query
       // haalt ze allemaal op, want de afgevinkte punten zijn hieronder nodig om te zien of
