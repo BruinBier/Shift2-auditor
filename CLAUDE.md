@@ -472,9 +472,11 @@ regel in `resultaten.jsonl`, plus `samenvatting.md`. Tien pagina's kosten twinti
 Daarna wegen agents alleen de pagina's met een treffer, met de echte meetcommando's.
 
 Een treffer is geen afkeuring. De zeef heeft geen database en geen dev-server nodig, dus hij
-draait ook in een cloud-sessie, en hij hervat zichzelf. Kapotte mail- en belkoppelingen
-(`href="/#"` op SIMsite) staan onder `technisch`: die horen bij `/technische-issues`, niet
-onder 2.4.4. Een hero met lege alt is een zwakke treffer: het CMS laat die altijd leeg, dus het
+draait ook in een cloud-sessie, en hij hervat zichzelf. Mail- en belkoppelingen zonder
+`mailto:` of `tel:` staan onder `technisch`, niet onder 2.4.4. Klik er eerst op voordat je ze
+kapot noemt: op SIMsite hebben ze `href="/#"` en opent een klikafhandelaar
+`location.assign("mailto:...")`. Ze werken dus (Valkenswaard, 2026-10-22: 236 pagina's, geen
+bevinding en geen issue). Een hero met lege alt is een zwakke treffer: het CMS laat die altijd leeg, dus het
 is alleen een probleem als er tekst in het beeld staat. `afbeeldingenMetLegeAlt` in de
 samenvatting groepeert ze per bestand, zodat je elk beeld één keer bekijkt.
 
