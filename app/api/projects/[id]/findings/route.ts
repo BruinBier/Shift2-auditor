@@ -189,9 +189,14 @@ export async function POST(
     if (body.sampleItemIds && Array.isArray(body.sampleItemIds) && body.sampleItemIds.length > 0) {
       console.log('Creating FindingOccurrence records for sample items:', body.sampleItemIds);
 
+      // Per pagina wat er daar aangepast moet worden: { [sampleItemId]: tekst }. Zie
+      // vindplaatsToelichting in lib/vindplaatsen.ts.
+      const toelichting: Record<string, unknown> =
+        body.occurrenceContexts && typeof body.occurrenceContexts === 'object' ? body.occurrenceContexts : {};
       const occurrences = body.sampleItemIds.map((sampleItemId: string) => ({
         findingId: finding.id,
         sampleItemId: sampleItemId,
+        context: typeof toelichting[sampleItemId] === 'string' ? (toelichting[sampleItemId] as string) : null,
       }));
 
       await prisma.findingOccurrence.createMany({

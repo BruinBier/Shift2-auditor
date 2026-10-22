@@ -20,7 +20,7 @@ import {
   kopRapport,
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
-import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
+import { geldtVoorAllePaginas, heeftTekst, vindplaatsToelichting } from '@/lib/vindplaatsen';
 import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
 import { marked } from 'marked';
 
@@ -981,6 +981,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                                     {occurrence.sampleItem.url}
                                                   </a>
                                                 )}
+                                                {vindplaatsToelichting(occurrence) && (
+                                                  <span className="block text-gray-600">{vindplaatsToelichting(occurrence)}</span>
+                                                )}
                                               </li>
                                             ))}
                                           </ul>
@@ -988,18 +991,22 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                           <>
                                             {finding.occurrences.map((occurrence: any) =>
                                               occurrence.sampleItem?.url && (
+                                                <div key={occurrence.id} className="mb-2">
                                                 <a
-                                                  key={occurrence.id}
                                                   href={occurrence.sampleItem.url}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
-                                                  className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
+                                                  className="text-blue-600 hover:underline flex items-center gap-1"
                                                 >
                                                   {occurrence.sampleItem.url}
                                                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                   </svg>
                                                 </a>
+                                                {vindplaatsToelichting(occurrence) && (
+                                                  <div className="text-gray-600">{vindplaatsToelichting(occurrence)}</div>
+                                                )}
+                                                </div>
                                               )
                                             )}
                                           </>
@@ -1171,6 +1178,9 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                                     {occurrence.sampleItem.url}
                                                   </a>
                                                 )}
+                                                {vindplaatsToelichting(occurrence) && (
+                                                  <span className="block text-gray-600">{vindplaatsToelichting(occurrence)}</span>
+                                                )}
                                               </li>
                                             ))}
                                           </ul>
@@ -1178,18 +1188,22 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                                           <>
                                             {finding.occurrences.map((occurrence: any) =>
                                               occurrence.sampleItem?.url && (
+                                                <div key={occurrence.id} className="mb-2">
                                                 <a
-                                                  key={occurrence.id}
                                                   href={occurrence.sampleItem.url}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
-                                                  className="text-blue-600 hover:underline flex items-center gap-1 mb-2"
+                                                  className="text-blue-600 hover:underline flex items-center gap-1"
                                                 >
                                                   {occurrence.sampleItem.url}
                                                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                   </svg>
                                                 </a>
+                                                {vindplaatsToelichting(occurrence) && (
+                                                  <div className="text-gray-600">{vindplaatsToelichting(occurrence)}</div>
+                                                )}
+                                                </div>
                                               )
                                             )}
                                           </>

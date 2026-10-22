@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs';
 import { groupFindingsByHierarchy } from '@/lib/report-calculations';
 import { isOpmerking } from '@/lib/finding-classification';
 import { getReportData } from '@/lib/report-data';
+import { vindplaatsToelichting } from '@/lib/vindplaatsen';
 
 export async function GET(
   request: NextRequest,
@@ -177,6 +178,8 @@ export async function GET(
             hyperlink: url,
             font: { color: { argb: 'FF0563C1' }, underline: true }
           });
+          // Wat er op deze pagina aangepast moet worden (lib/vindplaatsen.ts).
+          if (vindplaatsToelichting(occ)) richText.push({ text: `\n${vindplaatsToelichting(occ)}` });
         } else {
           if (idx > 0) richText.push({ text: '\n\n' });
           if (isWebsiteTemplate) {
@@ -281,6 +284,8 @@ export async function GET(
             hyperlink: url,
             font: { color: { argb: 'FF0563C1' }, underline: true }
           });
+          // Wat er op deze pagina aangepast moet worden (lib/vindplaatsen.ts).
+          if (vindplaatsToelichting(occ)) richText.push({ text: `\n${vindplaatsToelichting(occ)}` });
         } else {
           if (idx > 0) richText.push({ text: '\n\n' });
           if (isWebsiteTemplate) {

@@ -137,7 +137,7 @@ npm run cli -- get-pdfnietteksten <pdf-url of pad> [--paginas=71,74]  # 1.4.11 i
 
 # Write
 npm run cli -- create-sample-item <projectId> --title="Homepage" --url=https://... --type=structured [--voorgesteld=true] [--heeft-video=true|false] [--heeft-formulier=true|false]
-npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --responsibility=redacteur --sample-items=<sampleItemId1>,<sampleItemId2>
+npm run cli -- create-finding <projectId> --criterion=<criterionId> --description="..." --advice="..." --impact=matig --responsibility=redacteur --sample-items=<sampleItemId1>,<sampleItemId2> [--vindplaatsen=bestand.json]  # { "<sampleItemId>": "wat er op die pagina staat" }; staat in het rapport onder het adres
 npm run cli -- create-finding-from-quick <projectId> <quickFindingId> --sample-items=<sampleItemId>
 npm run cli -- save-checks <projectId> --bron=workflow < oordelen.json   # oordeel per sample per criterium
 npm run cli -- save-gebieden <projectId> --sample=<id> --criterium=1.3.1 < gebieden.json  # los bijwerken; normaal gaan ze mee met save-checks

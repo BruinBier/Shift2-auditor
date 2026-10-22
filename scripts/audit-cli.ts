@@ -951,6 +951,11 @@ async function createFinding(projectId: string, flags: Flags) {
   if (flags['sample-items']) {
     body.sampleItemIds = flags['sample-items'].split(',').map((s) => s.trim()).filter(Boolean);
   }
+  // Per pagina wat er daar mis is: een JSON-bestand { "<sampleItemId>": "tekst" }. Het
+  // rapport zet die tekst onder het adres, zodat de redacteur weet wat hij moet aanpassen.
+  if (flags.vindplaatsen) {
+    body.occurrenceContexts = JSON.parse(fs.readFileSync(flags.vindplaatsen, 'utf-8'));
+  }
 
   // Schrijfregel-check vóór het wegschrijven. Harde fouten blokkeren; twijfel-
   // gevallen worden alleen getoond. Omzeilen kan met --skip-lint.
@@ -10475,7 +10480,7 @@ async function main() {
         `  search-quick-findings <keyword>\n` +
         `  create-sample-item <projectId> --title=... [--url=...] [--type=structured|random|pdf] [--description=...] [--screenshot=true]\n` +
         `  lint-finding --description=... [--advice=...] [--impact=...] [--responsibility=...] [--status=...] [--criterion=<id|code>] [--pdf] [--json]\n` +
-        `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=voorstel|open|published|resolved] [--evidence=...] [--sample-items=id1,id2] [--skip-lint]\n` +
+        `  create-finding <projectId> --criterion=<id> --description=... --advice=... [--impact=klein|matig|serieus|kritiek|onbekend] [--responsibility=redacteur|ontwikkelaar|ontwerper|onbekend] [--status=voorstel|open|published|resolved] [--evidence=...] [--sample-items=id1,id2] [--vindplaatsen=bestand.json] [--skip-lint]\n` +
         `  create-finding-from-quick <projectId> <quickFindingId> [--sample-items=id1,id2]\n` +
         `  list-correcties [--status=te_analyseren|voorstel|geen_wijziging|toegevoegd|niet_toegevoegd]   # correcties van Frits om van te leren\n` +
         `  save-correctie-analyse <correctieId> < analyse.json   # zie writing/FRITS-WRITING-WORKFLOW.md\n` +

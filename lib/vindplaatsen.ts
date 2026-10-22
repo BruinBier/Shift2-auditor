@@ -10,14 +10,35 @@
  * Bevindingen en de generator voor HTML/Word/PDF.
  */
 
-type Vindplaats = { sampleItemId?: string | null; sampleItem?: { id?: string | null } | null };
+type Vindplaats = {
+  sampleItemId?: string | null;
+  sampleItem?: { id?: string | null } | null;
+  context?: string | null;
+};
 
-/** Of de bevinding op alle pagina's van de steekproef staat (bij twee of meer pagina's). */
+/**
+ * Wat er op déze pagina mis is, als dat bij de vindplaats is vastgelegd.
+ *
+ * Bij een pagecheck op alle pagina's (Valkenswaard, oktober 2026) is één bevinding per
+ * patroon het rapport, maar de redacteur moet per pagina weten wát hij moet aanpassen:
+ * welk e-mailadres, welke kop, welke afbeelding. Dat staat in `context`.
+ */
+export function vindplaatsToelichting(o: Vindplaats | null | undefined): string {
+  return (o?.context || '').trim();
+}
+
+/**
+ * Of de bevinding op alle pagina's van de steekproef staat (bij twee of meer pagina's).
+ *
+ * Heeft een vindplaats een eigen toelichting, dan is de lijst geen herhaling van de
+ * steekproef meer en blijft hij staan.
+ */
 export function geldtVoorAllePaginas(
   occurrences: Vindplaats[] | null | undefined,
   aantalSamples: number,
 ): boolean {
   if (!occurrences || aantalSamples < 2) return false;
+  if (occurrences.some((o) => vindplaatsToelichting(o))) return false;
   const ids = new Set(
     occurrences.map((o) => o.sampleItemId ?? o.sampleItem?.id).filter(Boolean),
   );

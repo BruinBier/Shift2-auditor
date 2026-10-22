@@ -729,18 +729,23 @@ export default function FindingDetailView({ project, finding, allCriteria, findi
                   <div className="mt-3 space-y-1">
                     {finding.occurrences.map((occurrence: any) => (
                       occurrence.sampleItem?.url && (
-                        <a
-                          key={occurrence.id}
-                          href={occurrence.sampleItem.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all flex items-start gap-1.5"
-                        >
-                          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          {occurrence.sampleItem.url}
-                        </a>
+                        <div key={occurrence.id}>
+                          <a
+                            href={occurrence.sampleItem.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all flex items-start gap-1.5"
+                          >
+                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            {occurrence.sampleItem.url}
+                          </a>
+                          {/* Wat er op deze pagina aangepast moet worden */}
+                          {occurrence.context && (
+                            <div className="text-sm text-gray-700 ml-6 mb-1">{occurrence.context}</div>
+                          )}
+                        </div>
                       )
                     ))}
                   </div>
@@ -866,6 +871,11 @@ export default function FindingDetailView({ project, finding, allCriteria, findi
                           </div>
                         )}
 
+                        {/* Wat er op deze pagina aangepast moet worden */}
+                        {occurrence.context && (
+                          <div className="text-sm text-gray-700 mb-2">{occurrence.context}</div>
+                        )}
+
                         {/* Gekoppeld op datum */}
                         {occurrence.createdAt && (
                           <div className="text-xs text-gray-500">
@@ -917,10 +927,9 @@ export default function FindingDetailView({ project, finding, allCriteria, findi
                 <div className="grid grid-cols-2 gap-4">
                   <dt className="text-xs font-medium text-gray-600">Status</dt>
                   <dd>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                      finding.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                    {/* Zelfde label als bovenaan: een voorstel stond hier als "Opmerking". */}
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${findingLabelClass(finding)}`}>
+                      {findingLabel(finding)}
                     </span>
                   </dd>
                 </div>

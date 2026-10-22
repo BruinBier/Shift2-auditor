@@ -24,7 +24,7 @@ import {
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
 import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
-import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
+import { geldtVoorAllePaginas, heeftTekst, vindplaatsToelichting } from '@/lib/vindplaatsen';
 import { STATUS_VERVALLEN, telWijzigingen, type SteekproefRegel } from '@/lib/steekproef-wijzigingen';
 
 function escapeHtml(text: string | null | undefined): string {
@@ -581,25 +581,29 @@ function renderBevindingenSectie(
 
         const findingsHtml = findings
           .map((f: any, idx: number) => {
-            const urls = Array.from(
-              new Set(
-                (f.occurrences || [])
-                  .map((o: any) => o.sampleItem?.url)
-                  .filter((u: any) => !!u)
-              )
-            ) as string[];
+            // Per adres de toelichting van die pagina: wat de redacteur daar moet aanpassen.
+            const toelichtingPerUrl = new Map<string, string[]>();
+            for (const o of f.occurrences || []) {
+              const u = o.sampleItem?.url;
+              if (!u) continue;
+              const t = vindplaatsToelichting(o);
+              const lijst = toelichtingPerUrl.get(u) || [];
+              if (t && !lijst.includes(t)) lijst.push(t);
+              toelichtingPerUrl.set(u, lijst);
+            }
+            const urls = Array.from(toelichtingPerUrl.keys());
+            const metToelichting = (u: string) => {
+              const t = toelichtingPerUrl.get(u) || [];
+              const link = `<a href="${escapeHtml(u)}" target="_blank" rel="noopener">${escapeHtml(u)}</a>`;
+              return t.length ? `${link}<br>${t.map(escapeHtml).join('<br>')}` : link;
+            };
             // Op alle pagina's van de steekproef: geen lijst, zie lib/vindplaatsen.ts.
             const locHtml =
               urls.length === 0 || geldtVoorAllePaginas(f.occurrences, aantalSamples)
                 ? ''
                 : urls.length === 1
-                ? `<p><a href="${escapeHtml(urls[0])}" target="_blank" rel="noopener">${escapeHtml(urls[0])}</a></p>`
-                : `<ul>${urls
-                    .map(
-                      (u) =>
-                        `<li><a href="${escapeHtml(u)}" target="_blank" rel="noopener">${escapeHtml(u)}</a></li>`
-                    )
-                    .join('')}</ul>`;
+                ? `<p>${metToelichting(urls[0])}</p>`
+                : `<ul>${urls.map((u) => `<li>${metToelichting(u)}</li>`).join('')}</ul>`;
             const descHtml = renderFindingMarkdown(f.description);
             const adviceHtml = heeftTekst(f.advice)
               ? `<h5>Advies</h5><div class="finding-text">${renderFindingMarkdown(f.advice)}</div>`

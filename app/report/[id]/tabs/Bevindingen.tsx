@@ -9,7 +9,7 @@ import {
 } from '@/lib/report-calculations';
 import { formatProjectName } from '@/lib/format-project-name';
 import { findingLabel, findingLabelClass, hoortInRapport, isOpmerking } from '@/lib/finding-classification';
-import { geldtVoorAllePaginas, heeftTekst } from '@/lib/vindplaatsen';
+import { geldtVoorAllePaginas, heeftTekst, vindplaatsToelichting } from '@/lib/vindplaatsen';
 
 export default function Bevindingen({ project }: { project: any }) {
   console.log('🔵 Bevindingen component loaded!');
@@ -727,6 +727,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                                           </a>
                                                         </>
                                                       )}
+                                                      {vindplaatsToelichting(occurrence) && (
+                                                        <span className="block text-gray-600">{vindplaatsToelichting(occurrence)}</span>
+                                                      )}
                                                     </li>
                                                   ))}
                                                 </ul>
@@ -749,6 +752,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                           </svg>
                                                         </a>
+                                                      )}
+                                                      {vindplaatsToelichting(occurrence) && (
+                                                        <div className="text-gray-600">{vindplaatsToelichting(occurrence)}</div>
                                                       )}
                                                     </div>
                                                   ))}
@@ -975,6 +981,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                                                 </a>
                                                               </>
                                                             )}
+                                                            {vindplaatsToelichting(occurrence) && (
+                                                              <span className="block text-gray-600">{vindplaatsToelichting(occurrence)}</span>
+                                                            )}
                                                           </li>
                                                         ))}
                                                       </ul>
@@ -997,6 +1006,9 @@ export default function Bevindingen({ project }: { project: any }) {
                                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                                 </svg>
                                                               </a>
+                                                            )}
+                                                            {vindplaatsToelichting(occurrence) && (
+                                                              <div className="text-gray-600">{vindplaatsToelichting(occurrence)}</div>
                                                             )}
                                                           </div>
                                                         ))}
