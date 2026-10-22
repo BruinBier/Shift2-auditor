@@ -462,6 +462,22 @@ telt), en een telefoonnummer met een kapotte belkoppeling is een functioneel pro
 
 **Meet contrast op het element dat de tekst zelf bevat**, niet op een omhulsel. Een `<a>` met een `<span>` erin heeft vaak een andere kleur dan de span die je ziet; die verwarring leverde een niet-bestaande afkeuring van 1,25:1 op.
 
+### Alle pagina's van een site: eerst zeven
+
+Moet een criterium op álle pagina's beoordeeld worden en niet op een steekproef
+(Valkenswaard-pagecheck, oktober 2026: 1354 pagina's, elf criteria), dan zet je geen agent per
+pagina neer. `npm run zeef -- --invoer=lijst.json --uit=map` opent elke pagina één keer, meet
+alle criteria in die laadbeurt (`scripts/zeef/meet-in-pagina.js`) en schrijft per pagina een
+regel in `resultaten.jsonl`, plus `samenvatting.md`. Tien pagina's kosten twintig seconden.
+Daarna wegen agents alleen de pagina's met een treffer, met de echte meetcommando's.
+
+Een treffer is geen afkeuring. De zeef heeft geen database en geen dev-server nodig, dus hij
+draait ook in een cloud-sessie, en hij hervat zichzelf. Kapotte mail- en belkoppelingen
+(`href="/#"` op SIMsite) staan onder `technisch`: die horen bij `/technische-issues`, niet
+onder 2.4.4. Een hero met lege alt is een zwakke treffer: het CMS laat die altijd leeg, dus het
+is alleen een probleem als er tekst in het beeld staat. `afbeeldingenMetLegeAlt` in de
+samenvatting groepeert ze per bestand, zodat je elk beeld één keer bekijkt.
+
 ## Een gesprek verwerken
 
 Hoe dat gaat staat in **`docs/werkwijze/gespreksverslag.md`**, en nergens anders. Het gebeurt
