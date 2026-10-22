@@ -41,6 +41,24 @@ async function fetchTitle(url: string): Promise<string | null> {
   }
 }
 
+// Tot 2026-10-22 had deze route alleen POST: `get-project` in de CLI kreeg een 405
+// en meldde daardoor een lege scope, ook bij een project met 1340 scope-URL's.
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const scopeUrls = await prisma.projectScopeUrl.findMany({
+      where: { projectId: params.id },
+      orderBy: { url: 'asc' },
+    });
+
+    return NextResponse.json(scopeUrls);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch scope URLs' }, { status: 500 });
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
