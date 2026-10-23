@@ -377,6 +377,13 @@ van de video is de uitkomst onbeslist; een afkeuring in een deel staat wel.
 Op een gewone pagina somt `get-flitsen` de gevonden video's op mét de regel om ze apart te
 meten.
 
+**Reclame telt niet mee.** Speelt YouTube eerst een advertentie (de speler draagt dan de klasse
+`ad-showing`), dan wacht `get-flitsen` die af, klikt met de muis op "Overslaan" zodra die knop
+er staat, en begint pas te meten als de film zelf loopt. Reclame halverwege wordt ook
+overgeslagen; de beeldjes daarvan gaan eruit en de opname loopt die tijd langer door. De
+uitvoer meldt het onder `reclame`. Op NIS-01 (2026-10-14) ging de meting op aan advertenties
+en werd van een video van 0:56 alleen 0:01 tot 0:12 gezien.
+
 **De CLI accepteert cookies zelf.** Elke pagina die een meetcommando opent, gaat langs
 `accepteerCookies` (`scripts/lib/browser-fetch.ts`): een zichtbare knop als "Accepteer alle
 cookies" of "Alles accepteren" wordt aangeklikt, mits hij over cookies gaat (de tekst noemt

@@ -6529,6 +6529,56 @@ async function getFlitsen(url: string, flags: Flags) {
           };
         });
 
+      /**
+       * YouTube-reclame: speelt er nu een, en staat er een knop om hem over te slaan?
+       *
+       * Tijdens een advertentie draagt de speler de klasse `ad-showing` en speelt de
+       * reclame in hetzelfde video-element als de film. Wie dan meet, meet de reclame:
+       * op NIS-01 (2026-10-23) gingen zo de eerste tientallen seconden op aan advertenties
+       * en werd van de video van 0:56 alleen 0:01 tot 0:12 gezien. De knop wordt met de
+       * muis aangeklikt en niet met `click()`, want YouTube negeert een klik uit een script.
+       */
+      const reclameStand = async () => {
+        const stand = await page
+          .evaluate(() => {
+            const speler = document.querySelector('.html5-video-player');
+            const bezig =
+              !!speler &&
+              (speler.classList.contains('ad-showing') || speler.classList.contains('ad-interrupting'));
+            if (!bezig) return { bezig: false, knop: null as null | { x: number; y: number } };
+            const knop = Array.from(
+              document.querySelectorAll(
+                '.ytp-skip-ad-button, .ytp-ad-skip-button, .ytp-ad-skip-button-modern, button[id^="skip-button"]'
+              )
+            )
+              .map((k) => (k as HTMLElement).getBoundingClientRect())
+              .find((r) => r.width > 0 && r.height > 0);
+            return {
+              bezig: true,
+              knop: knop ? { x: knop.left + knop.width / 2, y: knop.top + knop.height / 2 } : null,
+            };
+          })
+          .catch(() => ({ bezig: false, knop: null }));
+        if (stand.knop) await page.mouse.click(stand.knop.x, stand.knop.y).catch(() => {});
+        return { bezig: stand.bezig, overgeslagen: !!stand.knop };
+      };
+
+      /** Wacht tot de reclame voor de video voorbij is, en slaat hem over zodra dat kan. */
+      const wachtReclameAf = async (maxSeconden = 180) => {
+        const start = Date.now();
+        let gezien = false;
+        let overgeslagen = 0;
+        while (Date.now() - start < maxSeconden * 1000) {
+          const stand = await reclameStand();
+          if (!stand.bezig) break;
+          gezien = true;
+          if (stand.overgeslagen) overgeslagen++;
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+        const nogBezig = gezien && (await reclameStand()).bezig;
+        return { gezien, seconden: Math.round((Date.now() - start) / 1000), overgeslagen, nogBezig };
+      };
+
       let videoStand: any = null;
       let videoAdres: string | null = null;
       if (video) {
@@ -6560,6 +6610,17 @@ async function getFlitsen(url: string, flags: Flags) {
             videoStand = await zetAan();
           }
           if (videoStand.speelt && videoStand.gelopen > 0) break;
+        }
+      }
+
+      // Speelt er eerst reclame, dan beginnen we pas als de film zelf loopt. Daarna nog
+      // eens nagaan of hij speelt: na de reclame kan de speler op pauze blijven staan.
+      let reclameVooraf: Awaited<ReturnType<typeof wachtReclameAf>> | null = null;
+      if (video && videoStand?.speelt) {
+        reclameVooraf = await wachtReclameAf();
+        if (reclameVooraf.gezien && !reclameVooraf.nogBezig) {
+          await new Promise((r) => setTimeout(r, 1000));
+          videoStand = await zetAan();
         }
       }
 
@@ -6682,14 +6743,76 @@ async function getFlitsen(url: string, flags: Flags) {
         maxHeight: 400,
         everyNthFrame: 1,
       });
+      // Reclame halverwege de film: de speler houdt zelf bij wanneer die begint en eindigt,
+      // zodat die beeldjes er straks uit kunnen. Om de twee seconden kijken is te grof; een
+      // waarnemer op de klasse van de speler legt het moment op de milliseconde vast.
+      if (video) {
+        await page
+          .evaluate(() => {
+            const w = window as any;
+            w.__reclame = [] as { van: number; tot: number | null }[];
+            const speler = document.querySelector('.html5-video-player');
+            if (!speler) return;
+            const isReclame = () =>
+              speler.classList.contains('ad-showing') || speler.classList.contains('ad-interrupting');
+            let aan = isReclame();
+            if (aan) w.__reclame.push({ van: Date.now(), tot: null });
+            new MutationObserver(() => {
+              const nu = isReclame();
+              if (nu && !aan) w.__reclame.push({ van: Date.now(), tot: null });
+              if (!nu && aan) {
+                const laatste = w.__reclame[w.__reclame.length - 1];
+                if (laatste) laatste.tot = Date.now();
+              }
+              aan = nu;
+            }).observe(speler, { attributes: true, attributeFilter: ['class'] });
+          })
+          .catch(() => {});
+      }
       const opnameStart = Date.now();
-      while (Date.now() - opnameStart < opnameSeconden * 1000) {
-        await new Promise((r) => setTimeout(r, Math.min(2000, opnameSeconden * 1000)));
+      // Tijd die opging aan reclame halverwege komt erbij, anders valt het einde van de
+      // film buiten de opname.
+      let reclameTijd = 0;
+      while (Date.now() - opnameStart < (opnameSeconden + reclameTijd) * 1000) {
+        const stap = Math.min(2000, opnameSeconden * 1000);
+        await new Promise((r) => setTimeout(r, stap));
+        const reclameNu = video ? (await reclameStand()).bezig : false;
+        if (reclameNu) {
+          reclameTijd = Math.min(180, reclameTijd + stap / 1000);
+          continue;
+        }
         // Afgelopen is afgelopen: daarna tekent de speler een eindscherm, en dat hoort
-        // niet bij de film.
+        // niet bij de film. Tijdens reclame zegt `ended` niets over de film.
         if (videoBegin && (await videoTijd())?.klaar) break;
       }
       await cdp.send('Page.stopScreencast').catch(() => {});
+      const reclameTijdens: { van: number; tot: number | null }[] = video
+        ? await page.evaluate(() => (window as any).__reclame || []).catch(() => [])
+        : [];
+      // De beeldjes van de reclame eruit, met een halve seconde marge: de klasse wisselt
+      // net iets eerder of later dan het beeld. De tijdstempels van de rest blijven staan,
+      // zodat een flits nooit over het gat heen wordt geteld als één seconde.
+      const beeldjesVoorReclame = beeldjes.length;
+      if (reclameTijdens.length) {
+        const eruit = (ms: number) =>
+          reclameTijdens.some((r) => ms >= r.van - 500 && ms <= (r.tot ?? Infinity) + 500);
+        for (let i = beeldjes.length - 1; i >= 0; i--) {
+          if (eruit(beeldjes[i].tijd * 1000)) beeldjes.splice(i, 1);
+        }
+      }
+      const reclame = video
+        ? {
+            voor_de_video: reclameVooraf?.gezien
+              ? {
+                  seconden: reclameVooraf.seconden,
+                  overgeslagen: reclameVooraf.overgeslagen > 0,
+                  nog_bezig_na_wachten: reclameVooraf.nogBezig,
+                }
+              : null,
+            tijdens_de_video: reclameTijdens.length,
+            beeldjes_weggelaten: beeldjesVoorReclame - beeldjes.length,
+          }
+        : null;
       // Hoe lang er werkelijk is opgenomen: bij een video die eerder afloopt korter dan gevraagd.
       const opgenomen = Math.round((Date.now() - opnameStart) / 1000);
       const videoEind = videoBegin ? await videoTijd() : null;
@@ -6988,6 +7111,7 @@ async function getFlitsen(url: string, flags: Flags) {
         stilleSpelers === 0 &&
         videoGespeeld &&
         !(video && toestemmingsscherm) &&
+        !reclameVooraf?.nogBezig &&
         (volledigGemeten || verdacht);
       // Het drukste moment in de tijd van de video zelf, niet van de opname: de onderzoeker
       // zoekt het op in de speler, en daar is 0:19 0:19.
@@ -7002,9 +7126,23 @@ async function getFlitsen(url: string, flags: Flags) {
           }${volledigGemeten ? '.' : '; de rest is niet opgenomen.'}`
         : '';
 
+      const reclameZin = !reclame
+        ? ''
+        : reclame.voor_de_video?.nog_bezig_na_wachten
+        ? `Er speelde reclame die na ${reclame.voor_de_video.seconden} seconden wachten nog niet voorbij was; de film zelf is niet gemeten. `
+        : [
+            reclame.voor_de_video
+              ? `Eerst speelde ${reclame.voor_de_video.seconden} seconden reclame${
+                  reclame.voor_de_video.overgeslagen ? ', overgeslagen met de knop van YouTube' : ''
+                }; de meting begon pas toen de film zelf liep. `
+              : '',
+            reclame.tijdens_de_video
+              ? `Halverwege kwam ${reclame.tijdens_de_video === 1 ? 'één reclameblok' : `${reclame.tijdens_de_video} reclameblokken`}; ${reclame.beeldjes_weggelaten} beeldjes daarvan tellen niet mee. `
+              : '',
+          ].join('');
       const stapZin = (() => {
         const waar = video
-          ? `De video zelf geopend op zijn insluitadres (${video.platform} ${video.nummer}) en gedempt afgespeeld, want in een kader op de pagina is hij niet te meten. `
+          ? `De video zelf geopend op zijn insluitadres (${video.platform} ${video.nummer}) en gedempt afgespeeld, want in een kader op de pagina is hij niet te meten. ${reclameZin}`
           : klik
           ? `Na klikken op ${klik} `
           : '';
@@ -7066,6 +7204,7 @@ async function getFlitsen(url: string, flags: Flags) {
                 }${volledigGemeten ? ' (volledig)' : ' (NIET volledig)'}`,
               ]
             : []),
+          ...(reclameZin ? [`  reclame:                             ${reclameZin.trim()}`] : []),
           `  boven de gebiedsgrens:               ${teGroot ? 'JA' : 'nee'}${teGrootRood ? ' (rood: JA)' : ''}`,
           `  bruikbare snelheid:                  ${genoegSnel ? 'ja' : 'NEE — te weinig beeldjes per seconde'}`,
           '',
@@ -7125,6 +7264,7 @@ async function getFlitsen(url: string, flags: Flags) {
           verzadigdRood: blokkenBovenRood.size,
           bovenDeGebiedsgrens: teGroot || teGrootRood,
           ...(videoBereik ? { videoVan: videoBereik.van, videoTot: videoBereik.tot, videoDuur: videoBereik.duur, volledigGemeten } : {}),
+          ...(reclame ? { reclame } : {}),
           beslist,
         },
       });
@@ -7153,6 +7293,7 @@ async function getFlitsen(url: string, flags: Flags) {
         verzadigd_rood_boven_de_grens: teGrootRood,
         gemeten_op: video ? `de video zelf (${video.platform} ${video.nummer})` : 'de pagina',
         video_speelde: video ? videoStand : undefined,
+        reclame: reclame ?? undefined,
         toestemmingsscherm: toestemmingsscherm ?? undefined,
         mediaspelers: media.spelers.length,
         spelers_die_stilstaan: stilleSpelers,
@@ -7173,6 +7314,10 @@ async function getFlitsen(url: string, flags: Flags) {
                       ? ', er verscheen een toestemmingsscherm. Accepteer die eenmalig in de audit-sessie (npm run chrome:debug) en meet opnieuw'
                       : ''
                   }. Er is dus niets van de video gezien. `
+                : ''
+            }${
+              reclameVooraf?.nogBezig
+                ? `Er speelde na ${reclameVooraf.seconden} seconden nog steeds reclame; de film zelf is niet gemeten. Meet opnieuw. `
                 : ''
             }${
               !genoegSnel
