@@ -2814,88 +2814,154 @@ async function koppelLogboek(projectId: string, flags: Flags) {
    */
   const nietGeplaatst: { commando: string; url: string | null }[] = [];
 
+  /*
+   * Welke video op welke pagina staat.
+   *
+   * Een video meet je niet op de pagina maar op zijn eigen adres (zie get-flitsen), en dat
+   * adres hoort bij geen enkel sample. Tot 2026-10-23 bleef zo'n meting daarom liggen: op
+   * NIS-01 voldeed 2.3.1 op "Over Thuis in Nissewaard" op grond van een volledige meting
+   * van de video, terwijl de kaart alleen de onbesliste meting van de pagina toonde.
+   *
+   * De bron is de HTML die get-html van de pagina bewaarde: daar staat de insluitcode in,
+   * ook als youtube-nocookie.com. Plus het eindadres van een meting die op de pagina
+   * begon en op de video eindigde, zoals get-videosporen.
+   */
+  const VIDEO_IN_TEKST =
+    /(?:youtube(?:-nocookie)?\.com\/(?:watch\?[^"'\s<>]*?v=|embed\/|shorts\/|live\/)[\w-]{6,}|youtu\.be\/[\w-]{6,}|vimeo\.com\/(?:video\/)?\d{6,})/gi;
+  const videoNaarSamples = new Map<string, Set<any>>();
+  const gelezenBestanden = new Set<string>();
+  const noteerVideos = (tekst: string, sample: any) => {
+    for (const m of Array.from(tekst.matchAll(VIDEO_IN_TEKST))) {
+      const v = videoSpeeladres(m[0]);
+      if (!v) continue;
+      if (!videoNaarSamples.has(v.nummer)) videoNaarSamples.set(v.nummer, new Set());
+      videoNaarSamples.get(v.nummer)!.add(sample);
+    }
+  };
   for (const r of regels) {
-    const sample = sampleVanUrl.get(kaal(r.eindUrl || r.url || ''));
-    if (!sample) {
+    const sample = sampleVanUrl.get(kaal(r.url || ''));
+    if (!sample) continue;
+    if (r.eindUrl) noteerVideos(r.eindUrl, sample);
+    const bestand = r.artefact;
+    if (bestand && /\.html?$/i.test(bestand) && !gelezenBestanden.has(bestand)) {
+      gelezenBestanden.add(bestand);
+      try {
+        noteerVideos(fs.readFileSync(bestand, 'utf8'), sample);
+      } catch {
+        // Het bestand is opgeruimd of staat op een andere computer; dan niet.
+      }
+    }
+  }
+
+  for (const r of regels) {
+    const eind = r.eindUrl || r.url || '';
+    let doelen: any[] = [];
+    // Het videonummer als de meting op de video zelf is gedaan en niet op de pagina.
+    let losseVideo: string | null = null;
+    const direct = sampleVanUrl.get(kaal(eind));
+    if (direct) {
+      doelen = [direct];
+    } else {
+      // Eindigde de meting op een video, dan hoort hij bij de pagina waar hij begon, of
+      // anders bij elke pagina waar die video op staat.
+      const video = videoSpeeladres(eind) || videoSpeeladres(r.url || '');
+      if (video) {
+        const begin = sampleVanUrl.get(kaal(r.url || ''));
+        if (begin) {
+          doelen = [begin];
+        } else {
+          doelen = Array.from(videoNaarSamples.get(video.nummer) ?? []);
+          losseVideo = video.nummer;
+        }
+      }
+    }
+    if (!doelen.length) {
       nietGeplaatst.push({ commando: r.commando, url: r.eindUrl || r.url || null });
       continue;
     }
-    // Dezelfde vertaling als de meetknop op de kaart gebruikt, uit lib/verantwoording.ts.
-    // Zou elk van de twee zelf bepalen welke velden meegaan, dan ziet dezelfde meting er
-    // anders uit al naar gelang wie hem startte.
-    const meting = metingUitLogregel(r);
-    // Een schermafdruk van de hele pagina is algemeen bewijs: daar rust elk oordeel op.
-    // Een schermafdruk met --selector is dat niet -- dat is een foto van één element,
-    // genomen voor één criterium. Die onder alle criteria hangen levert onzin op: onder
-    // 2.1.4 (sneltoetsen) stond een uitsnede van het logo.
-    const gerichteOpname = r.commando === 'get-screenshot' && !!r.argumenten?.selector;
-    if (!r.criteria.length && ALGEMEEN.has(r.commando) && !gerichteOpname) {
-      if (!algemeenPerSample.has(sample.id)) algemeenPerSample.set(sample.id, new Map());
+    for (const sample of doelen) {
+      // Dezelfde vertaling als de meetknop op de kaart gebruikt, uit lib/verantwoording.ts.
+      // Zou elk van de twee zelf bepalen welke velden meegaan, dan ziet dezelfde meting er
+      // anders uit al naar gelang wie hem startte.
+      const meting = metingUitLogregel(r);
+      // Een schermafdruk van de hele pagina is algemeen bewijs: daar rust elk oordeel op.
+      // Een schermafdruk met --selector is dat niet -- dat is een foto van één element,
+      // genomen voor één criterium. Die onder alle criteria hangen levert onzin op: onder
+      // 2.1.4 (sneltoetsen) stond een uitsnede van het logo.
+      const gerichteOpname = r.commando === 'get-screenshot' && !!r.argumenten?.selector;
+      if (!r.criteria.length && ALGEMEEN.has(r.commando) && !gerichteOpname) {
+        if (!algemeenPerSample.has(sample.id)) algemeenPerSample.set(sample.id, new Map());
+        /*
+         * Op de VORM en niet op de commandonaam.
+         *
+         * Op de naam deelden alle get-screenshot-regels één plek en won de laatste. Op Home
+         * was dat een opname van het menu op 320 pixels, die daarmee de full-page opname van
+         * twee minuten eerder verdrong -- terwijl juist die laatste het algemene bewijs is
+         * waar elk oordeel op rust. Voor 1.4.5 is dat geen detail: tekst die in een
+         * afbeelding gebakken zit staat niet in de HTML, dus zonder de opname van de hele
+         * pagina is dat criterium niet vast te stellen. Het regelbestand vraagt er met zoveel
+         * woorden om. Frits, 2026-09-20.
+         *
+         * `vormVanMeting` scheidt ze: --breedte telt mee, dus 320 en de volle breedte zijn
+         * twee metingen en staan allebei onder het oordeel.
+         */
+        algemeenPerSample
+          .get(sample.id)!
+          .set(vormVanMeting(r.commando, r.argumenten ?? {}), meting);
+        continue;
+      }
+      if (!r.criteria.length) continue;
+
+      // Waaraan je ziet of twee metingen dezelfde meting zijn, staat in lib/verantwoording.ts:
+      // ook de meetknop op de kaart moet weten wanneer hij een regel vervangt in plaats van
+      // toevoegt.
+      // Een meting van de video is een andere meting dan die van de pagina, ook als het
+      // commando hetzelfde is: get-flitsen op de pagina zegt dat de pagina niet flitst, op
+      // de video dat de film niet flitst. Ze mogen elkaar dus niet verdringen, en twee
+      // video's op één pagina ook niet.
+      const vorm =
+        vormVanMeting(r.commando, r.argumenten ?? {}) + (losseVideo ? `|video:${losseVideo}` : '');
+
+      // Eerst per sample verzamelen, en pas daarna over de criteria verdelen — op basis
+      // van de criteria van de LAATSTE run.
+      //
+      // Anders blijft een oude regel eeuwig hangen onder een criterium waar hij niet meer
+      // bij hoort. `get-contrast` hing tot vandaag aan 1.4.3 én 1.4.11, ook als er geen
+      // rand te meten viel; een nieuwe run die alleen nog 1.4.3 opgeeft, verwijderde de
+      // oude regel onder 1.4.11 niet. Op de homepage stonden daardoor vijf tekstmetingen
+      // als bewijs onder een criterium dat over niet-tekstuele onderdelen gaat.
+      if (!gerichtPerSample.has(sample.id)) gerichtPerSample.set(sample.id, new Map());
+      const bestaand = gerichtPerSample.get(sample.id)!.get(vorm);
       /*
-       * Op de VORM en niet op de commandonaam.
+       * De laatste uitkomst telt, maar de waarborg niet.
        *
-       * Op de naam deelden alle get-screenshot-regels één plek en won de laatste. Op Home
-       * was dat een opname van het menu op 320 pixels, die daarmee de full-page opname van
-       * twee minuten eerder verdrong -- terwijl juist die laatste het algemene bewijs is
-       * waar elk oordeel op rust. Voor 1.4.5 is dat geen detail: tekst die in een
-       * afbeelding gebakken zit staat niet in de HTML, dus zonder de opname van de hele
-       * pagina is dat criterium niet vast te stellen. Het regelbestand vraagt er met zoveel
-       * woorden om. Frits, 2026-09-20.
-       *
-       * `vormVanMeting` scheidt ze: --breedte telt mee, dus 320 en de volle breedte zijn
-       * twee metingen en staan allebei onder het oordeel.
+       * Een herhaalde meting vervangt de vorige: die uitkomst is achterhaald. Dát hij ooit
+       * in een auditsessie is gedaan, wordt daar niet onwaar van. De knop op Home is op
+       * 8 september in de sessie gemeten en op 17 september headless overgedaan, met
+       * dezelfde uitkomst (11,99:1); de kaart meldde daarna "zonder auditsessie" bij een
+       * meting die er wel degelijk een had gehad. Dat hoort dus in de badge thuis, niet in de
+       * uitkomst. Frits, 2026-09-20.
        */
-      algemeenPerSample
-        .get(sample.id)!
-        .set(vormVanMeting(r.commando, r.argumenten ?? {}), meting);
-      continue;
+      const isSessie = (b: string | null | undefined) => b === 'auditsessie' || b === 'cdp';
+      /*
+       * Ook de browsermodus van de VORIGE run meetellen, niet alleen zijn vlag. Die vlag
+       * staat er bewust niet op zolang de laatste run zelf in een sessie zat -- dan zegt
+       * `browser` het al -- dus zonder dit zag een headless herhaling nooit dat zijn
+       * voorganger een sessie had.
+       */
+      const ooitInSessie =
+        bestaand?.meting.ooitInSessie ||
+        isSessie(bestaand?.meting.browser) ||
+        isSessie(meting.browser);
+      gerichtPerSample.get(sample.id)!.set(vorm, {
+        meting: {
+          ...meting,
+          keer: (bestaand?.meting.keer ?? 0) + 1,
+          ...(ooitInSessie && !isSessie(meting.browser) ? { ooitInSessie: true } : {}),
+        },
+        criteria: r.criteria,
+      });
     }
-    if (!r.criteria.length) continue;
-
-    // Waaraan je ziet of twee metingen dezelfde meting zijn, staat in lib/verantwoording.ts:
-    // ook de meetknop op de kaart moet weten wanneer hij een regel vervangt in plaats van
-    // toevoegt.
-    const vorm = vormVanMeting(r.commando, r.argumenten ?? {});
-
-    // Eerst per sample verzamelen, en pas daarna over de criteria verdelen — op basis
-    // van de criteria van de LAATSTE run.
-    //
-    // Anders blijft een oude regel eeuwig hangen onder een criterium waar hij niet meer
-    // bij hoort. `get-contrast` hing tot vandaag aan 1.4.3 én 1.4.11, ook als er geen
-    // rand te meten viel; een nieuwe run die alleen nog 1.4.3 opgeeft, verwijderde de
-    // oude regel onder 1.4.11 niet. Op de homepage stonden daardoor vijf tekstmetingen
-    // als bewijs onder een criterium dat over niet-tekstuele onderdelen gaat.
-    if (!gerichtPerSample.has(sample.id)) gerichtPerSample.set(sample.id, new Map());
-    const bestaand = gerichtPerSample.get(sample.id)!.get(vorm);
-    /*
-     * De laatste uitkomst telt, maar de waarborg niet.
-     *
-     * Een herhaalde meting vervangt de vorige: die uitkomst is achterhaald. Dát hij ooit
-     * in een auditsessie is gedaan, wordt daar niet onwaar van. De knop op Home is op
-     * 8 september in de sessie gemeten en op 17 september headless overgedaan, met
-     * dezelfde uitkomst (11,99:1); de kaart meldde daarna "zonder auditsessie" bij een
-     * meting die er wel degelijk een had gehad. Dat hoort dus in de badge thuis, niet in de
-     * uitkomst. Frits, 2026-09-20.
-     */
-    const isSessie = (b: string | null | undefined) => b === 'auditsessie' || b === 'cdp';
-    /*
-     * Ook de browsermodus van de VORIGE run meetellen, niet alleen zijn vlag. Die vlag
-     * staat er bewust niet op zolang de laatste run zelf in een sessie zat -- dan zegt
-     * `browser` het al -- dus zonder dit zag een headless herhaling nooit dat zijn
-     * voorganger een sessie had.
-     */
-    const ooitInSessie =
-      bestaand?.meting.ooitInSessie ||
-      isSessie(bestaand?.meting.browser) ||
-      isSessie(meting.browser);
-    gerichtPerSample.get(sample.id)!.set(vorm, {
-      meting: {
-        ...meting,
-        keer: (bestaand?.meting.keer ?? 0) + 1,
-        ...(ooitInSessie && !isSessie(meting.browser) ? { ooitInSessie: true } : {}),
-      },
-      criteria: r.criteria,
-    });
   }
 
   const teSchrijven = checks

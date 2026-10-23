@@ -375,7 +375,9 @@ minuten; `--seconden` begrenst dat. Het meldt welk stuk gemeten is
 waren het tien seconden, en op LEU-01 zat de strobo op 0:19. Zonder flitsen in een deel
 van de video is de uitkomst onbeslist; een afkeuring in een deel staat wel.
 Op een gewone pagina somt `get-flitsen` de gevonden video's op mét de regel om ze apart te
-meten.
+meten. `koppel-logboek` hangt een meting op een videoadres onder het oordeel van de pagina
+waar die video op staat; welke dat is, leest hij uit de HTML die `get-html` van de pagina
+bewaarde. Haal de pagina dus eerst met `get-html` op, anders blijft de videometing liggen.
 
 **Reclame telt niet mee.** Speelt YouTube eerst een advertentie (de speler draagt dan de klasse
 `ad-showing`), dan wacht `get-flitsen` die af, klikt met de muis op "Overslaan" zodra die knop
