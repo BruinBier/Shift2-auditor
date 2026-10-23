@@ -61,6 +61,9 @@ export default function Richtlijnen({ project, allCriteria }: RichtlijnenProps) 
     if (!code) continue;
     if (!findingsByCode.has(code)) findingsByCode.set(code, { open: 0, resolved: 0, total: 0 });
     const counts = findingsByCode.get(code)!;
+    // Alleen wat door de poort is: een voorstel telt nog niet mee en een afgewezen
+    // voorstel nooit (docs/adr/0001-akkoord-als-poort.md).
+    if (f.status === 'voorstel' || f.status === 'afgewezen') continue;
     if (isOpgelosteBevinding(f)) continue;
     counts.total++;
     if (isOpmerking(f)) counts.resolved++;
