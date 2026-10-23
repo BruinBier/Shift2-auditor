@@ -138,6 +138,11 @@ export async function POST(
       where: { title: titel, wcagCriterionId: finding.wcagCriterionId },
     });
 
+    // Onthouden of het issue al bestond. Tot 2026-10-23 werd dat achteraf afgeleid
+    // uit createdAt < updatedAt van het voorstel, en dat is bij een vers issue ook
+    // waar: het wordt aangemaakt vlak vóórdat het voorstel wordt bijgewerkt.
+    const hergebruikt = issue !== null;
+
     if (!issue) {
       issue = await prisma.technicalIssue.create({
         data: {
@@ -167,7 +172,7 @@ export async function POST(
     return NextResponse.json({
       finding: bijgewerkt,
       technicalIssue: issue,
-      hergebruikt: !body.forceerNieuw && issue.createdAt < bijgewerkt.updatedAt,
+      hergebruikt,
       criteriumOordeel: oordeel,
     });
   } catch (error: any) {
