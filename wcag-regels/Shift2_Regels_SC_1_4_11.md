@@ -445,6 +445,15 @@ een uitsnede, geen "ruim boven 3:1".
 9. [agent] De onderbouwing bij `reden` is **één of twee zinnen**: of de meting geldig was —
    kwam je op de gevraagde pagina uit, draaide de JavaScript, was het een auditsessie — en
    verder niets. Al het inhoudelijke gaat naar de deelgebieden.
+10. [agent] Heeft de site een hoogcontrastknop die zelf voldoet, en heb je daarom in de
+   hoogcontrastweergave gemeten, maak dan op het **homepage-sample** een opmerking met de
+   snelle bevinding 0a811ca3 ("Hoog contrast - Contrast switch"), tekst ongewijzigd, als
+   voorstel. Koppel hem aan het gebied "De hoogcontrastknop zelf ..." met uitkomst
+   `opmerking`, en zet het oordeel van die pagina op `opmerking`. Precies zoals bij 1.4.3,
+   waar dezelfde situatie de opmerking uit de snelle bevinding voor 1.4.3 oplevert. De
+   opdrachtgever moet weten dat de standaardweergave niet is beoordeeld, ook als daar
+   elementen onder de 3:1 zitten. Op NIS-01 (2026-10-23) ontbrak hij: de regel stond alleen
+   in de lijst onderaan dit bestand, niet in deze stappen, terwijl 1.4.3 hem wel had.
 
 ### Zo is het vastgesteld
 

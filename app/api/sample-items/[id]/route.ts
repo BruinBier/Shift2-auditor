@@ -147,16 +147,38 @@ async function synchroniseerVinkjeOordelen(
 
   const sample = await prisma.sampleItem.findUnique({
     where: { id: sampleItemId },
-    select: { heeftBewegendBeeld: true, heeftFormulier: true },
+    select: {
+      heeftBewegendBeeld: true,
+      heeftFormulier: true,
+      project: { select: { researchType: true } },
+    },
   });
   if (!sample) return null;
 
   const criteria = await prisma.wCAGCriterion.findMany({ select: { id: true, code: true } });
   const idVanCode = new Map(criteria.map((c) => [c.code, c.id]));
 
+  /*
+   * Alleen de criteria van het onderzoekstype. Het formuliervinkje dekt 3.3.1 t/m 3.3.7,
+   * maar een deelonderzoek content kent daarvan alleen 3.3.2. Op NIS-01 (2026-10-23)
+   * schreef het vinkje toch oordelen voor 3.3.1, 3.3.3 en 3.3.7 op twee pagina's; de
+   * afleiding zag die criteria daardoor als onderdeel van het onderzoek, met elf pagina's
+   * zonder oordeel, en het onderzoek kon niet worden afgerond. Een onbekend type laat alles
+   * door, zoals het was.
+   */
+  const type = sample.project.researchType
+    ? await prisma.researchType.findUnique({
+        where: { name: sample.project.researchType },
+        select: { criteria: { select: { wcagCriterionId: true } } },
+      })
+    : null;
+  const inType = type ? new Set(type.criteria.map((c) => c.wcagCriterionId)) : null;
+
   // Wat er NU uit de vinkjes volgt, beperkt tot de vakjes die dit bericht aanraakt.
   const velden = new Set(geraakt.map((v) => v.veld));
-  const sluiten = vervaltDoorVinkje(sample).filter((v) => velden.has(v.vinkje));
+  const sluiten = vervaltDoorVinkje(sample)
+    .filter((v) => velden.has(v.vinkje))
+    .filter((v) => !inType || inType.has(idVanCode.get(v.code) ?? ''));
   const sluitenCodes = new Set(sluiten.map((v) => v.code));
 
   /*
