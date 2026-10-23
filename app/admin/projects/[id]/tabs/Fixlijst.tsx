@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { isOpmerking } from '@/lib/finding-classification';
 
 interface Props {
   project: any;
@@ -24,18 +25,21 @@ const IMPACT_COLOR: Record<string, string> = {
   onbekend: 'bg-gray-100 text-gray-800',
 };
 
-function statusLabel(s: string): string {
-  if (s === 'open') return 'Afgekeurd';
-  if (s === 'resolved') return 'Opmerking';
-  if (s === 'published') return 'Gepubliceerd';
-  return s;
+// Opmerking of afkeuring volgt uit het type, niet uit de status: een opmerking krijgt bij
+// akkoord status `open`, en een opgeloste afkeuring staat op `resolved`. Tot 2026-10-23
+// las deze lijst het uit de status, en stonden opmerkingen tussen de afkeuringen.
+function statusLabel(f: any): string {
+  if (isOpmerking(f)) return 'Opmerking';
+  if (f.status === 'resolved') return 'Opgelost';
+  if (f.status === 'published') return 'Gepubliceerd';
+  return 'Afgekeurd';
 }
 
-function statusBadge(s: string): string {
-  if (s === 'open') return 'bg-red-100 text-red-800';
-  if (s === 'resolved') return 'bg-blue-100 text-blue-800';
-  if (s === 'published') return 'bg-green-100 text-green-800';
-  return 'bg-gray-100 text-gray-800';
+function statusBadge(f: any): string {
+  if (isOpmerking(f)) return 'bg-blue-100 text-blue-800';
+  if (f.status === 'resolved') return 'bg-gray-100 text-gray-800';
+  if (f.status === 'published') return 'bg-green-100 text-green-800';
+  return 'bg-red-100 text-red-800';
 }
 
 function truncate(s: string, n: number): string {
@@ -160,9 +164,9 @@ export default function Fixlijst({ project }: Props) {
     [relevant, scFilter]
   );
 
-  // Group: open first, then resolved
-  const openFindings = filtered.filter((f) => f.status === 'open');
-  const opmerkingen = filtered.filter((f) => f.status === 'resolved');
+  // Eerst de afkeuringen, dan de opmerkingen
+  const openFindings = filtered.filter((f) => !isOpmerking(f));
+  const opmerkingen = filtered.filter((f) => isOpmerking(f));
 
   // Right column: SCs tested (assessments with status != not_tested)
   const testedSCs = useMemo(() => {
@@ -219,13 +223,13 @@ export default function Fixlijst({ project }: Props) {
           className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
         >
           <span className="text-xs font-mono text-gray-500 w-14 shrink-0">{f.findingCode}</span>
-          <span className={`text-xs px-2 py-0.5 rounded font-medium shrink-0 ${statusBadge(f.status)}`}>
-            {statusLabel(f.status)}
+          <span className={`text-xs px-2 py-0.5 rounded font-medium shrink-0 ${statusBadge(f)}`}>
+            {statusLabel(f)}
           </span>
           <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded font-mono shrink-0">
             {f.wcagCriterion?.code}
           </span>
-          {f.impact && f.status === 'open' && (
+          {f.impact && !isOpmerking(f) && (
             <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${IMPACT_COLOR[f.impact] ?? IMPACT_COLOR.onbekend}`}>
               {IMPACT_LABEL[f.impact] ?? f.impact}
             </span>
