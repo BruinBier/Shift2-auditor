@@ -21,8 +21,9 @@ soepeler dan W3C.
 - **Niet in de buurt als tekst** → bevinding onder 1.1.1. Wie de pagina laat voorlezen, krijgt
   die tekst anders niet mee.
 
-**Bij een logo kijk je alleen naar de direct bijbehorende tekst of knop**, niet naar de rest
-van de pagina. Zie "Een logo en zijn tekstalternatief" onderaan dit bestand.
+**Een logo krijgt altijd een tekstalternatief**, ook als dezelfde naam in de tekst ernaast
+staat. De vrijstelling "staat als echte tekst in de buurt" geldt niet voor logo's. Zie "Een
+logo en zijn tekstalternatief" onderaan dit bestand.
 
 Dit geldt óók als de afbeelding verder puur illustratief oogt, en óók als de tekst een
 merknaam of logo is. Een logo mag onder 1.4.5 zijn uitgezonderd (afbeelding van tekst),
@@ -242,12 +243,11 @@ andere vorm. Vier beslissingen op één kaart.
    complex beeld (schema, infographic, kaart met legenda). Volg de beslisvolgorde hierboven.
 3. [agent] Staat er niets op de pagina dat geen tekst is, dan is deze toets niet van
    toepassing. Dat kun je pas zeggen ná de opname, niet ervoor.
-4. [agent] Staat er leesbare tekst ín het beeld — merknaam, embleem, slogan, banner, poster?
-   Zoek dan of diezelfde tekst in de buurt van de afbeelding als echte tekst staat (hetzelfde
-   blok, direct ervoor of erna). Bij een LOGO kijk je
-   alleen naar de direct bijbehorende tekst of knop: noemt die de organisatie volledig en
-   bevat het logo niets meer, dan mag alt leeg zijn. De footer of de paginatitel tellen niet.
-   Is het logo een zelfstandige link, beoordeel dan ook de naam van die link.
+4. [agent] Staat er leesbare tekst ín het beeld, zoals een banner, poster of slogan? Zoek dan
+   of diezelfde tekst in de buurt van de afbeelding als echte tekst staat (hetzelfde blok,
+   direct ervoor of erna). Is het beeld een LOGO of beeldmerk, dan krijgt het altijd een
+   tekstalternatief met de tekst die erop staat, wat er ook naast staat. Is het logo een
+   zelfstandige link, beoordeel dan ook de naam van die link.
 5. [agent] Bij een kaart met een legenda: lees de legenda uit het beeld en vink item voor item
    af of elk gegeven ook in de tekst staat. Jaartallen, percentages en categorienamen worden
    het vaakst vergeten.
@@ -348,17 +348,17 @@ Aanleiding: 1.1.1 op Home (V010)
 
 ### 2026-08-15
 
-EEN LOGO EN ZIJN TEKSTALTERNATIEF (aangepast 2026-10-10).
+EEN LOGO EN ZIJN TEKSTALTERNATIEF (aangepast 2026-10-23).
 
-Een logo krijgt een tekstalternatief dat de organisatie identificeert, tenzij dezelfde informatie al volledig beschikbaar is in de direct bijbehorende tekst of knop en het logo geen aanvullende informatie bevat. In dat geval mag het alt-attribuut leeg zijn (alt=""). Dit geldt voor zowel het eigen logo als het logo van een andere organisatie.
+Een logo krijgt ALTIJD een tekstalternatief met de tekst die erop staat, ook als dezelfde naam in de tekst ernaast staat. Dit geldt voor het eigen logo, het logo van een andere organisatie en het beeldmerk van een evenement of campagne.
 
-Is het logo een zelfstandige link, controleer dan of die link een toegankelijke naam heeft die het linkdoel beschrijft. Een aparte knop naast het logo vervangt die naam niet.
+Zo staat het bij W3C in de tutorial Images of text, voorbeeld 2 ("Image of text used as an unlinked logo"): het WAI-logo krijgt als tekstalternatief "Web Accessibility Initiative". Een logo is ook geen pure decoratie: het zegt van wie iets is, of om welk evenement het gaat. Volgens het succescriterium mag alleen pure decoratie leeg blijven.
 
-Keur een logo met alt="" dus niet automatisch af: beoordeel eerst de bijbehorende tekst, eventuele aanvullende informatie en de functie van het logo.
+De vrijstelling "staat als echte tekst in de buurt" uit de beslisboom van W3C geldt hier dus niet. Die gaat over gewone afbeeldingen met tekst, zoals een banner of een kop als plaatje (zie bovenaan dit bestand). Voor logo's heeft W3C een eigen voorbeeld.
 
-Wat "direct bijbehorend" is: de tekst of knop in hetzelfde blok als het logo, die je samen leest. De footer, de paginatitel of een kop elders op de pagina tellen niet. Op LEU-01 (Werken bij de gemeente, en.leudal.nl) staat het IGOM-logo met alt="" naast de tekst "All of our current job openings can be found through IGOM" en de knop "To the IGOM website": geen afkeuring (V063, afgewezen door Frits).
+Is het logo een zelfstandige link, controleer dan ook of die link een toegankelijke naam heeft die het linkdoel beschrijft. Een aparte knop naast het logo vervangt die naam niet.
 
-Tot 2026-10-10 stond hier dat een logo ALTIJD een tekstalternatief krijgt, ongeacht wat ernaast staat. Die regel was strenger dan WCAG en leverde afkeuringen op voor logo's waarvan de informatie al in de tekst ernaast stond.
+Van 2026-10-10 tot 2026-10-23 mocht alt="" als de naam in de direct bijbehorende tekst of knop stond. De aanleiding was LEU-01: het IGOM-logo naast "All of our current job openings can be found through IGOM", met V063 afgewezen. Die uitzondering kwam uit de beslisboom en niet uit het W3C-voorbeeld voor logo's. Op NIS-01 (Sportgala, 2026-10-23) keurde de agent daardoor een los logo van een evenement met alt="" goed. Besluit van Frits: afkeuren (V018).
 
 Het tekstalternatief bevat ALLE tekst die op het logo staat. Niet alleen de organisatienaam: staat er ook een dorpsnaam, een woord als "gemeente", een slogan of een toevoeging onder het beeldmerk, dan hoort dat er allemaal in. Neem het over zoals het er staat, in de volgorde waarin je het leest. Wie alleen de naam overneemt laat informatie liggen die op het plaatje wél te zien is, en dat is precies wat 1.1.1 wil voorkomen.
 

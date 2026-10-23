@@ -166,21 +166,25 @@ Afbeelding gevonden
 
 ### 4. LOGO'S
 
-**Regel:** Logo's zijn informatief — de alt-tekst bevat de organisatienaam.
+**Regel:** Een logo krijgt altijd een tekstalternatief met de tekst die erop staat, ook als
+dezelfde naam in de tekst ernaast of elders op de pagina staat. Zet het woord "logo" er niet
+in. Zie "Een logo en zijn tekstalternatief" in `wcag-regels/Shift2_Regels_SC_1_1_1.md`.
 
 ```html
-<!-- PASS: logo met organisatienaam -->
-<img src="logo.svg" alt="Logo Gemeente IJsselstein">
+<!-- PASS: los logo, niet in een link (W3C, Images of text, voorbeeld 2) -->
+<img src="logo.svg" alt="Gemeente IJsselstein">
 
-<!-- PASS: logo als link naar homepage -->
+<!-- PASS: logo als enige inhoud van een link naar de homepage: naam én doel -->
 <a href="/">
-  <img src="logo.png"
-       alt="Logo van de Gemeente IJsselstein, link naar de Homepagina">
+  <img src="logo.png" alt="Gemeente IJsselstein, naar de homepage">
 </a>
 
-<!-- PASS: herhaling van logo elders op pagina → decoratief -->
+<!-- FAIL: logo met leeg tekstalternatief, ook als de naam ernaast staat -->
 <img src="logo.svg" alt="">
-<!-- Alleen als de organisatienaam al elders prominent zichtbaar is -->
+
+<!-- PASS, maar niet zo adviseren: het woord "logo" hoort niet in ons advies.
+     Geen afkeuring, want de naam wordt voorgelezen. -->
+<img src="logo.svg" alt="Logo Gemeente IJsselstein">
 ```
 
 ### 5. HERO-AFBEELDINGEN
@@ -416,7 +420,8 @@ Aanbeveling:     [concrete oplossing met voorgestelde alt-tekst]
 
 | Patroon | Classificatie | Correcte alt | Toelichting |
 |---------|--------------|-------------|-------------|
-| Logo in header | Informatief | "Logo Gemeente X, link naar Homepagina" | Bevat org-naam + linkdoel |
+| Logo in header (enige inhoud van de link) | Informatief | "Gemeente X, naar de homepage" | Naam én doel; zonder het woord "logo" |
+| Logo los in de inhoud (evenement, partner) | Informatief | De tekst op het logo, bijv. "Sportgala Nissewaard" | Ook als de naam in de tekst ernaast staat |
 | Hero (generiek) | Decoratief | `alt=""` | Sfeerbeeld zonder specifieke info |
 | Hero (met tekst) | Informatief | Tekst in afbeelding overnemen | Tekst moet beschikbaar zijn |
 | Teaserfoto nieuwsoverzicht | Decoratief | `alt=""` | Kop+teaser geven al context |
