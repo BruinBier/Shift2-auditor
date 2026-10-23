@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { oordeelUitChecks } from './criterion-assessment';
+import { oordeelUitChecks, oordeelUitBevindingen } from './criterion-assessment';
 
 /**
  * De rekenregel die van de oordelen per pagina één projectoordeel maakt.
@@ -73,4 +73,25 @@ test('een afkeuring blijft staan, ook met pagina\'s zonder oordeel', () => {
 test('zonder ontbrekende pagina\'s geldt de oude regel', () => {
   assert.equal(oordeelUitChecks(Array(13).fill('niet_aanwezig'), 0), 'not_present');
   assert.equal(oordeelUitChecks(['niet_te_bepalen', 'voldoet'], 0), 'passed');
+});
+
+/**
+ * Het oordeel uit de bevindingen zelf. Een voorstel is nog niet beoordeeld en een
+ * afgewezen voorstel is geen bevinding: geen van beide zegt iets over het criterium.
+ * Tot 2026-10-23 maakte een criterium met alleen voorstellen "passed".
+ */
+test('alleen voorstellen of afgewezen voorstellen geven geen oordeel', () => {
+  assert.equal(oordeelUitBevindingen(['voorstel']), null);
+  assert.equal(oordeelUitBevindingen(['voorstel', 'afgewezen']), null);
+  assert.equal(oordeelUitBevindingen([]), null);
+});
+
+test('een openstaande bevinding maakt failed, ook naast een voorstel', () => {
+  assert.equal(oordeelUitBevindingen(['open', 'voorstel']), 'failed');
+  assert.equal(oordeelUitBevindingen(['published']), 'failed');
+});
+
+test('alleen opgeloste bevindingen maken passed, voorstellen tellen niet mee', () => {
+  assert.equal(oordeelUitBevindingen(['resolved']), 'passed');
+  assert.equal(oordeelUitBevindingen(['resolved', 'voorstel', 'afgewezen']), 'passed');
 });

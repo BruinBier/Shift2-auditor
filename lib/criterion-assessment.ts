@@ -21,6 +21,25 @@ import { prisma } from '@/lib/prisma';
 /** Statussen waarmee een bevinding meetelt voor de conclusie. */
 const TELT_MEE = ['open', 'published'] as const;
 
+/** Statussen die nog niet (voorstel) of nooit (afgewezen) door de poort zijn. */
+const VOOR_DE_POORT = ['voorstel', 'afgewezen'] as const;
+
+/**
+ * Het oordeel dat uit de statussen van de afkeuringen volgt, of null als die er niets
+ * over zeggen.
+ *
+ * Een voorstel en een afgewezen voorstel zeggen niets: het eerste is nog niet
+ * beoordeeld, het tweede is geen bevinding. Tot 2026-10-23 telden ze als "niet
+ * openstaand", dus als opgelost, en sprong een criterium met alleen voorstellen op
+ * passed. Bij Valkenswaard-pagecheck stonden zo zeven criteria op "voldoet", met 51
+ * afkeuringen in voorstel eronder.
+ */
+export function oordeelUitBevindingen(statussen: string[]): 'passed' | 'failed' | null {
+  const tellend = statussen.filter((s) => !(VOOR_DE_POORT as readonly string[]).includes(s));
+  if (tellend.length === 0) return null;
+  return tellend.some((s) => (TELT_MEE as readonly string[]).includes(s)) ? 'failed' : 'passed';
+}
+
 /**
  * Bepaalt het oordeel over één criterium opnieuw uit de bevindingen die eronder
  * hangen, en schrijft het weg. Geeft de nieuwe status terug, of null als er niets
@@ -28,6 +47,7 @@ const TELT_MEE = ['open', 'published'] as const;
  *
  * Regels:
  *   - opmerkingen tellen niet mee; alleen `type = 'bevinding'`
+ *   - voorstellen en afgewezen voorstellen tellen niet mee
  *   - minstens één openstaande bevinding  -> failed
  *   - wel bevindingen, allemaal opgelost   -> passed
  *   - geen bevindingen, oordeel is failed  -> not_tested
@@ -74,8 +94,11 @@ export async function herberekenCriteriumOordeel(
     select: { id: true, status: true },
   });
 
-  if (bevindingen.length === 0) {
-    // Een afkeuring zonder onderbouwing: de bevinding die haar droeg is weg.
+  const nieuweStatus = oordeelUitBevindingen(bevindingen.map((f) => f.status));
+
+  if (nieuweStatus === null) {
+    // Een afkeuring zonder onderbouwing: de bevinding die haar droeg is weg, of is
+    // weer een voorstel geworden.
     if (bestaande?.status === 'failed') {
       await prisma.criterionAssessment.update({
         where: { id: bestaande.id },
@@ -85,13 +108,6 @@ export async function herberekenCriteriumOordeel(
     }
     return null;
   }
-
-  // Voorstellen en afwijzingen vallen hier vanzelf buiten zodra die statussen
-  // bestaan: alleen 'open' en 'published' tellen mee.
-  const heeftOpenstaande = bevindingen.some((f) =>
-    (TELT_MEE as readonly string[]).includes(f.status)
-  );
-  const nieuweStatus = heeftOpenstaande ? 'failed' : 'passed';
 
   if (bestaande) {
     if (bestaande.status !== nieuweStatus) {
