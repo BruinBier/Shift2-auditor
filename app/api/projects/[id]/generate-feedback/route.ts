@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
+import { findingLabel } from '@/lib/finding-classification';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -45,7 +46,7 @@ export async function POST(
 
       return `
 ${index + 1}. ${criterionInfo}
-   Status: ${finding.status === 'open' ? 'Afgekeurd' : finding.status === 'resolved' ? 'Opgelost' : 'Onbekend'}
+   Status: ${findingLabel(finding)}
    Beschrijving: ${finding.description || 'Geen beschrijving'}
    Advies: ${finding.advice || 'Geen advies'}
    Impact: ${finding.impact !== null ? finding.impact : 'Niet gespecificeerd'}

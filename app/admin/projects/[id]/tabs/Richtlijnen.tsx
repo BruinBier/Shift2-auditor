@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { TEST_COVERAGE, ALL_AA_SCS, getTestsForSC, type TestCoverage } from '@/lib/wcag-coverage';
+import { isOpmerking, isOpgelosteBevinding } from '@/lib/finding-classification';
 
 interface RichtlijnenProps {
   project: any;
@@ -52,15 +53,17 @@ export default function Richtlijnen({ project, allCriteria }: RichtlijnenProps) 
     }
   }
 
-  // Index findings by SC code (count open vs resolved)
+  // Per SC: bevindingen en opmerkingen. `resolved` telt de opmerkingen; die volgen uit het
+  // type, want een opmerking staat na akkoord op 'open'. Een opgeloste afkeuring telt niet mee.
   const findingsByCode = new Map<string, { open: number; resolved: number; total: number }>();
   for (const f of project.findings || []) {
     const code = f.wcagCriterion?.code;
     if (!code) continue;
     if (!findingsByCode.has(code)) findingsByCode.set(code, { open: 0, resolved: 0, total: 0 });
     const counts = findingsByCode.get(code)!;
+    if (isOpgelosteBevinding(f)) continue;
     counts.total++;
-    if (f.status === 'resolved') counts.resolved++;
+    if (isOpmerking(f)) counts.resolved++;
     else counts.open++;
   }
 

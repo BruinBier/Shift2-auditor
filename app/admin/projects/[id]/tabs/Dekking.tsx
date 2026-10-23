@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { isOpgelosteBevinding, isOpgelosteOpmerking } from '@/lib/finding-classification';
 
 /**
  * Overzicht per succescriterium, met de dekkingscontrole eronder.
@@ -172,7 +173,7 @@ function CriteriumBlok({ rij, projectId }: { rij: CriteriumRij; projectId: strin
                     {f.responsibility && (
                       <span className="text-xs text-gray-600">{f.responsibility}</span>
                     )}
-                    {f.status === 'resolved' && (
+                    {(isOpgelosteBevinding(f) || isOpgelosteOpmerking(f)) && (
                       <span className="px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-800">
                         opgelost
                       </span>

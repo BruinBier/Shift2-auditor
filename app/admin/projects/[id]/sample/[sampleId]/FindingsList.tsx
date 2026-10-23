@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { findingLabel, findingLabelClass } from '@/lib/finding-classification';
 
 interface FindingsListProps {
   findings: any[];
@@ -71,12 +72,9 @@ export default function FindingsList({ findings, projectId, sampleId }: Findings
                     <h3 className="font-semibold text-gray-900">
                       Bevinding {findingIndex} (SC {finding.wcagCriterion.code})
                     </h3>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      finding.status === 'open'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {finding.status === 'open' ? 'Afgekeurd' : 'Opmerking'}
+                    {/* Het label volgt uit type en status samen: een opmerking staat na akkoord op 'open'. */}
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${findingLabelClass(finding)}`}>
+                      {findingLabel(finding)}
                     </span>
                     <span className="text-sm text-gray-500">
                       {finding.wcagCriterion.code} - {finding.wcagCriterion.titleNl}
