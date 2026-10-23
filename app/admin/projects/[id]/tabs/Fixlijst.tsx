@@ -278,6 +278,8 @@ export default function Fixlijst({ project }: Props) {
                       ) : (
                         <span className="text-gray-500">(geen URL)</span>
                       )}
+                      {/* Wat er op deze pagina aangepast moet worden (lib/vindplaatsen.ts) */}
+                      {o.context && <div className="text-gray-700">{o.context}</div>}
                     </li>
                   ))}
                 </ul>
