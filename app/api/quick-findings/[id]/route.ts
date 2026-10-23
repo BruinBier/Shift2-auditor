@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// GET /api/quick-findings/[id] - Eén snelle bevinding. Hier was geen GET, en daardoor gaf
+// `create-finding-from-quick` in de CLI altijd 405 (NIS-01, 2026-10-23).
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const quickFinding = await prisma.quickFinding.findUnique({ where: { id: params.id } });
+  if (!quickFinding) {
+    return NextResponse.json({ error: 'Snelle bevinding niet gevonden' }, { status: 404 });
+  }
+  return NextResponse.json(quickFinding);
+}
+
 // PUT /api/quick-findings/[id] - Update a quick finding
 export async function PUT(
   request: NextRequest,

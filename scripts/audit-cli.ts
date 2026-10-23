@@ -989,13 +989,20 @@ async function createFindingFromQuick(projectId: string, quickFindingId: string,
   if (!criterion) {
     throw new Error(`No WCAG criterion found for code "${qf.criterionCode}" from QuickFinding`);
   }
+  // Bij een snelle bevinding betekent status `resolved` "sjabloon voor een opmerking" (zie
+  // CLAUDE.md, gotcha 9). Dat is het TYPE van wat er gemaakt wordt, niet de status: tot
+  // 2026-10-23 kwam die status rechtstreeks op de bevinding, en sloeg een opmerking uit deze
+  // opdracht het voorstel over. Wat de CLI maakt is altijd een voorstel, net als
+  // create-finding; wie bewust iets anders wil, geeft --status mee.
+  const opmerking = qf.status === 'resolved' || !qf.impact;
   const body: Record<string, unknown> = {
     criterionId: criterion.id,
     description: qf.description,
     advice: qf.advice,
-    status: qf.status || 'open',
-    impact: qf.impact ?? undefined,
-    responsibility: qf.responsibility ?? undefined,
+    status: flags.status || 'voorstel',
+    type: opmerking ? 'opmerking' : 'bevinding',
+    impact: opmerking ? null : qf.impact,
+    responsibility: opmerking ? null : qf.responsibility ?? undefined,
   };
   if (flags['sample-items']) {
     body.sampleItemIds = flags['sample-items'].split(',').map((s) => s.trim()).filter(Boolean);
