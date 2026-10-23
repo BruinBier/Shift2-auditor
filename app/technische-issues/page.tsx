@@ -30,7 +30,7 @@ export default async function TechnischeIssuesPage() {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Technische issues</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Interne lijst van technische issues (leverancier/ontwikkelteam), los van WCAG-onderzoeken.
+              Interne lijst van technische issues per gemeente of organisatie, los van WCAG-onderzoeken.
             </p>
           </div>
           <Link
@@ -51,7 +51,7 @@ export default async function TechnischeIssuesPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr className="text-left text-xs text-gray-600 uppercase tracking-wider">
                   <th className="px-4 py-3">Titel</th>
-                  <th className="px-4 py-3">Leverancier</th>
+                  <th className="px-4 py-3">Organisatie</th>
                   <th className="px-4 py-3">WCAG</th>
                   <th className="px-4 py-3">Impact</th>
                   <th className="px-4 py-3">Status</th>

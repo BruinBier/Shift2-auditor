@@ -553,8 +553,12 @@ op de pagina `/technische-issues`, los van de projecten. Aanmaken met
 `POST /api/technical-issues` en `{ title, description, request?, wcagCriterionId?, impact?,
 supplier?, status? }`; `title` en `description` zijn verplicht, `status` is
 `open` of `resolved` (standaard `open`), `impact` kent dezelfde waarden als bij bevindingen.
-`supplier` is het filter: het domein van de klantsite (`beverwijk.nl`) voor fouten op de site,
-`shift2-auditor` voor verbeterpunten aan de tool zelf.
+`supplier` (in het scherm "Organisatie") is de **gemeente of organisatie** van het onderzoek (`Nissewaard`), ook
+als de fout in het sjabloon van een leverancier zit (SIMsite, SIMform). Welke leverancier het
+moet oplossen, staat in de titel ("SIMsite: ...") en de beschrijving, niet in dit veld.
+`shift2-auditor` voor verbeterpunten aan de tool zelf. Vastgelegd door Frits op 2026-10-23;
+daarvoor stond hier het domein van de klantsite (`beverwijk.nl`), en sjabloonfouten kregen
+`SIMgroep (SIMsite)`. De bestaande issues zijn die dag omgezet.
 
 Op de detailpagina staat onder titel en beschrijving de knop "Vertaal naar Engels". Die
 vertaalt de opgeslagen tekst via Azure Translator (`lib/azure-translator.ts`, route

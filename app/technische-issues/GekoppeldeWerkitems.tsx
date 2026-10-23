@@ -115,7 +115,7 @@ export default function GekoppeldeWerkitems({ id }: { id: string }) {
         type="search"
         value={zoek}
         onChange={(e) => setZoek(e.target.value)}
-        placeholder="Zoek op nummer, titel of leverancier…"
+        placeholder="Zoek op nummer, titel of organisatie…"
         autoComplete="off"
         className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
       />

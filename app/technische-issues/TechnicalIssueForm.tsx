@@ -206,13 +206,13 @@ OK: ja, ook ${aantal === 1 ? 'dat issue' : 'die issues'}. Annuleren: alleen dit 
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Leverancier</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Organisatie</label>
           <input
             type="text"
             value={supplier}
             onChange={(e) => setSupplier(e.target.value)}
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-            placeholder="bv. SIMsite"
+            placeholder="bv. Nissewaard"
           />
         </div>
 
