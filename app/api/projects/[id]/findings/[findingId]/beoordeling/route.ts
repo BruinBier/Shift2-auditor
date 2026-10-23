@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { herberekenCriteriumOordeel } from '@/lib/criterion-assessment';
-import { haalBevindingUitGebieden } from '@/lib/gebied-koppeling';
+import { haalBevindingUitGebieden, herzieGebiedenNaAfwijzing } from '@/lib/gebied-koppeling';
 import { kenBevindingCodeToe } from '@/lib/finding-code';
 
 /**
@@ -116,14 +116,20 @@ export async function POST(
         data: { status: 'afgewezen', afwijzingsreden: reden },
         include: { wcagCriterion: true, occurrences: true },
       });
-      // De koppeling bij de deelgebieden wijst nu naar een bevinding die er niet meer
-      // onder hoort. Zonder opruimen staat er op de kaart "Hier hoort een bevinding bij,
-      // maar die is niet gevonden" bij een gebied waar wél iets aan de hand is.
+      // Afwijzen zegt dat er geen overtreding is: het gebied waar het voorstel onder hing
+      // gaat naar ok, en het paginaoordeel naar voldoet als er verder niets afkeurt. Zie
+      // lib/gebied-koppeling.ts. Daarna nog de koppelingen opruimen die dat liet staan.
+      const herzien = await herzieGebiedenNaAfwijzing(
+        finding.id,
+        params.id,
+        finding.wcagCriterionId,
+        reden!
+      );
       await haalBevindingUitGebieden(finding.id, params.id, finding.wcagCriterionId);
       // Ook na een afwijzing herberekenen: het voorstel telde niet mee, maar de
       // regel hoort op één plek te blijven en is hier goedkoop.
       const oordeel = await herberekenCriteriumOordeel(params.id, finding.wcagCriterionId);
-      return NextResponse.json({ finding: bijgewerkt, criteriumOordeel: oordeel });
+      return NextResponse.json({ finding: bijgewerkt, criteriumOordeel: oordeel, herzien });
     }
 
     // doorzetten — het voorstel gaat naar de leverancier in plaats van de redactie.
@@ -167,10 +173,22 @@ export async function POST(
       include: { wcagCriterion: true, occurrences: true },
     });
 
+    // Doorgezet is ook geen contentbevinding: het paginaoordeel beweegt mee, net als bij
+    // afwijzen. Op NIS-01 bleef 4.1.2 op Apotheek Botlek anders "afgekeurd" zonder dat er
+    // nog een afkeuring onder hing, en kreeg het criterium geen oordeel.
+    const herzien = await herzieGebiedenNaAfwijzing(
+      finding.id,
+      params.id,
+      finding.wcagCriterionId,
+      bijgewerkt.afwijzingsreden ?? `Doorgezet naar technisch issue: ${issue.title}`
+    );
+    await haalBevindingUitGebieden(finding.id, params.id, finding.wcagCriterionId);
+
     const oordeel = await herberekenCriteriumOordeel(params.id, finding.wcagCriterionId);
 
     return NextResponse.json({
       finding: bijgewerkt,
+      herzien,
       technicalIssue: issue,
       hergebruikt,
       criteriumOordeel: oordeel,

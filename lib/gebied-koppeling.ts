@@ -28,6 +28,110 @@ const VERVALLEN = new Set(['afgewezen']);
 type Gebied = { gebied: string; uitkomst?: string; toelichting?: string; bevindingen?: string[] };
 
 /**
+ * Een afgewezen voorstel uit zijn gebied halen én het gebied laten meebewegen.
+ *
+ * Afwijzen zegt: hier is geen overtreding. Alleen de verwijzing weghalen
+ * (`haalBevindingUitGebieden`) liet het gebied op `fout` staan en het paginaoordeel op
+ * `afgekeurd`. Op NIS-01 (2026-10-23) bleef 1.3.1 op Alzheimer Café daardoor "voldoet niet"
+ * nadat de onderzoeker V012 had afgewezen met de reden dat er geen overtreding was, terwijl
+ * er op die pagina verder niets afkeurde.
+ *
+ * Een gebied dat op `fout` stond en na het weghalen geen bevinding meer heeft, gaat naar
+ * `ok`, met de afwijsreden achter de toelichting. Staat er daarna in het hele oordeel geen
+ * `fout` meer, en hangt er aan deze pagina geen andere afkeuring van dit criterium, dan
+ * wordt het paginaoordeel `voldoet`. Het akkoord vervalt, want dat gold voor "voldoet niet";
+ * de onderzoeker bevestigt het nieuwe oordeel zelf.
+ *
+ * Moet vóór `haalBevindingUitGebieden` draaien: daarna is niet meer te zien bij welk gebied
+ * de bevinding hoorde.
+ */
+export async function herzieGebiedenNaAfwijzing(
+  findingId: string,
+  projectId: string,
+  wcagCriterionId: string,
+  reden: string,
+): Promise<{ gebieden: number; naarVoldoet: number }> {
+  const checks = await prisma.sampleCriterionCheck.findMany({
+    where: { wcagCriterionId, sampleItem: { projectId } },
+    select: { id: true, sampleItemId: true, status: true, gebieden: true, reden: true },
+  });
+  // De pagina's waar het voorstel aan hing. Een criterium zonder deelgebieden (4.1.2
+  // bijvoorbeeld) heeft geen gebied om naar te kijken; dan is dit de enige band.
+  const paginas = new Set(
+    (
+      await prisma.findingOccurrence.findMany({
+        where: { findingId },
+        select: { sampleItemId: true },
+      })
+    ).map((o) => o.sampleItemId)
+  );
+
+  let gebiedenAangepast = 0;
+  let naarVoldoet = 0;
+  for (const check of checks) {
+    const gebieden = check.gebieden as Gebied[] | null;
+    const metGebieden = Array.isArray(gebieden) && gebieden.length > 0;
+    const gekoppeld =
+      metGebieden && gebieden!.some((g) => (g.bevindingen ?? []).includes(findingId));
+    // Met deelgebieden telt alleen de koppeling: hing het voorstel aan geen gebied, dan
+    // weet je niet welk gebied erover gaat. Zonder deelgebieden telt de pagina.
+    if (metGebieden ? !gekoppeld : !paginas.has(check.sampleItemId)) continue;
+
+    const nieuw = (gebieden ?? []).map((g) => {
+      if (!(g.bevindingen ?? []).includes(findingId)) return g;
+      const over = (g.bevindingen ?? []).filter((id) => id !== findingId);
+      if (g.uitkomst !== 'fout' || over.length) return { ...g, bevindingen: over };
+      gebiedenAangepast += 1;
+      return {
+        ...g,
+        uitkomst: 'ok',
+        bevindingen: over,
+        toelichting: `${(g.toelichting ?? '').trim()} Afgewezen door de onderzoeker: ${reden}`.trim(),
+      };
+    });
+
+    let wordtVoldoet = false;
+    if (check.status === 'afgekeurd' && !nieuw.some((g) => g.uitkomst === 'fout')) {
+      // Een andere afkeuring van dit criterium op deze pagina houdt het oordeel op
+      // afgekeurd, ook als die niet aan een gebied gekoppeld is. Een opmerking keurt niet af.
+      const andere = await prisma.finding.count({
+        where: {
+          id: { not: findingId },
+          projectId,
+          wcagCriterionId,
+          type: { not: 'opmerking' },
+          status: { not: 'afgewezen' },
+          occurrences: { some: { sampleItemId: check.sampleItemId } },
+        },
+      });
+      wordtVoldoet = andere === 0;
+    }
+
+    if (!metGebieden && !wordtVoldoet) continue;
+    await prisma.sampleCriterionCheck.update({
+      where: { id: check.id },
+      data: {
+        ...(metGebieden ? { gebieden: nieuw } : {}),
+        ...(wordtVoldoet
+          ? {
+              status: 'voldoet',
+              akkoord: null,
+              // Zonder gebieden is de reden de enige plek waar staat waarom het omsloeg.
+              ...(metGebieden
+                ? {}
+                : {
+                    reden: `${(check.reden ?? '').trim()} Afgewezen door de onderzoeker: ${reden}`.trim(),
+                  }),
+            }
+          : {}),
+      },
+    });
+    if (wordtVoldoet) naarVoldoet += 1;
+  }
+  return { gebieden: gebiedenAangepast, naarVoldoet };
+}
+
+/**
  * Haal een bevinding uit alle gebiedslijsten waar hij in staat.
  *
  * Draait over de sample-oordelen van hetzelfde criterium binnen hetzelfde project, want
