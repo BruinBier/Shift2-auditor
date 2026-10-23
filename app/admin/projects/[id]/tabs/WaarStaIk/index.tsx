@@ -19,6 +19,7 @@ import { bouwStand } from './gegevens';
 import Matrix from './Matrix';
 import Stapel from './Stapel';
 import Waarnemingen from './Waarnemingen';
+import Voorstellen from './Voorstellen';
 import type { Kaarttekst } from '@/lib/criterium-kaarttekst';
 
 export default function WaarStaIk({
@@ -87,6 +88,8 @@ export default function WaarStaIk({
 
   const { totalen } = stand;
   const teDoen = totalen.openVragen + totalen.voorstellen;
+  // De stand telt een voorstel op elke pagina waar het staat; hier telt het één keer.
+  const aantalVoorstellen = (project?.findings ?? []).filter((f: any) => f.status === 'voorstel').length;
 
   return (
     <div>
@@ -99,7 +102,7 @@ export default function WaarStaIk({
           <strong className="text-gray-900">{totalen.openVragen}</strong> vragen open in de browser
         </span>
         <span>
-          <strong className="text-gray-900">{totalen.voorstellen}</strong> voorstellen wachten op
+          <strong className="text-gray-900">{aantalVoorstellen}</strong> voorstellen wachten op
           akkoord
         </span>
         <span>
@@ -111,10 +114,23 @@ export default function WaarStaIk({
             {totalen.onbeoordeeld} combinaties nog niet beoordeeld
           </span>
         )}
+        {aantalVoorstellen > 0 && (
+          <button
+            type="button"
+            onClick={() => zetWeergave(weergave === 'voorstellen' ? null : 'voorstellen')}
+            className={`ml-auto rounded px-3 py-1.5 text-sm font-medium ${
+              weergave === 'voorstellen'
+                ? 'bg-gray-900 text-white'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {weergave === 'voorstellen' ? 'Terug naar de matrix' : 'Voorstellen afwerken'}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => zetWeergave(weergave === 'waarnemingen' ? null : 'waarnemingen')}
-          className={`ml-auto rounded px-3 py-1.5 text-sm font-medium ${
+          className={`${aantalVoorstellen > 0 ? '' : 'ml-auto '}rounded px-3 py-1.5 text-sm font-medium ${
             weergave === 'waarnemingen'
               ? 'bg-gray-900 text-white'
               : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -129,7 +145,7 @@ export default function WaarStaIk({
         </button>
       </div>
 
-      {totalen.onbeoordeeld === totalen.samples * totalen.criteria && (
+      {weergave !== 'voorstellen' && totalen.onbeoordeeld === totalen.samples * totalen.criteria && (
         <div className="mb-4 rounded border-l-4 border-blue-400 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           Er zijn nog geen sampleoordelen voor dit project. Draai de{' '}
           <code className="rounded bg-white/70 px-1">audit-samples</code>-workflow om de matrix te
@@ -137,7 +153,9 @@ export default function WaarStaIk({
         </div>
       )}
 
-      {weergave === 'waarnemingen' ? (
+      {weergave === 'voorstellen' ? (
+        <Voorstellen project={project} />
+      ) : weergave === 'waarnemingen' ? (
         <Waarnemingen
           projectId={project.id}
           samples={stand.samples}
