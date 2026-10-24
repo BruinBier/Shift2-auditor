@@ -1488,15 +1488,16 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                       </div>
                     )}
 
-                    {/* Volledige steekproef. Bij een herinspectie staan vervallen en toegevoegde pagina's
-                        erbij, zodat zichtbaar is waarom de lijst afwijkt van de nulmeting
-                        (lib/steekproef-wijzigingen.ts). Een vervallen pagina is offline: geen link. */}
+                    {/* Volledige steekproef. Bij een herinspectie staan toegevoegde pagina's erin met
+                        hun label, en de vervallen pagina's van de nulmeting eronder onder een eigen
+                        kop "Vervallen / Offline", als tekst zonder link: ze zijn offline
+                        (lib/steekproef-wijzigingen.ts). Frits, 2026-10-24 bij BEV-01 v1.1. */}
                     <h4 className="text-base font-semibold text-gray-900 mb-3">Volledige steekproef</h4>
-                    {steekproef.length > 0 ? (
+                    {steekproef.some((r: any) => r.status !== STATUS_VERVALLEN) ? (
                       <ul className="list-disc list-outside ml-5 text-sm text-gray-700 space-y-2">
-                        {steekproef.map(({ item, status }: any) => {
+                        {steekproef.filter((r: any) => r.status !== STATUS_VERVALLEN).map(({ item, status }: any) => {
                           const isFormulieren = project.researchTypeData?.type === 'formulieren';
-                          const link = item.url && status !== STATUS_VERVALLEN;
+                          const link = !!item.url;
                           return (
                             <li key={(status ?? '') + item.id}>
                               {isFormulieren && <div className="font-medium text-gray-900">{item.title}</div>}
@@ -1522,6 +1523,18 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                       </ul>
                     ) : (
                       <p className="text-sm text-gray-500 italic">Geen steekproef items toegevoegd</p>
+                    )}
+                    {steekproef.some((r: any) => r.status === STATUS_VERVALLEN) && (
+                      <>
+                        <h5 className="text-sm font-semibold italic text-gray-900 mt-4 mb-2">{STATUS_VERVALLEN}</h5>
+                        <ul className="list-disc list-outside ml-5 text-sm text-gray-700 space-y-2">
+                          {steekproef
+                            .filter((r: any) => r.status === STATUS_VERVALLEN)
+                            .map(({ item }: any) => (
+                              <li key={'vervallen' + item.id} className="break-all">{item.url || item.title}</li>
+                            ))}
+                        </ul>
+                      </>
                     )}
                   </div>
                 )}

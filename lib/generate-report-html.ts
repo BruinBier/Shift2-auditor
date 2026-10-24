@@ -709,19 +709,29 @@ function renderOnderzoeksdetails(
           .join('')}</ul>`
       : '';
 
-  // Een vervallen pagina is offline: de URL staat er als tekst, niet als link.
+  // De vervallen pagina's van de nulmeting staan niet meer in de lijst zelf, maar eronder
+  // onder een eigen kop "Vervallen / Offline" (h5), als tekst en niet als link: ze zijn
+  // offline. Frits, 2026-10-24 bij BEV-01 v1.1. Een toegevoegde pagina houdt zijn label.
+  const huidig = steekproef.filter((r) => r.status !== STATUS_VERVALLEN);
+  const vervallen = steekproef.filter((r) => r.status === STATUS_VERVALLEN);
   const sampleHtml =
-    steekproef.length > 0
-      ? `<ul>${steekproef
+    huidig.length > 0
+      ? `<ul>${huidig
           .map(({ item: s, status }) => {
             const label = status ? `, status: ${escapeHtml(status)}` : '';
-            if (s.url && status !== STATUS_VERVALLEN) {
+            if (s.url) {
               return `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.url)}</a>${label}</li>`;
             }
-            return `<li>${escapeHtml(s.url || s.title || 'Onbenoemd')}${label}</li>`;
+            return `<li>${escapeHtml(s.title || 'Onbenoemd')}${label}</li>`;
           })
           .join('')}</ul>`
       : '<p>Geen sample-items vastgelegd.</p>';
+  const vervallenHtml =
+    vervallen.length > 0
+      ? `<h5>${escapeHtml(STATUS_VERVALLEN)}</h5><ul>${vervallen
+          .map(({ item: s }) => `<li>${escapeHtml(s.url || s.title || 'Onbenoemd')}</li>`)
+          .join('')}</ul>`
+      : '';
 
   const techList =
     (project.technologies || []).length > 0
@@ -753,6 +763,7 @@ function renderOnderzoeksdetails(
     <p>Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Zie: <a href="https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek" target="_blank" rel="noopener">digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek</a></p>
     <h4>Volledige steekproef</h4>
     ${sampleHtml}
+    ${vervallenHtml}
   </div></div>
 
   <div class="panel"><div class="panel-title"><h3>Onderzoeksmethode en technieken</h3></div><div class="panel-body">
