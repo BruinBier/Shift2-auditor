@@ -243,6 +243,12 @@ export function feedbackMetOpgelost(
   const feedback = feedbackHtml?.trim() ? String(feedbackHtml) : null;
   if (!zin) return { feedback, los: null };
   if (!feedback) return { feedback: null, los: zin };
+  // Noemt de onderzoeker het aantal al zelf in de feedback, dan voegen we niets toe: hij
+  // wil de zin dan op zijn eigen manier ("…zijn er 16 opgelost, complimenten daarvoor!").
+  // Frits, 2026-10-24 bij BEV-01.
+  if (/bevindingen?\s+uit\s+(de\s+nulmeting|het\s+eerdere\s+onderzoek|het\s+vorige\s+onderzoek)/i.test(feedback)) {
+    return { feedback, los: null };
+  }
   const alinea = /<p(\s[^>]*)?>([\s\S]*?)<\/p>/i.exec(feedback);
   if (!alinea) return { feedback, los: zin };
   // Het eerste zinseinde gevolgd door witruimte en een hoofdletter of cijfer, of het einde
