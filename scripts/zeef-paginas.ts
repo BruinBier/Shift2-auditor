@@ -17,6 +17,9 @@
  *   npx tsx scripts/zeef-paginas.ts --invoer=exports/zeef/valkenswaard.nl/paginas.json
  *        [--uit=map] [--max=10] [--parallel=3] [--sitenaam="Gemeente Valkenswaard"]
  *   npx tsx scripts/zeef-paginas.ts --samenvatting --uit=map     # alleen de samenvatting opnieuw
+ *   npx tsx scripts/zeef-paginas.ts --verzamel --invoer=... --uit=map
+ *        # oordeelt niet: verzamelt alle koppen, linkteksten en alt-teksten (verzameld.jsonl),
+ *        # om ze daarna per unieke tekst te wegen (scripts/zeef/verzamel-in-pagina.js)
  *
  * De invoer is een lijst `{ url, titel?, type? }`.
  */
@@ -38,7 +41,10 @@ interface Invoer {
   type?: string;
 }
 
-const MEET = fs.readFileSync(path.join(__dirname, 'zeef', 'meet-in-pagina.js'), 'utf-8').trim();
+const VERZAMEL = flags.verzamel === 'true';
+const MEET = fs
+  .readFileSync(path.join(__dirname, 'zeef', VERZAMEL ? 'verzamel-in-pagina.js' : 'meet-in-pagina.js'), 'utf-8')
+  .trim();
 
 // `technisch` is geen criterium: kapotte mail- en belkoppelingen, voor /technische-issues.
 const CRITERIA = ['1.1.1', '1.3.1', '1.3.3', '1.4.1', '1.4.5', '1.4.11', '2.4.2', '2.4.4', '2.4.6', '2.5.3', '3.1.2', 'technisch'];
@@ -225,7 +231,7 @@ async function main() {
   }
   if (!flags.invoer) throw new Error('Geef --invoer=<bestand.json> mee: een lijst { url, titel?, type? }.');
   const lijst: Invoer[] = JSON.parse(fs.readFileSync(flags.invoer, 'utf-8'));
-  const resultaten = path.join(uitMap, 'resultaten.jsonl');
+  const resultaten = path.join(uitMap, VERZAMEL ? 'verzameld.jsonl' : 'resultaten.jsonl');
   const klaar = leesKlaar(resultaten);
   let teDoen = lijst.filter((i) => !klaar.has(i.url));
   if (flags.max) teDoen = teDoen.slice(0, Number(flags.max));
@@ -263,6 +269,10 @@ async function main() {
   };
   await Promise.all(Array.from({ length: parallel }, werker));
   await session.dispose();
+  if (VERZAMEL) {
+    console.log(JSON.stringify({ uitMap, bestand: resultaten, gedaan }, null, 2));
+    return;
+  }
   const s = samenvatting(uitMap);
   console.log(
     JSON.stringify(
