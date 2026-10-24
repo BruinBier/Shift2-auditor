@@ -21,7 +21,7 @@ import {
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
 import { geldtVoorAllePaginas, heeftTekst, vindplaatsToelichting } from '@/lib/vindplaatsen';
-import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
+import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst, opgelostSindsNulmetingZin, feedbackMetOpgelost } from '@/lib/samenvatting';
 import { marked } from 'marked';
 
 /**
@@ -298,6 +298,11 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           steekproefVervallen: telWijzigingen(steekproef).vervallen,
         });
 
+    const opgelost = feedbackMetOpgelost(
+      project.researcherFeedback,
+      opgelostSindsNulmetingZin(project, project.findings ?? [])
+    );
+
     return (
       <>
         <div
@@ -305,15 +310,20 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           dangerouslySetInnerHTML={{ __html: hoofdHtml }}
         />
 
+        {/* Bij een heronderzoek: hoeveel bevindingen uit de nulmeting zijn opgelost, achter
+            de eerste zin van de feedback; zonder feedback als losse alinea. Zelfde als in
+            Word/PDF; zie feedbackMetOpgelost in lib/samenvatting.ts. */}
+        {opgelost.los && <p className="mt-2">{opgelost.los}</p>}
+
         {/* Researcher feedback if available.
             whitespace-normal: het blok eromheen staat op pre-line, en dan werd elk
             regeleinde dat de editor tussen <p>, <ul> en <li> zet een lege regel op het
             scherm (BEV-01, 2026-10-20). Hetzelfde probleem als bij de samenvatting op
             MAAS-01; zie samenvattingHtml in lib/samenvatting.ts. */}
-        {project.researcherFeedback && (
+        {opgelost.feedback && (
           <div
             className="mt-4 prose prose-sm max-w-none whitespace-normal [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_p]:mb-2"
-            dangerouslySetInnerHTML={{ __html: project.researcherFeedback }}
+            dangerouslySetInnerHTML={{ __html: opgelost.feedback }}
           />
         )}
 

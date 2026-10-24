@@ -23,7 +23,7 @@ import {
   kopRapport,
   leesbaarAdres,
 } from '@/lib/onderzoek-soort';
-import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst } from '@/lib/samenvatting';
+import { samenvattingHtml, opgelosteBevindingenTekst, opmerkingenStandTekst, opgelostSindsNulmetingZin, feedbackMetOpgelost } from '@/lib/samenvatting';
 import { geldtVoorAllePaginas, heeftTekst, vindplaatsToelichting } from '@/lib/vindplaatsen';
 import { STATUS_VERVALLEN, telWijzigingen, type SteekproefRegel } from '@/lib/steekproef-wijzigingen';
 
@@ -341,8 +341,17 @@ function renderSamenvatting(
         steekproefVervallen: steekproefTelling.vervallen,
       });
 
-  const feedbackHtml = project.researcherFeedback
-    ? `<div class="researcher-feedback">${project.researcherFeedback}</div>`
+  // Bij een heronderzoek: hoeveel bevindingen uit de nulmeting zijn opgelost, achter de
+  // eerste zin van de feedback; zonder feedback als losse alinea. Buiten mainHtml, zodat
+  // het er ook staat bij een zelf geschreven samenvatting.
+  const { feedback, los } = feedbackMetOpgelost(
+    project.researcherFeedback,
+    opgelostSindsNulmetingZin(project, project.findings ?? [])
+  );
+  const opgelostHtml = los ? `<p>${escapeHtml(los)}</p>` : '';
+
+  const feedbackHtml = feedback
+    ? `<div class="researcher-feedback">${feedback}</div>`
     : '';
 
   const closingAdvice = isFormulieren
@@ -352,6 +361,7 @@ function renderSamenvatting(
   return `<section class="content-block">
   <h2 id="samenvatting">Samenvatting</h2>
   ${mainHtml}
+  ${opgelostHtml}
   ${feedbackHtml}
   <p>${closingAdvice}</p>
 </section>`;

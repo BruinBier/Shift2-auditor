@@ -187,6 +187,80 @@ function samenvattingRuw(i: SamenvattingInvoer): string {
 const TELWOORDEN = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien', 'elf', 'twaalf'];
 
 /**
+ * Hoeveel bevindingen uit de nulmeting (of het eerdere onderzoek) inmiddels zijn opgelost,
+ * als zin voor de samenvatting van elk heronderzoek. Frits, 2026-10-24 bij BEV-01 v1.1:
+ * "in de samenvatting moet nog worden vermeld welke issues uit de nulmeting zijn opgelost;
+ * dit moet er standaard in komen voor alle heronderzoeken", en daarna: alleen het aantal.
+ *
+ * Geteld worden afkeuringen, geen opmerkingen: een opmerking keurde niets af. Alleen wat
+ * uit de nulmeting komt (`discoveredInPhase`), want een nieuwe bevinding uit het
+ * heronderzoek kan niet al opgelost zijn. Opgelost is status `resolved`
+ * (`isOpgelosteBevinding`). De aanroeper zet de zin buiten het automatische deel, zodat hij
+ * er ook staat als de onderzoeker de samenvatting zelf schreef.
+ *
+ * Geeft null bij een nulmeting, of als er uit de nulmeting geen bevindingen zijn.
+ */
+export function opgelostSindsNulmetingZin(
+  project: OnderzoekSoortInvoer,
+  findings: (FindingLike & { discoveredInPhase?: string | null })[],
+): string | null {
+  if (!isHeronderzoek(project)) return null;
+  const uitNulmeting = findings.filter(
+    (f) =>
+      !isOpmerking(f) &&
+      f.status !== 'voorstel' &&
+      f.status !== 'afgewezen' &&
+      (f.discoveredInPhase == null || f.discoveredInPhase === 'nulmeting'),
+  );
+  const totaal = uitNulmeting.length;
+  if (totaal === 0) return null;
+  const opgelost = uitNulmeting.filter((f) => f.status === 'resolved').length;
+  const eerder = eerderOnderzoek(project);
+  if (opgelost === totaal) {
+    return totaal === 1
+      ? `De bevinding uit ${eerder} is opgelost.`
+      : `Alle ${totaal} bevindingen uit ${eerder} zijn opgelost.`;
+  }
+  if (opgelost === 0) {
+    return `Van de ${totaal} bevindingen uit ${eerder} is er nog geen opgelost.`;
+  }
+  return `Van de ${totaal} bevindingen uit ${eerder} ${opgelost === 1 ? 'is er 1' : `zijn er ${opgelost}`} opgelost.`;
+}
+
+/**
+ * Zet de zin van `opgelostSindsNulmetingZin` in de feedback van de onderzoeker, direct na
+ * de eerste zin van de eerste alinea. Daar staat bij een heronderzoek het algemene oordeel
+ * ("Sinds het vorige onderzoek is er veel verbeterd."), en het aantal hoort er meteen
+ * achter. Frits, 2026-10-24 bij BEV-01.
+ *
+ * Lukt dat niet (geen feedback, geen alinea, geen zinseinde te vinden), dan geeft dit de
+ * zin terug als losse alinea in `los`, en zet de aanroeper hem boven de feedback.
+ */
+export function feedbackMetOpgelost(
+  feedbackHtml: string | null | undefined,
+  zin: string | null,
+): { feedback: string | null; los: string | null } {
+  const feedback = feedbackHtml?.trim() ? String(feedbackHtml) : null;
+  if (!zin) return { feedback, los: null };
+  if (!feedback) return { feedback: null, los: zin };
+  const alinea = /<p(\s[^>]*)?>([\s\S]*?)<\/p>/i.exec(feedback);
+  if (!alinea) return { feedback, los: zin };
+  // Het eerste zinseinde gevolgd door witruimte en een hoofdletter of cijfer, of het einde
+  // van de alinea. Een afkorting als "bijv. de" telt zo niet als zinseinde.
+  const binnen = alinea[2];
+  const einde = /[.!?](?=\s+[A-Z0-9À-Ý'‘"“]|\s*$)/.exec(binnen);
+  if (!einde) return { feedback, los: zin };
+  const knip = einde.index + 1;
+  const veilig = escapeHtml(zin);
+  const nieuwBinnen = `${binnen.slice(0, knip)} ${veilig}${binnen.slice(knip)}`;
+  const start = alinea.index + alinea[0].indexOf(binnen);
+  return {
+    feedback: feedback.slice(0, start) + nieuwBinnen + feedback.slice(start + binnen.length),
+    los: null,
+  };
+}
+
+/**
  * De tekst onder "Bevindingen" bij een aanvullend onderzoek zonder afwijkingen.
  *
  * Daar stond "Er zijn geen bevindingen vastgesteld.", onder een inleiding die aankondigt
