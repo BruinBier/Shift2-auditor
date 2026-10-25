@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProjectAdminTabs from './ProjectAdminTabs';
 import { leesKaartteksten } from '@/lib/criterium-kaarttekst';
+import { getReportData } from '@/lib/report-data';
+import { calculateReportStats, type ProjectWithRelations } from '@/lib/report-calculations';
 
 export default async function ProjectAdminPage({ params }: { params: { id: string } }) {
   const project = await prisma.project.findUnique({
@@ -228,9 +230,25 @@ export default async function ProjectAdminPage({ params }: { params: { id: strin
   // kaart verandert niet.
   const kaartteksten = leesKaartteksten(allCriteria.map((c: any) => c.code));
 
+  // De cijfers voor de opleveringsmail, op dezelfde manier berekend als de samenvatting
+  // van het rapport (alleen de criteria van het onderzoekstype, niet aanwezig telt als
+  // voldaan). Zo staat in de mail hetzelfde getal als in het rapport dat erbij zit.
+  const rapportData = await getReportData(params.id);
+  const rapportStats = rapportData
+    ? calculateReportStats(rapportData.projectForCalc as unknown as ProjectWithRelations)
+    : null;
+  const rapportCijfers =
+    rapportStats && rapportStats.totalAssessed > 0
+      ? {
+          voldaan: rapportStats.effectivePassed,
+          totaal: rapportStats.totalAssessed,
+          percentage: Math.round((rapportStats.effectivePassed / rapportStats.totalAssessed) * 100),
+        }
+      : null;
+
   return (
     <ProjectAdminTabs
-      project={projectData}
+      project={{ ...projectData, rapportCijfers }}
       allCriteria={allCriteria}
       relatedProjects={relatedProjectsData}
       researchTypeExplanations={researchTypeExplanations}

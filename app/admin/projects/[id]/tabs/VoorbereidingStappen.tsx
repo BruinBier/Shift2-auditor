@@ -243,24 +243,40 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
 
   // Na de herinspectie, of na een nulmeting zonder hertest: geen uitnodiging maar een
   // melding. Het onderzoek is klaar, hier is het rapport, laat het weten als je de issues
-  // nog wilt bespreken. Het "Proficiat" hoort bij de hertest: daar is iets hersteld. Na
-  // een nulmeting is het percentage een vertrekpunt, geen prestatie.
-  const opleveringsmail = [
-    `Dag ${contactnaam || '[naam]'},`,
-    '',
-    isHerinspectie
-      ? `Het heronderzoek toegankelijkheid voor ${site} is afgerond.`
-      : `De nulmeting van het toegankelijkheidsonderzoek voor ${site} is afgerond.`,
-    '',
-    isHerinspectie
-      ? 'De website is op dit moment voor [percentage]% toegankelijk. Proficiat!'
-      : 'De website is op dit moment voor [percentage]% toegankelijk.',
-    '',
-    'De resultaten van dit onderzoek zijn direct beschikbaar via onderstaande URL:',
-    '[link naar het rapport]',
-    '',
-    'Laat het gerust weten als je de issues nog kort samen wilt bespreken. Ik hoor graag van je.',
-  ].join('\n');
+  // nog wilt bespreken.
+  //
+  // Na de herinspectie geen "Proficiat!" meer: bij 63% (BEV-01, oktober 2026) paste dat
+  // niet. De mail noemt het aantal criteria en het percentage, en wijst erop dat de link
+  // in de toegankelijkheidsverklaring kan. Tekst vastgesteld door Frits op 2026-10-25.
+  // De cijfers komen uit de projectpagina (rapportCijfers), berekend zoals het rapport.
+  // Nog niets beoordeeld: dan blijven de plekken om in te vullen staan.
+  const cijfers = project.rapportCijfers;
+  const opleveringsmail = isHerinspectie
+    ? [
+        `Dag ${contactnaam || '[naam]'},`,
+        '',
+        `Het heronderzoek naar de toegankelijkheid van ${site} is afgerond.`,
+        '',
+        `De website voldoet op dit moment aan ${cijfers?.voldaan ?? '[aantal]'} van de ${cijfers?.totaal ?? '[totaal]'} onderzochte succescriteria. Dat komt neer op ${cijfers?.percentage ?? '[percentage]'}%.`,
+        '',
+        'Je kunt de resultaten bekijken via onderstaande link. Deze kun je ook direct opnemen in de toegankelijkheidsverklaring:',
+        '[link naar het rapport]',
+        '',
+        'Mocht je de resterende bevindingen nog even samen willen doornemen, dan plan ik daar graag een moment voor in.',
+        'Laat het gerust weten!',
+      ].join('\n')
+    : [
+        `Dag ${contactnaam || '[naam]'},`,
+        '',
+        `De nulmeting van het toegankelijkheidsonderzoek voor ${site} is afgerond.`,
+        '',
+        `De website is op dit moment voor ${cijfers?.percentage ?? '[percentage]'}% toegankelijk.`,
+        '',
+        'De resultaten van dit onderzoek zijn direct beschikbaar via onderstaande URL:',
+        '[link naar het rapport]',
+        '',
+        'Laat het gerust weten als je de issues nog kort samen wilt bespreken. Ik hoor graag van je.',
+      ].join('\n');
 
   // Voert een ander bureau het onderzoek uit, dan loopt de voorbereiding anders: er is
   // geen scopegesprek en geen scope om in te vullen, want dat doet het bureau. Wat er
@@ -326,7 +342,9 @@ export default function VoorbereidingStappen({ project }: { project: any }) {
       knop: 'Kopieer opleveringsmail',
       naam: 'opleveringsmail',
       tekst: opleveringsmail,
-      onderwerp: `Rapport toegankelijkheidsonderzoek ${domein}`,
+      onderwerp: isHerinspectie
+        ? `Heronderzoek toegankelijkheid ${domein} afgerond`
+        : `Rapport toegankelijkheidsonderzoek ${domein}`,
     },
   };
 
