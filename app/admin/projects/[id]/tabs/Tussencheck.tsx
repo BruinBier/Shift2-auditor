@@ -340,6 +340,13 @@ export default function Tussencheck({ project }: TussencheckProps) {
                             Nieuw in {f.discoveredInPhase}
                           </span>
                         )}
+                        {/* Wat de onderzoeker bij de tussencheck zag. Staat niet in het rapport,
+                            wel in het voortgangsoverzicht. */}
+                        {f.interimNotes && (
+                          <p className="mt-2 text-xs text-gray-700 bg-yellow-50 border-l-2 border-yellow-400 px-2 py-1">
+                            <span className="font-semibold">Tussencheck:</span> {f.interimNotes}
+                          </p>
+                        )}
                         {f.occurrences && f.occurrences.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {f.occurrences.map((occ: any) => {
