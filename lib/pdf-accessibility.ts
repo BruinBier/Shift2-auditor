@@ -73,8 +73,8 @@ const WCAG_SLUG_LABELS: Record<string, string> = {
 
 const WCAG_URL_LABELS: Record<string, string> = {
   'https://www.w3.org/Translations/WCAG22-nl': 'WCAG 2.2 (Nederlandse vertaling)',
-  'https://www.w3.org/WAI/test-evaluate/conformance/wcag-em':
-    'WCAG-EM: methode voor toegankelijkheidsonderzoek',
+  'https://www.w3.org/TR/2014/NOTE-WCAG-EM-20140710':
+    'WCAG-EM 1.0: methode voor toegankelijkheidsonderzoek',
   'https://www.digitoegankelijk.nl': 'Digitoegankelijk.nl',
   'https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek':
     'Digitoegankelijk.nl: onderzoek voor de toegankelijkheidsverklaring',

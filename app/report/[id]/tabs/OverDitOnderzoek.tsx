@@ -1566,12 +1566,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                     <p className="text-sm text-gray-700">
                       Dit onderzoek is uitgevoerd conform de evaluatiemethode{' '}
                       <a
-                        href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/"
+                        href="https://www.w3.org/TR/2014/NOTE-WCAG-EM-20140710/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline inline-flex items-center gap-1"
                       >
-                        WCAG-EM
+                        WCAG-EM 1.0
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -1893,12 +1893,12 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
           <p className="text-sm text-gray-700 mb-6">
             Dit onderzoek is uitgevoerd conform de evaluatiemethode{' '}
             <a
-              href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/"
+              href="https://www.w3.org/TR/2014/NOTE-WCAG-EM-20140710/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline inline-flex items-center gap-1"
             >
-              WCAG-EM
+              WCAG-EM 1.0
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>

@@ -90,11 +90,11 @@ export async function getReportData(projectId: string) {
       ? await prisma.sampleItem.findMany({
           where: { projectId: project.parentProjectId },
           orderBy: { orderIndex: 'asc' },
-          select: { id: true, url: true, title: true },
+          select: { id: true, url: true, title: true, sampleType: true },
         })
       : null;
   const steekproef = steekproefMetWijzigingen(
-    project.sampleItems.map((s) => ({ id: s.id, url: s.url, title: s.title })),
+    project.sampleItems.map((s) => ({ id: s.id, url: s.url, title: s.title, sampleType: s.sampleType })),
     nulmetingSteekproef
   );
 

@@ -164,12 +164,12 @@ export default function Steekproef({ project }: { project: any }) {
             <p className="text-sm text-gray-700 leading-relaxed mb-4">
               Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument{' '}
               <a
-                href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/"
+                href="https://www.w3.org/TR/2014/NOTE-WCAG-EM-20140710/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 underline hover:text-blue-800"
               >
-                WCAG-EM
+                WCAG-EM 1.0
               </a>
               .
             </p>

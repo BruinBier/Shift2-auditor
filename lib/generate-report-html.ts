@@ -681,7 +681,7 @@ function renderBorging(): string {
 function renderOnderzoeksdetails(
   project: any,
   /** De steekproef met, bij een herinspectie, vervallen en toegevoegde pagina's. */
-  steekproef: SteekproefRegel<{ url?: string | null; title?: string | null }>[],
+  steekproef: SteekproefRegel<{ url?: string | null; title?: string | null; sampleType?: string | null }>[],
   scopeIn: any[],
   scopeOut: any[]
 ): string {
@@ -710,25 +710,43 @@ function renderOnderzoeksdetails(
       : '';
 
   // De vervallen pagina's van de nulmeting staan niet meer in de lijst zelf, maar eronder
-  // onder een eigen kop "Vervallen / Offline" (h5), als tekst en niet als link: ze zijn
+  // onder een eigen kop "Vervallen / Offline", als tekst en niet als link: ze zijn
   // offline. Frits, 2026-10-24 bij BEV-01 v1.1. Een toegevoegde pagina houdt zijn label.
   const huidig = steekproef.filter((r) => r.status !== STATUS_VERVALLEN);
   const vervallen = steekproef.filter((r) => r.status === STATUS_VERVALLEN);
+  const sampleLijst = (regels: typeof huidig) =>
+    `<ul>${regels
+      .map(({ item: s, status }) => {
+        const label = status ? `, status: ${escapeHtml(status)}` : '';
+        if (s.url) {
+          return `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.url)}</a>${label}</li>`;
+        }
+        return `<li>${escapeHtml(s.title || 'Onbenoemd')}${label}</li>`;
+      })
+      .join('')}</ul>`;
+  // Gesplitst naar soort, zoals WCAG-EM 1.0 (stap 3) de steekproef opbouwt en zoals de
+  // rapporttab Steekproef het toont. De willekeurige steekproef staat er ook bij nul,
+  // want ook dat zegt iets over hoe de steekproef is samengesteld; PDF alleen als er een is.
+  const groepen = [
+    { soort: 'structured', kop: 'Gestructureerde steekproef', altijd: true },
+    { soort: 'random', kop: 'Willekeurige steekproef', altijd: true },
+    { soort: 'pdf', kop: 'PDF-steekproef', altijd: false },
+  ];
   const sampleHtml =
     huidig.length > 0
-      ? `<ul>${huidig
-          .map(({ item: s, status }) => {
-            const label = status ? `, status: ${escapeHtml(status)}` : '';
-            if (s.url) {
-              return `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.url)}</a>${label}</li>`;
-            }
-            return `<li>${escapeHtml(s.title || 'Onbenoemd')}${label}</li>`;
+      ? groepen
+          .map(({ soort, kop, altijd }) => {
+            const regels = huidig.filter((r) => r.item.sampleType === soort);
+            if (regels.length === 0 && !altijd) return '';
+            return `<h4>${kop} (${regels.length})</h4>${
+              regels.length > 0 ? sampleLijst(regels) : '<p>Geen pagina\'s.</p>'
+            }`;
           })
-          .join('')}</ul>`
+          .join('')
       : '<p>Geen sample-items vastgelegd.</p>';
   const vervallenHtml =
     vervallen.length > 0
-      ? `<h5>${escapeHtml(STATUS_VERVALLEN)}</h5><ul>${vervallen
+      ? `<h4>${escapeHtml(STATUS_VERVALLEN)}</h4><ul>${vervallen
           .map(({ item: s }) => `<li>${escapeHtml(s.url || s.title || 'Onbenoemd')}</li>`)
           .join('')}</ul>`
       : '';
@@ -760,14 +778,13 @@ function renderOnderzoeksdetails(
   </div></div>
 
   <div class="panel"><div class="panel-title"><h3>Steekproef</h3></div><div class="panel-body">
-    <p>Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Zie: <a href="https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek" target="_blank" rel="noopener">digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek</a></p>
-    <h4>Volledige steekproef</h4>
+    <p>Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM 1.0. Zie: <a href="https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek" target="_blank" rel="noopener">digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek</a></p>
     ${sampleHtml}
     ${vervallenHtml}
   </div></div>
 
   <div class="panel"><div class="panel-title"><h3>Onderzoeksmethode en technieken</h3></div><div class="panel-body">
-    <p>Dit onderzoek is uitgevoerd conform de evaluatiemethode <a href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em" target="_blank" rel="noopener">WCAG-EM</a>. Deze methode is aanbevolen door <a href="https://www.digitoegankelijk.nl" target="_blank" rel="noopener">DigiToegankelijk (Logius)</a>. Bij het uitvoeren van dit onderzoek is ervan uitgegaan dat alle technieken van het W3C ondersteund worden en dus gebruikt mogen worden.</p>
+    <p>Dit onderzoek is uitgevoerd conform de evaluatiemethode <a href="https://www.w3.org/TR/2014/NOTE-WCAG-EM-20140710/" target="_blank" rel="noopener">WCAG-EM 1.0</a>. Deze methode is aanbevolen door <a href="https://www.digitoegankelijk.nl" target="_blank" rel="noopener">DigiToegankelijk (Logius)</a>. Bij het uitvoeren van dit onderzoek is ervan uitgegaan dat alle technieken van het W3C ondersteund worden en dus gebruikt mogen worden.</p>
   </div></div>
 
   <div class="panel"><div class="panel-title"><h3>Testomgeving</h3></div><div class="panel-body">
