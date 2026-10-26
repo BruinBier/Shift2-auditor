@@ -1467,7 +1467,7 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                 {openDetailsAccordions.has('sample') && (
                   <div className="px-6 py-4 bg-white">
                     <p className="text-sm text-gray-700 mb-4">
-                      Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie:{' '}
+                      Dit onderzoek is uitgevoerd op basis van een steekproef. De wijze waarop de steekproef is bepaald staat voorgeschreven in het evaluatiedocument WCAG-EM 1.0. Als een proces is meegenomen in het onderzoek staan ook alle procespagina's in de steekproef vermeld. Zie:{' '}
                       <a
                         href="https://www.digitoegankelijk.nl/toegankelijkheidsverklaring/onderzoek"
                         target="_blank"
@@ -1488,14 +1488,32 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                       </div>
                     )}
 
-                    {/* Volledige steekproef. Bij een herinspectie staan toegevoegde pagina's erin met
-                        hun label, en de vervallen pagina's van de nulmeting eronder onder een eigen
-                        kop "Vervallen / Offline", als tekst zonder link: ze zijn offline
-                        (lib/steekproef-wijzigingen.ts). Frits, 2026-10-24 bij BEV-01 v1.1. */}
-                    <h4 className="text-base font-semibold text-gray-900 mb-3">Volledige steekproef</h4>
+                    {/* Steekproef gesplitst naar soort, zoals in lib/generate-report-html.ts: de
+                        willekeurige steekproef ook bij nul, PDF alleen als er een is. Bij een
+                        herinspectie staan toegevoegde pagina's erin met hun label, en de vervallen
+                        pagina's van de nulmeting eronder onder een eigen kop "Vervallen / Offline",
+                        als tekst zonder link: ze zijn offline (lib/steekproef-wijzigingen.ts).
+                        Frits, 2026-10-24 bij BEV-01 v1.1. */}
                     {steekproef.some((r: any) => r.status !== STATUS_VERVALLEN) ? (
+                      [
+                        { soort: 'structured', kop: 'Gestructureerde steekproef', altijd: true },
+                        { soort: 'random', kop: 'Willekeurige steekproef', altijd: true },
+                        { soort: 'pdf', kop: 'PDF-steekproef', altijd: false },
+                      ].map(({ soort, kop, altijd }) => {
+                        const regels = steekproef.filter(
+                          (r: any) => r.status !== STATUS_VERVALLEN && r.item.sampleType === soort
+                        );
+                        if (regels.length === 0 && !altijd) return null;
+                        return (
+                          <div key={soort} className="mb-4">
+                            <h4 className="text-base font-semibold text-gray-900 mb-3">
+                              {kop} ({regels.length})
+                            </h4>
+                            {regels.length === 0 ? (
+                              <p className="text-sm text-gray-700">Geen pagina&apos;s.</p>
+                            ) : (
                       <ul className="list-disc list-outside ml-5 text-sm text-gray-700 space-y-2">
-                        {steekproef.filter((r: any) => r.status !== STATUS_VERVALLEN).map(({ item, status }: any) => {
+                        {regels.map(({ item, status }: any) => {
                           const isFormulieren = project.researchTypeData?.type === 'formulieren';
                           const link = !!item.url;
                           return (
@@ -1521,12 +1539,16 @@ export default function OverDitOnderzoek({ project }: { project: any }) {
                           );
                         })}
                       </ul>
+                            )}
+                          </div>
+                        );
+                      })
                     ) : (
                       <p className="text-sm text-gray-500 italic">Geen steekproef items toegevoegd</p>
                     )}
                     {steekproef.some((r: any) => r.status === STATUS_VERVALLEN) && (
                       <>
-                        <h5 className="text-sm font-semibold italic text-gray-900 mt-4 mb-2">{STATUS_VERVALLEN}</h5>
+                        <h4 className="text-base font-semibold text-gray-900 mt-4 mb-2">{STATUS_VERVALLEN}</h4>
                         <ul className="list-disc list-outside ml-5 text-sm text-gray-700 space-y-2">
                           {steekproef
                             .filter((r: any) => r.status === STATUS_VERVALLEN)
